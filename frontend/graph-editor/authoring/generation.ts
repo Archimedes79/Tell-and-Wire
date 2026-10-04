@@ -61,13 +61,23 @@ export function isWritten(node: GraphNode, write: Write): boolean {
   return !!heldBy(node, write).trim();
 }
 
+/** What a ✨ button asks for: one of a node's files, or -- ✨ Generate -- all of them. */
+export type Press = Write | 'all';
+
 /**
- * What one press on *write*'s ✨ writes, in order: for the body of a node that
- * has definitions, what is missing first -- its input definition where it
- * takes something in and has none, its output definition where it has none --
- * so one press does the whole node.
+ * What one press writes, in order. For the body of a node that has
+ * definitions, what is missing first -- its input definition where it takes
+ * something in and has none, its output definition where it has none -- so
+ * one press does the whole node. ✨ Generate does that the first time; once
+ * the body is written it writes each again, as pressing ✨ Input, ✨ Output
+ * and the body's ✨ one after another would. A data node has its body only.
  */
-export function writesFor(node: GraphNode, write: Write): Write[] {
+export function writesFor(node: GraphNode, write: Press): Write[] {
+  if (write === 'all') {
+    if (!hasDefinitions(node)) return ['body'];
+    if (!isWritten(node, 'body')) return writesFor(node, 'body');
+    return [...(node.inputs.length ? ['input' as const] : []), 'output', 'body'];
+  }
   if (write !== 'body' || !hasDefinitions(node)) return [write];
   return [
     ...(node.inputs.length && !isWritten(node, 'input') ? ['input' as const] : []),

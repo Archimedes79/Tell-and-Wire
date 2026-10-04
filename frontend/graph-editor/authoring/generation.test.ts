@@ -34,6 +34,15 @@ describe('what one press of ✨ writes', () => {
     expect(writesFor(made('ai', { input_definition: 'module.exports = null;' }), 'body')).toEqual(['input', 'output', 'body']);
   });
 
+  it('is, for ✨ Generate, the whole node the first time, and each file again after that, as its own ✨ would', () => {
+    expect(writesFor(made('code'), 'all')).toEqual(['input', 'output', 'body']);
+    expect(writesFor(made('code', { input_definition: INPUT }), 'all')).toEqual(['output', 'body']);
+    const whole = made('code', { input_definition: INPUT, output_definition: OUTPUT, code: 'function run() { return { output: 1 }; }' });
+    expect(writesFor(whole, 'all')).toEqual(['input', 'output', 'body']);
+    expect(writesFor({ ...whole, inputs: [] }, 'all')).toEqual(['output', 'body']);
+    expect(writesFor(made('data'), 'all')).toEqual(['body']);
+  });
+
   it('is only itself for ✨ Input and ✨ Output, and for a data node, which has no definitions', () => {
     expect(writesFor(made('code'), 'input')).toEqual(['input']);
     expect(writesFor(made('code'), 'output')).toEqual(['output']);

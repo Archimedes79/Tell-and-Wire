@@ -16,7 +16,7 @@ import { useGenerate } from '../authoring/useGenerate';
 import {
   bodyOf, exchangeName, generateRequest, generationGuard, previewGeneration, resultMessage, unfitDefinition, withHistory, writeName, writesFor,
   writtenInto,
-  type Refine, type Write,
+  type Press, type Refine, type Write,
 } from '../authoring/generation';
 import { inputSources, outputTargets } from '../authoring/generationContext';
 import { fileFromTheGraph, inputFilesOf } from '../authoring/exampleFile';
@@ -111,7 +111,7 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
    * what comes after would be written against it. A change or a fix is asked
    * of the body alone. Resolves to whether all of it was written.
    */
-  const handleGenerate = async (write: Write, refine?: Refine): Promise<boolean> => {
+  const handleGenerate = async (write: Press, refine?: Refine): Promise<boolean> => {
     const start = panel.node();
     if (!start) return false;
     for (const one of refine ? ['body' as const] : writesFor(start, write)) {

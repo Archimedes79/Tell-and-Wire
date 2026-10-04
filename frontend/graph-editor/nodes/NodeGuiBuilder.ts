@@ -3,7 +3,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { AICall } from '../../app/api/client';
 import type { Graph, GraphNode, NodeType } from '../../app/graph';
-import type { Refine, Write } from '../authoring/generation';
+import type { Press, Refine, Write } from '../authoring/generation';
 import { ElementGuiBuilder } from '../../app/elements/ElementGuiBuilder';
 
 /**
@@ -44,10 +44,11 @@ export interface NodePanelProps {
   message?: string;
   /**
    * ✨: write *write* -- for the body of a node with definitions, what is
-   * missing first -- or, asked with *refine*, change the body there is
-   * ("Say what to change", ✨ Fix). Resolves to whether something was written.
+   * missing first; for `all`, ✨ Generate (`writesFor`) -- or, asked with
+   * *refine*, change the body there is ("Say what to change", ✨ Fix).
+   * Resolves to whether something was written.
    */
-  onGenerate: (write: Write, refine?: Refine) => Promise<boolean>;
+  onGenerate: (write: Press, refine?: Refine) => Promise<boolean>;
   /** Stop the ✨ that is writing: nothing more is waited for, and what it still brings back is dropped. */
   onStop?: () => void;
   /** What only the side panel has, for a panel of a node ✨ writes for. */

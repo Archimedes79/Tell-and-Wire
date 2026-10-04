@@ -8,7 +8,7 @@ import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
 import { STANDARD_PROMPTS, VARIABLES, type PromptKind } from '../../../graph/authoring/prompts.ts';
 import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
 import { headingFromText, isNumberedHeading } from '../../app/document/heading';
-import { bodyOf, hasDefinitions, isWritten, outputsAsDefined, writeName, type Write } from './generation';
+import { bodyOf, hasDefinitions, isWritten, outputsAsDefined, writeName, writesFor, type Write } from './generation';
 import { filesOf } from '../../app/document/givenFiles';
 import FileChip from './FileChip';
 import CodeField from './CodeField';
@@ -237,14 +237,34 @@ function FileBox({ node, write, setConfig, updateNode }: {
   );
 }
 
+/** A ✨ button: greyed out while one is writing -- pressed then, it did nothing and said nothing. */
+function GenerateButton({ onClick, generating, title, children }: { onClick: () => void; generating: boolean; title: string; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={generating}
+      className="text-xs px-2 py-1 rounded"
+      style={{ background: SUCCESS, color: 'white', opacity: generating ? 0.5 : 1 }}
+      title={generating ? '✨ is still writing: wait for it, or Stop it below' : title}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** "a", "a and b", "a, b and c". */
+const listed = (items: string[]): string => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+
 /**
  * One of what ✨ writes for a node, as a row: its ✨, the prompt it is written
  * with, and the file -- its content, edited in place, and a chip beside it
  * that opens it in the person's own editor -- all in sight, whether or not
  * anything is written yet. *box* stands in for the file's editor where the
- * node draws its own (what a data node holds).
+ * node draws its own (what a data node holds). A node with one file only -- a
+ * data node -- has no ✨ of its own in the row: ✨ Generate is that one.
  */
-function Row({ node, write, setConfig, updateNode, onGenerate, generating, preview, before, box, children }: {
+function Row({ node, write, setConfig, updateNode, onGenerate, generating, preview, before, box, button = true, children }: {
   node: GraphNode;
   write: Write;
   setConfig: NodePanelProps['setConfig'];
@@ -254,27 +274,25 @@ function Row({ node, write, setConfig, updateNode, onGenerate, generating, previ
   preview?: (write: Write) => Promise<AICall[]>;
   before: () => void;
   box?: ReactNode;
+  button?: boolean;
   children?: ReactNode;
 }) {
   const { file } = keptIn(node, write);
   return (
     <section className="space-y-1.5 pt-2" style={{ borderTop: `1px solid ${LINE}` }} aria-label={writeName(node, write)}>
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          type="button"
-          onClick={() => void onGenerate(write)}
-          disabled={generating}
-          className="text-xs px-2 py-1 rounded"
-          style={{ background: SUCCESS, color: 'white', opacity: generating ? 0.5 : 1 }}
-          // Greyed out while one is writing: pressed then, it did nothing and said nothing.
-          title={generating ? '✨ is still writing: wait for it, or Stop it below'
-            : write === 'body' && hasDefinitions(node)
-            ? `Write ${file} -- and first what is missing of input.js and output.js`
-            : `Write ${file} from the node's text`}
-        >
-          {writeName(node, write)}
-        </button>
-      </div>
+      {button && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <GenerateButton
+            onClick={() => void onGenerate(write)}
+            generating={generating}
+            title={write === 'body' && hasDefinitions(node)
+              ? `Write ${file} -- and first what is missing of input.js and output.js`
+              : `Write ${file} from the node's text`}
+          >
+            {writeName(node, write)}
+          </GenerateButton>
+        </div>
+      )}
       <PromptBox node={node} write={write} setConfig={setConfig} preview={preview} />
       <FileChip nodeId={node.id} file={file} written={isWritten(node, write)} before={before} />
       {box ?? <FileBox node={node} write={write} setConfig={setConfig} updateNode={updateNode} />}
@@ -324,6 +342,11 @@ export default function NodeDefinition({ node, setConfig, updateNode, setDescrip
 
   const needs = defined && node.inputs.length && !isWritten(node, 'input')
     ? 'Write its input.js first (✨ Input): its example is what it is tried on.' : undefined;
+  // ✨ Generate: the whole node the first time, each file again after that (`writesFor`).
+  const files = listed(writesFor(node, 'all').map((write) => keptIn(node, write).file));
+  const generateTitle = !defined ? 'Write what it holds from the text'
+    : isWritten(node, 'body') ? `Write ${files} again, one after another, as their ✨ below would`
+    : `Write ${files} from the text`;
   const history = String(node.config.history ?? '');
 
   return (
@@ -335,9 +358,12 @@ export default function NodeDefinition({ node, setConfig, updateNode, setDescrip
           value={node.description}
           onChange={(event) => setDescription(event.target.value)}
           onBlur={headingFromTheText}
-          placeholder={`What should this node do? In your own words -- ✨ writes ${defined ? 'its files' : 'what it holds'} from this.`}
+          placeholder={`What should this node do? In your own words -- ✨ Generate writes ${defined ? 'its files' : 'what it holds'} from this.`}
           aria-label="What it should do"
         />
+        <div className="mt-1.5">
+          <GenerateButton onClick={() => void onGenerate('all')} generating={generating} title={generateTitle}>✨ Generate</GenerateButton>
+        </div>
         {!isProject && (
           <p className="text-xs mt-1" style={{ color: DIMMER }}>
             Its files are kept in the graph until it is saved as a project (File ▸ Save, a name without .json): then each is a file of its own.
@@ -354,7 +380,7 @@ export default function NodeDefinition({ node, setConfig, updateNode, setDescrip
           <FilesLine node={node} side="output" setConfig={setConfig} />
         </Row>
       )}
-      <Row node={node} updateNode={updateNode} write="body" setConfig={setConfig} onGenerate={onGenerate} generating={generating} preview={shell?.preview} before={before} box={holds} />
+      <Row node={node} updateNode={updateNode} write="body" setConfig={setConfig} onGenerate={onGenerate} generating={generating} preview={shell?.preview} before={before} box={holds} button={defined} />
       {generating && <LiveGeneration calls={liveCalls} minHeight={80} />}
       {message && (
         <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }} role="status">

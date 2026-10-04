@@ -71,8 +71,10 @@ The top box of the panel is the node in your words:
 > Read the population CSV (a country column and a population column) and show a bar chart
 > of the population per country.
 
-Press **✨ Input**, **✨ Output**, then **✨ Code** (an AI node: **✨ Prompt**). Each is
-written from the ones before it:
+Press **✨ Generate** under it: it writes `input.js`, `output.js` and `code.js` (an AI node:
+`prompt.md`), each from the ones before it. Pressed again, it writes each anew, one after
+another. To write one file only, press its own ✨ in its row -- **✨ Input**, **✨ Output**,
+**✨ Code** or **✨ Prompt**. A data node has one file, what it holds, and only ✨ Generate.
 
 | File | What it holds |
 |---|---|
@@ -81,7 +83,7 @@ written from the ones before it:
 | `code.js` / `prompt.md` | The body: the code, or the AI node's instructions. |
 | `history.md` | Every exchange with the model about this node. |
 
-Pressing the body's ✨ first writes whichever definition is missing. New code is tried on
+The body's own ✨ first writes whichever definition is missing. New code is tried on
 the example in `input.js` and repaired once if it fails. Each file shows in its row, editable
 in place; ⤢ opens it full-window, and its chip opens it in your own editor. There is no
 Save in the panel: a change is in the graph at once, and Undo takes it back.

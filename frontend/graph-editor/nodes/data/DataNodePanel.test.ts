@@ -16,18 +16,19 @@ function panel(node: GraphNode): string {
 }
 
 describe('a data node\'s panel', () => {
-  it('is its text, what it holds -- its kind and the value -- and ✨ Data, which writes the value: no definitions, no ▶ Try', () => {
+  it('is its text, ✨ Generate, which writes the value, and what it holds -- its kind and the value: no definitions, no ▶ Try', () => {
     const node = NODE_KINDS.data.create('memory');
     node.config.data_format = 'structure';
     node.config.data_value = { count: 2 };
     const html = panel(node);
-    // Its ✨ Data row: the button, the prompt, the file's chip, and the box it is edited in -- the kind and the value.
-    const at = ['aria-label="What it should do"', '>✨ Data</button>', 'aria-label="✨ Data prompt"', 'data.json ↗', 'aria-label="Kind"', 'aria-label="What it holds"', 'history.md ↗']
+    // ✨ Generate under its text, then its row: the prompt, the file's chip, and the box it is edited in -- the kind and the value.
+    const at = ['aria-label="What it should do"', '>✨ Generate</button>', 'aria-label="✨ Data prompt"', 'data.json ↗', 'aria-label="Kind"', 'aria-label="What it holds"', 'history.md ↗']
       .map((mark) => html.indexOf(mark));
     expect(at.every((index) => index >= 0), String(at)).toBe(true);
     expect(at).toEqual([...at].sort((a, b) => a - b));
     expect(html).toMatch(/<textarea[^>]*aria-label="What it holds"[^>]*>\{\n {2}&quot;count&quot;: 2\n\}<\/textarea>/);
-    for (const gone of ['✨ Input', '✨ Output', 'input.js', 'output.js', '▶ Try', 'From the graph']) expect(html, gone).not.toContain(gone);
+    // One file, one ✨: the row has no button of its own beside Generate.
+    for (const gone of ['>✨ Data</button>', '✨ Input', '✨ Output', 'input.js', 'output.js', '▶ Try', 'From the graph']) expect(html, gone).not.toContain(gone);
     // A text it holds is kept in data.txt.
     expect(panel(NODE_KINDS.data.create('note'))).toContain('data.txt ↗');
   });
