@@ -98,6 +98,20 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
 With nothing set, Tell-and-Wire uses a local model server that is running (Ollama or
 LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
 
+**Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
+servers: list them under *Advanced → Tools the model may use*, one per line -- an
+`https://…/mcp` address, or a name this machine's `ai-settings.json` defines:
+
+```json
+{ "mcp_servers": {
+    "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:/data"] },
+    "internal":   { "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer …" } } } }
+```
+
+A graph can name a server but never the command that starts one, so a graph someone hands
+you cannot start a program of its choosing. A tool call gets two minutes
+(`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight rounds of calls per answer.
+
 ## Docker
 
 ```bash

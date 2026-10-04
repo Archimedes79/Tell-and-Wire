@@ -300,37 +300,50 @@ runs. Its model client reads the same `ai-settings.json`. Held by `graph/core/co
 whose rounds run in a graph core of its own process"). `backend/app/wrapperDoc.test.ts`
 holds that every route of `api.ts` and every operation of the protocol is in this section.
 
-## Extending
+## Writing a plugin
 
-**A node kind.** Add `graph/nodes/<kind>/<Kind>NodeRunner.ts` (extend `NodeRunner`, keep
-its bars), list it in `NODES` (`graph/nodes/registry.ts`) and in `NodeType`
-(`graph/graph.ts`). Add `frontend/graph-editor/nodes/<kind>/<Kind>NodeGuiBuilder.ts` and its
-panel and register it in `NODE_BUILDERS` (`frontend/app/elements/registry.ts`); the compiler
-then asks for its entry in `NODE_KINDS` (`frontend/app/document/nodeKinds.ts`). A
-`graphAuthorNote` lets ✨ AI Graph offer it (`backend/graph-editor/graphPrompt.test.ts`).
+A plugin is added in the source, not loaded at run time: two folders under the same name,
+each registered in one list. The tests named below fail until both halves exist and match.
 
-**A block kind.** Add `backend/gui-editor/widgets/<kind>/<Kind>WidgetRunner.ts` (extend
-`WidgetRunner`, `StaticWidgetRunner` for design only, or `DisplayWidgetRunner` for a block
-that only shows), list it in `backend/gui-editor/widgets/roster.ts` and in `WidgetKind`
-(`graph/graph.ts`). Add the builder, view and panel in `frontend/gui-editor/widgets/<kind>/`,
-the builder to `frontend/gui-editor/widgets/roster.ts` and the view to `BLOCKS`
-(`frontend/gui-editor/page/blocks.ts`). A deployed page draws the view, so
-`boundary.test.ts` holds what it may import. For both kinds `symmetry.test.ts` fails until
-the halves match.
+**A node kind** (say `csv`):
 
-**Another language.** Everything that is JavaScript about writing and trying a body is the
-code node's `Language` (`JAVASCRIPT` in `graph/nodes/code/javascript.ts`; the interface is in
+1. `graph/nodes/csv/CsvNodeRunner.ts`: extend `NodeRunner` and keep its three bars. Add it
+   to `NODES` (`graph/nodes/registry.ts`) and to `NodeType` (`graph/graph.ts`).
+2. `frontend/graph-editor/nodes/csv/CsvNodeGuiBuilder.ts` and its panel: add it to
+   `NODE_BUILDERS` (`frontend/app/elements/registry.ts`); the compiler then asks for its
+   entry in `NODE_KINDS` (`frontend/app/document/nodeKinds.ts`).
+3. If ✨ AI Graph should offer it: a `graphAuthorNote` (`backend/graph-editor/graphPrompt.test.ts`).
+
+Checked by `symmetry.test.ts`, both `times.test.ts` and both `shells.test.ts`.
+
+**A block kind** (say `gauge`):
+
+1. `backend/gui-editor/widgets/gauge/GaugeWidgetRunner.ts`: extend `WidgetRunner`
+   (`StaticWidgetRunner` for a block that is only design, `DisplayWidgetRunner` for one that
+   only shows). Add it to `backend/gui-editor/widgets/roster.ts` and to `WidgetKind`
+   (`graph/graph.ts`).
+2. `frontend/gui-editor/widgets/gauge/`: `GaugeWidgetGuiBuilder.ts`, `GaugeWidgetView.tsx`
+   and, if it has settings, a panel. The builder goes into
+   `frontend/gui-editor/widgets/roster.ts`, the view into `BLOCKS`
+   (`frontend/gui-editor/page/blocks.ts`).
+
+Checked by `symmetry.test.ts`, and by `boundary.test.ts`, since a deployed page draws the view.
+
+**A language.** Everything that is JavaScript about writing and trying a body is the code
+node's `Language` (`JAVASCRIPT` in `graph/nodes/code/javascript.ts`; the interface is in
 `graph/authoring/generation.ts`): the file, the fence, what the model is told, the empty
-`run` it completes, the limits, and how a written body is run. The code node declares it in
-`generation()`; the writer (`backend/graph-editor/generate.ts`) names no language
-(`generate.test.ts`: "is written and tried in the language its node declares"). Two ways to
-add one:
+`run` it completes, the limits, and how a written body is run. The writer
+(`backend/graph-editor/generate.ts`) names no language (`generate.test.ts`: "is written and
+tried in the language its node declares"). Two ways:
 
-- **A node kind for it**: a runner with its own `Language`, and a `CodeService`
-  (`graph/nodes/Runtime.ts`) that runs bodies in that language, beside `nodeCode` in
-  `graph/core/node.ts`.
-- **A second graph core**: a program in that language that speaks the core protocol and runs
-  whole graphs; `TW_CORE` names it, and the conformance run above checks it.
+1. **A node kind for it**: a node kind as above whose runner declares its own `Language`,
+   and a `CodeService` (`graph/nodes/Runtime.ts`) that runs bodies in that language, beside
+   `nodeCode` in `graph/core/node.ts`.
+2. **A whole graph in that language**: a second graph core -- a program in that language
+   that speaks the core protocol above and runs whole graphs. `TW_CORE` names it; the
+   conformance run above checks it. The rules that are language-neutral (ports, wiring,
+   what starts a round) are inside the JavaScript runners today; taking them out of
+   `graph/` is the first step of this way.
 
 A JavaScript body runs in a Node process of its own under `--permission` (files yes; child
 processes, addons, workers no; the network stays open), with no key in its environment. It

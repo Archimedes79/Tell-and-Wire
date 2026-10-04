@@ -40,5 +40,8 @@ and `backend/gui-editor/`. Imports are relative. More in `docs/architecture.md`.
 - No compatibility code for old formats: when a format changes, the code that read the old
   one goes.
 - `ai-settings.json` can hold a real API key: it is gitignored; never commit or print it.
+- Legal: `LICENSE` and the notices (`licenses.txt`, `node/LICENSE`) go with every copy; add
+  no package, code, text, data or image that is not yours or that `npm run licenses` would
+  refuse; no personal or real portfolio data in examples.
 - Checks: `npm run typecheck`, `lint`, `build`, `test`, `licenses`. Work on a branch, let CI
   pass, then merge into `main`; a merge publishes the `latest` download.
