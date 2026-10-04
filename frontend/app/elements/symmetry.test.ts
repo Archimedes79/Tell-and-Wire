@@ -52,23 +52,27 @@ describe('the two halves of every element', () => {
     expect(Object.keys(WIDGET_BUILDERS).sort()).toEqual(WIDGETS.map((element) => element.widgetKind).sort());
   });
 
-  it.each([...registry.nodeTypes()])('node %s: <Kind>NodeRunner in graph/, <Kind>NodeGuiBuilder in the editor', (kind) => {
-    const name = `${pascal(kind)}Node`;
-    const element = registry.node(kind)!;
-    const builder = NODE_BUILDERS[kind as keyof typeof NODE_BUILDERS];
-    expect(RUNNERS).toContain(`nodes/${kind}/${name}Runner.ts`);
-    expect(BUILDER_MODULES[`./nodes/${kind}/${name}GuiBuilder.ts`]?.[`${name}GuiBuilder`]).toBe(builder.constructor);
-    expect(lineage(builder)).toEqual(mirrored(lineage(element)));
+  it('are, for every node type, <Kind>NodeRunner in graph/ and <Kind>NodeGuiBuilder in the editor, in mirrored classes', () => {
+    for (const kind of registry.nodeTypes()) {
+      const name = `${pascal(kind)}Node`;
+      const element = registry.node(kind)!;
+      const builder = NODE_BUILDERS[kind as keyof typeof NODE_BUILDERS];
+      expect(RUNNERS, `node ${kind}`).toContain(`nodes/${kind}/${name}Runner.ts`);
+      expect(BUILDER_MODULES[`./nodes/${kind}/${name}GuiBuilder.ts`]?.[`${name}GuiBuilder`], `node ${kind}`).toBe(builder.constructor);
+      expect(lineage(builder), `node ${kind}`).toEqual(mirrored(lineage(element)));
+    }
   });
 
-  it.each(WIDGETS.map((element) => element.widgetKind))('widget %s: <Kind>WidgetRunner, <Kind>WidgetGuiBuilder and <Kind>WidgetView', (kind) => {
-    const name = `${pascal(kind)}Widget`;
-    const element = widgetElement(kind)!;
-    const builder = WIDGET_BUILDERS[kind as keyof typeof WIDGET_BUILDERS];
-    expect(RUNNERS).toContain(`widgets/${kind}/${name}Runner.ts`);
-    expect(BUILDER_MODULES[`./widgets/${kind}/${name}GuiBuilder.ts`]?.[`${name}GuiBuilder`]).toBe(builder.constructor);
-    expect(EDITOR).toContain(`widgets/${kind}/${name}View.tsx`);
-    expect(lineage(builder)).toEqual(mirrored(lineage(element)));
+  it('are, for every widget kind, <Kind>WidgetRunner, <Kind>WidgetGuiBuilder and <Kind>WidgetView, in mirrored classes', () => {
+    for (const { widgetKind: kind } of WIDGETS) {
+      const name = `${pascal(kind)}Widget`;
+      const element = widgetElement(kind)!;
+      const builder = WIDGET_BUILDERS[kind as keyof typeof WIDGET_BUILDERS];
+      expect(RUNNERS, `widget ${kind}`).toContain(`widgets/${kind}/${name}Runner.ts`);
+      expect(BUILDER_MODULES[`./widgets/${kind}/${name}GuiBuilder.ts`]?.[`${name}GuiBuilder`], `widget ${kind}`).toBe(builder.constructor);
+      expect(EDITOR, `widget ${kind}`).toContain(`widgets/${kind}/${name}View.tsx`);
+      expect(lineage(builder), `widget ${kind}`).toEqual(mirrored(lineage(element)));
+    }
   });
 
   it('has no element folder on one side only', () => {

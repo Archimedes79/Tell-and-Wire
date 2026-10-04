@@ -37,11 +37,19 @@ describe('settings', () => {
     expect(JSON.stringify(seen)).not.toContain('from-env-secret');
   });
 
-  it('merges a save: one provider\'s key never clears another\'s, a blank key leaves one alone, a clear clears it', async () => {
-    const { file, env } = await own({ api_keys: { openai: 'keep-me', google: 'drop-me' }, endpoints: { ollama: 'http://old:11434' } });
+  it('merges a save -- a key never clears another\'s, a blank one leaves one alone, a clear clears it -- and sets or unsets the one AI setting beside them', async () => {
+    const { file, env } = await own({ api_keys: { openai: 'keep-me', google: 'drop-me' }, endpoints: { ollama: 'http://old:11434' }, mcp_servers: { fs: { command: 'x' } } });
     await save({ api_keys: { anthropic: 'new', openai: '' }, clear_keys: ['google'], endpoints: { lmstudio: 'http://box:1234/v1' } }, '/nowhere', env);
     expect(readSettingsFile(file).api_keys).toEqual({ openai: 'keep-me', anthropic: 'new' });
     expect(JSON.parse(await readFile(file, 'utf8')).endpoints).toEqual({ ollama: 'http://old:11434', lmstudio: 'http://box:1234/v1' });
+
+    const seen = await save({ ai: { provider: 'openai', model: 'gpt-5' } }, '/nowhere', env);
+    expect(readSettingsFile(file)).toMatchObject({ ai: { provider: 'openai', model: 'gpt-5' }, api_keys: { openai: 'keep-me' }, mcp_servers: { fs: { command: 'x' } } });
+    expect(seen.ai).toEqual({ provider: 'openai', model: 'gpt-5', environment: [] });
+
+    await save({ ai: { provider: 'default', model: '' } }, '/nowhere', env);
+    expect(readSettingsFile(file).ai).toBeUndefined();
+    expect(readSettingsFile(file).api_keys).toEqual({ openai: 'keep-me', anthropic: 'new' });
   });
 
   it('will not save over a file it cannot read, which would lose its keys and tool servers', async () => {
@@ -50,16 +58,5 @@ describe('settings', () => {
     await writeFile(file, handEdited);
     await expect(save({ endpoints: { ollama: 'http://127.0.0.1:11434' } }, '/nowhere', env)).rejects.toMatchObject({ status: 409 });
     expect(await readFile(file, 'utf8')).toBe(handEdited);
-  });
-
-  it('writes the one AI setting and unsets it for "default", leaving the keys and tool servers alone', async () => {
-    const { file, env } = await own({ api_keys: { openai: 'keep-me' }, mcp_servers: { fs: { command: 'x' } } });
-    const seen = await save({ ai: { provider: 'openai', model: 'gpt-5' } }, '/nowhere', env);
-    expect(readSettingsFile(file)).toMatchObject({ ai: { provider: 'openai', model: 'gpt-5' }, api_keys: { openai: 'keep-me' }, mcp_servers: { fs: { command: 'x' } } });
-    expect(seen.ai).toEqual({ provider: 'openai', model: 'gpt-5', environment: [] });
-
-    await save({ ai: { provider: 'default', model: '' } }, '/nowhere', env);
-    expect(readSettingsFile(file).ai).toBeUndefined();
-    expect(readSettingsFile(file).api_keys).toEqual({ openai: 'keep-me' });
   });
 });

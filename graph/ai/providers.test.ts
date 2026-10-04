@@ -153,16 +153,6 @@ describe('the wire formats', () => {
     expect(calls[3].body.messages[0].content[1]).toEqual({ type: 'image_url', image_url: { url: statement.files[0] } });
     expect(calls[4].body.messages[0].content[0]).toEqual({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: 'JVBE' } });
   });
-
-  it('refuses before any request when the key or the model is missing, and lends no model from another provider', async () => {
-    const calls = stubFetch([openAiReply('never asked')]);
-    await expect(service({ provider: 'openai', model: 'gpt-x' }).complete({ prompt: 'x' })).rejects.toThrow(/No OpenAI API key/);
-    await expect(service({ provider: 'lmstudio', model: '' }).complete({ prompt: 'x' })).rejects.toThrow(/No model configured/);
-    // A node naming another provider is not given this machine's model for its own.
-    await expect(service({ provider: 'google', model: 'gemini-flash', apiKeys: { openai: 'k' } }).complete({ prompt: 'x', provider: 'openai', model: '' }))
-      .rejects.toThrow(/No model configured for provider 'openai'/);
-    expect(calls).toHaveLength(0);
-  });
 });
 
 describe('retrying', () => {

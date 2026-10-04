@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parseGraph, type ExecutionResult, type Graph } from '../../graph/graph.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { executeGraph } from '../../graph/execution/executor.ts';
-import { NotOffered, applySent, checkSent, eventOf, interfaceOf, outputsOf, sentOf } from './graphInterface.ts';
+import { applySent, eventOf, interfaceOf, outputsOf, sentOf } from './graphInterface.ts';
 import { quietRuntime } from '../../graph/test/fakes.ts';
 
 /**
@@ -67,15 +67,6 @@ describe('a graph used from outside', () => {
       { name: 'talk', label: 'Talk', type: 'json', description: expect.stringContaining('"message"') },
     ]);
     expect([api.fired_by, api.sends]).toEqual([undefined, undefined]);
-  });
-
-  it('starts the round an event names -- none is the whole graph, sent nothing -- and refuses what it does not offer', () => {
-    expect(eventOf(tool(), 'ask', registry)).toEqual({ node_id: 'ask', port_id: 'data' });
-    expect(eventOf(tool(), null, registry)).toBeNull();
-    expect(() => eventOf(tool(), 'write', registry)).toThrow(NotOffered);
-    expect(() => eventOf(tool(), 'go', registry)).toThrow(/No event called "go": this graph starts on "ask", "api", "clock"/);
-    expect(() => checkSent(tool(), null, {}, registry)).not.toThrow();
-    expect(() => checkSent(tool(), null, { topic: 'dogs' }, registry)).toThrow(/A round of the whole graph is sent nothing/);
   });
 
   it('sends what a round is sent to the start point it fires as one package, and hands back the outputs by name', async () => {

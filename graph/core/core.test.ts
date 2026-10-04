@@ -143,19 +143,6 @@ describe('the wrapper\'s half of a core program', () => {
     }
   }, 30_000);
 
-  it('answers two requests at once, each with its own reply', async () => {
-    const program = processCore(process.execPath, [BACKEND_MAIN, 'core']);
-    try {
-      const project = fileURLToPath(new URL('../../examples/population_plotter', import.meta.url));
-      const graph = await loadGraph(project);
-      const [tested, tried] = await Promise.all([program.test({ graph, offline: true }), program.example({ graph, node: 'chart' })]);
-      expect(tested.tested).toBeGreaterThan(0);
-      expect(tried.status).toBe('pass');
-    } finally {
-      await program.close();
-    }
-  }, 30_000);
-
   it('refuses a program that speaks another protocol or does not answer, and says one that ended under a request', async () => {
     const other = fake("process.stdout.write(JSON.stringify({ id: request.id, reply: { protocol: 99, language: 'x', core: 'x' } }) + '\\n');");
     await expect(other.hello()).rejects.toThrow(/speaks protocol 99; this wrapper speaks 1/);

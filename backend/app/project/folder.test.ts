@@ -82,6 +82,9 @@ describe('a project folder', () => {
     expect(await text('nodes/count/output.js')).toBe('module.exports = { "total": 1 };\n');
     expect(await text('nodes/count/history.md')).toBe('## 2026-09-28 09:05 · ✨ Code\n\nNothing was sent.\n');
     expect(await text('nodes/say/prompt.md')).toBe('Say how many files there are, in one sentence.\n');
+    // code.js runs on its own, on the example in input.js.
+    const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes/count/code.js')], { cwd: dir });
+    expect(JSON.parse(stdout)).toEqual({ total: 1 });
     // A folder listing has no writing of its own, and a chart is one block of the page's: no node, no folder.
     expect(existsSync(join(dir, 'nodes/folder/select.js'))).toBe(false);
     expect(JSON.parse(await text('page/page.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
@@ -159,22 +162,6 @@ describe('a project folder', () => {
     expect(await text('nodes/say/notes.txt')).toBe('mine');
     expect(await text('nodes/count/fixtures/code.js')).toBe('// mine, a fixture');
   });
-
-  it('takes the part that runs code.js on its own out: it runs on its example, and what is read back is the code without it', async () => {
-    const graph = sample();
-    Object.assign(graph.nodes[1].config, {
-      code: 'function run(inputs) {\n  return { total: inputs.files.length };\n}',
-      input_definition: 'module.exports = { "files": ["a.csv", "b.csv"] };',
-    });
-    await writeProject(dir, graph);
-    const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes', 'count', 'code.js')], { cwd: dir });
-    expect(JSON.parse(stdout)).toEqual({ total: 2 });
-    forgetSeen();
-    expect((await readProject(dir)).nodes[1].config.code).toBe('function run(inputs) {\n  return { total: inputs.files.length };\n}');
-    // Edited in another editor with its own line ends, it is still taken off.
-    await touch(join(dir, 'nodes/count/code.js'), (await text('nodes/count/code.js')).replace(/\n/g, '\r\n'));
-    expect(await changesOnDisk(dir)).toEqual([{ node_id: 'count', field: 'code', value: 'function run(inputs) {\n  return { total: inputs.files.length };\n}' }]);
-  }, 30_000);
 
   it('refuses what a folder could write and not read back: two ids that differ only in case, a wire it could not tell apart, a number for an id', async () => {
     const code = (id: string, body: string) => ({

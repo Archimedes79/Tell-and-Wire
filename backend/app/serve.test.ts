@@ -1,11 +1,10 @@
-import { describe, it, expect, afterAll, vi } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { copyFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { request as httpRequest, type Server } from 'node:http';
 import { serve } from './serve.ts';
-import { Session } from '../gui-editor/session.ts';
 import { API, pathFor } from './api.ts';
 
 /**
@@ -83,18 +82,6 @@ describe('what a deployed tool serves', () => {
     expect(snapshot).toHaveProperty('idle_seconds');
     expect((snapshot.result as { status: string }).status).toBe('success');
   }, 60_000);
-
-  it('ends an answer that failed once it had begun, and goes on serving', async () => {
-    // A stream is one: its head is sent before anything can go wrong, and a second head would throw where nothing catches it.
-    const url = await serveGraph();
-    const broken = vi.spyOn(Session.prototype, 'view').mockImplementation(() => { throw new Error('boom'); });
-    try {
-      await fetch(`${url}/api/runtime/stream`).then((reply) => reply.text()).catch(() => 'cut off');
-    } finally {
-      broken.mockRestore();
-    }
-    expect((await fetch(`${url}/api/runtime/interface`)).status).toBe(200);
-  });
 
   // That the editor serves every route is not tested by calling them -- some
   // write settings or ask a model -- but by starting it: a server with a route

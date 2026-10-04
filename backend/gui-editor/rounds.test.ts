@@ -7,7 +7,7 @@ const done = (status: ExecutionResult['status'] = 'success'): ExecutionResult =>
 const named = (id: string) => id;
 
 describe('Rounds', () => {
-  it('runs one round after the other, in the order they were asked for', async () => {
+  it('runs one round after the other, in the order they were asked for, and goes on after a round that could not run, saying why', async () => {
     const rounds = new Rounds();
     const seen: string[] = [];
     const round = (label: string, ms: number) => rounds.start(1, named, async () => {
@@ -18,10 +18,7 @@ describe('Rounds', () => {
     }).outcome;
     await Promise.all([round('first', 40), round('second', 5)]);
     expect(seen).toEqual(['first starts', 'first ends', 'second starts', 'second ends']);
-  });
 
-  it('goes on after a round that could not run, and says why it could not', async () => {
-    const rounds = new Rounds();
     const failed = rounds.start(1, named, async () => { throw new Error('Graph contains a cycle'); });
     await expect(failed.outcome).rejects.toThrow('cycle');
     await wait(0);

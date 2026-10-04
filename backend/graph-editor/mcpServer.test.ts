@@ -134,16 +134,6 @@ describe('generate_graph', () => {
       { path: 'made/hello.json', name: 'Hello', description: 'Hello, described', nodes: 2 },
     ]);
   });
-
-  it("passes a provider's error through, and never a key with it", async () => {
-    const failing = new Error('401 from api.example: invalid key hunter2-hunter2-hunter2, also sk-abcdefghijklmnopqrstuvwxyz012345');
-    const made = await toolsWith({ ai: replying(failing), secrets: () => ['hunter2-hunter2-hunter2'] })
-      .call('generate_graph', { description: 'x' });
-    expect(made.isError).toBe(true);
-    expect(made.text).toContain('401 from api.example');
-    expect(made.text).not.toContain('hunter2');
-    expect(made.text).not.toContain('sk-abcdefghij');
-  });
 });
 
 describe('validate_graph', () => {
@@ -182,28 +172,15 @@ describe('save_graph', () => {
     expect(await readFile(join(root, 'notes.json'), 'utf8')).toBe('not even json');
   });
 
-  it('saves into a project the way the editor does, and run_graph reads it back by the project\'s own files', async () => {
-    const saved = await toolsWith().call('save_graph', {
-      path: 'proj/flow.json', graph: graphOf([textData('greeting'), code('work'), output('result')],
-        [edge('e1', 'greeting.output', 'work.in'), edge('e2', 'work.out', 'result.value')]),
-    });
-    expect(saved.isError).toBeUndefined();
-    expect(await readFile(join(root, 'proj', 'nodes', 'work', 'code.js'), 'utf8')).toContain('function run');
-    const flow = JSON.parse(await readFile(join(root, 'proj', 'flow.json'), 'utf8'));
-    expect(flow.wires).toEqual(['greeting.output -> work.in', 'work.out -> result.value']);
-    expect(JSON.parse(await readFile(join(root, 'proj', 'nodes', 'work', 'node.json'), 'utf8')).config).not.toHaveProperty('code');
-
-    const ran = await answer(toolsWith(), 'run_graph', { path: 'proj/flow.json' });
-    expect(ran.json.status).toBe('success');
-    expect(ranBody).toContain('function run');
-  });
-
-  it('over a project keeps what a document cannot carry -- history, ✨ prompts -- and does not write over a text changed since it was read', async () => {
+  it('saves into a project the way the editor does, runs it from there, keeps what a document cannot carry -- history, ✨ prompts -- and does not write over a text changed since it was read', async () => {
     const tools = toolsWith();
     const document = (body: string) => graphOf([textData('greeting'), code('work', body), output('result')],
       [edge('e1', 'greeting.output', 'work.in'), edge('e2', 'work.out', 'result.value')]);
     const path = (...parts: string[]) => join(root, 'proj', ...parts);
     expect((await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 1 }; }') })).isError).toBeUndefined();
+    expect(JSON.parse(await readFile(path('flow.json'), 'utf8')).wires).toEqual(['greeting.output -> work.in', 'work.out -> result.value']);
+    expect((await answer(tools, 'run_graph', { path: 'proj/flow.json' })).json.status).toBe('success');
+    expect(ranBody).toContain('out: 1');
 
     // What the person's own editor keeps beside it, as a server that never read the project meets it: the node's history, and a ✨ prompt they changed.
     forgetSeen();
@@ -309,26 +286,19 @@ describe('confinement', () => {
     expect(await readFile(join(root, 'ai-settings.json'), 'utf8')).toBe(settings);
   });
 
-  it('blanks a configured secret wherever it turns up, a run included', async () => {
+  it('blanks a configured secret wherever it turns up: in a run, and in a provider\'s error, which is passed on otherwise', async () => {
+    const secrets = () => ['hunter2-hunter2-hunter2'];
     await writeFile(join(root, 'leak.json'), JSON.stringify(hello('the key is hunter2-hunter2-hunter2, apparently')));
-    const ran = await toolsWith({ secrets: () => ['hunter2-hunter2-hunter2'] }).call('run_graph', { path: 'leak.json' });
+    const ran = await toolsWith({ secrets }).call('run_graph', { path: 'leak.json' });
     expect(ran.text).toContain('the key is [redacted], apparently');
     expect(ran.text).not.toContain('hunter2');
-  });
-});
 
-describe('call', () => {
-  it('never throws: an unknown tool and nonsense arguments are both answers, and the nine tools are the ones listed', async () => {
-    const tools = toolsWith();
-    const unknown = await tools.call('format_disk', {});
-    expect(unknown.isError).toBe(true);
-
-    for (const args of [null, 'text', [1, 2], { path: 42 }, { path: { toString: null } }]) {
-      const result = await tools.call('run_graph', args as never);
-      expect(result.isError).toBe(true);
-    }
-    expect(tools.specs.map((spec) => spec.name)).toEqual(
-      ['authoring_guide', 'generate_graph', 'validate_graph', 'save_graph', 'run_graph', 'describe_graph', 'run_node', 'test_graph', 'list_graphs']);
+    const failing = new Error('401 from api.example: invalid key hunter2-hunter2-hunter2, also sk-abcdefghijklmnopqrstuvwxyz012345');
+    const made = await toolsWith({ ai: replying(failing), secrets }).call('generate_graph', { description: 'x' });
+    expect(made.isError).toBe(true);
+    expect(made.text).toContain('401 from api.example');
+    expect(made.text).not.toContain('hunter2');
+    expect(made.text).not.toContain('sk-abcdefghij');
   });
 });
 

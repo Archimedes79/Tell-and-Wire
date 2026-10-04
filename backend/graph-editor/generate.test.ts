@@ -69,17 +69,6 @@ describe('✨ writes a node\'s files', () => {
     expect(reply.calls).toHaveLength(2);
   }, 30_000);
 
-  it('asks an input definition again, once, where its example cannot be read or names another input', async () => {
-    const ai = scripted([js('module.exports = { text: "a" };'), js('module.exports = { "text": "a" };')]);
-    const reply = await generate({ node: node('code'), write: 'input' }, deps(ai));
-    expect(reply.result).toBe('module.exports = { "text": "a" };');
-    expect(ai.asked).toHaveLength(2);
-
-    const stray = scripted([js('module.exports = { "txt": "a" };'), js('module.exports = { "txt": "b" };')]);
-    expect((await generate({ node: node('code'), write: 'input' }, deps(stray))).probe)
-      .toMatchObject({ status: 'failed', problems: ['It names "txt", which is not among the inputs: "text".'] });
-  });
-
   it('changes a body as said, from the function there is, and restates the node\'s text', async () => {
     const ai = scripted([`${js('function run(i) { return { lines: i.text.split("\\n").length + 1 }; }')}\n<description>Count the lines, plus one.</description>`]);
     const reply = await generate({

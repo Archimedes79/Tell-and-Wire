@@ -289,7 +289,7 @@ describe('the document the editor hands over', () => {
   const file = async (name: string) => join(await mkdtemp(join(tmpdir(), 'session-document-')), name);
   const roundsIn = async (path: string) => (JSON.parse(await readFile(stateFileOf(path), 'utf8')) as { rounds: number }).rounds;
 
-  it('keeps its session when it is saved, and moves its state along when saved as another file', async () => {
+  it('keeps its session when it is saved, moves its state along when saved as another file, and is given a session of its own when another editor took the server meanwhile', async () => {
     // Used in the App tab and then saved for the first time, a chat began again.
     const holder = holderOf(null, { runtime: fake });
     const session = await holder.hold(counter());
@@ -303,18 +303,16 @@ describe('the document the editor hands over', () => {
     await session.run(null);
     expect(await roundsIn(another)).toBe(2);
     expect(await roundsIn(saved)).toBe(1);
-  });
 
-  it('is given a session of its own when another editor took the server meanwhile, and writes nothing into that one', async () => {
     // Two editors on one server: the second's document went into the first's
     // session, and its state into the first one's project.
-    const holder = holderOf(null, { runtime: fake });
+    const shared = holderOf(null, { runtime: fake });
     const mine = await file('mine.json');
     const theirs = await file('theirs.json');
-    const first = await holder.hold(counter(), { path: mine });
+    const first = await shared.hold(counter(), { path: mine });
     await first.run(null);
-    await holder.hold(counter('function run(i) { return { next: i.n + 10 }; }'), { path: theirs });
-    const again = await holder.hold(counter(), { path: mine, session: first.id });
+    await shared.hold(counter('function run(i) { return { next: i.n + 10 }; }'), { path: theirs });
+    const again = await shared.hold(counter(), { path: mine, session: first.id });
     expect(again).not.toBe(first);
     // From its own file: the same session, as a restarted server's would be.
     expect(again.id).toBe(first.id);
@@ -386,26 +384,24 @@ describe('a gate, round by round', () => {
   const READ = { node_id: 'read', port_id: 'data' };
   const LENGTH = { node_id: 'length', port_id: 'data' };
 
-  it('stays shut for another event, and what the node made in an earlier round stands', async () => {
+  it('stays shut for another event, what the node made in an earlier round stands, and a stopped round holds nothing', async () => {
     const session = await open(reader());
     await session.run(READ, { by: 'read' });
     session.hold(reader('long'));
     const run = await session.run(LENGTH, { by: 'length' });
     expect(run.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', held: true, outputs: { text: 'the file' } });
     expect(session.kept().page).toEqual({ shown: 'long: the file' });
-  });
 
-  it('holds nothing a stopped round made', async () => {
-    const session = await open(reader());
-    session.hold(reader('short', 'function run() { slow; return { text: "the file" }; }'));
-    const { id } = session.start(READ, { by: 'read' });
+    const stopped = await open(reader());
+    stopped.hold(reader('short', 'function run() { slow; return { text: "the file" }; }'));
+    const { id } = stopped.start(READ, { by: 'read' });
     await wait(30);
-    session.stop(id);
-    for (let i = 0; i < 50 && !session.snapshot(id)?.done; i += 1) await wait(10);
-    session.hold(reader());
-    const run = await session.run(LENGTH, { by: 'length' });
-    expect(run.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', outputs: {} });
-    expect(run.node_results.find((r) => r.node_id === 'reader')!.held).toBeUndefined();
+    stopped.stop(id);
+    for (let i = 0; i < 50 && !stopped.snapshot(id)?.done; i += 1) await wait(10);
+    stopped.hold(reader());
+    const after = await stopped.run(LENGTH, { by: 'length' });
+    expect(after.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', outputs: {} });
+    expect(after.node_results.find((r) => r.node_id === 'reader')!.held).toBeUndefined();
   });
 });
 

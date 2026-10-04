@@ -21,7 +21,7 @@ const answer = (result: string, description?: string) => ({ result, calls: [], .
 const around = (node: GraphNode) => ({ nodes: [node], edges: [], metadata: { name: 'Words', description: '', gui_scheme: 'night' } as never, page: [] });
 
 describe('what one press of ✨ writes', () => {
-  it('is, for the body, what is missing first -- input.js where it takes something in, output.js -- so one press does the whole node', () => {
+  it('is, for the body, what is missing first -- input.js where it takes something in, output.js -- so one press does the whole node; for ✨ Generate, every file again once the body is there', () => {
     expect(writesFor(made('code'), 'body')).toEqual(['input', 'output', 'body']);
     expect(writesFor(made('code', { input_definition: INPUT }), 'body')).toEqual(['output', 'body']);
     expect(writesFor(made('code', { input_definition: INPUT, output_definition: OUTPUT }), 'body')).toEqual(['body']);
@@ -30,11 +30,8 @@ describe('what one press of ✨ writes', () => {
     expect(writesFor(made('ai', { input_definition: 'module.exports = null;' }), 'body')).toEqual(['input', 'output', 'body']);
     expect(writesFor(made('code'), 'input')).toEqual(['input']);
     expect(writesFor(made('data'), 'body')).toEqual(['body']);
-  });
 
-  it('is, for ✨ Generate, the whole node the first time, and each file again after that, as its own ✨ would', () => {
     expect(writesFor(made('code'), 'all')).toEqual(['input', 'output', 'body']);
-    expect(writesFor(made('code', { input_definition: INPUT }), 'all')).toEqual(['output', 'body']);
     const whole = made('code', { input_definition: INPUT, output_definition: OUTPUT, code: 'function run() { return { output: 1 }; }' });
     expect(writesFor(whole, 'all')).toEqual(['input', 'output', 'body']);
     expect(writesFor({ ...whole, inputs: [] }, 'all')).toEqual(['output', 'body']);

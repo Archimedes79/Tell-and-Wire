@@ -36,7 +36,19 @@ function withFiles(initial: [string, string][] = []) {
 const element = new EndNodeRunner();
 
 describe('an end point', () => {
-  it('writes each value to a file of its own, a list item by item numbered by its place, and leaves no earlier run\'s item behind', async () => {
+  it('writes one file, or each value to a file of its own, a list item by item numbered by its place, with no earlier run\'s item left behind -- or nothing', async () => {
+    const single = withFiles();
+    const written = await element.execute(outputNode({ write_mode: 'file', path: '/tmp/out.txt' }), { value: 'alpha' }, single.runtime);
+    expect([...single.files]).toEqual([['/tmp/out.txt', 'alpha']]);
+    expect(written.written_path).toBe('/tmp/out.txt');
+
+    for (const write_mode of ['none', undefined]) {
+      const quiet = withFiles();
+      await element.execute(outputNode({ write_mode, path: '/tmp/out' }), { value: 'alpha' }, quiet.runtime);
+      expect(quiet.files.size).toBe(0);
+    }
+
+
     const { runtime, files } = withFiles([['/tmp/out/notes.md', 'mine'], ['/tmp/out/value_x.txt', 'mine too']]);
     const result = await element.execute(
       outputNode({ write_mode: 'directory', path: '/tmp/values' }),
@@ -62,18 +74,5 @@ describe('an end point', () => {
     await element.execute(node, { value: ['new 1', null, 'new 3'] }, runtime);
     expect([...files.keys()].filter((path) => path.startsWith('/tmp/out/')).sort())
       .toEqual(['/tmp/out/notes.md', '/tmp/out/value_1.txt', '/tmp/out/value_3.txt', '/tmp/out/value_x.txt']);
-  });
-
-  it('writes one file where asked to, and nothing where it is not', async () => {
-    const { runtime, files } = withFiles();
-    const result = await element.execute(outputNode({ write_mode: 'file', path: '/tmp/out.txt' }), { value: 'alpha' }, runtime);
-    expect([...files]).toEqual([['/tmp/out.txt', 'alpha']]);
-    expect(result.written_path).toBe('/tmp/out.txt');
-
-    for (const write_mode of ['none', undefined]) {
-      const quiet = withFiles();
-      await element.execute(outputNode({ write_mode, path: '/tmp/out' }), { value: 'alpha' }, quiet.runtime);
-      expect(quiet.files.size).toBe(0);
-    }
   });
 });

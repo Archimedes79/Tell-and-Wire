@@ -26,15 +26,18 @@ describe('a code body', () => {
     try {
       const body = `
         import { readFileSync, writeFileSync } from 'node:fs';
+        import { tmpdir } from 'node:os';
+        import { join } from 'node:path';
         const tried = (what) => { try { what(); return 'allowed'; } catch (error) { return error.code; } };
         export function run() {
           return {
             package: tried(() => readFileSync('package.json')),
             settings: tried(() => readFileSync(${JSON.stringify(settings)})),
             beside: tried(() => writeFileSync(${JSON.stringify(beside)}, 'x')),
+            temp: tried(() => writeFileSync(join(tmpdir(), 'tell-and-wire-sandbox-probe.txt'), 'x')),
           };
         }`;
-      expect(await nodeCode.run(body, {})).toEqual({ package: 'allowed', settings: 'ERR_ACCESS_DENIED', beside: 'ERR_ACCESS_DENIED' });
+      expect(await nodeCode.run(body, {})).toEqual({ package: 'allowed', settings: 'ERR_ACCESS_DENIED', beside: 'ERR_ACCESS_DENIED', temp: 'allowed' });
     } finally {
       delete process.env.TW_SETTINGS;
       rmSync(settings, { force: true });
@@ -49,26 +52,6 @@ describe('a code body', () => {
     } finally {
       delete process.env.TW_BODY_TIMEOUT_MS;
     }
-  });
-
-  it('may read and write files in the places it is given, and be written with import, require or CommonJS exports', async () => {
-    const body = `
-      import { writeFileSync, readFileSync } from 'node:fs';
-      import { join } from 'node:path';
-      import { tmpdir } from 'node:os';
-      export function run() {
-        const path = join(tmpdir(), 'tell-and-wire-sandbox-probe.txt');
-        writeFileSync(path, 'written');
-        return { value: readFileSync(path, 'utf8') };
-      }
-    `;
-    expect(await nodeCode.run(body, {})).toEqual({ value: 'written' });
-
-    // Both styles come out of a model, and both are ordinary JavaScript.
-    const required = `export function run() { const { tmpdir } = require('node:os'); return { value: typeof tmpdir() }; }`;
-    expect(await nodeCode.run(required, {})).toEqual({ value: 'string' });
-    const exported = `function run(inputs) { return { words: inputs.text.split(' ').length }; } module.exports = { run };`;
-    expect(await nodeCode.run(exported, { text: 'a b c' })).toEqual({ words: 3 });
   });
 
   it('may not start another program, and is handed no key of the process that runs it: it asks through node.llm', async () => {

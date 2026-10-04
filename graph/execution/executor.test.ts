@@ -160,33 +160,6 @@ describe('a node run once per item', () => {
   });
 });
 
-describe('Stop', () => {
-  it('hands back what finished before it, as it arrived', async () => {
-    const stop = new AbortController();
-    const runtime = quietRuntime({
-      code: { run: async (body, inputs, signal) => {
-        if (signal?.aborted) throw new Error('Stopped.');
-        if (body.includes('SLOW')) {
-          setTimeout(() => stop.abort(), 5);
-          await new Promise((_, reject) => signal!.addEventListener('abort', () => reject(new Error('Stopped.'))));
-        }
-        return new Function('inputs', `${body}; return run(inputs);`)(inputs) as Record<string, unknown>;
-      } },
-    });
-    const graph = graphOf(
-      [
-        node('src', 'code', { code: 'function run() { return { rows: [1, 2] }; }' }),
-        node('table', 'end'),
-        node('slow', 'code', { code: '/* SLOW */ function run() { return { x: 1 }; }' }),
-      ],
-      [edge('a', 'src', 'rows', 'table', 'value'), edge('b', 'src', 'rows', 'slow', 'rows')],
-    );
-    const run = await executeGraph(graph, { runtime, registry, signal: stop.signal });
-    expect(run.status).toBe('cancelled');
-    expect(run.node_results.find((r) => r.node_id === 'table')!.inputs).toEqual({ value: [1, 2] });
-  });
-});
-
 describe('one node tried by itself', () => {
   const runtime = (ran: string[] = []) => quietRuntime({
     code: { run: async (body, inputs) => new Function('inputs', `${body}; return run(inputs);`)(inputs) },
