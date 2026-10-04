@@ -12,10 +12,10 @@
 // say which is which rather than leaving it to the folder. This is the half the
 // application is *made of*: it lives in the engine, it runs the graph, and it
 // would still do so with no browser anywhere. Its counterpart is
-// `editor/src/elements/ElementGuiBuilder.ts` -- the half that exists only so a
+// `frontend/app/elements/ElementGuiBuilder.ts` -- the half that exists only so a
 // person can build the thing. Each concrete class is named the same way:
 // `AiNodeRunner` beside `AiNodeGuiBuilder`, `SelectWidgetRunner` beside
-// `SelectWidgetGuiBuilder`. `editor/src/elements/symmetry.test.ts` holds the
+// `SelectWidgetGuiBuilder`. `frontend/app/elements/symmetry.test.ts` holds the
 // two lists to each other, class for class.
 //
 // **The element owns its config.** `config(subject)` reads the stored record
@@ -25,7 +25,7 @@
 // **Services arrive as a `Runtime`** (`Runtime.ts`), never as an import.
 //
 // **Its browser half is a mirror, not a subclass.** How an element looks and
-// is edited lives at the same relative path under `editor/src/elements/`
+// is edited lives in the folder of the same name in `frontend/` (nodes/<kind>/ in graph-editor, widgets/<kind>/ in gui-editor)
 // (`<Kind>View.tsx`, `<Kind>Panel.tsx`, `<Kind>GuiBuilder.ts`); nothing here
 // imports it, which is what keeps the editor out of a deployed bundle.
 

@@ -1,6 +1,6 @@
 // The half of an element that exists so a person can build with it.
 //
-// The mirror of `engine/src/elements/ElementRunner.ts`, class for class: every
+// The mirror of `graph/nodes/ElementRunner.ts`, class for class: every
 // element class there ends in `Runner`, and its counterpart here swaps that for
 // `GuiBuilder` -- `ElementRunner` / `ElementGuiBuilder`, `NodeRunner` /
 // `NodeGuiBuilder`, `AiNodeRunner` / `AiNodeGuiBuilder` -- in the same folder,

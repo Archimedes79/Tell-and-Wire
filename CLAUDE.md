@@ -2,43 +2,43 @@
 
 ## Principles
 
-- **Keep it simple.** Code, UI and documents: the simplest thing that works. Delete before
-  adding.
-- **Argue, then follow.** If a rule, test or request here looks wrong, say so once with
-  the reason. Then the person you work with decides.
+- **Simple and short**: code, UI and documents. Delete before adding.
+- **Argue** when you believe a decision is wrong: say why, once. Then the person you work
+  with decides.
 
-## Where things live
+## The parts
 
-| Part | Frontend (`editor/src/`) | Backend (`engine/src/`) |
-|---|---|---|
-| Graph editor | `canvas/`, `elements/nodes/` | `host/editor/` (save, ✨, deploy), `project/` |
-| Gui editor | `page/`, `elements/widgets/` | `elements/widgets/`, `host/session.ts` |
-| Graph execution | -- | `core/`, `execution/`, `elements/nodes/` |
-| A delivered tool | `runtime/` | `host/` (server, runtime API) |
+| Part | Folder |
+|---|---|
+| Graph editor, frontend | `frontend/graph-editor/` |
+| Graph editor, backend | `backend/graph-editor/` |
+| The graph's code (JavaScript) and its execution | `graph/` |
+| Gui editor, frontend | `frontend/gui-editor/` |
+| Gui editor, backend | `backend/gui-editor/` |
+| The shell around them | `frontend/app/`, `backend/app/` |
 
-`examples/` are the project folders the tests and CI run. Documents: `README.md` (what it
-is, how to start), `docs/user-guide.md` (how to build a tool), `docs/architecture.md` (how
-it is built).
+`graph/` imports nothing from the others; a deployed tool carries `graph/`, `backend/app/`
+and `backend/gui-editor/`. Imports are relative. More in `docs/architecture.md`.
 
 ## How a change is made
 
-One iteration: **(1) 2 3 4**, repeated until all say yes. A different agent per role
-where possible; the User never reads the code.
-
-1. **Architect** (bigger changes only: a new kind, format, route or concept): a short plan
-   -- where it lives, what it replaces, what goes. Surface or concept changes: a mockup the
-   owner has seen.
-2. **Coder**: readable, high-quality code in the style around it; then review it -- what
-   can be simpler, what can be removed.
-3. **Tester**: tests for the rules and bugs that matter, not the implementation. Keep them
-   few: extend before adding, delete duplicates. Fewer tests is a risk we take on purpose.
-4. **User**: in the built editor, with the mouse, rebuild an example. Is the workflow
-   short and obvious? Any button or element not needed? Does it do what it says?
+1. **Plan** the architecture for bigger changes, as modules: where it lives, what it
+   replaces, what goes. A change to the surface: a mockup first.
+2. **Code**: high-quality code whose working you understand. Simplify; remove what is not
+   needed.
+3. **Test**: write and run automated tests. Keep their number low; remove the least
+   important. Also check that it builds and runs.
+4. **Gui expert test**: in the built editor, with the mouse, rebuild examples and count the
+   clicks. Is the workflow easy and clear without explanation? Is any button or element not
+   needed? Does each do what it says? Is the usability consistent across elements, and top
+   notch?
+5. Repeat 2-4 (and 1 when the plan changes) until it is ready.
 
 ## Conventions
 
-- English in UI and documents. No compatibility code for old formats.
-- Never commit or print `ai-settings.json` (real keys). Leave `examples/test/` and
-  `examples/data/words/` alone (someone else's).
-- Checks: `npm run typecheck`, `lint`, `build`, `test`, `licenses`; CI runs them.
-- Branch, CI green, merge into `main`. A merge publishes (`latest` download).
+- Text in the UI and in the documents is English.
+- No compatibility code for old formats: when a format changes, the code that read the old
+  one goes.
+- `ai-settings.json` can hold a real API key: it is gitignored; never commit or print it.
+- Checks: `npm run typecheck`, `lint`, `build`, `test`, `licenses`. Work on a branch, let CI
+  pass, then merge into `main`; a merge publishes the `latest` download.

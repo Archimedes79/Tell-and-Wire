@@ -1,4 +1,4 @@
-// A node's build-time half, in the browser: the mirror of `engine/src/elements/NodeRunner.ts`.
+// A node's build-time half, in the browser: the mirror of `graph/nodes/NodeRunner.ts`.
 
 import type { ComponentType, ReactNode } from 'react';
 import type { AICall } from '../../app/api/client';

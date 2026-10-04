@@ -1,4 +1,4 @@
-// The widgets a page is built from: the mirror of `engine/src/elements/widgets/roster.ts`,
+// The widgets a page is built from: the mirror of `backend/gui-editor/widgets/roster.ts`,
 // and the only place that knows the whole set.
 
 import type { WidgetKind } from '../../app/graph';

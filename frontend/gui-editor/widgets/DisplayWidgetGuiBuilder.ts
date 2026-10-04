@@ -1,4 +1,4 @@
-// The mirror of `engine/src/elements/widgets/DisplayWidgetRunner.ts`: a block
+// The mirror of `backend/gui-editor/widgets/DisplayWidgetRunner.ts`: a block
 // that only shows what the end point it shows hands back -- a chart, a table,
 // an image.
 //

@@ -1,4 +1,4 @@
-// The mirror of `engine/src/elements/widgets/StaticWidgetRunner.ts`: a widget
+// The mirror of `backend/gui-editor/widgets/StaticWidgetRunner.ts`: a widget
 // that is part of the page rather than part of the graph -- a heading, a rule,
 // a gap. No connections, nothing to run, nothing to author.
 

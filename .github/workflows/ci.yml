@@ -28,7 +28,7 @@ jobs:
 
       # Every installed package against the licences it may come under, so a
       # dependency on other terms fails the push that brings it in
-      # (docs/licenses.md).
+      # (scripts/licenses.mjs).
       - name: Licences
         run: npm run licenses
 
@@ -221,7 +221,7 @@ jobs:
               --title "Tell-and-Wire latest (main)" --notes "$notes"
           fi
 
-  # Publishes the same one-process image docs/install.md and docker-compose.yml
+  # Publishes the same one-process image README.md and docker-compose.yml
   # describe -- built here, not by hand, so what a `docker pull` gets is what
   # this run just tested. Skipped for a pull request: nobody should be able to
   # publish an image by opening one.

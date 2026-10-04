@@ -34,7 +34,7 @@ const designOf = (session: string, revision: number): string => `${session}#${re
  * each widget's `View` -- so a deployed tool cannot look or behave
  * differently from what was designed.
  *
- * Served by the bundle's `engine/host/serve.ts` at `runtime.html`.
+ * Served by the bundle's `backend/app/serve.ts` at `runtime.html`.
  */
 export default function RuntimeApp() {
   const [design, setDesign] = useState<(PageDesign & { startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);

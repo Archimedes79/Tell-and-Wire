@@ -6,10 +6,8 @@
 
 .git/
 node_modules/
-engine/node_modules/
-editor/node_modules/
-editor/dist/
-editor/.vite/
+frontend/dist/
+frontend/.vite/
 data/
 ai-settings.json
 *.log

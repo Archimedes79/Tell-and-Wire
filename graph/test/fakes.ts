@@ -2,7 +2,7 @@
 // what they are about.
 //
 // Beside `src`, not in it: a deploy bundle and the downloadable package copy
-// every file of `engine/src` that is not a test, and a helper for tests that
+// every file of `graph/` and `backend/` that is not a test, and a helper for tests that
 // sat there would ship with them. Nothing here is a test of its own either --
 // vitest only runs `*.test.ts` -- so it is imported, and that is all.
 import type { Graph, GraphEdge, GraphNode } from '../graph.ts';

@@ -73,7 +73,7 @@ async function exists(path) {
 
 /**
  * Build the page, three tries. A synced folder (Dropbox, OneDrive) holds a
- * handle on editor/dist for a moment after files change in it, and Vite's
+ * handle on frontend/dist for a moment after files change in it, and Vite's
  * first step -- emptying that folder -- then fails with EPERM for no reason a
  * second attempt still has.
  */

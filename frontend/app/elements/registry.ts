@@ -1,5 +1,5 @@
 // Every element's GuiBuilder, by the name the file format gives it: the mirror of
-// `engine/src/elements/registry.ts`. The shells ask these and never switch on a
+// `graph/nodes/registry.ts`. The shells ask these and never switch on a
 // node type or a widget kind themselves.
 
 import type { NodeType } from '../graph';

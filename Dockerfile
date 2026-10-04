@@ -1,10 +1,11 @@
-# The editor, as one process: the engine serving the built page on :8000.
+# The editor, as one process: the backend serving the built page on :8000.
 FROM node:24-alpine
 
 WORKDIR /app
 COPY package.json package-lock.json ./
-COPY engine/package.json engine/
-COPY editor/package.json editor/
+COPY graph/package.json graph/
+COPY backend/package.json backend/
+COPY frontend/package.json frontend/
 RUN npm ci
 
 COPY . .

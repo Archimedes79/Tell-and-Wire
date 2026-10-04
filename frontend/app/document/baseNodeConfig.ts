@@ -21,7 +21,7 @@ export function baseNodeConfig(): NodeConfig {
     path: '',
     recursive: false,
     extensions: '',
-    // 'default' -> the one AI setting in ⚙ Settings (engine/src/ai/settings.ts
+    // 'default' -> the one AI setting in ⚙ Settings (graph/ai/settings.ts
     // `aiSetting`), until someone pins this node to a provider of its own.
     ai_provider: 'default',
     ai_model: '',

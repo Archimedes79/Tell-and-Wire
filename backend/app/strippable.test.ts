@@ -3,10 +3,10 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /**
- * The engine must run with no build step, anywhere.
+ * The graph's code and the backend run with no build step, anywhere.
  *
  * That is what makes a bundle a copy rather than a compilation: a recipient
- * runs `node engine/main.ts graph.json` and nothing is installed, generated or
+ * runs `node backend/app/main.ts .` and nothing is installed, generated or
  * transpiled. Node achieves it by *stripping* the types out — not compiling
  * them — so a handful of TypeScript features that need code emitted for them
  * are unavailable, and using one is an error that appears on the recipient's
@@ -17,7 +17,8 @@ import { join } from 'node:path';
  * here instead.
  */
 
-const SRC = join(__dirname);
+/** The repository: what Node runs as it is lives in graph/ and backend/. */
+const ROOT = join(__dirname, '..', '..');
 
 const FORBIDDEN: { pattern: RegExp; what: string; instead: string }[] = [
   {
@@ -46,17 +47,17 @@ async function engineSources(dir: string): Promise<string[]> {
   const found: string[] = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...await engineSources(full));
+    if (entry.isDirectory()) { if (entry.name !== 'node_modules') found.push(...await engineSources(full)); }
     else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) found.push(full);
   }
   return found;
 }
 
-describe('every engine source survives type stripping', () => {
+describe('every source Node runs survives type stripping', () => {
   it('uses nothing that Node would have to compile', async () => {
     const offences: string[] = [];
 
-    for (const file of await engineSources(SRC)) {
+    for (const file of [...await engineSources(join(ROOT, 'graph')), ...await engineSources(join(ROOT, 'backend'))]) {
       const source = await readFile(file, 'utf8');
       // Comments talk about these constructs on purpose; only code counts.
       const code = source
@@ -65,7 +66,7 @@ describe('every engine source survives type stripping', () => {
 
       for (const { pattern, what, instead } of FORBIDDEN) {
         if (pattern.test(code)) {
-          offences.push(`${file.slice(SRC.length + 1)}: ${what} — ${instead}`);
+          offences.push(`${file.slice(ROOT.length + 1)}: ${what} — ${instead}`);
         }
       }
     }

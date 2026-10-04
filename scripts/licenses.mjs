@@ -6,18 +6,17 @@
 //
 // What the page is built from goes with every copy of it, so those packages
 // must be permissive: their one condition is that their notice travels along,
-// which `licenses.txt` in the built page sees to (editor/vite.config.ts). A
+// which `licenses.txt` in the built page sees to (frontend/vite.config.ts). A
 // development tool goes no further than the container image, where npm puts it
 // in a folder of its own with its own licence file, so it may also come under
 // terms that ask no more than that -- the browser data a CSS tool reads
-// (CC-BY-4.0), the Python licence of an argument parser. docs/licenses.md says
-// the same for people.
+// (CC-BY-4.0), the Python licence of an argument parser.
 
 import { readFileSync } from 'node:fs';
 
 const PERMISSIVE = ['MIT', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2.0', '0BSD'];
 const DEVELOPMENT = [...PERMISSIVE, 'CC0-1.0', 'CC-BY-4.0', 'Python-2.0', 'BlueOak-1.0.0'];
-/** Development tools that write code of their own into the page (editor/vite.config.ts says which). */
+/** Development tools that write code of their own into the page (frontend/vite.config.ts says which). */
 const WRITE_INTO_THE_PAGE = ['vite', 'tailwindcss'];
 
 /**
@@ -52,7 +51,7 @@ const total = (counts) => [...counts.values()].reduce((sum, n) => sum + n, 0);
 console.log(`What the page may be built from (${total(groups.page)} packages): ${line(groups.page)}`);
 console.log(`Development only (${total(groups.development)} packages): ${line(groups.development)}`);
 if (refused.length) {
-  console.error(`\nNot under a licence this project allows (see docs/licenses.md):\n${refused.join('\n')}`);
+  console.error(`\nNot under a licence this project allows (the lists are at the top of scripts/licenses.mjs):\n${refused.join('\n')}`);
   process.exit(1);
 }
 console.log('Every one of them under a licence this project allows.');

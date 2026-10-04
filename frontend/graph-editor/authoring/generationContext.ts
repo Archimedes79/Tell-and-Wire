@@ -18,7 +18,7 @@ import { cut } from '../../app/ui/cut';
  * They are facts, not sentences: which node feeds each input and what it hands
  * on (`inputSources`), where each output goes and what the node there wants
  * (`outputTargets`), what arrived on the last run (`lastRunInputs`). The
- * engine's brief (`engine/src/host/editor/brief.ts`) is the one place they are
+ * engine's brief (`backend/graph-editor/brief.ts`) is the one place they are
  * put into words: {Input Definition} and {Output Definition} while a node has
  * none of its own.
  *

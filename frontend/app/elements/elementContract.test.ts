@@ -4,7 +4,7 @@
  * Walks every registered `NodeGuiBuilder` and `WidgetGuiBuilder` (`registry.ts`) and asserts
  * the handful of properties each must have. A new node type or widget kind is
  * held to them by being registered; what it does when a graph runs is the
- * engine's to test, beside the element (`engine/src/elements/`).
+ * engine's to test, beside the element (`graph/nodes/`, `backend/gui-editor/widgets/`).
  */
 import { describe, it, expect } from 'vitest';
 import { NODE_KINDS } from '../document/nodeKinds';
@@ -73,7 +73,7 @@ describe.each(Object.entries(WIDGET_BUILDERS))('block element: %s', (widgetKind,
   it('says what it can connect to through the engine, which is the only place that is said', () => {
     // Not a copy here: two answers to "what can this block do" would be the
     // Gui tab offering a connection the run then ignores. The answers
-    // themselves are asserted in engine/src/elements/connections.test.ts.
+    // themselves are asserted in backend/gui-editor/widgets/connections.test.ts.
     const can = blockCan(makeWidget(widgetKind as GuiWidget['kind']));
     expect(typeof can.fires).toBe('boolean');
     expect(typeof can.shows).toBe('boolean');

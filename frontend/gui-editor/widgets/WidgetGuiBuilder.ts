@@ -1,4 +1,4 @@
-// A widget's build-time half, in the browser: the mirror of `engine/src/elements/WidgetRunner.ts`.
+// A widget's build-time half, in the browser: the mirror of `backend/gui-editor/widgets/WidgetRunner.ts`.
 
 import type { ComponentType } from 'react';
 import type { GuiWidget, WidgetKind } from '../../app/graph';

@@ -1,252 +1,257 @@
-# User guide: make a small tool in 30 minutes
+# User guide
 
-How to go from nothing to a working tool with the mouse, and where the time goes. It was
-written by building the [population plotter](../examples/population_plotter/) in the
-editor from an empty canvas, on `gemini-flash-lite-latest`; what is measured says so, the
-rest is an estimate.
+How to build a tool in Tell-and-Wire, step by step. The running example is
+[examples/population_plotter](../examples/population_plotter/): choose a CSV, see a bar
+chart. `frontend/app/masterExamples.test.ts` builds this example, folder_summaries and
+chat the way this guide does (blocks added, a node dropped, a wire dragged) and runs them.
 
-A *small tool* here means what the three master examples are: **a page, a start point, one
-node and an end point** — choose a file, get a chart; choose a folder, get a summary of
-each file; a chat with a model. [`masterExamples.test.ts`](../editor/src/masterExamples.test.ts)
-builds each of them the way this guide does (blocks added, a node dropped, a wire dragged)
-and runs it.
+Start the editor and set up a model first, as the [README](../README.md) says. ✨ needs a
+model; a small, fast one (for example `gemini-flash-lite-latest`) writes a node's files in
+seconds. A local model costs nothing per call but can take minutes per answer.
 
-## The time budget
+## The words
 
-| Step | Time | What decides it |
-|---|---|---|
-| Download, unzip, start | 3–5 min | A zip of about 37 MB (Windows) or 47 MB (Linux) in 0.5.0; Node.js is inside. |
-| Give it a model | 5 min hosted · 10–60 min local | Hosted: an account and an API key. Local: installing a runtime and downloading a model of several GB. |
-| Build the page | 1–2 min | Two blocks for the plotter, and one setting: what choosing a file starts. |
-| Add a node and wire it | 1–2 min | Two drags. |
-| ✨ writes the node's three files | 1–2 min | Measured: each of the three finished within the 8–15 s waited for it, on a small hosted model. |
-| Run it, look, correct one thing | 3–10 min | **This is where the time goes** — see below. |
-| Save, hand it on | 2 min | A folder name; one click on 🚀. |
+| Word | What it is |
+|---|---|
+| graph | The nodes and the wires between them: what the tool does (Graph tab). |
+| node | One step. A heading, a short text, and settings or files. |
+| port | A dot on a node's edge: an input on the left, an output on the right. |
+| wire | Carries an output to an input. |
+| round | One run of the graph, from a start point to the end points it reaches. |
+| page | The blocks a person uses: what the tool looks like (Gui tab). |
+| block | One thing on the page: a picker, a button, a chart, a chat. |
 
-About **15–25 minutes** for a first tool of this size, with a hosted model: that is inside
-30. The tool with a model in it (section 6) adds about ten, estimated, because its input has
-to be named and told to run per item.
+## The node kinds
 
-It is not inside 30 when the model has to be downloaded first, when the data is messier than
-the sample, or when the tool grows past about four nodes. The sections below say what costs
-the time.
+The palette on the left of the Graph tab lists them. Click one, or drag it onto the canvas.
 
-## 1. Install (3–5 min)
+| Node | What it does |
+|---|---|
+| **Start point** | Where a round begins. Started by the page (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. |
+| **Folder** | Lists the files in a folder, filtered by file types, optionally with subfolders. Reads no file. |
+| **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
+| **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It runs sandboxed and may ask a model with `await node.llm({ prompt })`. |
+| **Data** | A value kept between rounds: text or a structure. What arrives replaces it for the next round. A loop goes through a data node. |
+| **End point** | Where a round ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
+| **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
-Download the zip for your system from the [releases page](https://github.com/Archimedes79/Tell-and-Wire/releases/latest)
-— [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip)
-or [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip),
-both x64 — unzip it, and start `run.cmd` (Windows) or `./run.sh` (Linux). The editor opens in
-your browser on <http://127.0.0.1:8000>, or the next free port. Nothing else is installed.
+## 1. Build the page
 
-macOS, or a checkout instead of a zip: Node 24 or newer, then `./start.sh` — see
-[install.md](install.md). Keep a checkout out of a folder that Dropbox or OneDrive syncs:
-they lock files while `npm ci` and the build replace them, and both fail with `EBUSY` or `EPERM`.
+Name the tool in the field at the top left, then open the **Gui** tab. Click **File or
+folder**, then **Chart** in the left column (or type `/` on the page). Each block comes
+connected: what the picker holds goes to a new start point, *Start*, and the chart shows a
+new end point, *Chart*.
 
-## 2. Give it a model (5 min)
+Click a block to see its settings on the right:
 
-✨ writes a node's files by asking a model, and an AI node asks one every time it runs. So
-this comes before the first node.
+- **Its data goes to**: the start points whose package carries what the block holds.
+- **Using it fires**: the start point a round begins at when the block is used.
+- **It shows**: the end point whose value the block draws.
 
-1. Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
-2. In the editor: **⚙ Settings → Keys and addresses**, paste it next to *Google Gemini*,
-   **Save**. Keys are write-only: they are saved on this machine and never shown again.
-3. In the same dialog, under **AI**: provider *Google Gemini — free tier*, model
-   `gemini-flash-lite-latest`, **Save**. The line *Now: google / gemini-flash-lite-latest*
-   confirms it.
+The first block that can fire a start point fires it, so choosing a file runs the graph. A
+button or a chat always fires its start point. A dropdown that only sends is a setting: it
+starts nothing, and the next round picks up its value.
 
-Use the `-latest` names: dated Gemini names are retired. A small, fast model is the right
-choice for ✨: in the run this guide comes from, each file was written in seconds. A larger
-one writes better code and takes longer; a model on your own machine (Ollama, LM Studio —
-[ai-providers.md](ai-providers.md)) costs nothing per call but can take minutes per answer,
-more with a model that "thinks". With nothing set, the editor takes a local model that is running (Ollama or LM Studio),
-else Ollama, and ✨ fails until one is running.
+## 2. Add a node and wire it
 
-## 3. Build the tool (about 10 min)
+On the **Graph** tab the two points are already there. A start point's card says which
+blocks fire it and send to it; an end point's card says which blocks show it. Click
+**Code** in the palette: the node appears with its panel open on the right.
 
-The example is the population plotter: choose a CSV of countries and numbers, see a bar
-chart. Its pieces are a **page** (what the person sees), a **start point** and an **end
-point** (where a round begins, and what it hands back), a **node** (what it does), and two
-**wires**: from the start point into the node, and from the node to the end point.
+Drag from the start point's *Data* dot (the amber diamond) to the code node's input, and
+from the code node's output to the end point's *Value* dot. A dot's name shows while the
+pointer is on the card. The first wire also sets what the input **takes** of the package:
+here the chosen file's content (`file.content`). Advanced in the panel shows it and lets
+you change it.
 
-**The page.** Name the tool in the field at the top left, then open the **Gui** tab. The
-left column lists blocks; click **File or folder**, then **Chart**. They appear on the page,
-each connected as it is made: what the picker holds goes to a new start point, *Start*, and
-the chart shows a new end point named after it, *Chart* -- give the chart another label and
-the end point takes it too. (Typing `/` on the page opens the same list.)
+## 3. Say what the node does; ✨ writes its files
 
-Click the picker: its settings are on the right. Under **Its data goes to**, *Start (start)*
-is ticked, and **Using it fires** says *⚡ Start (start)*: nothing else on the page fires
-that start point, so the first block that can, does -- choosing a file is what runs the
-graph. (A button fires the start point it is made for whatever else does; a second picker
-or box only sends to it, until its own **Using it fires** says otherwise.) That is the whole
-page: a block that asks for a file and starts the graph, and a block that shows what
-arrives.
-
-**The node.** Back on the **Graph** tab, the two points are already on the canvas: *Start*,
-whose card says which blocks fire it and send to it (*⚡ File or folder · sent File or
-folder*), and *Chart* (*shown on Chart*). Click the gear in the left column — the code
-node — and it appears, with its panel open on the right.
-
-**The wires.** Drag from the start point's *Data* dot — the diamond on its right edge — to
-the code node's input dot, and from the code node's output dot to the end point's *Value*
-dot (a dot's name shows while the pointer is on its card). The first wire also says
-what the input takes of what the start point is sent: the chosen file's content, as text.
-The *takes* box under the port, in the panel's **Advanced**, shows it — *File or folder ·
-content* — and changes it. **Advanced** stays open, or folded, as you left it on the last
-node of the same kind.
-
-**The node's text.** In the panel, the top box is the node in your own words. Say what it
-should do, with what comes in and what goes out:
+The top box of the panel is the node in your words:
 
 > Read the population CSV (a country column and a population column) and show a bar chart
 > of the population per country.
 
-**✨ writes the rest.** Press **✨ Input**, then **✨ Output**, then **✨ Code**, in that
-order — each is written from the one before. You get three files, each shown in the panel
-and each a plain file in the project folder:
+Press **✨ Input**, **✨ Output**, then **✨ Code** (an AI node: **✨ Prompt**). Each is
+written from the ones before it:
 
-- `input.js` — what one call of the node is handed, with an example. Here a CSV as text.
-- `output.js` — what it hands on, with an example. Here a chart: kind, title, points.
-- `code.js` — the function between them. It is tried on the example and repaired before you
-  see it.
+| File | What it holds |
+|---|---|
+| `input.js` | What one call is handed: a JSDoc typedef, then one example as plain JSON. |
+| `output.js` | What one call returns, the same way. Its keys are the node's outputs. |
+| `code.js` / `prompt.md` | The body: the code, or the AI node's instructions. |
+| `history.md` | Every exchange with the model about this node. |
 
-You do not have to write any of them; you can change any of them. A node's name follows its
-text. To change one thing later, say it in the bar under the canvas — *Say what to change*,
-scoped to the open node or to the whole graph — rather than editing by hand.
+Pressing the body's ✨ first writes whichever definition is missing. New code is tried on
+the example in `input.js` and repaired once if it fails. Each file shows in its row, editable
+in place; ⤢ opens it full-window, and its chip opens it in your own editor. There is no
+Save in the panel: a change is in the graph at once, and Undo takes it back.
 
-**Shortcut:** **Generate** in the toolbar (the wand: *Write every empty node, in the order the
-graph runs*) writes the files of every node that has none yet, so a graph of several nodes with their texts
-is one click.
+- **▶ Try** runs the node once on the example in `input.js` and holds the result to
+  `output.js`. **✨ Fix** repairs the body where it failed.
+- **What ✨ sends** shows the prompt word for word. Each ✨ shows its prompt; change it
+  for this node, or Reset it.
+- **The bar under the canvas** (*Say what to change*) changes the selected node, or the
+  whole graph when none is selected. A graph change shows what it adds, removes and changes
+  before you **Apply** it.
+- **Generate** in the toolbar writes every empty node, in the order the graph runs.
+  **File → ✨ AI Graph…** designs a whole graph from a description: good for a first sketch.
 
-## 4. Run it (2 min)
+Two things save the most time. Give ✨ Input a real file before ✨ Code: **⟳ From the graph**
+takes what the graph hands the node, **📂 Add a file…** picks one, or drop a file on the
+node. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
 
-**▶ Run** runs the application, as an IDE does: the page opens on the **App** tab and waits
-to be used. Choose a CSV in the picker — **📂 Browse…**, or type its path and press Enter —
-and the chart is drawn: choosing the file fires *Start*, and the round runs what *Start* is
-wired to. After a run, every node shows what it made under its port, so a wrong node is
-visible in place.
+## 4. Wiring in more detail
 
-There is a sample at [`examples/data/three_countries.csv`](../examples/data/three_countries.csv).
+- **Types.** A port is `text`, `number`, `boolean`, `json`, `list`, `file_path`, `image`,
+  `binary` or `any`. An input marked *Read the file at this path* (`file_path`) is handed
+  the file's content: text as text, a Word document as Markdown, a picture or a PDF as
+  itself, which an AI node sends to its model.
+- **What an input takes.** A start point hands on one package, for example
+  `{"event": {"name": "draw", "by": "file"}, "values": {"file": {"path": "...", "content": "..."}}}`.
+  An input takes one part of it by a dotted path (`file.content`, `chat.message`), or the
+  whole package.
+- **Once per item.** A new node runs once on what arrives. Tick **Run once per item**
+  (Advanced) and each item of a list is its own call; *Items at once* sets how many run
+  together (four by default).
+- **The ◆ gate.** Every node but a start point has a ◆ on its top edge. Unwired, the node
+  runs whenever a round reaches it. Wired, it runs only when the round began at a start
+  point wired to it, or a node put `true` on it. A code node that returns booleans is the
+  filter and the router. A node whose gate stays shut keeps what it made last.
+- **Failures.** A failed node skips what depends on it. *Catch failures instead of ending
+  the run* (Advanced) puts the reason on an `error` output instead.
 
-A round started while a picker that sends to its start point has nothing chosen — a button
-pressed before a file was picked — first opens *Before running…*, which asks for the file.
+## 5. Start points and end points
 
-The bar under the tool's name says the last round in a line: what began it and how its
-nodes went — *Last round: "Summarize", from "File" -- 3 ran* — with why each node
-that did not run did not under it, as each such node's card on the graph says too. **What
-using it keeps** folds away what the session holds that the design does not say — what the
-start point was sent, what memory holds, what each block holds — and **↺ Start over**
-forgets it all; the delivered page has **↺ Start over** too. **Keep as a test**, beside the
-line, keeps a round of a saved project that went as it should in its `tests/` folder:
-`test` runs it again, asking no model, and holds what comes back to what came back then.
+A round runs what its start point is wired to, everything after that, and what those nodes
+need upstream. So one page with two start points is two tools in one window. A start
+point wired to nothing starts everything; a round of the whole graph counts every start
+point as started.
 
-## 5. Save it and hand it on (2 min)
+A node upstream that only provides context is reused when nothing about it changed, so a
+second round does not ask the model again. A folder node lists its folder every round.
 
-**File → Save as…** and a name without `.json` makes a **project folder**:
-`flow.json` (the nodes and a line per wire), `layout.json` (where the nodes sit), `page/` (the
-blocks), and one folder per node under `nodes/` — the start and end point too — with its
-settings in `node.json`, its ports in `interface.json`, and for the code node its `input.js`,
-`output.js` and `code.js`. They are plain text, so `git diff` reads them and your own editor
-can open them. A name that is taken -- a project or a `.json` graph already there -- is not
-written over: the dialog says so, and **Replace** writes over it.
+An end point's value is the tool's result under its name: a block shows it, a script and
+the command line read it. **Also write it to** writes it to a file, or each item to its own
+file in a folder.
 
-**🚀 Deploy** downloads the tool as a zip: the engine, the graph and its page. Whoever receives it
-unzips it and starts `run.cmd` or `run.sh`; the page is there, with no editor.
+## 6. The Gui tab and its blocks
 
-## 6. A tool with a model in it: summarize a folder (about 10 min)
+The page is built like a document. Type headings and text in place. Press `/` to insert a
+block. A selected block has a small toolbar: ¼ ½ ¾ Full, shorter or taller, move, add
+below, remove. *Look & size* holds the tone, frame and background. *Colour scheme of the
+page* recolours everything. Blocks are live while you build: a button pressed here runs
+the graph.
 
-The same pattern with an AI node: choose a folder of `.txt` files, and one window shows a
-summary of each. The sample is [`examples/data/stories/`](../examples/data/stories/), three
-short stories. It differs from the plotter in three places, and the third is the one that
-cost the most time to find.
+| Block | Sends | Fires | Shows |
+|---|---|---|---|
+| File or folder | a file `{path, content}`, or a folder's file paths | when picked | |
+| Text input / output / in & out | the text typed (input, in & out) | on Enter | what arrives, as text (output, in & out) |
+| Dropdown | the choice | when chosen | |
+| Slider | the number | when let go | |
+| Button | | when pressed | |
+| Chat | `{message, history}` | when a message is sent | the reply, added to the conversation |
+| Chart, Table, Image | | | what arrives |
+| Heading, Text, Caption, Divider, Gap | | | (the page's own design) |
 
-**The page.** Click **File or folder** and **Text output**. On the picker: set **Using it
-fires** to *⚡ Start (start)* (choosing a folder is what runs it), **Mode** to *Directory
-(list of files)*, **File types** to `.txt`, and **Folder** to where the stories are. A path
-typed there is what the page starts on.
+A block runs no code. A node shapes the data first. A chart draws a **figure**:
 
-**The node and the wires.** On the Graph tab, click the AI node in the left column. Wire
-the start point's *Data* dot to its left dot, and its right dot to the *Value* dot of
-*Text output*, the end point the text block shows. A wire from a start point that a folder
-picker sends to makes the input take the folder's files, a list of paths, each read where
-it arrives: what the node is handed is the text.
+```json
+{ "kind": "bars", "title": "Population", "points": [{ "label": "India", "value": 1450000000 }] }
+```
 
-**Name what comes in, before ✨.** Open the panel's **Advanced — ports, model, tools,
-images, failures**:
+`kind` is `bars`, `columns`, `line` or `donut`. The chart lays it out at the block's real
+size and redraws on resize without a run. For anything else a node can hand it a finished
+SVG string. A table shows a list of objects (keys become columns) or a list of lists. An
+image shows a path, a URL or a data URL, or a list of them. Text, charts and tables offer
+**⤓ Save** (`.txt`, `.svg`, `.csv`).
 
-1. Change the input's name from `prompt` to what it holds: `story`. The default says *what
-   to ask*, and ✨ Input believes it: given `prompt`, it twice wrote an example that was not a
-   story -- first an invented one, then the node's own sentence -- and an example answer to
-   match.
-2. Tick **Run once per item**. Without it the model is handed the whole list in one call
-   and writes one summary of everything.
+## 7. ▶ Run and the App tab
 
-**Text, a real file, then ✨.** In the top box:
+**▶ Run** runs the tool as its user will. With a page, the **App** tab opens and the graph
+runs when the page is used. With a start point a call starts, the App tab shows a box for
+each part the graph reads and a button per start point. Start points that start themselves
+start, and their clocks tick. A graph with no start point runs once, whole. **■ Stop** ends
+it.
 
-> Summarize one short story: its title, then two sentences -- what it is about, and where
-> it ends up.
+- After a round every node's card shows what it made: a line of text, a row count, a
+  small chart, a thumbnail, or the first line of an error.
+- The line under the tool's name says what began the last round and why any node did not
+  run.
+- *What using it keeps* lists what the session holds: what each start point was sent, what
+  data nodes hold, what each block holds. **↺ Start over** forgets it. None of it changes
+  the saved design.
+- A picker that has nothing chosen asks first, in *📥 Before running…*.
+- **⧉ Open as a tool** opens the delivered page in a window of its own, on the same session.
 
-Press **⟳ From the graph** under *Example files*: it runs what feeds the node — the start
-point, sent what the page holds — and attaches the first story. Then **✨ Input**,
-**✨ Output**, **✨ Prompt**. An AI node's third file is its instructions, `prompt.md`, not
-code. `input.js` now holds the first story's text under `story`, and `output.js` a summary
-of it. In the run measured here the three took about 36 s on a small hosted model.
+## 8. Save the project
 
-**Run it.** **▶ Run** opens the **App** tab with the folder in the path box, and waits for
-you: choosing the folder is what runs it, so press **Enter** in the box (*Press Enter to use
-this folder*, it says). Three stories were summarized within ten seconds, one summary under
-the other in the text window.
+**File → Save as…** with a name without `.json` writes a project folder: `flow.json` (the
+nodes and a line per wire), `layout.json` (positions), `page/page.json` (the blocks), and
+`nodes/<id>/` per node with `node.json`, `interface.json` and its files. A name ending in
+`.json` writes one file with everything inline. **Save as…** onto a project or graph file
+that is already there asks first (**Replace**).
 
-## Where the time goes
+The editor watches the folder. Change a file in your own editor or with git, and the change
+comes in as one undo step. **File → Reload from disk** reopens everything.
 
-**1. The first run on real data.** ✨ writes the code against the *example* in `input.js`.
-A CSV with other column names, a decimal comma, or a header on row three runs fine on the
-example and fails on your file. Give ✨ Input the real file before pressing ✨ Code — **⟳
-From the graph** or **📂 Add a file…** in the panel, or drop one on the node. That one step is
-the difference between a first run that works and ten minutes of correcting. The same goes
-for what the input is *called*: a node with its default input `prompt` and a wired file
-produced a wrong example twice in a row here, before it was named `story`.
+## 9. Keep a round as a test
 
-**2. Saying it precisely.** A vague text gets a vague node. *Plot the data* writes something;
-*bar chart of the population per country, largest first* writes what you meant. When the
-result is almost right, change it with one sentence in the bar under the canvas instead of
-rewriting the text.
+After a round that went as it should, **Keep as a test** on the App tab writes it to the
+project's `tests/` folder (the project must be saved). From the command line, `--keep` does
+the same:
 
-**3. A slow model.** A tool with an AI node asks the model once per run, or once per item.
-Twenty files at 10 s each is three minutes of waiting each time you try it. Try on one file.
+```bash
+node backend/app/main.ts my_project --event measure --value "paragraph=One two." --keep
+```
 
-**4. A model that does not know the shape of your problem.** ✨ with a small model is good at
-one node with a clear task. It is weaker at many nodes at once: asked to build a whole tool
-from one sentence (*File → ✨ AI Graph…*), the same model returned in about ten seconds a
-four-node graph and a warning that one of its AI nodes would run once on everything instead
-of once per item. Build from a page and one node, run it, add the next. The whole-graph
-generator is for a first sketch.
+The file holds what came from outside the graph (the start point's package, what the models
+answered, what data nodes held) and what the end points handed back. `test` runs the round
+again with those handed in, asks no model, and fails when an end point hands back something
+else. It also runs each code and AI node on its `input.js` example and holds the result to
+`output.js`; `--offline` skips what needs a model:
 
-**5. Words.** The plotter needs six: a page, a start point, an end point, a node, a port, a
-wire. A tool that starts on a clock needs a start point that starts itself, and one that
-filters a gate (◆); [graphs.md](graphs.md) explains them when a tool gets there.
+```bash
+node backend/app/main.ts test --offline my_project    # what CI runs for every example
+node backend/app/main.ts check my_project             # what is wrong, without running
+```
+
+## 10. Deploy
+
+**Deploy** in the toolbar downloads a zip; `node backend/app/main.ts my_project --bundle ./out`
+writes the same folder. The person who gets it unzips it and starts `run.cmd` or `./run.sh`.
+They need Node 24 or newer and nothing else. With a page, the tool opens in the browser on
+port 8000 or the next free one. Without a page or a call, it runs once and prints JSON.
+
+The bundle carries the project, the code that ran it, the built page, the files the graph
+starts on (one from outside the project goes to `data/`; a file or folder over 50 MB, or one
+that is missing, stops Deploy) and the licence. It leaves out the editor, the tests, each node's `history.md` and `state.json`. A
+tool that asks a model reads `ai-settings.json` beside `run.sh`, or the `TW_AI_*`
+variables. A project can also bring a page of its own in `frontend/index.html`, which uses
+the runtime API by name (see `examples/nested_statistics/frontend/`).
+
+## 11. The MCP server
+
+An assistant such as Claude Code can design, check, save and run graphs in one folder:
+
+```bash
+claude mcp add tell-and-wire -- node <repo>/backend/app/main.ts --mcp --mcp-root <project folder>
+```
+
+Its tools are `authoring_guide`, `generate_graph`, `validate_graph`, `save_graph`,
+`run_graph`, `describe_graph`, `run_node`, `test_graph` and `list_graphs`. Every path stays
+inside `--mcp-root`; it never opens `ai-settings.json` and filters keys out of what it
+returns. A graph it runs runs for real, so point the root at a project folder, not at your
+home folder.
 
 ## When something does not work
 
-- **A node shows an error under its port, or is skipped.** Open it, press **▶ Try**: it runs
-  on the example in `input.js`, held to the example in `output.js`. A failing example says
-  which of the two is wrong. **✨ Fix** repairs the body from that error.
-- **✨ does nothing, or answers with an error.** The model setting: ⚙ Settings → AI shows
-  *Now: provider / model*. A key that is missing or a local server that is not running both
-  end here.
-- **What did it send?** **What ✨ sends** next to each ✨ shows the request word for word.
-- **The graph reports a problem before it runs.** The list names the node and what to
-  change; it is the same check CI runs on every example.
-- **Using the page starts nothing.** No block fires its start point: on the Gui tab, set
-  **Using it fires** on the block that should start it. The check names it too: *It is
-  started by the page, and nothing on the page fires it.*
-- **It runs and the page stays empty.** The block shows an end point nothing is wired into,
-  or a wire is on the wrong dot: the end point's card says which blocks show it, and its
-  *Value* dot is where the result goes in.
-
-## Next
-
-[`examples/`](../examples/) holds seven tools to open and read, from the plotter to a team of
-AI analysts. [graphs.md](graphs.md) is the reference for every node and block;
-[deployment.md](deployment.md) for what 🚀 produces.
+- **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
+  says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
+- **✨ does nothing or fails.** Check **⚙ Settings → AI**: it says *Now: provider / model*.
+  A missing key or a local server that is not running ends here.
+- **Using the page starts nothing.** No block fires the start point: set **Using it fires**
+  on the block that should. `check` names this too.
+- **The page stays empty.** The block shows an end point nothing is wired into, or a wire
+  is on the wrong dot. The end point's card says which blocks show it.
+- **A model that thinks runs out of tokens.** Raise `TW_MAX_TOKENS` (default 4096), or use
+  a model that does not think.
