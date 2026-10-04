@@ -1,0 +1,20 @@
+{
+  "name": "tell-and-wire-backend",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "description": "The editor's server: the graph editor's and the Gui editor's backends, and the server and command line around them.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "typescript": "^5.2.2",
+    "vitest": "^1.6.1"
+  }
+}

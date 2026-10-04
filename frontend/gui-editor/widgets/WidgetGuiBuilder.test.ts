@@ -1,0 +1,50 @@
+import { describe, it, expect } from 'vitest';
+import type { WidgetKind } from '../../app/graph';
+import { WIDGET_BUILDERS } from '../../app/elements/registry';
+
+/** What every block holds: who it is, and how it is drawn. */
+const COMMON = ['id', 'kind', 'label', 'mode', 'w', 'h', 'tone'];
+
+/** What each kind keeps of its own, and reads. */
+const OWN: Record<WidgetKind, string[]> = {
+  text: ['value'],
+  divider: [],
+  spacer: [],
+  input_picker: ['value', 'extensions', 'recursive'],
+  text_io: ['value'],
+  plot_window: [],
+  image_view: [],
+  table: [],
+  select: ['options'],
+  slider: ['min', 'max', 'step'],
+  button: [],
+  chat: [],
+};
+
+describe('a new block, as the palette puts it on a page', () => {
+  it('holds only its own kind\'s settings', () => {
+    // The bug: every kind's settings were spread onto every block, so a divider
+    // or a chart was saved with a folder's file types, an options list and an
+    // example file.
+    for (const [kind, builder] of Object.entries(WIDGET_BUILDERS) as [WidgetKind, (typeof WIDGET_BUILDERS)[WidgetKind]][]) {
+      const extra = Object.keys(builder.create('block', 'Block')).filter((key) => !COMMON.includes(key) && !OWN[kind].includes(key));
+      expect(extra, kind).toEqual([]);
+    }
+  });
+
+  it('starts a folder picker as a folder and its file types', () => {
+    expect(WIDGET_BUILDERS.input_picker.create('folder', 'Folder', 'directory')).toMatchObject({ value: '', extensions: '', recursive: false });
+  });
+
+  it('carries no mode for a kind that has none', () => {
+    expect(WIDGET_BUILDERS.button.create('go', 'Go')).not.toHaveProperty('mode');
+    expect(WIDGET_BUILDERS.text_io.create('box', 'Box')).toMatchObject({ mode: 'both' });
+  });
+
+  it('starts a paragraph of text one row tall, room for a line or two, as a heading and a caption are', () => {
+    // Rebuilt by hand: a new Text block stood three rows tall for its one line.
+    for (const mode of ['body', 'heading', 'caption']) {
+      expect(WIDGET_BUILDERS.text.create('words', '', mode), mode).toMatchObject({ w: 16, h: 1 });
+    }
+  });
+});

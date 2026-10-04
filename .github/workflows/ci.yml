@@ -55,13 +55,13 @@ jobs:
       # What a person would find broken by opening one: an edge to a port that
       # is not there, a file nothing reads, an interface naming a lost output.
       - name: Check the examples
-        run: node engine/src/main.ts check $(ls -d examples/*/ | grep -v '^examples/data/$')
+        run: node backend/app/main.ts check $(ls -d examples/*/ | grep -v '^examples/data/$')
 
       # Each node run once on the example in its input.js and held to its
       # output.js, without a model: there is no key here, so an AI node is
       # skipped, not failed.
       - name: Test the examples' nodes
-        run: node engine/src/main.ts test --offline $(ls -d examples/*/ | grep -v '^examples/data/$')
+        run: node backend/app/main.ts test --offline $(ls -d examples/*/ | grep -v '^examples/data/$')
 
   # The launcher, on a checkout that has nothing installed yet -- which is what
   # a person has when they clone this and double-click start. It installs and

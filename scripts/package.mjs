@@ -13,8 +13,8 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { zip } from '../engine/src/host/editor/zip.ts';
-import { NODE_MAJOR, runCmd, runSh, zipMode } from '../engine/src/cli/launchers.ts';
+import { zip } from '../backend/graph-editor/zip.ts';
+import { NODE_MAJOR, runCmd, runSh, zipMode } from '../backend/app/cli/launchers.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -29,19 +29,19 @@ async function walk(dir, keep = () => true) {
   }
   for (const entry of entries) {
     const path = join(dir, entry.name).replace(/\\/g, '/');
-    if (entry.isDirectory()) found.push(...await walk(path, keep));
+    if (entry.isDirectory()) { if (entry.name !== 'node_modules') found.push(...await walk(path, keep)); }
     else if (keep(path)) found.push(path);
   }
   return found;
 }
 
-// The same launchers every deploy bundle gets (engine/src/cli/launchers.ts):
+// The same launchers every deploy bundle gets (backend/app/cli/launchers.ts):
 // they check for Node before it is needed, start from their own folder, and
 // keep a Windows window open long enough to read a failure. No port is passed
 // unless PORT is set, so the engine takes the first free one from 8000 --
 // the version before always passed 8000, and died on a machine that already
 // had an editor running there.
-const LAUNCHER = { command: 'engine/src/main.ts --editor editor/dist', portFromEnv: true };
+const LAUNCHER = { command: 'backend/app/main.ts --editor frontend/dist', portFromEnv: true };
 
 /**
  * What this zip was built from, in a file beside the README.
@@ -84,11 +84,11 @@ const node = nodeFolder ? await bundledNode(nodeFolder) : undefined;
 
 const NEEDS = node
   ? `Nothing. Node.js, which runs it, is in node/ -- with its licence, node/LICENSE --
-and the launchers use it. The engine is TypeScript that Node runs directly, it
-has no dependencies, and the page in editor/dist is already built. Nothing is
+and the launchers use it. The code is TypeScript that Node runs directly, it
+has no dependencies, and the page in frontend/dist is already built. Nothing is
 installed, and nothing is installed while a graph runs.`
-  : `Node ${NODE_MAJOR} or newer. That is the whole list: the engine is TypeScript that Node
-runs directly, it has no dependencies, and the page in editor/dist is already
+  : `Node ${NODE_MAJOR} or newer. That is the whole list: the code is TypeScript that Node
+runs directly, it has no dependencies, and the page in frontend/dist is already
 built. Nothing is installed, and nothing is installed while a graph runs.
 
     node --version
@@ -117,8 +117,9 @@ ${NEEDS}
 
     run.sh, run.cmd   start it${node ? '\n    node/       Node.js, which runs it, and its licence' : ''}
     VERSION     what this was built from
-    engine/     the engine and the editor's server, as source
-    editor/dist the editor's page, built; its licenses.txt names the
+    graph/      the graph's code: how a graph runs, as source
+    backend/    the editor's server, as source
+    frontend/dist the editor's page, built; its licenses.txt names the
                 packages it is built from, each with its licence
     examples/   project folders to open from the editor's Open dialog
     LICENSE     the terms AI-Graph comes under
@@ -128,9 +129,11 @@ folder of its own -- that one holds a single graph and no editor.
 `;
 
 const files = [
-  ...await walk('engine/src', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')),
-  'engine/package.json',
-  ...await walk('editor/dist'),
+  ...await walk('graph', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/')),
+  'graph/package.json',
+  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')),
+  'backend/package.json',
+  ...await walk('frontend/dist'),
   ...await walk('examples'),
   'LICENSE',
 ];

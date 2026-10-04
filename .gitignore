@@ -3,8 +3,8 @@
 
 # Node
 node_modules/
-editor/dist/
-editor/.vite/
+frontend/dist/
+frontend/.vite/
 *.tsbuildinfo
 
 # OS
@@ -34,8 +34,6 @@ ai-settings.json
 # Local editor/agent scratch, not part of the project.
 .claude/
 
-# The engine's installed packages.
-engine/node_modules/
 
 # What a session of a graph keeps beside it: never deployed, gone after a reset.
 state.json

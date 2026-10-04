@@ -1,0 +1,107 @@
+import { describe, it, expect } from 'vitest';
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileSearch, findFiles, findProjects } from './files.ts';
+
+/**
+ * What the editor's project search and its file chips -- a node's file,
+ * opened in the person's own editor -- get from the machine.
+ *
+ * Browsing is not here: it is the same picker a deployed tool serves, and it
+ * is tested in `host/browse.test.ts` beside the code.
+ */
+
+async function sandbox() {
+  const dir = await mkdtemp(join(tmpdir(), 'editor-files-'));
+  await mkdir(join(dir, 'sub'));
+  await writeFile(join(dir, 'b.txt'), 'hello');
+  await writeFile(join(dir, 'a.md'), '# hi');
+  await writeFile(join(dir, 'blob.bin'), Buffer.from([0xff, 0xfe, 0x00, 0x80]));
+  return dir;
+}
+
+describe('what opens a node file without VS Code', () => {
+  it('is a text editor, never the system\'s "open": on Windows that runs a .js with Windows Script Host', async () => {
+    const { textEditorFor } = await import('./files.ts');
+    expect(textEditorFor('C:\\p\\nodes\\count\\code.js', 'win32')).toEqual({ command: 'notepad.exe', args: ['C:\\p\\nodes\\count\\code.js'] });
+    expect(textEditorFor('/p/nodes/count/code.js', 'darwin')).toEqual({ command: 'open', args: ['-t', '/p/nodes/count/code.js'] });
+  });
+});
+
+describe('openExternal', () => {
+  // Only the refusals are tested: the acceptance starts a program on whatever
+  // machine runs the suite, and a test that opens an editor window is one
+  // nobody keeps switched on.
+  it('refuses a path outside the graph\'s own node folder', async () => {
+    const { openExternal, NotOpenable } = await import('./files.ts');
+    const dir = await sandbox();
+    await expect(openExternal(join(dir, 'sub'), '../b.txt')).rejects.toBeInstanceOf(NotOpenable);
+  });
+
+  it('refuses anything that is not text a node keeps: nothing a system would run', async () => {
+    const { openExternal, NotOpenable } = await import('./files.ts');
+    const dir = await sandbox();
+    await writeFile(join(dir, 'run.bat'), 'echo hi');
+    await expect(openExternal(dir, 'blob.bin')).rejects.toBeInstanceOf(NotOpenable);
+    await expect(openExternal(dir, 'run.bat')).rejects.toBeInstanceOf(NotOpenable);
+  });
+
+  it('says the graph must be saved when the file is not there yet', async () => {
+    const { openExternal } = await import('./files.ts');
+    const { NotFound } = await import('../../graph/errors.ts');
+    const dir = await sandbox();
+    await expect(openExternal(dir, 'Analyse.js')).rejects.toBeInstanceOf(NotFound);
+  });
+});
+
+describe('findProjects', () => {
+  it('finds the project folders of a dropped folder\'s name, and nothing in dependencies or build output', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-'));
+    for (const folder of ['examples/chat', 'work/chat', 'node_modules/pkg/chat', 'examples/data', 'notes/chat']) {
+      await mkdir(join(root, folder), { recursive: true });
+    }
+    for (const project of ['examples/chat', 'work/chat', 'node_modules/pkg/chat']) {
+      await writeFile(join(root, project, 'flow.json'), '{"nodes": {}, "wires": []}');
+    }
+    expect((await findProjects('chat', root)).map((path) => path.slice(root.length + 1).split(/[\\/]/).join('/')).sort())
+      .toEqual(['examples/chat', 'work/chat']);
+    expect(await findProjects('data', root)).toEqual([]);
+    expect(await findProjects('chat', join(root, 'examples', 'chat'))).toEqual([join(root, 'examples', 'chat')]);
+  });
+
+  it('looks where a dropped file is looked for, as fileSearch says: three levels of folders down', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-deep-'));
+    for (const project of ['a/b/c/three', 'a/b/c/d/four']) {
+      await mkdir(join(root, project), { recursive: true });
+      await writeFile(join(root, project, 'flow.json'), '{"nodes": {}, "wires": []}');
+    }
+    expect(await findProjects('three', root)).toEqual([join(root, 'a', 'b', 'c', 'three')]);
+    expect(await findProjects('four', root)).toEqual([]);
+  });
+});
+
+describe('findFiles', () => {
+  it('finds a dropped file by its name and size, and nothing in dependencies, dot-folders or build output', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-file-'));
+    for (const folder of ['examples/data', 'other', 'node_modules/pkg', '.cache']) await mkdir(join(root, folder), { recursive: true });
+    await writeFile(join(root, 'examples/data/people.csv'), 'name\nAnna\n');
+    await writeFile(join(root, 'other/people.csv'), 'name\nAnna\nBen\n');
+    await writeFile(join(root, 'node_modules/pkg/people.csv'), 'name\nAnna\n');
+    await writeFile(join(root, '.cache/people.csv'), 'name\nAnna\n');
+    const found = async (size: number) => (await findFiles('people.csv', size, root)).map((path) => path.slice(root.length + 1).split(/[\\/]/).join('/'));
+    expect(await found(10)).toEqual(['examples/data/people.csv']);
+    expect(await found(14)).toEqual(['other/people.csv']);
+    expect(await found(3)).toEqual([]);
+  });
+
+  it('looks three levels of folders down, passing over build output and dot names -- and says where it looked', async () => {
+    // A drop that found nothing said "not under the folder the editor was started in" of all of these.
+    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-depth-'));
+    for (const folder of ['a/b/c', 'data/raw/2024/q1', 'build', '.venv']) await mkdir(join(root, folder), { recursive: true });
+    for (const file of ['a/b/c/three.csv', 'data/raw/2024/q1/four.csv', 'build/data.csv', '.env']) await writeFile(join(root, file), 'x');
+    const count = async (name: string) => (await findFiles(name, 1, root)).length;
+    expect([await count('three.csv'), await count('four.csv'), await count('data.csv'), await count('.env')]).toEqual([1, 0, 0, 0]);
+    expect(fileSearch(root)).toBe(`${root} and 3 levels of folders below it, leaving out node_modules, dist, build and every name that begins with a dot`);
+  });
+});

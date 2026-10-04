@@ -1,0 +1,141 @@
+import React, { createContext, useContext, useState } from 'react';
+import type { AICall } from '../../app/api/client';
+import { ACCENT_TEXT, DIMMER, LINE, MUTED, SUNKEN, TEXT } from '../../app/ui/theme';
+
+const NOTHING: AICall[] = [];
+const Transcript = createContext<AICall[]>(NOTHING);
+/** The same, for a generation still running. Empty whenever none is. */
+const Live = createContext<AICall[]>(NOTHING);
+
+/** What the generation running right now has sent so far. */
+export function useLiveGeneration(): AICall[] {
+  return useContext(Live);
+}
+
+/**
+ * Hand the transcript of a node panel's ✨ to whatever draws its result.
+ *
+ * A context rather than a prop because the path from the panel, which owns
+ * `useGenerate`, down to where the exchange is drawn runs through the node's
+ * own panel (`NodeDefinition`), which does nothing with it but pass it on. A
+ * row of forwarding props like that is what let the ✨ buttons drift apart in
+ * the first place.
+ */
+export function GenerationReport(
+  { calls, live = NOTHING, children }:
+  { calls: AICall[]; live?: AICall[]; children: React.ReactNode },
+) {
+  return (
+    <Transcript.Provider value={calls}>
+      <Live.Provider value={live}>{children}</Live.Provider>
+    </Transcript.Provider>
+  );
+}
+
+/**
+ * What the ✨ button actually sent, and what came back.
+ *
+ * Generation was a black box: press it, wait, receive text or an error. When
+ * the error is "the model may still be loading, or the request exceeded its
+ * context window", there is no way to tell which -- and no way to see that the
+ * prompt had grown to forty thousand characters because an example file was
+ * attached three nodes ago.
+ *
+ * Collapsed to one line by default, because the answer is what you wanted and
+ * the transcript is what you want *when the answer is wrong*. Open, it is the
+ * whole exchange in order: generating code is not one call but three or four --
+ * write it, run it against real inputs, repair it -- and which pass went wrong
+ * is the first thing worth knowing.
+ */
+export default function GenerationTranscript() {
+  const calls = useContext(Transcript);
+  const [open, setOpen] = useState(false);
+  const [shown, setShown] = useState<number | null>(null);
+
+  if (!calls.length) return null;
+
+  const sent = calls.reduce((total, call) => total + call.sent_chars, 0);
+  const seconds = calls.reduce((total, call) => total + call.seconds, 0);
+  const failed = calls.filter((call) => call.error).length;
+
+  return (
+    <div className="mt-2 text-xs" style={{ color: MUTED }}>
+      <button
+        onClick={() => setOpen((was) => !was)}
+        className="w-full text-left px-2 py-1 rounded"
+        style={{ color: failed ? ACCENT_TEXT : MUTED, background: SUNKEN }}
+      >
+        {open ? '▾' : '▸'} {calls.length === 1 ? '1 call' : `${calls.length} calls`}
+        {' · '}{sent.toLocaleString('en-US')} chars sent
+        {seconds > 0 && ` · ${seconds.toFixed(1)}s`}
+        {failed > 0 && ` · ${failed} failed`}
+      </button>
+
+      {open && (
+        <div className="mt-1 space-y-1">
+          {calls.map((call, index) => (
+            <div key={index} className="rounded" style={{ border: `1px solid ${LINE}` }}>
+              <button
+                onClick={() => setShown((was) => (was === index ? null : index))}
+                className="w-full text-left px-2 py-1"
+                style={{ color: call.error ? ACCENT_TEXT : MUTED }}
+              >
+                {shown === index ? '▾' : '▸'} {index + 1}. {call.provider}/{call.model}
+                {' · '}{call.sent_chars.toLocaleString('en-US')} out
+                {call.reply_chars > 0 && ` · ${call.reply_chars.toLocaleString('en-US')} back`}
+                {call.seconds > 0 && ` · ${call.seconds.toFixed(1)}s`}
+                {call.error && ' · error'}
+              </button>
+
+              {shown === index && (
+                <div className="px-2 pb-2 space-y-2">
+                  <Part label="System" text={call.system} />
+                  <Part label="Prompt" text={call.prompt} />
+                  {call.error
+                    ? <Part label="Error" text={call.error} tone={ACCENT_TEXT} />
+                    : <Part label="Reply" text={call.reply ?? ''} />}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One side of one exchange.
+ *
+ * Scrolls rather than truncates: a prompt gets opened precisely when it might
+ * be too long, and a transcript that hides the end hides the thing being looked
+ * for. Empty parts are dropped, so a generation with no system prompt does not
+ * show a labelled empty box.
+ */
+/** One side of an exchange, for anything that shows a request: the preview beside ✨ too. */
+export function SentPart({ label, text }: { label: string; text: string }) {
+  return <Part label={label} text={text} />;
+}
+
+function Part({ label, text, tone }: { label: string; text: string; tone?: string }) {
+  if (!text.trim()) return null;
+  return (
+    <div>
+      <div className="mb-0.5" style={{ color: DIMMER }}>
+        {label} · {text.length.toLocaleString('en-US')} chars
+      </div>
+      <pre
+        className="whitespace-pre-wrap break-words rounded p-2 overflow-auto"
+        style={{
+          background: SUNKEN,
+          color: tone ?? TEXT,
+          border: `1px solid ${LINE}`,
+          maxHeight: 220,
+          fontSize: 11,
+        }}
+      >
+        {text}
+      </pre>
+    </div>
+  );
+}

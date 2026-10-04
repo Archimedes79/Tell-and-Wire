@@ -1,0 +1,320 @@
+import { describe, it, expect } from 'vitest';
+import { mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { parseGraph } from '../../../graph/graph.ts';
+import { loadGraph } from '../project/folder.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
+import { bundleNeeds, writeBundle } from './bundle.ts';
+import { NODE_MAJOR } from './launchers.ts';
+
+/**
+ * A bundle is only a claim until someone runs it somewhere else.
+ *
+ * So this writes one into a temporary directory and runs the graph *from
+ * there* — not from the repo — with the repo's own sources out of reach. That
+ * is the difference between "the files were copied" and "it works".
+ */
+
+const REPO = resolve(__dirname, '..', '..', '..');
+
+function run(dir: string, args: string[] = []): Promise<{ code: number; out: string; err: string }> {
+  return new Promise((fulfil, fail) => {
+    const child = spawn(process.execPath, [join(dir, 'backend', 'app', 'main.ts'), dir, ...args], {
+      cwd: dir,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let out = ''; let err = '';
+    child.stdout.on('data', (c) => { out += c; });
+    child.stderr.on('data', (c) => { err += c; });
+    child.on('error', fail);
+    child.on('close', (code) => fulfil({ code: code ?? -1, out, err }));
+  });
+}
+
+/** A graph with nothing to carry along: the smallest thing a bundle can hold. */
+const MINIMAL = resolve(REPO, 'graph', 'test', 'fixtures', 'minimal.json');
+
+async function bundleOf(path: string): Promise<string> {
+  const graph = await loadGraph(path);
+  const dir = await mkdtemp(join(tmpdir(), 'ai-graph-bundle-'));
+  await writeBundle(graph, dir, { dataFrom: REPO });
+  return dir;
+}
+
+describe('a bundle', () => {
+  it('runs the graph from somewhere else entirely', async () => {
+    const dir = await bundleOf(resolve(REPO, 'examples', 'population_plotter'));
+    try {
+      // No `--inputs`: the CSV the picker starts on came along, at the same
+      // relative path, so the tool opens on a chart rather than on an error.
+      const { code, out } = await run(dir);
+      expect(code).toBe(0);
+      const result = JSON.parse(out);
+      expect(result.status).toBe('success');
+      // Not merely "it started": the chart has something to draw, and its end
+      // point was handed it. A run produces the figure, never the drawing --
+      // nothing here knows how big the recipient's window will be.
+      const plot = result.node_results.find((n: { node_id: string }) => n.node_id === 'plot');
+      expect(plot.inputs.value.kind).toBe('bars');
+      expect(plot.inputs.value.points.length).toBeGreaterThan(0);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 180_000);
+
+  it('carries what runs, and not how each node was written: its history stays with the project', async () => {
+    const graph = await loadGraph(resolve(REPO, 'examples', 'population_plotter'));
+    const chart = graph.nodes.find((node) => node.id === 'chart')!;
+    chart.config.history = '## 2026-09-28 10:00 · ✨ Input\n\nPrompt:\n\n```\nC:/Users/someone/private/customers.csv\n```';
+    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-history-bundle-'));
+    try {
+      await writeBundle(graph, dir, { dataFrom: REPO });
+      // The project folder, as it was built: its code a file, and no history.md.
+      expect(await readdir(join(dir, 'nodes', 'chart'))).not.toContain('history.md');
+      const shipped = await loadGraph(dir);
+      const config = shipped.nodes.find((node) => node.id === 'chart')!.config;
+      expect(config).not.toHaveProperty('history');
+      expect(config.code).toBe(chart.config.code);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it('carries no tests, because a recipient has nothing to compare against', async () => {
+    const dir = await bundleOf(MINIMAL);
+    try {
+      const { code, out } = await run(dir);
+      expect(code).toBe(0);
+      expect(JSON.parse(out).status).toBe('success');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it('carries the terms its engine comes under: whoever is handed a copy is handed those', async () => {
+    const dir = await bundleOf(MINIMAL);
+    try {
+      expect(await readFile(join(dir, 'LICENSE'), 'utf8')).toBe(await readFile(join(REPO, 'LICENSE'), 'utf8'));
+      expect(await readFile(join(dir, 'README.md'), 'utf8')).toContain('under the terms in LICENSE');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it('looks for its AI settings beside run.sh, where a recipient drops them, from wherever it is started', async () => {
+    // The bundle's own copy is asked: it keeps graph/ at the path a checkout does.
+    const dir = await bundleOf(MINIMAL);
+    const elsewhere = await mkdtemp(join(tmpdir(), 'ai-graph-elsewhere-'));
+    try {
+      const settings = pathToFileURL(join(dir, 'graph', 'ai', 'settings.ts')).href;
+      const asked = `const { candidatePaths } = await import(${JSON.stringify(settings)}); process.stdout.write(JSON.stringify(candidatePaths(${JSON.stringify(elsewhere)}, {})));`;
+      const looked = await new Promise<string[]>((answered, failed) => {
+        let out = '';
+        const child = spawn(process.execPath, ['--input-type=module', '-e', asked], { windowsHide: true, stdio: ['ignore', 'pipe', 'inherit'] });
+        child.stdout.on('data', (chunk) => { out += chunk; });
+        child.on('error', failed);
+        child.on('close', () => answered(JSON.parse(out) as string[]));
+      });
+      expect(looked).toContain(join(dir, 'ai-settings.json'));
+      expect(looked).not.toContain(join(dir, '..', 'ai-settings.json'));
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+      await rm(elsewhere, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it('carries the page, and only what the page references, and serves it', async () => {
+    // The editor's own chunks sit in the same build folder. A bundle that
+    // copied the folder would hand the graph editor to someone who was handed
+    // a finished tool, so the file list comes out of runtime.html itself.
+    const graph = await loadGraph(resolve(REPO, 'examples/population_plotter'));
+    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-page-bundle-'));
+    try {
+      const written = await writeBundle(graph, dir, { pageDir: resolve(REPO, 'frontend/dist'), dataFrom: REPO });
+      // In web/: a project's page/ is the page itself, its blocks in page.json.
+      const page = written.filter((p) => p.startsWith('web/'));
+      expect(page).toContain('web/runtime.html');
+      expect(page.some((p) => p.endsWith('.js'))).toBe(true);
+      // The page is made of packages whose notice has to go with every copy.
+      expect(await readFile(join(dir, 'web', 'licenses.txt'), 'utf8')).toMatch(/^react-dom \S+ \(MIT\)$/m);
+      // run.sh serves, because there is something to serve.
+      expect(await readFile(join(dir, 'run.sh'), 'utf8')).toContain('--serve');
+      // The recipient's first command is ./run.sh; on Windows there is no bit to set.
+      if (process.platform !== 'win32') expect((await stat(join(dir, 'run.sh'))).mode & 0o111).not.toBe(0);
+      // The same launcher the downloadable package ships, Node check included.
+      expect(await readFile(join(dir, 'run.cmd'), 'utf8')).toContain('where node');
+
+      // Served as run.sh serves it: the page it carries, not "No page.".
+      const port = await new Promise<number>((found) => {
+        const probe = createServer();
+        probe.listen(0, '127.0.0.1', () => {
+          const { port: free } = probe.address() as { port: number };
+          probe.close(() => found(free));
+        });
+      });
+      const server = spawn(process.execPath, [join(dir, 'backend', 'app', 'main.ts'), '.', '--serve', '--port', String(port)], {
+        cwd: dir, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'],
+        env: { ...process.env, AI_GRAPH_NO_BROWSER: '1', AI_GRAPH_SETTINGS: join(dir, 'no-settings.json') },
+      });
+      let said = '';
+      server.stderr.on('data', (chunk) => { said += chunk; });
+      const ended = new Promise((done) => server.on('exit', done));
+      try {
+        for (const until = Date.now() + 20_000; Date.now() < until && !said.includes('Serving on') && server.exitCode === null;) {
+          await new Promise((wake) => setTimeout(wake, 100));
+        }
+        const shown = await fetch(`http://127.0.0.1:${port}/`);
+        expect(shown.headers.get('content-type'), said).toContain('text/html');
+        expect(await shown.text()).toBe(await readFile(join(dir, 'web', 'runtime.html'), 'utf8'));
+      } finally {
+        server.kill();
+        await ended;
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it('says what has to be installed, and no more than that', async () => {
+    const plotter = await loadGraph(resolve(REPO, 'examples/population_plotter'));
+    const hello = parseGraph(JSON.parse(
+      await readFile(MINIMAL, 'utf8'),
+    ));
+
+    // The plotter has a page, so a bundle without one would be half of it.
+    expect(bundleNeeds(plotter).interface).toBe(true);
+    // Hello world is two nodes, no page and no model: Node and nothing else.
+    expect(bundleNeeds(hello)).toEqual({ interface: false, ai: false });
+    // A page whose blocks are all gone draws nothing. Served, the tool
+    // showed an empty page and not the run's result.
+    expect(bundleNeeds(parseGraph({ ...hello, page: { blocks: [] } }))).toEqual({ interface: false, ai: false });
+
+    // A model called from inside a node that holds a graph is still a model
+    // the recipient has to configure.
+    const deep = parseGraph({
+      metadata: { name: 'Deep' },
+      nodes: [{
+        id: 'part', node_type: 'subgraph', label: 'Part', inputs: [], outputs: [],
+        config: {
+          subgraph: {
+            metadata: { name: 'Inner' },
+            nodes: [{ id: 'ask', node_type: 'ai', label: 'Ask', inputs: [], outputs: [], config: {} }],
+            edges: [],
+          },
+        },
+      }],
+      edges: [],
+    });
+    expect(bundleNeeds(deep).ai).toBe(true);
+  });
+
+  it('serves a tool a call starts -- its page is the caller -- and not one only because a graph inside a node is called', async () => {
+    // Handed on, a graph only a call starts ran once on its example and
+    // ended, with nobody able to call it.
+    const nested = await loadGraph(resolve(REPO, 'examples/nested_statistics'));
+    expect(bundleNeeds(nested).interface).toBe(true);
+    const inner = await loadGraph(resolve(REPO, 'examples/nested_statistics/nodes/statistics'));
+    const holder = parseGraph({
+      metadata: { name: 'Holds' },
+      nodes: [{ id: 'part', node_type: 'subgraph', label: 'Part', inputs: [], outputs: [], config: { subgraph: inner } }],
+      edges: [],
+    });
+    expect(bundleNeeds(holder).interface).toBe(false);
+  });
+
+  /**
+   * "Does this need a model" has one answer and two readers: a bundle, which
+   * tells its recipient to configure a provider, and an offline `test`, which
+   * skips the examples of a node that would need one.
+   *
+   * They were asked separately -- `deployNeeds` looked at the body, `asksModel`
+   * was a constant -- and for a code node calling the model they disagreed: the
+   * bundle said "configure a provider", the offline test ran that same body
+   * into a model that was never there.
+   */
+  it('gives the bundle and an offline test the same answer about a model', () => {
+    const graphWith = (code: string) => parseGraph({
+      metadata: { name: 'One code node' },
+      nodes: [{ id: 'n', node_type: 'code', label: 'N', inputs: [], outputs: [], config: { code } }],
+      edges: [],
+    });
+    const calls = graphWith('async function run(inputs) { return { out: await node.llm("hi") }; }');
+    const quiet = graphWith('function run(inputs) { return { out: 1 + 1 }; }');
+    const code = registry.node('code')!;
+
+    expect(bundleNeeds(calls).ai).toBe(true);
+    expect(code.asksModel(calls.nodes[0])).toBe(true);
+    expect(bundleNeeds(quiet).ai).toBe(false);
+    expect(code.asksModel(quiet.nodes[0])).toBe(false);
+
+    // An ai node says it once, and both readers get it.
+    const ai = registry.node('ai')!;
+    expect(ai.asksModel({ config: {} } as never)).toBe(true);
+  });
+
+  it('refuses a graph with nothing in it: a bundle is something handed over', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-empty-'));
+    try {
+      await expect(writeBundle(parseGraph({ nodes: [], edges: [] }), dir)).rejects.toThrow(/nothing to hand over/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('is handed on whole: a file picked from anywhere comes along, and the tool is told where it is now', async () => {
+    // 📂 Browse… picks an absolute path. Left for the recipient to bring, the
+    // tool opened on somebody else's machine's path and "no such file".
+    const outside = await mkdtemp(join(tmpdir(), 'ai-graph-outside-'));
+    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-whole-'));
+    try {
+      await writeFile(join(outside, 'sales.csv'), 'Region,Total\nNorth,3\n');
+      const graph = await loadGraph(resolve(REPO, 'examples', 'population_plotter'));
+      const picker = graph.page!.blocks.find((block) => block.id === 'file')!;
+      picker.value = join(outside, 'sales.csv');
+      const written = await writeBundle(graph, dir, { dataFrom: REPO });
+      expect(written).toContain('data/sales.csv');
+      expect(await readFile(join(dir, 'data', 'sales.csv'), 'utf8')).toBe('Region,Total\nNorth,3\n');
+      const shipped = JSON.parse(await readFile(join(dir, 'page', 'page.json'), 'utf8')) as { id: string; value: string }[];
+      expect(shipped.find((block) => block.id === 'file')!.value).toBe('data/sales.csv');
+      expect(await readFile(join(dir, 'README.md'), 'utf8')).toContain('- `data/sales.csv`');
+
+      // A file that is not there is no bundle at all -- said, and nothing written.
+      const empty = await mkdtemp(join(tmpdir(), 'ai-graph-refused-'));
+      try {
+        picker.value = join(outside, 'gone.csv');
+        await expect(writeBundle(graph, empty, { dataFrom: REPO })).rejects.toThrow(/cannot be handed on whole: .*gone\.csv" is not there/);
+        expect(await readdir(empty)).toEqual([]);
+      } finally {
+        await rm(empty, { recursive: true, force: true });
+      }
+    } finally {
+      await rm(outside, { recursive: true, force: true });
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('writes a README that names the model settings only when one is asked', async () => {
+    const dir = await bundleOf(resolve(REPO, 'examples', 'population_plotter'));
+    try {
+      const readme = await readFile(join(dir, 'README.md'), 'utf8');
+      // The Node the launchers check for: it said 22 while run.sh refused anything below 24.
+      expect(readme).toContain(`Node ${NODE_MAJOR} or newer`);
+      // The one thing a recipient has to be told, and now the only one: the
+      // interpreter that runs the engine runs every body in the graph too.
+      expect(readme).toContain('Nothing else');
+      // The plotter asks no model, so a page of provider settings would be
+      // instructions for something that never happens.
+      expect(readme).not.toContain('AI_GRAPH_AI_PROVIDER');
+      // What a person is handed is a page of blocks, called that.
+      expect(readme).toContain('## The page');
+      expect(readme).not.toMatch(/\b(interface|widgets?|gui)\b/i);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+});

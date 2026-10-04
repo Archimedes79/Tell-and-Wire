@@ -1,23 +1,24 @@
 {
   "name": "ai-graph",
   "private": true,
-  "description": "One workspace: the engine, and the editor that is built on it.",
+  "description": "One workspace: the graph's code, the editor's server, and the editor's page.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24"
   },
   "workspaces": [
-    "engine",
-    "editor"
+    "graph",
+    "backend",
+    "frontend"
   ],
   "scripts": {
-    "start": "node engine/src/main.ts --editor editor/dist",
+    "start": "node backend/app/main.ts --editor frontend/dist",
     "dev": "node scripts/dev.mjs",
-    "build": "npm run build --workspace editor",
+    "build": "npm run build --workspace frontend",
     "package": "npm run build && node scripts/package.mjs",
     "test": "npm test --workspaces",
     "typecheck": "npm run typecheck --workspaces",
-    "lint": "npm run lint --workspace editor",
+    "lint": "npm run lint --workspace frontend",
     "licenses": "node scripts/licenses.mjs"
   }
 }

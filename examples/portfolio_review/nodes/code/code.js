@@ -257,6 +257,6 @@ if (/^code(\.js)?$/.test(process.getBuiltinModule('node:path').basename(process.
   process.getBuiltinModule('node:vm').runInNewContext(process.getBuiltinModule('node:fs').readFileSync(file, 'utf8'), { module: input });
   const example = input.exports;
   if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input.js has no example yet -- an object keyed by input, written by ✨ Input.');
-  const node = { llm: async () => { throw new Error('node.llm needs the engine: node engine/src/main.ts run-node <project> <node id>'); } };
+  const node = { llm: async () => { throw new Error('node.llm needs the engine: node backend/app/main.ts run-node <project> <node id>'); } };
   Promise.resolve(run(example, node)).then((out) => console.log(JSON.stringify(out, null, 2)));
 }

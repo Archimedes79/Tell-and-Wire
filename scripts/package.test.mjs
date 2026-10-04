@@ -123,7 +123,7 @@ function oldNode() {
 }
 
 test('the zip holds what a person runs', () => {
-  assert.ok(existsSync(join(root, 'editor', 'dist', 'index.html')), 'build the editor first: npm run build');
+  assert.ok(existsSync(join(root, 'frontend', 'dist', 'index.html')), 'build the editor first: npm run build');
   const zip = join(work, 'ai-graph-test.zip');
   const packed = spawnSync(process.execPath, [join(root, 'scripts', 'package.mjs'), zip], {
     cwd: root, encoding: 'utf8', env: { ...process.env, AI_GRAPH_VERSION: 'test' },
@@ -133,7 +133,7 @@ test('the zip holds what a person runs', () => {
   const unpacked = unzip(zip, work);
   assert.equal(unpacked.status, 0, unpacked.stderr);
 
-  for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'engine/src/main.ts', 'editor/dist/index.html', 'editor/dist/licenses.txt']) {
+  for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/app/main.ts', 'frontend/dist/index.html', 'frontend/dist/licenses.txt']) {
     assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
   }
   assert.match(readFileSync(join(folder, 'VERSION'), 'utf8'), /^AI-Graph test\ncommit \S+\nbuilt /);
@@ -144,7 +144,7 @@ test('the zip holds what a person runs', () => {
 test('it runs the graphs it ships with, a graph inside a node included', () => {
   // Serving the page is half of it; the other half is that the engine in the
   // zip runs a graph, without a model and without anything installed.
-  const ran = spawnSync(process.execPath, [join('engine', 'src', 'main.ts'), join('examples', 'nested_statistics')], {
+  const ran = spawnSync(process.execPath, [join('backend', 'app', 'main.ts'), join('examples', 'nested_statistics')], {
     cwd: folder, encoding: 'utf8', env: environment(),
   });
   assert.equal(ran.status, 0, ran.stderr);

@@ -18,11 +18,13 @@ import { readPort, stopEditor } from './editorProcess.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 
-/** What the page is built from, besides the two source folders. */
+/** What the page is built from, besides the source folders. */
 const BUILD_INPUTS = [
-  'package.json', 'package-lock.json', 'editor/package.json', 'editor/index.html', 'editor/runtime.html',
-  'editor/tsconfig.json', 'editor/tsconfig.node.json', 'editor/vite.config.ts', 'editor/tailwind.config.js', 'editor/postcss.config.js',
+  'package.json', 'package-lock.json', 'frontend/package.json', 'frontend/index.html', 'frontend/runtime.html',
+  'frontend/tsconfig.json', 'frontend/tsconfig.node.json', 'frontend/vite.config.ts', 'frontend/tailwind.config.js', 'frontend/postcss.config.js',
 ];
+/** The folders the page's code is in: its own, and the graph's and the backend's, which it imports from. */
+const SOURCES = ['frontend/app', 'frontend/graph-editor', 'frontend/gui-editor', 'graph', 'backend'];
 
 try {
   if (Number(process.versions.node.split('.')[0]) < 24) {
@@ -30,14 +32,14 @@ try {
   }
   await stopEditor(readPort(args));
   if (!await exists(join(root, 'node_modules'))) npm(['ci'], 'Installing dependencies...');
-  const page = join(root, 'editor', 'dist', 'index.html');
+  const page = join(root, 'frontend', 'dist', 'index.html');
   if (!await exists(page) || await sourcesNewerThan((await stat(page)).mtimeMs)) await build();
 } catch (error) {
   console.error(`\n${error.message}`);
   process.exit(1);
 }
 
-const editor = spawn(process.execPath, ['engine/src/main.ts', '--editor', 'editor/dist', ...args], { cwd: root, stdio: 'inherit' });
+const editor = spawn(process.execPath, ['backend/app/main.ts', '--editor', 'frontend/dist', ...args], { cwd: root, stdio: 'inherit' });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => editor.kill(signal));
 editor.on('exit', (code, signal) => process.exit(code ?? (signal ? 0 : 1)));
 editor.on('error', (error) => {
@@ -47,13 +49,15 @@ editor.on('error', (error) => {
 
 async function sourcesNewerThan(builtAt) {
   for (const file of BUILD_INPUTS) if (await modifiedAfter(join(root, file), builtAt)) return true;
-  return await newestIn(join(root, 'editor', 'src'), builtAt) || await newestIn(join(root, 'engine', 'src'), builtAt);
+  for (const folder of SOURCES) if (await newestIn(join(root, folder), builtAt)) return true;
+  return false;
 }
 
 /** Whether any file under *directory* changed after *builtAt*. Tests are not built into the page. */
 async function newestIn(directory, builtAt) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
+    if (entry.name === 'node_modules') continue;
     if (entry.isDirectory() ? await newestIn(path, builtAt) : !entry.name.includes('.test.') && await modifiedAfter(path, builtAt)) return true;
   }
   return false;
