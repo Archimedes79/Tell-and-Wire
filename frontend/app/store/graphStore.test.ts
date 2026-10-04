@@ -62,6 +62,12 @@ describe('graphStore.loadGraph', () => {
     expect(store().exportGraph()).not.toHaveProperty('page');
   });
 
+  it('says the wires it leaves out, to nodes that are not there', () => {
+    const wire = { id: 'w', source_node_id: 'plain', source_port_id: 'output', target_node_id: 'missing', target_port_id: 'input' };
+    expect(store().loadGraph({ metadata: store().metadata, nodes: [graphNode({ id: 'plain' })], edges: [wire] }).dropped).toEqual(['plain.output -> missing.input']);
+    expect(store().rfEdges).toEqual([]);
+  });
+
   /**
    * A graph written by hand, by the MCP server or by a model leaves keys out, and the
    * a run reads each missing one some way. Opening such a graph and saving it must not
@@ -100,7 +106,7 @@ describe('graphStore: what a round remembered', () => {
 describe('graphStore.takeDiskChanges', () => {
   const inner = (nodes: unknown[] = []) => ({ metadata: { name: 'Inner', description: '', gui_scheme: 'night' }, nodes, edges: [] });
 
-  it('takes what changed on disk in as one undo step, and leaves a graph inside a node alone while there is unsaved work', () => {
+  it('takes what changed on disk in without an undo step -- no Undo brings the old text back -- and leaves a graph inside a node alone while there is unsaved work', () => {
     loadTestGraph([
       graphNode({
         id: 'count', node_type: 'code', outputs: [port('total', 'output', 'Total')],
@@ -110,26 +116,31 @@ describe('graphStore.takeDiskChanges', () => {
     ]);
     store().markSaved();
 
-    // The graph a node holds, changed in its folder: taken whole, its ports following.
+    // The graph a node holds, changed in its folder: taken whole, its ports following -- and what is on disk is saved by definition.
     store().takeDiskChanges([{ node_id: 'part', field: NESTED_GRAPH_FIELD, value: inner([graphNode({ id: 'result', node_type: 'end', label: 'Result' })]) }]);
     expect((nodeById('part').config.subgraph as Graph).nodes.map((n) => n.id)).toEqual(['result']);
     expect(nodeById('part').outputs.map((p) => p.name)).toEqual(['Result']);
     expect(store().isDirty()).toBe(false);
 
-    // Code changed on disk: taken -- and what is on disk is saved by definition.
+    // A change made here, then code changed on disk: taken over the unsaved work, which stays.
+    store().updateNode('count', { label: 'Counter' });
     store().takeDiskChanges([
       { node_id: 'count', field: 'code', value: 'function run() { return { total: 2 }; }' },
       { node_id: 'gone', field: 'code', value: 'ignored' },
     ]);
     expect(nodeById('count').config.code).toContain('total: 2');
-    expect(store().isDirty()).toBe(false);
-    store().undo();
-    expect(nodeById('count').config.code).toContain('total: 1');
+    expect(store().isDirty()).toBe(true);
 
-    // With unsaved work here (the undo left some), taking it would replace the whole graph without a word.
+    // With unsaved work here, taking a whole graph would replace it without a word.
     const { refused } = store().takeDiskChanges([{ node_id: 'part', field: NESTED_GRAPH_FIELD, value: inner([graphNode({ id: 'theirs' })]) }]);
     expect(refused).toEqual(['part']);
     expect((nodeById('part').config.subgraph as Graph).nodes.map((n) => n.id)).toEqual(['result']);
+
+    // Undo takes back what was done here, not what the other editor wrote: saved after it, that would be overwritten.
+    store().undo();
+    expect(nodeById('count').label).toBe('Node');
+    expect(nodeById('count').config.code).toContain('total: 2');
+    expect(store().isDirty()).toBe(false);
   });
 });
 

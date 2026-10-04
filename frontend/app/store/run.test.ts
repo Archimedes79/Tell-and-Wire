@@ -4,13 +4,17 @@ import type { RoundSnapshot } from '../api/client';
 
 // The server, as far as a document's session goes: it goes on with the session a
 // document is handed over as, and any other is a new one.
-const server = vi.hoisted(() => ({ sessions: 0 }));
+const server = vi.hoisted(() => ({ sessions: 0, stopped: [] as string[] }));
 vi.mock('../api/client', async (actual) => ({
   ...(await actual<typeof import('../api/client')>()),
   call: vi.fn(async (route: string, body?: { session?: string | null }) => {
     if (route === 'holdGraph') {
       if (!body?.session || body.session !== `s${server.sessions}`) server.sessions += 1;
       return { session: `s${server.sessions}`, dropped: [] };
+    }
+    if (route === 'stopRound') {
+      server.stopped.push((body as unknown as { id: string }).id);
+      return {};
     }
     throw new Error(`not expected here: ${route}`);
   }),
@@ -21,7 +25,8 @@ vi.mock('../api/session', async (actual) => ({
   watchSession: vi.fn(() => () => {}),
 }));
 
-const { useGraphStore } = await import('./graphStore');
+const { useGraphStore, goingRound } = await import('./graphStore');
+const { useSession } = await import('../api/session');
 const store = () => useGraphStore.getState();
 
 const round = (over: Partial<RoundSnapshot> = {}): RoundSnapshot => ({
@@ -34,6 +39,7 @@ const made = (node_id: string, outputs: Record<string, unknown>): ExecutionResul
 
 beforeEach(() => {
   server.sessions = 0;
+  server.stopped.length = 0;
   store().newGraph();
 });
 
@@ -41,25 +47,27 @@ describe('a round of the session', () => {
   it('is followed while it goes, and shows what it made once it has ended', async () => {
     store().addNode('code', { x: 0, y: 0 });
     await store().holdDocument();
-    store().followRound(round({ done: false, completed: 0, total: 2, current_label: 'Count' }));
-    expect(store().isExecuting).toBe(true);
-    expect(store().runProgress).toMatchObject({ completed: 0, total: 2, label: 'Count' });
-    store().followRound(round({ result: made('code', { output: 3 }) }));
-    expect(store().isExecuting).toBe(false);
-    expect(store().runProgress).toBeNull();
+    // As the stream tells it: the session holds the round, and the store follows it.
+    useSession.setState({ round: round({ done: false, completed: 0, total: 2, current_label: 'Count' }) });
+    expect(goingRound()).toMatchObject({ completed: 0, total: 2, current_label: 'Count' });
+    useSession.setState({ round: round({ result: made('code', { output: 3 }) }) });
+    expect(goingRound()).toBeNull();
     expect(store().executionResult?.node_results[0].outputs).toEqual({ output: 3 });
   });
 
-  it('that ends after another graph was opened writes nothing, and shows nothing, there', async () => {
+  it('is stopped when another graph is opened -- a drop, pasted JSON, ✨ -- and writes nothing, and shows nothing, there', async () => {
     store().addNode('code', { x: 0, y: 0 });
     await store().holdDocument();
-    store().followRound(round({ done: false }));
+    useSession.setState({ round: round({ done: false }) });
     // While it runs: another graph, whose code node is called "code" too.
     store().loadGraph({
       metadata: store().metadata,
       nodes: [{ id: 'code', node_type: 'code', label: 'B', description: '', position: { x: 0, y: 0 }, inputs: [], outputs: [], config: { code: 'function run() { return { output: 1 }; }' } } as never],
       edges: [],
     });
+    // Nothing is going any more, so no Stop is left behind; the server was told to end it.
+    expect(goingRound()).toBeNull();
+    expect(server.stopped).toEqual(['r1']);
     store().followRound(round({ result: made('code', { output: { rows: [1, 2] } }) }));
     expect(store().executionResult).toBeNull();
     expect(store().isDirty()).toBe(false);

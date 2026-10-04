@@ -6,7 +6,8 @@ import { wholeList } from '../authoring/perItem';
 import { caughtErrorAt, portIdProblems } from './portIds';
 import { takenAs, type FieldChoice } from '../../app/document/page';
 import { freeId } from '../../app/document/ids';
-import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED, NEUTRAL_BUTTON } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED } from '../../app/ui/theme';
 
 /**
  * What a node takes in and hands out, named by the person who wrote it.
@@ -165,7 +166,7 @@ function PortRow({ port, kind, editable, perPort, readsFiles, wholeOffered, wire
   });
 
   return (
-    <div className="space-y-1" aria-label={`${kind} ${port.id}`}>
+    <div className="space-y-1" role="group" aria-label={`${kind} ${port.id}`}>
       <div className="flex items-center gap-1.5">
         {editable ? (
           <input
@@ -207,7 +208,7 @@ function PortRow({ port, kind, editable, perPort, readsFiles, wholeOffered, wire
                 nobody typed a message. */}
             {kind === 'input' && (
               <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: DIMMER }}
-                title="Needed: when it is wired and nothing arrives on it, this node does not run that round">
+                title="Needed: when it is wired and nothing arrives on it, this node does not run that time">
                 <input type="checkbox" checked={port.required} aria-label="input needed"
                   onChange={(e) => set({ required: e.target.checked }, ONCE)} />
                 needed
@@ -233,15 +234,15 @@ function PortRow({ port, kind, editable, perPort, readsFiles, wholeOffered, wire
                 whole list
               </label>
             )}
-            <button
-              className="text-xs px-1.5 py-1 rounded"
-              style={NEUTRAL_BUTTON}
+            <Button
+              variant="quiet"
+              size="sm"
               title="Remove this port, and any wire on it"
               aria-label={`Remove ${kind} ${port.id}`}
               onClick={remove}
             >
               ✕
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -275,19 +276,17 @@ function Side({ title, hint, kind, ports, fixed, editing, wiring, takes, readsFi
   const problem = editable ? problemOf(ports) : '';
 
   return (
-    <div>
+    <div role="group" aria-label={title}>
       <div className="flex items-baseline justify-between mb-1">
-        <label className="text-xs font-medium" style={{ color: MUTED }}>{title}</label>
+        <h4 className="text-xs font-medium" style={{ color: MUTED }}>{title}</h4>
         {editable && (
-          <button
-            type="button"
-            className="text-xs px-2 py-0.5 rounded"
-            style={NEUTRAL_BUTTON}
+          <Button
+            size="sm"
             onClick={() => onChange([...ports, fresh(kind, new Set(ports.map((p) => p.id)))], ONCE)}
             title={`Add an ${kind}: name it, and wire it on the canvas`}
           >
             + {kind}
-          </button>
+          </Button>
         )}
       </div>
       {hint && <p className="text-xs mb-1.5" style={{ color: DIMMER }}>{hint}</p>}

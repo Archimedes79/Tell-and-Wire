@@ -11,7 +11,7 @@ import { statusTone } from '../../app/store/executionStatus';
  * before this (`frontend/app/elements/resultPreview.ts`, and the element that reads it);
  * this only draws it, in the colours of the run that made it (`statusTone`):
  * green, or amber where it lost items. Faded when the node stood still this
- * round, and what stands is what it made before.
+ * run, and what stands is what it made before.
  */
 export default function ResultPreview({ preview, status = 'success', held }: {
   preview: Preview;

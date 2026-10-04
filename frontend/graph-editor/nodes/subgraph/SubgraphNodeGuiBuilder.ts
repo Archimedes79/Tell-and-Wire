@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { SubgraphNodeRunner } from '../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 const ELEMENT = new SubgraphNodeRunner();
@@ -23,17 +24,19 @@ export class SubgraphNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'A graph inside a node: build a part of the work on its own canvas';
 
-  readonly icon = '🧩';
+  readonly example = 'e.g. Take a paper, and give back a one-paragraph summary and a verdict';
 
-  readonly color = 'var(--ui-node-subgraph, #2a2a4a)';
+  readonly color = NODE.subgraph;
 
   // A graph of its own, one node wide from out here: the way a graph grows
   // in depth rather than in width.
   override readonly paletteGroup = 'Structure';
 
-  override readonly ownsDescription = true;
-
   override readonly Panel = lazy(() => import('./SubgraphNodePanel'));
+
+  override readonly AdvancedPanel = lazy(() => import('./SubgraphNodeAdvancedPanel'));
+
+  override readonly advancedSummary = 'ports, once per item, failures';
 
   override describeOutput(node: GraphNode): string {
     const ports = ELEMENT.derivedPorts(node as never, runnerRegistry)?.outputs ?? [];

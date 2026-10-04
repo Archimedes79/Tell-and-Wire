@@ -31,10 +31,10 @@ export function fileActions({ busyWith, isProject, onNew, onDesign, onOpen, onSa
   // Not while a run or a sweep is going: what they bring back is for the
   // graph they started on, and is dropped once another is open.
   return [
-    { label: 'New', hint: 'An empty graph', blocked: busyWith, onSelect: onNew },
+    { label: 'New', hint: 'An empty tool', blocked: busyWith, onSelect: onNew },
     // Designing a new graph lives beside New: changing this one is the bar under the canvas.
     { label: '✨ Describe a graph…', hint: 'Say what it should do; the AI builds it', onSelect: onDesign },
-    { label: 'Open…', hint: 'A graph file or a project folder', blocked: busyWith, onSelect: onOpen },
+    { label: 'Open…', hint: 'A tool folder or a graph file', blocked: busyWith, onSelect: onOpen },
     { label: 'Save', shortcut: 'Ctrl+S', divided: true, onSelect: onSave },
     { label: 'Save as…', onSelect: onSaveAs },
     // Code and prompts that change on disk come in by themselves; this is
@@ -109,7 +109,7 @@ export default function FileMenu({ actions, where }: { actions: FileAction[]; wh
         aria-expanded={!!at}
         className="h-8 shrink-0 flex items-center gap-1 rounded-md px-2.5 text-sm font-medium hover-raise"
         style={{ color: TEXT }}
-        title="New, Open, Save, Save as…, and the graph as JSON"
+        title="New, Open, Save, Save as…, and the tool as JSON"
       >
         File
         <ChevronDown size={14} strokeWidth={2} aria-hidden="true" style={{ color: MUTED }} />

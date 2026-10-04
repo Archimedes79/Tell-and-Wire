@@ -3,6 +3,7 @@ import type { GraphNode } from '../../../app/graph';
 import { ERROR_PORT } from '../../../../graph/execution/wiring.ts';
 import { definitionsIn } from '../../../../graph/authoring/definition.ts';
 import { withFile } from '../../../app/document/givenFiles';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 export class CodeNodeGuiBuilder extends NodeGuiBuilder {
@@ -14,14 +15,11 @@ export class CodeNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'Run JavaScript -- say what it should do, and ✨ writes it';
 
-  readonly icon = '⚙️';
+  readonly example = 'e.g. Count the words in the text and return the number';
 
-  readonly color = 'var(--ui-node-code, #1a3a2a)';
+  readonly color = NODE.code;
 
   override readonly paletteGroup = 'Processing';
-
-  // Its text is what it should do, drawn by its panel above what ✨ writes from it.
-  override readonly ownsDescription = true;
 
   override readonly definesItself = true;
 

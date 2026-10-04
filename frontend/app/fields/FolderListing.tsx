@@ -1,6 +1,7 @@
 import React from 'react';
 import { errorText } from '../api/errorText';
-import { DANGER_TEXT, DIMMER, MUTED, NEUTRAL_BUTTON, SUNKEN, TEXT } from '../ui/theme';
+import Button from '../ui/Button';
+import { DANGER_TEXT, DIMMER, MUTED, SUNKEN, TEXT } from '../ui/theme';
 
 /** How many paths of a listing are shown; the rest are counted. */
 const SHOWN = 40;
@@ -56,13 +57,12 @@ export default function FolderListing({ recursive, onRecursive, noFolder, list, 
         Look into subfolders too
       </label>
       <p className="text-xs" style={{ color: DIMMER }}>
-        Hands on every file it lists, as a list of paths. To use only some of them, wire a code node after it that keeps those.
+        Hands on every file it lists. To keep only some, wire a code node after it.
       </p>
-      <button className="text-xs px-2 py-1 rounded" style={{ ...NEUTRAL_BUTTON, opacity: busy || noFolder ? 0.5 : 1 }}
-        disabled={busy || noFolder} onClick={show}
+      <Button size="sm" disabled={busy || noFolder} onClick={show}
         title={noFolder ? 'Choose a folder first' : 'List the folder the way a run lists it: its file types, and its subfolders when it looks into them'}>
         {busy ? 'Listing…' : files ? 'List them again' : 'Show the files it lists'}
-      </button>
+      </Button>
       {failure && <p className="text-xs" style={{ color: DANGER_TEXT }}>{failure}</p>}
       {files && (
         <div className="text-xs rounded px-2 py-1.5" style={{ background: SUNKEN }}>

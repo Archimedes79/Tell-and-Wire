@@ -4,12 +4,16 @@ import type { Graph, GraphNode } from './graph';
 // What ▶ Run starts: the application, as whoever gets the tool runs it -- its
 // clock kept by the server's session, the document handed to it first.
 
-const server = vi.hoisted(() => ({ asked: [] as string[], ticks: false }));
+const server = vi.hoisted(() => ({ asked: [] as string[], ticks: false, hold: null as Promise<void> | null, down: false }));
 vi.mock('./api/client', async (actual) => ({
   ...(await actual<typeof import('./api/client')>()),
   call: vi.fn(async (route: string, _request?: unknown, options?: { keepalive?: boolean }) => {
     server.asked.push(options?.keepalive ? `${route}, as the page closes` : route);
-    if (route === 'holdGraph') return { session: 's1', dropped: [] };
+    if (route === 'holdGraph') {
+      await server.hold;
+      if (server.down) throw new Error('The server did not answer.');
+      return { session: 's1', dropped: [] };
+    }
     if (route === 'startApplication') return { ticks: server.ticks };
     return { stopped: true };
   }),
@@ -47,7 +51,7 @@ const open = (graph: Graph): Graph => {
   return useGraphStore.getState().rootGraph();
 };
 
-beforeEach(() => { whole = 0; server.asked.length = 0; server.ticks = false; vi.useFakeTimers(); });
+beforeEach(() => { whole = 0; server.asked.length = 0; server.ticks = false; server.hold = null; server.down = false; vi.useFakeTimers(); });
 afterEach(async () => {
   await stopApplication();
   vi.useRealTimers();
@@ -68,6 +72,24 @@ describe('the application ▶ Run starts', () => {
     expect(whole).toBe(1);
     expect(useApplication.getState().running).toBe(false);
     expect(server.asked[server.asked.length - 1]).toBe('stopApplication');
+  });
+
+  it('is not started by what comes after a ■ Stop pressed while the document is on its way -- and a document that cannot be handed over leaves it not running', async () => {
+    const graph = open(paged([button], node('work', 'code')));
+    let release!: () => void;
+    server.hold = new Promise<void>((resolve) => { release = resolve; });
+    const starting = startApplication(graph, runWhole);
+    await vi.waitFor(() => expect(server.asked).toContain('holdGraph'));
+    await stopApplication();
+    release();
+    await starting;
+    expect(server.asked).not.toContain('startApplication');
+    expect(useApplication.getState().running).toBe(false);
+
+    server.hold = null;
+    server.down = true;
+    await expect(startApplication(graph, runWhole)).rejects.toThrow('did not answer');
+    expect(useApplication.getState().running).toBe(false);
   });
 
   it('ends with the editor: closed or reloaded while it runs, the server clock is stopped', async () => {

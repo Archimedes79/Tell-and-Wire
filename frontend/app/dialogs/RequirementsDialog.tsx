@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { Requirement } from '../api/client';
 import Modal from '../ui/Modal';
+import Button from '../ui/Button';
 import PathField from './PathField';
-import { MUTED, NEUTRAL_BUTTON, PRIMARY_BUTTON } from '../ui/theme';
+import { MUTED } from '../ui/theme';
 
 interface RequirementsDialogProps {
   requirements: Requirement[] | null;
@@ -13,11 +14,12 @@ interface RequirementsDialogProps {
 const KIND_ICON: Record<string, string> = { file: '📄', directory: '📁' };
 
 /**
- * The "before running" window: what a round the page starts asks before it
- * can run -- a file or a folder for each picker with nothing chosen.
+ * The "before running" window: what a run the page starts asks before it
+ * can go -- a file or a folder for each picker with nothing chosen.
  */
 export default function RequirementsDialog({ requirements, onSubmit, onCancel }: RequirementsDialogProps) {
   const [values, setValues] = useState<Record<string, string>>({});
+  const id = useId();
 
   // Answers are kept by each question's own key: the block that asked, which
   // the backend hands each answer to.
@@ -37,7 +39,7 @@ export default function RequirementsDialog({ requirements, onSubmit, onCancel }:
 
   return (
     <Modal
-      title="📥 Before running…"
+      title="Choose files for the run"
       onClose={onCancel}
       // Typed paths; a backdrop click must not discard them. Escape is the
       // deliberate way out and matches Cancel.
@@ -50,21 +52,8 @@ export default function RequirementsDialog({ requirements, onSubmit, onCancel }:
               Still needed: {missing.join(', ')}
             </span>
           )}
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-sm rounded-lg"
-            style={NEUTRAL_BUTTON}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSubmit(values)}
-            disabled={!canSubmit}
-            className="px-4 py-2 text-sm rounded-lg font-semibold"
-            style={{ ...PRIMARY_BUTTON, opacity: canSubmit ? 1 : 0.5 }}
-          >
-            ▶ Run Graph
-          </button>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button variant="primary" onClick={() => onSubmit(values)} disabled={!canSubmit}>▶ Run the tool</Button>
         </>
       }
     >
@@ -76,24 +65,26 @@ export default function RequirementsDialog({ requirements, onSubmit, onCancel }:
 
       <div
         className="px-6 py-5 space-y-4"
-        // Enter in any field runs, as in every other one-purpose dialog.
+        // Enter in a path box runs, as in every other one-purpose dialog; on
+        // Browse… or a row of the file browser it is that button's, not a run.
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && canSubmit) onSubmit(values);
+          if (e.key === 'Enter' && canSubmit && e.target instanceof HTMLInputElement) onSubmit(values);
         }}
       >
         {requirements.map((req, index) => (
           <div key={req.key}>
-            <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>
+            <label htmlFor={`${id}-${index}`} className="block text-xs font-medium mb-1" style={{ color: MUTED }}>
               {KIND_ICON[req.kind] ?? '📄'}{' '}
               {`${req.kind === 'directory' ? 'Folder' : 'File'} for "${req.label}"`}
             </label>
             {/* Typing an absolute path from memory was the only way to answer
                 this dialog; a path field offers a picker. */}
             <PathField
+              id={`${id}-${index}`}
               value={values[req.key] ?? ''}
               onChange={(path) => set(req.key, path)}
               mode={req.kind}
-              placeholder={req.kind === 'directory' ? '/path/to/directory' : '/path/to/file'}
+              placeholder={req.kind === 'directory' ? 'Choose a folder…' : 'Choose a file…'}
               mono
               autoFocus={index === 0}
             />

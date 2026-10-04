@@ -2,7 +2,7 @@
 // outputs showed, the round going or gone -- as the server tells it, by name.
 //
 // One for every page that shows a graph in use -- the delivered tool, the
-// editor's App and Gui tabs -- fed by the server's stream
+// editor's App and Page tabs -- fed by the server's stream
 // (`GET /api/runtime/stream`): the session on connect and after every change,
 // each round as it starts, goes and ends, whoever started it -- this page,
 // another tab, the clock.
@@ -137,6 +137,11 @@ function refused(reason: string, started: RoundSnapshot['started']): RoundSnapsh
   };
 }
 
+/** Say that a round for *event* could not start, as every failed round is said. */
+export function roundRefused(error: unknown, event: string | null, by?: string): void {
+  useSession.setState({ round: refused(errorText(error, 'The run could not start.'), event ? { event, by: by ?? 'call' } : null) });
+}
+
 /**
  * Start a round for *event* -- the whole graph for none -- asked with *ask*:
  * one the page starts is `by` the block that fired it, and sent what the
@@ -150,7 +155,7 @@ export async function startRound(event: string | null, ask: RoundAsk = {}): Prom
   try {
     ({ round_id: id } = await call('startRound', { event, ...ask }));
   } catch (error) {
-    useSession.setState({ round: refused(errorText(error, 'The round could not start.'), event ? { event, by: ask.by ?? 'call' } : null) });
+    roundRefused(error, event, ask.by);
     return;
   }
   const early = endedEarly.get(id);

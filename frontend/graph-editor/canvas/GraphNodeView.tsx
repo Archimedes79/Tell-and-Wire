@@ -5,7 +5,7 @@ import type { GraphNode, GuiWidget, NodeResult, Port } from '../../app/graph';
 import { takesNewInputs, useGraphStore } from '../../app/store/graphStore';
 import { NODE_BUILDERS } from '../../app/elements/registry';
 import { errorLine, portPreviews } from '../../app/elements/resultPreview';
-import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT } from '../../app/ui/theme';
+import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../app/ui/theme';
 import { cut } from '../../app/ui/cut';
 import { hasOutputs, statusTone } from '../../app/store/executionStatus';
 import { blocksAt } from '../../app/document/page';
@@ -16,25 +16,26 @@ import { errorText } from '../../app/api/errorText';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import ResultPreview, { ErrorPreview } from './ResultPreview';
 import NodeKind from './NodeKind';
-import { askToDelete } from './nodeRemoval';
+import Button from '../../app/ui/Button';
+import { useIsWriting } from '../authoring/useGenerate';
 
 // Colour AND a glyph: a red/green 8px dot is unreadable both to a screen
 // reader and to a colour-blind user scanning a canvas for the failed node.
 // One for every status a run reports, so none goes without a dot.
 const statusStyles: Record<NodeResult['status'] | 'held', { color: string; glyph: string; title: string }> = {
   success: { color: SUCCESS, glyph: '✓', title: 'Succeeded' },
-  // Delivered, with items lost: amber, as in the results panel.
-  partial: { color: '#f59e0b', glyph: '◐', title: 'Some items failed; the others delivered' },
+  // Delivered, with items lost: the warning colour, as in the results panel.
+  partial: { color: WARNING, glyph: '◐', title: 'Some items failed; the others delivered' },
   error: { color: DANGER, glyph: '!', title: 'Failed' },
   // Something it needs failed, the run was stopped, or its ◆ stayed shut.
-  skipped: { color: '#6b7280', glyph: '–', title: 'Did not run' },
-  // Did not run this round: its ◆ stayed shut, and what it made before stands.
-  held: { color: '#6b7280', glyph: '‖', title: 'Did not run this round: what it produced in an earlier round stands' },
+  skipped: { color: DIM, glyph: '–', title: 'Did not run' },
+  // Did not run this time: its ◆ stayed shut, and what it made before stands.
+  held: { color: DIM, glyph: '‖', title: 'Did not run: what it made in an earlier run stands' },
 };
 
 /**
  * One port, as a dot on the card's edge -- or, for a start point's, where a
- * round begins, the amber diamond an event wears everywhere. The dot is drawn
+ * run begins, the amber diamond an event wears everywhere. The dot is drawn
  * inside a bare handle rather than as it, so the diamond can turn while the
  * name beside it stays level. The name shows while the card is under the
  * pointer -- which is while a wire is being dragged to it -- and is always the
@@ -56,7 +57,7 @@ function PortDot({ port, type, side, top, lit, fires }: {
     ? { background: EVENT, border: `2px solid ${SURFACE}`, borderRadius: 2, transform: 'rotate(45deg)' }
     : { background: port.multi ? SURFACE : colour, border: `2px solid ${port.multi ? colour : SURFACE}`, borderRadius: '50%' };
   const title = fires
-    ? `${port.description || port.name} — a round begins here, at whatever this is wired to.`
+    ? `${port.description || port.name} — a run begins here, at whatever this is wired to.`
     : `${port.description || port.name}${port.multi ? ' (a list)' : ''}`;
   return (
     <Handle
@@ -109,6 +110,8 @@ function pageLine(node: GraphNode, page: GuiWidget[]): string | undefined {
 const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const { graphNode } = data;
   const open = useGraphStore((s) => s.editingNodeId === id);
+  // ✨ is writing for it, whether or not its panel is open.
+  const writing = useIsWriting(id);
   const executionResult = useGraphStore((s) =>
     s.executionResult?.node_results.find((r) => r.node_id === id)
   );
@@ -134,7 +137,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const statusTitle = executionResult?.status === 'skipped'
     ? executionResult.messages?.[0] ?? status?.title
     : status?.title;
-  // Where a round begins: its ports are events, and nothing gates it.
+  // Where a run begins: its ports are events, and nothing gates it.
   const events = new Set(runnerRegistry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
   const connected = useGraphStore((s) => pageLine(graphNode, s.page));
   const summary = builder?.canvasSummary?.(graphNode);
@@ -177,11 +180,10 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
     setDropFailed('');
     dropExample(id, dropInto, file).catch((reason) => setDropFailed(errorText(reason, 'The file could not be read.')));
   }, [id, dropInto]);
-  // The same question Delete on the canvas asks, when there is one to ask:
-  // its wires, what the page connects to it (`askToDelete`).
+  // As Delete on the canvas: nothing is asked, and Ctrl+Z puts it back.
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    askToDelete([id], [], window.confirm);
+    useGraphStore.getState().deleteNodes([id]);
   }, [id]);
 
   // A wire on its way from another node's output: where dropping it on the
@@ -208,14 +210,14 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       }}
     >
       {/* The run port: every node has it and no node declares it. A start
-          point is the one kind that does not -- it is where rounds begin,
+          point is the one kind that does not -- it is where runs begin,
           not where they go. */}
       {!events.size && (
         <Handle
           type="target"
           position={Position.Top}
           id={RUN_PORT}
-          title="Start here. Wire a start point to this, and the round it begins runs the graph from this node on. It carries no value."
+          title="Start here. Wire a start point to this, and the run it begins goes from this node on. It carries no value."
           style={{ width: 12, height: 12, top: -7, left: 18, transform: 'none', background: 'transparent', border: 'none', borderRadius: 0 }}
         >
           <span
@@ -229,6 +231,9 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         <div className="flex items-center gap-2 min-w-0">
           <NodeKind node={graphNode} />
           <span className="flex-1" />
+          {writing && (
+            <span className="shrink-0 text-xs animate-pulse" role="img" aria-label="✨ is writing for this node" title="✨ is writing for this node">✨</span>
+          )}
           {status && (
             <span
               className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
@@ -242,15 +247,16 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
           )}
           {/* Out of the way until it is wanted: on the card under the pointer,
               or the one selected. `nodrag`: pressing it does not start a move. */}
-          <button
+          <Button
+            variant="danger"
+            size="sm"
             onClick={handleDelete}
-            className={`nodrag shrink-0 rounded px-1 text-xs leading-4 transition-opacity group-hover:opacity-100 focus:opacity-100 ${lit ? 'opacity-100' : 'opacity-0'}`}
-            style={{ color: MUTED }}
+            className={`nodrag shrink-0 -my-1 -mr-1.5 transition-opacity group-hover:opacity-100 focus:opacity-100 ${lit ? 'opacity-100' : 'opacity-0'}`}
             title="Delete node"
             aria-label={`Delete node ${graphNode.label}`}
           >
-            ✕
-          </button>
+            🗑
+          </Button>
         </div>
         <div className="truncate text-sm font-semibold" style={{ color: TEXT }} title={graphNode.label}>
           {graphNode.label}

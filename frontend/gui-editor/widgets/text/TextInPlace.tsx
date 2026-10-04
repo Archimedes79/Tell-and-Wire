@@ -37,6 +37,7 @@ export default function TextInPlace({ widget, cell, rows, onText, onRows }: Inli
       onChange={(event) => { onText(event.target.value); fit(event.target); }}
       onMouseDown={(event) => event.stopPropagation()}
       placeholder={role === 'heading' ? 'Heading' : 'Write something… Markdown works: **bold**, lists, links'}
+      aria-label={widget.label || (role === 'heading' ? 'Heading' : 'Text')}
       spellCheck
     />
   );

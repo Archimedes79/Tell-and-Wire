@@ -4,15 +4,16 @@ import { GuiSurfacePage } from '../page/GuiPage';
 import { useRound } from '../page/useRound';
 import CallForms from '../page/CallForms';
 import type { InterfaceEntry } from '../../../backend/gui-editor/graphInterface.ts';
-import { useSchemeOnRoot } from '../page/useSchemeOnRoot';
 import { connectionsOf, pageInUse, type PageDesign } from '../page/pageInUse';
 import RequirementsDialog from '../../app/dialogs/RequirementsDialog';
 import DeliveredHeader from '../page/DeliveredHeader';
 import RuntimeAISettings from './RuntimeAISettings';
 import { call } from '../../app/api/client';
-import { setEdit, startOver, useSession, watchSession } from '../../app/api/session';
+import { roundGoing, setEdit, startOver, useSession, watchSession } from '../../app/api/session';
 import { errorText } from '../../app/api/errorText';
-import { DANGER_TEXT, DIM, NEUTRAL_BUTTON, SUNKEN } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { schemeVars } from '../../app/ui/scheme';
+import { DANGER_FILL, DANGER_TEXT, DIM, SUNKEN } from '../../app/ui/theme';
 
 /** Which design of which session: what a drawn page was drawn from. */
 const designOf = (session: string, revision: number): string => `${session}#${revision}`;
@@ -37,12 +38,11 @@ const designOf = (session: string, revision: number): string => `${session}#${re
  * Served by the bundle's `backend/app/serve.ts` at `runtime.html`.
  */
 export default function RuntimeApp() {
-  const [design, setDesign] = useState<(PageDesign & { startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
+  const [design, setDesign] = useState<(PageDesign & { scheme: string; startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
   const [loadError, setLoadError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const session = useSession();
-  // A deployed tool looks like the thing that was designed, scheme included.
-  useSchemeOnRoot(design?.scheme);
+  const busy = roundGoing(session);
 
   const load = useCallback(() => {
     Promise.all([call('page'), call('interface')])
@@ -91,29 +91,31 @@ export default function RuntimeApp() {
   const finishedAt = session.view?.finished_at;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ background: SUNKEN }}>
+    // A deployed tool looks like the thing that was designed, scheme included.
+    <div className="flex flex-col h-screen overflow-hidden" style={{ ...schemeVars(design?.scheme), background: SUNKEN }}>
       <DeliveredHeader
         name={design?.name ?? ''}
         description={design?.description ?? ''}
         round={session.round}
         tools={(
           <>
-            <button
+            <Button
+              size="sm"
+              className="shrink-0"
               onClick={() => { void startOver(); }}
-              className="px-3 py-1.5 text-xs rounded-lg shrink-0"
-              style={NEUTRAL_BUTTON}
+              disabled={busy}
               title="Forget what using this tool left behind: what was sent, what it remembers, what the page holds"
             >
               ↺ Start over
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              className="shrink-0"
               onClick={() => setShowSettings(true)}
-              className="px-3 py-1.5 text-xs rounded-lg shrink-0"
-              style={NEUTRAL_BUTTON}
               title="Point this tool at a different AI"
             >
               ⚙ AI Settings
-            </button>
+            </Button>
           </>
         )}
         note={clock?.runs_by_itself && (
@@ -127,7 +129,7 @@ export default function RuntimeApp() {
 
       <div className="flex-1 relative overflow-auto">
         {loadError && (
-          <div className="m-6 text-sm rounded-lg px-4 py-3" style={{ background: 'rgba(239,68,68,0.1)', color: DANGER_TEXT }}>
+          <div className="m-6 text-sm rounded-lg px-4 py-3" style={{ background: DANGER_FILL, color: DANGER_TEXT }}>
             {loadError}
           </div>
         )}
@@ -139,7 +141,7 @@ export default function RuntimeApp() {
             then the page, or, when it has no blocks, what the tool does and
             what its run hands back: the editor's running application draws the same. */}
         {design && (
-          <CallForms events={design.events} sent={session.view?.sent ?? {}} onCall={(event, values) => { void round.run(event, undefined, values); }} />
+          <CallForms events={design.events} sent={session.view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />
         )}
         {design && (
           <GuiSurfacePage

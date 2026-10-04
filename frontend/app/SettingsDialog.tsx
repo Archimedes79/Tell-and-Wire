@@ -1,138 +1,190 @@
 import { useEffect, useState } from 'react';
 import type { AIProvider } from './graph';
-import { call, type SettingsStatus } from './api/client';
+import { call, type SettingsPatch, type SettingsStatus } from './api/client';
 import { errorText } from './api/errorText';
-import ProviderModelSelect, { nowText, refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
-import AICredentialsSection from './AICredentialsSection';
+import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
 import Modal from './ui/Modal';
-import { ACCENT_FILL, ACCENT_TEXT, DIM, PRIMARY_BUTTON, TEXT } from './ui/theme';
+import Button from './ui/Button';
+import { DEFAULT_SETTINGS } from '../../graph/ai/providers.ts';
+import { ACCENT_FILL, ACCENT_TEXT, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS, TEXT } from './ui/theme';
 
-interface SettingsDialogProps {
-  onClose: () => void;
-}
+/** Where each provider's key comes from, said where the key is typed. */
+const KEY_HINTS: Record<string, string> = {
+  openai: 'From platform.openai.com',
+  anthropic: 'From console.anthropic.com',
+  google: 'Free key from aistudio.google.com/apikey',
+  github_copilot: 'A GitHub token with the models:read scope',
+  openai_compatible: 'Whatever your endpoint expects',
+};
+
+const label = (id: string): string => AI_PROVIDER_LABELS[id as AIProvider] ?? id;
 
 /**
- * The one AI setting: which AI ✨, ▶ Try and every run call,
- * wherever a node does not pin its own. This machine's, saved in
- * `ai-settings.json` beside the keys it needs and never in a graph, so a graph
- * handed to someone else runs on whatever they chose.
+ * The AI the tool asks and what it needs to ask it, as one form with one Save:
+ * the provider and model that ✨, ▶ Try and every run call wherever a node
+ * names none, the keys, and the servers' addresses. This machine's, saved in
+ * `ai-settings.json` and never in a graph, so a graph handed to someone else
+ * runs on whatever they chose.
  *
- * "Now" is the backend's answer (`aiSetting`, through the status route), not
- * worked out here: it is what a run will call, environment and all.
+ * Keys are write-only by design: the server reports whether one is set and
+ * where it came from, never its value, so a key never travels back into the
+ * browser. The rows are what the backend's status names (`CREDENTIALS`,
+ * `ENDPOINT_ENV` in `graph/ai/providers.ts`), not a list of their own.
+ *
+ * "Now" is the backend's answer (`providers`), not worked out here: it is what
+ * a run will call, environment and all.
  */
-function OneAiSetting() {
-  const status = useProviderStatus();
-  const [saved, setSaved] = useState<SettingsStatus['ai'] | null>(null);
-  const [draft, setDraft] = useState<{ provider: AIProvider; model: string }>({ provider: 'default', model: '' });
-  const [message, setMessage] = useState('');
-
-  const show = (ai: SettingsStatus['ai']) => {
-    setSaved(ai);
-    setDraft({ provider: (ai.provider || 'default') as AIProvider, model: ai.model });
-  };
+export default function SettingsDialog({ onClose }: { onClose: () => void }) {
+  const probe = useProviderStatus();
+  const [saved, setSaved] = useState<SettingsStatus | null>(null);
+  const [provider, setProvider] = useState<AIProvider>('default');
+  const [model, setModel] = useState('');
+  const [endpoints, setEndpoints] = useState<Record<string, string>>({});
+  /** Keys typed and not saved yet, by provider; and the stored keys to take away. */
+  const [keys, setKeys] = useState<Record<string, string>>({});
+  const [removing, setRemoving] = useState<string[]>([]);
+  const [problem, setProblem] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    call('aiSettings').then((data) => show(data.ai)).catch((e) => setMessage(errorText(e, 'Could not read the AI settings file.')));
+    // A local model that started since the editor did is running now: asked again as Settings opens.
+    refreshProviderStatus();
+    call('aiSettings').then((data) => {
+      setSaved(data);
+      setProvider((data.ai.provider || 'default') as AIProvider);
+      setModel(data.ai.model);
+      setEndpoints(data.endpoints);
+    }).catch((error) => setProblem(errorText(error, 'Could not read the AI settings file.')));
   }, []);
 
-  const changed = saved !== null && (draft.provider !== (saved.provider || 'default') || draft.model !== saved.model);
+  const typedKeys = Object.fromEntries(Object.entries(keys).map(([id, key]) => [id, key.trim()]).filter(([, key]) => key));
+  const changed = saved !== null && (
+    provider !== (saved.ai.provider || 'default') || model !== saved.ai.model
+    || Object.keys(saved.endpoints).some((id) => (endpoints[id] ?? '') !== saved.endpoints[id])
+    || Object.keys(typedKeys).length > 0 || removing.length > 0
+  );
 
   const save = async () => {
-    setMessage('');
+    const patch: SettingsPatch = { ai: { provider, model }, endpoints, api_keys: typedKeys, clear_keys: removing };
+    setSaving(true);
+    setProblem('');
     try {
-      show((await call('saveAiSettings', { ai: draft })).ai);
+      await call('saveAiSettings', patch);
       refreshProviderStatus();
-      setMessage('Saved.');
-    } catch (e) {
-      setMessage(errorText(e, 'Could not save the AI settings file.'));
+      onClose();
+    } catch (error) {
+      setProblem(errorText(error, 'Could not save the AI settings file.'));
+      setSaving(false);
     }
   };
 
-  return (
-    <>
-      <ProviderModelSelect
-        provider={draft.provider}
-        model={draft.model}
-        onProviderChange={(provider) => setDraft((prev) => ({ ...prev, provider }))}
-        onModelChange={(model) => setDraft((prev) => ({ ...prev, model }))}
-        defaultLabel={() => 'Not set (a local model that is running, else Ollama)'}
-      />
-      <div className="flex items-center gap-3 mt-3 text-xs">
-        <button
-          className="px-2.5 py-1.5 rounded-lg"
-          style={{ ...PRIMARY_BUTTON, opacity: changed ? 1 : 0.5 }}
-          disabled={!changed}
-          onClick={save}
-        >
-          Save
-        </button>
-        <span style={{ color: DIM }}>Now: <strong style={{ color: TEXT }}>{nowText(status)}</strong></span>
-        {message && <span style={{ color: ACCENT_TEXT }}>{message}</span>}
-      </div>
-      {saved && saved.environment.length > 0 && (
-        <div className="text-xs rounded-lg px-3 py-2 mt-3" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
-          {saved.environment.map((variable, i) => <span key={variable}>{i > 0 && ' and '}<code>{variable}</code></span>)}{' '}
-          {saved.environment.length > 1 ? 'are' : 'is'} set where the editor was started. That is the same
-          setting, for a machine without this dialog, and it wins over what is saved here.
-        </div>
-      )}
-    </>
-  );
-}
+  const toggleRemoving = (id: string) => setRemoving((now) => (now.includes(id) ? now.filter((one) => one !== id) : [...now, id]));
 
-export default function SettingsDialog({ onClose }: SettingsDialogProps) {
   return (
     <Modal
       title="⚙ Settings"
       onClose={onClose}
       maxWidth="max-w-2xl"
+      dismissOnBackdrop={false}
       footer={
-        <button
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs rounded-lg font-semibold"
-          style={PRIMARY_BUTTON}
-        >
-          Done
-        </button>
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={() => { void save(); }} disabled={!changed || saving}>{saving ? '…' : 'Save'}</Button>
+        </>
       }
     >
       <div className="p-5 space-y-6">
-          <section>
-            <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>
-              AI
-            </h3>
-            <p className="text-xs mb-3" style={{ color: DIM }}>
-              What ✨, ▶ Try and every run call — for each AI node left on
-              “Use the setting in ⚙ Settings”, and for code that asks a model. A node that names
-              its own provider and model always uses those instead. Saved on this machine in{' '}
-              <code>ai-settings.json</code>, never in a graph: a graph you share runs on whatever
-              its recipient set here.
-            </p>
-            <OneAiSetting />
-          </section>
+        <section>
+          <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI</h3>
+          <p className="text-xs mb-3" style={{ color: DIM }}>
+            What ✨, ▶ Try and every run call, unless a node names its own.
+          </p>
+          <ProviderModelSelect
+            provider={provider}
+            model={model}
+            onProviderChange={setProvider}
+            onModelChange={setModel}
+            defaultLabel={() => 'Not set (a local model that is running, else Ollama)'}
+          />
+          <p className="text-xs mt-3" style={{ color: DIM }}>Now: <strong style={{ color: TEXT }}>{nowText(probe)}</strong></p>
+          {saved && saved.ai.environment.length > 0 && (
+            <div className="text-xs rounded-lg px-3 py-2 mt-3" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
+              {saved.ai.environment.map((variable, i) => <span key={variable}>{i > 0 && ' and '}<code>{variable}</code></span>)}{' '}
+              {saved.ai.environment.length > 1 ? 'are' : 'is'} set where the editor was started and wins over what is saved here.
+            </div>
+          )}
+        </section>
 
-          <section>
-            <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>
-              What starts this graph
-            </h3>
-            <p className="text-xs" style={{ color: DIM }}>
-              A <strong>▶️ Start point</strong> does, and it starts the graph at what it is wired to.
-              <strong> The page</strong> starts one — a button, a chat message, a dropdown told to —,
-              so does <strong>a call</strong> from a script or the graph above, and a start point can
-              start <strong>itself</strong>: when the tool starts, and on a clock. Add one from the
-              palette and wire its data into the first node that works on it.
-            </p>
-          </section>
+        {saved && (
+          <>
+            <section>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Keys</h3>
+              <div className="space-y-2">
+                {Object.keys(saved.credentials).map((id) => {
+                  const state = saved.credentials[id];
+                  const going = removing.includes(id);
+                  return (
+                    <div key={id} className="flex items-center gap-2">
+                      <div className="w-36 shrink-0">
+                        <div className="text-xs font-medium" style={{ color: TEXT }}>{label(id)}</div>
+                        <div className="text-xs" style={{ color: going ? DANGER_TEXT : state.configured ? SUCCESS : DIMMER }}>
+                          {going ? 'key will be removed' : state.configured ? `key set (${state.source})` : 'no key'}
+                        </div>
+                      </div>
+                      <input
+                        type="password"
+                        className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-sm font-mono"
+                        style={FIELD}
+                        value={keys[id] ?? ''}
+                        onChange={(e) => setKeys((now) => ({ ...now, [id]: e.target.value }))}
+                        placeholder={state.configured ? 'Enter a new key to replace it' : KEY_HINTS[id] ?? 'Its API key'}
+                        autoComplete="off"
+                        disabled={going}
+                        aria-label={`${label(id)} API key`}
+                      />
+                      {state.configured && state.source === 'settings file' && (
+                        <Button
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => toggleRemoving(id)}
+                          title={going ? 'Keep the stored key' : `Remove the stored ${label(id)} key`}
+                        >
+                          {going ? 'Keep' : 'Remove'}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
-          <section>
-            <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>
-              Keys and addresses
-            </h3>
-            <p className="text-xs mb-3" style={{ color: DIM }}>
-              What the providers need in order to answer: the setting above, and any a node names.
+            <section>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Server addresses</h3>
+              <div className="space-y-2">
+                {Object.keys(saved.endpoints).map((id) => (
+                  <div key={id} className="flex items-center gap-2">
+                    <label htmlFor={`address-${id}`} className="w-36 shrink-0 text-xs font-medium" style={{ color: TEXT }}>{label(id)}</label>
+                    <input
+                      id={`address-${id}`}
+                      className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-sm font-mono"
+                      style={FIELD}
+                      value={endpoints[id] ?? ''}
+                      onChange={(e) => setEndpoints((now) => ({ ...now, [id]: e.target.value }))}
+                      placeholder={DEFAULT_SETTINGS.endpoints[id] || 'https://my-endpoint.example.com/v1'}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <p className="text-xs" style={{ color: DIMMER, borderTop: `1px solid ${LINE}`, paddingTop: 12 }}>
+              Stored in <span style={{ color: MUTED }} className="font-mono">{saved.settings_file}</span>.
+              An environment variable of the same name wins.
             </p>
-            <AICredentialsSection />
-          </section>
+          </>
+        )}
+
+        {problem && <p className="text-xs" style={{ color: DANGER_TEXT }} role="alert">{problem}</p>}
       </div>
     </Modal>
   );

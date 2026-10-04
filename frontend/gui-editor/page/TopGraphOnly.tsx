@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { useGraphStore } from '../../app/store/graphStore';
-import { DIMMER, MUTED, NEUTRAL_BUTTON, SUNKEN } from '../../app/ui/theme';
+import { roundGoing, useSession } from '../../app/api/session';
+import Button from '../../app/ui/Button';
+import { DIMMER, MUTED, SUNKEN } from '../../app/ui/theme';
 
 /**
  * A view of the page, shown only where a page can be: in the graph at the top.
@@ -16,7 +18,7 @@ export default function TopGraphOnly({ children }: { children: ReactNode }) {
   // No level changes while a run is in flight -- its result would land on the
   // canvas of another graph (`openSubgraph`) -- so the way up waits for it. A
   // button that then did nothing, without a word, would look broken.
-  const running = useGraphStore((s) => s.isExecuting);
+  const running = useSession(roundGoing);
   if (!inside) return <>{children}</>;
 
   return (
@@ -28,14 +30,9 @@ export default function TopGraphOnly({ children }: { children: ReactNode }) {
         You are inside a node's graph, which runs as one part of the graph above it and has no page of its own.
         Go back up to build the page or try it.
       </p>
-      <button
-        className="mt-2 text-xs px-3 py-1.5 rounded-lg"
-        style={{ ...NEUTRAL_BUTTON, opacity: running ? 0.5 : 1 }}
-        disabled={running}
-        onClick={() => closeSubgraphsTo(0)}
-      >
+      <Button className="mt-2" disabled={running} onClick={() => closeSubgraphsTo(0)}>
         ↑ Back to the graph at the top
-      </button>
+      </Button>
       {running && (
         <p className="text-xs" style={{ color: DIMMER }}>
           A run is going on. The way up opens when it is over.

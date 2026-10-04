@@ -8,7 +8,7 @@ import { ACCENT, DIMMER, EVENT } from '../../app/ui/theme';
  * itself selected and about to be deleted, so what a node is wired to shows
  * the moment it is chosen.
  *
- * A wire into a ◆ only opens a gate -- whether the node runs this round -- and
+ * A wire into a ◆ only opens a gate -- whether the node runs -- and
  * delivers nothing, so it stays dashed and amber whatever is selected: drawn
  * like data, it would ask what the node does with the `true` it carries.
  */

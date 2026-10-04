@@ -1,5 +1,6 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import { FIELD, LINE, MUTED, NEUTRAL_BUTTON, SUNKEN, PRIMARY_BUTTON, SCRIM, SURFACE, TEXT } from '../../app/ui/theme';
+import React, { Suspense, useLayoutEffect, type ReactNode } from 'react';
+import Button from '../../app/ui/Button';
+import { FIELD, LINE, MUTED, SUNKEN, SCRIM, SURFACE, TEXT } from '../../app/ui/theme';
 
 export type CodeLanguage = 'javascript' | 'markdown';
 
@@ -21,6 +22,11 @@ interface CodeFieldProps {
   minHeight?: number;
   /** What the enlarged editor is called: "Draw chart -- code.js". */
   title?: string;
+  /** The editor across the window is open. Opened and closed from outside: the file's chip opens it. */
+  large: boolean;
+  onLarge: (open: boolean) => void;
+  /** Stands in the large window's header, beside Done. */
+  header?: ReactNode;
 }
 
 /**
@@ -31,20 +37,20 @@ interface CodeFieldProps {
  * no highlighting, no bracket matching, and a sixty-line function was read
  * through a slot six lines high. This is CodeMirror: syntax colours, line
  * numbers, bracket matching, search (Ctrl+F), multiple cursors, undo that
- * belongs to the box rather than to the browser -- and ⤢ opens the same
- * document across the whole window, because the honest fix for a small
- * window is a big one. Tab indents there; in the box it moves on to the next
- * field, as everywhere in the panel, and Escape in it leaves the panel open.
+ * belongs to the box rather than to the browser -- and the large window opens
+ * the same document across the whole screen, because the honest fix for a
+ * small window is a big one. Tab indents there; in the box it moves on to the
+ * next field, as everywhere in the panel, and Escape in it leaves the panel
+ * open.
  *
- * For anything longer-lived there is still the other way out: the file's
- * chip beside the box opens it in your own editor. The two compose -- this is
- * for the edit you make here, that is for the afternoon you spend in VS Code.
+ * For anything longer-lived there is still the other way out: "Open in my
+ * editor", in the large window's header, opens the file in your own editor.
+ * The two compose -- this is for the edit you make here, that is for the
+ * afternoon you spend in VS Code.
  */
 export default function CodeField({
-  value, onChange, language, placeholder, minHeight = 160, title,
+  value, onChange, language, placeholder, minHeight = 160, title, large, onLarge, header,
 }: CodeFieldProps) {
-  const [large, setLarge] = useState(false);
-
   // What is there for the moment the editor takes to arrive: the same text in
   // a plain box, editable, so nothing about the panel waits on a download.
   const plain = (
@@ -55,21 +61,28 @@ export default function CodeField({
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       spellCheck={false}
+      aria-label={title}
     />
   );
 
-  useEffect(() => {
+  // A layout effect: the opener is read before the editor in the window takes the focus.
+  useLayoutEffect(() => {
     if (!large) return undefined;
+    // The focus goes back to what opened the window when it closes.
+    const opener = document.activeElement as HTMLElement | null;
     // Escape closes the large editor and nothing else: left to bubble, it
     // would reach the node's panel underneath and close it.
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.stopPropagation();
-      setLarge(false);
+      onLarge(false);
     };
     window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [large]);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      opener?.focus?.();
+    };
+  }, [large, onLarge]);
 
   return (
     <div className="relative" data-code-field="">
@@ -79,22 +92,13 @@ export default function CodeField({
           height={{ min: minHeight, max: '46vh' }}
         />
       </Suspense>
-      <button
-        type="button"
-        onClick={() => setLarge(true)}
-        className="absolute text-xs px-1.5 py-0.5 rounded"
-        style={{ top: 6, right: 8, ...NEUTRAL_BUTTON, opacity: 0.85 }}
-        title="Edit in a large window (Esc to come back)"
-        aria-label="Edit in a large window"
-      >
-        ⤢
-      </button>
 
       {large && (
         <div
           className="fixed inset-0 flex flex-col"
           style={{ zIndex: 200, background: SCRIM, padding: '3vh 3vw' }}
-          role="panel"
+          role="dialog"
+          aria-modal="true"
           aria-label={title ?? 'Editor'}
         >
           <div
@@ -106,9 +110,8 @@ export default function CodeField({
               Ctrl+F search · Ctrl+D next match · Alt+↑↓ move line · Esc done
             </span>
             <span className="flex-1" />
-            <button type="button" className="text-xs px-3 py-1 rounded" style={PRIMARY_BUTTON} onClick={() => setLarge(false)}>
-              Done
-            </button>
+            {header}
+            <Button variant="primary" size="sm" onClick={() => onLarge(false)}>Done</Button>
           </div>
           <div className="flex-1 min-h-0 rounded-b-lg overflow-hidden" style={{ background: SUNKEN }}>
             <Suspense fallback={plain}>

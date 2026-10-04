@@ -18,14 +18,12 @@ describe('a folder node\'s panel', () => {
     expect(panel(node)).toMatch(/<button[^>]*disabled=""[^>]*>Show the files it lists<\/button>/);
     node.config.path = 'data/stories';
     const html = panel(node);
-    expect(html).toContain('aria-label="Folder"');
+    expect(html).toContain('>Folder</label>');
     expect(html).toContain('aria-label="File types"');
     expect(html).toContain('Look into subfolders too');
     expect(html).toMatch(/<button(?![^>]*disabled)[^>]*>Show the files it lists<\/button>/);
-    // Where a folder chosen on the page comes in.
-    expect(html).toContain('A path wired into its “Path” port is listed instead');
-    // Choosing some of the files is a code node after it, said in one line.
-    expect(html).toContain('To use only some of them, wire a code node after it');
+    // Failures are caught in Advanced, like every kind's, not here.
+    expect(html).not.toContain('Catch');
     expect(html).not.toContain('✨');
   });
 });

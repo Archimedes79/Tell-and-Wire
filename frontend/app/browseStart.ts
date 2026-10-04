@@ -12,7 +12,7 @@ export function folderOf(path: string): string {
  *
  * - a bare name -- a new graph's, or one typed -- in *lastFolder*, the folder
  *   a graph was last opened from or saved to, with that name: read as a
- *   folder, the name opened on "Directory not found: …\untitled_graph";
+ *   folder, the name opened on "Directory not found: …\untitled_tool";
  * - a path saved to again, in the folder it is in, with its own name: a saved
  *   project's own folder opened, and "Save here" put a project inside it;
  * - a path to open from, there.

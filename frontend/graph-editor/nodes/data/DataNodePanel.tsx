@@ -24,9 +24,9 @@ export async function holdDropped(file: Dropped, setConfig: NodePanelProps['setC
 }
 
 /**
- * A data node: its text, and ✨ Data, which writes what it holds from the text,
- * shaped as the nodes it feeds want it -- its kind and the value, edited in
- * that row as its file is.
+ * A data node: ✨ Generate, which writes what it holds from its text, shaped
+ * as the nodes it feeds want it -- its kind and the value, edited in that row
+ * as a file is.
  */
 export default function DataNodePanel(props: NodePanelProps) {
   return <NodeDefinition {...props} holds={<DataValue node={props.node} setConfig={props.setConfig} />} />;
@@ -116,9 +116,9 @@ function DataValue({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConfig
       {kind !== node.config.data_format && (
         <p className="text-xs" style={{ color: DIMMER }}>It holds structured data, so it is edited and described as structure.</p>
       )}
-      <p className="text-xs" style={{ color: DIMMER }}>
-        Kept between runs. What arrives on its input replaces it; until then this is what it hands on,
-        and what the nodes wired to it are shown.
+      <p className="text-xs" style={{ color: DIMMER }}
+        title="Until something arrives on its input, this is what it hands on, and what the nodes wired to it are shown.">
+        Kept between runs. What arrives on its input replaces it.
       </p>
     </div>
   );

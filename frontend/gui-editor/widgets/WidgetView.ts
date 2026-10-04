@@ -39,4 +39,6 @@ export interface WidgetViewProps {
   fires?: boolean;
   /** A run is in flight. For a block that shows waiting: a chat's typing dots. */
   busy?: boolean;
+  /** The `id` of the block's one control, which the label above the block names (`BlockKind.labelsControl`). */
+  controlId?: string;
 }

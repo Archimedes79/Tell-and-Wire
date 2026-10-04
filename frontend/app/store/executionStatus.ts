@@ -1,5 +1,5 @@
 import type { ExecutionStatus, NodeResult } from '../graph';
-import { DANGER_TEXT } from '../ui/theme';
+import { DANGER_FILL, DANGER_TEXT, SUCCESS_FILL, SUCCESS_TEXT, WARNING_FILL, WARNING_TEXT } from '../ui/theme';
 
 /**
  * Whether a node result carries usable output.
@@ -28,7 +28,7 @@ export const hasOutputs = (result: Pick<NodeResult, 'status' | 'held'>): boolean
  * green delivered, amber delivered with items lost (`partial`), red otherwise.
  */
 export const statusTone = (status: ExecutionStatus | string | undefined) => {
-  if (status === 'success') return { bg: 'rgba(34,197,94,0.1)', fg: '#86efac' };
-  if (status === 'partial') return { bg: 'rgba(234,179,8,0.12)', fg: '#fcd34d' };
-  return { bg: 'rgba(239,68,68,0.1)', fg: DANGER_TEXT };
+  if (status === 'success') return { bg: SUCCESS_FILL, fg: SUCCESS_TEXT };
+  if (status === 'partial') return { bg: WARNING_FILL, fg: WARNING_TEXT };
+  return { bg: DANGER_FILL, fg: DANGER_TEXT };
 };

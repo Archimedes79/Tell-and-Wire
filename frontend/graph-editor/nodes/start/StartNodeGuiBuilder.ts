@@ -1,12 +1,13 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { StartNodeRunner } from '../../../../graph/nodes/start/StartNodeRunner.ts';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 const ELEMENT = new StartNodeRunner();
 
 /**
- * Where a round begins: a start point, named, started by the page, by a call
+ * Where a run begins: a start point, named, started by the page, by a call
  * or by the graph itself -- what it starts is what its "data" is wired to.
  */
 export class StartNodeGuiBuilder extends NodeGuiBuilder {
@@ -16,18 +17,18 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly label = 'Start point';
 
-  readonly hint = 'Where a round begins: started by the page, by a call, or by itself -- when the tool starts, on a clock';
+  readonly hint = 'Where a run begins: started by the page, by a call, or by itself -- when the tool starts, on a clock';
 
-  readonly icon = '▶️';
+  readonly example = 'e.g. The text to summarise, typed on the page';
 
-  readonly color = 'var(--ui-node-start, #4a3a12)';
+  readonly color = NODE.start;
 
   override readonly paletteGroup = 'Input';
 
   override readonly Panel = lazy(() => import('./StartNodePanel'));
 
   override describeOutput(): string {
-    return 'one package, {event, values}: the event when this round began here (null in any other), and the values it was sent, under the sender\'s names';
+    return 'one package, {event, values}: the event when this run began here (null in any other), and the values it was sent, under the sender\'s names';
   }
 
   /** Who starts it, under its port: the one thing worth reading without opening it. */

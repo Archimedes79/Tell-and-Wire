@@ -8,6 +8,11 @@
   padding: 0;
 }
 
+/* The editor is dark under every colour scheme (a page container sets its own): native controls and scrollbars follow. */
+html {
+  color-scheme: dark;
+}
+
 html, body, #root {
   height: 100%;
   overflow: hidden;
@@ -81,3 +86,17 @@ button:disabled {
 /* A chat block waiting for its answer: three dots, breathing. */
 .chat-typing { letter-spacing: 2px; animation: chat-typing 1.2s ease-in-out infinite; }
 @keyframes chat-typing { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+/* `app/ui/Button.tsx`: what its variants do under the pointer, and disabled. */
+.btn:disabled { opacity: 0.5; }
+.btn-fill:not(:disabled):hover { filter: brightness(1.12); }
+.btn-danger:not(:disabled):hover { background: color-mix(in srgb, var(--ui-danger, #ef4444) 16%, transparent); }
+
+/* Where the keyboard is. Tailwind's `outline-none` on a field takes its ring
+   away; this comes after it and gives one back, in the scheme's accent. */
+:focus-visible {
+  outline: 2px solid var(--ui-accent, #6164ec);
+  outline-offset: 2px;
+}
+/* A container focused by the program (a dialog's panel) is not a place to show it. */
+[tabindex="-1"]:focus-visible { outline: none; }

@@ -1,30 +1,14 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
-import type { Graph } from './graph';
 import { useGraphStore } from './store/graphStore';
-import { ApiError, call, watchGeneration, type AICall } from './api/client';
-import { errorText } from './api/errorText';
+import Button from './ui/Button';
 import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
 import { hasDefinitions } from '../graph-editor/authoring/generation';
 import GraphProblems from './GraphProblems';
-import { lastAsked } from './lastAsked';
+import ProblemsChip from './ProblemsChip';
+import { useGraphAsk, type GraphAsk } from './graphAsk';
 import { changeGoesTo, changeTarget, describeChange, graphChange, graphRequest, targetName } from './graphChange';
-import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, NEUTRAL_BUTTON, PRIMARY_BUTTON, SUNKEN, SURFACE, TEXT } from './ui/theme';
-
-/** Where a change of the whole graph stands: asked, back and waiting to be applied, failed, or applied. */
-type Change =
-  | { phase: 'idle' }
-  | { phase: 'asking'; said: string; calls: AICall[] }
-  /** *sent*: the graph as it was asked about, to tell whether it changed since. */
-  | { phase: 'ready'; said: string; graph: Graph; explanation: string; sent: string }
-  | { phase: 'failed'; said: string; error: string; calls: AICall[] }
-  /**
-   * *step*: the undo step it was applied as -- while that is still the last
-   * one, Undo is the change. Not how many steps there were: the history is
-   * kept to fifty, and once full the next edit left the count as it was, and
-   * the note offered to undo that edit as the change.
-   */
-  | { phase: 'applied'; step: string };
+import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from './ui/theme';
 
 /**
  * The bar under the canvas, always there: say what to change, on the node the
@@ -32,8 +16,8 @@ type Change =
  *
  * On a node whose body ✨ writes, the words go to the node's panel
  * (`askChange`), which changes the body as said. On the whole graph -- and on
- * a node whose settings are all it is, a change of that node in it -- ✨ AI
- * Graph is sent the graph and the words, and what comes back is shown, with
+ * a node whose settings are all it is, a change of that node in it -- ✨ Describe
+ * a graph is sent the graph and the words, and what comes back is shown, with
  * what it adds, removes and changes and what `check` finds in it, before it is
  * applied as one undo step.
  */
@@ -42,70 +26,60 @@ export default function ChangeBar() {
   const clearSelection = useGraphStore((s) => s.clearSelection);
   const lastStep = useGraphStore((s) => s.past[s.past.length - 1]);
   const [text, setText] = useState('');
-  const [change, setChange] = useState<Change>({ phase: 'idle' });
-  // Only the last change asked for is still wanted: Stop leaves the one on its way unwanted.
-  const asked = useRef(lastAsked());
+  // One request at a time, and only the last is still wanted: Stop leaves the one on its way unwanted.
+  const { ask: change, send, reset } = useGraphAsk();
+  /**
+   * The undo step a change was applied as, while that is still the last one:
+   * then Undo is the change. Not how many steps there were: the history is
+   * kept to fifty, and once full the next edit left the count as it was, and
+   * the note offered to undo that edit as the change.
+   */
+  const [applied, setApplied] = useState<string | null>(null);
   // Another graph opened, or a level in or out of this one: a change asked of
   // the graph before -- on its way, or back and not applied -- is not this
   // one's, and nor are the words said of it, waiting in the field.
   const opened = useGraphStore((s) => s.document);
   useEffect(() => {
-    asked.current.cancel();
-    setChange({ phase: 'idle' });
+    reset();
+    setApplied(null);
     setText('');
-  }, [opened]);
+  }, [opened, reset]);
 
   const asking = change.phase === 'asking';
 
-  const send = async () => {
+  const submit = async () => {
     const words = text.trim();
     if (!words || asking) return;
     const store = useGraphStore.getState();
     if (target && changeGoesTo(target) === 'panel') {
       store.askChange(target.id, words);
       setText('');
-      setChange({ phase: 'idle' });
+      reset();
       return;
     }
-    const graph = store.exportGraph();
-    const wanted = asked.current.ask();
-    setChange({ phase: 'asking', said: words, calls: [] });
     setText('');
-    try {
-      const result = await watchGeneration(
-        (progressId) => call('generateGraph', { description: graphRequest(target, words), graph, progress_id: progressId }),
-        (calls) => { if (wanted()) setChange((now) => (now.phase === 'asking' ? { ...now, calls } : now)); },
-      );
-      if (!wanted()) return;
-      setChange({ phase: 'ready', said: words, graph: result.graph, explanation: result.explanation, sent: JSON.stringify(graph) });
-    } catch (error) {
-      if (!wanted()) return;
-      // The words go back where they were, to be sent again or said otherwise.
-      setText(words);
-      setChange({
-        phase: 'failed', said: words, error: errorText(error, 'The graph could not be changed.'),
-        calls: error instanceof ApiError && error.body.calls ? error.body.calls : [],
-      });
-    }
+    setApplied(null);
+    // The words go back where they were, to be sent again or said otherwise.
+    if (await send(words, graphRequest(target, words), store.exportGraph()) === 'failed') setText(words);
   };
 
   const stop = () => {
     if (change.phase !== 'asking') return;
-    asked.current.cancel();
     setText(change.said);
-    setChange({ phase: 'idle' });
+    reset();
   };
 
   const apply = () => {
     if (change.phase !== 'ready') return;
     useGraphStore.getState().changeGraph(change.graph);
     const { past } = useGraphStore.getState();
-    setChange({ phase: 'applied', step: past[past.length - 1] });
+    setApplied(past[past.length - 1]);
+    reset();
   };
 
   const discard = () => {
     if (change.phase === 'ready') setText(change.said);
-    setChange({ phase: 'idle' });
+    reset();
   };
 
   return (
@@ -114,7 +88,7 @@ export default function ChangeBar() {
         <Note>
           <div className="flex items-center gap-3">
             <span className="flex-1 min-w-0 truncate" style={{ color: TEXT }} title={change.said}>✨ Changing the graph as said: {change.said}</span>
-            <button type="button" onClick={stop} className="shrink-0 rounded-lg px-3 py-1 text-xs" style={NEUTRAL_BUTTON}>Stop</button>
+            <Button size="sm" className="shrink-0" onClick={stop} title="The server may go on with it; what comes back is dropped">Stop waiting</Button>
           </div>
           <details className="mt-2">
             <summary className="cursor-pointer select-none text-xs" style={{ color: MUTED }}>What is sent, and what comes back</summary>
@@ -127,7 +101,7 @@ export default function ChangeBar() {
         <Note>
           <div className="flex items-start gap-3">
             <span className="flex-1 min-w-0" style={{ color: DANGER_TEXT }}>❌ {change.error}</span>
-            <button type="button" onClick={() => setChange({ phase: 'idle' })} className="shrink-0 text-xs" style={{ color: MUTED }} aria-label="Dismiss">✕</button>
+            <Button variant="quiet" size="sm" className="shrink-0" onClick={reset} aria-label="Dismiss" title="Dismiss">✕</Button>
           </div>
           {change.calls.length > 0 && (
             <details className="mt-2">
@@ -137,14 +111,12 @@ export default function ChangeBar() {
           )}
         </Note>
       )}
-      {change.phase === 'applied' && lastStep === change.step && (
+      {change.phase === 'idle' && applied !== null && lastStep === applied && (
         <Note>
           <div className="flex items-center gap-3">
             <span className="flex-1 min-w-0" style={{ color: TEXT }}>✓ The graph was changed as said.</span>
-            <button type="button" onClick={() => useGraphStore.getState().undo()} className="shrink-0 rounded-lg px-3 py-1 text-xs" style={NEUTRAL_BUTTON}>
-              ↶ Undo
-            </button>
-            <button type="button" onClick={() => setChange({ phase: 'idle' })} className="shrink-0 text-xs" style={{ color: MUTED }} aria-label="Dismiss">✕</button>
+            <Button size="sm" className="shrink-0" onClick={() => useGraphStore.getState().undo()}>↶ Undo</Button>
+            <Button variant="quiet" size="sm" className="shrink-0" onClick={() => setApplied(null)} aria-label="Dismiss" title="Dismiss">✕</Button>
           </div>
         </Note>
       )}
@@ -152,16 +124,14 @@ export default function ChangeBar() {
       <div className="flex items-center gap-2.5 min-w-0">
         {/* A quarter of the row at most, whole in its title: at 40 % beside a
             panel at 1024 pixels it left the field 147 pixels to say anything in. */}
-        <button
-          type="button"
+        <Button
           onClick={clearSelection}
           disabled={!target}
-          className="h-10 shrink-0 max-w-[25%] truncate rounded-lg px-3 text-sm"
-          style={{ background: SUNKEN, border: `1px solid ${LINE}`, color: TEXT, cursor: target ? 'pointer' : 'default' }}
+          className="h-10 shrink-0 max-w-[25%] truncate"
           title={target ? `On ${targetName(target)}. Click to say it about the whole graph instead` : 'Nothing is selected: what you say changes the graph itself'}
         >
-          on: {targetName(target)}
-        </button>
+          {target ? `on: ${targetName(target)}` : 'whole graph'}
+        </Button>
         <label
           className="flex h-10 flex-1 min-w-0 items-center gap-2.5 rounded-lg px-3"
           style={{ background: SUNKEN, border: `1px solid ${LINE}` }}
@@ -173,7 +143,7 @@ export default function ChangeBar() {
             onKeyDown={(event) => {
               if (event.key !== 'Enter') return;
               event.preventDefault();
-              void send();
+              void submit();
             }}
             disabled={asking}
             placeholder="Say what to change…"
@@ -182,19 +152,19 @@ export default function ChangeBar() {
             style={{ color: TEXT }}
           />
         </label>
-        <button
-          type="button"
-          onClick={() => { void send(); }}
+        <Button
+          variant="primary"
+          onClick={() => { void submit(); }}
           disabled={asking || !text.trim()}
-          className="h-10 shrink-0 rounded-lg px-4 text-sm font-semibold"
-          style={{ ...PRIMARY_BUTTON, opacity: asking || !text.trim() ? 0.55 : 1 }}
+          className="h-10 shrink-0"
           title={target && changeGoesTo(target) === 'panel'
             // A data node has no ▶ Try: what its panel writes is what it holds.
             ? `Change ${targetName(target)} as said: its panel writes it${hasDefinitions(target) ? ', and tries it' : ''}`
             : 'Change the whole graph as said, with ✨: you see what it changes before it is applied'}
         >
           Change
-        </button>
+        </Button>
+        <ProblemsChip />
       </div>
     </div>
   );
@@ -215,7 +185,7 @@ function Note({ children }: { children: ReactNode }) {
  * was changed here while it was asked, that applying it replaces that.
  */
 function Proposal({ change, onApply, onDiscard }: {
-  change: Extract<Change, { phase: 'ready' }>;
+  change: Extract<GraphAsk, { phase: 'ready' }>;
   onApply: () => void;
   onDiscard: () => void;
 }) {
@@ -245,10 +215,8 @@ function Proposal({ change, onApply, onDiscard }: {
       </div>
       <div className="mt-2.5 flex items-center gap-2">
         <span className="flex-1 min-w-0 truncate text-xs" style={{ color: DIM }} title={change.said}>Asked: {change.said}</span>
-        <button type="button" onClick={onDiscard} className="shrink-0 rounded-lg px-3 py-1.5 text-xs" style={NEUTRAL_BUTTON}>Discard</button>
-        <button type="button" onClick={onApply} className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold" style={PRIMARY_BUTTON}>
-          Apply
-        </button>
+        <Button size="sm" className="shrink-0" onClick={onDiscard}>Discard</Button>
+        <Button variant="primary" size="sm" className="shrink-0" onClick={onApply}>Apply</Button>
       </div>
     </Note>
   );

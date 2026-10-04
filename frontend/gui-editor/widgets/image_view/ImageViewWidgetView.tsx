@@ -1,5 +1,5 @@
 import type { WidgetViewProps } from '../WidgetView';
-import { DIMMER, LINE, MUTED, SUNKEN } from '../../../app/ui/theme';
+import { DIMMER, LINE, MUTED, SUNKEN, WARNING_TEXT } from '../../../app/ui/theme';
 import { cut } from '../../../app/ui/cut';
 
 /**
@@ -42,7 +42,7 @@ export default function ImageViewWidgetView({ widget, value, incoming }: WidgetV
       )}
 
       {problems.map((problem, index) => (
-        <p key={`problem-${index}`} className="text-xs p-2" style={{ color: '#fcd34d' }}>{problem}</p>
+        <p key={`problem-${index}`} className="text-xs p-2" style={{ color: WARNING_TEXT }}>{problem}</p>
       ))}
 
       <div className={images.length > 1 ? 'grid gap-2' : ''}

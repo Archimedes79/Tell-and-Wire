@@ -3,12 +3,13 @@ import { FIELD } from '../../../app/ui/theme';
 import { selectChoice, selectOptions } from '../../../../backend/gui-editor/widgets/select/choice.ts';
 
 /** Runtime select widget: a dropdown over the block's own option list, standing where a run reads it. */
-export default function SelectWidgetView({ widget, value, onChange, onTrigger, fires, busy }: WidgetViewProps) {
+export default function SelectWidgetView({ widget, value, onChange, onTrigger, fires, busy, controlId }: WidgetViewProps) {
   const options = selectOptions(widget.options);
   const current = selectChoice(options, value);
 
   return (
     <select
+      id={controlId}
       className="w-full rounded-lg px-2 py-1.5 text-sm"
       style={FIELD}
       value={current}

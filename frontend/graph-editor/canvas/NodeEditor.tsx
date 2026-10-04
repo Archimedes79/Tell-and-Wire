@@ -1,16 +1,18 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useId } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { Graph, GraphNode, Port } from '../../app/graph';
 import { call } from '../../app/api/client';
 import { useGraphStore } from '../../app/store/graphStore';
 import { derivedNodePorts } from '../../app/document/ports';
 import { fieldChoices, takenAs } from '../../app/document/page';
+import { headingFromText, isNumberedHeading } from '../../app/document/heading';
 import PortsEditor, { TakesSelect } from './PortsEditor';
 import { withPorts } from './nodeDraft';
 import { useNodePanel } from './nodePanel';
 import { NODE_BUILDERS } from '../../app/elements/registry';
 import { ONCE, type NodeGuiBuilder, type NodePanelProps, type UndoStep } from '../nodes/NodeGuiBuilder';
 import SidePanel from '../../app/ui/SidePanel';
+import ErrorBoundary from '../../app/ui/ErrorBoundary';
 import NodeKind from './NodeKind';
 import { useGenerate } from '../authoring/useGenerate';
 import {
@@ -41,10 +43,15 @@ interface NodeEditorProps {
 const advancedOpen = new Map<string, boolean>();
 
 /**
- * A node's panel, docked beside the canvas while the node is selected. There
- * is no Save and no Cancel: what is changed here is in the graph a moment
- * later, Undo takes it back, and ✕ or Esc close it with nothing lost
- * (`nodePanel.ts`) -- as does choosing another node, whose panel it becomes.
+ * A node's panel, docked beside the canvas while the node is selected: the
+ * same build for every kind. Its heading and kind on top, "What it does"
+ * (the node's text), what the kind itself has -- its own panel (`Panel`),
+ * with the ✨ rows of a code, ai or data node --, one folded Advanced section
+ * (the ports where they are the person's, and the kind's `AdvancedPanel`),
+ * and "What runs, technically" last. There is no Save and no Cancel: what is
+ * changed here is in the graph a moment later, Undo takes it back, and ✕ or
+ * Esc close it with nothing lost (`nodePanel.ts`) -- as does choosing another
+ * node, whose panel it becomes.
  */
 export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
   const panel = useNodePanel(nodeId);
@@ -53,14 +60,19 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
   // frame of a drag, when no node had changed.
   const graphNodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
   const graphEdges = useGraphStore((s) => s.rfEdges);
-  const metadata = useGraphStore((s) => s.metadata);
   // The page's blocks: what a start point wired here is sent, what shows an end point it feeds.
   const page = useGraphStore((s) => s.page);
-  // The last run's per-node values: where the file an input definition is
-  // written from may come from.
-  const executionResult = useGraphStore((s) => s.executionResult);
-  // One state machine for every ✨ in this editor.
-  const generate = useGenerate();
+  // One state machine for every ✨ in this editor, kept outside it: closing the panel stops nothing.
+  const generate = useGenerate(nodeId);
+  const describing = useId();
+
+  // Closed under the focus -- Esc, the ✕ -- the keyboard goes back to the
+  // node's card, and goes on from there.
+  useEffect(() => () => {
+    if (document.activeElement === document.body) {
+      document.querySelector<HTMLElement>(`.react-flow__node[data-id="${CSS.escape(nodeId)}"]`)?.focus();
+    }
+  }, [nodeId]);
 
   const node = panel.node();
   if (!node) return null;
@@ -80,6 +92,12 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
 
   const setConfig: NodePanelProps['setConfig'] = (key, value, step) => panel.setConfig(key, value, step);
   const setDescription = (value: string) => panel.change((current) => ({ ...current, description: value }), { field: 'description' });
+  /** A node ✨ writes for, while its heading is still the numbered one it was given, is headed from its text. */
+  const headingFromTheText = () => {
+    if (!isNumberedHeading(node.label)) return;
+    const heading = headingFromText(node.description);
+    if (heading) panel.change((current) => ({ ...current, label: heading }), ONCE);
+  };
 
   // The graph on the canvas with this node in it as the panel shows it, read
   // when asked: what is tried, fetched from the graph and sent to ✨ is the
@@ -90,17 +108,21 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
     whole.nodes = whole.nodes.map((candidate) => (candidate.id === current.id ? current : candidate));
     return whole;
   };
+  // The graph around the node, read from the store when asked -- not as it
+  // was when the panel was drawn: ✨ writes one file after another, each into
+  // a graph that the one before it changed.
   const around = () => {
+    const state = useGraphStore.getState();
     const current = panel.node() ?? node;
     return {
-      nodes: graphNodes.map((candidate) => (candidate.id === current.id ? current : candidate)), edges: graphEdges, metadata,
-      page: useGraphStore.getState().page,
+      nodes: state.rfNodes.map((item) => (item.id === current.id ? current : item.data.graphNode)),
+      edges: state.rfEdges, metadata: state.metadata, page: state.page, executionResult: state.executionResult,
     };
   };
   const requestFor = (write: Write, refine?: Refine) => {
     const current = panel.node() ?? node;
-    const { nodes, edges, page } = around();
-    return generateRequest(current, write, around(), inputFilesOf(current, nodes, edges, executionResult, page), refine);
+    const { executionResult, ...rest } = around();
+    return generateRequest(current, write, rest, inputFilesOf(current, rest.nodes, rest.edges, executionResult, rest.page), refine);
   };
 
   /**
@@ -153,33 +175,26 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
     .filter((source): source is GraphNode => !!source && runnerRegistry.node(source.node_type)?.takesPackage === true);
   const takes = Object.fromEntries(node.inputs.map((port) => [port.id, fromStart(port).flatMap((source) => fieldChoices(page, source))]));
   const setPorts = (ports: { inputs: Port[]; outputs: Port[] }, step?: UndoStep) => panel.change((current) => withPorts(current, ports), step);
-  // The ports are the person's to name, rather than following a setting.
+  // Whether the ports are the person's to name, rather than following a
+  // setting -- the element is what knows, so the question is asked, never
+  // switched on a type -- and whether there are any to show: an end point's
+  // outputs are none, and its inputs are.
   const ownPorts = derivedNodePorts(node) === null;
+  const showPorts = ownPorts && (element.portEditing.inputs !== 'none' || element.portEditing.outputs !== 'none');
   const defined = element.definesItself && ownPorts;
-  const ports = (
-    <PortsEditor
-      inputs={node.inputs}
-      outputs={node.outputs}
-      onChange={setPorts}
-      editing={element.portEditing}
-      hints={{ inputs: element.portHint('inputs', node), outputs: element.portHint('outputs', node) }}
-      wiring={wiring}
-      takes={takes}
-      readsFiles={runnerRegistry.node(node.node_type)?.readsFileInputs ?? false}
-      compact={defined}
-      perItem={defined && runsPerItem(node)}
-      caught={caught}
-    />
-  );
   const shell: NodePanelProps['shell'] = bodyOf(node) ? {
     graph,
     preview: (write) => previewGeneration(requestFor(write)),
     graphFile: () => {
-      const { nodes, edges } = around();
+      const { nodes, edges, executionResult } = around();
       return fileFromTheGraph(panel.node() ?? node, nodes, edges, executionResult, graph);
     },
     flush: () => panel.write(),
   } : undefined;
+  // Ports that follow from its settings are not the person's to name -- but
+  // what one wired from a start point takes of its package is: a folder's
+  // path, a subgraph's port.
+  const taking = !ownPorts ? node.inputs.filter((port) => fromStart(port).length > 0) : [];
 
   return (
     <SidePanel
@@ -190,90 +205,85 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
       onClose={onClose}
     >
       <div className="px-6 py-5">
-          {/* Only for elements whose own panel does not already draw the
-              node's text: a code, ai or data node writes from it. */}
-          {!element.ownsDescription && (
-            <div className="mb-4">
-              <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>
-                Description (optional)
-              </label>
+        <GenerationReport calls={generate.transcript} live={generate.live}>
+          <div className="space-y-4">
+            {/* The node's text: what it should do, in words. Every kind has
+                one; the nodes ✨ writes for write from it, and so do the
+                nodes wired to this one (`wantsOn`). */}
+            <div>
+              <label htmlFor={describing} className="block text-xs font-medium mb-1" style={{ color: MUTED }}>What it does</label>
               <textarea
-                className="w-full rounded-lg px-3 py-2 text-sm resize-none"
-                style={{ ...FIELD, minHeight: 64 }}
+                id={describing}
+                className="w-full rounded-lg px-3 py-2 text-sm resize-y"
+                style={{ ...FIELD, minHeight: 72 }}
                 value={node.description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={element.hint}
+                onBlur={runnerRegistry.node(node.node_type)?.generation() ? headingFromTheText : undefined}
+                placeholder={element.example}
               />
             </div>
-          )}
 
-          <GenerationReport calls={generate.transcript} live={generate.live}>
-          <div className="space-y-4">
-              {/* A panel is its own chunk, loaded when a node is first opened. */}
-              {Panel && <Suspense fallback={null}><Panel
-                node={node}
-                setConfig={setConfig}
-                updateNode={(change, step) => panel.change(change, step)}
-                setDescription={setDescription}
-                generating={generate.busy}
-                message={generate.message}
-                onGenerate={handleGenerate}
-                onStop={generate.stop}
-                shell={shell}
-              /></Suspense>}
+            {/* What the kind has: a panel is its own chunk, loaded when a node is first opened. */}
+            {Panel && <ErrorBoundary inline><Suspense fallback={null}><Panel
+              node={node}
+              setConfig={setConfig}
+              updateNode={(change, step) => panel.change(change, step)}
+              setDescription={setDescription}
+              generating={generate.busy}
+              message={generate.message}
+              onGenerate={handleGenerate}
+              onStop={generate.stop}
+              shell={shell}
+            /></Suspense></ErrorBoundary>}
 
-              {/* What this node takes in and hands out, where that is the
-                  person's to say. A start point's ports are its own and a
-                  folder node's follow its settings, and the element is what knows
-                  which -- so the question is asked, never switched on a type.
-                  A node that defines itself keeps them among its Advanced settings. */}
-              {/* Ports that follow from its settings are not the person's to
-                  name -- but what one wired from a start point takes of its
-                  package is: a folder's path, a subgraph's port. */}
-              {!ownPorts && node.inputs.some((port) => fromStart(port).length > 0) && (
-                <div className="space-y-1">
-                  {node.inputs.filter((port) => fromStart(port).length > 0).map((port) => (
-                    <TakesSelect key={port.id} port={port} takes={takes[port.id] ?? []} label={port.name || port.id}
-                      onTake={(choice) => panel.change((current) => ({
-                        ...current, inputs: current.inputs.map((one) => (one.id === port.id ? takenAs(one, choice, false) : one)),
-                      }), ONCE)} />
-                  ))}
+            {taking.length > 0 && (
+              <div className="space-y-1">
+                {taking.map((port) => (
+                  <TakesSelect key={port.id} port={port} takes={takes[port.id] ?? []} label={port.name || port.id}
+                    onTake={(choice) => panel.change((current) => ({
+                      ...current, inputs: current.inputs.map((one) => (one.id === port.id ? takenAs(one, choice, false) : one)),
+                    }), ONCE)} />
+                ))}
+              </div>
+            )}
+
+            {/* Everything with a good default, folded away: a node should
+                open on what it does, not on a form to fill in first. */}
+            {(showPorts || element.AdvancedPanel) && (
+              <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}
+                open={advancedOpen.get(node.node_type) ?? false}
+                onToggle={(e) => advancedOpen.set(node.node_type, e.currentTarget.open)}>
+                <summary className="px-3 py-2 text-xs font-medium cursor-pointer select-none" style={{ color: MUTED }}>
+                  Advanced{element.advancedSummary ? ` — ${element.advancedSummary}` : ''}
+                </summary>
+                <div className="px-3 pb-3 pt-1 space-y-4">
+                  {showPorts && (
+                    <PortsEditor
+                      inputs={node.inputs}
+                      outputs={node.outputs}
+                      onChange={setPorts}
+                      editing={element.portEditing}
+                      hints={{ inputs: element.portHint('inputs', node), outputs: element.portHint('outputs', node) }}
+                      wiring={wiring}
+                      takes={takes}
+                      readsFiles={runnerRegistry.node(node.node_type)?.readsFileInputs ?? false}
+                      compact={defined}
+                      perItem={defined && runsPerItem(node)}
+                      caught={caught}
+                    />
+                  )}
+                  {element.AdvancedPanel && (
+                    <ErrorBoundary inline><Suspense fallback={null}>
+                      <element.AdvancedPanel node={node} setConfig={setConfig} updateNode={(change, step) => panel.change(change, step)} />
+                    </Suspense></ErrorBoundary>
+                  )}
                 </div>
-              )}
-
-              {!defined && ownPorts && (
-                <details className="rounded-lg" open style={{ border: `1px solid ${LINE}` }}>
-                  <summary className="px-3 py-2 text-xs font-medium cursor-pointer select-none" style={{ color: MUTED }}>
-                    {element.portEditing.outputs === 'none' ? 'Ports — what comes in' : 'Ports — what goes in and comes out'}
-                  </summary>
-                  <div className="px-3 pb-3 pt-1">
-                    {ports}
-                  </div>
-                </details>
-              )}
-
-              {/* Knobs with good defaults, folded away: a node should open on
-                  what it does, not on a form to fill in first. */}
-              {element.AdvancedPanel && (
-                <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}
-                  open={advancedOpen.get(node.node_type) ?? false}
-                  onToggle={(e) => advancedOpen.set(node.node_type, e.currentTarget.open)}>
-                  <summary className="px-3 py-2 text-xs font-medium cursor-pointer select-none" style={{ color: MUTED }}>
-                    Advanced{element.advancedSummary ? ` — ${element.advancedSummary}` : ''}
-                  </summary>
-                  <div className="px-3 pb-3 pt-1 space-y-4">
-                    <Suspense fallback={null}>
-                      <element.AdvancedPanel node={node} setConfig={setConfig} updateNode={(change, step) => panel.change(change, step)}
-                        ports={defined ? ports : undefined} />
-                    </Suspense>
-                    <WhatRuns node={node} />
-                  </div>
-                </details>
-              )}
-              {/* Where the work is done, technically: for the curious, so folded. */}
-              {!element.AdvancedPanel && <WhatRuns node={node} folded />}
+              </details>
+            )}
+            {/* Where the work is done, technically: for the curious, so folded, and last. */}
+            <WhatRuns node={node} />
           </div>
-          </GenerationReport>
+        </GenerationReport>
       </div>
     </SidePanel>
   );

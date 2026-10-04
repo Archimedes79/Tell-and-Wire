@@ -23,7 +23,7 @@ export class InputPickerWidgetGuiBuilder extends WidgetGuiBuilder {
   override readonly defaultMode = 'file';
 
   override readonly firesHint =
-    'Picking a file or folder (or Enter in the path box) starts a round at that start point.';
+    'Picking a file or folder (or Enter in the path box) starts a run at that start point.';
 
   /**
    * A picker is a source like a folder node, with no input port:

@@ -1,5 +1,5 @@
 import type { WidgetViewProps } from '../WidgetView';
-import { PRIMARY_BUTTON } from '../../../app/ui/theme';
+import Button from '../../../app/ui/Button';
 
 /**
  * Runtime button widget: a press fires the start point the button names.
@@ -10,14 +10,8 @@ import { PRIMARY_BUTTON } from '../../../app/ui/theme';
  */
 export default function ButtonWidgetView({ widget, onTrigger, busy }: WidgetViewProps) {
   return (
-    <button
-      type="button"
-      className="w-full h-full rounded-lg text-sm font-medium"
-      style={{ ...PRIMARY_BUTTON, opacity: busy ? 0.6 : 1 }}
-      disabled={busy}
-      onClick={() => onTrigger?.()}
-    >
+    <Button variant="primary" className="w-full h-full" disabled={busy} onClick={() => onTrigger?.()}>
       {widget.label || 'Press'}
-    </button>
+    </Button>
   );
 }

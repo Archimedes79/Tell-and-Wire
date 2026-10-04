@@ -36,15 +36,14 @@ export default function RunOncePerItem({ node, updateNode, subject }: Pick<NodeA
   const oneCall = hasDefinitions(node) ? ' -- input.js and output.js say one call;' : ';';
   return (
     <div>
-      <label className="flex items-center gap-2 text-sm" style={{ color: MUTED }}>
-        <input type="checkbox" checked={checked} aria-label="Run once per item"
+      <label className="flex items-center gap-2 text-sm" style={{ color: MUTED }}
+        title={`A list arrives. Ticked, ${subject} runs once for each item in it${oneCall} what comes out is a list of the results. Unticked, it gets the list whole, once -- for totals, summaries, merges.`}>
+        <input type="checkbox" checked={checked}
           onChange={(event) => updateNode((current) => withPerItem(current, event.target.checked, lists), ONCE)} />
         Run once per item
       </label>
       <p className="text-xs mt-0.5" style={{ color: DIMMER }}>
-        {checked
-          ? `A list arrives, and ${subject} runs once for each item in it${oneCall} what comes out is a list of the results.`
-          : `A list arrives, and ${subject} gets it whole, once -- for totals, summaries, merges.`}
+        {checked ? `A list arrives: ${subject} runs once for each item.` : `A list arrives: ${subject} gets it whole, once.`}
       </p>
     </div>
   );

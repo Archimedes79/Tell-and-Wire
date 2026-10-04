@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { LINE, MUTED, PANEL, SCRIM, SUNKEN, TEXT } from './theme';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import Button from './Button';
+import { LINE, PANEL, SCRIM, SUNKEN, TEXT } from './theme';
 
 interface ModalProps {
   title: React.ReactNode;
@@ -53,6 +54,7 @@ export default function Modal({
   dismissOnEscape = true,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
   // What had the focus before the dialog, read as it is first drawn: a field
   // in it may take the focus (autoFocus) before the effect below runs.
   const [before] = useState(() => (typeof document === 'undefined' ? null : document.activeElement as HTMLElement | null));
@@ -86,6 +88,17 @@ export default function Modal({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [dismissOnEscape, onClose]);
 
+  // Focus that lands outside the dialog on top -- a Tab from the address bar,
+  // a script -- is brought back: behind the backdrop, nothing can be clicked.
+  useEffect(() => {
+    const keepIn = (event: FocusEvent) => {
+      const panel = panelRef.current;
+      if (panel && !panel.contains(event.target as Node) && hearsEscape(panel, document)) panel.focus();
+    };
+    document.addEventListener('focusin', keepIn);
+    return () => document.removeEventListener('focusin', keepIn);
+  }, []);
+
   // Keep Tab inside the dialog: without this the next Tab lands on the canvas
   // behind the backdrop, where clicks do not even reach.
   const onKeyDownCapture = (event: React.KeyboardEvent) => {
@@ -118,6 +131,7 @@ export default function Modal({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
         tabIndex={-1}
         className={`rounded-xl overflow-hidden shadow-2xl w-full ${maxWidth} mx-4 outline-none flex flex-col`}
         style={{ ...PANEL, maxHeight: '90vh' }}
@@ -128,8 +142,8 @@ export default function Modal({
           className="flex items-center justify-between px-5 py-3 shrink-0"
           style={{ background: SUNKEN, borderBottom: `1px solid ${LINE}` }}
         >
-          <span className="text-sm font-semibold" style={{ color: TEXT }}>{title}</span>
-          <button onClick={onClose} aria-label="Close dialog" style={{ color: MUTED }}>✕</button>
+          <span id={titleId} className="text-sm font-semibold" style={{ color: TEXT }}>{title}</span>
+          <Button variant="quiet" size="sm" onClick={onClose} aria-label="Close" title="Close">✕</Button>
         </div>
 
         <div className="flex-1 overflow-y-auto">{children}</div>

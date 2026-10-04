@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 /** Where a result goes, in words, for the node that makes it. */
@@ -13,7 +14,7 @@ function destination(node: GraphNode): string {
   }
 }
 
-/** Where a round ends: an end point -- what arrives is what the graph hands back, under its name, and, if asked, a file or a folder of it. */
+/** Where a run ends: an end point -- what arrives is what the graph hands back, under its name, and, if asked, a file or a folder of it. */
 export class EndNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'end';
 
@@ -23,18 +24,17 @@ export class EndNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'The run\'s result, under this node\'s name -- also written to a file or a folder, if asked';
 
-  readonly icon = '📤';
+  readonly example = 'e.g. One row per country, with its population';
 
-  readonly color = 'var(--ui-node-end, #3a2000)';
+  readonly color = NODE.end;
 
   override readonly paletteGroup = 'Output';
 
   override readonly Panel = lazy(() => import('./EndNodePanel'));
 
-  // Its description is what the result is, which the node feeding it is told
-  // (`wantsOn`): the panel asks for it in those words, beside where it goes.
-  override readonly ownsDescription = true;
+  override readonly advancedSummary = 'ports';
 
+  // Its text is what the result is, which the node feeding it is told (`wantsOn`).
   // It ends a branch: nothing comes out of it. "path" is read by name.
   override readonly portEditing = { inputs: 'edit', outputs: 'none' } as const;
 

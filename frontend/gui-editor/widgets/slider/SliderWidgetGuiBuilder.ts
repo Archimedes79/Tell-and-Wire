@@ -15,7 +15,7 @@ export class SliderWidgetGuiBuilder extends WidgetGuiBuilder {
   override readonly Panel = lazy(() => import('./SliderWidgetPanel'));
 
   override readonly firesHint =
-    'Letting go of the handle (or an arrow key) starts a round at that start point — not every value it passes on the way.';
+    'Letting go of the handle (or an arrow key) starts a run at that start point — not every value it passes on the way.';
 
   protected override defaultSpan() {
     return { w: 8, h: 2 };

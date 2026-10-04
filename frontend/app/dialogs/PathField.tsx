@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import FileBrowserDialog from './FileBrowserDialog';
-import { FIELD, FIELD_ON_SURFACE, MUTED, NEUTRAL_BUTTON } from '../ui/theme';
+import Button from '../ui/Button';
+import { FIELD, FIELD_ON_SURFACE, MUTED } from '../ui/theme';
 
 interface PathFieldProps {
   value: string;
@@ -74,16 +75,15 @@ export default function PathField({
           readOnly={readOnly}
           disabled={disabled}
         />
-        <button
-          type="button"
-          className={`text-xs ${size} rounded-lg flex-shrink-0`}
-          style={{ ...NEUTRAL_BUTTON, opacity: disabled ? 0.6 : 1 }}
+        <Button
+          size={onSurface || compact ? 'sm' : 'md'}
+          className="shrink-0"
           disabled={disabled}
           onClick={() => setBrowsing(true)}
           title={mode === 'directory' ? 'Choose a folder' : mode === 'save' ? 'Choose where to save it' : 'Choose a file'}
         >
           📂 Browse…
-        </button>
+        </Button>
         {children}
       </div>
       {browsing && (

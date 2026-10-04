@@ -96,7 +96,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
 
   /** Said under "Using it fires", for a block whose use can fire a start point: what using it is. */
   readonly firesHint: string =
-    'Choosing a value starts a round at that start point: what it is wired to runs, and what follows from it — not the whole graph.';
+    'Choosing a value starts a run at that start point: what it is wired to runs, and what follows from it — not the whole graph.';
 
   /** Using it is all it is for -- a button, a chat: a new one fires the start point it sends to, whatever else fires it. */
   readonly firesWhenMade: boolean = false;

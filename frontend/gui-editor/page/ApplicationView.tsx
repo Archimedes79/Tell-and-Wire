@@ -10,13 +10,15 @@ import KeptFold from './KeptFold';
 import RequirementsDialog from '../../app/dialogs/RequirementsDialog';
 import { useGraphStore } from '../../app/store/graphStore';
 import { graphEdge } from '../../app/document/wires';
-import { setEdit, startOver, useSession } from '../../app/api/session';
+import { roundGoing, setEdit, startOver, useSession } from '../../app/api/session';
 import { errorText } from '../../app/api/errorText';
 import { call } from '../../app/api/client';
 import { interfaceOf } from '../../../backend/gui-editor/graphInterface.ts';
 import { pageStarts } from '../../../graph/execution/triggers.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
-import { DANGER_TEXT, DIMMER, LINE, MUTED, NEUTRAL_BUTTON, SUNKEN } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { schemeVars } from '../../app/ui/scheme';
+import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../app/ui/theme';
 
 /** Hand the server the document, so what runs is what is being edited. */
 const holdDocument = () => useGraphStore.getState().holdDocument();
@@ -66,7 +68,7 @@ export default function ApplicationView() {
     return node?.label || widgets.find((block) => block.id === id)?.label || id;
   };
   const explained = roundExplained(session.round, nameOf);
-  // A round that went as it should, kept as a test of the project: run again by `test`, asking no model.
+  // A round that went as it should, kept as a test of the tool: run again by `test`, asking no model.
   const project = useGraphStore((s) => (s.isProject ? s.currentFilePath : null));
   const [keeping, setKeeping] = useState<{ round: string; said: string } | null>(null);
   const keepable = !!project && session.round?.done && session.round.result?.status === 'success';
@@ -112,7 +114,7 @@ export default function ApplicationView() {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: SUNKEN }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ ...schemeVars(metadata.gui_scheme), background: SUNKEN }}>
       <DeliveredHeader
         name={metadata.name}
         description={metadata.description}
@@ -122,15 +124,15 @@ export default function ApplicationView() {
             {opening && opening !== 'Opening…' && (
               <span className="text-xs" style={{ color: DANGER_TEXT }}>{opening}</span>
             )}
-            <button
+            <Button
+              size="sm"
+              className="shrink-0"
               onClick={() => { void openAsTool(); }}
               disabled={opening === 'Opening…'}
-              className="px-3 py-1.5 text-xs rounded-lg shrink-0"
-              style={NEUTRAL_BUTTON}
               title="A window of its own, served exactly as a bundle serves it. Nothing is written to disk."
             >
               ⧉ Open as a tool
-            </button>
+            </Button>
           </>
         )}
       />
@@ -152,21 +154,22 @@ export default function ApplicationView() {
           </span>
         )}
         {keepable && keeping?.round !== session.round!.round_id && (
-          <button type="button" onClick={() => { void keep(); }} className="px-2 py-0.5 text-xs rounded-lg shrink-0" style={NEUTRAL_BUTTON}
-            title="Keep this round as a test of the project: what it was sent, what its models answered and what came back, in tests/ -- run again by test, asking no model">
+          <Button size="sm" className="shrink-0" onClick={() => { void keep(); }}
+            title="Keep this run as a test of the tool: what it was sent, what its models answered and what came back, in tests/ -- run again by test, asking no model">
             Keep as a test
-          </button>
+          </Button>
         )}
         {keeping && keeping.round === session.round?.round_id && (
           <span className="text-xs shrink-0" style={{ color: DIMMER }}>{keeping.said}</span>
         )}
       </div>
 
-      <KeptFold kept={session.view?.kept} nameOf={nameOf} onStartOver={() => { void startOver(); }} />
+      <KeptFold kept={session.view?.kept} nameOf={nameOf} busy={roundGoing(session)} onStartOver={() => { void startOver(); }} />
 
       <CallForms
         events={offered.events}
         sent={session.view?.sent ?? {}}
+        busy={roundGoing(session)}
         onCall={(event, values) => { void round.run(event, undefined, values); }}
       />
 

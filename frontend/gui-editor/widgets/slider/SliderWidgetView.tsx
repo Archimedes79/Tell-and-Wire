@@ -6,7 +6,7 @@ import { sliderRange } from '../../../../backend/gui-editor/widgets/slider/range
 const MOVES = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
 
 /** Runtime slider widget: a range input with its current number shown beside it. */
-export default function SliderWidgetView({ widget, value, onChange, onTrigger, fires, busy }: WidgetViewProps) {
+export default function SliderWidgetView({ widget, value, onChange, onTrigger, fires, busy, controlId }: WidgetViewProps) {
   // The range and the number are read by the runner's rule, the one a run
   // emits by: a value left from before the range was narrowed would otherwise
   // stand beside the handle while the graph is handed the edge of the range.
@@ -17,6 +17,7 @@ export default function SliderWidgetView({ widget, value, onChange, onTrigger, f
   return (
     <div className="flex items-center gap-3">
       <input
+        id={controlId}
         type="range"
         className="flex-1"
         min={min}

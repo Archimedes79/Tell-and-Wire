@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import type { WidgetViewProps } from '../WidgetView';
 import Markdown from '../../../app/ui/Markdown';
-import { ACCENT_FILL, DIMMER, FIELD, LINE, MUTED, PRIMARY_BUTTON, SUNKEN, TEXT } from '../../../app/ui/theme';
+import Button from '../../../app/ui/Button';
+import { ACCENT_FILL, DIMMER, FIELD, LINE, MUTED, SUNKEN, TEXT } from '../../../app/ui/theme';
 import { chatValue, type ChatMessage, type ChatValue } from '../../../../backend/gui-editor/widgets/chat/value.ts';
 
 /**
@@ -18,7 +19,7 @@ import { chatValue, type ChatMessage, type ChatValue } from '../../../../backend
  * backend's `ChatWidgetRunner.settle`), which also empties `pending`. A run that
  * fails leaves it, so the message is still in the box to send again.
  */
-export default function ChatWidgetView({ value, onChange, onTrigger, busy }: WidgetViewProps) {
+export default function ChatWidgetView({ value, onChange, onTrigger, busy, controlId }: WidgetViewProps) {
   const { messages, pending } = chatValue(value);
   const end = useRef<HTMLDivElement | null>(null);
   // While its answer is on the way the message is shown as said, not as being typed.
@@ -68,39 +69,34 @@ export default function ChatWidgetView({ value, onChange, onTrigger, busy }: Wid
 
       <div className="flex items-end gap-2 flex-shrink-0">
         <textarea
+          id={controlId}
           className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm resize-none"
           style={{ ...FIELD, height: 40 }}
           value={sending ? '' : pending}
           disabled={sending}
           onChange={(e) => onChange({ messages, pending: e.target.value })}
           onKeyDown={(e) => {
-            if (e.key !== 'Enter' || e.shiftKey) return;
+            // Enter that ends an input method's composition is not Enter.
+            if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
             e.preventDefault();
             send();
           }}
           placeholder="Message…  (Enter sends, Shift+Enter for a new line)"
           aria-label="Message"
         />
-        <button
-          type="button"
-          onClick={send}
-          disabled={busy || !pending.trim()}
-          className="rounded-lg px-4 text-sm font-medium flex-shrink-0"
-          style={{ ...PRIMARY_BUTTON, height: 40, opacity: busy || !pending.trim() ? 0.5 : 1 }}
-        >
+        <Button variant="primary" className="h-10 shrink-0" onClick={send} disabled={busy || !pending.trim()}>
           Send
-        </button>
+        </Button>
         {messages.length > 0 && (
-          <button
-            type="button"
+          <Button
+            size="sm"
+            className="h-10 shrink-0"
             onClick={() => onChange({ messages: [], pending })}
             disabled={busy}
-            className="rounded-lg px-3 text-xs flex-shrink-0"
-            style={{ height: 40, color: MUTED, border: `1px solid ${LINE}`, background: 'transparent' }}
             title="Forget this conversation and start a new one"
           >
             New chat
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -19,7 +19,7 @@ const blocks = [
   { id: 'pick', kind: 'select', label: 'Pick', options: 'a\nb', value: 'a', w: 4, h: 1 },
 ] as GuiWidget[];
 const page: PageModel = {
-  name: 'Tool', description: '', scheme: 'night', blocks,
+  name: 'Tool', description: '', blocks,
   valueOf: (block) => block.value, shownOn: () => undefined, busy: false, error: '', outputs: [],
   // As the graph's names say: the button is an event, the dropdown a value.
   fires: (block) => block.id === 'go', takes: (block) => block.id === 'pick',

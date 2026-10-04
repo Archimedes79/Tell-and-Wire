@@ -23,14 +23,16 @@ import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
 import { blocksAt } from '../../app/document/page';
+import { HEADING_FIELD } from '../authoring/HeadingField';
 import type { NodeType } from '../../app/graph';
-import { LINE, PANEL, SUNKEN, SURFACE } from '../../app/ui/theme';
+import { LINE, MUTED, PANEL, SUNKEN, SURFACE } from '../../app/ui/theme';
+import { scheme } from '../../app/ui/scheme';
 
 const nodeTypes = { graphNode: GraphNodeView };
 
 /**
  * @param active Whether the graph tab is the one on screen.
- * @param onOpenPage Show the Gui tab: what double-clicking a start or end
+ * @param onOpenPage Show the Page tab: what double-clicking a start or end
  *   point the page uses does, since the page is built there.
  *
  * The canvas stays mounted while another tab is shown, so switching back keeps
@@ -89,7 +91,7 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
     if (owed.fit) {
       const nodes = rfInstance.getNodes();
       if (!nodes.every(measured)) return;
-      // An empty graph starts where the first node goes (`besideTheRest`) is in sight.
+      // An empty graph starts where the first node goes (`placement`) is in sight.
       rfInstance.setViewport(nodes.length
         ? getViewportForBounds(getNodesBounds(nodes), wrapper.clientWidth, wrapper.clientHeight, minZoom, 1, 0.25)
         : { x: 0, y: 0, zoom: 1 });
@@ -187,12 +189,21 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
   return (
     // Focusable, so a click on the empty canvas puts the keys here: Delete
     // deletes what is selected only when it was pressed on the canvas
-    // (`deletes`), and asks first what is worth asking (`askToDelete`).
+    // (`deletes`), without asking: Ctrl+Z puts it back.
     <div
       ref={reactFlowWrapper}
-      className="flex-1 min-h-0 outline-none"
+      className="relative flex-1 min-h-0 outline-none"
       tabIndex={-1}
-      onKeyDown={(event) => { if (deletes(event.key, active)) deleteSelected(window.confirm); }}
+      onKeyDown={(event) => {
+        if (deletes(event.key, active)) deleteSelected();
+        // ReactFlow's Enter on a focused card selects it and fires no click: it
+        // opens the card's panel, as a click does, and the keys go to it.
+        const card = (event.target as HTMLElement).closest?.<HTMLElement>('.react-flow__node');
+        if (event.key === 'Enter' && active && card && card === event.target && card.dataset.id) {
+          setEditingNode(card.dataset.id);
+          window.setTimeout(() => document.getElementById(HEADING_FIELD)?.focus(), 0);
+        }
+      }}
     >
       <ReactFlow
         nodes={rfNodes}
@@ -208,6 +219,8 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
         nodeDragThreshold={1}
         onEdgesChange={(changes: EdgeChange[]) => setRFEdges(applyEdgeChanges(changes, rfEdges))}
         onConnect={onConnect}
+        // Not to itself: a node's output into its own input waits on itself.
+        isValidConnection={(wire) => wire.source !== wire.target}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         // One click on a node is the node the person is on: its panel opens
@@ -253,20 +266,16 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
           <MiniMap
             style={PANEL}
             // The minimap paints SVG `fill` attributes, where a CSS variable does
-            // not resolve -- so the scheme's tint is read off the document here
-            // instead of handed over as `var(--ui-node-ai)`. It was a second,
-            // hard-coded copy of four of the six tints before that, which is why
-            // a data node was the wrong colour on a map of its own graph.
-            nodeColor={(node) => {
-              const type = node.data?.graphNode?.node_type;
-              const tint = type
-                ? getComputedStyle(document.documentElement).getPropertyValue(`--ui-node-${type}`).trim()
-                : '';
-              return tint || SURFACE;
-            }}
+            // not resolve, so it takes the editor's own (Night) tints as values.
+            nodeColor={(node) => scheme(undefined).nodes[node.data?.graphNode?.node_type as NodeType] ?? SURFACE}
           />
         )}
       </ReactFlow>
+      {!rfNodes.length && (
+        <p className="pointer-events-none absolute inset-x-0 top-1/3 mx-auto w-fit max-w-sm rounded-xl px-5 py-4 text-center text-sm" style={{ ...PANEL, color: MUTED }}>
+          Add a start point from the left, or say what the tool should do in the bar below.
+        </p>
+      )}
     </div>
   );
 }

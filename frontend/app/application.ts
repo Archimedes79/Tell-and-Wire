@@ -24,7 +24,7 @@
 
 import { create } from 'zustand';
 import type { Graph } from './graph';
-import { useGraphStore } from './store/graphStore';
+import { goingRound, useGraphStore } from './store/graphStore';
 import { call } from './api/client';
 import { stopRound } from './api/session';
 import { startEvents } from '../../graph/execution/triggers.ts';
@@ -78,32 +78,51 @@ function stopWhenLeft(): () => void {
   return () => removeEventListener('pagehide', left);
 }
 
+/** Which start is the current one: ■ Stop, or another ▶ Run, ends the steps of an earlier one still on their way. */
+let generation = 0;
+
 /**
  * Start the application *graph* -- stopping one that is running first -- and
  * resolve once what starting it runs has started. *runWhole* runs it whole,
  * for a graph nothing else starts: the delivered tool's steps, which ask first
- * what the graph still needs (`useRound`).
+ * what the graph still needs (`useRound`). A step that fails ends the
+ * application and is thrown: nothing stays running that is not.
  */
 export async function startApplication(graph: Graph, runWhole: () => Promise<void>): Promise<void> {
   const stopping = stopApplication();
+  const mine = (generation += 1);
+  const current = () => generation === mine;
   // Running from the moment ▶ Run is pressed, before the server has answered:
   // the App tab it opens is shown only while the application runs, and would
   // close again in between.
   useApplication.setState({ running: true });
   // What the graph's cards showed before is not what this run has done.
   useGraphStore.getState().setExecutionResult(null);
-  // The one before is stopped in the server first, or its stop could overtake this start.
-  await stopping;
-  await useGraphStore.getState().holdDocument();
-  whileRunning = [followEdits(), stopWhenLeft()];
-  const { ticks } = await call('startApplication', {});
-  if (startEvents(graph, runnerRegistry).includes(null)) await runWhole();
-  // Nothing left to happen: no page to use, no call to make, no clock to tick.
-  if (!opensApp(graph) && !ticks) await end();
+  try {
+    // The one before is stopped in the server first, or its stop could overtake this start.
+    await stopping;
+    if (!current()) return;
+    await useGraphStore.getState().holdDocument();
+    // ■ Stop pressed while the document was on its way: nothing starts after it.
+    if (!current()) return;
+    whileRunning = [followEdits(), stopWhenLeft()];
+    const { ticks } = await call('startApplication', {});
+    if (!current()) {
+      await call('stopApplication', {}).catch(() => {});
+      return;
+    }
+    if (startEvents(graph, runnerRegistry).includes(null)) await runWhole();
+    // Nothing left to happen: no page to use, no call to make, no clock to tick.
+    if (current() && !opensApp(graph) && !ticks) await end();
+  } catch (error) {
+    if (current()) await end();
+    throw error;
+  }
 }
 
 /** No longer running: edits no longer handed over, and the server's clock stopped -- once it has answered. */
 function end(): Promise<void> {
+  generation += 1;
   for (const undo of whileRunning) undo();
   whileRunning = [];
   useApplication.setState({ running: false });
@@ -113,6 +132,6 @@ function end(): Promise<void> {
 /** Stop the application -- its clocks -- and the round in flight, whoever started it. */
 export async function stopApplication(): Promise<void> {
   const ending = useApplication.getState().running ? end() : null;
-  if (useGraphStore.getState().isExecuting) await stopRound().catch(() => {});
+  if (goingRound()) await stopRound().catch(() => {});
   await ending;
 }

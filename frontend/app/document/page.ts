@@ -3,7 +3,7 @@
 //
 // What a block can do with the graph -- send its data, fire a start point,
 // show an end point -- is the runner's answer (`WidgetRunner.sends`, `event`,
-// `showsEnd`), asked of the same element a round asks, so the Gui tab never
+// `showsEnd`), asked of the same element a round asks, so the Page tab never
 // offers a connection a round then ignores and `check` names.
 
 import type { DataType, GraphNode, GuiWidget, Port } from '../graph';

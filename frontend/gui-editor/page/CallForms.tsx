@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { InterfaceEntry } from '../../../backend/gui-editor/graphInterface.ts';
-import { DIMMER, FIELD, LINE, MUTED, PRIMARY_BUTTON } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { DIMMER, FIELD, LINE, MUTED } from '../../app/ui/theme';
 
 /**
  * What *values* hold at the dotted *path* -- read here, as a frontend reads
@@ -42,24 +43,27 @@ function put(values: Record<string, unknown>, path: string, value: unknown): voi
  * standing in for the script or the frontend somebody writes. For each, a box
  * for every part the graph reads of what it is sent (`reads`) -- filled with
  * what it was sent last, its example at first -- and a button that starts it
- * with them, sent along with the rest of what it was sent last.
+ * with them, sent along with the rest of what it was sent last. The button
+ * waits while a run goes.
  */
-export default function CallForms({ events, sent, onCall }: {
+export default function CallForms({ events, sent, busy, onCall }: {
   events: InterfaceEntry[];
   /** What each start point was sent last, by its name (`SessionView.sent`). */
   sent: Record<string, unknown>;
+  /** A run is going: a call waits for it. */
+  busy: boolean;
   onCall: (event: string, values: Record<string, unknown>) => void;
 }) {
   const called = events.filter((event) => event.started_by === 'call');
   if (!called.length) return null;
   return (
     <div className="px-8 py-4 space-y-5" style={{ borderBottom: `1px solid ${LINE}` }}>
-      {called.map((event) => <CallForm key={event.name} event={event} sent={sent[event.name]} onCall={onCall} />)}
+      {called.map((event) => <CallForm key={event.name} event={event} sent={sent[event.name]} busy={busy} onCall={onCall} />)}
     </div>
   );
 }
 
-function CallForm({ event, sent, onCall }: { event: InterfaceEntry; sent: unknown; onCall: (event: string, values: Record<string, unknown>) => void }) {
+function CallForm({ event, sent, busy, onCall }: { event: InterfaceEntry; sent: unknown; busy: boolean; onCall: (event: string, values: Record<string, unknown>) => void }) {
   const reads = event.reads ?? [];
   // What is typed, by part. A part nobody typed into shows what it was sent last.
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -71,7 +75,7 @@ function CallForm({ event, sent, onCall }: { event: InterfaceEntry; sent: unknow
     onCall(event.name, values);
   };
   return (
-    <form className="space-y-2 max-w-2xl" onSubmit={(e) => { e.preventDefault(); call(); }}>
+    <form className="space-y-2 max-w-2xl" onSubmit={(e) => { e.preventDefault(); if (!busy) call(); }}>
       <p className="text-xs" style={{ color: MUTED }}>
         <strong>{event.label}</strong> — started by a call{event.description ? `: ${event.description}` : ''}
       </p>
@@ -90,7 +94,7 @@ function CallForm({ event, sent, onCall }: { event: InterfaceEntry; sent: unknow
       {!reads.length && (
         <p className="text-xs" style={{ color: DIMMER }}>No node takes a part of what it is sent by name: it is sent what it was sent last.</p>
       )}
-      <button type="submit" className="px-4 py-1.5 text-sm rounded-lg font-semibold" style={PRIMARY_BUTTON}>{event.label}</button>
+      <Button type="submit" variant="primary" disabled={busy}>{event.label}</Button>
     </form>
   );
 }

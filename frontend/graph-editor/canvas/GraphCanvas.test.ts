@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { ReactFlowProvider } from 'reactflow';
@@ -45,7 +45,6 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  vi.restoreAllMocks();
   await act(async () => { root.unmount(); });
   screen.remove();
 });
@@ -79,35 +78,18 @@ function press(target: EventTarget, key: string): void {
   }
 }
 
-/** Every question asked, answered *yes* or not. */
-function answering(yes: boolean): string[] {
-  const asked: string[] = [];
-  vi.spyOn(window, 'confirm').mockImplementation((question) => { asked.push(String(question)); return yes; });
-  return asked;
-}
-
 /** What the store is asked by hand, as a panel or a menu would ask it. */
 const done = (change: () => void) => act(() => { change(); });
 
 describe('Delete on the canvas', () => {
-  it('asks first, and on a no leaves the node, its wires and the block that shows it as they were; on a yes takes them as one undo step', () => {
-    // ReactFlow took a node's wires, then asked about the node: kept on
-    // Cancel, it was kept with none.
-    const asked = answering(false);
-    choose('shown');
-    press(card('shown'), 'Delete');
-    expect(asked).toHaveLength(1);
-    expect(node('shown')).toBeDefined();
-    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);
-    expect(store().page[0].shows).toBe('shown');
-    expect(store().past).toHaveLength(0);
-
-    answering(true);
+  it('takes the node, its wires and the block that shows it without asking, as one undo step', () => {
+    // ReactFlow took a node's wires first, then the node: two steps of Ctrl+Z.
     choose('shown');
     press(card('shown'), 'Delete');
     expect(node('shown')).toBeUndefined();
     expect(store().rfEdges).toEqual([]);
     expect(store().page[0].shows).toBeUndefined();
+    expect(store().past).toHaveLength(1);
     done(() => store().undo());
     expect(node('shown')).toBeDefined();
     expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);

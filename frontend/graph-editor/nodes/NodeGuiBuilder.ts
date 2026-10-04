@@ -1,6 +1,6 @@
 // A node's build-time half, in the browser: the mirror of `graph/nodes/NodeRunner.ts`.
 
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType } from 'react';
 import type { AICall } from '../../app/api/client';
 import type { Graph, GraphNode, NodeType } from '../../app/graph';
 import type { Press, Refine, Write } from '../authoring/generation';
@@ -66,11 +66,8 @@ export interface NodePanelProps {
 
 export type PortEditing = 'edit' | 'fixed' | 'none';
 
-/** The folded-away settings most people never touch -- and, where they are the node's own to edit, its ports. */
-export type NodeAdvancedPanelProps = Pick<NodePanelProps, 'node' | 'setConfig' | 'updateNode'> & {
-  /** The ports editor, drawn by the side panel, for a node that keeps its ports among these settings (`definesItself`). */
-  ports?: ReactNode;
-};
+/** The folded-away settings most people never touch, drawn after the node's ports (`NodeEditor`). */
+export type NodeAdvancedPanelProps = Pick<NodePanelProps, 'node' | 'setConfig' | 'updateNode'>;
 
 export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   // ── What it is ────────────────────────────────────────────────────────────
@@ -87,9 +84,10 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   /** Shown on hover in the palette: what the node is for, in one line. */
   abstract readonly hint: string;
 
-  abstract readonly icon: string;
+  /** What a person might write in the node's text: the placeholder of "What it does". */
+  abstract readonly example: string;
 
-  /** The node's tint on the canvas: a scheme variable, with the default scheme's colour as fallback. */
+  /** The node's tint on the canvas: its `NODE` colour (`app/ui/theme.ts`). */
   abstract readonly color: string;
 
   /**
@@ -101,24 +99,20 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   readonly paletteGroup?: string;
 
   /**
-   * The settings most people never touch, drawn folded away under everything
-   * else, so that opening a node shows what it *does* and not a form.
+   * The settings most people never touch -- once per item, catching failures,
+   * the model --, drawn in the one folded Advanced section under everything
+   * else, after the ports where the node has ports to edit: opening a node
+   * shows what it *does*, not a form.
    */
   readonly AdvancedPanel?: ComponentType<NodeAdvancedPanelProps>;
 
-  /** What the folded-away settings are about, in a few words: shown on the fold. */
+  /** What Advanced holds for this node, in a few words: shown on the fold. A node with no ports to edit and no panel here has no fold. */
   readonly advancedSummary?: string;
 
   /**
-   * The panel draws the node's text itself -- what it should do, the text ✨
-   * writes from -- so the side panel draws no description box of its own above it.
-   */
-  readonly ownsDescription?: boolean;
-
-  /**
    * A node that says what its ports carry in its definitions (input.js,
-   * output.js): a code or an ai node. Its ports are edited among its Advanced
-   * settings, without a type per port -- an input's follows its wire -- and
+   * output.js): a code or an ai node. Its ports are edited in Advanced,
+   * without a type per port -- an input's follows its wire -- and
    * its outputs follow its output definition.
    */
   readonly definesItself: boolean = false;

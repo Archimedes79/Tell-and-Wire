@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import type { RoundSnapshot } from '../../app/api/client';
+import { stopRound } from '../../app/api/session';
+import Button from '../../app/ui/Button';
 import { DANGER_TEXT, DIM, LINE, MUTED, SURFACE, TEXT } from '../../app/ui/theme';
 
-/** How a round went, in a word: going, done, or failed -- nothing before the first. */
+/** How a run went, in a word: going, done, or failed -- nothing before the first. */
 function roundStatus(round: RoundSnapshot | null): { label: string; failed: boolean } {
   if (!round) return { label: '', failed: false };
   if (!round.done) return { label: '⏳ Running…', failed: false };
@@ -14,7 +16,7 @@ function roundStatus(round: RoundSnapshot | null): { label: string; failed: bool
 
 /**
  * The bar above the delivered page: what this tool is -- the graph's name and
- * description -- and how its last round went.
+ * description -- and how its last run went, with a Stop while one goes.
  *
  * It has no ▶ Run. A tool runs when it is started (`startEvents`: its start points
  * that start themselves, or, with no start point at all, the whole graph once) and
@@ -56,6 +58,9 @@ export default function DeliveredHeader({ name, description, round, tools, note 
         <span className="text-xs font-medium whitespace-nowrap" style={{ color: status.failed ? DANGER_TEXT : MUTED }}>
           {status.label}
         </span>
+      )}
+      {round && !round.done && (
+        <Button size="sm" className="shrink-0" onClick={() => { void stopRound(); }} title="Stop the run">■ Stop</Button>
       )}
     </header>
   );

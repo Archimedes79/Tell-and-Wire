@@ -12,7 +12,7 @@
   {
     "extensions": ".txt,.md",
     "fires": "summarize",
-    "h": 2,
+    "h": 3,
     "id": "file",
     "kind": "input_picker",
     "label": "File",

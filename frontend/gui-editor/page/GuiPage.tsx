@@ -4,8 +4,7 @@ import { BLOCKS } from './blocks';
 import { useContainerCell } from './useContainerCell';
 import { blockStyle, gridStyle, resolveWidgetLayout, type WidgetPlacement } from '../../app/document/layout';
 import { toneIsBare, toneStyle, type Tone } from '../../app/ui/tone';
-import { schemeVars } from '../../app/ui/scheme';
-import { DANGER, DANGER_TEXT, DIM, MUTED, TEXT } from '../../app/ui/theme';
+import { DANGER, DANGER_FILL, DANGER_TEXT, DIM, MUTED, TEXT } from '../../app/ui/theme';
 import RunResult, { type ShownOutput } from './RunResult';
 
 /**
@@ -35,7 +34,6 @@ import RunResult, { type ShownOutput } from './RunResult';
 export interface PageModel {
   name: string;
   description: string;
-  scheme: string;
   /** The blocks, as designed. */
   blocks: GuiWidget[];
   /** What a block holds now: what was set, what the session keeps, or its design. */
@@ -78,7 +76,7 @@ export function blockValue(
 
 /** The grid the page flows on: 16 square columns, capped at a readable width. */
 export function PageGrid({
-  children, minRows, onCell, scheme,
+  children, minRows, onCell,
 }: {
   children: React.ReactNode;
   /** Keep this much height when empty, so there is a page to aim at. */
@@ -94,8 +92,6 @@ export function PageGrid({
    * fell behind the pointer.
    */
   onCell?: (cell: number) => void;
-  /** The page's colour scheme. */
-  scheme: string;
 }) {
   const { ref, cell } = useContainerCell();
 
@@ -107,7 +103,6 @@ export function PageGrid({
       data-gui-surface
       style={{
         ...gridStyle(cell),
-        ...schemeVars(scheme),
         minHeight: minRows ? cell * minRows : undefined,
       }}
     >
@@ -123,7 +118,7 @@ export function PageGrid({
  * none, and none of that code is in its bundle.
  */
 export function GuiBlock({
-  placement, value, incoming, onChange, onTrigger, fires, busy, style, onMouseDown, blockRef, labelInset, children, content,
+  placement, value, incoming, onChange, onTrigger, fires, busy, style, frame, blockRef, labelInset, children, content,
 }: {
   placement: WidgetPlacement;
   value: unknown;
@@ -135,7 +130,8 @@ export function GuiBlock({
   fires?: boolean;
   busy?: boolean;
   style?: React.CSSProperties;
-  onMouseDown?: (event: React.MouseEvent) => void;
+  /** What the designer adds to the block's own box: selecting it by mouse and keyboard. */
+  frame?: React.HTMLAttributes<HTMLDivElement>;
   blockRef?: (element: HTMLElement | null) => void;
   /** Room for a drag grip beside the caption. Designer only. */
   labelInset?: number;
@@ -148,7 +144,11 @@ export function GuiBlock({
   content?: React.ReactNode;
 }) {
   const { widget } = placement;
-  const View = BLOCKS[widget.kind]?.View;
+  const kind = BLOCKS[widget.kind];
+  const View = kind?.View;
+  // What the label above a block names, when the block is one control.
+  const controlId = kind?.labelsControl ? `block-${widget.id}` : undefined;
+  const caption = { className: 'text-xs font-medium flex-shrink-0', style: { color: MUTED, paddingLeft: labelInset ?? 0 } };
   const look = { border: widget.border, background: widget.background };
   const bare = toneIsBare(widget.tone as Tone, look);
 
@@ -165,20 +165,18 @@ export function GuiBlock({
         padding: bare ? '2px 10px' : '6px 10px',
         ...style,
       }}
-      onMouseDown={onMouseDown}
+      {...frame}
     >
       {children}
 
       {/* Over a plain block too: a chart or a reply without a frame still says what it is. */}
-      {widget.label && !BLOCKS[widget.kind]?.drawsLabel && (
-        <span className="text-xs font-medium flex-shrink-0" style={{ color: MUTED, paddingLeft: labelInset ?? 0 }}>
-          {widget.label}
-        </span>
-      )}
+      {widget.label && !kind?.drawsLabel && (controlId
+        ? <label htmlFor={controlId} {...caption}>{widget.label}</label>
+        : <span {...caption}>{widget.label}</span>)}
 
       <div className="flex-1 min-h-0">
         {content ?? (View ? (
-          <View widget={widget} value={value} incoming={incoming} onChange={onChange} onTrigger={onTrigger} fires={fires} busy={busy} />
+          <View widget={widget} value={value} incoming={incoming} onChange={onChange} onTrigger={onTrigger} fires={fires} busy={busy} controlId={controlId} />
         ) : (
           <span className="text-xs" style={{ color: DANGER }}>Unknown kind of block: {widget.kind}</span>
         ))}
@@ -200,7 +198,7 @@ function WithoutPage({ page }: { page: PageModel }) {
       <div className="m-6 max-w-2xl">
         <p className="text-sm mb-2" style={{ color: TEXT }}>This graph has no nodes yet.</p>
         <p className="text-xs" style={{ color: DIM }}>
-          Add one from the palette on the Graph tab, or a block on the Gui tab.
+          Add one from the palette on the Graph tab, or a block on the Page tab.
         </p>
       </div>
     );
@@ -229,7 +227,7 @@ function RunError({ error }: { error: string }) {
   return (
     <div
       className="mx-6 mt-4 text-sm rounded-lg px-4 py-3 whitespace-pre-wrap"
-      style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: DANGER_TEXT }}
+      style={{ background: DANGER_FILL, border: `1px solid ${DANGER}`, color: DANGER_TEXT }}
     >
       {error}
     </div>
@@ -266,7 +264,7 @@ export function GuiSurfacePage({ page, onValue, onEvent }: {
     <>
       <RunError error={page.error} />
       <div className="flex-1 overflow-auto px-8 py-6">
-        <PageGrid scheme={page.scheme}>
+        <PageGrid>
           {resolveWidgetLayout(page.blocks).map((placement) => {
             const { widget } = placement;
             const incoming = page.shownOn(widget);

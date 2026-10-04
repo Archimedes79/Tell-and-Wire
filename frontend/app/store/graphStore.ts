@@ -1,23 +1,27 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { Node, Edge } from 'reactflow';
-import type { Graph, GraphNode, GraphEdge, GraphMetadata, ExecutionResult, GuiWidget, NodeType } from '../graph';
+import type { Graph, GraphNode, GraphMetadata, ExecutionResult, GuiWidget, NodeType } from '../graph';
 import type { RFNodeData } from './nodeData';
 import type { PortRenames } from './portRenames';
 import { derivedNodePorts } from '../document/ports';
 import { defaultField, takenAs, withoutPoints } from '../document/page';
 import { call, type RoundSnapshot } from '../api/client';
-import { forgetSession, useSession, watchSession } from '../api/session';
-import { NODE_KINDS, savedNode } from '../document/nodeKinds';
-import { baseNodeConfig } from '../document/baseNodeConfig';
+import { forgetSession, stopRound, useSession, watchSession } from '../api/session';
+import { NODE_KINDS } from '../document/nodeKinds';
+import {
+  buildReactFlowGraph, defaultMetadata, exported, normalizeGraph, pageOf, takeIn, withDiskChanges, withNested,
+} from '../document/graphDoc';
+import { HISTORY_LIMIT, endCoalescing, historyActions } from './history';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
-import { defaultMetadata as formatDefaults, mergeResults } from '../../../graph/graph.ts';
+import { mergeResults } from '../../../graph/graph.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import type { TextChange } from '../../../backend/app/api.ts';
 import { NESTED_GRAPH_FIELD } from '../../../backend/app/project/changes.ts';
 import { withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import { freeId, slugOf } from '../document/ids';
+import { makeRoom } from '../document/placement';
 import { graphEdge } from '../document/wires';
 import { wireOf } from '../../../backend/app/project/flow.ts';
 
@@ -48,7 +52,6 @@ export interface GraphStore {
 
   // Execution state
   executionResult: ExecutionResult | null;
-  isExecuting: boolean;
   /**
    * The server holds another document's session now: another tab or window
    * handed it one, or the server started anew. Its rounds are not this
@@ -89,16 +92,6 @@ export interface GraphStore {
   // each committed change, `future` the ones an undo stepped back out of.
   past: string[];
   future: string[];
-
-  /** Live progress of the round in flight, or null when nothing is running. */
-  runProgress: {
-    completed: number;
-    total: number;
-    label: string;
-    itemDone: number;
-    itemTotal: number;
-    idleSeconds: number | null;
-  } | null;
 
   // UI state
   /** The node whose panel is open beside the canvas: the one the person is on. */
@@ -176,8 +169,7 @@ export interface GraphStore {
   connectToNewInput: (wire: { source: string; sourceHandle: string; target: string }) => boolean;
   /**
    * Take *nodeIds* off the graph with every wire into or out of them, and the
-   * wires *wireIds* besides: one undo step, however much goes. What is worth
-   * asking first is asked before this (`canvas/nodeRemoval.ts`).
+   * wires *wireIds* besides: one undo step, however much goes. Nothing is asked.
    */
   deleteNodes: (nodeIds: string[], wireIds?: string[]) => void;
   setRFNodes: (nodes: Node<RFNodeData>[]) => void;
@@ -185,7 +177,12 @@ export interface GraphStore {
   setEditingNode: (nodeId: string | null) => void;
   /** What the canvas shows the rounds made: none, before anything ran. */
   setExecutionResult: (result: ExecutionResult | null) => void;
-  loadGraph: (graph: Graph) => void;
+  /**
+   * Open *graph* as the document, stopping the run of the one it replaces.
+   * *unsaved*: it is at no file and counts as unsaved (a graph ✨ designed).
+   * Says the wires it had to leave out, to nodes that are not there.
+   */
+  loadGraph: (graph: Graph, options?: { unsaved?: boolean }) => { dropped: string[] };
   /**
    * An empty graph with the format's default settings, as a document of its
    * own: nothing of the one before it -- its pinned AI, its colour scheme,
@@ -262,16 +259,17 @@ export interface GraphStore {
   /**
    * Take in code and prompts that changed in the project folder on disk.
    *
-   * One undo step, so a change from another editor can be taken back like any
-   * other -- and none when nothing of it is taken. What is on disk is saved by
-   * definition: a graph that was clean stays clean, and one with unsaved edits
-   * keeps exactly those. Says the nodes whose change it took, and those whose
-   * graph was left on disk because there is unsaved work here.
+   * No undo step: what the other editor wrote is in every state Undo and Redo
+   * go to, so Undo never brings the old text back to be saved over it. What
+   * is on disk is saved by definition: a graph that was clean stays clean,
+   * and one with unsaved edits keeps exactly those. Says the nodes whose
+   * change it took, and those whose graph was left on disk because there is
+   * unsaved work here.
    */
   takeDiskChanges: (changes: TextChange[]) => { taken: string[]; refused: string[] };
   /**
    * Hand the server's session the document: what every round runs, whoever
-   * starts it -- the App tab, the Gui tab, the clock, the tool opened in a
+   * starts it -- the App tab, the Page tab, the clock, the tool opened in a
    * window of its own. What runs, not how each node was written: a node's
    * history is up to half a megabyte, and a round reads none of it. It is
    * handed over as the document of the session it was given before: another
@@ -280,10 +278,11 @@ export interface GraphStore {
    */
   holdDocument: () => Promise<void>;
   /**
-   * A round of the session, as its stream tells it: the busy flag, how far it
-   * is, and -- once it ended -- what it made, on the canvas. A round no event
-   * started is all there is to show; one an event started is laid over what
-   * was shown. A round of a document opened before this one is not this one's.
+   * A round of the session, as its stream tells it: once it ended, what it
+   * made, on the canvas -- how far it is, and whether it goes, is the
+   * session's (`goingRound`). A round no event started is all there is to
+   * show; one an event started is laid over what was shown. A round of a
+   * document opened before this one is not this one's.
    */
   followRound: (round: RoundSnapshot) => void;
 }
@@ -311,162 +310,6 @@ export function untouchedInput(node: GraphNode, wired: boolean): string | undefi
   return written ? undefined : only.id;
 }
 
-/** Four cards and the wires between them. */
-const ROW_WIDTH = 4 * 260 + 3 * 80;
-/** A card of a few ports and the gap below it. */
-const ROW_HEIGHT = 220;
-
-/**
- * Where a node goes that nobody put anywhere -- a palette click, the start
- * point a block on the page makes: to the right of what is already there, not
- * on top of it. A random spot put the second node on the first more often
- * than not, and a graph reads left to right anyway. The gap is room for a
- * wire and no more: a card keeps its width (260 at most), and three new nodes
- * still fit beside an open panel at a zoom that can be read (`READABLE_ZOOM`).
- * A row holds four: the seventh node of one long row put the first out of
- * sight of "fit view", so the fifth starts a row below the last.
- */
-export function besideTheRest(placed: Node[]): { x: number; y: number } {
-  if (!placed.length) return { x: 200, y: 120 };
-  const left = Math.min(...placed.map((node) => node.position.x));
-  const last = Math.max(...placed.map((node) => node.position.y));
-  const row = placed.filter((node) => last - node.position.y < ROW_HEIGHT / 2);
-  const right = Math.max(...row.map((node) => node.position.x + (node.width ?? 260)));
-  if (right - left + 80 + 260 > ROW_WIDTH) {
-    const below = Math.max(...row.map((node) => node.position.y + (node.height ?? ROW_HEIGHT - 80)));
-    return { x: left, y: below + 80 };
-  }
-  return { x: right + 80, y: Math.min(...row.map((node) => node.position.y)) };
-}
-
-let nodeCounter = 1;
-function newId(prefix: string) {
-  return `${prefix}-${nodeCounter++}-${Date.now()}`;
-}
-
-function normalizeMetadata(metadata: Partial<GraphMetadata> | undefined): GraphMetadata {
-  return { ...defaultMetadata(), ...(metadata ?? {}) };
-}
-
-function normalizeGraphNode(rawNode: Partial<GraphNode>): GraphNode {
-  // No type is a type nobody knows: kept as it came, below, and named by `check`.
-  const nodeType = rawNode.node_type ?? ('' as NodeType);
-  const nodeId = rawNode.id ?? newId(nodeType || 'node');
-  const kind = NODE_KINDS[nodeType];
-  // A type this editor does not know -- one of a newer version, say -- is kept
-  // as it came, as the backend and a project folder keep it: opening such a
-  // graph threw, and a save must not lose the node. `check` names it.
-  if (!kind) {
-    return {
-      label: nodeId, description: '', ...rawNode, id: nodeId, node_type: nodeType,
-      position: { x: 0, y: 0, ...(rawNode.position ?? {}) },
-      inputs: Array.isArray(rawNode.inputs) ? rawNode.inputs : [],
-      outputs: Array.isArray(rawNode.outputs) ? rawNode.outputs : [],
-      config: rawNode.config ?? ({} as GraphNode['config']),
-    };
-  }
-  const defaults = kind.create(nodeId);
-
-  const node: GraphNode = {
-    ...defaults,
-    ...rawNode,
-    id: nodeId,
-    node_type: nodeType,
-    position: {
-      ...defaults.position,
-      ...(rawNode.position ?? {}),
-    },
-    inputs: Array.isArray(rawNode.inputs) ? rawNode.inputs : defaults.inputs,
-    outputs: Array.isArray(rawNode.outputs) ? rawNode.outputs : defaults.outputs,
-    // A key the file left out means what a run reads it as -- its one
-    // default -- not what a new node starts with: loading and saving must not
-    // change what a graph does.
-    config: { ...baseNodeConfig(), ...(rawNode.config ?? {}) },
-  };
-
-  // Where the element derives its ports -- a start point, a folder node from
-  // its settings, a subgraph node from the graph it holds -- they
-  // come from the element, never from what a file, an import or a model said.
-  // A run works them out the same way (`portsOf` in `wiring.ts`), and a
-  // second answer here is a second answer that can disagree.
-  const derived = derivedNodePorts(node);
-  return derived ? { ...node, ...derived } : node;
-}
-
-/**
- * *outer* with *inner* put back into the node it came out of, and that node's
- * ports derived from it again -- an end point added in there is a port out
- * here, and this is the moment that becomes true.
- */
-function withNested(outer: Graph, nodeId: string, inner: Graph): Graph {
-  return {
-    ...outer,
-    nodes: outer.nodes.map((node) => {
-      if (node.id !== nodeId) return node;
-      const held = { ...node, config: { ...node.config } };
-      runnerRegistry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
-      return { ...held, ...(derivedNodePorts(held) ?? {}) };
-    }),
-  };
-}
-
-/**
- * A level of the document as a file keeps it (`exportGraph`): each node's own
- * settings, not every field every node starts with -- and the size it was
- * given, never the one ReactFlow measured: a graph must serialise the same way
- * twice running, or "unsaved" means nothing.
- */
-function exported(rfNodes: Node<RFNodeData>[], rfEdges: Edge[], metadata: GraphMetadata, page: GuiWidget[]): Graph {
-  const nodes: GraphNode[] = rfNodes.map((rfn) => keptNested(savedNode({
-    ...rfn.data.graphNode,
-    position: { x: rfn.position.x, y: rfn.position.y },
-    // None is no key: a node made here has none, one read back from a file had null.
-    width: rfn.data.graphNode.width ?? undefined,
-    height: rfn.data.graphNode.height ?? undefined,
-  })));
-  const edges: GraphEdge[] = rfEdges.map(graphEdge);
-  return { metadata, nodes, edges, ...(page.length ? { page: { blocks: page } } : {}) };
-}
-
-/**
- * *node* with the graph it holds -- a subgraph's -- kept as that graph is kept
- * from inside it: going in and out again, changing nothing, read as unsaved
- * when the file wrote a node's default (`batch_mode: "whole_list"`) that a
- * level leaves out.
- */
-function keptNested(node: GraphNode): GraphNode {
-  const element = runnerRegistry.node(node.node_type);
-  const held = element?.nestedGraph(node as never) as Graph | null | undefined;
-  if (!element || !held) return node;
-  const graph = normalizeGraph(held);
-  const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
-  const kept = { ...node, config: { ...node.config } };
-  element.setNestedGraph(kept as never, exported(rfNodes, rfEdges, graph.metadata, graph.page?.blocks ?? []) as never);
-  return kept;
-}
-
-function normalizeGraph(graph: Graph): Graph {
-  const nodes = Array.isArray(graph.nodes) ? graph.nodes.map((node) => normalizeGraphNode(node)) : [];
-  const nodeIds = new Set(nodes.map((node) => node.id));
-  // A wire is taken as the graph says it (`GraphEdge`); one to a node that is
-  // not there is dropped, as `check` would report it.
-  const edges = Array.isArray(graph.edges)
-    ? graph.edges.filter((edge) => nodeIds.has(edge.source_node_id) && nodeIds.has(edge.target_node_id))
-    : [];
-
-  // A page is its blocks: one with none is no page.
-  const blocks = Array.isArray(graph.page?.blocks) ? graph.page.blocks : [];
-  return {
-    metadata: normalizeMetadata(graph.metadata),
-    nodes,
-    edges,
-    ...(blocks.length ? { page: { blocks } } : {}),
-  };
-}
-
-/** The format's defaults (`defaultMetadata` in `graph/graph.ts`), in the editor's typed view of them. */
-const defaultMetadata = (): GraphMetadata => formatDefaults() as GraphMetadata;
-
 /**
  * Which document the server's session holds -- the `opened` count when it was
  * handed over -- and which session that is: a round is shown only on the
@@ -483,19 +326,6 @@ const serverHoldsAnother = (): boolean => {
   return !!told && !!heldSession && told !== heldSession;
 };
 
-/** How many undo steps are kept. Each entry is a whole serialised graph. */
-const HISTORY_LIMIT = 50;
-
-/** How long after a named change the next one of that name still belongs to its undo step (`commit`). */
-export const COALESCE_MS = 2000;
-
-/**
- * The last undo step a named change began or added to, and when -- or null
- * when the last change had no name. Not state anybody draws, so not in the
- * store: a change of the same name within `COALESCE_MS` adds to that step.
- */
-let coalescing: { key: string; at: number } | null = null;
-
 /**
  * What `isDirty` last answered, and the parts of the store it was worked out
  * from. The header asks on every change of the store -- a tick of a run, a
@@ -503,47 +333,6 @@ let coalescing: { key: string; at: number } | null = null;
  * again of the same document, it is not worked out again.
  */
 let dirtyAnswer: { of: unknown[]; dirty: boolean } | null = null;
-
-/** The size a node was given, if it was given one, as ReactFlow lays it out. */
-function sizeStyle(node: GraphNode): { style: { width: number; height: number } } | Record<string, never> {
-  return typeof node.width === 'number' && typeof node.height === 'number'
-    ? { style: { width: node.width, height: node.height } }
-    : {};
-}
-
-/**
- * Build the ReactFlow node/edge arrays for a graph. Shared by `loadGraph` and by
- * undo/redo's `applyGraphSnapshot`, so restoring a snapshot can never drift from
- * loading a file -- they were the same twenty lines twice.
- */
-function buildReactFlowGraph(graph: Graph) {
-  const rfNodes: Node<RFNodeData>[] = graph.nodes.map((gn) => ({
-    id: gn.id,
-    type: 'graphNode',
-    position: { x: gn.position.x, y: gn.position.y },
-    // A size goes in `style`, which is what ReactFlow *renders* from and what
-    // its resizer writes (`updateStyle: true`). `width`/`height` on a node are
-    // its measurement: ReactFlow fills them in once the node is drawn and
-    // overwrites whatever was put there. Setting the size there therefore did
-    // nothing at all -- a node saved at 340x300 came back at whatever its
-    // contents happened to measure -- and the measurement then read as an edit
-    // to a graph nobody had touched.
-    ...sizeStyle(gn),
-    data: { graphNode: gn },
-  }));
-
-  // How a wire looks is the canvas's to say (`canvas/wireLook.ts`): it depends
-  // on what is selected there, which the document knows nothing of.
-  const rfEdges: Edge[] = graph.edges.map((ge) => ({
-    id: ge.id,
-    source: ge.source_node_id,
-    sourceHandle: ge.source_port_id,
-    target: ge.target_node_id,
-    targetHandle: ge.target_port_id,
-  }));
-
-  return { rfNodes, rfEdges };
-}
 
 export const useGraphStore = create<GraphStore>()(
   immer((set, get) => ({
@@ -554,7 +343,6 @@ export const useGraphStore = create<GraphStore>()(
     currentFilePath: null,
     isProject: false,
     executionResult: null,
-    isExecuting: false,
     heldElsewhere: false,
     editingNodeId: null,
     pendingChange: null,
@@ -564,7 +352,6 @@ export const useGraphStore = create<GraphStore>()(
     savedSnapshot: null,
     past: [],
     future: [],
-    runProgress: null,
 
     setMetadata: (meta) => {
       // Named without ": ", so it is never taken for a node panel's change (`nodeId: fields`).
@@ -601,9 +388,14 @@ export const useGraphStore = create<GraphStore>()(
         position,
         data: { graphNode: fill ? fill(defaults) : defaults },
       };
+      const aside = new Map(makeRoom(get().rfNodes, position).map((move) => [move.id, move.x]));
       set((state) => {
         // The one marked, as its panel is the one open: the node selected before stayed lit beside it.
-        for (const node of state.rfNodes) if (node.selected) node.selected = false;
+        for (const node of state.rfNodes) {
+          if (node.selected) node.selected = false;
+          const x = aside.get(node.id);
+          if (x !== undefined) node.position = { ...node.position, x };
+        }
         state.rfNodes.push({ ...rfNode, selected: true } as never);
       });
       return id;
@@ -806,10 +598,15 @@ export const useGraphStore = create<GraphStore>()(
         state.executionResult = shown;
       }),
 
-    loadGraph: (graph) => {
+    loadGraph: (graph, { unsaved = false } = {}) => {
       const normalizedGraph = normalizeGraph(graph);
       const { rfNodes, rfEdges } = buildReactFlowGraph(normalizedGraph);
-      coalescing = null;
+      // What it was given and cannot hold, said by whoever loads it: a wire to a node that is not there.
+      const kept = new Set(normalizedGraph.edges);
+      const dropped = (Array.isArray(graph.edges) ? graph.edges : []).filter((edge) => !kept.has(edge)).map(wireOf);
+      endCoalescing();
+      // The run of the document being left has no one to show its end to: it is stopped with it.
+      if (goingRound()) void stopRound().catch(() => {});
 
       set((state) => {
         state.metadata = normalizedGraph.metadata;
@@ -837,8 +634,11 @@ export const useGraphStore = create<GraphStore>()(
       forgetSession();
       // Snapshot through exportGraph() rather than from normalizedGraph: it is
       // the same serialisation isDirty() compares against, so a freshly loaded
-      // graph is guaranteed to read as clean.
-      get().markSaved();
+      // graph is guaranteed to read as clean. One that is at no file -- ✨ made
+      // it -- is not: it is unsaved until it is written somewhere.
+      if (unsaved) set((state) => { state.savedSnapshot = null; });
+      else get().markSaved();
+      return { dropped };
     },
 
     newGraph: () => get().loadGraph({ metadata: defaultMetadata(), nodes: [], edges: [] }),
@@ -847,7 +647,7 @@ export const useGraphStore = create<GraphStore>()(
       // Not while a run is in flight: its result is about to arrive, and it
       // would arrive at a canvas showing a different graph, where node ids
       // that happen to match would be given another level's values.
-      if (get().isExecuting) return;
+      if (goingRound()) return;
       const node = get().rfNodes.find((n: RFNode) => n.id === nodeId)?.data.graphNode;
       // Whether there is a graph to go into is the same question as whether
       // this node holds one, so it is asked once. A `NodeGuiBuilder.opensNestedGraph`
@@ -872,7 +672,7 @@ export const useGraphStore = create<GraphStore>()(
     },
 
     closeSubgraph: () => {
-      if (get().isExecuting) return;
+      if (goingRound()) return;
       const { subgraphStack } = get();
       const frame = subgraphStack[subgraphStack.length - 1];
       if (!frame) return;
@@ -917,75 +717,7 @@ export const useGraphStore = create<GraphStore>()(
       return exported(rfNodes as never, rfEdges, metadata, page as never);
     },
 
-    commit: (coalesce) => {
-      const now = Date.now();
-      if (coalesce && coalescing?.key === coalesce && now - coalescing.at < COALESCE_MS) {
-        coalescing.at = now;
-        return;
-      }
-      coalescing = coalesce ? { key: coalesce, at: now } : null;
-      const snapshot = JSON.stringify(get().exportGraph());
-      set((state) => {
-        if (state.past[state.past.length - 1] === snapshot) return;
-        state.past.push(snapshot);
-        // A bounded stack: undo is for recovering from a mistake, not for
-        // replaying a whole session, and every entry is a full graph.
-        if (state.past.length > HISTORY_LIMIT) state.past.shift();
-        // Any new change abandons the redo branch, as in every editor.
-        state.future = [];
-      });
-    },
-
-    undo: () => {
-      const { past } = get();
-      if (past.length === 0) return;
-      const current = JSON.stringify(get().exportGraph());
-      const previous = past[past.length - 1];
-      set((state) => {
-        state.past.pop();
-        state.future.push(current);
-      });
-      get().applyGraphSnapshot(previous, true);
-    },
-
-    redo: () => {
-      const { future } = get();
-      if (future.length === 0) return;
-      const current = JSON.stringify(get().exportGraph());
-      const next = future[future.length - 1];
-      set((state) => {
-        state.future.pop();
-        state.past.push(current);
-      });
-      get().applyGraphSnapshot(next, true);
-    },
-
-    /**
-     * Restore a serialised graph without touching the history stacks or the
-     * saved-snapshot marker -- undoing back to the last saved state must read as
-     * clean again, and undoing past it as dirty, which falls out of leaving
-     * `savedSnapshot` alone.
-     */
-    applyGraphSnapshot: (json, keepEditing = false) => {
-      const graph = normalizeGraph(JSON.parse(json) as Graph);
-      const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
-      // Whatever came next is not a continuation of what was typed before.
-      coalescing = null;
-      set((state) => {
-        state.metadata = graph.metadata;
-        state.rfNodes = rfNodes as never;
-        state.rfEdges = rfEdges;
-        state.page = (graph.page?.blocks ?? []) as never;
-        // Everything that names a node of the graph that was here. Left
-        // standing, each points at something that may not exist any more: a
-        // result against ids that now mean other nodes, a panel on one of
-        // them. The node's panel stays for Undo, on a node that is still there:
-        // the same graph, a step back.
-        state.executionResult = null;
-        const stays = keepEditing && graph.nodes.some((node) => node.id === state.editingNodeId);
-        if (!stays) state.editingNodeId = null;
-      });
-    },
+    ...historyActions(set, get),
 
     isDirty: () => {
       const { rfNodes, rfEdges, metadata, page, subgraphStack, savedSnapshot } = get();
@@ -1023,20 +755,18 @@ export const useGraphStore = create<GraphStore>()(
         return JSON.stringify((node.config as unknown as Record<string, unknown>)[change.field]) !== JSON.stringify(change.value);
       });
       if (!taken.length) return { taken: [], refused };
-      get().commit();
+      // Not an undo step: it is in every state Undo and Redo go to, so that no
+      // Undo brings the old text back to be saved over what the other editor wrote.
+      endCoalescing();
       set((state) => {
         for (const change of taken) {
-          if (change.node_id === null) {
-            state.page = (Array.isArray(change.value) ? change.value : []) as never;
-            continue;
-          }
-          const node = state.rfNodes.find((n: RFNode) => n.id === change.node_id)!.data.graphNode;
-          // Where a node keeps the graph it holds is the element's business.
-          if (change.field === NESTED_GRAPH_FIELD) runnerRegistry.node(node.node_type)?.setNestedGraph(node as never, change.value as never);
-          else (node.config as unknown as Record<string, unknown>)[change.field] = change.value;
-          // The ports follow from the graph it holds.
-          Object.assign(node, derivedNodePorts(node) ?? {});
+          if (change.node_id === null) state.page = pageOf(change) as never;
+          else takeIn(state.rfNodes.find((n: RFNode) => n.id === change.node_id)!.data.graphNode, change);
         }
+        state.past = state.past.map((snapshot) => withDiskChanges(snapshot, taken));
+        state.future = state.future.map((snapshot) => withDiskChanges(snapshot, taken));
+        // What is on disk is saved: with unsaved work here, the saved state has it too, so only that work is unsaved.
+        if (!wasClean && state.savedSnapshot !== null) state.savedSnapshot = withDiskChanges(state.savedSnapshot, taken);
       });
       if (wasClean) get().markSaved();
       // Said by what changed: a node by its id, the page as "page".
@@ -1055,8 +785,12 @@ export const useGraphStore = create<GraphStore>()(
       const root = get().rootGraph();
       const graph = name ? { ...root, metadata: { ...root.metadata, name } } : root;
       const result = await call('saveGraph', { path, graph, replace: replace || path === get().currentFilePath });
-      if (name) get().setMetadata({ name });
       set((state) => {
+        // The name is the tool's -- the graph at the top -- whichever level the canvas shows.
+        if (name) {
+          if (state.subgraphStack.length) state.subgraphStack[0].graph.metadata.name = name;
+          else state.metadata.name = name;
+        }
         state.savedSnapshot = JSON.stringify(graph);
       });
       get().setCurrentFilePath(result.path, result.project);
@@ -1088,22 +822,13 @@ export const useGraphStore = create<GraphStore>()(
       if (heldOpened !== get().opened) return;
       // Another tab's document: the server holds one session, and that round is of its graph.
       if (serverHoldsAnother()) return;
+      if (!round.done) return;
       set((state) => {
-        state.isExecuting = !round.done;
-        state.runProgress = round.done ? null : {
-          completed: round.completed,
-          total: round.total,
-          label: round.current_label,
-          itemDone: round.item_done,
-          itemTotal: round.item_total,
-          idleSeconds: round.idle_seconds,
-        };
-        if (!round.done) return;
         const made: ExecutionResult = round.result ?? {
           status: round.cancelled ? 'cancelled' : 'error',
           node_results: [],
           outputs: {},
-          error: round.error ?? 'The round ended without a result.',
+          error: round.error ?? 'The run ended without a result.',
         };
         // A round an event started ran part of the graph, so what the rest of
         // the page shows is still true and stays: pressing "Plot" must not
@@ -1115,11 +840,29 @@ export const useGraphStore = create<GraphStore>()(
   }))
 );
 
+/**
+ * The round going in this document, or null. Only the session says whether one
+ * goes (`useSession`), so a stop button cannot outlive the round it stops --
+ * unless the server holds another editor's document now (`heldElsewhere`),
+ * whose round is not this one's.
+ */
+export function goingRound(): RoundSnapshot | null {
+  const { round } = useSession.getState();
+  return round && !round.done && !useGraphStore.getState().heldElsewhere ? round : null;
+}
+
+/** `goingRound`, drawn anew as it starts, goes on and ends. */
+export function useGoingRound(): RoundSnapshot | null {
+  const round = useSession((s) => s.round);
+  const elsewhere = useGraphStore((s) => s.heldElsewhere);
+  return round && !round.done && !elsewhere ? round : null;
+}
+
 // Every round of the session the editor's document is held in, from whichever
 // page or clock started it: the canvas and the toolbar follow it.
 useSession.subscribe((state, before) => {
   if (state.view?.session !== before.view?.session && !handing && serverHoldsAnother()) {
-    useGraphStore.setState({ heldElsewhere: true, isExecuting: false, runProgress: null });
+    useGraphStore.setState({ heldElsewhere: true });
   }
   if (state.round && state.round !== before.round) useGraphStore.getState().followRound(state.round);
 });

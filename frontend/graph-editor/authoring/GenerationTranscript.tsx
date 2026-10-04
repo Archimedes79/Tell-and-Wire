@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { AICall } from '../../app/api/client';
+import Button from '../../app/ui/Button';
 import { ACCENT_TEXT, DIMMER, LINE, MUTED, SUNKEN, TEXT } from '../../app/ui/theme';
 
 const NOTHING: AICall[] = [];
@@ -60,32 +61,24 @@ export default function GenerationTranscript() {
 
   return (
     <div className="mt-2 text-xs" style={{ color: MUTED }}>
-      <button
-        onClick={() => setOpen((was) => !was)}
-        className="w-full text-left px-2 py-1 rounded"
-        style={{ color: failed ? ACCENT_TEXT : MUTED, background: SUNKEN }}
-      >
+      <Button variant="quiet" size="sm" className="w-full text-left" aria-expanded={open} onClick={() => setOpen((was) => !was)}>
         {open ? '▾' : '▸'} {calls.length === 1 ? '1 call' : `${calls.length} calls`}
         {' · '}{sent.toLocaleString('en-US')} chars sent
         {seconds > 0 && ` · ${seconds.toFixed(1)}s`}
         {failed > 0 && ` · ${failed} failed`}
-      </button>
+      </Button>
 
       {open && (
         <div className="mt-1 space-y-1">
           {calls.map((call, index) => (
             <div key={index} className="rounded" style={{ border: `1px solid ${LINE}` }}>
-              <button
-                onClick={() => setShown((was) => (was === index ? null : index))}
-                className="w-full text-left px-2 py-1"
-                style={{ color: call.error ? ACCENT_TEXT : MUTED }}
-              >
+              <Button variant="quiet" size="sm" className="w-full text-left" aria-expanded={shown === index} onClick={() => setShown((was) => (was === index ? null : index))}>
                 {shown === index ? '▾' : '▸'} {index + 1}. {call.provider}/{call.model}
                 {' · '}{call.sent_chars.toLocaleString('en-US')} out
                 {call.reply_chars > 0 && ` · ${call.reply_chars.toLocaleString('en-US')} back`}
                 {call.seconds > 0 && ` · ${call.seconds.toFixed(1)}s`}
                 {call.error && ' · error'}
-              </button>
+              </Button>
 
               {shown === index && (
                 <div className="px-2 pb-2 space-y-2">

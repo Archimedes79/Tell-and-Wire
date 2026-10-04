@@ -1,5 +1,6 @@
 import type { SessionView } from '../../app/api/client';
-import { DIMMER, LINE, MUTED, NEUTRAL_BUTTON } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { DIMMER, LINE, MUTED } from '../../app/ui/theme';
 import { cut } from '../../app/ui/cut';
 
 /** A value as it reads in a line: a text as it is, anything else as its JSON -- cut short either way. */
@@ -21,10 +22,12 @@ function slotWords(slot: string): string {
  * over, which forgets it all. Folded, and said in its summary how much there
  * is: the state a round runs on is no secret, and never in the way.
  */
-export default function KeptFold({ kept, nameOf, onStartOver }: {
+export default function KeptFold({ kept, nameOf, busy, onStartOver }: {
   kept: SessionView['kept'] | undefined;
   /** A node's or a block's id, as a person reads it: its label. */
   nameOf: (id: string) => string;
+  /** A run is going: it is not started over under it. */
+  busy: boolean;
   onStartOver: () => void;
 }) {
   const lines = [
@@ -40,12 +43,11 @@ export default function KeptFold({ kept, nameOf, onStartOver }: {
       <div className="py-2 space-y-1">
         {lines.length
           ? lines.map((line) => <p key={line} className="font-mono" style={{ color: DIMMER }}>{line}</p>)
-          : <p style={{ color: DIMMER }}>Nothing differs from the design: every round starts from what it says.</p>}
-        <button type="button" onClick={onStartOver} disabled={!lines.length}
-          className="mt-1 px-3 py-1 text-xs rounded-lg" style={{ ...NEUTRAL_BUTTON, opacity: lines.length ? 1 : 0.5 }}
+          : <p style={{ color: DIMMER }}>Nothing differs from the design: every run starts from what it says.</p>}
+        <Button size="sm" className="mt-1" onClick={onStartOver} disabled={!lines.length || busy}
           title="Forget what using it left behind: what its start points were sent, what its memory holds, what the page holds">
           ↺ Start over
-        </button>
+        </Button>
       </div>
     </details>
   );

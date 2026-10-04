@@ -3,7 +3,7 @@ import type { GuiWidget, WidgetKind } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { freeId } from '../../app/document/ids';
 import type { PaletteEntry as KindEntry } from '../widgets/WidgetGuiBuilder';
-import { DIMMER, LINE, SURFACE, TEXT } from '../../app/ui/theme';
+import { ACCENT_TEXT, DIMMER, LINE, SURFACE, TEXT } from '../../app/ui/theme';
 
 /**
  * The element palette, in the same place and the same shape as the node palette
@@ -112,7 +112,7 @@ export default function DesignerPalette({
       style={{ width: 200, background: SURFACE, borderRight: `1px solid ${LINE}`, flexShrink: 0 }}
     >
       <div className="px-4 pt-4 pb-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#818cf8' }}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: ACCENT_TEXT }}>
           Blocks
         </h2>
         <p className="text-xs mt-1" style={{ color: DIMMER }}>
@@ -124,12 +124,12 @@ export default function DesignerPalette({
         const open = !group.folded || more;
         return (
           <div key={group.label} className="py-2">
-            <h3
-              className="px-4 text-xs font-medium uppercase tracking-wider mb-1 select-none"
-              style={{ color: DIMMER, cursor: group.folded ? 'pointer' : 'default' }}
-              onClick={group.folded ? () => setMore((was) => !was) : undefined}
-            >
-              {group.folded ? `${more ? '▾' : '▸'} ${group.label}` : group.label}
+            <h3 className="px-4 text-xs font-medium uppercase tracking-wider mb-1 select-none" style={{ color: DIMMER }}>
+              {group.folded ? (
+                <button type="button" className="uppercase tracking-wider" aria-expanded={more} onClick={() => setMore((was) => !was)}>
+                  {`${more ? '▾' : '▸'} ${group.label}`}
+                </button>
+              ) : group.label}
             </h3>
             {open && group.entries.map((entry) => (
               <button

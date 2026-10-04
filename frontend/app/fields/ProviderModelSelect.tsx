@@ -41,15 +41,20 @@ const AI_PROVIDER_COST: Record<AIProvider, string> = {
 
 // One probe shared by every mounted picker: the status answers "which local
 // providers run, which models do they serve, what is the one AI setting now"
-// for the whole editor, not per component instance.
+// for the whole editor, not per component instance. A probe that failed is
+// not kept: the next picker asks again.
 let statusPromise: Promise<ProviderStatus | null> | null = null;
 const listeners = new Set<(status: ProviderStatus | null) => void>();
 const fetchStatus = () => {
-  if (!statusPromise) statusPromise = call('providers').catch(() => null);
+  if (!statusPromise) {
+    const asked = call('providers').catch(() => null);
+    statusPromise = asked;
+    void asked.then((status) => { if (!status && statusPromise === asked) statusPromise = null; });
+  }
   return statusPromise;
 };
 
-/** Ask the backend again: after the one AI setting is saved, every picker's "now" is stale. */
+/** Ask the backend again: after the one AI setting is saved, or Settings is opened -- a local model may have started since. */
 export function refreshProviderStatus(): void {
   statusPromise = null;
   fetchStatus().then((status) => listeners.forEach((listener) => listener(status)));
@@ -116,7 +121,8 @@ export default function ProviderModelSelect({
   provider, model, onProviderChange, onModelChange, defaultLabel, lendsFromSetting,
 }: ProviderModelSelectProps) {
   const status = useProviderStatus();
-  const listId = useId();
+  const id = useId();
+  const listId = `${id}-models`;
 
   const annotate = (value: AIProvider, label: string) => {
     const cost = AI_PROVIDER_COST[value];
@@ -138,7 +144,7 @@ export default function ProviderModelSelect({
   const style = { background: SUNKEN, color: TEXT, border: `1px solid ${LINE}` };
 
   const providerSelect = (
-    <select className={boxClass} style={style} value={provider} onChange={(e) => onProviderChange(e.target.value as AIProvider)}>
+    <select id={`${id}-provider`} className={boxClass} style={style} value={provider} onChange={(e) => onProviderChange(e.target.value as AIProvider)}>
       {options.map(([value, label]) => (
         <option key={value} value={value}>{label}</option>
       ))}
@@ -147,6 +153,7 @@ export default function ProviderModelSelect({
   const modelInput = (
     <>
       <input
+        id={`${id}-model`}
         className={boxClass}
         style={style}
         value={model}
@@ -165,11 +172,11 @@ export default function ProviderModelSelect({
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Provider</label>
+        <label htmlFor={`${id}-provider`} className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Provider</label>
         {providerSelect}
       </div>
       <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Model</label>
+        <label htmlFor={`${id}-model`} className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Model</label>
         {modelInput}
       </div>
     </div>

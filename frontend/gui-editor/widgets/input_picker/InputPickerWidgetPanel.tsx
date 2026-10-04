@@ -43,7 +43,7 @@ export default function InputPickerWidgetPanel({ widget, onUpdate }: WidgetPanel
         onChange={(picked) => onUpdate({ value: picked })}
         mode={directory ? 'directory' : 'file'}
         extensions={widget.extensions ?? ''}
-        placeholder={directory ? '/path/to/directory' : '/path/to/file'}
+        placeholder={directory ? 'Choose a folder…' : 'Choose a file…'}
         ariaLabel={directory ? 'Folder' : 'Default path'}
         onSurface
       />

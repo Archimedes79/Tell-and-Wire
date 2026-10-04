@@ -10,13 +10,14 @@
 // the character that made the box grow was lost. A ✨ result accepted a minute
 // after it was asked for did the same to every edit made meanwhile.
 //
-// The designer's surface, its side panel, a block typed into on the Gui tab,
+// The designer's surface, its side panel, a block typed into on the Page tab,
 // and `masterExamples.test.ts`, which builds the examples the way a person
 // does, all call these functions. A block used in the running application or
 // in a delivered tool never comes here: what is set there is the session's
 // (`api/session.ts`).
 import type { GraphNode, GuiWidget } from '../../app/graph';
-import { besideTheRest, useGraphStore } from '../../app/store/graphStore';
+import { useGraphStore } from '../../app/store/graphStore';
+import { placement } from '../../app/document/placement';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
 import { freeId, slugOf } from '../../app/document/ids';
 import { blockCan, blocksAt, endPoints, pageStartPoints } from '../../app/document/page';
@@ -112,7 +113,7 @@ function newPoint(kind: 'start' | 'end', label: string, made: GraphNode[]): Grap
   const placed = useGraphStore.getState().rfNodes;
   const taken = [...placed.map((node) => node.id), ...made.map((node) => node.id)];
   const id = freeId(kind === 'start' ? 'start' : slugOf(label) || 'result', taken);
-  const at = besideTheRest(placed);
+  const at = placement(placed);
   // Named apart from the points of its kind there are: a second start point was "Start" beside "Start".
   const named = [...placed.map((node) => node.data.graphNode as GraphNode), ...made].filter((node) => node.node_type === kind).map((node) => node.label);
   return { ...NODE_KINDS[kind].create(id), label: freeId(label, named, ' '), position: { x: at.x, y: at.y + made.length * 140 } };

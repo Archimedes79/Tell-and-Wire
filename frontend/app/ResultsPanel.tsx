@@ -1,5 +1,5 @@
 import { useGraphStore } from './store/graphStore';
-import { ACCENT, ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from './ui/theme';
+import { ACCENT, ACCENT_TEXT, DANGER_FILL, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT, WARNING_FILL, WARNING_TEXT } from './ui/theme';
 import { hasOutputs, statusTone } from './store/executionStatus';
 
 export default function ResultsPanel() {
@@ -24,7 +24,7 @@ export default function ResultsPanel() {
       <div className="px-4 py-3 border-b" style={{ borderColor: LINE }}>
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: ACCENT }}>
-            Execution Results
+            Last run
           </h2>
           <span
             className="text-xs px-2 py-0.5 rounded font-medium"
@@ -61,7 +61,7 @@ export default function ResultsPanel() {
       {/* Top-level error */}
       {result.error && (
         <div className="px-4 py-3 border-b" style={{ borderColor: LINE }}>
-          <div className="text-xs p-2 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: DANGER_TEXT }}>
+          <div className="text-xs p-2 rounded" style={{ background: DANGER_FILL, color: DANGER_TEXT }}>
             {result.error}
           </div>
         </div>
@@ -106,8 +106,8 @@ export default function ResultsPanel() {
                 className="px-3 py-2 text-xs"
                 style={
                   nr.status === 'partial'
-                    ? { color: '#fcd34d', background: 'rgba(234,179,8,0.06)' }
-                    : { color: DANGER_TEXT, background: 'rgba(239,68,68,0.05)' }
+                    ? { color: WARNING_TEXT, background: WARNING_FILL }
+                    : { color: DANGER_TEXT, background: DANGER_FILL }
                 }
               >
                 {nr.error}
@@ -116,7 +116,7 @@ export default function ResultsPanel() {
             {/* What the run has to say about a node that did not fail: why it had
                 nothing to do, or that its outputs broke its output interface. */}
             {(nr.messages ?? []).length > 0 && (
-              <div className="px-3 py-2 text-xs space-y-1" style={{ color: '#fcd34d', background: 'rgba(234,179,8,0.06)' }}>
+              <div className="px-3 py-2 text-xs space-y-1" style={{ color: WARNING_TEXT, background: WARNING_FILL }}>
                 {nr.messages!.map((line, index) => <div key={index}>⚠ {line}</div>)}
               </div>
             )}

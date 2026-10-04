@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import Modal from '../../app/ui/Modal';
 import { call, type ToolAiSettings } from '../../app/api/client';
 import { errorText } from '../../app/api/errorText';
-import { ACCENT_FILL, ACCENT_TEXT, DIM, MUTED, NEUTRAL_BUTTON } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { ACCENT_FILL, ACCENT_TEXT, DIM, MUTED } from '../../app/ui/theme';
 
 /**
  * Which AI this tool calls, and where to change that.
@@ -10,8 +11,7 @@ import { ACCENT_FILL, ACCENT_TEXT, DIM, MUTED, NEUTRAL_BUTTON } from '../../app/
  * Read-only, and on purpose. Whoever runs a deployed tool configures it where
  * they run it -- `ai-settings.json` beside it, or the environment -- because a
  * page that wrote credentials would put a key in a file nobody asked for. The
- * dialog used to offer a Save that could never work: the server has no route
- * for it, and says why in `serve.ts`.
+ * server has no route for saving them, and says why in `serve.ts`.
  */
 export default function RuntimeAISettings({ onClose }: { onClose: () => void }) {
   const [settings, setSettings] = useState<ToolAiSettings | null>(null);
@@ -26,7 +26,7 @@ export default function RuntimeAISettings({ onClose }: { onClose: () => void }) 
       title="⚙ AI settings"
       onClose={onClose}
       maxWidth="max-w-xl"
-      footer={<button onClick={onClose} className="px-3 py-1.5 text-xs rounded-lg" style={NEUTRAL_BUTTON}>Close</button>}
+      footer={<Button onClick={onClose}>Close</Button>}
     >
       <div className="p-5 space-y-4 text-xs">
         {settings && (

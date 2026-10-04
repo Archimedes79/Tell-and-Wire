@@ -11,7 +11,7 @@ import { insertBlock, moveBlock, patchBlock, removeBlock } from './pageWrite';
 import { liveTypedValues } from './typedValues';
 import PageHeading from './PageHeading';
 import WidgetEditor from './WidgetEditor';
-import { SCHEMES, type SchemeId } from '../../app/ui/scheme';
+import { SCHEMES, schemeVars, type SchemeId } from '../../app/ui/scheme';
 import { ACCENT, FIELD_ON_SURFACE, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../app/ui/theme';
 
 /**
@@ -194,7 +194,12 @@ export default function DesignerTab() {
         <div
           data-gui-dropzone
           className="flex-1 overflow-auto px-8 py-6"
-          style={dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : undefined}
+          // The page, in its own colour scheme: the editor around it keeps its own.
+          style={{
+            ...schemeVars(metadata.gui_scheme),
+            background: SUNKEN,
+            ...(dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : {}),
+          }}
         >
           <DesignerSurface
             dropIndex={dragEntry ? dropIndex : null}
@@ -240,7 +245,6 @@ export default function DesignerTab() {
         <WidgetEditor
           widget={selected}
           onChange={(patch) => { if (selected) patchBlock(selected.id, patch); }}
-          onRemove={removeSelected}
         />
 
       </aside>

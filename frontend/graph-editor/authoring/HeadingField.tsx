@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { TEXT } from '../../app/ui/theme';
 
+/** What marks the heading box, for whoever hands the keyboard to a panel just opened (`GraphCanvas`). */
+export const HEADING_FIELD = 'node-heading';
+
 /**
  * A node's heading, which is never empty: a field emptied is not written, and
  * when it loses focus it shows the heading the node still has. What is typed
@@ -10,6 +13,7 @@ export default function HeadingField({ heading, onChange }: { heading: string; o
   const [typed, setTyped] = useState<string | null>(null);
   return (
     <input
+      id={HEADING_FIELD}
       className="text-lg font-bold bg-transparent border-none outline-none w-full"
       style={{ color: TEXT }}
       value={typed ?? heading}

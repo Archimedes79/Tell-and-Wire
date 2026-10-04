@@ -20,6 +20,7 @@ vi.mock('../api/client', async (actual) => ({
 
 const { useGraphStore } = await import('./graphStore');
 const store = () => useGraphStore.getState();
+const defaultName = useGraphStore.getState().metadata.name;
 
 describe('saving the document', () => {
   beforeEach(() => {
@@ -50,9 +51,20 @@ describe('saving the document', () => {
     const refused = store().save('word_stats', { name: 'word_stats' });
     writes[0].fail(new Error('A project is already at word_stats.'));
     await expect(refused).rejects.toThrow();
-    expect(store().metadata.name).toBe('Untitled Graph');
+    expect(store().metadata.name).toBe(defaultName);
     expect(store().isDirty()).toBe(true);
     expect(store().currentFilePath).toBeNull();
+  });
+
+  it('names the tool, not the graph on the canvas, when it is saved as from inside a node', async () => {
+    const part = store().addNode('subgraph', { x: 0, y: 0 });
+    store().openSubgraph(part);
+    const saving = store().save('word_stats', { name: 'word_stats' });
+    writes[0].finish();
+    await saving;
+    expect(store().metadata.name).not.toBe('word_stats');
+    store().closeSubgraph();
+    expect(store().metadata.name).toBe('word_stats');
   });
 
   it('writes over a graph only where it is its own file, or the person said to', async () => {

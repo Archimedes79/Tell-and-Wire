@@ -9,7 +9,7 @@ const START = new StartNodeRunner();
 
 /** Who starts a start point, in the words the panel offers it. */
 const STARTERS = [
-  ['page', 'The page', 'a block on it: a button, Enter in a text box, a choice made -- the graph then needs its page'],
+  ['page', 'The page', 'a block on it: a button, Enter in a text box, a choice made'],
   ['call', 'A call', 'a script, a model over MCP, or the graph above, by this start point\'s name'],
   ['itself', 'Itself', 'when the tool starts, and again on a clock'],
 ] as const;
@@ -65,7 +65,7 @@ function ExampleSent({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConf
           ? read.problem
           : unsent
             ? `${unsent.problem} ${unsent.fix}`
-            : 'It is sent this when nobody sends it anything: the graph run on its own, ▶ Try. An input wired from here can take one of its parts.'}
+            : 'Sent when nobody sends anything: a run on its own, ▶ Try.'}
       </span>
     </div>
   );
@@ -126,15 +126,14 @@ export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
               aria-label="Interval"
             />
             <span className="text-xs" style={{ color: problem ? DANGER_TEXT : DIM }}>
-              {problem || '45, 30s, 5m, 2h or 1d — counted from the end of one round to the start of the next'}
+              {problem || '45, 30s, 5m, 2h or 1d — from the end of one run to the start of the next'}
             </span>
           </label>
         </div>
       )}
-      <p className="text-xs" style={{ color: DIM }}>
-        It hands on one package, <code>{'{event, values}'}</code>, to what its <code>data</code> is wired to: the
-        values under the names the sender gave them. The first node it reaches reads what it needs out of it.
-        In a round it did not begin, <code>event</code> is empty and the values are the ones it was sent last.
+      <p className="text-xs" style={{ color: DIM }}
+        title="The values are under the names the sender gave them; the first node it reaches reads what it needs out of them. In a run it did not begin, event is empty and the values are the ones it was sent last.">
+        Hands on one package, <code>{'{event, values}'}</code>, to what its <code>data</code> is wired to.
       </p>
     </div>
   );

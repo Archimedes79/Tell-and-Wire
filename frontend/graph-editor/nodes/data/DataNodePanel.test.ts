@@ -15,13 +15,13 @@ function panel(node: GraphNode): string {
 }
 
 describe('a data node\'s panel', () => {
-  it('is its text, ✨ Generate, which writes the value, and what it holds -- its kind and the value: no definitions, no ▶ Try', () => {
+  it('is ✨ Generate, which writes the value, and what it holds -- its kind and the value: no definitions, no ▶ Try', () => {
     const node = NODE_KINDS.data.create('memory');
     node.config.data_format = 'structure';
     node.config.data_value = { count: 2 };
     const html = panel(node);
-    // ✨ Generate under its text, then its row: the prompt, the file's chip, and the box it is edited in -- the kind and the value.
-    const at = ['aria-label="What it should do"', '>✨ Generate</button>', 'aria-label="✨ Data prompt"', 'data.json ↗', 'aria-label="Kind"', 'aria-label="What it holds"', 'history.md ↗']
+    // ✨ Generate, then its row: the prompt, the file's chip, and the box it is edited in -- the kind and the value.
+    const at = ['>✨ Generate</button>', 'aria-label="✨ Data prompt"', 'data.json ↗', 'aria-label="Kind"', 'aria-label="What it holds"', 'history.md ↗']
       .map((mark) => html.indexOf(mark));
     expect(at.every((index) => index >= 0), String(at)).toBe(true);
     expect(at).toEqual([...at].sort((a, b) => a - b));

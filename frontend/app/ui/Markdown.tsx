@@ -12,8 +12,18 @@ import { ACCENT_TEXT, HOVER, LINE, MUTED, TEXT } from './theme';
  * **No `dangerouslySetInnerHTML`.** The text can come from a graph the user was
  * handed by someone else, and a bundle is opened in the recipient's browser, so
  * rendering it as markup would be an injection hole by construction. Building
- * elements means a `<script>` in the source is text, not a script.
+ * elements means a `<script>` in the source is text, not a script. Nor does a
+ * link run one: it goes to the web, a mail address or a place on this site, and
+ * a `javascript:` link is only its words.
  */
+
+/** Where a link may go: no scheme at all, or http, https or mailto. */
+function linkable(href: string): boolean {
+  // A browser ignores spaces, tabs and line breaks inside a scheme: "java<tab>script:".
+  const bare = [...href].filter((char) => char.charCodeAt(0) > 32).join('');
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(bare);
+  return !scheme || ['http', 'https', 'mailto'].includes(scheme[1].toLowerCase());
+}
 
 /** Inline: `code`, **bold**, *italic*, [link](url). Applied in that order. */
 function inline(text: string, keyPrefix: string): React.ReactNode[] {
@@ -42,11 +52,9 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
       const label = token.slice(1, split);
       const href = token.slice(split + 2, -1);
       // rel: the page may be opened from a bundle someone else built.
-      parts.push(
-        <a key={key} href={href} target="_blank" rel="noreferrer noopener" style={{ color: ACCENT_TEXT }}>
-          {label}
-        </a>,
-      );
+      parts.push(linkable(href)
+        ? <a key={key} href={href} target="_blank" rel="noreferrer noopener" style={{ color: ACCENT_TEXT }}>{label}</a>
+        : label);
     }
     last = match.index + token.length;
   }

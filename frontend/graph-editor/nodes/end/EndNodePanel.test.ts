@@ -17,7 +17,7 @@ describe('an end point\'s panel', () => {
     const node = NODE_KINDS.end.create('o');
     node.config.write_mode = 'directory';
     const html = panel(node);
-    expect(html).toContain('aria-label="Folder"');
+    expect(html).toContain('>Folder</label>');
     expect(html).toContain('📂 Browse…');
     expect(panel(NODE_KINDS.end.create('o'))).not.toContain('📂 Browse…');
   });

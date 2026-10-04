@@ -11,7 +11,7 @@
   },
   {
     "extensions": ".md,.txt",
-    "h": 2,
+    "h": 3,
     "id": "paper",
     "kind": "input_picker",
     "label": "Manuscript",

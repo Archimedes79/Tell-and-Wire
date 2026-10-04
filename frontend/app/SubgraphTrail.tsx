@@ -1,5 +1,6 @@
-import { useGraphStore } from './store/graphStore';
-import { DIMMER, MUTED, TEXT } from './ui/theme';
+import { useGoingRound, useGraphStore } from './store/graphStore';
+import Button from './ui/Button';
+import { DIMMER, TEXT } from './ui/theme';
 
 /**
  * Where you are, and the way back out: the graph at the top, then one step
@@ -15,7 +16,7 @@ import { DIMMER, MUTED, TEXT } from './ui/theme';
 export default function SubgraphTrail() {
   const subgraphStack = useGraphStore((s) => s.subgraphStack);
   const closeSubgraphsTo = useGraphStore((s) => s.closeSubgraphsTo);
-  const running = useGraphStore((s) => s.isExecuting);
+  const running = useGoingRound() !== null;
   if (subgraphStack.length === 0) return null;
 
   // `depth` is how many levels remain when you are standing on that step.
@@ -34,16 +35,19 @@ export default function SubgraphTrail() {
         return (
           <span key={step.depth} className="flex items-center gap-1">
             {index > 0 && <span style={{ color: DIMMER }}>▸</span>}
-            <button
-              type="button"
-              className="px-2 py-0.5 rounded"
-              style={{ color: here ? TEXT : MUTED }}
-              disabled={here || running}
-              title={here ? 'You are here' : running ? 'A run is going on. The way out opens when it is over.' : `Back out to ${step.name}`}
-              onClick={() => closeSubgraphsTo(step.depth)}
-            >
-              {step.name}
-            </button>
+            {here ? (
+              <span className="px-2.5 py-1 font-medium" style={{ color: TEXT }} aria-current="location">{step.name}</span>
+            ) : (
+              <Button
+                variant="quiet"
+                size="sm"
+                disabled={running}
+                title={running ? 'A run is going on. The way out opens when it is over.' : `Back out to ${step.name}`}
+                onClick={() => closeSubgraphsTo(step.depth)}
+              >
+                {step.name}
+              </Button>
+            )}
           </span>
         );
       })}

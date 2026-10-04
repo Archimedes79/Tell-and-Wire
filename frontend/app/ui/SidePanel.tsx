@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { LINE, MUTED, SURFACE } from './theme';
+import Button from './Button';
+import { LINE, SURFACE } from './theme';
 
 /** Wide enough for a code editor and a result, narrow enough that the canvas stays usable beside it at 1024 pixels. */
 const SIDE_PANEL_WIDTH = 440;
@@ -11,14 +12,20 @@ const SIDE_PANEL_WIDTH = 440;
  * the panel, or the File menu, is closed by Escape, and the panel with it was
  * one close too many. Nor one pressed in a file box (*from*, inside a
  * CodeMirror editor): it closed the panel from under what was being typed.
+ * Nor one pressed in a field outside it, the bar under the canvas: that
+ * cleared the selection the bar's words were about.
  */
 export function panelHearsEscape(
-  panel: Pick<HTMLElement, 'offsetParent'> | null,
+  panel: Pick<HTMLElement, 'offsetParent' | 'contains'> | null,
   page: Pick<Document, 'querySelector'>,
   from?: EventTarget | null,
 ): boolean {
-  const inBox = (from as Partial<Element> | null | undefined)?.closest?.('.cm-editor') != null;
-  return panel !== null && panel.offsetParent !== null && !inBox && page.querySelector('[role="dialog"], [role="menu"]') === null;
+  const near = from as Partial<Element> | null | undefined;
+  const inBox = near?.closest?.('.cm-editor') != null;
+  const field = near?.closest?.('input, textarea, select');
+  const elsewhere = field != null && !panel?.contains(field);
+  return panel !== null && panel.offsetParent !== null && !inBox && !elsewhere
+    && page.querySelector('[role="dialog"], [role="menu"]') === null;
 }
 
 /**
@@ -60,16 +67,7 @@ export default function SidePanel({ kicker, title, onClose, children }: {
           {kicker && <div className="mb-1.5">{kicker}</div>}
           {title}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="shrink-0 rounded px-1.5 text-sm hover-raise"
-          style={{ color: MUTED }}
-          title="Close (Esc)"
-          aria-label="Close the panel"
-        >
-          ✕
-        </button>
+        <Button variant="quiet" size="sm" className="shrink-0" onClick={onClose} title="Close (Esc)" aria-label="Close the panel">✕</Button>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
     </aside>

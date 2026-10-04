@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import PathField, { FileTypesField } from '../../../app/dialogs/PathField';
 import { listAsRun } from '../../authoring/readAsRun';
 import FolderListing from '../../../app/fields/FolderListing';
@@ -15,20 +16,21 @@ import type { NodePanelProps } from '../NodeGuiBuilder';
  */
 export default function FolderNodePanel({ node, setConfig }: NodePanelProps) {
   const path = String(node.config.path ?? '');
+  const folder = useId();
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Folder</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={folder}>Folder</label>
         <PathField
+          id={folder}
           value={path}
           onChange={(picked) => setConfig('path', picked)}
           mode="directory"
           extensions={node.config.extensions ?? ''}
           placeholder="/path/to/folder"
-          ariaLabel="Folder"
         />
         <p className="text-xs mt-1" style={{ color: DIMMER }}>
-          A path wired into its “Path” port is listed instead: a folder chosen on the page, or sent by a call.
+          A path wired into its “Path” port is listed instead.
         </p>
       </div>
       <FileTypesField value={node.config.extensions ?? ''} onChange={(extensions) => setConfig('extensions', extensions)} />
@@ -41,20 +43,6 @@ export default function FolderNodePanel({ node, setConfig }: NodePanelProps) {
         list={() => listAsRun(node)}
         of={JSON.stringify([path, node.config.extensions ?? '', !!node.config.recursive])}
       />
-      <div>
-        <label className="flex items-center gap-2 text-sm" style={{ color: MUTED }}>
-          <input
-            type="checkbox"
-            checked={!!node.config.catch_errors}
-            onChange={(e) => setConfig('catch_errors', e.target.checked)}
-          />
-          Catch a failed listing instead of failing the node
-        </label>
-        <p className="text-xs mt-1" style={{ color: DIMMER }}>
-          A folder that is not there fails this node. Turned on, it adds an{' '}
-          <strong style={{ color: '#a78bfa' }}>error</strong> output port: empty on success, the reason otherwise.
-        </p>
-      </div>
     </div>
   );
 }

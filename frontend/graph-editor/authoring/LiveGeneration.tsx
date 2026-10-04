@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { AICall } from '../../app/api/client';
-import { DIMMER, FIELD, MUTED } from '../../app/ui/theme';
+import { DIMMER, FIELD, LINE, MUTED, PURPLE_TEXT } from '../../app/ui/theme';
 
 /**
  * What is happening while a ✨ button is busy.
@@ -40,8 +40,8 @@ export default function LiveGeneration({ calls, minHeight }: { calls: AICall[]; 
       )}
 
       {calls.map((call, index) => (
-        <div key={index} className={index ? 'mt-3 pt-3' : ''} style={index ? { borderTop: '1px solid #1e2235' } : {}}>
-          <div style={{ color: '#a78bfa' }}>
+        <div key={index} className={index ? 'mt-3 pt-3' : ''} style={index ? { borderTop: `1px solid ${LINE}` } : {}}>
+          <div style={{ color: PURPLE_TEXT }}>
             {/* Numbered, because a repair pass is the second call and looking
                 like the first is exactly how it goes unnoticed. */}
             {`step ${index + 1} — ${call.provider}/${call.model}`}

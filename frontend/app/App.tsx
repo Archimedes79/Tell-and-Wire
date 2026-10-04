@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { slugOf } from './document/ids';
 import { ReactFlowProvider } from 'reactflow';
 
@@ -9,24 +9,25 @@ import DesignerTab from '../gui-editor/page/DesignerTab';
 import ApplicationView from '../gui-editor/page/ApplicationView';
 import TopGraphOnly from '../gui-editor/page/TopGraphOnly';
 import type { EditorView } from './ViewTabs';
-import { useSchemeOnRoot } from '../gui-editor/page/useSchemeOnRoot';
 import NodeEditor from '../graph-editor/canvas/NodeEditor';
 import ResultsPanel from './ResultsPanel';
 import ChangeBar from './ChangeBar';
 
 import SettingsDialog from './SettingsDialog';
-import GraphProblems from './GraphProblems';
+import JsonDialog, { parseGraphJson } from './JsonDialog';
 import { DiskChanges } from './diskChanges';
 import { droppedProject, landedInCodeField } from './windowDrops';
 import { browseStart, folderOf } from './browseStart';
-import Modal from './ui/Modal';
 import FileBrowserDialog from './dialogs/FileBrowserDialog';
+import { useDialogs } from './dialogs/useDialogs';
 
-import { besideTheRest, useGraphStore } from './store/graphStore';
+import { useGraphStore } from './store/graphStore';
+import { placement } from './document/placement';
 import { ApiError, call } from './api/client';
 import { errorText } from './api/errorText';
 import type { NodeType, Graph } from './graph';
-import { DANGER_TEXT, LINE, MUTED, NEUTRAL_BUTTON, PRIMARY_BUTTON, SUNKEN, TEXT, WELL } from './ui/theme';
+import { defaultMetadata } from '../../graph/graph.ts';
+import { SUNKEN } from './ui/theme';
 
 const FOLDER_KEY = 'tell-and-wire.last-folder';
 
@@ -64,6 +65,7 @@ export default function App() {
   const isProject = useGraphStore((s) => s.isProject);
   const insideSubgraph = useGraphStore((s) => s.subgraphStack.length > 0);
   const takeDiskChanges = useGraphStore((s) => s.takeDiskChanges);
+  const dialogs = useDialogs();
 
   // The browser's own "leave site?" prompt. Nothing else stands between an
   // hour of wiring and an accidental Cmd-R or tab close: the graph lives only
@@ -78,71 +80,144 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [isDirty]);
 
-  /**
-   * Ask before replacing the current graph. Every path that calls `loadGraph`
-   * goes through here -- New, Load, Paste JSON and ✨ Describe a graph all destroy
-   * unsaved work otherwise, and only New used to say so.
-   */
-  const confirmDiscard = useCallback(
-    (action: string) => !isDirty() || window.confirm(`${action} Unsaved changes to the current graph will be lost.`),
-    [isDirty],
-  );
-
   const [showSettings, setShowSettings] = useState(false);
   const [view, setView] = useState<EditorView>('graph');
-  const guiScheme = useGraphStore((s) => s.metadata.gui_scheme);
-  useSchemeOnRoot(guiScheme);
 
   // What the header says of saving and opening, kept with the graph it was
   // said of: another one opened or started (`document` moved on) leaves it
   // unsaid. "✅ Saved to …\capitals-table" stood over three graphs opened after it.
-  const [said, setSaid] = useState({ text: '', document: 0 });
-  const setSaveStatus = useCallback((text: string) => setSaid({ text, document: useGraphStore.getState().document }), []);
+  // A *problem* stays said while the graph is unsaved -- which a save that failed leaves it.
+  const [said, setSaid] = useState({ text: '', problem: false, document: 0 });
+  const say = useCallback((text: string, problem = false) => setSaid({ text, problem, document: useGraphStore.getState().document }), []);
   const documentOpen = useGraphStore((s) => s.document);
-  const saveStatus = said.document === documentOpen ? said.text : '';
+  const heard = said.document === documentOpen ? said : { text: '', problem: false };
 
-  // Editing the page means the Gui tab -- at the size it will really be, next
+  // Editing the page means the Page tab -- at the size it will really be, next
   // to the blocks it will really sit beside -- which double-clicking a start
   // or end point the page uses opens.
   const openPage = useCallback(() => setView('design'), []);
-  const [showJsonImport, setShowJsonImport] = useState(false);
-  const [jsonImportValue, setJsonImportValue] = useState('');
-  const [jsonImportError, setJsonImportError] = useState('');
-  const [copyStatus, setCopyStatus] = useState('');
 
-  const parseGraphJson = useCallback((raw: string): Graph => {
-    let parsed: unknown;
+  // The folder the last graph was opened from or saved to -- '' before one
+  // was: the folder the server was started in. Where the file browser starts
+  // when the path box holds a bare name (`browseStart`). Kept in the browser,
+  // so a restart of the server does not send the person back to the folder it
+  // was started in.
+  const [lastFolder, setLastFolder] = useState(rememberedFolder);
+  useEffect(() => {
+    if (!currentFilePath) return;
+    const folder = folderOf(currentFilePath);
+    setLastFolder(folder);
+    rememberFolder(folder);
+  }, [currentFilePath]);
 
+  // A project folder by default: a name without .json. Typing .json saves one file instead.
+  const suggestedName = () => slugOf(rootGraph().metadata.name) || 'my_tool';
+
+  /**
+   * Make *graph* the document and say how it went -- what it could not hold,
+   * a wire to a node that is not there, included. *file*: where it came from.
+   * *unsaved*: it came from nowhere (✨ designed it).
+   */
+  const replaceWith = (graph: Graph, ok: string, file?: { path: string; project: boolean }, unsaved = false) => {
+    const { dropped } = loadGraph(graph, { unsaved });
+    if (file) setCurrentFilePath(file.path, file.project);
+    if (dropped.length) say(`⚠ Left out ${dropped.length === 1 ? 'a wire' : `${dropped.length} wires`} to nodes that are not there: ${dropped.join(', ')}`, true);
+    else say(ok);
+  };
+
+  /** Open the tool at *path*; throws what the server refused. */
+  const openPath = async (path: string, ok = `✅ Opened ${path}`) => {
+    const result = await call('openGraph', { path });
+    replaceWith(result.graph, ok, { path: result.path, project: result.project });
+  };
+
+  /** Write the tool to *path* -- where it is, without one. False where a save is going already; throws what the server refused. */
+  const saving = useRef(false);
+  const write = async (path?: string, as?: { replace?: boolean; name?: string }): Promise<boolean> => {
+    if (saving.current) return false;
+    saving.current = true;
+    say('Saving…');
     try {
-      parsed = JSON.parse(raw);
+      const saved = await save(path, as);
+      say(`✅ Saved to ${saved.path}`);
+      return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Malformed JSON.';
-      throw new Error(`Invalid graph JSON: ${message}`);
+      say('');
+      throw error;
+    } finally {
+      saving.current = false;
     }
+  };
 
-    if (
-      !parsed ||
-      typeof parsed !== 'object' ||
-      !('nodes' in parsed) ||
-      !('edges' in parsed) ||
-      !Array.isArray((parsed as Graph).nodes) ||
-      !Array.isArray((parsed as Graph).edges)
-    ) {
-      throw new Error('Invalid graph JSON: expected nodes and edges arrays.');
-    }
-
-    return parsed as Graph;
-  }, []);
-
-  // What Load Graph would load, as it stands in the box: `check`'s word on
-  // it is said under the box, before it is loaded (`GraphProblems`).
-  const pasted = useMemo(() => {
+  /**
+   * Save to *path*, where the tool is not. A tool still untitled is called what
+   * it is saved as -- reopened, it should not say "Untitled tool" above a
+   * folder named word_stats -- and one already at *path* is replaced only when
+   * the person says so, in a click.
+   */
+  const writeAs = async (path: string): Promise<boolean> => {
+    const name = rootGraph().metadata.name === defaultMetadata().name
+      ? (path.split(/[\\/]/).filter(Boolean).pop() ?? '').replace(/\.json$/i, '') || undefined
+      : undefined;
     try {
-      return parseGraphJson(jsonImportValue);
-    } catch {
-      return null;
+      return await write(path, { name });
+    } catch (error) {
+      if (!(error instanceof ApiError && error.body.taken === true)) throw error;
+      const replace = await dialogs.ask({
+        title: 'Replace the tool?',
+        text: `A tool is already at ${path}.`,
+        answers: [{ value: true, label: 'Replace', variant: 'primary' }],
+      });
+      return replace ? write(path, { name, replace: true }) : false;
     }
-  }, [jsonImportValue, parseGraphJson]);
+  };
+
+  // Open and Save as go straight to the file browser: choosing a file is what
+  // they are for, and a path box first -- "/path/to/my_graph" -- asked the
+  // one question a newcomer cannot answer. Typing a path in the browser's own
+  // box does the same. Picking is the choice: it is opened, or saved to, at once.
+  const browse = <T,>(mode: 'file' | 'save', title: string, onPick: (path: string, done: (result: T) => void) => Promise<void>, none: T): Promise<T> =>
+    dialogs.show<T>((done) => (
+      <FileBrowserDialog
+        title={title}
+        mode={mode}
+        projects
+        extensions=".json"
+        {...browseStart(mode === 'file' ? 'load' : 'save', currentFilePath ?? '', lastFolder, suggestedName())}
+        onPick={(path) => onPick(path, done)}
+        onClose={() => done(none)}
+      />
+    ));
+
+  /** Save as: the tool where the person chooses; whether it was saved. */
+  const saveAs = () => browse<boolean>('save', 'Save the tool as', async (path, done) => { if (await writeAs(path)) done(true); }, false);
+
+  /** Save to where the tool is -- or, at no file yet, as: whether it was saved. */
+  const saveTool = async (): Promise<boolean> => {
+    if (!useGraphStore.getState().currentFilePath) return saveAs();
+    try {
+      return await write();
+    } catch (error) {
+      say(`❌ ${errorText(error, 'Save failed')}`, true);
+      return false;
+    }
+  };
+
+  /**
+   * Whether the document may be replaced: it is, when it holds nothing unsaved
+   * -- or the person saves it, or lets it go. Everything that loads a graph
+   * asks first: New, Open, Reload, a drop, pasted JSON and ✨ Describe a graph
+   * destroy unsaved work otherwise.
+   */
+  const mayReplace = async (): Promise<boolean> => {
+    if (!isDirty()) return true;
+    const answer = await dialogs.ask<'save' | 'discard'>({
+      title: `Save changes to "${rootGraph().metadata.name}"?`,
+      text: 'They are lost if you discard them.',
+      answers: [{ value: 'discard', label: 'Discard', variant: 'danger' }, { value: 'save', label: 'Save', variant: 'primary' }],
+    });
+    return answer === 'discard' || (answer === 'save' && await saveTool());
+  };
 
   /**
    * Load a graph JSON dropped anywhere on the window.
@@ -156,46 +231,40 @@ export default function App() {
    * The browser does not reveal where a dropped file lives, so the loaded graph
    * has no file path and Save will ask for one, exactly as after Paste JSON.
    */
-  const handleGraphFileDrop = useCallback(async (file: File) => {
+  const dropGraphFile = async (file: File) => {
     if (!/\.json$/i.test(file.name)) {
-      setSaveStatus(`❌ ${file.name} is not a .json graph file.`);
+      say(`❌ ${file.name} is not a .json graph file.`, true);
       return;
     }
     // A project's flow.json is its wiring only: each node is a folder beside
     // it, which a browser does not hand over.
     if (file.name === 'flow.json') {
-      setSaveStatus('❌ This is a project\'s flow.json: its nodes are folders beside it, which a browser '
-        + 'does not hand over. Drop the project folder, or open it with File → Open….');
+      say('❌ This is a tool\'s flow.json: its nodes are folders beside it, which a browser '
+        + 'does not hand over. Drop the tool\'s folder, or open it with File → Open….', true);
       return;
     }
     let graph: Graph;
     try {
       graph = parseGraphJson(await file.text());
     } catch (error) {
-      setSaveStatus(`❌ ${errorText(error, `Could not read ${file.name}`)}`);
+      say(`❌ ${errorText(error, `Could not read ${file.name}`)}`, true);
       return;
     }
-    if (!confirmDiscard(`Load ${file.name}?`)) return;
-    loadGraph(graph);
-    setCurrentFilePath(null);
-    setSaveStatus(`✅ Loaded ${file.name}`);
-  }, [confirmDiscard, loadGraph, parseGraphJson, setCurrentFilePath, setSaveStatus]);
+    if (await mayReplace()) replaceWith(graph, `✅ Loaded ${file.name}`);
+  };
 
   /**
-   * A dropped folder: a project, most likely, opened when the editor's server
+   * A dropped folder: a tool, most likely, opened when the editor's server
    * finds exactly one of that name (`droppedProject`).
    */
-  const handleProjectFolderDrop = useCallback(async (name: string) => {
-    if (!confirmDiscard(`Open the project ${name}?`)) return;
+  const dropToolFolder = async (name: string) => {
+    if (!(await mayReplace())) return;
     try {
-      const result = await call('openGraph', { path: await droppedProject(name) });
-      loadGraph(result.graph);
-      setCurrentFilePath(result.path, result.project);
-      setSaveStatus(`✅ Opened ${result.path}`);
+      await openPath(await droppedProject(name));
     } catch (error) {
-      setSaveStatus(`❌ ${errorText(error, `Could not open ${name}`)}`);
+      say(`❌ ${errorText(error, `Could not open ${name}`)}`, true);
     }
-  }, [confirmDiscard, loadGraph, setCurrentFilePath, setSaveStatus]);
+  };
 
   useEffect(() => {
     const onDragOver = (event: DragEvent) => {
@@ -212,8 +281,8 @@ export default function App() {
       // One dropped into a code box arrives, and its editor has typed it in.
       if (landedInCodeField(event.target)) return;
       // Only answerable while the event lasts: afterwards the item is gone.
-      if (event.dataTransfer?.items?.[0]?.webkitGetAsEntry()?.isDirectory) void handleProjectFolderDrop(file.name);
-      else void handleGraphFileDrop(file);
+      if (event.dataTransfer?.items?.[0]?.webkitGetAsEntry()?.isDirectory) void dropToolFolder(file.name);
+      else void dropGraphFile(file);
     };
     window.addEventListener('dragover', onDragOver);
     window.addEventListener('drop', onDrop);
@@ -221,7 +290,7 @@ export default function App() {
       window.removeEventListener('dragover', onDragOver);
       window.removeEventListener('drop', onDrop);
     };
-  }, [handleGraphFileDrop, handleProjectFolderDrop]);
+  });
 
   // Add a node from a palette click: beside what is already there, with its
   // panel open -- the next click was always on it. The canvas brings it into
@@ -229,81 +298,39 @@ export default function App() {
   const handleAddNode = useCallback(
     (nodeType: NodeType) => {
       const { rfNodes, setEditingNode } = useGraphStore.getState();
-      setEditingNode(addNode(nodeType, besideTheRest(rfNodes)));
+      setEditingNode(addNode(nodeType, placement(rfNodes)));
     },
     [addNode]
   );
 
-  const handleNewGraph = () => {
-    if (!confirmDiscard('Start a new graph?')) return;
-    newGraph();
+  const handleNewGraph = async () => {
+    if (await mayReplace()) newGraph();
   };
 
-  // Path-based Load/Save/Save As -- a small modal collects the absolute
-  // server-side path, so "Save" can later write back to the exact same file
-  // a graph was loaded from instead of always downloading to a new location.
-  // `taken`: the save was refused because a graph is at the path already, and
-  // the dialog asks whether to replace it -- its button is Replace.
-  const [filePrompt, setFilePrompt] = useState<{ mode: 'load' | 'save'; path: string; error: string; busy: boolean; taken?: boolean } | null>(null);
-  /** Which file prompt has its browser open ('load' | 'save'), or null. */
-  const [browsingFor, setBrowsingFor] = useState<'load' | 'save' | null>(null);
-
-  // A project folder by default: a name without .json. Typing .json saves one file instead.
-  const suggestedFileName = () =>
-    slugOf(useGraphStore.getState().metadata.name) || 'my_graph';
-
-  // The folder the last graph was opened from or saved to -- '' before one
-  // was: the folder the server was started in. Where the file browser starts
-  // when the path box holds a bare name (`browseStart`). Kept in the browser,
-  // so a restart of the server does not send the person back to the folder it
-  // was started in.
-  const [lastFolder, setLastFolder] = useState(rememberedFolder);
-  useEffect(() => {
-    if (!currentFilePath) return;
-    const folder = folderOf(currentFilePath);
-    setLastFolder(folder);
-    rememberFolder(folder);
-  }, [currentFilePath]);
-
-  // Open and Save As go straight to the file browser: choosing a file is what
-  // they are for, and a path box first -- "/path/to/my_graph" -- asked the
-  // one question a newcomer cannot answer. Closing the browser leaves the path
-  // box, for whoever would rather type.
-  const handleOpenLoad = () => {
-    if (!confirmDiscard('Load another graph?')) return;
-    setFilePrompt({ mode: 'load', path: currentFilePath ?? '', error: '', busy: false });
-    setBrowsingFor('load');
-  };
-
-  const handleOpenSaveAs = () => {
-    setFilePrompt({ mode: 'save', path: currentFilePath ?? suggestedFileName(), error: '', busy: false });
-    setBrowsingFor('save');
+  const handleOpen = async () => {
+    if (await mayReplace()) await browse<void>('file', 'Open a tool', async (path, done) => { await openPath(path); done(); }, undefined);
   };
 
   /**
-   * Open the project again from disk: for the flow, or a node's settings or
+   * Open the tool again from disk: for the flow, or a node's settings or
    * ports, changing outside -- a git pull, a merge. Code and prompts need no
    * such thing: they are watched (below). It is Open, of the same path.
    */
   const handleReloadProject = async () => {
-    if (!currentFilePath) return;
-    if (!confirmDiscard('Reload the project from disk?')) return;
-    setSaveStatus('Reloading…');
+    if (!currentFilePath || !(await mayReplace())) return;
+    say('Reloading…');
     try {
-      const result = await call('openGraph', { path: currentFilePath });
-      loadGraph(result.graph);
-      setCurrentFilePath(result.path, result.project);
-      setSaveStatus('✅ Reloaded from disk');
+      await openPath(currentFilePath, '✅ Reloaded from disk');
     } catch (error) {
-      setSaveStatus(`❌ ${errorText(error, 'Reload failed')}`);
+      say(`❌ ${errorText(error, 'Reload failed')}`, true);
     }
   };
 
   const disk = useRef(new DiskChanges());
   // A project's code and prompts are files, and files get edited elsewhere:
   // in VS Code, by git, by an assistant. The folder is asked every second and
-  // a half what changed, and what did comes in as one undo step -- no reload,
-  // no button, and nothing typed here is lost (see takeDiskChanges, and the
+  // a half what changed, and what did comes in without a reload or a button,
+  // and nothing typed here is lost (see takeDiskChanges, and the
   // node's panel, which keeps what it has not written yet on top of a change from outside). Only while the page is
   // looked at: a hidden tab has nobody to show a change to.
   useEffect(() => {
@@ -321,12 +348,12 @@ export default function App() {
         if (!changes.length) return;
         // Named: the nodes whose change was taken -- not one gone since, or one that held it already.
         const { taken, refused } = takeDiskChanges(changes);
-        if (taken.length) setSaveStatus(`↻ From disk: ${taken.join(', ')}`);
+        if (taken.length) say(`↻ From disk: ${taken.join(', ')}`);
         // A graph inside a node changed on disk while there is unsaved work
         // here. Taking it would replace that graph whole, so it waits.
         if (refused.length) {
-          setSaveStatus(`⚠ The graph inside ${[...new Set(refused)].join(', ')} changed on disk. `
-            + 'Save or undo your changes, then reload the project to take it.');
+          say(`⚠ The graph inside ${[...new Set(refused)].join(', ')} changed on disk. `
+            + 'Save or undo your changes, then reload the tool to take it.', true);
         }
       } catch {
         // Half-written by the other editor, most likely: the next look gets it.
@@ -334,21 +361,7 @@ export default function App() {
     };
     const timer = window.setInterval(look, 1500);
     return () => { alive = false; window.clearInterval(timer); };
-  }, [isProject, currentFilePath, insideSubgraph, takeDiskChanges, setSaveStatus]);
-
-  const handleSave = async () => {
-    if (!currentFilePath) {
-      handleOpenSaveAs();
-      return;
-    }
-    setSaveStatus('Saving\u2026');
-    try {
-      const saved = await save();
-      setSaveStatus(`\u2705 Saved to ${saved.path}`);
-    } catch (error) {
-      setSaveStatus(`\u274c ${errorText(error, 'Save failed')}`);
-    }
-  };
+  }, [isProject, currentFilePath, insideSubgraph, takeDiskChanges, say]);
 
   // Ctrl/Cmd+S, because the only other way to save is a trip to the toolbar,
   // and Ctrl/Cmd+Z / Shift+Z / Y for undo and redo.
@@ -359,7 +372,7 @@ export default function App() {
 
       if (key === 's') {
         event.preventDefault();
-        handleSave();
+        void saveTool();
         return;
       }
 
@@ -384,70 +397,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   });
 
-  /**
-   * Load or save *chosen* -- a file picked in the browser -- or what the path
-   * box holds; *replace*: the person said to write over the graph there.
-   */
-  const handleFilePromptConfirm = async (chosen?: string, replace = false) => {
-    if (!filePrompt) return;
-    const path = (chosen ?? filePrompt.path).trim();
-    if (!path) {
-      setFilePrompt({ ...filePrompt, error: 'Please enter a file path.' });
-      return;
-    }
-    setFilePrompt({ ...filePrompt, busy: true, error: '' });
-    try {
-      if (filePrompt.mode === 'load') {
-        const result = await call('openGraph', { path });
-        loadGraph(result.graph);
-        setCurrentFilePath(result.path, result.project);
-      } else {
-        // An untitled graph is called what it was saved as: reopened, it
-        // should not say "Untitled Graph" above a folder named word_stats.
-        const name = useGraphStore.getState().metadata.name === 'Untitled Graph'
-          ? (path.split(/[\\/]/).filter(Boolean).pop() ?? '').replace(/\.json$/i, '') || undefined
-          : undefined;
-        const saved = await save(path, { replace, name });
-        setSaveStatus(`\u2705 Saved to ${saved.path}`);
-      }
-      setFilePrompt(null);
-    } catch (error) {
-      setFilePrompt({
-        mode: filePrompt.mode, path, busy: false,
-        error: errorText(error, 'Something went wrong.'),
-        taken: error instanceof ApiError && error.body.taken === true,
-      });
-    }
-  };
-
-  const handleOpenJsonImport = useCallback(() => {
-    setJsonImportValue(JSON.stringify(rootGraph(), null, 2));
-    setJsonImportError('');
-    setCopyStatus('');
-    setShowJsonImport(true);
-  }, [rootGraph]);
-
-  const handleCopyJson = async () => {
-    try {
-      await navigator.clipboard.writeText(jsonImportValue);
-      setCopyStatus('✅ Copied to clipboard');
-    } catch {
-      setCopyStatus('❌ Could not access the clipboard');
-    }
-  };
-
-  const handleImportGraph = useCallback(() => {
-    if (!confirmDiscard('Replace the current graph with this JSON?')) return;
-    try {
-      const graph = parseGraphJson(jsonImportValue);
-      loadGraph(graph);
-      setShowJsonImport(false);
-      setJsonImportError('');
-    } catch (error) {
-      setJsonImportError(error instanceof Error ? error.message : 'Invalid graph JSON.');
-    }
-  }, [confirmDiscard, jsonImportValue, loadGraph, parseGraphJson]);
-
   return (
     <ReactFlowProvider>
       {/* Clipped, not hidden: a box that hides its overflow can still be
@@ -455,15 +404,32 @@ export default function App() {
           the whole page sideways. What does not fit scrolls where it is. */}
       <div className="flex flex-col h-screen overflow-clip" style={{ background: SUNKEN }}>
         <Toolbar
-          onNewGraph={handleNewGraph}
-          onSave={handleSave}
-          onSaveAs={handleOpenSaveAs}
-          onReloadProject={handleReloadProject}
-          onLoad={handleOpenLoad}
-          onInjectJson={handleOpenJsonImport}
+          onNewGraph={() => { void handleNewGraph(); }}
+          onSave={() => { void saveTool(); }}
+          onSaveAs={() => { void saveAs(); }}
+          onReloadProject={() => { void handleReloadProject(); }}
+          onLoad={() => { void handleOpen(); }}
+          onInjectJson={() => {
+            void dialogs.show<void>((done) => (
+              <JsonDialog
+                graph={rootGraph()}
+                onLoad={async (graph) => {
+                  if (!(await mayReplace())) return false;
+                  replaceWith(graph, '✅ Loaded the pasted graph');
+                  return true;
+                }}
+                onClose={done}
+              />
+            ));
+          }}
           onOpenSettings={() => setShowSettings(true)}
-          confirmDiscard={confirmDiscard}
-          saveStatus={saveStatus}
+          onLoadDesigned={async (graph) => {
+            if (!(await mayReplace())) return false;
+            replaceWith(graph, '', undefined, true);
+            return true;
+          }}
+          saveStatus={heard.problem ? '' : heard.text}
+          problem={heard.problem ? heard.text : ''}
           view={view}
           onViewChange={setView}
         />
@@ -489,149 +455,7 @@ export default function App() {
         {view === 'app' && <TopGraphOnly><ApplicationView /></TopGraphOnly>}
 
         {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
-
-        {filePrompt && (
-          <Modal
-            title={filePrompt.mode === 'load' ? 'Load Graph' : 'Save Graph As'}
-            onClose={() => setFilePrompt(null)}
-            dismissOnBackdrop={!filePrompt.busy}
-            dismissOnEscape={!filePrompt.busy}
-            footer={
-              <>
-                <button
-                  onClick={() => setFilePrompt(null)}
-                  disabled={filePrompt.busy}
-                  className="px-3 py-1.5 text-xs rounded-lg"
-                  style={{ ...NEUTRAL_BUTTON, opacity: filePrompt.busy ? 0.5 : 1 }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => { void handleFilePromptConfirm(undefined, filePrompt.taken); }}
-                  disabled={filePrompt.busy}
-                  className="px-3 py-1.5 text-xs rounded-lg font-semibold"
-                  style={{ ...PRIMARY_BUTTON, opacity: filePrompt.busy ? 0.7 : 1 }}
-                >
-                  {filePrompt.busy ? '…' : filePrompt.mode === 'load' ? 'Load' : filePrompt.taken ? 'Replace' : 'Save'}
-                </button>
-              </>
-            }
-          >
-            <div className="p-5 flex flex-col gap-3">
-                <label className="text-xs font-medium" style={{ color: MUTED }}>
-                  File path
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    autoFocus
-                    className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm font-mono outline-none"
-                    style={{ ...WELL, color: TEXT }}
-                    value={filePrompt.path}
-                    onChange={(e) => setFilePrompt({ ...filePrompt, path: e.target.value, taken: false })}
-                    onKeyDown={(e) => e.key === 'Enter' && handleFilePromptConfirm(undefined, filePrompt.taken)}
-                    placeholder="/path/to/my_graph"
-                  />
-                  <button
-                    type="button"
-                    className="px-3 py-2 text-xs rounded-lg flex-shrink-0"
-                    style={NEUTRAL_BUTTON}
-                    disabled={filePrompt.busy}
-                    onClick={() => setBrowsingFor(filePrompt.mode)}
-                  >
-                    Browse…
-                  </button>
-                </div>
-
-              {filePrompt.error && (
-                <div className="text-xs" style={{ color: DANGER_TEXT }}>
-                  {filePrompt.error}
-                </div>
-              )}
-            </div>
-          </Modal>
-        )}
-
-        {filePrompt && browsingFor && (
-          <FileBrowserDialog
-            mode={browsingFor === 'load' ? 'file' : 'save'}
-            {...browseStart(browsingFor, filePrompt.path, lastFolder, suggestedFileName())}
-            extensions=".json"
-            projects
-            onPick={(picked) => {
-              // Picking a file is the choice: it is loaded, or saved to, straight away.
-              setFilePrompt({ ...filePrompt, path: picked, error: '' });
-              setBrowsingFor(null);
-              void handleFilePromptConfirm(picked);
-            }}
-            onClose={() => setBrowsingFor(null)}
-          />
-        )}
-
-        {showJsonImport && (
-          <Modal
-            title="Copy / Paste Graph JSON"
-            onClose={() => setShowJsonImport(false)}
-            maxWidth="max-w-3xl"
-            // Pasted JSON is typed work: a stray backdrop click must not lose it.
-            dismissOnBackdrop={false}
-            footer={
-              <>
-                <button
-                  onClick={() => setShowJsonImport(false)}
-                  className="px-3 py-1.5 text-xs rounded-lg"
-                  style={NEUTRAL_BUTTON}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCopyJson}
-                  className="px-3 py-1.5 text-xs rounded-lg"
-                  style={NEUTRAL_BUTTON}
-                >
-                  📋 Copy to Clipboard
-                </button>
-                <button
-                  onClick={handleImportGraph}
-                  className="px-3 py-1.5 text-xs rounded-lg font-semibold"
-                  style={PRIMARY_BUTTON}
-                >
-                  Load Graph
-                </button>
-              </>
-            }
-          >
-            <div className="p-5 flex flex-col gap-3">
-                <textarea
-                  value={jsonImportValue}
-                  onChange={(e) => {
-                    setJsonImportValue(e.target.value);
-                    if (jsonImportError) setJsonImportError('');
-                  }}
-                  className="w-full rounded-lg p-4 text-sm font-mono resize-y outline-none"
-                  style={{
-                    minHeight: 320,
-                    background: SUNKEN,
-                    border: `1px solid ${LINE}`,
-                    color: TEXT,
-                  }}
-                  spellCheck={false}
-                />
-
-                {jsonImportError && (
-                  <div className="text-xs" style={{ color: DANGER_TEXT }}>
-                    {jsonImportError}
-                  </div>
-                )}
-                {pasted && <GraphProblems graph={pasted} />}
-
-              {copyStatus && (
-                <div className="text-xs" style={{ color: MUTED }}>
-                  {copyStatus}
-                </div>
-              )}
-            </div>
-          </Modal>
-        )}
+        {dialogs.dialogs}
       </div>
     </ReactFlowProvider>
   );

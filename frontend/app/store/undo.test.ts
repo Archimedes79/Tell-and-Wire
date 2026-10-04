@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { COALESCE_MS, useGraphStore } from './graphStore';
+import { useGraphStore } from './graphStore';
+import { COALESCE_MS } from './history';
 
 const store = () => useGraphStore.getState();
 const nodeCount = () => store().rfNodes.length;

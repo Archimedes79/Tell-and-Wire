@@ -28,9 +28,9 @@ export function roundExplained(round: RoundSnapshot | null, nameOf: (nodeId: str
   const held = results.filter((one) => one.held).length;
   const idle = results.filter((one) => one.status === 'skipped' && !one.held).length;
   const failed = results.filter((one) => one.status === 'error').length;
-  const parts = [`${ran} ran`, reused ? `${reused} reused ${reused > 1 ? 'their' : 'its'} last result` : '', held ? `${held} stood still` : '', idle ? `${idle} had nothing to do` : '', failed ? `${failed} failed` : ''].filter(Boolean);
+  const parts = [`${ran} node${ran === 1 ? '' : 's'} ran`, reused ? `${reused} reused ${reused > 1 ? 'their' : 'its'} last result` : '', held ? `${held} stood still` : '', idle ? `${idle} had nothing to do` : '', failed ? `${failed} failed` : ''].filter(Boolean);
   const why = results
     .filter((one) => one.status !== 'success' && one.status !== 'partial')
     .map((one) => `${nameOf(one.node_id)}: ${one.error || one.messages?.[0] || one.status}`);
-  return { line: `Last round: ${began} -- ${parts.join(', ')}`, why };
+  return { line: `Last run: ${began} -- ${parts.join(', ')}`, why };
 }

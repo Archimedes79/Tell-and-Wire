@@ -7,13 +7,12 @@ import { blockCan, endPoints, pageStartPoints, type Point } from '../../app/docu
 import { connectToNewPoint } from './pageWrite';
 import { GUI_GRID_COLUMNS } from '../../app/document/layout';
 import { TONES, TONE_LABELS, type Tone } from '../../app/ui/tone';
-import { DANGER, DIMMER, FIELD_ON_SURFACE, LINE, MUTED, WELL } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { DIMMER, FIELD_ON_SURFACE, LINE, MUTED, NODE, PURPLE_TEXT, WELL } from '../../app/ui/theme';
 
 interface WidgetEditorProps {
   widget: GuiWidget | null;
   onChange: (patch: Partial<GuiWidget>) => void;
-  /** Remove this block from the page. Dragging is what arranges it. */
-  onRemove?: () => void;
 }
 
 /** What a select offers for a point made there and then: "+ New start point". */
@@ -46,8 +45,8 @@ function Connections({ widget, onChange }: { widget: GuiWidget; onChange: (patch
   return (
     <div className="mb-3 flex flex-col gap-3">
       {can.sends && (
-        <div>
-          <span className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Its data goes to</span>
+        <fieldset>
+          <legend className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Its data goes to</legend>
           {starts.map((start) => (
             <label key={start.id} className="flex items-center gap-2 text-xs" style={{ color: MUTED }}>
               <input
@@ -60,13 +59,13 @@ function Connections({ widget, onChange }: { widget: GuiWidget; onChange: (patch
               {named(start)}
             </label>
           ))}
-          <button type="button" className="text-xs underline mt-1" style={{ color: DIMMER }} onClick={() => connectToNewPoint(widget.id, 'sends_to')}>
+          <Button variant="quiet" size="sm" onClick={() => connectToNewPoint(widget.id, 'sends_to')}>
             + New start point
-          </button>
+          </Button>
           <p className="text-xs mt-1" style={{ color: DIMMER }}>
             Sent as “{widget.id}” in the package of each: {can.sends?.description}.
           </p>
-        </div>
+        </fieldset>
       )}
 
       {can.fires && (
@@ -116,7 +115,7 @@ function Connections({ widget, onChange }: { widget: GuiWidget; onChange: (patch
  * Same shape as a node's config panel one level down, which is why it draws
  * the element's own `Panel` rather than knowing any widget kind.
  */
-export default function WidgetEditor({ widget, onChange, onRemove }: WidgetEditorProps) {
+export default function WidgetEditor({ widget, onChange }: WidgetEditorProps) {
   if (!widget) {
     return (
       <p className="text-xs" style={{ color: DIMMER }}>
@@ -131,19 +130,9 @@ Select a block on the page — or press <kbd>/</kbd> to add one.
   return (
     <div className="px-3 py-3 rounded-lg" style={WELL}>
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: '#2d1b4e', color: '#c4b5fd' }}>
+        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: NODE.ai, color: PURPLE_TEXT }}>
           {element.label}
         </span>
-        <span className="flex-1" />
-        <button
-          onClick={onRemove}
-          className="text-xs px-2 py-1 rounded"
-          style={{ background: DANGER, color: 'white' }}
-          title="Remove (Del)"
-          aria-label="Remove"
-        >
-          ✕
-        </button>
       </div>
 
       <label className="block mb-3">
@@ -213,9 +202,9 @@ Select a block on the page — or press <kbd>/</kbd> to add one.
               />
             </label>
             {(widget.border !== undefined || widget.background) && (
-              <button type="button" className="text-xs underline" onClick={() => onChange({ border: undefined, background: '' })}>
+              <Button variant="quiet" size="sm" onClick={() => onChange({ border: undefined, background: '' })}>
                 Default
-              </button>
+              </Button>
             )}
           </div>
 

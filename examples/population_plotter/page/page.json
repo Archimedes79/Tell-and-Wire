@@ -2,7 +2,7 @@
   {
     "extensions": ".csv",
     "fires": "draw",
-    "h": 2,
+    "h": 3,
     "id": "file",
     "kind": "input_picker",
     "label": "CSV file",

@@ -1,6 +1,5 @@
 import React from 'react';
 import type { GuiWidget } from '../../app/graph';
-import { useGraphStore } from '../../app/store/graphStore';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { blockValue, GuiBlock, PageGrid } from './GuiPage';
 import { heldValue, roundGoing, useSession } from '../../app/api/session';
@@ -9,7 +8,8 @@ import { cellsFromDrag, resolveWidgetLayout, GUI_GRID_COLUMNS, GUI_MAX_CELL } fr
 import QuickInsert from './QuickInsert';
 import type { PaletteEntry } from './DesignerPalette';
 import { blockCan, widgetValueIsDesign } from '../../app/document/page';
-import { ACCENT, DIMMER, LINE, MUTED, SURFACE, TEXT } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../app/ui/theme';
 
 /**
  * The page, plus the few affordances needed to build one.
@@ -52,7 +52,6 @@ export default function DesignerSurface({
   onInsertAt: (index: number | null) => void;
   onInsert: (entry: PaletteEntry, index: number) => void;
 }) {
-  const scheme = useGraphStore((s) => s.metadata.gui_scheme);
   // What the blocks show is what the rounds of the session handed the end
   // points they show -- whoever started them: this tab, the App tab, the clock.
   const session = useSession();
@@ -123,7 +122,7 @@ export default function DesignerSurface({
     <div onMouseDown={() => onSelect(null)}>
       {/* An empty page is still a page: without a minimum height the grid is
           zero pixels tall and there is nothing to aim a first element at. */}
-      <PageGrid minRows={4} onCell={setCell} scheme={scheme}>
+      <PageGrid minRows={4} onCell={setCell}>
         {placements.map((placement, index) => {
           const { widget } = placement;
           const incoming = session.view?.shown[widget.id];
@@ -155,13 +154,25 @@ export default function DesignerSurface({
                 labelInset={16}
                 // The toolbar hangs above the block, outside its box.
                 style={{
-                  outline: selected ? `2px solid ${ACCENT}` : 'none',
+                  // Not selected: the page's focus ring shows where the keyboard is.
+                  outline: selected ? `2px solid ${ACCENT}` : undefined,
                   outlineOffset: 1,
                   opacity: draggingId === widget.id ? 0.55 : 1,
                   overflow: selected ? 'visible' : undefined,
                   zIndex: selected ? 5 : undefined,
                 }}
-                onMouseDown={(e) => { e.stopPropagation(); onSelect(widget.id); }}
+                frame={{
+                  onMouseDown: (e) => { e.stopPropagation(); onSelect(widget.id); },
+                  // Enter or Space on the block itself, not on a field in it, selects it.
+                  onKeyDown: (e) => {
+                    if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+                    e.preventDefault();
+                    onSelect(widget.id);
+                  },
+                  tabIndex: 0,
+                  role: 'group',
+                  'aria-label': widget.label || widget.kind,
+                }}
                 content={InPlace ? (
                   <InPlace
                     widget={widget}
@@ -217,7 +228,7 @@ export default function DesignerSurface({
                 {fires && (
                   <span
                     className="absolute select-none pointer-events-none"
-                    style={{ right: 3, top: 2, fontSize: 10, color: '#fbbf24' }}
+                    style={{ right: 3, top: 2, fontSize: 10, color: WARNING_TEXT }}
                     title={`Using this block fires "${widget.fires}"`}
                     aria-hidden="true"
                   >
@@ -300,10 +311,6 @@ function BlockToolbar({
   onInsertBelow: () => void;
   onRemove: () => void;
 }) {
-  const button = (active = false): React.CSSProperties => ({
-    padding: '2px 7px', borderRadius: 5, fontSize: 12, lineHeight: '18px',
-    color: active ? '#fff' : TEXT, background: active ? ACCENT : 'transparent',
-  });
   const gap = <span style={{ width: 1, alignSelf: 'stretch', background: LINE, margin: '2px 3px' }} />;
 
   // Kept inside the page: over a block narrower than the toolbar at the
@@ -332,21 +339,21 @@ function BlockToolbar({
       onMouseDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
     >
       {WIDTHS.map((option) => (
-        <button key={option.w} type="button" style={button(width === option.w)} title={option.title} onClick={() => onWidth(option.w)}>
+        <Button key={option.w} size="sm" variant={width === option.w ? 'primary' : 'quiet'} aria-pressed={width === option.w} title={option.title} onClick={() => onWidth(option.w)}>
           {option.label}
-        </button>
+        </Button>
       ))}
       {gap}
-      <button type="button" style={button()} title="Shorter" onClick={onShorter}>−</button>
+      <Button variant="quiet" size="sm" title="Shorter" onClick={onShorter}>−</Button>
       <span style={{ fontSize: 11, color: MUTED }}>height</span>
-      <button type="button" style={button()} title="Taller" onClick={onTaller}>＋</button>
+      <Button variant="quiet" size="sm" title="Taller" onClick={onTaller}>＋</Button>
       {gap}
-      <button type="button" style={{ ...button(), opacity: onUp ? 1 : 0.3 }} title="Move up (Ctrl+↑)" onClick={onUp} disabled={!onUp}>↑</button>
-      <button type="button" style={{ ...button(), opacity: onDown ? 1 : 0.3 }} title="Move down (Ctrl+↓)" onClick={onDown} disabled={!onDown}>↓</button>
+      <Button variant="quiet" size="sm" title="Move up (Ctrl+↑)" onClick={onUp} disabled={!onUp}>↑</Button>
+      <Button variant="quiet" size="sm" title="Move down (Ctrl+↓)" onClick={onDown} disabled={!onDown}>↓</Button>
       {gap}
-      <button type="button" style={button()} title="Add a block below (/)" onClick={onInsertBelow}>＋ block</button>
+      <Button variant="quiet" size="sm" title="Add a block below (/)" onClick={onInsertBelow}>＋ block</Button>
       {gap}
-      <button type="button" style={{ ...button(), color: '#f87171' }} title="Remove (Del)" onClick={onRemove} aria-label="Remove block">🗑</button>
+      <Button variant="danger" size="sm" title="Delete block (Del)" aria-label="Delete block" onClick={onRemove}>🗑</Button>
     </div>
   );
 }

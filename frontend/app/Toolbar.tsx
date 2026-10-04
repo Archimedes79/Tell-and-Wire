@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Play, Redo2, Rocket, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from './ui/ToolbarButton';
-import { useGraphStore } from './store/graphStore';
-import { ApiError, call, downloadBundle, watchGeneration, type AICall } from './api/client';
+import Button from './ui/Button';
+import { useGoingRound, useGraphStore } from './store/graphStore';
+import { downloadBundle } from './api/client';
 import { errorText } from './api/errorText';
 import type { Graph } from './graph';
 import { useRound } from '../gui-editor/page/useRound';
@@ -10,13 +11,13 @@ import RequirementsDialog from './dialogs/RequirementsDialog';
 import { useGraphSweep } from '../graph-editor/authoring/useGraphSweep';
 import Modal from './ui/Modal';
 import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
-import { lastAsked } from './lastAsked';
+import { useGraphAsk } from './graphAsk';
 import SubgraphTrail from './SubgraphTrail';
 import GraphProblems from './GraphProblems';
 import ViewTabs, { type EditorView } from './ViewTabs';
 import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from './application';
 import FileMenu, { fileActions } from './FileMenu';
-import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, NEUTRAL_BUTTON, PRIMARY_BUTTON, SUCCESS, SUNKEN, SURFACE, TEXT } from './ui/theme';
+import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT } from './ui/theme';
 
 /**
  * How long a node may go without producing anything before the toolbar says so.
@@ -30,13 +31,12 @@ import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_TEXT, DIM, DIMMER, LINE, MUTED
 const STALLED_AFTER_SECONDS = 45;
 
 /**
- * Why New, Open and Reload wait, or null when they need not: a run or a ✨
- * sweep is going, and what it brings back belongs to the graph it started on.
+ * Why New, Open and Reload wait, or null when they need not: a ✨ sweep is
+ * going, and what it brings back belongs to the graph it started on. (A run
+ * is stopped with the graph it belongs to: `loadGraph`.)
  */
-export function graphBusy(running: boolean, sweeping: boolean): string | null {
-  if (running) return 'A run is going: stop it, or wait for it, before opening another graph.';
-  if (sweeping) return '✨ Generate is writing this graph: stop it, or wait for it, before opening another.';
-  return null;
+export function graphBusy(sweeping: boolean): string | null {
+  return sweeping ? '✨ Generate all is writing this graph: stop it, or wait for it, before opening another.' : null;
 }
 
 interface ToolbarProps {
@@ -48,23 +48,25 @@ interface ToolbarProps {
   onLoad: () => void;
   onInjectJson: () => void;
   onOpenSettings: () => void;
-  /** Ask before replacing the current graph; false means the user said no. */
-  confirmDiscard: (action: string) => boolean;
+  /** Make the document the graph ✨ designed, after asking about unsaved work; whether it was. */
+  onLoadDesigned: (graph: Graph) => Promise<boolean>;
+  /** What the header says of saving and opening -- while the document is clean -- and what went wrong, always. */
   saveStatus: string;
+  problem: string;
   view: EditorView;
   onViewChange: (view: EditorView) => void;
 }
 
 /**
- * The header: the app's name, the graph's, its views -- and on the
- * right what is done to the graph as a whole: ▶ Run first, then Generate,
+ * The header: the app's name, the tool's -- its views -- and on the
+ * right what is done to the tool as a whole: ▶ Run first, then Generate all,
  * Settings and Deploy. What is done now and then is in the File menu (New,
  * ✨ Describe a graph, Open, Save, Save as…, Reload, JSON); Undo and Redo are icons.
  * Changing the graph as said is the bar under the canvas.
  */
 export default function Toolbar({
-  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, confirmDiscard,
-  saveStatus, view, onViewChange,
+  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, onLoadDesigned,
+  saveStatus, problem, view, onViewChange,
 }: ToolbarProps) {
   const metadata = useGraphStore((s) => s.metadata);
   const currentFilePath = useGraphStore((s) => s.currentFilePath);
@@ -76,8 +78,9 @@ export default function Toolbar({
   // the graph -- each a whole serialised document, every frame of a drag.
   const dirty = useGraphStore((s) => s.isDirty());
   const setMetadata = useGraphStore((s) => s.setMetadata);
-  const isExecuting = useGraphStore((s) => s.isExecuting);
-  const runProgress = useGraphStore((s) => s.runProgress);
+  // Whether a run goes, and how far, is the session's alone (`goingRound`).
+  const going = useGoingRound();
+  const isExecuting = going !== null;
   const heldElsewhere = useGraphStore((s) => s.heldElsewhere);
   const isProject = useGraphStore((s) => s.isProject);
   const undo = useGraphStore((s) => s.undo);
@@ -87,28 +90,24 @@ export default function Toolbar({
   const undoAvailable = useGraphStore((s) => s.past.length > 0);
   const redoAvailable = useGraphStore((s) => s.future.length > 0);
   const executionResult = useGraphStore((s) => s.executionResult);
-  const loadGraph = useGraphStore((s) => s.loadGraph);
 
   const [deployBusy, setDeployBusy] = useState('');
   const [deployError, setDeployError] = useState('');
   // Asking what the graph needs, then running: the delivered page's own steps.
-  const delivered = useRound(() => useGraphStore.getState().holdDocument());
+  // The document is handed over by ▶ Run just before (`startApplication`).
+  const delivered = useRound();
 
   const [showDescribe, setShowDescribe] = useState(false);
-  const [aiDescription, setAiDescription] = useState('');
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [aiError, setAiError] = useState('');
-  const [aiResult, setAiResult] = useState<{ graph: Graph; explanation?: string } | null>(null);
-  // What the one long call has sent so far, so designing a graph is not five
-  // minutes of a spinning button with nothing behind it.
-  const [aiCalls, setAiCalls] = useState<AICall[]>([]);
-  const aiAsked = useRef(lastAsked());
+  const [description, setDescription] = useState('');
+  const { ask, send, reset } = useGraphAsk();
+  const asking = ask.phase === 'asking';
+  const describeId = useId();
 
   /** Why another graph cannot be opened now, or null when it can. */
-  const busyWith = graphBusy(isExecuting, sweep.busy);
+  const busyWith = graphBusy(sweep.busy);
 
   /**
-   * ▶ Run: the application, run as whoever gets it will run it -- one button,
+   * ▶ Run: the tool, run as whoever gets it will run it -- one button,
    * the same on every tab (`app/application.ts`). With a page, the page opens
    * (the App tab) and the graph runs when it is used; without one, what starts
    * the graph starts it. While it runs the button is ■ Stop, which ends it.
@@ -116,7 +115,7 @@ export default function Toolbar({
    * It is the document that runs: from inside a node's graph, the canvas goes
    * back up to the top first, where the page is and where the results land.
    * A graph run whole at start goes through the delivered tool's own steps
-   * (`useRound`), as every round does.
+   * (`useRound`), as every run does.
    */
   const appRunning = useApplication((s) => s.running);
   const opensTab = useTopOpensApp();
@@ -130,7 +129,9 @@ export default function Toolbar({
       if (view !== 'app') ranFrom.current = view;
       onViewChange('app');
     }
-    void startApplication(graph, () => delivered.run(null));
+    setDeployError('');
+    startApplication(graph, () => delivered.run(null))
+      .catch((error) => setDeployError(errorText(error, 'The tool could not be started.')));
   };
   // Stopped -- by ■ Stop, or by itself, having nothing left to do -- or its
   // page gone, it takes its tab with it.
@@ -164,64 +165,28 @@ export default function Toolbar({
     });
 
   const handleOpenDescribe = () => {
-    setAiDescription('');
-    setAiError('');
-    setAiResult(null);
+    setDescription('');
+    reset();
     setShowDescribe(true);
   };
 
   const handleCloseDescribe = () => {
     // What is still on its way is no longer wanted: nothing it brings is shown.
-    aiAsked.current.cancel();
-    setAiGenerating(false);
+    reset();
     setShowDescribe(false);
-    setAiResult(null);
-    setAiError('');
   };
 
-  const handleGenerateGraph = async () => {
-    setAiCalls([]);
-    if (!aiDescription.trim()) {
-      setAiError('Please describe the graph you want first.');
-      return;
-    }
-    const wanted = aiAsked.current.ask();
-    setAiGenerating(true);
-    setAiError('');
-    setAiResult(null);
-    try {
-      const result = await watchGeneration(
-        (progressId) => call('generateGraph', { description: aiDescription, progress_id: progressId }),
-        (calls) => { if (wanted()) setAiCalls(calls); },
-      );
-      if (wanted()) setAiResult(result);
-    } catch (e) {
-      if (!wanted()) return;
-      setAiError(errorText(e, 'Failed to generate graph.'));
-      // The whole failing exchange, replies included, as a node's ✨ keeps it:
-      // the failing case is the one where what was asked matters.
-      if (e instanceof ApiError && e.body.calls) setAiCalls(e.body.calls);
-    } finally {
-      if (wanted()) setAiGenerating(false);
-    }
-  };
-
-  const handleConfirmDescribe = () => {
-    if (!aiResult) return;
+  const handleLoadDescribed = async () => {
     // The user came here to explore an idea; loading the result must not
     // silently destroy the graph they already had open.
-    if (!confirmDiscard('Replace the current graph with the generated one?')) return;
-    loadGraph(aiResult.graph);
-    setShowDescribe(false);
-    setAiResult(null);
-    setAiError('');
+    if (ask.phase === 'ready' && await onLoadDesigned(ask.graph)) handleCloseDescribe();
   };
 
   const statusColor = executionResult
     ? executionResult.status === 'success' ? SUCCESS : DANGER
     : DIMMER;
-  // The last round's word, not said while the next one goes: "6/18" and "cancelled" side by side
-  // read as if the round going had been stopped.
+  // The last run's word, not said while the next one goes: "6/18" and "cancelled" side by side
+  // read as if the run going had been stopped.
   const statusLabel = executionResult && !isExecuting ? executionResult.status : '';
 
   // The bar fits the window: below 1280 pixels its buttons are their icons
@@ -237,9 +202,9 @@ export default function Toolbar({
       >
         <span className="shrink-0 whitespace-nowrap text-base font-bold" style={{ color: ACCENT_TEXT }}>Tell & Wire</span>
 
-        {/* The graph's name; where it is saved is its tooltip and the File menu's first line.
+        {/* The tool's name; where it is saved is its tooltip and the File menu's first line.
             Inside a node's graph the trail names where you are, the top graph
-            first: a name field there showed "Untitled Graph" beside a trail
+            first: a name field there showed "Untitled tool" beside a trail
             saying "Statistics", and nobody could tell whose name it was. */}
         {!inside && (
           <input
@@ -248,7 +213,7 @@ export default function Toolbar({
             style={{ color: MUTED, borderBottom: `1px dashed ${LINE}`, paddingBottom: 2 }}
             value={metadata.name}
             onChange={(e) => setMetadata({ name: e.target.value })}
-            aria-label="The graph's name"
+            aria-label="The tool's name"
             title={currentFilePath ?? 'Not saved to a file yet'}
           />
         )}
@@ -262,34 +227,33 @@ export default function Toolbar({
 
         {/* What is going on, cut to the room between the tabs and the actions. */}
         <div className="flex flex-1 min-w-0 items-center justify-end gap-2 overflow-hidden">
-          {isExecuting && runProgress && (
+          {going && (
             <span
               className="text-xs tabular-nums truncate"
               style={{ color: MUTED }}
               title={
                 'Nodes finished, of the total in this graph'
-                + (runProgress.itemTotal > 1 ? '; then items finished within the running node' : '')
+                + (going.item_total > 1 ? '; then items finished within the running node' : '')
               }
             >
-              {runProgress.completed}/{runProgress.total}
-              {runProgress.label ? ` · ${runProgress.label}` : ''}
+              {going.completed}/{going.total}
+              {going.current_label ? ` · ${going.current_label}` : ''}
               {/* Only worth showing for a real batch: "1/1" on every single-item
                   node is noise that makes the useful case harder to spot. */}
-              {runProgress.itemTotal > 1 ? ` · ${runProgress.itemDone}/${runProgress.itemTotal}` : ''}
+              {going.item_total > 1 ? ` · ${going.item_done}/${going.item_total}` : ''}
             </span>
           )}
           {/* Said only once it is worth saying. Below the threshold a run is
               visibly working, and a ticking "1s… 2s…" would be pure anxiety;
               above it, silence is the thing the user cannot otherwise tell from
               a hang. */}
-          {isExecuting && runProgress && runProgress.idleSeconds !== null
-            && runProgress.idleSeconds > STALLED_AFTER_SECONDS && (
+          {going && going.idle_seconds !== null && going.idle_seconds > STALLED_AFTER_SECONDS && (
             <span
               className="text-xs tabular-nums whitespace-nowrap"
               style={{ color: DIM }}
               title="No output from the model since this long. The run is still waiting, not stopped."
             >
-              ⏳ {Math.round(runProgress.idleSeconds)}s
+              ⏳ {Math.round(going.idle_seconds)}s
             </span>
           )}
           {/* A "✅ Saved to …" that survives the next ten edits is a lie about
@@ -298,6 +262,10 @@ export default function Toolbar({
             <span className="text-xs truncate" style={{ color: MUTED }} title={saveStatus}>
               {saveStatus}
             </span>
+          )}
+          {/* What went wrong stays said while the graph is unsaved: a save that failed leaves it so. */}
+          {problem && (
+            <span className="text-xs font-medium truncate" style={{ color: DANGER_TEXT }} title={problem}>{problem}</span>
           )}
           {deployError && (
             <span className="text-xs font-medium truncate" style={{ color: DANGER_TEXT }} title={deployError}>❌ {deployError}</span>
@@ -331,27 +299,27 @@ export default function Toolbar({
         </div>
 
         {appRunning || isExecuting ? (
-          <button
+          <Button
+            variant="danger"
+            className="h-9 shrink-0 flex items-center gap-2"
             onClick={() => { void stopApplication(); }}
-            title="Stop the application: its clocks, and the round in flight"
-            className="h-9 px-4 flex-shrink-0 rounded-lg text-sm font-semibold flex items-center gap-2"
-            style={{ background: DANGER, color: 'white' }}
+            title="Stop the tool: its clocks, and the run in flight"
           >
             <Square size={13} strokeWidth={2.5} aria-hidden="true" />
             Stop
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
+            variant="primary"
+            className="h-9 shrink-0 flex items-center gap-2"
             onClick={handleRun}
             title={opensTab
-              ? 'Run the application: it opens as whoever gets it uses it -- its page, or a call to each start point a call starts -- and the graph runs when it is used'
-              : 'Run the application: what starts the graph starts it -- its start points that start themselves, or, with none, the whole graph once'}
-            className="h-9 px-4 flex-shrink-0 rounded-lg text-sm font-semibold flex items-center gap-2"
-            style={PRIMARY_BUTTON}
+              ? 'Run the tool: it opens as whoever gets it uses it -- its page, or a call to each start point a call starts -- and the graph runs when it is used'
+              : 'Run the tool: what starts the graph starts it -- its start points that start themselves, or, with none, the whole graph once'}
           >
             <Play size={13} strokeWidth={2.5} aria-hidden="true" />
             Run
-          </button>
+          </Button>
         )}
 
         {/* Front to back through the graph: each node is generated against what
@@ -359,7 +327,7 @@ export default function Toolbar({
             written against a description rather than against data. */}
         <ToolbarButton
           icon={sweep.busy ? Square : Wand2}
-          label={sweep.busy ? 'Stop' : 'Generate'}
+          label={sweep.busy ? 'Stop' : 'Generate all'}
           title={sweep.busy
             ? 'Stop after the node in flight'
             : 'Write every empty node, in the order the graph runs'}
@@ -368,30 +336,30 @@ export default function Toolbar({
         />
 
         {/* Labelled, and the title names what is inside. An API key lives in
-            here, under "Keys and addresses", and a tooltip that spoke only of
+            here, under "Keys", and a tooltip that spoke only of
             "code generation AI and this graph's runtime AI default" was a sign
             pointing away from the thing people come looking for. */}
         <ToolbarButton
           icon={Settings}
           label="Settings"
-          title="The AI that generates, tests and runs, API keys and server addresses, and what starts the graph"
+          title="The AI that generates, tests and runs, its API keys and server addresses"
           onClick={onOpenSettings}
           framed
         />
 
         {/* One thing to do, so no menu: the look at the tool detached is the
-            running application's pop-out, beside the page it opens. */}
+            running tool's pop-out, beside the page it opens. */}
         <ToolbarButton
           icon={Rocket}
           label={deployBusy ? `${deployBusy}…` : 'Deploy'}
-          title="Download this graph as a tool of its own: a zip with the graph, its page and the code that runs them"
+          title="Download this tool as one of its own: a zip with the graph, its page and the code that runs them"
           onClick={handleDownloadBundle}
           disabled={!!deployBusy}
           framed
         />
       </header>
 
-      {/* What ✨ Generate says, whole, under the header: in it, at 1024
+      {/* What ✨ Generate all says, whole, under the header: in it, at 1024
           pixels, "Nothing to generate. 3 left alone: …" was 77 pixels wide
           and the rest only a tooltip. */}
       {sweep.message && (
@@ -399,10 +367,10 @@ export default function Toolbar({
           style={{ background: SURFACE, borderBottom: `1px solid ${LINE}`, color: MUTED }}>
           <span className="flex-1 min-w-0 break-words">{sweep.message}</span>
           {!sweep.busy && (
-            <button type="button" onClick={sweep.dismiss} className="shrink-0" style={{ color: MUTED }}
-              title="Dismiss what ✨ Generate said" aria-label="Dismiss">
+            <Button variant="quiet" size="sm" className="shrink-0" onClick={sweep.dismiss}
+              title="Dismiss what ✨ Generate all said" aria-label="Dismiss">
               ✕
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -416,76 +384,60 @@ export default function Toolbar({
       {/* Describe-a-graph dialog */}
       {showDescribe && (
         <Modal
-          title="✨ Generate Graph with AI"
+          title="✨ Describe a graph"
           onClose={handleCloseDescribe}
           maxWidth="max-w-2xl"
-          dismissOnBackdrop={!aiGenerating}
-          dismissOnEscape={!aiGenerating}
+          dismissOnBackdrop={!asking}
+          dismissOnEscape={!asking}
           footer={
             <>
-              <button
-                onClick={handleCloseDescribe}
-                className="px-4 py-2 text-sm rounded-lg"
-                style={NEUTRAL_BUTTON}
-              >
-                Cancel
-              </button>
-              {aiResult ? (
-                <button
-                  onClick={handleConfirmDescribe}
-                  className="px-4 py-2 text-sm rounded-lg font-semibold"
-                  style={{ background: SUCCESS, color: 'white' }}
-                >
-                  Load Graph
-                </button>
+              <Button onClick={handleCloseDescribe}>Cancel</Button>
+              {ask.phase === 'ready' ? (
+                <Button variant="primary" onClick={() => { void handleLoadDescribed(); }}>Load graph</Button>
               ) : (
-                <button
-                  onClick={handleGenerateGraph}
-                  disabled={aiGenerating}
-                  className="px-4 py-2 text-sm rounded-lg font-semibold"
-                  style={{ ...PRIMARY_BUTTON, opacity: aiGenerating ? 0.7 : 1 }}
-                >
-                  {aiGenerating ? '⏳ Generating…' : 'Generate'}
-                </button>
+                <Button variant="primary" onClick={() => { void send(description, description); }} disabled={asking || !description.trim()}>
+                  {asking ? '⏳ Generating…' : 'Generate'}
+                </Button>
               )}
             </>
           }
         >
           <div className="p-5 flex flex-col gap-3">
-            <label className="text-xs font-medium" style={{ color: MUTED }}>
+            <label htmlFor={describeId} className="text-xs font-medium" style={{ color: MUTED }}>
               Describe the graph you want
             </label>
             <textarea
+              id={describeId}
               autoFocus
-              value={aiDescription}
-              onChange={(e) => setAiDescription(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg p-3 text-sm resize-y outline-none"
               style={{ minHeight: 100, background: SUNKEN, border: `1px solid ${LINE}`, color: TEXT }}
               placeholder="e.g. Read a text file, summarize it with AI, and show the result on a page."
-              disabled={aiGenerating}
+              disabled={asking}
             />
             <p className="text-xs" style={{ color: DIM }}>
               To change the graph that is open instead, say it in the bar under the canvas.
             </p>
 
-            {(aiGenerating || (aiError && aiCalls.length > 0)) && (
+            {(ask.phase === 'asking' || (ask.phase === 'failed' && ask.calls.length > 0)) && (
               <div className="mt-3">
-                <LiveGeneration calls={aiCalls} minHeight={140} />
+                <LiveGeneration calls={ask.calls} minHeight={140} />
               </div>
             )}
-            {aiError && (
-              <div className="text-xs px-3 py-2 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: DANGER_TEXT }}>
-                ❌ {aiError}
+            {ask.phase === 'failed' && (
+              <div className="text-xs px-3 py-2 rounded" style={{ background: DANGER_FILL, color: DANGER_TEXT }}>
+                ❌ {ask.error}
               </div>
             )}
 
-            {aiResult && (
+            {ask.phase === 'ready' && (
               <div className="text-xs px-3 py-2 rounded" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
-                {aiResult.explanation || 'Graph generated.'} ({aiResult.graph.nodes.length} node{aiResult.graph.nodes.length === 1 ? '' : 's'},{' '}
-                {aiResult.graph.edges.length} edge{aiResult.graph.edges.length === 1 ? '' : 's'})
+                {ask.explanation || 'Graph generated.'} ({ask.graph.nodes.length} node{ask.graph.nodes.length === 1 ? '' : 's'},{' '}
+                {ask.graph.edges.length} wire{ask.graph.edges.length === 1 ? '' : 's'})
               </div>
             )}
-            {aiResult && <GraphProblems graph={aiResult.graph} />}
+            {ask.phase === 'ready' && <GraphProblems graph={ask.graph} />}
           </div>
         </Modal>
       )}

@@ -6,9 +6,7 @@ import { indentWithTab, redo } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { LINE } from '../../app/ui/theme';
-import { useGraphStore } from '../../app/store/graphStore';
-import { scheme } from '../../app/ui/scheme';
+import { ACCENT, LINE } from '../../app/ui/theme';
 import type { CodeLanguage } from './CodeField';
 
 // CodeMirror, and nothing else: this is the one module that imports it, and it
@@ -20,7 +18,7 @@ import type { CodeLanguage } from './CodeField';
 const FONT = {
   '&': { fontSize: '12.5px', borderRadius: '8px', border: `1px solid ${LINE}`, overflow: 'hidden' },
   '.cm-scroller': { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', lineHeight: '1.5' },
-  '&.cm-focused': { outline: 'none', borderColor: '#6366f1' },
+  '&.cm-focused': { outline: 'none', borderColor: ACCENT },
   // A prompt is prose: a line longer than the box wraps, it does not scroll away.
   '.cm-content': { paddingBottom: '8px' },
 };
@@ -50,10 +48,6 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
   const changed = useRef(onChange);
   changed.current = onChange;
   const languageSlot = useRef(new Compartment());
-  // One Dark on a dark scheme, CodeMirror's own light look on a light one: a
-  // black editor in the middle of a paper-coloured panel is the one thing in
-  // it that ignored the scheme.
-  const light = scheme(useGraphStore((state) => state.metadata.gui_scheme)).light === true;
 
   useEffect(() => {
     if (!host.current) return undefined;
@@ -67,7 +61,7 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
           // Redo; CodeMirror's own key for it on Windows is Ctrl+Y alone.
           keymap.of([{ key: 'Mod-Shift-z', run: redo, preventDefault: true }, ...(tabIndents ? [indentWithTab] : [])]),
           languageSlot.current.of(language === 'javascript' ? javascript() : markdown()),
-          ...(light ? [] : [oneDark]),
+          oneDark,
           EditorView.lineWrapping,
           EditorView.theme({
             ...FONT,

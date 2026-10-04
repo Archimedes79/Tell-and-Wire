@@ -64,7 +64,7 @@ function useFollow(text: string) {
  * What it shows of a run follows the text as it grows and can be saved as a
  * text file; what is typed is the person's own, and already in their hands.
  */
-export default function TextIoWidgetView({ widget, value, incoming, onChange, onTrigger, fires }: WidgetViewProps) {
+export default function TextIoWidgetView({ widget, value, incoming, onChange, onTrigger, fires, controlId }: WidgetViewProps) {
   const mode = textIoRole(widget.mode);
   const text = asText(value);
   const incomingText = asText(incoming);
@@ -74,7 +74,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
   // Whether it sends is the page's to say, the one it acts on (WidgetViewProps.fires).
   const sends = fires === true;
   const sendOnEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!sends || event.key !== 'Enter' || event.shiftKey) return;
+    if (!sends || event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
     event.preventDefault();
     const typed = event.currentTarget.value;
     if (typed.trim()) onTrigger?.(typed);
@@ -90,6 +90,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
     return (
       <div className="relative group h-full">
         <textarea
+          id={controlId}
           ref={follow.ref}
           onScroll={follow.onScroll}
           className="w-full h-full rounded-lg px-2 py-1.5 resize-none"
@@ -106,6 +107,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
   if (mode === 'input') {
     return (
       <textarea
+        id={controlId}
         className="w-full h-full rounded-lg px-2 py-1.5 resize-none"
         style={{ ...FIELD, ...BOX_TEXT, minHeight: 80 }}
         value={text}
@@ -134,6 +136,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
         {saveButton(incomingText)}
       </div>
       <textarea
+        id={controlId}
         className="w-full rounded-lg px-2 py-1.5 resize-none"
         style={{ ...FIELD, ...BOX_TEXT, minHeight: 60 }}
         value={text}

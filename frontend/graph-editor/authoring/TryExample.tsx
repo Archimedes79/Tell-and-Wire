@@ -4,7 +4,8 @@ import { call } from '../../app/api/client';
 import { errorText } from '../../app/api/errorText';
 import type { ExampleRun } from '../../../graph/authoring/examples.ts';
 import type { Refine } from './generation';
-import { ACCENT_TEXT, DANGER_TEXT, DIMMER, PRIMARY_BUTTON, SUCCESS, SUNKEN, TEXT } from '../../app/ui/theme';
+import Button from '../../app/ui/Button';
+import { ACCENT_TEXT, DANGER_TEXT, DIMMER, SUCCESS, SUNKEN, TEXT } from '../../app/ui/theme';
 
 /** What one press of ▶ Try came to: the example's run, or why it could not be tried. */
 interface Tried {
@@ -94,22 +95,19 @@ export default function TryExample({ tried, running, onTry, whyNot, busy, onFix 
   return (
     <div className="space-y-2" aria-label="Try">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
+        <Button
+          size="sm"
           onClick={onTry}
           disabled={running || busy || !!whyNot}
-          className="text-xs px-3 py-1 rounded"
-          style={{ ...PRIMARY_BUTTON, opacity: running || busy || whyNot ? 0.5 : 1 }}
           title={whyNot ?? 'Run it once on the example in input.js, and hold what comes out to output.js -- nothing else runs'}
         >
           {running ? 'Running…' : '▶ Try'}
-        </button>
+        </Button>
         <span className="text-xs" style={{ color: DIMMER }}>{whyNot ?? 'On the example in input.js, held to output.js.'}</span>
         {fixable && (
-          <button type="button" className="text-xs px-2 py-1 rounded" style={{ background: SUCCESS, color: 'white', opacity: busy ? 0.5 : 1 }}
-            disabled={busy} onClick={onFix} title="Repair the body from how it failed, or where it does not fit output.js">
+          <Button size="sm" disabled={busy} onClick={onFix} title="Repair the body from how it failed, or where it does not fit output.js">
             ✨ Fix
-          </button>
+          </Button>
         )}
       </div>
       {tried?.failure && <p className="text-xs" style={{ color: DANGER_TEXT }}>{tried.failure}</p>}

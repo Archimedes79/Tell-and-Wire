@@ -51,23 +51,25 @@ export interface BlockKind {
   ownsValue?: (widget: GuiWidget) => boolean;
   /** Its label is what it shows -- a button's caption -- so none is written above it. */
   drawsLabel?: true;
+  /** The label above it names the one control in it, which takes the view's `controlId`. */
+  labelsControl?: true;
 }
 
 export const BLOCKS: Record<WidgetKind, BlockKind> = {
   text: { View: TextWidgetView },
   divider: { View: DividerWidgetView },
   spacer: { View: SpacerWidgetView },
-  input_picker: { View: InputPickerWidgetView },
+  input_picker: { View: InputPickerWidgetView, labelsControl: true },
   // The box a person types into holds what they typed, which is what a run
   // sends; the reply is shown above it from what arrived. Handed the reply as
   // its value, the box showed one text and ▶ Run sent another. A box that
   // only shows is what arrived.
-  text_io: { View: TextIoWidgetView, ownsValue: (widget) => textIoRole(widget.mode) !== 'output' },
+  text_io: { View: TextIoWidgetView, labelsControl: true, ownsValue: (widget) => textIoRole(widget.mode) !== 'output' },
   plot_window: { View: PlotWindowWidgetView },
   image_view: { View: ImageViewWidgetView },
   table: { View: TableWidgetView },
-  select: { View: SelectWidgetView },
-  slider: { View: SliderWidgetView },
+  select: { View: SelectWidgetView, labelsControl: true },
+  slider: { View: SliderWidgetView, labelsControl: true },
   button: { View: ButtonWidgetView, drawsLabel: true },
-  chat: { View: ChatWidgetView, ownsValue: () => true },
+  chat: { View: ChatWidgetView, labelsControl: true, ownsValue: () => true },
 };

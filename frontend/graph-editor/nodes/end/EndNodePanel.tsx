@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import PathField from '../../../app/dialogs/PathField';
 import { useGraphStore } from '../../../app/store/graphStore';
 import { blocksAt } from '../../../app/document/page';
@@ -10,19 +11,21 @@ import type { NodePanelProps } from '../NodeGuiBuilder';
 const END = new EndNodeRunner();
 
 /**
- * An end point: what a round hands back under the node's name -- always --
+ * An end point: what a run hands back under the node's name -- always --
  * and, besides, a file or a folder it is written to.
  *
  * The run's result is no place a value is sent to, beside a file: it is what
  * the end point is. A page block shows it by name, a script and the command
  * line read it by name, and the page is never chosen here -- it chooses the
  * end point (`shows`). Writing a file is the end point's own, done whether or
- * not anyone watches. What it is and where it is written are what the node
- * feeding it is told it wants (`EndNodeGuiBuilder.wantsOn`).
+ * not anyone watches. What it is -- its text -- and where it is written are
+ * what the node feeding it is told it wants (`EndNodeGuiBuilder.wantsOn`).
  */
-export default function EndNodePanel({ node, setConfig, setDescription }: NodePanelProps) {
+export default function EndNodePanel({ node, setConfig }: NodePanelProps) {
   const mode = node.config.write_mode;
   const writes = mode === 'file' || mode === 'directory';
+  const alsoWrite = useId();
+  const path = useId();
   // The key its value really gets in the run's result: its name, unless an
   // end point before it has that already (`resultKeys`, as a run asks).
   const nodes = useGraphStore((s) => s.rfNodes);
@@ -41,13 +44,13 @@ export default function EndNodePanel({ node, setConfig, setDescription }: NodePa
       </p>
 
       <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Also write it to</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={alsoWrite}>Also write it to</label>
         <select
+          id={alsoWrite}
           className="w-full rounded-lg px-3 py-2 text-sm"
           style={FIELD}
           value={writes ? mode : 'none'}
           onChange={(e) => setConfig('write_mode', e.target.value)}
-          aria-label="Also write it to"
         >
           <option value="none">Nothing</option>
           <option value="file">A file</option>
@@ -56,40 +59,23 @@ export default function EndNodePanel({ node, setConfig, setDescription }: NodePa
 
         {writes && (
           <div className="mt-3">
-            <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={path}>
               {mode === 'file' ? 'File' : 'Folder'}
             </label>
             {/* A file is saved, so 📂 Browse… starts with its name filled in; a folder is chosen as it is. */}
             <PathField
+              id={path}
               mode={mode === 'file' ? 'save' : 'directory'}
               value={String(node.config.path ?? '')}
-              onChange={(path) => setConfig('path', path)}
+              onChange={(picked) => setConfig('path', picked)}
               placeholder={mode === 'file' ? 'output/result.txt' : 'output/results'}
-              ariaLabel={mode === 'file' ? 'File' : 'Folder'}
             />
-            <p className="text-xs mt-1" style={{ color: DIMMER }}>
-              {mode === 'file'
-                ? 'A text is written as it is, anything else as JSON.'
-                : 'Each value that arrives becomes a file of its own in this folder.'}
-              {' '}Written every round, page or no page. A path wired into the “Path” port is used instead: one chosen on the page, or sent by a call.
+            <p className="text-xs mt-1" style={{ color: DIMMER }}
+              title={`${mode === 'file' ? 'A text is written as it is, anything else as JSON.' : 'Each value that arrives becomes a file of its own in this folder.'} Written every run, page or no page. A path wired into the “Path” port is used instead: one chosen on the page, or sent by a call.`}>
+              Written every run. A path wired into “Path” is used instead.
             </p>
           </div>
         )}
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }}>What the result is</label>
-        <textarea
-          className="w-full rounded-lg px-3 py-2 text-sm resize-y"
-          style={{ ...FIELD, minHeight: 56 }}
-          value={node.description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g. one row per country, with its population"
-          aria-label="What the result is"
-        />
-        <p className="text-xs mt-1" style={{ color: DIMMER }}>
-          The node wired into this one is told this, and where it is written, when ✨ writes it.
-        </p>
       </div>
     </div>
   );

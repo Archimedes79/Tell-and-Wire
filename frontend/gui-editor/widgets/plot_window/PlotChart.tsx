@@ -1,5 +1,6 @@
 import { DIM, DIMMER, HOVER, LINE, MUTED, RAISE, TEXT } from '../../../app/ui/theme';
 import { cut } from '../../../app/ui/cut';
+import { plotColours } from '../../../app/ui/scheme';
 
 /**
  * The room a chart leaves around its plot, in the block's own pixels -- a
@@ -49,7 +50,7 @@ export interface Figure {
 const KINDS: PlotKind[] = ['bars', 'columns', 'line', 'donut'];
 
 /** A series colour that survives a scheme change, with a fallback for the canvas preview, which is outside the page. */
-const FALLBACK = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#a78bfa', '#84cc16', '#fb923c'];
+const FALLBACK = plotColours('night');
 const colour = (index: number) => `var(--plot-${(index % 8) + 1}, ${FALLBACK[index % 8]})`;
 
 /**
@@ -127,10 +128,17 @@ function notAFigure(value: unknown): string {
     + 'A code node wired in before it can turn it into points.';
 }
 
-/** Auto-scale a set of values to an axis range that always includes 0 (so the baseline stays on-chart for all-negative or all-positive data), guarding against a zero-size range. */
+/**
+ * Auto-scale a set of values to an axis range that always includes 0 (so the baseline stays on-chart for all-negative or all-positive data), guarding against a zero-size range.
+ * A loop, not `Math.max(...values)`, which throws for a list of 120,000 values or more.
+ */
 export function computeAxisRange(values: number[]): { min: number; max: number; range: number } {
-  const max = Math.max(0, ...values);
-  const min = Math.min(0, ...values);
+  let max = 0;
+  let min = 0;
+  for (const value of values) {
+    if (value > max) max = value;
+    if (value < min) min = value;
+  }
   const range = max - min || Math.max(1, Math.abs(max) || 1);
   return { min, max: min + range, range };
 }
@@ -439,15 +447,17 @@ function Upright({ figure, ...common }: Common & { figure: Figure }) {
  * States" the moment there are more than a handful.
  */
 function Bars({ figure, ...common }: Common & { figure: Figure }) {
-  const { frame, margin, top } = common;
+  const { frame, margin, top, min, range } = common;
   const points = figure.points;
-  const longest = Math.max(...points.map((p) => p.label.length), 1);
+  const longest = points.reduce((most, p) => Math.max(most, p.label.length), 1);
   const names = Math.min(Math.round(frame.width * 0.32), 8 + longest * 6.4);
   const left = margin.labelled ? Math.max(24, names) : 4;
   const right = margin.labelled ? 52 : 4;
   const plotW = Math.max(1, frame.width - left - right);
   const plotH = Math.max(1, frame.height - top - (margin.labelled ? 22 : 4));
-  const max = Math.max(...points.map((p) => Math.abs(p.value)), 1);
+  // The scale includes 0, and a bar runs from there: a negative value to the left of it.
+  const x = (value: number) => left + ((value - min) / range) * plotW;
+  const zero = x(0);
   const slot = plotH / points.length;
   // Capped, so three rows in a tall block are bars and not three fat stripes;
   // generous enough that six rows do not read as a sparse list either.
@@ -459,7 +469,8 @@ function Bars({ figure, ...common }: Common & { figure: Figure }) {
     <g>
       {points.map((p, i) => {
         const y = top + i * slot + (slot - bar) / 2;
-        const w = Math.max(2, (Math.abs(p.value) / max) * plotW);
+        const end = x(p.value);
+        const w = Math.max(2, Math.abs(end - zero));
         const named = margin.labelled && i % every === 0;
         return (
           <g key={i}>
@@ -472,14 +483,14 @@ function Bars({ figure, ...common }: Common & { figure: Figure }) {
               </text>
             )}
             <rect
-              x={left} y={y} width={w} height={bar}
+              x={Math.min(zero, end)} y={y} width={w} height={bar}
               rx={Math.min(4, bar / 3)} style={{ fill: colour(0) }}
             >
               <title>{`${p.label}: ${p.value}`}</title>
             </rect>
             {named && (
               <text
-                x={left + w + 6} y={y + bar / 2 + 4}
+                x={(p.value < 0 ? zero : Math.min(zero, end) + w) + 6} y={y + bar / 2 + 4}
                 fontSize={CHART_TEXT.label} fill={DIM}
               >
                 {axisLabel(p.value)}
@@ -489,7 +500,7 @@ function Bars({ figure, ...common }: Common & { figure: Figure }) {
         );
       })}
       <line
-        x1={left} x2={left} y1={top} y2={top + plotH}
+        x1={zero} x2={zero} y1={top} y2={top + plotH}
         stroke={DIMMER} strokeWidth={1}
       />
     </g>

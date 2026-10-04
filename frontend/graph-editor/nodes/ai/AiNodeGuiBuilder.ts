@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { definitionsIn } from '../../../../graph/authoring/definition.ts';
 import { withFile } from '../../../app/document/givenFiles';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 export class AiNodeGuiBuilder extends NodeGuiBuilder {
@@ -13,14 +14,11 @@ export class AiNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'Ask a local or hosted model -- say what it should do, and ✨ writes its prompt';
 
-  readonly icon = '🤖';
+  readonly example = 'e.g. Summarise the text in three bullet points, in the language it is written in';
 
-  readonly color = 'var(--ui-node-ai, #2d1b4e)';
+  readonly color = NODE.ai;
 
   override readonly paletteGroup = 'Processing';
-
-  // Its text is what it should do, drawn by its panel above what ✨ writes from it.
-  override readonly ownsDescription = true;
 
   override readonly definesItself = true;
 

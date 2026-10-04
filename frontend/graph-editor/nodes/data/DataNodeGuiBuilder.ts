@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { DataNodeRunner } from '../../../../graph/nodes/data/DataNodeRunner.ts';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { describeDataFormat } from './dataFormat';
 
@@ -18,19 +19,18 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'Remember a value between runs, so a loop can build on its own last result';
 
-  readonly icon = '🗃️';
+  readonly example = 'e.g. The ten largest capitals, with their population';
 
-  readonly color = 'var(--ui-node-data, #183b3b)';
+  readonly color = NODE.data;
 
   override readonly paletteGroup = 'Processing';
 
   // A data node IS the graph's register: it holds its value between runs,
-  // which is what lets a feedback edge into it close a cycle. Its panel is its
-  // text, that value -- its kind and what it holds -- and ✨ Data, which writes
-  // the value from the text.
-  override readonly ownsDescription = true;
-
+  // which is what lets a feedback edge into it close a cycle. Its panel is that
+  // value -- its kind and what it holds -- and ✨ Data, which writes it from the text.
   override readonly Panel = lazy(() => import('./DataNodePanel'));
+
+  override readonly advancedSummary = 'ports';
 
   // The node reads "input" and hands on "output" by those names.
   override readonly portEditing = { inputs: 'fixed', outputs: 'fixed' } as const;

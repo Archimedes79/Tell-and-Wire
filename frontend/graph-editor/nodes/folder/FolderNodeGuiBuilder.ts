@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
+import { NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 const pathOf = (node: GraphNode): string => String(node.config.path ?? '').trim();
@@ -14,13 +15,17 @@ export class FolderNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'The files in a folder: their paths, and how many';
 
-  readonly icon = '📁';
+  readonly example = 'e.g. The PDF files in the reports folder';
 
-  readonly color = 'var(--ui-node-folder, #1e3a5f)';
+  readonly color = NODE.folder;
 
   override readonly paletteGroup = 'Processing';
 
   override readonly Panel = lazy(() => import('./FolderNodePanel'));
+
+  override readonly AdvancedPanel = lazy(() => import('./FolderNodeAdvancedPanel'));
+
+  override readonly advancedSummary = 'failures';
 
   /** A folder is a guess until there is one to list: a default path, which is what every node after it is then shown. A fed one takes its path from upstream. */
   override missingExample(node: GraphNode, fed: boolean): boolean {

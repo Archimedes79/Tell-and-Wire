@@ -1,7 +1,8 @@
 import type { WidgetViewProps } from '../WidgetView';
 import { asText } from '../../../../backend/gui-editor/widgets/text_io/text.ts';
 import PathField from '../../../app/dialogs/PathField';
-import { DANGER_SOFT, DIMMER, LINE, MUTED } from '../../../app/ui/theme';
+import Button from '../../../app/ui/Button';
+import { DIMMER, MUTED } from '../../../app/ui/theme';
 
 /**
  * Runtime input_picker widget: unified file or directory picker.
@@ -11,7 +12,7 @@ import { DANGER_SOFT, DIMMER, LINE, MUTED } from '../../../app/ui/theme';
  * exposes a chosen file's name, never its location -- so it could not produce
  * a path the server resolves.
  */
-export default function InputPickerWidgetView({ widget, value, onChange, onTrigger, fires, busy }: WidgetViewProps) {
+export default function InputPickerWidgetView({ widget, value, onChange, onTrigger, fires, busy, controlId }: WidgetViewProps) {
   const isDir = widget.mode === 'directory';
   const listed = Array.isArray(value);
   const hasValue = listed ? value.length > 0 : !!value;
@@ -24,11 +25,12 @@ export default function InputPickerWidgetView({ widget, value, onChange, onTrigg
   return (
     <div className="flex flex-col gap-2 h-full">
       <PathField
+        id={controlId}
         value={listed ? '' : asText(value)}
         onChange={onChange}
         mode={isDir ? 'directory' : 'file'}
         extensions={widget.extensions || ''}
-        placeholder={isDir ? '/path/to/directory' : '/path/to/file'}
+        placeholder={isDir ? 'Choose a folder…' : 'Choose a file…'}
         compact
         mono
         readOnly={listed}
@@ -41,15 +43,15 @@ export default function InputPickerWidgetView({ widget, value, onChange, onTrigg
         onPicked={(picked) => onTrigger?.(picked)}
       >
         {hasValue && (
-          <button
+          <Button
+            variant="quiet"
+            className="shrink-0"
             onClick={() => onChange('')}
-            className="text-xs px-2 py-1.5 rounded-lg flex-shrink-0"
-            style={{ background: LINE, color: DANGER_SOFT }}
             title="Clear selection"
             aria-label={`Clear ${widget.label || widget.id}`}
           >
             ✕
-          </button>
+          </Button>
         )}
       </PathField>
       {listed && (

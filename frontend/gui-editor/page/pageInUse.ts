@@ -15,7 +15,6 @@ import type { PageModel } from './GuiPage';
 export interface PageDesign {
   name: string;
   description: string;
-  scheme: string;
   blocks: GuiWidget[];
   /** The start point each block that starts a round fires, by the block's id. */
   fires: Record<string, string>;
@@ -56,7 +55,6 @@ export function pageInUse(design: PageDesign, session: PageSession): PageModel {
   return {
     name: design.name,
     description: design.description,
-    scheme: design.scheme,
     blocks: design.blocks,
     valueOf: (block) => heldValue(session, block.id, block.value),
     shownOn: (block) => shown[block.id],

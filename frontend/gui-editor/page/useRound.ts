@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { call, type Requirement } from '../../app/api/client';
-import { startRound, useSession, type RoundAsk } from '../../app/api/session';
+import { roundRefused, startRound, useSession, type RoundAsk } from '../../app/api/session';
 
 /**
  * Starting a round the way every page starts one.
@@ -10,14 +10,11 @@ import { startRound, useSession, type RoundAsk } from '../../app/api/session';
  * tab, whose blocks are live -- and ▶ Run starts the rounds of a graph without
  * a page the same way again. A round from any of them has the same two steps:
  * ask what the page still needs (a file nobody chose on a picker), and only
- * then start it, with what was set on the page and the answers, by name. The
- * editor's page once had the second step and not the first, so pressing a
- * button there failed on a file nobody had chosen, while the same press in the
- * delivered tool politely asked for it.
+ * then start it, with what was set on the page and the answers, by name.
  *
  * *before*, given, runs first: the editor hands its document to the server,
  * so the round runs what is being edited. *values* is what the page sends
- * besides what was set on it -- the Gui tab's design.
+ * besides what was set on it -- the Page tab's design.
  */
 export function useRound(before?: () => Promise<void>, values?: () => Record<string, unknown>) {
   const [requirements, setRequirements] = useState<Requirement[] | null>(null);
@@ -31,7 +28,13 @@ export function useRound(before?: () => Promise<void>, values?: () => Record<str
    * session keeps.
    */
   const run = async (event: string | null = null, by?: string, sent?: Record<string, unknown>) => {
-    await before?.();
+    try {
+      await before?.();
+    } catch (error) {
+      // The document could not be handed over: said as a run that did not start, not thrown at the button.
+      roundRefused(error, event, by);
+      return;
+    }
     const ask: RoundAsk = by ? { values: { ...values?.(), ...useSession.getState().edits }, by } : sent ? { values: sent } : {};
     try {
       // The "before running" questions, for this event: what it does not run is not asked about.

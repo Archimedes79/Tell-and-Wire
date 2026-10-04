@@ -1,5 +1,5 @@
 // Saving what a block shows as a file of its own -- a text as .txt, a chart as
-// .svg, a table's rows as .csv -- wherever the page is drawn: the Gui tab,
+// .svg, a table's rows as .csv -- wherever the page is drawn: the Page tab,
 // the App tab and the delivered tool alike. The browser hands the file over, as it
 // does for any link that says `download`; the page may be open on another
 // machine than the graph, and nothing of the server's is asked.
@@ -41,9 +41,16 @@ export function fileName(label: string | undefined, fallback: string, extension:
  * Rows as CSV (RFC 4180): the header, then a line per row, a cell in quotes
  * where it holds a comma, a quote or a line break, and each quote in it
  * doubled. Every line ends in CRLF, as the RFC writes them.
+ *
+ * A cell a spreadsheet would run as a formula -- one that starts with `=`, `+`,
+ * `-`, `@`, a tab or a return -- starts with a `'` instead, which makes it text.
+ * A plain number stays one: `-5` is a value, not a formula.
  */
 export function csvText(header: string[], rows: string[][]): string {
-  const cell = (text: string) => (/[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text);
+  const cell = (text: string) => {
+    const safe = /^[=+\-@\t\r]/.test(text) && !/^[+-]?\d+(\.\d+)?(e[+-]?\d+)?$/i.test(text) ? `'${text}` : text;
+    return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  };
   return [header, ...rows].map((row) => `${row.map(cell).join(',')}\r\n`).join('');
 }
 
