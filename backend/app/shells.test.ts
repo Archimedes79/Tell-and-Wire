@@ -45,3 +45,14 @@ describe('the shells around the elements', () => {
     expect(offending).toEqual([]);
   });
 });
+
+describe('the graph\'s code', () => {
+  it('imports nothing from backend/ or frontend/: a core in another language is a graph/ of its own', () => {
+    const graph = sources(join(ROOT, 'graph')).filter((path) => /\.ts$/.test(path) && !/\.test\.ts$/.test(path) && !path.includes(`${sep}test${sep}`));
+    const reaching = graph.flatMap((path) => [...readFileSync(path, 'utf8').matchAll(/(?:from|import\()\s*'(\.[^']+)'/g)]
+      .map((match) => relative(ROOT, join(path, '..', match[1])).split(sep).join('/'))
+      .filter((target) => !target.startsWith('graph/'))
+      .map((target) => `${relative(ROOT, path).split(sep).join('/')} -> ${target}`));
+    expect(reaching).toEqual([]);
+  });
+});

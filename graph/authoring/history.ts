@@ -9,7 +9,19 @@
 // The engine owns the format; the editor appends after each exchange, and the
 // file is the node's like its code: read, diffed and opened as what it is.
 
-import type { AICall } from '../../backend/app/api.ts';
+/** One request to a model, as it happened: for looking at when an answer is wrong or missing. */
+export interface AICall {
+  provider: string;
+  model: string;
+  system: string;
+  prompt: string;
+  /** Counted on the server, so the number has one source. */
+  sent_chars: number;
+  reply: string | null;
+  reply_chars: number;
+  seconds: number;
+  error: string | null;
+}
 
 /** How much history a node keeps: about 500 KB of text. */
 const HISTORY_LIMIT = 500 * 1024;

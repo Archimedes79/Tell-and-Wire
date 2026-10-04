@@ -43,7 +43,7 @@
 
 import type { Graph, GraphEdge } from '../graph.ts';
 import type { Runners } from '../nodes/NodeRunner.ts';
-import type { StartedBy } from '../../backend/gui-editor/graphInterface.ts';
+import type { StartedBy } from '../nodes/NodeRunner.ts';
 
 /** The input every node has and nobody declares: the ◆, a gate. What arrives opens it or does not, and is never handed on. */
 export const RUN_PORT = '__run';

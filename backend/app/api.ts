@@ -6,7 +6,7 @@
 //
 // So this file is the conversation, once. The server serves exactly this table
 // (`serve.ts` fails to start if a route has no handler), the page calls it by
-// name (`editor/src/api/client.ts`), and both are type-checked against the same
+// name (`frontend/app/api/client.ts`), and both are type-checked against the same
 // request and response here. Types and one plain table only -- nothing that
 // needs Node or a browser -- so either side can import it, and a bundle, which
 // carries it, pays for a list.
@@ -20,6 +20,7 @@ import type { TextChange } from './project/changes.ts';
 import type { ExampleRun } from '../../graph/authoring/examples.ts';
 import type { RuntimeRequirement } from '../gui-editor/widgets/WidgetRunner.ts';
 import type { GraphInterface } from '../gui-editor/graphInterface.ts';
+import type { AICall } from '../../graph/authoring/history.ts';
 
 export type { TextChange };
 
@@ -273,19 +274,8 @@ export interface Refine {
   problems?: string[];
 }
 
-/** One request to a model, as it happened: for looking at when an answer is wrong or missing. */
-export interface AICall {
-  provider: string;
-  model: string;
-  system: string;
-  prompt: string;
-  /** Counted on the server, so the number has one source. */
-  sent_chars: number;
-  reply: string | null;
-  reply_chars: number;
-  seconds: number;
-  error: string | null;
-}
+/** One request to a model, as it happened (`graph/authoring/history.ts`, which writes it into history.md). */
+export type { AICall };
 
 /**
  * What trying generated code on the node's example revealed -- the example in

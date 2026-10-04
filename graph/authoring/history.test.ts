@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { AICall } from '../../backend/app/api.ts';
+import type { AICall } from './history.ts';
 import { exchangeEntry, withExchange } from './history.ts';
 
 const call = (over: Partial<AICall> = {}): AICall => ({

@@ -3,7 +3,7 @@ import type { Runtime } from '../Runtime.ts';
 import type { GraphNode } from '../../graph.ts';
 import { port } from '../port.ts';
 import { names, type Problem } from '../../execution/wiring.ts';
-import type { Offer, StartedBy } from '../../../backend/gui-editor/graphInterface.ts';
+import type { Offer, StartedBy } from '../NodeRunner.ts';
 import { RUN_PORT, START_PORT, parseInterval } from '../../execution/triggers.ts';
 
 export interface StartConfig {

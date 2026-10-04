@@ -14,36 +14,12 @@
 // out.
 
 import type { DataType, ExecutionResult, Graph, GraphNode } from '../../graph/graph.ts';
-import type { Runners } from '../../graph/nodes/NodeRunner.ts';
+import type { Offer, Runners, StartedBy } from '../../graph/nodes/NodeRunner.ts';
 import type { Trigger } from '../../graph/execution/triggers.ts';
 import { names } from '../../graph/execution/wiring.ts';
 import { firedBy, sentBy, widgetElement } from './widgets/page.ts';
 
-type OfferKind = 'event' | 'output';
-
-/**
- * Who starts an event: the page -- one of its blocks, so the graph needs a
- * page --, a call from outside -- a script, a model over MCP, the graph
- * above --, or the graph itself, when the tool starts and on a clock.
- */
-export type StartedBy = 'page' | 'call' | 'itself';
-
-/** One thing a node offers whoever uses the graph from outside. */
-export interface Offer {
-  kind: OfferKind;
-  /** What a caller calls it: the node's id. */
-  name: string;
-  /** What a person reads: the node's label. */
-  label: string;
-  type: DataType;
-  /** A list of them. */
-  list?: boolean;
-  description?: string;
-  /** An event's: the port it fires on. */
-  port?: string;
-  /** An event's: who starts it. */
-  startedBy?: StartedBy;
-}
+type OfferKind = Offer['kind'];
 
 /** One name, as a caller is told it: no node, no port. */
 export interface InterfaceEntry {
