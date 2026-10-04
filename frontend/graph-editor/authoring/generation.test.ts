@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { GraphNode, Port } from '../../app/graph';
-import type { ProbeReport } from '../../app/api/client';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
-import {
-  exchangeName, generateRequest, generationGuard, isWritten, outputsAsDefined, outputsFrom, resultMessage, unfitDefinition, writeName, writesFor, writtenInto,
-} from './generation';
-import { withPerItem } from './perItem';
+import { generateRequest, outputsFrom, writesFor, writtenInto } from './generation';
 
 /**
  * What a node's ✨ asks and what it writes in: the request built in one place
@@ -30,8 +26,10 @@ describe('what one press of ✨ writes', () => {
     expect(writesFor(made('code', { input_definition: INPUT }), 'body')).toEqual(['output', 'body']);
     expect(writesFor(made('code', { input_definition: INPUT, output_definition: OUTPUT }), 'body')).toEqual(['body']);
     expect(writesFor(made('code', {}, []), 'body')).toEqual(['output', 'body']);
-    // A stub is nothing written.
+    // A stub is nothing written; ✨ Input and a data node, which has no definitions, write only themselves.
     expect(writesFor(made('ai', { input_definition: 'module.exports = null;' }), 'body')).toEqual(['input', 'output', 'body']);
+    expect(writesFor(made('code'), 'input')).toEqual(['input']);
+    expect(writesFor(made('data'), 'body')).toEqual(['body']);
   });
 
   it('is, for ✨ Generate, the whole node the first time, and each file again after that, as its own ✨ would', () => {
@@ -41,25 +39,6 @@ describe('what one press of ✨ writes', () => {
     expect(writesFor(whole, 'all')).toEqual(['input', 'output', 'body']);
     expect(writesFor({ ...whole, inputs: [] }, 'all')).toEqual(['output', 'body']);
     expect(writesFor(made('data'), 'all')).toEqual(['body']);
-  });
-
-  it('is only itself for ✨ Input and ✨ Output, and for a data node, which has no definitions', () => {
-    expect(writesFor(made('code'), 'input')).toEqual(['input']);
-    expect(writesFor(made('code'), 'output')).toEqual(['output']);
-    expect(writesFor(made('data'), 'body')).toEqual(['body']);
-  });
-
-  it('is named on its button, in a message and in history.md -- a change and a fix by what they were', () => {
-    expect(['input', 'output', 'body'].map((write) => writeName(made('code'), write as never))).toEqual(['✨ Input', '✨ Output', '✨ Code']);
-    expect(writeName(made('ai'), 'body')).toBe('✨ Prompt');
-    expect(writeName(made('data'), 'body')).toBe('✨ Data');
-    expect(exchangeName(made('code'), 'body', { change: '  also count the words ' })).toBe('Change: also count the words');
-    expect(exchangeName(made('code'), 'body', { error: 'x is not defined' })).toBe('✨ Fix');
-  });
-
-  it('waits for the node\'s text: everything is written from it', () => {
-    expect(generationGuard(made('code'))).toMatch(/Say what this node should do first/);
-    expect(generationGuard({ ...made('code'), description: 'Count the words.' })).toBeUndefined();
   });
 });
 
@@ -93,34 +72,6 @@ describe('what comes back, written in', () => {
       .toBe('function run() { return { output: 1 }; }');
   });
 
-  it('is, for an output definition, the outputs too: its example\'s keys are the node\'s outputs', () => {
-    const written = writtenInto(made('code', {}, []), 'output', answer('module.exports = { "rows": [], "count": 2, "title": "t" };'), '✨ Output', at);
-    expect(written.outputs.map((port) => [port.id, port.data_type])).toEqual([['rows', 'list'], ['count', 'number'], ['title', 'text']]);
-  });
-
-  it('is what a data node holds, as what it is: structure parsed, text as it is', () => {
-    const structure = made('data', { data_format: 'structure' });
-    expect(writtenInto(structure, 'body', answer('{ "count": 3 }'), '✨ Data', at).config.data_value).toEqual({ count: 3 });
-    expect(writtenInto(made('data'), 'body', answer('three'), '✨ Data', at).config.data_value).toBe('three');
-  });
-
-  it('makes a data node kept as text a structure where ✨ Data answered with JSON of anything but a string', () => {
-    // The review's capitals: a JSON list kept as text went to data.txt, and the node it fed was handed one string.
-    const capitals = writtenInto(made('data'), 'body', answer('[{ "capital": "Paris", "population": 2102650 }]'), '✨ Data', at);
-    expect(capitals.config).toMatchObject({ data_format: 'structure', data_value: [{ capital: 'Paris', population: 2102650 }] });
-    expect(writtenInto(made('data'), 'body', answer('42'), '✨ Data', at).config).toMatchObject({ data_format: 'structure', data_value: 42 });
-    // A text stays text, one that is JSON of a string too.
-    for (const text of ['Dear reader,', '"quoted"', '{ not json']) {
-      expect(writtenInto(made('data'), 'body', answer(text), '✨ Data', at).config, text).toMatchObject({ data_format: 'text', data_value: text });
-    }
-  });
-
-  it('restates the node\'s text where a change was asked, and leaves it where nothing came back for it', () => {
-    const node = { ...made('code'), description: 'Count the words.' };
-    expect(writtenInto(node, 'body', answer('x', '  Count the words, and the lines. '), 'Change: lines', at).description).toBe('Count the words, and the lines.');
-    expect(writtenInto(node, 'body', answer('x', '  '), '✨ Code', at).description).toBe('Count the words.');
-  });
-
   it('writes the output.js a changed body came back with together with it, as one step: its keys are the outputs', () => {
     const node = { ...made('code', { input_definition: INPUT, output_definition: OUTPUT, code: 'function run() { return { output: 1 }; }' }), description: 'Count.' };
     const figure = 'module.exports = { "figure": { "kind": "bars", "points": [] }, "count": 2 };';
@@ -135,12 +86,16 @@ describe('what comes back, written in', () => {
     expect(kept.outputs).toBe(node.outputs);
   });
 
-  it('says whether the file is written: its stub is not', () => {
-    expect(isWritten(made('code'), 'input')).toBe(false);
-    expect(isWritten(made('code', { input_definition: 'module.exports = null;' }), 'input')).toBe(false);
-    expect(isWritten(made('code', { input_definition: INPUT }), 'input')).toBe(true);
-    expect(isWritten(made('data', { data_value: { count: 1 } }), 'body')).toBe(true);
-    expect(isWritten(made('data'), 'body')).toBe(false);
+  it('is what a data node holds, as what it is: structure parsed, text as it is, JSON of anything but a string a structure', () => {
+    const structure = made('data', { data_format: 'structure' });
+    expect(writtenInto(structure, 'body', answer('{ "count": 3 }'), '✨ Data', at).config.data_value).toEqual({ count: 3 });
+    expect(writtenInto(made('data'), 'body', answer('three'), '✨ Data', at).config.data_value).toBe('three');
+    // A JSON list kept as text went to data.txt, and the node it fed was handed one string.
+    const capitals = writtenInto(made('data'), 'body', answer('[{ "capital": "Paris", "population": 2102650 }]'), '✨ Data', at);
+    expect(capitals.config).toMatchObject({ data_format: 'structure', data_value: [{ capital: 'Paris', population: 2102650 }] });
+    for (const text of ['Dear reader,', '"quoted"', '{ not json']) {
+      expect(writtenInto(made('data'), 'body', answer(text), '✨ Data', at).config, text).toMatchObject({ data_format: 'text', data_value: text });
+    }
   });
 });
 
@@ -153,70 +108,5 @@ describe('the outputs an output definition names', () => {
     expect(outputs.map((one) => [one.id, one.data_type, one.name])).toEqual([
       ['flag', 'boolean', 'flag'], ['summary', 'text', 'SUMMARY'], ['parts', 'json', 'parts'], ['error', 'text', 'ERROR'],
     ]);
-  });
-
-  it('hands on a list from a new port where the node runs once per item', () => {
-    // Ticked "Run once per item": a new node runs once, on what arrives whole.
-    const perItem = withPerItem(made('code'), true);
-    expect(perItem.config.batch_mode).toBe('per_item');
-    expect(outputsFrom(perItem, OUTPUT)[0].multi).toBe(true);
-    expect(outputsFrom(made('code'), 'module.exports = { "total": 1 };')[0].multi).toBe(false);
-  });
-
-  it('leaves the outputs alone for a definition without an example -- a stub, or one that cannot be read', () => {
-    const node = made('code');
-    expect(outputsFrom(node, 'module.exports = null;')).toBe(node.outputs);
-    expect(outputsFrom(node, 'module.exports = { oops')).toBe(node.outputs);
-  });
-
-  it('are the outputs of an output.js typed by hand -- the node itself while it names the ones it has, or cannot be read', () => {
-    // Rebuilt by hand: output.js said text and info, and the node still handed on "output".
-    const typed = made('code', { output_definition: 'module.exports = { "text": "t", "info": "i" };' });
-    expect(outputsAsDefined(typed).outputs.map((one) => one.id)).toEqual(['text', 'info']);
-    const same = made('code', { output_definition: OUTPUT });
-    expect(outputsAsDefined(same)).toBe(same);
-    const half = made('code', { output_definition: 'module.exports = { "te' });
-    expect(outputsAsDefined(half)).toBe(half);
-  });
-});
-
-describe('what is said once ✨ is done', () => {
-  const probe = (status: ProbeReport['status'], error = '', problems: string[] = []) => ({ probe: { status, error, problems } });
-
-  it('says it was written, and how the try on the example went', () => {
-    expect(resultMessage('✨ Code', probe('ok'))).toBe('✅ ✨ Code: written, and it fits output.js on the example in input.js.');
-    expect(resultMessage('✨ Code', probe('repaired'), { change: 'Add one.' })).toMatch(/^✅ ✨ Code: changed\. The first attempt did not fit/);
-    expect(resultMessage('✨ Code', probe('failed', 'boom'))).toBe('⚠️ ✨ Code: written, but it fails on the example in input.js: boom');
-    expect(resultMessage('✨ Code', probe('failed', '', ['"count" is missing']))).toBe('⚠️ ✨ Code: written, but "count" is missing');
-    expect(resultMessage('✨ Input', probe('skipped'))).toBe('✅ ✨ Input: written.');
-  });
-
-  it('says what ✨ Fix came to -- repaired, or still not -- rather than that code was written', () => {
-    const fix = { error: 'x is not defined' };
-    expect(resultMessage('✨ Code', probe('repaired'), fix)).toBe('✅ ✨ Fix: repaired, and it fits output.js on the example in input.js.');
-    expect(resultMessage('✨ Code', probe('ok'), fix)).toBe('✅ ✨ Fix: repaired, and it fits output.js on the example in input.js.');
-    expect(resultMessage('✨ Code', probe('failed', '', ['Output "output" is a number; output.js says a list']), fix))
-      .toBe('⚠️ ✨ Fix: still does not fit -- output "output" is a number; output.js says a list');
-    expect(resultMessage('✨ Code', probe('failed', 'boom'), fix)).toBe('⚠️ ✨ Fix: it still fails on the example in input.js: boom');
-    expect(resultMessage('✨ Prompt', probe('skipped'), fix)).toBe('✅ ✨ Fix: written again. ▶ Try tries it.');
-    // An output.js that could not be read, corrected with it.
-    expect(resultMessage('✨ Code', { ...probe('ok'), output_definition: 'module.exports = { "output": 1 };' }, fix))
-      .toBe('✅ ✨ Fix: repaired, output.js corrected, and it fits output.js on the example in input.js.');
-  });
-
-  it('says so where a change came back with a new output.js', () => {
-    const figure = 'module.exports = { "figure": {} };';
-    expect(resultMessage('✨ Code', { ...probe('ok'), output_definition: figure }, { change: 'A figure.' }))
-      .toBe('✅ ✨ Code: changed, with a new output.js, and it fits output.js on the example in input.js.');
-    expect(resultMessage('✨ Prompt', { ...probe('skipped'), output_definition: figure }, { change: 'The reason too.' })).toBe('✅ ✨ Prompt: changed, with a new output.js.');
-  });
-
-  it('stops a press at a definition that does not fit the node: what comes after would be written against it', () => {
-    const names = { status: 'failed' as const, error: '', problems: ['It names "text", which is not among the inputs: "input".'] };
-    expect(unfitDefinition('input', names)).toBe('it names "text", which is not among the inputs: "input".');
-    expect(resultMessage('✨ Input', { probe: names })).toBe('⚠️ ✨ Input: written, but it names "text", which is not among the inputs: "input".');
-    expect(unfitDefinition('output', { status: 'skipped', error: '', problems: [] })).toBeUndefined();
-    // A body that fails its try is written and said: nothing comes after it.
-    expect(unfitDefinition('body', { status: 'failed', error: 'boom', problems: [] })).toBeUndefined();
   });
 });

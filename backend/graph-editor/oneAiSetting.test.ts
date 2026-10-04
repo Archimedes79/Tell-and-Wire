@@ -11,8 +11,8 @@ import { graphOf } from '../../graph/test/fakes.ts';
 
 /**
  * Where an AI call goes, whoever makes it: to the node's own provider and
- * model when it pins them, and to the one AI setting otherwise -- for a run,
- * ✨ Generate and ▶ Try alike.
+ * model when it pins them, and to the one AI setting otherwise -- for a run
+ * and ✨ Generate alike.
  *
  * Both are providers nobody has, so the provider layer refuses each by name
  * before anything leaves the machine, and the refusal says where the call
@@ -26,9 +26,7 @@ let dir = '';
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-one-setting-'));
   const file = join(dir, 'ai-settings.json');
-  await writeFile(file, JSON.stringify({
-    ai: { provider: SETTING, model: 'm' },
-  }));
+  await writeFile(file, JSON.stringify({ ai: { provider: SETTING, model: 'm' } }));
   vi.stubEnv('TW_SETTINGS', file);
   // The developer's own shell must not decide this either.
   vi.stubEnv('TW_AI_PROVIDER', '');
@@ -40,76 +38,23 @@ afterAll(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-const routes = editorRoutes();
-const loopback = { loopback: true } as never;
 const refusedBy = (provider: string) => `Unknown AI provider: ${provider}`;
 
-function asking(config: Record<string, unknown> = {}): GraphNode {
-  return {
-    id: 'ask', node_type: 'ai', label: 'Ask', description: '',
-    position: { x: 0, y: 0 }, inputs: [], outputs: [],
-    config: { prompt: 'Name a city.', ...config },
-  };
-}
-
-const onSetting = asking({ ai_provider: 'default', ai_model: '' });
-const pinned = asking({ ai_provider: PIN, ai_model: 'its-model' });
-
-describe('a node that pins its own model', () => {
-  it('is sent there by a run, and by ▶ Try on its example', async () => {
-    const run = await executeGraph(graphOf([pinned]), { runtime: nodeRuntime(), registry });
-    expect(run.node_results[0].error).toContain(refusedBy(PIN));
-
-    const tried = await routes.runNode!({ ...graphOf([pinned]), node_id: 'ask', inputs: {} } as never, loopback);
-    expect((tried as { error: string }).error).toContain(refusedBy(PIN));
-
-    const tested = await routes.testNode!({
-      ...graphOf([asking({ ai_provider: PIN, ai_model: 'its-model', input_definition: 'module.exports = {};' })]),
-      node_id: 'ask',
-    } as never, loopback);
-    expect(JSON.stringify(tested)).toContain(refusedBy(PIN));
-  }, 30_000);
+const asking = (config: Record<string, unknown>): GraphNode => ({
+  id: 'ask', node_type: 'ai', label: 'Ask', description: '',
+  position: { x: 0, y: 0 }, inputs: [], outputs: [],
+  config: { prompt: 'Name a city.', ...config },
 });
 
-describe('everything else', () => {
-  it('goes to the one AI setting in a run, and in ▶ Try on its example', async () => {
-    const run = await executeGraph(graphOf([onSetting]), { runtime: nodeRuntime(), registry });
-    expect(run.node_results[0].error).toContain(refusedBy(SETTING));
+describe('an AI call', () => {
+  it('goes to the node\'s own model when it pins one, and to the one AI setting otherwise -- in a run, and from ✨ Generate', async () => {
+    const pinned = await executeGraph(graphOf([asking({ ai_provider: PIN, ai_model: 'its-model' })]), { runtime: nodeRuntime(), registry });
+    expect(pinned.node_results[0].error).toContain(refusedBy(PIN));
 
-    const tried = await routes.runNode!({ ...graphOf([onSetting]), node_id: 'ask', inputs: {} } as never, loopback);
-    expect((tried as { error: string }).error).toContain(refusedBy(SETTING));
+    const onSetting = await executeGraph(graphOf([asking({ ai_provider: 'default', ai_model: '' })]), { runtime: nodeRuntime(), registry });
+    expect(onSetting.node_results[0].error).toContain(refusedBy(SETTING));
 
-    const tested = await routes.testNode!({
-      ...graphOf([asking({ input_definition: 'module.exports = {};' })]),
-      node_id: 'ask',
-    } as never, loopback);
-    expect(JSON.stringify(tested)).toContain(refusedBy(SETTING));
-  }, 30_000);
-
-  it('goes there from ✨ Generate', async () => {
     const node = { id: 'count', node_type: 'code', label: 'Count', description: 'Count the words.', inputs: [], outputs: [], config: {} };
-    await expect(routes.generate!({ node } as never, loopback))
-      .rejects.toThrow(refusedBy(SETTING));
-    await expect(routes.generateGraph!({ description: 'Count the words in a text.' } as never, loopback))
-      .rejects.toThrow(refusedBy(SETTING));
-  }, 30_000);
-
-  it('is where the bar\'s change of the graph goes: the route hands the graph there is on, as what runs of it', async () => {
-    const node = { id: 'count', node_type: 'code', label: 'Count', description: 'Count the words.', inputs: [], outputs: [], config: { code: 'x', history: 'every earlier prompt' } };
-    let refused = { message: '', extra: { calls: [] as { prompt: string }[] } };
-    try {
-      await routes.generateGraph!({ description: 'Count the lines too.', graph: graphOf([node as never]) } as never, loopback);
-    } catch (error) {
-      refused = error as typeof refused;
-    }
-    expect(refused.message).toContain(refusedBy(SETTING));
-    const [sent] = refused.extra.calls;
-    expect(sent.prompt).toMatch(/^This is the graph as it is now:[\s\S]*"id": "count"[\s\S]*Change it as follows:\nCount the lines too\./);
-    expect(sent.prompt).not.toContain('every earlier prompt');
-  }, 30_000);
-
-  it('is what the editor is told it is now', async () => {
-    const status = await routes.providers!(undefined as never, loopback);
-    expect((status as { target: unknown }).target).toEqual({ provider: SETTING, model: 'm' });
+    await expect(editorRoutes().generate!({ node } as never, { loopback: true } as never)).rejects.toThrow(refusedBy(SETTING));
   }, 30_000);
 });

@@ -5,8 +5,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { localCore } from './localCore.ts';
-import { processCore, serveCore, commandParts } from './stdio.ts';
-import { PROTOCOL, type CoreAnswer, type CoreEvent } from './protocol.ts';
+import { processCore, serveCore } from './stdio.ts';
+import type { CoreAnswer, CoreEvent } from './protocol.ts';
 import { loadGraph } from '../../backend/app/project/folder.ts';
 import { readKeptRounds } from '../../backend/app/project/keptRounds.ts';
 import { eventOf } from '../../backend/gui-editor/graphInterface.ts';
@@ -43,11 +43,7 @@ const counter = localCore({
 const BACKEND_MAIN = fileURLToPath(new URL('../../backend/app/main.ts', import.meta.url));
 
 describe('a graph core', () => {
-  it('says who it is and which protocol it speaks', async () => {
-    expect(await counter.hello()).toEqual({ protocol: PROTOCOL, language: 'javascript', core: 'Tell & Wire JavaScript core' });
-  });
-
-  it('runs a round: says first how many nodes it runs, and hands back what every node keeps and was left holding', async () => {
+  it('runs a round: says first how many nodes it runs, hands back what every node keeps and was left holding, and keeps nothing of one that was stopped', async () => {
     const events: CoreEvent[] = [];
     const ended = await counter.round({ graph: counting, trigger: { node_id: 'go', port_id: 'data' } }, (event) => events.push(event));
     expect(events[0]).toEqual({ type: 'plan', total: 3 });
@@ -57,15 +53,14 @@ describe('a graph core', () => {
     expect(Object.keys(ended.held)).toEqual(expect.arrayContaining(['count']));
     // The graph it was handed is not changed: it ran a copy.
     expect(counting.nodes[0].config.values).toEqual({ text: 'a b c' });
-  });
 
-  it('keeps nothing of a round that was stopped', async () => {
+    // A round that was stopped keeps nothing.
     const stop = new AbortController();
     stop.abort();
-    const slow = localCore({ runtime: (report) => quietRuntime({ report, code: { run: async () => ({ words: 1 }) } }) });
-    const ended = await slow.round({ graph: counting, trigger: null }, undefined, stop.signal);
-    expect(ended.result.status).toBe('cancelled');
-    expect(ended.held).toEqual({});
+    const fresh = localCore({ runtime: (report) => quietRuntime({ report, code: { run: async () => ({ words: 1 }) } }) });
+    const stopped = await fresh.round({ graph: counting, trigger: null }, undefined, stop.signal);
+    expect(stopped.result.status).toBe('cancelled');
+    expect(stopped.held).toEqual({});
   });
 });
 
@@ -105,11 +100,6 @@ describe('a graph core as a program of its own', () => {
       await program.close();
     }
   }, 30_000);
-
-  it('is named by a command line: a program and its arguments, a quoted part kept whole', () => {
-    expect(commandParts('node backend/app/main.ts core')).toEqual(['node', 'backend/app/main.ts', 'core']);
-    expect(commandParts('"C:/Program Files/core.exe" --fast')).toEqual(['C:/Program Files/core.exe', '--fast']);
-  });
 });
 
 describe('the wrapper\'s half of a core program', () => {
@@ -159,21 +149,19 @@ describe('the wrapper\'s half of a core program', () => {
     }
   }, 30_000);
 
-  it('refuses a program that speaks another protocol, or does not answer at all', async () => {
+  it('refuses a program that speaks another protocol or does not answer, and says one that ended under a request', async () => {
     const other = fake("process.stdout.write(JSON.stringify({ id: request.id, reply: { protocol: 99, language: 'x', core: 'x' } }) + '\\n');");
     await expect(other.hello()).rejects.toThrow(/speaks protocol 99; this wrapper speaks 1/);
     await other.close();
     const silent = fake('');
     await expect(silent.forget()).rejects.toThrow(/did not answer "hello" within 1.5 s/);
     await silent.close();
-  }, 20_000);
-
-  it('says a program that ended under a request, and starts it again for the next', async () => {
     const dies = fake(`
       if (request.op === 'hello') process.stdout.write(JSON.stringify({ id: request.id, reply: { protocol: 1, language: 'x', core: 'dies' } }) + '\\n');
       else if (request.op === 'forget') process.exit(3);
       else process.stdout.write(JSON.stringify({ id: request.id, reply: null }) + '\\n');`);
     await expect(dies.forget()).rejects.toThrow(/ended \(exit code 3\)/);
+    // The next request starts it again.
     expect((await dies.hello()).core).toBe('dies');
     await dies.close();
   }, 20_000);

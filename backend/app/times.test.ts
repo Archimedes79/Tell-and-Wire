@@ -83,15 +83,18 @@ describe('the base classes', () => {
 describe('every kind', () => {
   const files = [...kinds(NODES), ...kinds(WIDGETS)].filter((file) => !BASES.includes(file));
 
-  it.each(files.map((file) => [file.slice(ROOT.length + 1).split('\\').join('/'), file]))('%s keeps the order of its base', (_name, file) => {
-    const known = membersOf(file).filter((member) => blockOf.has(member.name));
-    const order = known.map((member) => blockOf.get(member.name)!);
-    expect(order, known.map((member) => member.name).join(', ')).toEqual([...order].sort((a, b) => a - b));
-    // What is build time stands under the bar that says so.
-    const unmarked = known.filter((member) => blockOf.get(member.name) === 2 && member.block !== 2).map((member) => member.name);
-    expect(unmarked, 'build-time members above the "Build time" bar').toEqual([]);
-    const misplaced = known.filter((member) => blockOf.get(member.name)! < 2 && member.block === 2).map((member) => member.name);
-    expect(misplaced, 'run-time members under the "Build time" bar').toEqual([]);
+  it('each keeps the order of its base', () => {
+    for (const file of files) {
+      const where = file.slice(ROOT.length + 1).split('\\').join('/');
+      const known = membersOf(file).filter((member) => blockOf.has(member.name));
+      const order = known.map((member) => blockOf.get(member.name)!);
+      expect(order, `${where}: ${known.map((member) => member.name).join(', ')}`).toEqual([...order].sort((a, b) => a - b));
+      // What is build time stands under the bar that says so.
+      const unmarked = known.filter((member) => blockOf.get(member.name) === 2 && member.block !== 2).map((member) => member.name);
+      expect(unmarked, `${where}: build-time members above the "Build time" bar`).toEqual([]);
+      const misplaced = known.filter((member) => blockOf.get(member.name)! < 2 && member.block === 2).map((member) => member.name);
+      expect(misplaced, `${where}: run-time members under the "Build time" bar`).toEqual([]);
+    }
   });
 });
 
@@ -122,29 +125,34 @@ describe('what a run calls', () => {
     'backend/app/serve.ts', 'backend/gui-editor/session.ts', 'backend/gui-editor/rounds.ts', 'graph/core/node.ts',
   ];
 
-  it.each(RUN_TIME)('%s reaches nothing that is build time', (path) => {
-    const file = join(ROOT, path);
-    expect(existsSync(file), `${path} has moved: name its new place here`).toBe(true);
-    expect(reaches(readFileSync(file, 'utf8'))).toEqual([]);
+  it('nothing a run goes through reaches what is build time', () => {
+    for (const path of RUN_TIME) {
+      const file = join(ROOT, path);
+      expect(existsSync(file), `${path} has moved: name its new place here`).toBe(true);
+      expect(reaches(readFileSync(file, 'utf8')), path).toEqual([]);
+    }
   });
 
   // The other half, and the one a list of files cannot hold: inside a kind's own
   // class, what stands above its "Build time" bar is what a run calls. A
   // build-time member may ask a run-time one; never the other way.
   const classes = [...new Set([...BASES, ...kinds(NODES), ...kinds(WIDGETS)])];
-  it.each(classes.map((file) => [file.slice(ROOT.length + 1).split('\\').join('/'), file]))('%s: nothing above the "Build time" bar reaches below it', (_name, file) => {
-    const text = readFileSync(file, 'utf8');
-    const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
-    const blocks = new Map(membersOf(file).map((member) => [member.name, member.block]));
+  it('in every kind, nothing above the "Build time" bar reaches below it', () => {
     const crossing: string[] = [];
-    ts.forEachChild(source, (node) => {
-      if (!ts.isClassDeclaration(node)) return;
-      for (const member of node.members) {
-        const name = member.name && ts.isIdentifier(member.name) ? member.name.text : '';
-        if (!name || (blocks.get(name) ?? blockOf.get(name)) === 2) continue;
-        for (const reached of reaches(text, { pos: member.getStart(), end: member.end })) crossing.push(`${name} -> ${reached}`);
-      }
-    });
+    for (const file of classes) {
+      const where = file.slice(ROOT.length + 1).split('\\').join('/');
+      const text = readFileSync(file, 'utf8');
+      const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+      const blocks = new Map(membersOf(file).map((member) => [member.name, member.block]));
+      ts.forEachChild(source, (node) => {
+        if (!ts.isClassDeclaration(node)) return;
+        for (const member of node.members) {
+          const name = member.name && ts.isIdentifier(member.name) ? member.name.text : '';
+          if (!name || (blocks.get(name) ?? blockOf.get(name)) === 2) continue;
+          for (const reached of reaches(text, { pos: member.getStart(), end: member.end })) crossing.push(`${where}: ${name} -> ${reached}`);
+        }
+      });
+    }
     expect(crossing).toEqual([]);
   });
 });
@@ -154,19 +162,21 @@ describe('what runs', () => {
     id: 'n', node_type: type as GraphNode['node_type'], label: 'N', description: '', position: { x: 0, y: 0 }, inputs: [], outputs: [], config,
   });
 
-  it.each(registry.nodeTypes())('is said by a %s node, and is there', (type) => {
-    const element = registry.node(type)!;
-    const subject = node(type);
-    const runs = element.whatRuns(subject);
-    expect(runs.does.length).toBeGreaterThan(20);
-    if (runs.where.startsWith('graph/')) {
-      const [file, method] = runs.where.split(' › ');
-      const path = resolve(ROOT, file);
-      expect(existsSync(path), `${file} does not exist`).toBe(true);
-      expect(readFileSync(path, 'utf8')).toMatch(new RegExp(`\\b${method}\\(`));
-    } else {
-      // A body: one of the files this element keeps in its folder.
-      expect(element.texts(subject).map((text) => text.file)).toContain(runs.where);
+  it('is said by every kind of node, and is there', () => {
+    for (const type of registry.nodeTypes()) {
+      const element = registry.node(type)!;
+      const subject = node(type);
+      const runs = element.whatRuns(subject);
+      expect(runs.does.length, type).toBeGreaterThan(20);
+      if (runs.where.startsWith('graph/')) {
+        const [file, method] = runs.where.split(' › ');
+        const path = resolve(ROOT, file);
+        expect(existsSync(path), `${type}: ${file} does not exist`).toBe(true);
+        expect(readFileSync(path, 'utf8'), type).toMatch(new RegExp(`\\b${method}\\(`));
+      } else {
+        // A body: one of the files this element keeps in its folder.
+        expect(element.texts(subject).map((text) => text.file), type).toContain(runs.where);
+      }
     }
   });
 

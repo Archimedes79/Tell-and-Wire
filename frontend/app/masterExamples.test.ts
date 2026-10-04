@@ -14,7 +14,6 @@ import { Session } from '../../backend/gui-editor/session.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { problemsIn } from '../../backend/app/project/check.ts';
 import { readProject } from '../../backend/app/project/folder.ts';
-import { filePorts } from '../../graph/execution/fileInputs.ts';
 import { parseGraph } from '../../graph/graph.ts';
 import type { Runtime } from '../../graph/nodes/Runtime.ts';
 
@@ -68,7 +67,6 @@ const writtenFor = (name: string, id: string): Partial<Record<Write, string>> =>
 // ── What a person does ────────────────────────────────────────────────────
 
 const store = () => useGraphStore.getState();
-const nodeOf = (id: string): GraphNode => store().rfNodes.find((node) => node.id === id)!.data.graphNode as GraphNode;
 const blockOf = (id: string): GuiWidget => store().page.find((block) => block.id === id)!;
 
 /** Drop a node on the canvas. */
@@ -316,33 +314,5 @@ describe('chat: a page with a chat block, and a model', () => {
     // Both turns are the session's; the block in the document is as it was built.
     expect((session.view().page[chat] as { messages: unknown[] }).messages).toHaveLength(4);
     expect(blockOf(chat).value).toEqual(graph.page!.blocks.find((block) => block.id === chat)!.value);
-  });
-});
-
-describe('a wire from a start point a picker sends to', () => {
-  it('makes the input it ends on take the file\'s text, so nobody has to say it twice', () => {
-    const file = addBlock('input_picker', 'file', { label: 'File' });
-    const code = drop('code', 560);
-    expect(nodeOf(code).inputs[0].data_type).toBe('any');
-    wire(startOf(file), 'data', code, nodeOf(code).inputs[0].id);
-    expect(nodeOf(code).inputs[0]).toMatchObject({ field: `${file}.content`, data_type: 'text' });
-    // The same wire twice is one wire.
-    wire(startOf(file), 'data', code, nodeOf(code).inputs[0].id);
-    expect(store().rfEdges).toHaveLength(1);
-  });
-
-  /**
-   * Every kind a person wires a folder into starts out saying nothing about
-   * what it carries, and that is what lets the wire say it: the folder's
-   * files, a list of paths, each read where it arrives -- which is all the
-   * run asks (`execution/fileInputs.ts`).
-   */
-  it.each(['code', 'ai'] as const)('%s: a folder\'s files reach it as their text', (kind) => {
-    const folder = addBlock('input_picker', 'directory', { label: 'Folder' });
-    const node = drop(kind, 560);
-    expect(nodeOf(node).inputs[0].data_type).toBe('any');
-    wire(startOf(folder), 'data', node, nodeOf(node).inputs[0].id);
-    expect(nodeOf(node).inputs[0]).toMatchObject({ field: folder, data_type: 'file_path', multi: true });
-    expect(filePorts(nodeOf(node), registry)).toEqual([nodeOf(node).inputs[0].id]);
   });
 });

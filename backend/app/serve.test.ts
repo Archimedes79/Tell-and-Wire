@@ -1,23 +1,24 @@
 import { describe, it, expect, afterAll } from 'vitest';
-import { mkdtemp, rm, writeFile, mkdir, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { copyFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { request as httpRequest, type Server } from 'node:http';
-import { portTaken, serve } from './serve.ts';
+import { serve } from './serve.ts';
 import { API, pathFor } from './api.ts';
 
 /**
- * The endpoints a deployed page calls, and the two rules about them.
+ * The endpoints a deployed page calls, and the rules about them.
  *
  * The shapes are not this server's to choose: `api.ts` declares them for both
  * ends, and a snapshot missing `done` looks to the page exactly like a run that
- * never finishes — which is how it first behaved.
+ * never finishes -- which is how it first behaved.
  *
- * The second rule is what is *absent*. A deployed tool must not offer code
- * generation or graph editing; those routes are not "not implemented yet", they
- * are the boundary, and a test is the only thing that keeps a boundary from
- * being widened by someone being helpful.
+ * The other rules are what is *absent* and who may ask. A deployed tool must
+ * not offer code generation or graph editing; those routes are not "not
+ * implemented yet", they are the boundary, and a test is the only thing that
+ * keeps a boundary from being widened by someone being helpful. And the server
+ * answers its own page only: any web page can address 127.0.0.1.
  */
 
 const REPO = resolve(__dirname, '..', '..');
@@ -32,25 +33,32 @@ afterAll(() => { for (const server of started) server.close(); });
 const MINIMAL = join(mkdtempSync(join(tmpdir(), 'served-')), 'minimal.json');
 copyFileSync(resolve(REPO, 'graph', 'test', 'fixtures', 'minimal.json'), MINIMAL);
 
-async function serveGraph(graphPath = MINIMAL, pageDir?: string) {
-  const { server, url } = await serve({ graphPath, pageDir, port: 0 });
+async function serveGraph(options: { host?: string } = {}) {
+  const { server, url } = await serve({ graphPath: MINIMAL, port: 0, ...options });
   started.push(server);
-  return { url, graph: JSON.parse(await readFile(graphPath, 'utf8')) };
+  return url;
 }
 
 const asJson = (response: Response) => response.json() as Promise<Record<string, unknown>>;
 
-describe('what a deployed tool serves', () => {
-  it('hands over the page it ships, as it was designed -- not the graph', async () => {
-    const { url, graph } = await serveGraph();
-    const page = await asJson(await fetch(`${url}/api/runtime/page`));
-    expect(page.name).toBe(graph.metadata.name);
-    expect(Array.isArray(page.blocks)).toBe(true);
-    expect(page).not.toHaveProperty('nodes');
+/** A request with exactly the headers given: `fetch` will not send a Host or Origin of its own choosing. */
+function ask(url: string, path: string, headers: Record<string, string>, body?: string) {
+  const { port } = new URL(url);
+  return new Promise<{ status: number; text: string }>((answered, failed) => {
+    const sent = httpRequest({ host: '127.0.0.1', port, path, method: body === undefined ? 'GET' : 'POST', headers }, (reply) => {
+      let text = '';
+      reply.on('data', (chunk) => { text += chunk; });
+      reply.on('end', () => answered({ status: reply.statusCode ?? 0, text }));
+    });
+    sent.on('error', failed);
+    sent.end(body);
   });
+}
+const status = async (...args: Parameters<typeof ask>) => (await ask(...args)).status;
 
-  it('runs it watchably, in the shape the page reads', async () => {
-    const { url } = await serveGraph();
+describe('what a deployed tool serves', () => {
+  it('runs a round watchably, in the shape the page reads', async () => {
+    const url = await serveGraph();
     const post = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
     const { round_id: roundId, total } = await asJson(await fetch(`${url}/api/runtime/rounds`, post)) as
       { round_id: string; total: number };
@@ -67,13 +75,7 @@ describe('what a deployed tool serves', () => {
 
     // Every field the page's `RoundSnapshot` declares. A missing one is not a
     // cosmetic gap: `done` is how the page knows to stop polling.
-    expect(snapshot).toMatchObject({
-      round_id: roundId,
-      done: true,
-      cancelled: false,
-      total,
-      error: null,
-    });
+    expect(snapshot).toMatchObject({ round_id: roundId, done: true, cancelled: false, total, error: null });
     expect(snapshot).toHaveProperty('current_label');
     expect(snapshot).toHaveProperty('item_done');
     expect(snapshot).toHaveProperty('item_total');
@@ -81,267 +83,11 @@ describe('what a deployed tool serves', () => {
     expect((snapshot.result as { status: string }).status).toBe('success');
   }, 60_000);
 
-  it('turns down a body that is not JSON, rather than breaking over it', async () => {
-    // This request being refused, not the server failing: a 500 has nothing
-    // for the caller to act on. The size limit beside it is in `http.test.ts`.
-    const { url } = await serveGraph();
-    const refused = await fetch(`${url}/api/runtime/requirements`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: 'not json at all',
-    });
-    expect(refused.status).toBe(400);
-    expect((await asJson(refused)).detail).toMatch(/not JSON/);
-  });
-
-  it('answers a path with a broken escape as one that names nothing, not as a failure', async () => {
-    const { url } = await serveGraph();
-    const response = await fetch(`${url}/api/runtime/rounds/%E0%A4%A`);
-    expect(response.status).toBe(404);
-  });
-
-  it('offers nothing a deployed tool has no business offering', async () => {
-    // Not "not implemented": these are the boundary. Code generation and graph
-    // editing belong to building one, not to running one.
-    const { url } = await serveGraph();
-    for (const path of ['/api/ai/generate', '/api/graphs/file/save', '/api/nodes/code/run']) {
-      const response = await fetch(`${url}${path}`, { method: 'POST' });
-      expect(response.status).toBe(404);
-    }
-  });
-});
-
-describe('a web page elsewhere in the same browser', () => {
-  /**
-   * Any page can address 127.0.0.1. A form or `fetch` posting `text/plain` goes
-   * out without the browser asking first, and a page that renamed its own site
-   * to 127.0.0.1 (DNS rebinding) can even read the answer. The editor's server
-   * runs code, writes files and holds keys, so it answers its own page only.
-   */
-  function ask(url: string, path: string, headers: Record<string, string>, body?: string) {
-    const { port } = new URL(url);
-    return new Promise<number>((answered, failed) => {
-      const sent = httpRequest({ host: '127.0.0.1', port, path, method: body === undefined ? 'GET' : 'POST', headers }, (reply) => {
-        reply.resume();
-        answered(reply.statusCode ?? 0);
-      });
-      sent.on('error', failed);
-      sent.end(body);
-    });
-  }
-
-  it('answers its own page, by any loopback name', async () => {
-    const { url } = await serveGraph();
-    const port = new URL(url).port;
-    for (const name of ['127.0.0.1', 'localhost', '[::1]']) {
-      const own = { Host: `${name}:${port}`, Origin: `http://${name}:${port}`, 'Content-Type': 'application/json' };
-      expect(await ask(url, '/api/runtime/requirements', own, '{}'), name).toBe(200);
-    }
-  });
-
-  it('refuses a request that names another host or port', async () => {
-    const { url } = await serveGraph();
-    const port = new URL(url).port;
-    expect(await ask(url, '/api/runtime/page', { Host: `evil.example:${port}` })).toBe(403);
-    expect(await ask(url, '/api/runtime/page', { Host: 'localhost:1' })).toBe(403);
-    expect(await ask(url, '/', { Host: `evil.example:${port}` })).toBe(403);
-  });
-
-  it('refuses a call from another origin, or one the browser marks cross-site', async () => {
-    const { url } = await serveGraph();
-    const host = new URL(url).host;
-    const json = { Host: host, 'Content-Type': 'application/json' };
-    const body = '{}';
-    expect(await ask(url, '/api/runtime/requirements', { ...json, Origin: 'https://evil.example' }, body)).toBe(403);
-    expect(await ask(url, '/api/runtime/requirements', { ...json, Origin: 'http://localhost:1' }, body)).toBe(403);
-    expect(await ask(url, '/api/runtime/requirements', { ...json, Origin: 'null' }, body)).toBe(403);
-    expect(await ask(url, '/api/runtime/requirements', { ...json, 'Sec-Fetch-Site': 'cross-site' }, body)).toBe(403);
-  });
-
-  it('reads a body only when it says it is JSON', async () => {
-    // text/plain is what a page may post anywhere without the browser asking first.
-    const { url } = await serveGraph();
-    const host = new URL(url).host;
-    expect(await ask(url, '/api/runtime/requirements', { Host: host, 'Content-Type': 'text/plain' }, '{}')).toBe(415);
-    expect(await ask(url, '/api/runtime/requirements', { Host: host }, '{}')).toBe(415);
-  });
-
-  it('served beyond loopback, answers as this machine on any port, and as no name a page chose', async () => {
-    // A container: bound to every interface, reached as localhost through the
-    // port its host published it on -- and every editor route open to whoever
-    // gets that far, so a page that pointed its own name here must not.
-    const { server, url } = await serve({ graphPath: MINIMAL, port: 0, host: '0.0.0.0' });
-    started.push(server);
-    // Said as an address a browser opens: 0.0.0.0 is none.
-    expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
-    const json = { 'Content-Type': 'application/json' };
-    expect(await ask(url, '/api/runtime/requirements', { ...json, Host: 'localhost:8000', Origin: 'http://localhost:8000' }, '{}')).toBe(200);
-    expect(await ask(url, '/api/runtime/requirements', { ...json, Host: 'evil.example:8000', Origin: 'http://evil.example:8000' }, '{}')).toBe(403);
-    expect(await ask(url, '/', { Host: 'tool.lan' })).toBe(403);
-  });
-
-  it('served beyond loopback, answers as a name it was given, and still only to that origin', async () => {
-    process.env.TW_ALLOWED_HOSTS = 'Tool.lan, other.lan';
-    try {
-      const { server, url } = await serve({ graphPath: MINIMAL, port: 0, host: '0.0.0.0' });
-      started.push(server);
-      const json = { 'Content-Type': 'application/json' };
-      expect(await ask(url, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'http://tool.lan' }, '{}')).toBe(200);
-      expect(await ask(url, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://evil.example' }, '{}')).toBe(403);
-      expect(await ask(url, '/', { Host: 'evil.example' })).toBe(403);
-    } finally {
-      delete process.env.TW_ALLOWED_HOSTS;
-    }
-  });
-});
-
-describe('a port that is already taken', () => {
-  /**
-   * A bundle is started by double-clicking it on a machine whose ports are
-   * none of its author's business. Node's default for a `listen` that fails is
-   * an unhandled 'error' event: a stack trace, no window, and nothing a
-   * recipient can act on — which is exactly what happened to someone who had
-   * something else on 8000.
-   */
-  it('is this call failing, not the process dying', async () => {
-    const first = await serve({ graphPath: MINIMAL, port: 0 });
-    started.push(first.server);
-    const port = Number(new URL(first.url).port);
-
-    const second = serve({ graphPath: MINIMAL, port });
-    await expect(second).rejects.toMatchObject({ code: 'EADDRINUSE' });
-    // And it is recognisable as *that* failure, which is what lets the caller
-    // try the next port instead of giving up.
-    const error = await second.catch((e: unknown) => e);
-    expect(portTaken(error)).toBe(true);
-    expect(portTaken(new Error('something else'))).toBe(false);
-  });
-});
-
-describe('a server bound to ::1', () => {
-  it('answers, and says its address as a browser takes it', async (context) => {
-    const served = await serve({ graphPath: MINIMAL, port: 0, host: '::1' }).catch((error: { code?: string }) => {
-      // A machine with no IPv6 loopback has nothing to show here.
-      if (error.code === 'EADDRNOTAVAIL' || error.code === 'EAFNOSUPPORT') return null;
-      throw error;
-    });
-    if (!served) return context.skip();
-    started.push(served.server);
-    expect(served.url).toMatch(/^http:\/\/\[::1\]:\d+$/);
-    expect((await fetch(`${served.url}/api/runtime/page`)).status).toBe(200);
-  });
-});
-
-describe('the page it serves', () => {
-  it('serves the built page, and the same page for a deep link', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-page-'));
-    try {
-      await mkdir(join(dir, 'assets'), { recursive: true });
-      await writeFile(join(dir, 'runtime.html'), '<!doctype html><title>tool</title>');
-      await writeFile(join(dir, 'assets', 'app.js'), 'console.log(1)');
-
-      const { url } = await serveGraph(MINIMAL, dir);
-
-      expect(await (await fetch(`${url}/`)).text()).toContain('<title>tool</title>');
-      expect(await (await fetch(`${url}/assets/app.js`)).text()).toBe('console.log(1)');
-      // A single-page tool: a path that is not a file is still the tool.
-      expect(await (await fetch(`${url}/anything`)).text()).toContain('<title>tool</title>');
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
-  });
-
-  it('will not serve its way out of the page directory', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-page-'));
-    try {
-      await writeFile(join(dir, 'runtime.html'), '<!doctype html><title>tool</title>');
-      const { url } = await serveGraph(MINIMAL, dir);
-      // Whatever this resolves to, it must not be a file from above the page.
-      const escaped = await (await fetch(`${url}/../../graph.json`)).text();
-      expect(escaped).toContain('<title>tool</title>');
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
-  });
-});
-
-describe('the server as the front door of the editor', () => {
-  async function editor() {
-    const dist = await mkdtemp(join(tmpdir(), 'editor-dist-'));
-    await writeFile(join(dist, 'index.html'), '<!doctype html><title>the editor</title>');
-    const { server, url } = await serve({ port: 0, editor: { dist } });
-    started.push(server);
-    return url;
-  }
-
-  it('serves the editor page, and that page for any deep link', async () => {
-    const url = await editor();
-    expect(await (await fetch(`${url}/`)).text()).toContain('the editor');
-    expect(await (await fetch(`${url}/some/route`)).text()).toContain('the editor');
-  });
-
-  it('answers the routes the editor calls itself', async () => {
-    const url = await editor();
-    const graph = JSON.parse(await readFile(MINIMAL, 'utf8'));
-    const post = (path: string, body: unknown) => fetch(`${url}${path}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    });
-    // Nothing to ask about before a graph is handed over; then the session's.
-    expect((await post('/api/runtime/requirements', {})).status).toBe(404);
-    await post('/api/runtime/hold', { graph });
-    const requirements = await (await post('/api/runtime/requirements', {})).json();
-    expect(Array.isArray(requirements)).toBe(true);
-    const settings = await asJson(await fetch(`${url}/api/ai/settings`));
-    expect(settings.credentials).toBeTruthy();
-  });
-
-  /**
-   * "Open as tool": the editor hands its session the graph it is editing, and
-   * the runtime page then asks for its page over the ordinary `page` route.
-   * Before it is handed over there is nothing to serve, and saying so is what
-   * tells the window it was opened by hand rather than by the button.
-   */
-  it('serves the page of the graph the editor hands it, as a tool would', async () => {
-    const url = await editor();
-    expect((await fetch(`${url}/api/runtime/page`)).status).toBe(404);
-
-    const graph = JSON.parse(await readFile(MINIMAL, 'utf8'));
-    graph.metadata.name = 'Handed over';
-    const held = await fetch(`${url}/api/runtime/hold`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ graph }),
-    });
-    expect(held.status).toBe(200);
-    const { session } = await asJson(held);
-    expect(typeof session).toBe('string');
-
-    const served = await asJson(await fetch(`${url}/api/runtime/page`));
-    expect(served).toMatchObject({ session, name: 'Handed over' });
-  });
-
-  it('goes on with the session a document is handed over as, and begins one of its own for any other', async () => {
-    const url = await editor();
-    const graph = JSON.parse(await readFile(MINIMAL, 'utf8'));
-    const hold = async (body: unknown) => (await asJson(await fetch(`${url}/api/runtime/hold`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    }))).session;
-    const first = await hold({ graph });
-    expect(await hold({ graph, session: first })).toBe(first);
-    expect(await hold({ graph })).not.toBe(first);
-  });
-
-  it('will not let a deployed tool be handed a different graph', async () => {
-    // The route is the editor's. A tool serving what someone posted to it is
-    // a tool that does what its visitor says, not what it ships.
-    const { url } = await serveGraph();
-    const response = await fetch(`${url}/api/runtime/hold`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
-    });
-    expect(response.status).toBe(404);
-  });
-
   // That the editor serves every route is not tested by calling them -- some
   // write settings or ask a model -- but by starting it: a server with a route
-  // and no handler refuses to start, and `editor()` above started.
-  it('serves a deployed tool its own routes of the contract, and none of the editor\'s', async () => {
-    const { url } = await serveGraph();
+  // and no handler refuses to start, and the editor test below started.
+  it('serves its own routes of the contract, none of the editor\'s, and nothing a tool has no business offering', async () => {
+    const url = await serveGraph();
     for (const [name, route] of Object.entries(API)) {
       const { path } = pathFor(name as keyof typeof API, { id: 'none' });
       const stop = new AbortController();
@@ -358,35 +104,83 @@ describe('the server as the front door of the editor', () => {
       if (route.for === 'editor') expect(detail, name).toBe('Not part of this server.');
       else expect(detail, name).not.toBe('Not part of this server.');
     }
+    // Code generation and graph editing belong to building a tool, not to running one; and a tool
+    // handed the graph its visitor posts would do what the visitor says, not what it ships.
+    for (const path of ['/api/ai/generate', '/api/graphs/file/save', '/api/nodes/code/run', '/api/runtime/hold']) {
+      expect((await fetch(`${url}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, path).toBe(404);
+    }
   }, 60_000);
+});
 
-  it('opens the picker where the editor was started, even when it serves a graph', async () => {
-    // One browse handler serves both; only where an empty path starts differs.
-    // A tool starts in its graph's folder, and the editor -- also when it was
-    // given a graph to serve -- where it was started.
+describe('a web page elsewhere in the same browser', () => {
+  /**
+   * A form or `fetch` posting `text/plain` goes out without the browser asking
+   * first, and a page that renamed its own site to 127.0.0.1 (DNS rebinding) can
+   * even read the answer. The editor's server runs code, writes files and holds
+   * keys, so it answers its own page only.
+   */
+  it('answers its own page, by any loopback name, and refuses another host, origin, site or content type', async () => {
+    const url = await serveGraph();
+    const { port, host } = new URL(url);
+    const json = { 'Content-Type': 'application/json' };
+    for (const name of ['127.0.0.1', 'localhost', '[::1]']) {
+      const own = { ...json, Host: `${name}:${port}`, Origin: `http://${name}:${port}` };
+      expect(await status(url, '/api/runtime/requirements', own, '{}'), name).toBe(200);
+    }
+    expect(await status(url, '/api/runtime/page', { Host: `evil.example:${port}` })).toBe(403);
+    expect(await status(url, '/api/runtime/page', { Host: 'localhost:1' })).toBe(403);
+    expect(await status(url, '/', { Host: `evil.example:${port}` })).toBe(403);
+    const foreigners: Record<string, string>[] = [{ Origin: 'https://evil.example' }, { Origin: 'http://localhost:1' }, { Origin: 'null' }, { 'Sec-Fetch-Site': 'cross-site' }];
+    for (const foreign of foreigners) {
+      expect(await status(url, '/api/runtime/requirements', { ...json, Host: host, ...foreign }, '{}'), JSON.stringify(foreign)).toBe(403);
+    }
+    // text/plain is what a page may post anywhere without the browser asking first.
+    expect(await status(url, '/api/runtime/requirements', { Host: host, 'Content-Type': 'text/plain' }, '{}')).toBe(415);
+    expect(await status(url, '/api/runtime/requirements', { Host: host }, '{}')).toBe(415);
+  });
+
+  it('served beyond loopback (a container), answers as this machine on any port and as a name it was given, never as one a page chose', async () => {
+    const json = { 'Content-Type': 'application/json' };
+    const url = await serveGraph({ host: '0.0.0.0' });
+    // Said as an address a browser opens: 0.0.0.0 is none.
+    expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+    expect(await status(url, '/api/runtime/requirements', { ...json, Host: 'localhost:8000', Origin: 'http://localhost:8000' }, '{}')).toBe(200);
+    expect(await status(url, '/api/runtime/requirements', { ...json, Host: 'evil.example:8000', Origin: 'http://evil.example:8000' }, '{}')).toBe(403);
+    expect(await status(url, '/', { Host: 'tool.lan' })).toBe(403);
+
+    process.env.TW_ALLOWED_HOSTS = 'Tool.lan, other.lan';
+    try {
+      const named = await serveGraph({ host: '0.0.0.0' });
+      expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'http://tool.lan' }, '{}')).toBe(200);
+      expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://evil.example' }, '{}')).toBe(403);
+      expect(await status(named, '/', { Host: 'evil.example' })).toBe(403);
+    } finally {
+      delete process.env.TW_ALLOWED_HOSTS;
+    }
+  });
+});
+
+describe('the server as the front door of the editor', () => {
+  it('serves the editor page for any deep link and never a file from above it, refuses what nothing serves, and serves the page of the graph it is handed', async () => {
     const dist = await mkdtemp(join(tmpdir(), 'editor-dist-'));
     await writeFile(join(dist, 'index.html'), '<!doctype html><title>the editor</title>');
-    const ask = async (url: string) => (await asJson(await fetch(`${url}/api/files/browse`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: '' }),
-    }))).path;
-    const asEditor = await serve({ port: 0, editor: { dist }, graphPath: MINIMAL });
-    started.push(asEditor.server);
-    expect(await ask(asEditor.url)).toBe(resolve(process.cwd()));
-    const { url: asTool } = await serveGraph();
-    expect(await ask(asTool)).toBe(dirname(MINIMAL));
-  });
-
-  it('still refuses what nothing serves, rather than guessing', async () => {
-    const url = await editor();
-    expect((await fetch(`${url}/api/nothing/here`)).status).toBe(404);
-  });
-
-  it('says how to get a page when there is none built yet', async () => {
-    const dist = await mkdtemp(join(tmpdir(), 'editor-empty-'));
     const { server, url } = await serve({ port: 0, editor: { dist } });
     started.push(server);
-    const reply = await fetch(`${url}/`);
-    expect(reply.status).toBe(404);
-    expect((await asJson(reply)).detail).toContain('npm run build');
+    const { host } = new URL(url);
+
+    expect((await ask(url, '/some/route', { Host: host })).text).toContain('the editor');
+    // Not normalised on the way, as `fetch` would: whatever this resolves to is not a file from above the page.
+    expect((await ask(url, '/../../package.json', { Host: host })).text).toContain('the editor');
+    expect(await status(url, '/api/nothing/here', { Host: host })).toBe(404);
+
+    // "Open as tool": the editor hands its session the graph it is editing, and the runtime page then
+    // asks for its page over the ordinary route. Before that there is nothing to serve.
+    expect((await fetch(`${url}/api/runtime/page`)).status).toBe(404);
+    const graph = JSON.parse(await readFile(MINIMAL, 'utf8'));
+    graph.metadata.name = 'Handed over';
+    const held = await asJson(await fetch(`${url}/api/runtime/hold`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ graph }),
+    }));
+    expect(await asJson(await fetch(`${url}/api/runtime/page`))).toMatchObject({ session: held.session, name: 'Handed over' });
   });
 });

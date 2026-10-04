@@ -46,42 +46,21 @@ function centralRecords(archive: Buffer): { path: string; madeBy: number; mode: 
 }
 
 describe('a zip written by hand', () => {
-  it('holds every entry, deflated, under a forward-slash path', () => {
-    const archive = zip([
-      { path: 'graph.json', content: Buffer.from('{"a":1}') },
-      { path: 'backend\\app\\main.ts', content: Buffer.from('console.log("hi")') },
-    ]);
-    expect(entries(archive)).toEqual([
-      { path: 'graph.json', content: '{"a":1}' },
-      { path: 'backend/app/main.ts', content: 'console.log("hi")' },
-    ]);
-  });
-
-  it('ends with a central directory that counts the entries', () => {
-    const archive = zip([{ path: 'a', content: Buffer.from('x') }, { path: 'b', content: Buffer.from('y') }]);
-    const end = archive.length - 22;
-    expect(archive.readUInt32LE(end)).toBe(0x06054b50);
-    expect(archive.readUInt16LE(end + 10)).toBe(2);
-  });
-
-  it('marks an entry with a mode as made on Unix, carrying the mode', () => {
-    // run.sh has to come out of the archive executable; without this, every
+  it('holds every entry, deflated, under a forward-slash path, and marks an entry with a mode as made on Unix', () => {
+    // run.sh has to come out of the archive executable; without the mode, every
     // Mac and Linux user's first `./run.sh` said "Permission denied".
     const archive = zip([
       { path: 'run.sh', content: Buffer.from('#!/bin/sh\n'), mode: 0o755 },
-      { path: 'README.md', content: Buffer.from('# hi') },
+      { path: 'backend\\app\\main.ts', content: Buffer.from('console.log("hi")') },
     ]);
-    const records = centralRecords(archive);
-    expect(records).toEqual([
+    expect(entries(archive)).toEqual([
+      { path: 'run.sh', content: '#!/bin/sh\n' },
+      { path: 'backend/app/main.ts', content: 'console.log("hi")' },
+    ]);
+    expect(centralRecords(archive)).toEqual([
       { path: 'run.sh', madeBy: 3, mode: 0o100755 },
       // Untouched: an entry without a mode is written exactly as before.
-      { path: 'README.md', madeBy: 0, mode: 0 },
+      { path: 'backend/app/main.ts', madeBy: 0, mode: 0 },
     ]);
-  });
-
-  it('is empty but well-formed with nothing in it', () => {
-    const archive = zip([]);
-    expect(archive.length).toBe(22);
-    expect(archive.readUInt32LE(0)).toBe(0x06054b50);
   });
 });

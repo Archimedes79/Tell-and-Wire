@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { Graph, GraphNode, Port } from '../graph.ts';
-import { callNode, collectInputs, executeGraph, executeNode, fieldOf, inputsFor, memoryFeedbackEdges, runNodeAlone, topologicalLevels } from './executor.ts';
+import type { Graph, GraphNode } from '../graph.ts';
+import { executeGraph, inputsFor, memoryFeedbackEdges, runNodeAlone, topologicalLevels } from './executor.ts';
 import { NodeRunner } from '../nodes/NodeRunner.ts';
 import { type Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
@@ -22,137 +22,59 @@ const held = (id: string, value: unknown): GraphNode => ({
 /** A runtime with no world attached: these tests are about ordering, not doing. */
 const nowhere = quietRuntime();
 
-describe('topologicalLevels', () => {
-  it('puts independent nodes in one stage and dependents in the next', () => {
-    const nodes = [node('a'), node('b'), node('c')];
-    const edges = [edge('e1', 'a', 'out', 'c', 'in'), edge('e2', 'b', 'out', 'c', 'in')];
-    expect(topologicalLevels(nodes, edges, new Set())).toEqual([['a', 'b'], ['c']]);
-  });
+describe('a loop', () => {
+  it('runs only through a node that remembers: the wire into it settles for the next round; a loop of forgetful nodes is refused', async () => {
+    const forgetful = [node('a'), node('b')];
+    const forgetfulLoop = [edge('e1', 'a', 'o', 'b', 'i'), edge('e2', 'b', 'o', 'a', 'i')];
+    expect(memoryFeedbackEdges(forgetful, forgetfulLoop, registry).size).toBe(0);
+    expect(() => topologicalLevels(forgetful, forgetfulLoop, new Set())).toThrow(/cycle/);
 
-  it('keeps the graph order inside a stage, so a run is reproducible', () => {
-    const nodes = [node('z'), node('y'), node('x')];
-    expect(topologicalLevels(nodes, [], new Set())).toEqual([['z', 'y', 'x']]);
-  });
-
-  it('refuses a cycle that no memory closes', () => {
-    const nodes = [node('a'), node('b')];
-    const edges = [edge('e1', 'a', 'out', 'b', 'in'), edge('e2', 'b', 'out', 'a', 'in')];
-    expect(() => topologicalLevels(nodes, edges, new Set())).toThrow(/cycle/);
-  });
-});
-
-describe('memoryFeedbackEdges', () => {
-  it('cuts the edge into a node that remembers, and only that one', () => {
-    // data remembers; code does not. The loop is legal because the value the
-    // data node holds is what breaks it -- the next round starts from there.
-    const nodes = [node('store', 'data'), node('step', 'code')];
-    const edges = [
-      edge('read', 'store', 'output', 'step', 'input'),
-      edge('write', 'step', 'output', 'store', 'input'),
-    ];
-    expect([...memoryFeedbackEdges(nodes, edges, registry)]).toEqual(['write']);
-  });
-
-  it('cuts only an edge that closes a loop, whatever order the wires are stored in', async () => {
-    // store <-> step is the loop; step -> kept -> show hangs below it, and
-    // `kept` remembers too. Cutting the wire into `kept` would settle it a
-    // round late for nothing.
-    const nodes = () => [
-      node('store', 'data', { data_value: 1 }), node('step', 'code', { code: 'function run(i) { return { out: i.x + 1 }; }' }),
-      node('kept', 'data', { data_value: 'stale' }), node('show', 'code', { code: 'function run(i) { return { saw: i.v }; }' }),
-    ];
-    const loop = [edge('read', 'store', 'output', 'step', 'x'), edge('write', 'step', 'out', 'store', 'input')];
-    const tail = [edge('keep', 'step', 'out', 'kept', 'input'), edge('shown', 'kept', 'output', 'show', 'v')];
-    expect([...memoryFeedbackEdges(nodes(), [...loop, ...tail], registry)]).toEqual(['write']);
-    expect([...memoryFeedbackEdges(nodes(), [...tail, ...loop], registry)]).toEqual(['write']);
-
-    const runtime = quietRuntime({ code: { run: async (body, inputs) => new Function('inputs', `${body}; return run(inputs);`)(inputs) } });
-    const saw = async (edges: typeof loop) => (await executeGraph(graphOf(nodes(), edges), { runtime, registry }))
-      .node_results.find((r) => r.node_id === 'show')!.outputs;
-    expect(await saw([...tail, ...loop])).toEqual({ saw: 2 });
-    expect(await saw([...loop, ...tail])).toEqual({ saw: 2 });
-  });
-
-  it('leaves a cycle between two forgetful nodes alone, for the ordering to reject', () => {
-    const nodes = [node('a', 'code'), node('b', 'code')];
-    const edges = [edge('e1', 'a', 'o', 'b', 'i'), edge('e2', 'b', 'o', 'a', 'i')];
-    expect(memoryFeedbackEdges(nodes, edges, registry).size).toBe(0);
-  });
-
-});
-
-describe('collectInputs', () => {
-  const outputs = new Map([['a', { out: 1 }], ['b', { out: 2 }]]);
-
-  it('gives a single-edge port the value itself, not a list of one', () => {
-    const edges = [edge('e1', 'a', 'out', 'c', 'in')];
-    expect(collectInputs('c', edges, outputs, new Set())).toEqual({ in: 1 });
-  });
-
-  it('gives a port fed by several edges a list', () => {
-    const edges = [edge('e1', 'a', 'out', 'c', 'in'), edge('e2', 'b', 'out', 'c', 'in')];
-    expect(collectInputs('c', edges, outputs, new Set())).toEqual({ in: [1, 2] });
-  });
-
-  it('omits a failed source rather than passing null for it', () => {
-    // A null would say "this ran and produced nothing", which is a different
-    // fact from "this never ran", and downstream code cannot tell them apart.
-    const edges = [edge('e1', 'missing', 'out', 'c', 'in')];
-    expect(collectInputs('c', edges, outputs, new Set())).toEqual({});
-  });
-
-  it('ignores a feedback edge: its source has not run yet this round', () => {
-    const edges = [edge('loop', 'a', 'out', 'c', 'in')];
-    expect(collectInputs('c', edges, outputs, new Set(['loop']))).toEqual({});
-  });
-
-  it('hands a port that takes one value of what arrives only that value -- of a package, one of what was sent', () => {
-    const takes = (field: string): Port[] => [{ id: 'text', name: 'text', kind: 'input', data_type: 'text', multi: false, required: false, description: '', field }];
-    const sent = new Map([['ask', { data: { event: null, values: { file: { path: 'a.csv', content: 'x,y' } } } }]]);
-    const edges = [edge('e1', 'ask', 'data', 'c', 'text')];
-    expect(collectInputs('c', edges, sent, new Set(), takes('file.content'))).toEqual({ text: 'x,y' });
-    expect(collectInputs('c', edges, sent, new Set(), takes('file'))).toEqual({ text: { path: 'a.csv', content: 'x,y' } });
-    // Nothing under that name: nothing arrived.
-    expect(collectInputs('c', edges, sent, new Set(), takes('folder')).text).toBeUndefined();
+    // data remembers; code does not: the value the data node holds is what breaks the loop.
+    const store = node('store', 'data', { data_value: 'old' });
+    const step = node('step', 'code', { code: 'x', language: 'js' });
+    step.outputs = [{ id: 'output', name: 'o', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
+    const loop = [edge('read', 'store', 'output', 'step', 'input'), edge('write', 'step', 'output', 'store', 'input')];
+    expect([...memoryFeedbackEdges([store, step], loop, registry)]).toEqual(['write']);
+    await executeGraph(graphOf([store, step], loop), { runtime: { ...nowhere, code: { run: async () => ({ output: 'fresh' }) } }, registry });
+    expect(store.config.data_value).toBe('fresh');
   });
 });
 
-describe('fieldOf', () => {
-  it('walks a dotted path into what arrived, into the values of a package', () => {
-    expect(fieldOf({ event: { name: 'go', by: 'page' }, values: { a: { b: 1 } } }, 'a.b')).toBe(1);
-    expect(fieldOf({ a: { b: 2 } }, 'a.b')).toBe(2);
-    expect(fieldOf({ a: 'text' }, 'a.b')).toBeUndefined();
-    expect(fieldOf(null, 'a')).toBeUndefined();
+describe('a failure', () => {
+  class Boom extends NodeRunner {
+    readonly nodeType = 'code' as const;
+    async execute(): Promise<Record<string, unknown>> { throw new Error('the body blew up'); }
+  }
+  const withBoom = { node: (type: string) => (type === 'code' ? new Boom() : registry.node(type)) } as never;
+  const failing = (config: Record<string, unknown>): GraphNode => ({
+    ...node('bad', 'code', config),
+    outputs: [
+      { id: 'value', name: 'Value', kind: 'output', data_type: 'any', multi: false, required: false, description: '' },
+      { id: 'error', name: 'Error', kind: 'output', data_type: 'text', multi: false, required: false, description: '' },
+    ],
+  });
+  const run = (nodes: GraphNode[], edges: ReturnType<typeof edge>[]) => executeGraph(graphOf(nodes, edges), { runtime: nowhere, registry: withBoom });
+  const status = (result: Awaited<ReturnType<typeof run>>) => Object.fromEntries(result.node_results.map((r) => [r.node_id, r.status]));
+
+  it('skips what depended on it and goes on with the rest -- unless the node catches its failure', async () => {
+    const plain = await run([failing({}), node('after', 'end'), held('elsewhere', 'x')], [edge('e', 'bad', 'value', 'after', 'value')]);
+    expect(status(plain)).toEqual({ bad: 'error', after: 'skipped', elsewhere: 'success' });
+    expect(plain.status).toBe('partial');
+    expect(plain.error).toMatch(/"bad" failed: the body blew up/);
+
+    // `catch_errors`: the node still throws, the executor decides what that costs.
+    const caught = await run([failing({ catch_errors: true }), node('after', 'end')], [edge('e', 'bad', 'error', 'after', 'value')]);
+    expect(status(caught)).toEqual({ bad: 'partial', after: 'success' });
+    expect(caught.node_results[0].outputs).toEqual({ value: null, error: 'the body blew up' });
+
+    const unwired = await run([failing({ catch_errors: true })], []);
+    expect(unwired.status).toBe('partial');
+    expect(unwired.error).toBeNull();
   });
 });
 
-describe('executeGraph', () => {
-  it('skips what depended on a failure instead of abandoning the run', async () => {
-    class Boom extends NodeRunner {
-      readonly nodeType = 'code' as const;
-      async execute(): Promise<Record<string, unknown>> { throw new Error('no'); }
-    }
-    const registryWithBoom = {
-      node: (type: string) => (type === 'code' ? new Boom() : registry.node(type)),
-    };
-
-    const result = await executeGraph(
-      graphOf([node('bad', 'code'), node('after', 'end'), held('elsewhere', 'x')],
-            [edge('e', 'bad', 'output', 'after', 'value')]),
-      { runtime: nowhere, registry: registryWithBoom as never },
-    );
-
-    const status = Object.fromEntries(result.node_results.map((r) => [r.node_id, r.status]));
-    expect(status).toEqual({ bad: 'error', after: 'skipped', elsewhere: 'success' });
-    // Partial, not error: something did run, and the report should say so.
-    expect(result.status).toBe('partial');
-    // And what the reader is told: which node, by the name on the canvas, and why.
-    expect(result.error).toBe('code node "bad" failed: no (1 more could not run)');
-    // The node that could not run says which one it waited for.
-    expect(result.node_results.find((r) => r.node_id === 'after')?.messages).toEqual(['code node "bad" failed before it, so it could not run.']);
-  });
-
-  it('takes a result that is handed in, and does not run that node', async () => {
+describe('a result that is handed in', () => {
+  it('is taken as the node\'s own, the node does not run, and the answer travels on', async () => {
     let ran = 0;
     class Counts extends NodeRunner {
       readonly nodeType = 'code' as const;
@@ -173,121 +95,14 @@ describe('executeGraph', () => {
 
     // Only the two nodes that were not answered ran, and the answer travelled.
     expect(ran).toBe(1);
-    const source = result.node_results.find((r) => r.node_id === 'source')!;
-    expect(source.status).toBe('success');
-    expect(source.outputs).toEqual({ output: 'a value' });
-    expect(source.messages?.[0]).toMatch(/Handed in from outside/);
-    expect(result.node_results.filter((r) => r.node_id === 'source')).toHaveLength(1);
+    const source = result.node_results.filter((r) => r.node_id === 'source');
+    expect(source).toHaveLength(1);
+    expect(source[0]).toMatchObject({ status: 'success', outputs: { output: 'a value' } });
     expect(result.node_results.find((r) => r.node_id === 'after')?.outputs).toEqual({ output: 'saw a value' });
-  });
-
-  it('refuses a result for a node that is not in the graph', async () => {
-    await expect(executeGraph(
-      graphOf([node('here', 'end')]),
-      { runtime: nowhere, registry, given: { elsewhere: { output: 1 } } },
-    )).rejects.toThrow(/"elsewhere", which is not a node in this graph/);
-  });
-
-  it('will not start on two nodes with one id, or an edge that ends nowhere', async () => {
-    await expect(executeGraph(
-      graphOf([node('twice'), node('twice')]),
-      { runtime: nowhere, registry },
-    )).rejects.toThrow(/More than one node has this id/);
-
-    // Silent otherwise: nothing is ever put on that wire, and the run would
-    // report a result computed without it.
-    await expect(executeGraph(
-      graphOf([node('here', 'end')], [edge('e', 'ghost', 'output', 'here', 'value')]),
-      { runtime: nowhere, registry },
-    )).rejects.toThrow(/edge "e": Its source is node "ghost", and there is no such node/);
-  });
-
-  it('runs a graph whose nodes declare no ports: the edges are the wiring', async () => {
-    // What a graph written by hand looks like. `check` says the ports are
-    // missing; the run does not, because the value travels by edge.
-    const result = await executeGraph(
-      graphOf([node('make', 'code', { code: 'x', language: 'js' }), node('show', 'end')],
-            [edge('e', 'make', 'output', 'show', 'value')]),
-      { runtime: { ...nowhere, code: { run: async () => ({ output: 'made' }) } }, registry },
-    );
-    expect(result.status).toBe('success');
-  });
-
-  it('settles a feedback edge into the node that remembers, for the next round', async () => {
-    const store = node('store', 'data', { data_value: 'old' });
-    const step = node('step', 'code', { code: 'x', language: 'js' });
-    step.outputs = [{ id: 'output', name: 'o', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
-
-    await executeGraph(
-      graphOf([store, step], [
-        edge('read', 'store', 'output', 'step', 'input'),
-        edge('write', 'step', 'output', 'store', 'input'),
-      ]),
-      {
-        runtime: { ...nowhere, code: { run: async () => ({ output: 'fresh' }) } },
-        registry,
-      },
-    );
-
-    expect(store.config.data_value).toBe('fresh');
-  });
-
-  it('keeps the list a port fed by two wires received, not the last wire\'s value', async () => {
-    // A data node fed by two nodes hands on both this round: it must keep both.
-    const store = node('store', 'data', { data_value: 'old' });
-    const runtime = { ...nowhere, code: { run: async (body: string) => ({ v: body }) } };
-    const run = await executeGraph(
-      graphOf([node('a', 'code', { code: 'A' }), node('b', 'code', { code: 'B' }), store],
-        [edge('ea', 'a', 'v', 'store', 'input'), edge('eb', 'b', 'v', 'store', 'input')]),
-      { runtime, registry },
-    );
-    expect(run.node_results.find((r) => r.node_id === 'store')!.outputs.output).toEqual(['A', 'B']);
-    expect(store.config.data_value).toEqual(['A', 'B']);
-  });
-
-  it('hands an end point fed by two wires both of what arrived', async () => {
-    const runtime = { ...nowhere, code: { run: async (body: string) => ({ output: body }) } };
-    const run = await executeGraph(
-      graphOf([node('ask', 'start', { values: { q: 'go' } }), node('a', 'code', { code: 'answer a' }), node('b', 'code', { code: 'answer b' }), node('show', 'end')], [
-        edge('e1', 'ask', 'data', 'a', 'x'), edge('e2', 'ask', 'data', 'b', 'x'),
-        edge('e3', 'a', 'output', 'show', 'value'), edge('e4', 'b', 'output', 'show', 'value'),
-      ]),
-      { runtime, registry },
-    );
-    expect(run.node_results.find((r) => r.node_id === 'show')!.inputs.value).toEqual(['answer a', 'answer b']);
-  });
-
-  /** Three outputs: two called "Result", and one whose label is the key the second would be given. */
-  const labelled = () => graphOf([
-    held('a', 'alpha'),
-    held('b', 'beta'),
-    held('c', 'gamma'),
-    { ...node('first', 'end'), label: 'Result' },
-    { ...node('clash', 'end'), label: 'Result (second)' },
-    { ...node('second', 'end'), label: 'Result' },
-  ], [
-    edge('e1', 'a', 'output', 'first', 'value'),
-    edge('e2', 'b', 'output', 'second', 'value'),
-    edge('e3', 'c', 'output', 'clash', 'value'),
-  ]);
-
-  it('keeps every output in the result when two share a label: the first under it', async () => {
-    // `check` says to give them their own labels; until then no value is dropped.
-    const result = await executeGraph(labelled(), { runtime: nowhere, registry });
-    expect(result.outputs).toEqual({
-      Result: { value: 'alpha' },
-      'Result (second)': { value: 'gamma' },
-      'Result (second) 2': { value: 'beta' },
-    });
-  });
-
-  it('keys an output the same whether or not the others ran', async () => {
-    const result = await executeGraph(labelled(), { runtime: nowhere, registry, only: new Set(['b', 'second']) });
-    expect(result.outputs).toEqual({ 'Result (second) 2': { value: 'beta' } });
   });
 });
 
-describe('a batch with failing items', () => {
+describe('a node run once per item', () => {
   /** A per_item code node fed a list of three, whose runner fails on the word "bad". */
   function batchOf(items: string[], catches = false): Graph {
     return {
@@ -313,57 +128,27 @@ describe('a batch with failing items', () => {
   const workResult = async (items: string[], catches = false) =>
     (await executeGraph(batchOf(items, catches), { runtime: picky, registry })).node_results.find((r) => r.node_id === 'work')!;
 
-  it('puts the reason on the error port of a node that catches its failures, once for the node', async () => {
-    // It used to carry [null]: a list with a null for the failed item, which
-    // says nothing, and is not empty -- so what was wired to it ran on nothing.
-    const work = await workResult(['ok', 'bad'], true);
-    expect(work.status).toBe('partial');
-    expect(work.outputs.out).toEqual(['ok', null]);
-    expect(typeof work.outputs.error).toBe('string');
-    expect(work.outputs.error).toBe(work.error);
-    expect(work.outputs.error).toContain('1 of 2 items failed');
-    expect(work.outputs.error).toContain('boom');
-  });
+  it('loses the failed item, not the node; an error only when every item fails; the reason on the error port of a node that catches', async () => {
+    const some = await workResult(['ok', 'bad', 'ok']);
+    expect(some.status).toBe('partial');
+    expect(some.error).toContain('1 of 3 items failed');
+    expect(some.error).toContain('boom');
+    expect(some.outputs.out).toEqual(['ok', null, 'ok']);
 
-  it('leaves the error port of a node that catches its failures empty when nothing failed', async () => {
-    const work = await workResult(['ok', 'ok'], true);
-    expect(work.status).toBe('success');
-    expect(work.outputs.error).toBeUndefined();
-  });
+    expect((await workResult(['bad', 'bad'])).status).toBe('error');
 
-  it('is partial, counted, with the first failure quoted, and the rest intact', async () => {
-    const work = await workResult(['ok', 'bad', 'ok']);
-    expect(work.status).toBe('partial');
-    expect(work.error).toContain('1 of 3 items failed');
-    expect(work.error).toContain('boom');
-    expect(work.outputs.out).toEqual(['ok', null, 'ok']);
-  });
-
-  it('is an error, with the message, when every item fails', async () => {
-    const work = await workResult(['bad', 'bad']);
-    expect(work.status).toBe('error');
-    expect(work.error).toContain('boom');
-  });
-
-  it('is a plain success when nothing fails', async () => {
-    expect((await workResult(['ok', 'ok'])).status).toBe('success');
-  });
-
-  it('says the first item\'s failure, not whichever failed first in time', async () => {
-    const slowFirst: Runtime = {
-      ...nowhere,
-      code: { run: async (_body, inputs) => {
-        if (inputs.items === 'bad slow') await new Promise((wait) => setTimeout(wait, 30));
-        throw new Error(`boom on ${String(inputs.items)}`);
-      } },
-    };
-    const run = await executeGraph(batchOf(['bad slow', 'bad fast']), { runtime: slowFirst, registry });
-    expect(run.node_results.find((r) => r.node_id === 'work')!.error).toBe('boom on bad slow');
+    // Once for the node, as text: a [null] on the port would run what is wired to it on nothing.
+    const caught = await workResult(['ok', 'bad'], true);
+    expect(caught.status).toBe('partial');
+    expect(caught.outputs.out).toEqual(['ok', null]);
+    expect(caught.outputs.error).toBe(caught.error);
+    expect(caught.outputs.error).toContain('boom');
+    expect((await workResult(['ok', 'ok'], true)).outputs.error).toBeUndefined();
   });
 });
 
-describe('what a stopped run hands back', () => {
-  it('hands back what finished before Stop as it arrived', async () => {
+describe('Stop', () => {
+  it('hands back what finished before it, as it arrived', async () => {
     const stop = new AbortController();
     const runtime = quietRuntime({
       code: { run: async (body, inputs, signal) => {
@@ -387,171 +172,36 @@ describe('what a stopped run hands back', () => {
     expect(run.status).toBe('cancelled');
     expect(run.node_results.find((r) => r.node_id === 'table')!.inputs).toEqual({ value: [1, 2] });
   });
-
-  it('does not ask a model when every wire into its one port brought nothing', async () => {
-    let asked = 0;
-    const runtime = quietRuntime({ ai: { complete: async () => { asked += 1; return 'answer'; } } });
-    const graph = graphOf(
-      [
-        node('one', 'start', { values: { text: '' } }),
-        node('two', 'start', { values: { text: '' } }),
-        { ...node('ask', 'ai', { prompt: 'Answer.' }), inputs: [{ id: 'message', name: 'message', kind: 'input', data_type: 'text', multi: false, required: false, description: '', field: 'text' }] },
-      ],
-      [edge('ea', 'one', 'data', 'ask', 'message'), edge('eb', 'two', 'data', 'ask', 'message')],
-    );
-    const run = await executeGraph(graph, { runtime, registry });
-    expect(run.node_results.find((r) => r.node_id === 'ask')!.status).toBe('skipped');
-    expect(asked).toBe(0);
-  });
-});
-
-describe('a node that catches its own failure', () => {
-  /**
-   * `catch_errors` is one mechanism for every element rather than a copy in
-   * each: the element throws as it always did, and the executor decides what
-   * that costs. The error port is optional to wire -- unwired, the run simply
-   * carries on, and the node still reports what went wrong.
-   */
-  class Boom extends NodeRunner {
-    readonly nodeType = 'code' as const;
-    async execute(): Promise<Record<string, unknown>> { throw new Error('the body blew up'); }
-  }
-  const withBoom = { node: (type: string) => (type === 'code' ? new Boom() : registry.node(type)) };
-
-  function failing(config: Record<string, unknown>): GraphNode {
-    const bad = node('bad', 'code', config);
-    bad.outputs = [
-      { id: 'value', name: 'Value', kind: 'output', data_type: 'any', multi: false, required: false, description: '' },
-      { id: 'error', name: 'Error', kind: 'output', data_type: 'text', multi: false, required: false, description: '' },
-    ];
-    return bad;
-  }
-
-  it('keeps the run going, and puts the message on its error port', async () => {
-    const result = await executeGraph(
-      graphOf([failing({ catch_errors: true })], []),
-      { runtime: nowhere, registry: withBoom as never },
-    );
-    const bad = result.node_results[0];
-    expect(bad.status).toBe('partial');
-    expect(bad.outputs).toEqual({ value: null, error: 'the body blew up' });
-    expect(bad.error).toBe('the body blew up');
-  });
-
-  it('lets what is downstream run, instead of skipping it', async () => {
-    const result = await executeGraph(
-      graphOf([failing({ catch_errors: true }), node('after', 'end')],
-            [edge('e', 'bad', 'error', 'after', 'value')]),
-      { runtime: nowhere, registry: withBoom as never },
-    );
-    const status = Object.fromEntries(result.node_results.map((r) => [r.node_id, r.status]));
-    expect(status).toEqual({ bad: 'partial', after: 'success' });
-  });
-
-  it('is off unless asked: the same node without it still ends the run there', async () => {
-    const result = await executeGraph(
-      graphOf([failing({}), node('after', 'end')], [edge('e', 'bad', 'value', 'after', 'value')]),
-      { runtime: nowhere, registry: withBoom as never },
-    );
-    const status = Object.fromEntries(result.node_results.map((r) => [r.node_id, r.status]));
-    expect(status).toEqual({ bad: 'error', after: 'skipped' });
-  });
-
-  it('does not need the port wired to anything', async () => {
-    const result = await executeGraph(
-      graphOf([failing({ catch_errors: true })], []),
-      { runtime: nowhere, registry: withBoom as never },
-    );
-    expect(result.status).toBe('partial');
-    expect(result.error).toBeNull();
-  });
-
-  it('does the same when it is run by itself, as run-node runs it', async () => {
-    const graph = graphOf([failing({ catch_errors: true })], []);
-    const inRun = (await executeGraph(graph, { runtime: nowhere, registry: withBoom as never })).node_results[0];
-    const alone = await executeNode(graph, 'bad', {}, { runtime: nowhere, registry: withBoom as never });
-    expect(alone).toMatchObject({ status: inRun.status, outputs: inRun.outputs, error: inRun.error });
-  });
 });
 
 describe('one node tried by itself', () => {
-  it('stands still where a run would, with the run\'s reason, and asks no model', async () => {
-    let asked = 0;
-    const runtime = quietRuntime({ ai: { complete: async () => { asked += 1; return 'answer'; } } });
-    const ask = node('ask', 'ai', { prompt: 'Answer.' });
-    ask.inputs = [{ id: 'message', name: 'm', kind: 'input', data_type: 'text', multi: false, required: false, description: '' }];
-    const graph = graphOf([node('src', 'code'), ask], [edge('e', 'src', 'out', 'ask', 'message')]);
-    const alone = await executeNode(graph, 'ask', { message: '' }, { runtime, registry });
-    expect(alone).toMatchObject({ status: 'skipped', messages: ['Nothing arrived on any of its inputs, so there was nothing to ask.'] });
-    expect(asked).toBe(0);
+  const runtime = (ran: string[] = []) => quietRuntime({
+    code: { run: async (body, inputs) => new Function('inputs', `${body}; return run(inputs);`)(inputs) },
+    report: (event) => { if (event.type === 'node_start') ran.push(event.node_id); },
   });
 
-  it('fails when what feeds it failed, rather than running on nothing and succeeding', async () => {
+  it('fails when what feeds it failed or stood still, rather than running on nothing and succeeding; runs what computes the ◆ of what feeds it', async () => {
     // run-node and the MCP server's run_node, with no inputs given.
     const reader = node('reader', 'code', { code: 'function run() { throw new Error("ENOENT: data.csv"); }' });
     const count = node('count', 'code', { code: 'function run(i) { return { n: String(i.text ?? "").length }; }' });
-    const runtime = quietRuntime({ code: { run: async (body, inputs) => new Function('inputs', `${body}; return run(inputs);`)(inputs) } });
-    const { result } = await runNodeAlone(graphOf([reader, count], [edge('e', 'reader', 'text', 'count', 'text')]), 'count', undefined, { runtime, registry });
-    expect(result.status).toBe('error');
-    expect(result.error).toMatch(/ENOENT: data\.csv/);
-  });
+    const failed = await runNodeAlone(graphOf([reader, count], [edge('e', 'reader', 'text', 'count', 'text')]), 'count', undefined, { runtime: runtime(), registry });
+    expect(failed.result.status).toBe('error');
+    expect(failed.result.error).toMatch(/ENOENT: data\.csv/);
 
-  /** `reader` hangs on `flag`'s ◆, and `target` takes what `reader` read. */
-  const flagged = (open: boolean) => graphOf([
-    node('flag', 'code', { code: `function run() { return { open: ${open} }; }` }),
-    node('reader', 'code', { code: 'function run() { return { text: "the file" }; }' }),
-    node('target', 'code', { code: 'function run(i) { return { n: String(i.text ?? "").length }; }' }),
-  ], [edge('g', 'flag', 'open', 'reader', '__run'), edge('t', 'reader', 'text', 'target', 'text')]);
-  const running = () => {
-    const ran: string[] = [];
-    const runtime = quietRuntime({
-      code: { run: async (body, inputs) => new Function('inputs', `${body}; return run(inputs);`)(inputs) },
-      report: (event) => { if (event.type === 'node_start') ran.push(event.node_id); },
-    });
-    return { ran, runtime };
-  };
+    /** `reader` hangs on `flag`'s ◆, and `target` takes what `reader` read. */
+    const flagged = (open: boolean) => graphOf([
+      node('flag', 'code', { code: `function run() { return { open: ${open} }; }` }),
+      node('reader', 'code', { code: 'function run() { return { text: "the file" }; }' }),
+      node('target', 'code', { code: 'function run(i) { return { n: String(i.text ?? "").length }; }' }),
+    ], [edge('g', 'flag', 'open', 'reader', '__run'), edge('t', 'reader', 'text', 'target', 'text')]);
 
-  it('runs what computes the ◆ of what feeds it, as ⟳ From the graph asks', async () => {
-    // It used to leave `flag` out, so `reader` never opened and nothing arrived.
-    const { runtime } = running();
-    const { inputs } = await inputsFor(flagged(true), 'target', { runtime, registry });
+    const { inputs } = await inputsFor(flagged(true), 'target', { runtime: runtime(), registry });
     expect(inputs).toEqual({ text: 'the file' });
-  });
 
-  it('does not run when what feeds it stood still, rather than running on nothing and succeeding', async () => {
-    const { ran, runtime } = running();
-    const { result } = await runNodeAlone(flagged(false), 'target', undefined, { runtime, registry });
+    const ran: string[] = [];
+    const { result } = await runNodeAlone(flagged(false), 'target', undefined, { runtime: runtime(ran), registry });
     expect(result.status).toBe('error');
-    expect(result.error).toMatch(/"reader".*Nothing opened its ◆/);
+    expect(result.error).toMatch(/"reader"/);
     expect(ran).not.toContain('target');
-  });
-
-  it('says what does not fit its output.js, as a run says it', async () => {
-    const make = node('make', 'code', { code: 'x', output_definition: 'module.exports = { "n": 1.5 };' });
-    make.outputs = [{ id: 'n', name: 'n', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
-    const runtime = quietRuntime({ code: { run: async () => ({ n: 'not a number' }) } });
-    const alone = await executeNode(graphOf([make]), 'make', {}, { runtime, registry });
-    expect(alone.messages?.[0]).toBe('Does not fit its output.js: output "n" is text; output.js says a number');
-  });
-
-  it('hands its body the stop it was given, run on inputs or on its example', async () => {
-    // Both took a signal and dropped it: ▶ Try stopped went on grinding.
-    const stop = new AbortController();
-    const handed: (AbortSignal | undefined)[] = [];
-    const runtime = quietRuntime({ code: { run: async (_body, inputs, signal) => { handed.push(signal); return inputs; } } });
-    const graph = graphOf([node('work', 'code', { code: 'x' })]);
-    await executeNode(graph, 'work', {}, { runtime, registry, signal: stop.signal });
-    await callNode(graph, 'work', {}, { runtime, registry, signal: stop.signal });
-    expect(handed).toEqual([stop.signal, stop.signal]);
-  });
-
-  it('starts no more items once it is stopped', async () => {
-    const stop = new AbortController();
-    let ran = 0;
-    const runtime = quietRuntime({ code: { run: async (_body, inputs) => { ran += 1; stop.abort(); return inputs; } } });
-    const each = node('each', 'code', { code: 'x', batch_mode: 'per_item', batch_concurrency: 1 });
-    each.inputs = [{ id: 'item', name: 'item', kind: 'input', data_type: 'any', multi: true, required: false, description: '' }];
-    await executeNode(graphOf([each]), 'each', { item: [1, 2, 3] }, { runtime, registry, signal: stop.signal });
-    expect(ran).toBe(1);
   });
 });

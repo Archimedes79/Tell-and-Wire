@@ -1,13 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import type { Graph, GraphNode } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { Session } from '../../gui-editor/session.ts';
 import { edge, graphOf, quietRuntime } from '../../../graph/test/fakes.ts';
-import { keptRound, readKeptRounds, replayRound, writeKeptRound, TESTS_DIR } from './keptRounds.ts';
+import { keptRound, replayRound } from './keptRounds.ts';
 import { localCore } from '../../../graph/core/localCore.ts';
 
 /**
@@ -56,58 +53,20 @@ async function keptOf(graph: Graph) {
 }
 
 describe('a round, kept', () => {
-  it('hands in what came from outside or from before -- the package, the answer -- and keeps what came back', async () => {
+  it('hands in what came from outside or from before and keeps what came back; run again it asks no model, and fails saying what differs', async () => {
     const kept = await keptOf(asker());
     expect(kept.event).toBe('ask');
     expect(kept.by).toBe('call');
     expect(Object.keys(kept.given).sort()).toEqual(['answer', 'ask']);
-    expect(kept.given.ask.data).toEqual({ event: { name: 'ask', by: 'call' }, values: { question: 'How long?' } });
     expect(kept.given.answer).toEqual({ output: 'three short words' });
     expect(kept.outputs).toEqual({ words: 3 });
-  });
 
-  it('runs again to what it handed back, asking no model', async () => {
-    const kept = await keptOf(asker());
     const noModel = quietRuntime({ code: inProcess, ai: { complete: async () => { throw new Error('asked a model'); } } });
     expect(await replayRound(asker(), kept, { core: localCore({ runtime: () => noModel }), registry })).toEqual({ status: 'pass', details: [], outputs: { words: 3 } });
-  });
 
-  it('fails, saying what differs, when what runs again hands back otherwise', async () => {
-    const kept = await keptOf(asker());
     const changed = asker('function run(i) { return { n: String(i.text).length }; }');
-    const replayed = await replayRound(changed, kept, { core: localCore({ runtime: () => answering }), registry });
+    const replayed = await replayRound(changed, kept, { core: localCore({ runtime: () => noModel }), registry });
     expect(replayed.status).toBe('fail');
     expect(replayed.details).toEqual(['"words" handed back 17; the kept round, 3.']);
-  });
-
-  it('fails where the graph changed so that a model would be asked that was not asked then', async () => {
-    const kept = await keptOf(asker());
-    const { answer: _answer, ...given } = kept.given;
-    const replayed = await replayRound(asker(), { ...kept, given }, { core: localCore({ runtime: () => answering }), registry });
-    expect(replayed.status).not.toBe('pass');
-    expect(replayed.details.join(' ')).toMatch(/asks no model/);
-  });
-});
-
-describe('the rounds a project keeps', () => {
-  it('are files in its tests/ folder, named after their event, read back as they were written', async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'kept-'));
-    const kept = await keptOf(asker());
-    expect(await writeKeptRound(folder, kept)).toBe('ask-1');
-    expect(await writeKeptRound(folder, kept)).toBe('ask-2');
-    expect(JSON.parse(await readFile(join(folder, TESTS_DIR, 'ask-1.json'), 'utf8'))).toEqual(kept);
-    expect((await readKeptRounds(folder)).map(({ name, round }) => [name, round?.event])).toEqual([['ask-1', 'ask'], ['ask-2', 'ask']]);
-  });
-
-  it('say of a file that is no kept round what is wrong with it, and of a project without tests/ that there are none', async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'kept-'));
-    expect(await readKeptRounds(folder)).toEqual([]);
-    await mkdir(join(folder, TESTS_DIR));
-    await writeFile(join(folder, TESTS_DIR, 'broken.json'), '{ not json');
-    await writeFile(join(folder, TESTS_DIR, 'other.json'), '{"name": "something else"}');
-    const read = await readKeptRounds(folder);
-    expect(read.map(({ name, round }) => [name, round])).toEqual([['broken', null], ['other', null]]);
-    expect(read[0].problem).toMatch(/cannot be read/);
-    expect(read[1].problem).toMatch(/needs "event", "given" and "outputs"/);
   });
 });

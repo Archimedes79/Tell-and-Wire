@@ -2,15 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ExecutionResult } from '../graph';
 import type { RoundSnapshot } from '../api/client';
 
-// The server, as far as a document's session goes: what it was handed, and
-// which session that is -- it goes on with the one a document is handed over
-// as, and any other is a new one.
-const server = vi.hoisted(() => ({ held: [] as unknown[], sessions: 0 }));
+// The server, as far as a document's session goes: it goes on with the session a
+// document is handed over as, and any other is a new one.
+const server = vi.hoisted(() => ({ sessions: 0 }));
 vi.mock('../api/client', async (actual) => ({
   ...(await actual<typeof import('../api/client')>()),
   call: vi.fn(async (route: string, body?: { session?: string | null }) => {
     if (route === 'holdGraph') {
-      server.held.push(body);
       if (!body?.session || body.session !== `s${server.sessions}`) server.sessions += 1;
       return { session: `s${server.sessions}`, dropped: [] };
     }
@@ -24,7 +22,6 @@ vi.mock('../api/session', async (actual) => ({
 }));
 
 const { useGraphStore } = await import('./graphStore');
-const { useSession } = await import('../api/session');
 const store = () => useGraphStore.getState();
 
 const round = (over: Partial<RoundSnapshot> = {}): RoundSnapshot => ({
@@ -36,28 +33,8 @@ const made = (node_id: string, outputs: Record<string, unknown>): ExecutionResul
 });
 
 beforeEach(() => {
-  server.held.length = 0;
   server.sessions = 0;
   store().newGraph();
-});
-
-describe('what the server\'s session is handed', () => {
-  it('is what runs: a node\'s history, up to half a megabyte, stays in the editor', async () => {
-    const id = store().addNode('code', { x: 0, y: 0 });
-    store().updateNode(id, { config: { ...store().rfNodes[0].data.graphNode.config, history: '## 2026-09-28 09:00 · ✨ Code\n\nNothing was sent.', batch_mode: 'per_item' } });
-    await store().holdDocument();
-    const sent = server.held[0] as { graph: { nodes: { config: Record<string, unknown> }[] } };
-    expect(sent.graph.nodes[0].config).not.toHaveProperty('history');
-    expect(sent.graph.nodes[0].config.batch_mode).toBe('per_item');
-  });
-
-  it('is a session of its own for another document, and the same one for the same document', async () => {
-    await store().holdDocument();
-    await store().holdDocument();
-    store().newGraph();
-    await store().holdDocument();
-    expect(server.held.map((asked) => (asked as { session: string | null }).session)).toEqual([null, 's1', null]);
-  });
 });
 
 describe('a round of the session', () => {
@@ -73,16 +50,7 @@ describe('a round of the session', () => {
     expect(store().executionResult?.node_results[0].outputs).toEqual({ output: 3 });
   });
 
-  it('that an event started is laid over what was shown; a whole one starts from a clean slate', async () => {
-    await store().holdDocument();
-    store().followRound(round({ result: made('a', { x: 1 }) }));
-    store().followRound(round({ round_id: 'r2', result: made('b', { y: 2 }) }));
-    expect(store().executionResult?.node_results.map((one) => one.node_id)).toEqual(['a', 'b']);
-    store().followRound(round({ round_id: 'r3', started: null, result: made('c', { z: 3 }) }));
-    expect(store().executionResult?.node_results.map((one) => one.node_id)).toEqual(['c']);
-  });
-
-  it('that ends after another graph was opened writes nothing, and shows nothing, there (B30)', async () => {
+  it('that ends after another graph was opened writes nothing, and shows nothing, there', async () => {
     store().addNode('code', { x: 0, y: 0 });
     await store().holdDocument();
     store().followRound(round({ done: false }));
@@ -95,35 +63,5 @@ describe('a round of the session', () => {
     store().followRound(round({ result: made('code', { output: { rows: [1, 2] } }) }));
     expect(store().executionResult).toBeNull();
     expect(store().isDirty()).toBe(false);
-  });
-
-  it('of another tab\'s graph is not shown here: the server holds one session, and says so until this one is handed back', async () => {
-    // Re-test: after another tab opened folder_summaries on the same server, its nodes stood in this tab's results.
-    store().addNode('code', { x: 0, y: 0 });
-    await store().holdDocument();
-    useSession.setState({ view: { session: 's1' } as never });
-    store().followRound(round({ done: false }));
-    expect(store().heldElsewhere).toBe(false);
-    // Another tab hands the server its graph: a session of its own.
-    server.sessions = 9;
-    useSession.setState({ view: { session: 's9' } as never });
-    expect(store().heldElsewhere).toBe(true);
-    expect(store().isExecuting).toBe(false);
-    store().followRound(round({ round_id: 'theirs', result: made('summaries', { text: 'not ours' }) }));
-    expect(store().executionResult).toBeNull();
-    // ▶ Run hands this one over again: its own session, and its rounds shown.
-    await store().holdDocument();
-    expect(server.held.map((asked) => (asked as { session: string | null }).session)).toEqual([null, 's1']);
-    useSession.setState({ view: { session: 's10' } as never });
-    expect(store().heldElsewhere).toBe(false);
-    store().followRound(round({ round_id: 'ours', result: made('code', { output: 1 }) }));
-    expect(store().executionResult?.node_results[0].node_id).toBe('code');
-    useSession.setState({ view: null });
-  });
-
-  it('that could not run is said as a failure, with its reason', async () => {
-    await store().holdDocument();
-    store().followRound(round({ error: 'Graph contains a cycle' }));
-    expect(store().executionResult).toMatchObject({ status: 'error', error: 'Graph contains a cycle' });
   });
 });

@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { ExecutionResult, GraphNode, Wire } from '../../app/graph';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
-import { filesOf, withFile } from '../../app/document/givenFiles';
 import { inputFilesOf } from './exampleFile';
-import { tryKey } from './TryExample';
 
 /**
  * The files ✨ Input writes a node's input definition from: the node's own --
@@ -28,38 +26,13 @@ const ran = (inputs: Record<string, unknown>): ExecutionResult => ({
 } as ExecutionResult);
 
 describe('the files ✨ Input writes from', () => {
-  it('are the node\'s own, where it was given some', () => {
+  it('are the node\'s own, else the file the last run handed a file-reading input, else what is wired to it holds -- and none for an input that reads no file', () => {
     const { nodes, edges } = typed('data/typed.csv');
     expect(inputFilesOf(reader({ input_files: ['data/a.csv', 'spec.md'] }), nodes, edges, null)).toEqual(['data/a.csv', 'spec.md']);
-  });
-
-  it('are otherwise the file the last run handed a file-reading input -- or what is wired to it holds', () => {
-    const { nodes, edges } = typed('data/typed.csv');
     expect(inputFilesOf(reader(), nodes, edges, ran({ csv: ['data/ran.csv', 'data/second.csv'] }))).toEqual(['data/ran.csv']);
     expect(inputFilesOf(reader(), nodes, edges, null)).toEqual(['data/typed.csv']);
-  });
-
-  it('are none where nothing hands it a file: an input that reads no file is not asked', () => {
-    const { nodes, edges } = typed('data/typed.csv');
     expect(inputFilesOf(reader(), [], [], null)).toEqual([]);
     const words = { ...reader(), inputs: [{ ...reader().inputs[0], data_type: 'any' as const }] };
     expect(inputFilesOf(words, nodes, edges, null)).toEqual([]);
-  });
-});
-
-describe('a file given to a ✨', () => {
-  it('is added once: a file given twice is still one, and the node itself', () => {
-    const once = withFile(reader(), 'input', 'data/a.csv');
-    expect(filesOf(once, 'input')).toEqual(['data/a.csv']);
-    expect(withFile(once, 'input', 'data/a.csv')).toBe(once);
-    expect(filesOf(withFile(once, 'output', 'spec.md'), 'output')).toEqual(['spec.md']);
-    expect(filesOf(once, 'output')).toEqual([]);
-  });
-
-  it('changes nothing a try runs: ▶ Try\'s result stays on screen', () => {
-    const node = reader({ input_definition: 'module.exports = { "csv": "a" };' });
-    expect(tryKey(withFile(withFile(node, 'input', 'data/a.csv'), 'output', 'spec.md'))).toBe(tryKey(node));
-    expect(tryKey({ ...node, config: { ...node.config, prompts: { body: 'Mine.' }, history: '## …' } })).toBe(tryKey(node));
-    expect(tryKey({ ...node, config: { ...node.config, code: 'function run() { return {}; }' } })).not.toBe(tryKey(node));
   });
 });

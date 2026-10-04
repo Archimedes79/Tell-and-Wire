@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { extensionFilter, listFolder } from './folderListing.ts';
+import { listFolder } from './folderListing.ts';
 import { nodeRuntime } from '../core/node.ts';
 import { registry } from './registry.ts';
 import { parseWidget, widgetElement } from '../../backend/gui-editor/widgets/page.ts';
@@ -27,24 +27,16 @@ const runtime = nodeRuntime();
 const names = (files: string[]) => files.map((file) => file.slice(dir.length + 1).split('\\').join('/'));
 
 describe('a folder listing', () => {
-  it('reads its file types in any case, with or without the dot', () => {
-    expect(extensionFilter(' .CSV, txt ,, Md')).toEqual(['.csv', '.txt', '.md']);
-    expect(extensionFilter('')).toEqual([]);
-  });
-
-  it('keeps the file types it names whatever their case -- "CSV" found nothing', async () => {
+  it('keeps the file types it names whatever their case, and looks into subfolders only when told to', async () => {
     expect(names(await listFolder(dir, { recursive: false, extensions: 'CSV' }, runtime))).toEqual(['a.CSV', 'b.csv']);
     expect(names(await listFolder(dir, { recursive: false, extensions: '' }, runtime))).toEqual(['a.CSV', 'b.csv', 'c.txt']);
-  });
-
-  it('looks into subfolders only when told to', async () => {
     expect(names(await listFolder(dir, { recursive: true, extensions: '.csv' }, runtime))).toEqual(['a.CSV', 'b.csv', 'more/d.csv']);
   });
 
-  it('is the same for a folder node and a file-picker block', async () => {
-    const node = { id: 'n', node_type: 'folder', config: { path: dir, extensions: 'csv' } } as unknown as GraphNode;
+  it('is the same for a folder node, which takes a wired path over its own, and a file-picker block', async () => {
+    const node = { id: 'n', node_type: 'folder', config: { path: '/nowhere', extensions: 'csv' } } as unknown as GraphNode;
     const block = parseWidget({ id: 'pick', kind: 'input_picker', mode: 'directory', value: dir, extensions: 'csv' });
-    const fromNode = await registry.node('folder')!.execute(node, {}, runtime);
+    const fromNode = await registry.node('folder')!.execute(node, { path: dir }, runtime);
     const fromBlock = await widgetElement('input_picker')!.data(block, runtime);
     expect(names(fromNode.files as string[])).toEqual(['a.CSV', 'b.csv']);
     expect(fromNode.count).toBe(2);

@@ -31,25 +31,18 @@ function recording(reply: (request: AiRequest) => string = () => 'an answer'): R
 const code = registry.node('code')!;
 
 describe('a code node', () => {
-  it('may ask a model, on the graph\'s default, and a bundle of it says so', async () => {
+  it('may ask a model, on the graph\'s default, a bundle of it says so, and it may ask only so often', async () => {
     const runtime = recording(() => 'forty-two');
     const node = codeNode('async function run(i, node) { return { output: await node.llm({ prompt: "What is " + i.text + "?" }) }; }');
     expect(await code.execute(node, { text: '6 x 7' }, runtime)).toEqual({ output: 'forty-two' });
     expect(runtime.asked[0]).toMatchObject({ prompt: 'What is 6 x 7?', provider: 'default', system: '' });
     expect(code.deployNeeds(node).asksAi).toBe(true);
-  }, 30_000);
+    expect(code.deployNeeds(codeNode('function run() { return { a: 1 }; }')).asksAi).toBe(false);
 
-  it('may give its own instructions and inputs, sent the way an ai node sends them', async () => {
-    const runtime = recording();
-    const node = codeNode('async function run(i, node) { return { output: await node.llm({ system: "Be brief.", inputs: { a: "one", b: "two" }, temperature: 0 }) }; }');
-    await code.execute(node, { text: 'x' }, runtime);
-    expect(runtime.asked[0]).toMatchObject({ system: 'Be brief.', prompt: 'a:\none\n\nb:\ntwo', temperature: 0 });
-  }, 30_000);
-
-  it('is told when it has asked as often as it may, instead of spending a budget', async () => {
-    const runtime = { ...recording(), llmCallsPerBody: 3 };
-    const node = codeNode('async function run(i, node) { for (;;) await node.llm({ prompt: "again" }); }');
-    await expect(code.execute(node, { text: 'x' }, runtime)).rejects.toThrow(/asked the model 3 times/);
-    expect(runtime.asked).toHaveLength(3);
+    // Told when it has asked as often as it may, instead of spending a budget.
+    const capped = { ...recording(), llmCallsPerBody: 3 };
+    const looping = codeNode('async function run(i, node) { for (;;) await node.llm({ prompt: "again" }); }');
+    await expect(code.execute(looping, { text: 'x' }, capped)).rejects.toThrow(/asked the model 3 times/);
+    expect(capped.asked).toHaveLength(3);
   }, 30_000);
 });

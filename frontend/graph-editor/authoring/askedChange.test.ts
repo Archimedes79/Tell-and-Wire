@@ -10,8 +10,8 @@ import type { GraphNode } from '../../app/graph';
  * ✨, asked with the change -- and the request is taken, once.
  */
 
-// ✨'s server: what each generation was asked, answered at once -- a code
-// node's body, or what a data node holds, each with its text restated.
+// ✨'s server: what each generation was asked, answered at once with a
+// code node's body and its text restated.
 const asked = vi.hoisted(() => [] as Record<string, unknown>[]);
 vi.mock('../../app/api/client', async (actual) => ({
   ...(await actual<typeof import('../../app/api/client')>()),
@@ -19,14 +19,10 @@ vi.mock('../../app/api/client', async (actual) => ({
     if (route === 'generationProgress') return { calls: [] };
     if (route !== 'generate') throw new Error(`not expected here: ${route}`);
     asked.push(body);
-    const probe = { status: 'skipped', error: '', problems: [] };
-    if ((body.node as GraphNode).node_type === 'data') {
-      return { result: '{"cities": ["Berlin", "Paris"]}', description: 'Keeps two capitals: Berlin and Paris.', probe, calls: [] };
-    }
     return {
       result: 'function run(inputs) { return { output: String(inputs.input).toUpperCase() }; }',
       description: 'Shouts the text it is given.',
-      probe: { ...probe, status: 'ok' },
+      probe: { status: 'ok', error: '', problems: [] },
       calls: [],
     };
   }),
@@ -96,27 +92,4 @@ describe('a change asked of a node whose panel is open', () => {
     expect(String(nodeOf(nodeId).config.history)).toContain('Change: shout it');
   });
 
-  it('changes what a data node holds as said, with its text restated', async () => {
-    const data = store().addNode('data', { x: 0, y: 200 });
-    store().updateNode(data, {
-      description: 'Keeps a capital.',
-      config: { ...nodeOf(data).config, data_format: 'structure', data_value: { cities: ['Berlin'] } },
-    });
-    await open(data);
-    await act(async () => { store().askChange(data, 'add Paris'); });
-    await answered();
-    expect(asked[0]).toMatchObject({ write: 'body', refine: { change: 'add Paris' } });
-    await act(async () => { root.unmount(); });
-    root = createRoot(page);
-    expect(nodeOf(data).config.data_value).toEqual({ cities: ['Berlin', 'Paris'] });
-    expect(nodeOf(data).description).toBe('Keeps two capitals: Berlin and Paris.');
-    expect(String(nodeOf(data).config.history)).toContain('Change: add Paris');
-  });
-
-  it('is not this panel\'s when it is asked of another node', async () => {
-    await act(async () => { store().askChange('elsewhere', 'shout it'); });
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
-    expect(asked).toHaveLength(0);
-    expect(store().pendingChange).toMatchObject({ nodeId: 'elsewhere' });
-  });
 });

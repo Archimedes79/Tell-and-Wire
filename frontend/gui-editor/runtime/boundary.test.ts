@@ -123,78 +123,50 @@ describe('deployment boundary', () => {
     for (let by = reachedBy.get(path); by; by = reachedBy.get(by)) links.unshift(by);
     return links.join(' → ');
   };
+  const reaching = (found: (path: string) => boolean) => [...reachable].filter(found).map(chain);
 
-  it('reaches the page a deployed tool renders', () => {
+  it('reaches the page a deployed tool renders, and draws the page it is handed from the halves that are delivered', () => {
     // A check on the walker itself: without it, the assertions below could pass
     // because nothing was found rather than because nothing is wrong.
     expect(BY_PATH.has('gui-editor/runtime/main.tsx')).toBe(true);
     expect(reachable.has('gui-editor/runtime/RuntimeApp.tsx')).toBe(true);
     expect(reachable.has('gui-editor/page/GuiPage.tsx')).toBe(true);
     expect(reachable.size).toBeGreaterThan(10);
+    // Absent *because the page gets what it needs elsewhere*, not because it stopped working.
+    expect(reachable.has('gui-editor/page/blocks.ts')).toBe(true);
+    expect(reachable.has('app/api/session.ts')).toBe(true);
   });
 
   it('draws elements with their views, and never loads a panel or the fields one is made of', () => {
     // Panels are registered with `lazy(() => import(…))`, which this walk --
     // like the bundler's static graph -- does not follow: a panel is a chunk
     // the editor fetches when an element is opened, and a tool never does.
-    const editing = [...reachable].filter((path) => /Panel\.tsx$/.test(path) || /^(app|graph-editor)\/fields\//.test(path));
-    expect(editing.map(chain)).toEqual([]);
+    expect(reaching((path) => /Panel\.tsx$/.test(path) || /^(app|graph-editor)\/fields\//.test(path))).toEqual([]);
     expect([...reachable].some((path) => /WidgetView\.tsx$/.test(path))).toBe(true);
   });
 
-  it.each(EDITOR_AREAS)('reaches nothing in %s/: a tool holds no graph, draws no canvas, writes no node, has no editor around it', (area) => {
-    expect([...reachable].filter((path) => inArea(path, area)).map(chain)).toEqual([]);
+  it('reaches nothing of the editor: no store, canvas, authoring or shell, and no module for building a graph', () => {
+    for (const area of EDITOR_AREAS) expect(reaching((path) => inArea(path, area)), area).toEqual([]);
+    for (const module of EDITOR_ONLY) expect(reaching((path) => path.replace(/\.tsx?$/, '') === module), module).toEqual([]);
   });
 
-  it.each(EDITOR_ONLY)('does not pull %s into a deployed bundle', (module) => {
-    const hit = [...reachable].find((path) => path.replace(/\.tsx?$/, '') === module);
-    expect(hit && chain(hit), `${module} is reachable from runtime/`).toBeUndefined();
-  });
-
-  /**
-   * The builders, as a whole rather than member by member: a tool never loads
-   * a `GuiBuilder` class, nor either registry that hands them out. That is the
-   * bytes being absent, not only the calls, so a member added to a
-   * `GuiBuilder` tomorrow is kept out of a tool whichever bar it lands under
-   * (`frontend/app/elements/times.test.ts` holds that the run-time bar is empty).
-   *
-   * It used to have one exception, `store/graphStore.ts`: a tool loaded its
-   * graph into the editor's store, and loading and running reached into the
-   * builders for what a node *is* (`document/nodeKinds.ts` since). A tool
-   * holds no graph now -- the server does, and hands the page its blocks --
-   * so the store is not in it at all.
-   */
-  it.each(['app/elements/registry.ts', 'gui-editor/widgets/roster.ts'])(
-    'does not pull the builder registry %s into a deployed bundle',
-    (module) => {
-      expect(reachable.has(module) ? chain(module) : null).toBeNull();
-    },
-  );
-
-  it('never loads a GuiBuilder class, even one imported without the registry', () => {
-    expect([...reachable].filter((path) => /GuiBuilder\.ts$/.test(path)).map(chain)).toEqual([]);
+  it('never loads a GuiBuilder class, nor either registry that hands them out', () => {
+    // The bytes being absent, not only the calls, so a member added to a
+    // `GuiBuilder` tomorrow is kept out of a tool whichever bar it lands under.
+    expect(reaching((path) => /GuiBuilder\.ts$/.test(path) || ['app/elements/registry.ts', 'gui-editor/widgets/roster.ts'].includes(path))).toEqual([]);
   });
 
   /**
    * graph/ and backend/, as far as a tool's page loads them: the contract
-   * (`backend/app/api.ts`), and the shapes of a few values its views read -- a
+   * (`host/api.ts`), and the shapes of a few values its views read -- a
    * chat's conversation, a dropdown's choice, a slider's range. Which blocks
    * start a round and which are given a value are the graph's events and
-   * values, which the runtime API tells the page by name. It used to ask the
-   * element registry of graph/, and so loaded every runner, the executor and
-   * the authoring code with it: fifty modules of graph/, for two answers.
+   * values, which the runtime API tells the page by name.
    */
   it('loads of graph/ and backend/ only the contract and the shapes of the values its views read', () => {
     const loaded = [...reachable].filter((path) => path.startsWith('graph/') || path.startsWith('backend/'));
     expect(loaded).toContain('backend/app/api.ts');
     const more = loaded.filter((path) => !/^backend\/(app\/api\.ts|gui-editor\/widgets\/[a-z_]+\/[a-z][A-Za-z]*\.ts)$/.test(path));
     expect(more.map(chain)).toEqual([]);
-  });
-
-  it('draws the page it is handed, and runs it through the session, from the halves that are delivered', () => {
-    // The other side of the rules above: absent *because the page gets what it
-    // needs elsewhere*, not because the page stopped working.
-    expect(reachable.has('gui-editor/page/blocks.ts')).toBe(true);
-    expect(reachable.has('app/api/session.ts')).toBe(true);
   });
 });

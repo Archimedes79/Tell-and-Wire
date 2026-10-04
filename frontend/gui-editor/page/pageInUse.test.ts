@@ -50,17 +50,13 @@ afterEach(async () => {
 });
 
 describe('a page in use', () => {
-  it('starts a round by a button\'s name, and hands on no value of it: a press is an event', async () => {
+  it('starts a round by a button\'s name, with no value of it, and hands on what a block that takes a value now holds', async () => {
     await act(async () => { host.querySelector('button')!.click(); });
-    expect(told).toEqual(['event go']);
-  });
-
-  it('hands on what a block that takes a value now holds, before the round it starts', async () => {
     const select = host.querySelector('select')!;
     await act(async () => {
       select.value = 'b';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    expect(told[0]).toBe('value pick "b"');
+    expect(told.slice(0, 2)).toEqual(['event go', 'value pick "b"']);
   });
 });

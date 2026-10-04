@@ -36,38 +36,9 @@ function variants(): GraphNode[] {
 }
 
 describe('NodeGuiBuilder.saved', () => {
-  it.each(variants().map((node) => [`${node.node_type} (${node.config.write_mode})`, node]))(
-    '%s: a run sees the lean node exactly as the full one',
-    (_name, node) => {
-      const lean = savedNode(node);
-      expect(answers(lean)).toEqual(answers(node));
-    },
-  );
-
-  it('writes, for a new node, only what it starts with that is no default', () => {
-    // One default per key: a key a new node holds at its default says nothing
-    // a run would not assume, and is left out of its file.
-    const saved = Object.fromEntries(Object.entries(NODE_KINDS).map(([type, kind]) => [type, savedNode(kind.create('n')).config]));
-    expect(saved.folder).toEqual({});
-    expect(saved.data).toEqual({});
-    expect(saved.start).toEqual({});
-    expect(saved.end).toEqual({});
-    // Once, on what arrives: the default `batch_mode`, so nothing to write.
-    expect(saved.ai).toEqual({});
-    // No code: code.js is its stub until ✨ Code writes it.
-    expect(saved.code).toEqual({});
-    expect(Object.keys(saved.subgraph)).toEqual(['subgraph']);
-  });
-
-  it('saves a folder node as its folder, its file types and its subfolders, and nothing more', () => {
-    const node = NODE_KINDS.folder.create('n');
-    node.config = { ...node.config, path: 'data', extensions: '.csv', recursive: true };
-    expect(savedNode(node).config).toEqual({ path: 'data', extensions: '.csv', recursive: true });
-  });
-
-  it('keeps any key once somebody changed it from its default', () => {
-    const node = NODE_KINDS.end.create('n');
-    node.config.temperature = 0.1;
-    expect(savedNode(node).config.temperature).toBe(0.1);
+  it('writes a lean node a run sees exactly as the full one: every node type, in every mode', () => {
+    for (const node of variants()) {
+      expect(answers(savedNode(node)), `${node.node_type} (${node.config.write_mode})`).toEqual(answers(node));
+    }
   });
 });

@@ -116,7 +116,7 @@ one by one in `backend/gui-editor/session.test.ts`.
    deletes the file; the App tab lists what it forgets under *What using it keeps*.
 6. **One session per server**, its id in every runtime route
    (`backend/app/runtimeApi.test.ts`). The command line and `run_graph` keep nothing: they
-   start from the design (`backend/app/cli/cli.test.ts`).
+   start from the design.
 
 None of it marks the editor's document unsaved or is saved with it
 (`frontend/app/store/graphStore.test.ts`: "shows what a round made, and keeps none of it in
@@ -333,8 +333,7 @@ Checked by `symmetry.test.ts`, and by `boundary.test.ts`, since a deployed page 
 node's `Language` (`JAVASCRIPT` in `graph/nodes/code/javascript.ts`; the interface is in
 `graph/authoring/generation.ts`): the file, the fence, what the model is told, the empty
 `run` it completes, the limits, and how a written body is run. The writer
-(`backend/graph-editor/generate.ts`) names no language (`generate.test.ts`: "is written and
-tried in the language its node declares"). Two ways:
+(`backend/graph-editor/generate.ts`) names no language. Two ways:
 
 1. **A node kind for it**: a node kind as above whose runner declares its own `Language`,
    and a `CodeService` (`graph/nodes/Runtime.ts`) that runs bodies in that language, beside
@@ -402,7 +401,7 @@ Besides the provider keys and addresses in the README:
 ## Checks
 
 `npm run typecheck` (all three workspaces), `npm run lint` (`frontend/`), `npm run build`
-(`frontend/dist`; the bundle test needs it), `npm test` (Vitest in all three workspaces),
+(`frontend/dist`; the package test needs it), `npm test` (Vitest in all three workspaces),
 `npm run licenses` (every installed package against the licences it may have,
 `scripts/licenses.mjs`). CI (`.github/workflows/ci.yml`) runs these, then
 `node backend/app/main.ts check` and `test --offline` over every folder in `examples/`, and

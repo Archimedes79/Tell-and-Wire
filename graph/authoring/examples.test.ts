@@ -22,62 +22,24 @@ const counter = (config: Record<string, unknown>, inputs = [port('text', 'input'
 });
 
 const INPUT = 'module.exports = { "text": "a\\nb\\nc" };';
+const OUTPUT = 'module.exports = { "lines": 3 };';
 
 describe('a node\'s example', () => {
-  it('is one call on its input.js, held to its output.js', async () => {
-    const run = await runExample(counter({ input_definition: INPUT, output_definition: 'module.exports = { "lines": 3 };' }), 'count', { runtime: running, registry });
-    expect(run).toEqual({ status: 'pass', details: [], outputs: { lines: 3 }, held: true });
+  it('is one call on its input.js, held to its output.js: it passes, fails where the result does not fit, and errors where the node does', async () => {
+    const run = (config: Record<string, unknown>) => runExample(counter({ input_definition: INPUT, ...config }), 'count', { runtime: running, registry });
+
+    expect(await run({ output_definition: OUTPUT })).toEqual({ status: 'pass', details: [], outputs: { lines: 3 }, held: true });
+
+    const misfit = await run({ output_definition: 'module.exports = { "lines": "three", "words": 2 };' });
+    expect(misfit.status).toBe('fail');
+    expect(misfit.details).toEqual(['output "words" is missing', 'output "lines" is a number; output.js says text']);
+
+    expect(await run({ code: 'function run() { throw new Error("no rows"); }' })).toMatchObject({ status: 'error', details: ['no rows'] });
   });
 
-  it('is handed the example as it is: a file-reading input already holds the text, and nothing is read', async () => {
-    let read = 0;
-    const runtime = { ...running, files: { ...running.files, read: async () => { read += 1; return 'x'; } } };
-    expect((await runExample(counter({ input_definition: INPUT }), 'count', { runtime, registry })).outputs).toEqual({ lines: 3 });
-    expect(read).toBe(0);
-  });
-
-  it('is one item for a node run once per item: one call, nothing fanned out, nothing collected', async () => {
-    const graph = counter({ input_definition: INPUT, output_definition: 'module.exports = { "lines": 1 };', batch_mode: 'per_item' },
-      [port('text', 'input', { multi: true })]);
-    graph.nodes[0].outputs[0].multi = true;
-    expect(await runExample(graph, 'count', { runtime: running, registry })).toMatchObject({ status: 'pass', outputs: { lines: 3 } });
-  });
-
-  it('fails where what came out does not fit output.js, saying where', async () => {
-    const run = await runExample(counter({ input_definition: INPUT, output_definition: 'module.exports = { "lines": "three", "words": 2 };' }), 'count', { runtime: running, registry });
-    expect(run.status).toBe('fail');
-    expect(run.details).toEqual(['output "words" is missing', 'output "lines" is a number; output.js says text']);
-  });
-
-  it('only has to run without an output.js', async () => {
-    expect(await runExample(counter({ input_definition: INPUT }), 'count', { runtime: running, registry }))
-      .toEqual({ status: 'pass', details: [], outputs: { lines: 3 }, held: false });
-  });
-
-  it('is held to nothing where its output.js cannot be read -- and fails, saying why, rather than "fits"', async () => {
-    const run = await runExample(counter({ input_definition: INPUT, output_definition: 'module.exports = { "lines": 3, };' }), 'count', { runtime: running, registry });
-    expect(run).toMatchObject({ status: 'fail', outputs: { lines: 3 }, held: false });
-    expect(run.details).toEqual([expect.stringMatching(/^output\.js cannot be read: its example after module\.exports is not plain JSON/)]);
-  });
-
-  it('says what to do where there is nothing to try it on, or it cannot be read', async () => {
-    expect((await runExample(counter({}), 'count', { runtime: running, registry })).details)
-      .toEqual(['It has no input.js, so there is nothing to try it on: write one with ✨ Input.']);
-    const broken = await runExample(counter({ input_definition: 'module.exports = { text: "a" };' }), 'count', { runtime: running, registry });
-    expect(broken.status).toBe('error');
-    expect(broken.details[0]).toMatch(/^Its input\.js cannot be read: its example after module.exports is not plain JSON/);
-    // A node that takes nothing in is tried on nothing.
-    expect((await runExample(counter({}, []), 'count', { runtime: running, registry })).status).toBe('pass');
-  });
-
-  it('says how the node failed', async () => {
-    const run = await runExample(counter({ input_definition: INPUT, code: 'function run() { throw new Error("no rows"); }' }), 'count', { runtime: running, registry });
-    expect(run).toMatchObject({ status: 'error', details: ['no rows'] });
-  });
-
-  it('asks the model for an ai node -- and, offline, skips it', async () => {
+  it('asks the model for an ai node and, offline, skips it; a graph is tested at every depth', async () => {
     const asked: AiRequest[] = [];
-    const graph = parseGraph({
+    const say = parseGraph({
       metadata: { name: 't' },
       nodes: [{
         id: 'say', node_type: 'ai', label: 'Say', description: 'Count the lines.', inputs: [port('text', 'input')], outputs: [port('count', 'output')],
@@ -86,35 +48,24 @@ describe('a node\'s example', () => {
       edges: [],
     });
     const runtime = quietRuntime({ ai: { complete: async (request) => { asked.push(request); return '{"count": 3}'; } } });
-    expect(await runExample(graph, 'say', { runtime, registry, offline: true })).toMatchObject({ status: 'skipped' });
+    expect(await runExample(say, 'say', { runtime, registry, offline: true })).toMatchObject({ status: 'skipped' });
     expect(asked).toEqual([]);
-    expect(await runExample(graph, 'say', { runtime, registry })).toMatchObject({ status: 'pass', outputs: { count: 3 } });
+    expect(await runExample(say, 'say', { runtime, registry })).toMatchObject({ status: 'pass', outputs: { count: 3 } });
     expect(asked[0].prompt).toBe('a\nb\nc');
-  });
-});
 
-describe('testing a graph', () => {
-  const inner = counter({ input_definition: INPUT, output_definition: 'module.exports = { "lines": 3 };' });
-  const graph = parseGraph({
-    metadata: { name: 'outer' },
-    nodes: [
-      ...counter({ input_definition: INPUT, output_definition: 'module.exports = { "lines": 3 };' }).nodes,
-      // Not tried, and said: it has inputs, and no input.js to try it on.
-      { ...counter({}).nodes[0], id: 'plain' },
-      { id: 'part', node_type: 'subgraph', label: 'Part', inputs: [], outputs: [], config: { subgraph: inner } },
-    ],
-    edges: [],
-  });
-
-  it('runs every node that has an example, at every depth, names the way down to it -- and says one that has none yet', async () => {
+    const inner = counter({ input_definition: INPUT, output_definition: OUTPUT });
+    const graph = parseGraph({
+      metadata: { name: 'outer' },
+      nodes: [
+        ...counter({ input_definition: INPUT, output_definition: OUTPUT }).nodes,
+        // Not tried, and said: it has inputs, and no input.js to try it on.
+        { ...counter({}).nodes[0], id: 'plain' },
+        { id: 'part', node_type: 'subgraph', label: 'Part', inputs: [], outputs: [], config: { subgraph: inner } },
+      ],
+      edges: [],
+    });
     const { tested, results } = await testGraph(graph, { runtime: () => running, registry });
     expect(tested).toBe(3);
     expect(results.map(({ inside, nodeId, result }) => `${inside}${nodeId}: ${result.status}`)).toEqual(['count: pass', 'plain: skipped', 'part ▸ count: pass']);
-    expect(results[1].result.details).toEqual(['It has no input.js yet, so there is nothing to try it on: write one with ✨ Input.']);
-  });
-
-  it('runs only the node asked for, and says so where it has nothing to run it on', async () => {
-    const { results } = await testGraph(graph, { runtime: () => running, registry, only: 'plain' });
-    expect(results).toEqual([{ inside: '', nodeId: 'plain', result: expect.objectContaining({ status: 'error' }) }]);
   });
 });

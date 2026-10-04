@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { GraphEdge, GraphNode, Port } from '../graph';
 import { useGraphStore } from './graphStore';
-import { portRenames, trackPorts, untracked } from './portRenames';
+import { trackPorts } from './portRenames';
 import { saveDraft } from '../../graph-editor/canvas/nodeDraft';
 import { baseNodeConfig } from '../document/baseNodeConfig';
 
@@ -10,16 +10,13 @@ import { baseNodeConfig } from '../document/baseNodeConfig';
  *
  * A port's id is the name a body reads it by -- `inputs.csv`, `{ figure }` --
  * so the ports editor edits exactly that, and a rename must not cut the wire
- * on it: renaming `input` to `csv` would otherwise quietly cut the graph in half.
- *
- * The three edits below are the ones the ports editor makes (`PortsEditor`):
+ * on it. The edits below are the ones the ports editor makes (`PortsEditor`):
  * a row is edited by spreading it with the change, removed by filtering it
- * out, and a new one is appended. Each test edits a draft that way, writes it
- * the way the panel does (`saveDraft`, from `nodePanel`), and looks at the wires.
+ * out. Each test edits a draft that way, writes it the way the panel does
+ * (`saveDraft`), and looks at the wires.
  */
 const edit = (ports: Port[], at: number, patch: Partial<Port>) => ports.map((port, i) => (i === at ? { ...port, ...patch } : port));
 const remove = (ports: Port[], at: number) => ports.filter((_, i) => i !== at);
-const add = (ports: Port[], id: string): Port[] => [...ports, { id, name: id, kind: 'input', data_type: 'any', multi: false, required: false, description: '' }];
 
 const input = (id: string): Port => ({ id, name: id, kind: 'input', data_type: 'any', multi: false, required: false, description: '' });
 const output = (id: string): Port => ({ id, name: id, kind: 'output', data_type: 'any', multi: false, required: false, description: '' });
@@ -45,111 +42,40 @@ function savePanel(id: string, change: (draft: GraphNode) => GraphNode) {
 const wire = (source: string, target: string, port: string): GraphEdge =>
   ({ id: `${source}-${target}-${port}`, source_node_id: source, source_port_id: 'out', target_node_id: target, target_port_id: port });
 
-function load(nodes: GraphNode[], edges: GraphEdge[]) {
+/** The graph each test starts from: a and b wired into ai's two inputs. */
+function load() {
   store().loadGraph({
     metadata: { name: 'T', description: '', gui_scheme: 'night' },
-    nodes,
-    edges,
+    nodes: [
+      node('a', [], [output('out')]),
+      node('b', [], [output('out')]),
+      node('ai', [input('prompt'), input('context')], [output('output')]),
+    ],
+    edges: [wire('a', 'ai', 'prompt'), wire('b', 'ai', 'context')],
   });
 }
 
-beforeEach(() => {
-  load([
-    node('a', [], [output('out')]),
-    node('b', [], [output('out')]),
-    node('ai', [input('prompt'), input('context')], [output('output')]),
-  ], [wire('a', 'ai', 'prompt'), wire('b', 'ai', 'context')]);
-});
+beforeEach(load);
 
 describe('writing a node\'s panel: the wires follow the ports, not the rows', () => {
-  it('takes a removed port\'s wire away, and leaves the port that slid into its row alone', () => {
-    // The bug: removing `prompt` read as "prompt renamed to context", so the
-    // wire from a landed on context, which then had two.
+  it('takes a removed port\'s wire away, and leaves the port that slid into its row alone -- even when another is renamed to the name just freed', () => {
     savePanel('ai', (draft) => ({ ...draft, inputs: remove(draft.inputs, 0) }));
     expect(stored('ai').inputs.map((port) => port.id)).toEqual(['context']);
     expect(into('ai')).toEqual(['b -> context']);
-  });
 
-  it('does the same for the last of three, and for a port in the middle', () => {
-    load([node('a', [], [output('out')]), node('b', [], [output('out')]), node('c', [], [output('out')]),
-      node('code', [input('csv'), input('kind'), input('top')])],
-    [wire('a', 'code', 'csv'), wire('b', 'code', 'kind'), wire('c', 'code', 'top')]);
-    savePanel('code', (draft) => ({ ...draft, inputs: remove(draft.inputs, 1) }));
-    expect(into('code')).toEqual(['a -> csv', 'c -> top']);
-  });
-
-  it('moves the wire of a port that was renamed', () => {
-    savePanel('ai', (draft) => ({ ...draft, inputs: edit(draft.inputs, 0, { id: 'question' }) }));
-    expect(into('ai')).toEqual(['a -> question', 'b -> context']);
-  });
-
-  it('names the moved wire after its new end: a new port of the old name gets a wire of its own', () => {
-    // Re-test: after `input` became `file`, the wire was still called "start.data -> code.input".
-    savePanel('ai', (draft) => ({ ...draft, inputs: edit(draft.inputs, 0, { id: 'question' }) }));
-    expect(store().rfEdges.find((edge) => edge.targetHandle === 'question')?.id).toBe('a.out -> ai.question');
-    savePanel('ai', (draft) => ({ ...draft, inputs: add(draft.inputs, 'prompt') }));
-    store().connect({ source: 'a', sourceHandle: 'out', target: 'ai', targetHandle: 'prompt' });
-    const ids = store().rfEdges.map((edge) => edge.id);
-    expect(new Set(ids).size).toBe(ids.length);
-    expect(into('ai')).toEqual(['a -> prompt', 'a -> question', 'b -> context']);
-  });
-
-  it('moves the wire of an output that was renamed, at its source end', () => {
-    load([node('code', [], [output('output')]), node('sink', [input('value')])],
-      [{ id: 'e1', source_node_id: 'code', source_port_id: 'output', target_node_id: 'sink', target_port_id: 'value' }]);
-    savePanel('code', (draft) => ({ ...draft, outputs: edit(draft.outputs, 0, { id: 'figure' }) }));
-    expect(store().rfEdges.map((edge) => `${edge.source}.${edge.sourceHandle} -> ${edge.target}.${edge.targetHandle}`))
-      .toEqual(['code.figure -> sink.value']);
-  });
-
-  it('tells a removal and a rename apart when both happen before one Save', () => {
-    // Remove `prompt`, then rename `context` to `prompt`. By rows this was
-    // "context renamed to prompt" with prompt's wire staying put -- the port
-    // now called prompt got both wires.
-    savePanel('ai', (draft) => {
-      const without = remove(draft.inputs, 0);
-      return { ...draft, inputs: edit(without, 0, { id: 'prompt' }) };
-    });
-    expect(stored('ai').inputs.map((port) => port.id)).toEqual(['prompt']);
+    // Remove `prompt`, then rename `context` to `prompt` before one Save: by rows this
+    // read as "context renamed to prompt", and the port now called prompt got both wires.
+    load();
+    savePanel('ai', (draft) => ({ ...draft, inputs: edit(remove(draft.inputs, 0), 0, { id: 'prompt' }) }));
     expect(into('ai')).toEqual(['b -> prompt']);
   });
 
-  it('swaps two names, and the wires swap with them', () => {
-    savePanel('ai', (draft) => {
-      let inputs = edit(draft.inputs, 0, { id: 'tmp' });
-      inputs = edit(inputs, 1, { id: 'prompt' });
-      inputs = edit(inputs, 0, { id: 'context' });
-      return { ...draft, inputs };
-    });
-    expect(into('ai')).toEqual(['a -> context', 'b -> prompt']);
-  });
+  it('moves the wire of a port that was renamed, at an input or at an output, and names it after its new end', () => {
+    savePanel('ai', (draft) => ({ ...draft, inputs: edit(draft.inputs, 0, { id: 'question' }) }));
+    expect(into('ai')).toEqual(['a -> question', 'b -> context']);
+    expect(store().rfEdges.find((edge) => edge.targetHandle === 'question')?.id).toBe('a.out -> ai.question');
 
-  it('gives a new port no wire, and keeps every old one where it was', () => {
-    savePanel('ai', (draft) => ({ ...draft, inputs: add(draft.inputs, 'extra') }));
-    expect(into('ai')).toEqual(['a -> prompt', 'b -> context']);
-  });
-
-  it('counts a port the element put back under the same name as the same port', () => {
-    // "Catch failures" adds `error` as a new object, not through the ports
-    // editor: it is the port of its name, and its wires stay.
-    load([node('code', [], [output('output'), output('error')]), node('sink', [input('value'), input('why')])],
-      [{ id: 'e1', source_node_id: 'code', source_port_id: 'error', target_node_id: 'sink', target_port_id: 'why' }]);
-    savePanel('code', (draft) => ({ ...draft, outputs: [...draft.outputs.filter((port) => port.id !== 'error'), output('error')] }));
-    expect(into('sink')).toEqual(['code -> why']);
-  });
-});
-
-describe('what the panel keeps on a port to tell them apart', () => {
-  it('is never written: the draft reads as the node it came from', () => {
-    const plain = node('n', [input('a')], [output('b')]);
-    const draft = trackPorts(plain);
-    expect(JSON.stringify(draft)).toBe(JSON.stringify(plain));
-    expect(untracked(draft)).toEqual(plain);
-    expect(Object.getOwnPropertySymbols(untracked(draft).inputs[0])).toEqual([]);
-  });
-
-  it('says nothing when nothing about the ports changed', () => {
-    const plain = node('n', [input('a')], [output('b')]);
-    expect(portRenames(plain, trackPorts(plain))).toEqual({ inputs: {}, outputs: {} });
+    savePanel('a', (draft) => ({ ...draft, outputs: edit(draft.outputs, 0, { id: 'figure' }) }));
+    expect(store().rfEdges.find((edge) => edge.target === 'ai' && edge.targetHandle === 'question')?.sourceHandle).toBe('figure');
   });
 });

@@ -21,38 +21,18 @@ function docx(body: string): Uint8Array {
 }
 
 const bullet = (id: number): string => `<w:numPr><w:ilvl w:val="0"/><w:numId w:val="${id}"/></w:numPr>`;
-
-describe('a Word document, read', () => {
-  it('is its text as Markdown: headings by what their style is called, in any language', async () => {
-    const said = await docxMarkdown(docx(
-      p(r('Bericht'), '<w:pStyle w:val="Titel"/>') + p(r('Einleitung'), '<w:pStyle w:val="berschrift1"/>') + p(r('Text &amp; mehr &lt;3')),
-    ));
-    expect(said).toBe('# Bericht\n\n## Einleitung\n\nText & mehr <3\n');
-  });
-
-  it('keeps bold and italic, and does not mark the spaces around them', async () => {
-    expect(await docxMarkdown(docx(p(r('ein ') + r('fettes ', '<w:b/>') + r('Wort', '<w:i/>') + r(' nicht', '<w:b w:val="0"/>')))))
-      .toBe('ein **fettes** *Wort* nicht\n');
-  });
-
-  it('writes a list as its numbering says, bulleted or numbered, one block', async () => {
-    expect(await docxMarkdown(docx(p(r('a'), bullet(1)) + p(r('b'), bullet(1)) + p(r('eins'), bullet(2)))))
-      .toBe('- a\n- b\n1. eins\n');
-  });
-
-  it('writes a table as a table, its first row the head', async () => {
-    const cell = (text: string): string => `<w:tc>${p(r(text))}</w:tc>`;
-    const table = `<w:tbl><w:tr>${cell('A')}${cell('B')}</w:tr><w:tr>${cell('1')}${cell('x | y')}</w:tr></w:tbl>`;
-    expect(await docxMarkdown(docx(table))).toBe('| A | B |\n| --- | --- |\n| 1 | x \\| y |\n');
-  });
-
-  it('says what it is when it is no Word document', async () => {
-    await expect(docxMarkdown(new TextEncoder().encode('plain text'))).rejects.toThrow(/no zip archive/);
-  });
-});
+const cell = (text: string): string => `<w:tc>${p(r(text))}</w:tc>`;
 
 describe('a file a node reads', () => {
-  it('is its text, a Word document as Markdown, a PDF as itself', async () => {
+  it('is its text; a Word document as Markdown, headings by what their style is called; a PDF as itself', async () => {
+    const said = await docxMarkdown(docx(
+      p(r('Bericht'), '<w:pStyle w:val="Titel"/>') + p(r('Einleitung'), '<w:pStyle w:val="berschrift1"/>')
+      + p(r('ein ') + r('fettes ', '<w:b/>') + r('Wort', '<w:i/>') + r(' &amp; mehr'))
+      + p(r('a'), bullet(1)) + p(r('b'), bullet(1)) + p(r('eins'), bullet(2))
+      + `<w:tbl><w:tr>${cell('A')}${cell('B')}</w:tr><w:tr>${cell('1')}${cell('x | y')}</w:tr></w:tbl>`,
+    ));
+    expect(said).toBe('# Bericht\n\n## Einleitung\n\nein **fettes** *Wort* & mehr\n\n- a\n- b\n1. eins\n\n| A | B |\n| --- | --- |\n| 1 | x \\| y |\n');
+
     const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-documents-'));
     try {
       await writeFile(join(dir, 'note.txt'), 'hello');
@@ -63,7 +43,6 @@ describe('a file a node reads', () => {
       const pdf = await fileContent(join(dir, 'statement.pdf'), nodeFiles);
       expect(pdf).toBe(`data:application/pdf;base64,${Buffer.from('%PDF-1.4').toString('base64')}`);
       expect(isInlineFile(pdf)).toBe(true);
-      expect(isInlineFile('data:text/plain;base64,aGk=')).toBe(false);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

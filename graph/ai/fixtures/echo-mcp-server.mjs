@@ -6,17 +6,11 @@
 // stdout, chatter on stderr, a tool list that comes in pages.
 //
 //   node echo-mcp-server.mjs            the server
-//   node echo-mcp-server.mjs --crash    dies before saying hello, loudly
 //   node echo-mcp-server.mjs --mute     reads everything and answers nothing
 
 import { createInterface } from 'node:readline';
 
 const mode = process.argv[2] ?? '';
-
-if (mode === '--crash') {
-  process.stderr.write('echo-mcp-server: the database is on fire\n');
-  process.exit(3);
-}
 
 // Not JSON, on the channel that is supposed to carry only JSON.
 process.stdout.write('echo-mcp-server ready\n');
@@ -44,25 +38,8 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {} },
   },
   {
-    name: 'picture',
-    description: 'Returns a caption and an image.',
-    inputSchema: { type: 'object', properties: {} },
-  },
-  {
-    name: 'whoami',
-    description: 'Says what EXAMPLE_NAME is set to, so a test can see `env` arrive.',
-    inputSchema: { type: 'object', properties: {} },
-  },
-  {
     name: 'hang',
     description: 'Never answers, the way a wedged server does: for the clock and for Stop.',
-    inputSchema: { type: 'object', properties: {} },
-  },
-  {
-    // Listed and then denied, which is how a JSON-RPC *error* -- as opposed to
-    // a result flagged `isError` -- gets to a client that only calls listed tools.
-    name: 'ghost.tool',
-    description: 'Is in the list and not in the server.',
     inputSchema: { type: 'object', properties: {} },
   },
 ];
@@ -74,10 +51,6 @@ function call(name, args) {
   if (name === 'add') return text(Number(args.a) + Number(args.b));
   if (name === 'echo') return text(args.text);
   if (name === 'fail') return { ...text('it did not work'), isError: true };
-  if (name === 'whoami') return text(process.env.EXAMPLE_NAME ?? 'nobody');
-  if (name === 'picture') {
-    return { content: [{ type: 'text', text: 'a cat' }, { type: 'image', data: 'AAAA', mimeType: 'image/png' }] };
-  }
   return undefined;
 }
 

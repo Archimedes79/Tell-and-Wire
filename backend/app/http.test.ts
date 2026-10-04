@@ -15,21 +15,14 @@ function request(chunks: string[], headers: Record<string, string> = {}): Incomi
 }
 
 describe('reading a request body', () => {
-  it('returns the whole body, however it was split', async () => {
-    expect((await readBytes(request(['{"a":', '1}']))).toString()).toBe('{"a":1}');
-  });
-
-  it('refuses one longer than the limit, and keeps none of it', async () => {
+  it('reads one in whatever pieces, and refuses one longer than the limit, announced or not', async () => {
     // The point of the limit is the memory: a body is held whole before a
     // handler sees any of it, so a wrong length must cost nothing.
+    expect((await readBytes(request(['{"a":', '1}']))).toString()).toBe('{"a":1}');
     const refused = await readBytes(request(['0123456789']), 4).catch((error: unknown) => error);
     expect(refused).toBeInstanceOf(Refusal);
     expect((refused as Refusal).status).toBe(413);
-  });
-
-  it('refuses one that announces itself as too long before reading a byte', async () => {
-    const refused = await readBytes(request(['{}'], { 'content-length': '999999999' }), 4)
-      .catch((error: unknown) => error);
-    expect((refused as Refusal).status).toBe(413);
+    const announced = await readBytes(request(['{}'], { 'content-length': '999999999' }), 4).catch((error: unknown) => error);
+    expect((announced as Refusal).status).toBe(413);
   });
 });

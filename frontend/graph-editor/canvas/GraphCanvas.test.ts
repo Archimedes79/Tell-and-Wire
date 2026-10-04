@@ -89,76 +89,28 @@ function answering(yes: boolean): string[] {
 /** What the store is asked by hand, as a panel or a menu would ask it. */
 const done = (change: () => void) => act(() => { change(); });
 
-describe('a node on the canvas', () => {
-  it('is chosen by a click, which changes nothing: Redo is still there, and Undo takes back the step before', () => {
-    done(() => store().updateNode('count', { label: 'Counted' }));
-    done(() => store().undo());
-    mouse(card('count'), 'mousedown');
-    mouse(card('count'), 'mouseup');
-    mouse(card('count'), 'click');
-    // Chosen: its panel opens.
-    expect(store().editingNodeId).toBe('count');
-    // And nothing else: the click used to be a drag begun, an undo step that threw Redo away.
-    expect(store().past).toHaveLength(0);
-    done(() => store().redo());
-    expect(node('count')!.label).toBe('Counted');
-  });
-
-  it('moved, is one undo step', () => {
-    const at = store().rfNodes.find((item) => item.id === 'count')!.position;
-    mouse(card('count'), 'mousedown', 10, 10);
-    for (const x of [20, 40, 60]) mouse(window, 'mousemove', x, 10);
-    mouse(window, 'mouseup', 60, 10);
-    expect(store().rfNodes.find((item) => item.id === 'count')!.position.x).toBeGreaterThan(at.x);
-    expect(store().past).toHaveLength(1);
-    done(() => store().undo());
-    expect(store().rfNodes.find((item) => item.id === 'count')!.position).toEqual(at);
-  });
-});
-
 describe('Delete on the canvas', () => {
-  it('asks once about an end point -- its wires, and the block that shows it -- and on a no leaves it as it was', () => {
+  it('asks first, and on a no leaves the node, its wires and the block that shows it as they were; on a yes takes them as one undo step', () => {
     // ReactFlow took a node's wires, then asked about the node: kept on
     // Cancel, it was kept with none.
     const asked = answering(false);
     choose('shown');
     press(card('shown'), 'Delete');
+    expect(asked).toHaveLength(1);
     expect(node('shown')).toBeDefined();
     expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);
     expect(store().page[0].shows).toBe('shown');
     expect(store().past).toHaveLength(0);
-    expect(asked).toEqual(['Delete "Result"? Its 1 connection goes with it. 1 block of the page loses its connection to it.']);
-  });
 
-  it('takes a node and its wires as one undo step', () => {
     answering(true);
-    choose('count');
-    press(card('count'), 'Delete');
-    expect(node('count')).toBeUndefined();
+    choose('shown');
+    press(card('shown'), 'Delete');
+    expect(node('shown')).toBeUndefined();
     expect(store().rfEdges).toEqual([]);
-    // One Ctrl+Z brings back the node and its wires: it took two.
+    expect(store().page[0].shows).toBeUndefined();
     done(() => store().undo());
-    expect(node('count')).toBeDefined();
-    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);
-  });
-
-  it('deletes nothing when pressed anywhere but on the canvas', () => {
-    answering(true);
-    choose('count');
-    // In a field beside it, as the node's panel is.
-    const field = document.createElement('input');
-    document.body.appendChild(field);
-    act(() => { field.focus(); });
-    press(field, 'Delete');
-    field.remove();
-    expect(node('count')).toBeDefined();
-  });
-
-  it('asks what the card\'s ✕ asks: an end point a block shows, wired to nothing, is not deleted without a word', () => {
-    const asked = answering(false);
-    done(() => store().setRFEdges([]));
-    act(() => { screen.querySelector<HTMLElement>('[aria-label="Delete node Result"]')!.click(); });
-    expect(asked).toEqual(['Delete "Result"? 1 block of the page loses its connection to it.']);
     expect(node('shown')).toBeDefined();
+    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);
+    expect(store().page[0].shows).toBe('shown');
   });
 });

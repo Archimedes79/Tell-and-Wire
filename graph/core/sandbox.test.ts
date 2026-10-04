@@ -15,7 +15,7 @@ import { nodeCode } from './node.ts';
  */
 
 describe('a code body', () => {
-  it('may still read and write files', async () => {
+  it('may read and write files, and be written with import, require or CommonJS exports', async () => {
     const body = `
       import { writeFileSync, readFileSync } from 'node:fs';
       import { join } from 'node:path';
@@ -27,9 +27,15 @@ describe('a code body', () => {
       }
     `;
     expect(await nodeCode.run(body, {})).toEqual({ value: 'written' });
+
+    // Both styles come out of a model, and both are ordinary JavaScript.
+    const required = `export function run() { const { tmpdir } = require('node:os'); return { value: typeof tmpdir() }; }`;
+    expect(await nodeCode.run(required, {})).toEqual({ value: 'string' });
+    const exported = `function run(inputs) { return { words: inputs.text.split(' ').length }; } module.exports = { run };`;
+    expect(await nodeCode.run(exported, { text: 'a b c' })).toEqual({ words: 3 });
   });
 
-  it('may not start another program', async () => {
+  it('may not start another program, and is handed no key of the process that runs it: it asks through node.llm', async () => {
     const body = `
       export function run() {
         const { execSync } = require('node:child_process');
@@ -38,52 +44,15 @@ describe('a code body', () => {
       }
     `;
     await expect(nodeCode.run(body, {})).rejects.toThrow(/ERR_ACCESS_DENIED|not allowed|ERR_REQUIRE|Error/);
-  });
 
-  it('is handed no key of the process that runs it: it asks through node.llm', async () => {
     // Fake values, set for this test only: what matters is which names arrive.
     const planted = { OPENAI_API_KEY: 'sk-planted', GITHUB_TOKEN: 'ghp-planted', SERVICE_PASSWORD: 'planted', TW_PLAIN: 'kept' };
     Object.assign(process.env, planted);
     try {
-      const body = `export function run() { return { names: Object.keys(process.env).filter((name) => ${JSON.stringify(Object.keys(planted))}.includes(name)) }; }`;
-      expect(await nodeCode.run(body, {})).toEqual({ names: ['TW_PLAIN'] });
+      const names = `export function run() { return { names: Object.keys(process.env).filter((name) => ${JSON.stringify(Object.keys(planted))}.includes(name)) }; }`;
+      expect(await nodeCode.run(names, {})).toEqual({ names: ['TW_PLAIN'] });
     } finally {
       for (const name of Object.keys(planted)) delete process.env[name];
     }
-  });
-});
-
-describe('how a body may be written', () => {
-  /**
-   * Both styles come out of a model, and both are ordinary JavaScript. A body
-   * using `require` used to fail with ERR_AMBIGUOUS_MODULE_SYNTAX -- a message
-   * about module formats, for someone who only asked for a file to be read.
-   */
-  it('may use require', async () => {
-    const body = `
-      export function run() {
-        const { tmpdir } = require('node:os');
-        return { value: typeof tmpdir() };
-      }
-    `;
-    expect(await nodeCode.run(body, {})).toEqual({ value: 'string' });
-  });
-
-  it('may export its run the CommonJS way, as code.js run on its own does', async () => {
-    // A model that has just read input.js and output.js ends code.js the same way.
-    const body = `
-      function run(inputs) { return { words: inputs.text.split(' ').length }; }
-      module.exports = { run };
-      exports.also = run;
-    `;
-    expect(await nodeCode.run(body, { text: 'a b c' })).toEqual({ words: 3 });
-  });
-
-  it('may use import', async () => {
-    const body = `
-      import { tmpdir } from 'node:os';
-      export function run() { return { value: typeof tmpdir() }; }
-    `;
-    expect(await nodeCode.run(body, {})).toEqual({ value: 'string' });
   });
 });

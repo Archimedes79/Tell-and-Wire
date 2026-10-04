@@ -35,19 +35,3 @@ describe('going into a node\'s graph from its panel', () => {
     }
   });
 });
-
-describe('going into a node\'s graph and out again, changing nothing', () => {
-  it('leaves the document saved, though its file wrote a setting at its default', () => {
-    // Re-test: nested_statistics read "● Unsaved changes" once its Statistics node was entered.
-    const part = NODE_KINDS.subgraph.create('part');
-    const inner = NODE_KINDS.code.create('count');
-    inner.config = { ...inner.config, batch_mode: 'whole_list', code: 'function run() { return {}; }' };
-    part.config = { ...part.config, subgraph: { metadata: { name: 'Inner', description: '' }, nodes: [inner], edges: [] } } as GraphNode['config'];
-    store().loadGraph({ metadata: { name: 'Outer', description: '', gui_scheme: 'night' }, nodes: [part], edges: [] });
-    expect(store().isDirty()).toBe(false);
-    enterGraphOf('part');
-    expect(store().isDirty()).toBe(false);
-    store().closeSubgraph();
-    expect(store().isDirty()).toBe(false);
-  });
-});

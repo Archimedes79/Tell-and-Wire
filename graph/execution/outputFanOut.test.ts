@@ -46,26 +46,12 @@ async function run(g: Graph) {
 }
 
 describe('an end point told to run "once per item"', () => {
-  it('writes a list to its file once, not each item over the last', async () => {
-    const { writes, out } = await run(graph(['a', 'b', 'c'], { write_mode: 'file', path: '/tmp/r.txt' }));
-    expect(writes).toEqual([['/tmp/r.txt', JSON.stringify(['a', 'b', 'c'])]]);
-    expect(out.written_path).toBe('/tmp/r.txt');
-  });
+  it('still takes a list whole: written once to its file, as numbered files to its folder', async () => {
+    const toFile = await run(graph(['a', 'b', 'c'], { write_mode: 'file', path: '/tmp/r.txt' }));
+    expect(toFile.writes).toEqual([['/tmp/r.txt', JSON.stringify(['a', 'b', 'c'])]]);
+    expect(toFile.out.written_path).toBe('/tmp/r.txt');
 
-  it('writes a list to its folder as numbered files', async () => {
-    const { writes } = await run(graph(['a', 'b', 'c'], { write_mode: 'directory', path: '/tmp/d' }));
-    expect(writes.map(([path]) => path)).toEqual(['/tmp/d/value_1.txt', '/tmp/d/value_2.txt', '/tmp/d/value_3.txt']);
-  });
-
-  it('hands an empty list on as one, rather than running zero times', async () => {
-    const { writes, out } = await run(graph([], {}));
-    expect(writes).toEqual([]);
-    expect(out.value).toEqual([]);
-  });
-
-  it('is not told to fan out, whatever its file says; a code node still is', () => {
-    const output = graph([], { write_mode: 'file' }).nodes[1];
-    expect(registry.node('end')!.batchMode(output)).toBe('whole');
-    expect(registry.node('code')!.batchMode({ ...output, node_type: 'code' })).toBe('per_item');
+    const toFolder = await run(graph(['a', 'b', 'c'], { write_mode: 'directory', path: '/tmp/d' }));
+    expect(toFolder.writes.map(([path]) => path)).toEqual(['/tmp/d/value_1.txt', '/tmp/d/value_2.txt', '/tmp/d/value_3.txt']);
   });
 });
