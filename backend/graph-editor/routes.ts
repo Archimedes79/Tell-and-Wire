@@ -130,13 +130,11 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       return graph;
     }),
 
-    findProjects: async (asked, { loopback }) => {
-      if (!loopback) throw new Refusal(403, 'Looking for projects is only offered on this machine.');
+    findProjects: async (asked) => {
       return { paths: asked.name ? await files.findProjects(String(asked.name)) : [], searched: files.fileSearch() };
     },
 
-    findFile: async (asked, { loopback }) => {
-      if (!loopback) throw new Refusal(403, 'Looking for files is only offered on this machine.');
+    findFile: async (asked) => {
       const size = Number(asked.size);
       return {
         paths: asked.name && Number.isFinite(size) ? await files.findFiles(String(asked.name), size) : [],
@@ -227,8 +225,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
 
     providers: () => settings.providerStatus(),
 
-    async openExternal(asked, { loopback }) {
-      if (!loopback) throw new Refusal(403, 'Opening files is only offered on this machine.');
+    async openExternal(asked) {
       if (!asked.graph_path || !asked.node_id) throw new Refusal(400, "Missing 'graph_path' or 'node_id'.");
       try {
         const folder = project.projectFolderOf(resolve(expandHome(asked.graph_path)));

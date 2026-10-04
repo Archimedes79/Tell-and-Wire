@@ -379,13 +379,14 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
 
 ## Security boundaries
 
-- Everything binds to loopback; nothing asks who is calling. Bound wider (`--host`, a
-  container), the server prints a warning and every route it serves is open to whoever
+- Everything binds to loopback; nothing asks who is calling. The editor refuses to start
+  bound wider (`--host`, a container) unless `TW_EDITOR_ON_NETWORK=1` says the port is open
+  to nobody else (the Docker image sets it: `docker-compose.yml` publishes on the host's
+  `127.0.0.1`). A tool bound wider prints a warning, and every route is open to whoever
   reaches the port, except the ones `api.ts` marks `local` (browsing, finding projects and
   files, opening a node's file in an editor) and a round that sets a picker's file or
   folder: those answer 403. What stays open includes opening and saving at any path, running
-  code and the settings with their keys, so `docker-compose.yml` publishes on the host's
-  `127.0.0.1`.
+  code and the settings with their keys.
 - A request must name `127.0.0.1`, `localhost`, `[::1]` or a name in `TW_ALLOWED_HOSTS`, come
   from the server's own origin and send `application/json` (`foreignRequest`,
   `backend/app/http.ts`). Every page it serves forbids being framed (`servePage`).
@@ -405,6 +406,7 @@ Besides the provider keys and addresses in the README:
 | `TW_AI_PROVIDER`, `TW_AI_MODEL` | The one AI setting, over the file |
 | `TW_CORE` | A graph core program to run rounds in |
 | `TW_ALLOWED_HOSTS` | Host names a server bound wider than loopback answers to, comma-separated |
+| `TW_EDITOR_ON_NETWORK` | Lets the editor start bound beyond this machine, when nobody else can reach its port |
 | `TW_NO_BROWSER` | Do not open a browser on start |
 | `TW_TIMEOUT_MS`, `TW_MCP_TIMEOUT_MS` | How long a model call (10 min) or an MCP tool call (2 min) may take; `0`: no limit |
 | `TW_MAX_TOKENS`, `TW_MAX_LLM_CALLS` | A model answer's token budget (4096; an answer cut off by it is an error); `node.llm` calls per body run (25) |

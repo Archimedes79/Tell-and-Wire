@@ -62,12 +62,15 @@ export interface Served {
   shutdown: (graceMs?: number) => Promise<string[]>;
 }
 
+/** Whether a bind address is this machine only. */
+export const isLoopbackHost = (host: string): boolean => host === '127.0.0.1' || host === 'localhost' || host === '::1';
+
 export async function serve(options: ServeOptions): Promise<Served> {
   // Everything below that outlives a request is written down here as it is
   // started, and stopped in that order: see lifecycle.ts.
   const lifecycle = new Lifecycle();
   const host = options.host ?? '127.0.0.1';
-  const loopback = host === '127.0.0.1' || host === 'localhost' || host === '::1';
+  const loopback = isLoopbackHost(host);
   const exchange: Exchange = { loopback };
   /** Who this server is, for telling its own page from another's: its port is known once it listens. */
   const self = { loopback, port: 0, names: namesFor(host) };
