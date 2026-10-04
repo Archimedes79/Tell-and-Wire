@@ -2,8 +2,9 @@
 
 # Tell & Wire
 
-**A visual editor for small AI tools: wire nodes into a graph, give it a page,
-and hand it on as a folder that runs wherever Node runs.**
+**A visual node editor for AI workflows and small local tools: say in plain words what
+each node should do, wire the nodes into a graph, give it a page, and hand it on as a
+folder that runs wherever Node runs -- offline, with a local model, if you like.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
 
@@ -12,6 +13,10 @@ and hand it on as a folder that runs wherever Node runs.**
 </div>
 
 ## What it is
+
+Tell & Wire is a node-based, no-code editor for AI workflows: you describe what each step
+should do, and a model writes it. The tools you build run on your own computer, with a
+local LLM (Ollama, LM Studio) or a model API of your choice.
 
 A tool in Tell & Wire has two halves.
 
@@ -137,5 +142,12 @@ portfolio_review are teams of AI reviewers.
 
 ## Licence
 
-Source-available under [PolyForm Noncommercial 1.0.0](LICENSE): noncommercial use is free,
-commercial use needs a separate licence (open an issue), and what you build is yours.
+Source-available under [PolyForm Noncommercial 1.0.0](LICENSE), not open source:
+noncommercial use is free, commercial use needs a separate licence (open an issue), and
+what you build is yours.
+
+## Trademarks
+
+Ollama, LM Studio, OpenAI, Anthropic, Google Gemini, GitHub Models, Node.js and the other
+product names in this document belong to their owners. Tell & Wire is not affiliated with
+or endorsed by them; the names only say what it can connect to or run on.
