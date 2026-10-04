@@ -95,7 +95,7 @@ function bodyEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEn
  * this process, or the result. Anything else a body prints is its own business
  * and is ignored, so logging after the result cannot break it.
  */
-const MARK = '\u001eai-graph:';
+const MARK = '\u001etell-and-wire:';
 /** How long a body that has handed over its result may take to end by itself. */
 const LINGER_MS = 1500;
 
@@ -113,7 +113,7 @@ const LINGER_MS = 1500;
  */
 export const nodeCode: CodeService = {
   async run(body, inputs, signal, context) {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-'));
     const file = join(dir, 'body.mjs');
 
     // A body runs as an ES module, where `require` and `module` do not exist.
@@ -173,7 +173,7 @@ export const nodeCode: CodeService = {
 /**
  * A failure in the body, counted in the body's own lines.
  *
- * Node reports `/tmp/ai-graph-x9/body.mjs:7:24` -- a file that is deleted
+ * Node reports `/tmp/tell-and-wire-x9/body.mjs:7:24` -- a file that is deleted
  * before anyone reads the message, at a line the wrapper above moved. The
  * person looking at the error wrote line 1 of a body, and that is what it now
  * says.
@@ -302,7 +302,7 @@ export function nodeRuntime(overrides: Partial<Runtime> = {}): Runtime {
     // editor runs is the one the next call uses.
     ai: { complete: async (request) => ai.complete({ ...request, ...lent(request, await aiSetting()) }), setting: () => aiSetting() },
     tools: mcpToolService(configuredMcpServers()),
-    ...(Number(process.env.AI_GRAPH_MAX_LLM_CALLS) > 0 ? { llmCallsPerBody: Number(process.env.AI_GRAPH_MAX_LLM_CALLS) } : {}),
+    ...(Number(process.env.TW_MAX_LLM_CALLS) > 0 ? { llmCallsPerBody: Number(process.env.TW_MAX_LLM_CALLS) } : {}),
     ...overrides,
   };
 }

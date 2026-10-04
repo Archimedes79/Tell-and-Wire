@@ -33,9 +33,9 @@ the time.
 
 ## 1. Install (3–5 min)
 
-Download the zip for your system from the [releases page](https://github.com/Archimedes79/AI_Graph/releases/latest)
-— [Windows](https://github.com/Archimedes79/AI_Graph/releases/latest/download/ai-graph-windows.zip)
-or [Linux](https://github.com/Archimedes79/AI_Graph/releases/latest/download/ai-graph-linux.zip),
+Download the zip for your system from the [releases page](https://github.com/Archimedes79/Tell-and-Wire/releases/latest)
+— [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip)
+or [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip),
 both x64 — unzip it, and start `run.cmd` (Windows) or `./run.sh` (Linux). The editor opens in
 your browser on <http://127.0.0.1:8000>, or the next free port. Nothing else is installed.
 

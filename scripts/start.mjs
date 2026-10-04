@@ -2,7 +2,7 @@
 // start.ps1 and start.sh call.
 //
 // Starting is also restarting. An editor already on the port is stopped first
-// -- only an AI-Graph one, see editorProcess.mjs -- because the usual reason to
+// -- only an Tell-and-Wire one, see editorProcess.mjs -- because the usual reason to
 // start again is that the engine changed, and a server keeps running the
 // engine it was started with while serving whatever page was built since.
 // Dependencies are installed on first use, and the page is rebuilt when any

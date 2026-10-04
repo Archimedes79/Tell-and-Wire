@@ -57,7 +57,7 @@ describe('openExternal', () => {
 
 describe('findProjects', () => {
   it('finds the project folders of a dropped folder\'s name, and nothing in dependencies or build output', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-'));
+    const root = await mkdtemp(join(tmpdir(), 'tell-and-wire-find-'));
     for (const folder of ['examples/chat', 'work/chat', 'node_modules/pkg/chat', 'examples/data', 'notes/chat']) {
       await mkdir(join(root, folder), { recursive: true });
     }
@@ -71,7 +71,7 @@ describe('findProjects', () => {
   });
 
   it('looks where a dropped file is looked for, as fileSearch says: three levels of folders down', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-deep-'));
+    const root = await mkdtemp(join(tmpdir(), 'tell-and-wire-find-deep-'));
     for (const project of ['a/b/c/three', 'a/b/c/d/four']) {
       await mkdir(join(root, project), { recursive: true });
       await writeFile(join(root, project, 'flow.json'), '{"nodes": {}, "wires": []}');
@@ -83,7 +83,7 @@ describe('findProjects', () => {
 
 describe('findFiles', () => {
   it('finds a dropped file by its name and size, and nothing in dependencies, dot-folders or build output', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-file-'));
+    const root = await mkdtemp(join(tmpdir(), 'tell-and-wire-find-file-'));
     for (const folder of ['examples/data', 'other', 'node_modules/pkg', '.cache']) await mkdir(join(root, folder), { recursive: true });
     await writeFile(join(root, 'examples/data/people.csv'), 'name\nAnna\n');
     await writeFile(join(root, 'other/people.csv'), 'name\nAnna\nBen\n');
@@ -97,7 +97,7 @@ describe('findFiles', () => {
 
   it('looks three levels of folders down, passing over build output and dot names -- and says where it looked', async () => {
     // A drop that found nothing said "not under the folder the editor was started in" of all of these.
-    const root = await mkdtemp(join(tmpdir(), 'ai-graph-find-depth-'));
+    const root = await mkdtemp(join(tmpdir(), 'tell-and-wire-find-depth-'));
     for (const folder of ['a/b/c', 'data/raw/2024/q1', 'build', '.venv']) await mkdir(join(root, folder), { recursive: true });
     for (const file of ['a/b/c/three.csv', 'data/raw/2024/q1/four.csv', 'build/data.csv', '.env']) await writeFile(join(root, file), 'x');
     const count = async (name: string) => (await findFiles(name, 1, root)).length;

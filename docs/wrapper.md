@@ -1,6 +1,6 @@
 # The wrapper
 
-AI-Graph is three layers. A **graph core** runs graphs. The **wrapper** around it holds
+Tell-and-Wire is three layers. A **graph core** runs graphs. The **wrapper** around it holds
 the graph in use and talks to everything outside. **Frontends** talk only to the
 wrapper: a tool's page (or any program that uses a graph) and the graph editor.
 
@@ -101,10 +101,10 @@ any number of `{ "id": 7, "event": … }` and then `{ "id": 7, "reply": … }` o
 goes to stderr. It ends when stdin ends.
 
 `node engine/src/main.ts core` is the JavaScript core as such a program. The wrapper runs
-its graphs in one when `AI_GRAPH_CORE` names it, a program and its arguments:
+its graphs in one when `TW_CORE` names it, a program and its arguments:
 
 ```bash
-AI_GRAPH_CORE="node engine/src/main.ts core" node engine/src/main.ts --editor editor/dist
+TW_CORE="node engine/src/main.ts core" node engine/src/main.ts --editor editor/dist
 ```
 
 Without it the core runs inside the wrapper's process (`core/localCore.ts`).
@@ -134,7 +134,7 @@ rounds, HTTP. It is handed a graph with what the round was sent already in its s
 points and what nodes keep already in them, and it changes nothing it was handed.
 
 **A core in another language** is correct when it runs the examples the way this one does:
-`node engine/src/main.ts test examples/<name> --offline` with `AI_GRAPH_CORE` naming it
+`node engine/src/main.ts test examples/<name> --offline` with `TW_CORE` naming it
 runs each node's example and replays the project's kept rounds (`tests/*.json`), which
 came from real runs. Its model client reads the same AI setting as the wrapper
 (`ai-settings.json`).

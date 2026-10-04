@@ -15,7 +15,7 @@ const loopback = { loopback: true } as never;
 let dir = '';
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'ai-graph-save-'));
+  dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-save-'));
 });
 
 afterEach(async () => {

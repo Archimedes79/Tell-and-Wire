@@ -98,7 +98,7 @@ const stub = () => aiService({ endpoints: { openai_compatible: model.url } });
 
 // What an example saves -- a CSV, a .tex -- lands here rather than in the
 // working directory a test happens to run in.
-const saved = await mkdtemp(join(tmpdir(), 'ai-graph-example-saves-'));
+const saved = await mkdtemp(join(tmpdir(), 'tell-and-wire-example-saves-'));
 afterAll(() => rm(saved, { recursive: true, force: true }));
 const files = { ...nodeFiles, write: (path: string, content: string, mode?: 'text' | 'binary') => nodeFiles.write(isAbsolute(path) ? path : join(saved, path), content, mode) };
 
@@ -132,10 +132,10 @@ function runBundle(dir: string): Promise<{ code: number; out: string; err: strin
       cwd: dir, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        AI_GRAPH_AI_PROVIDER: 'google', AI_GRAPH_AI_MODEL: 'stub-model',
+        TW_AI_PROVIDER: 'google', TW_AI_MODEL: 'stub-model',
         GOOGLE_BASE_URL: model.url, GOOGLE_API_KEY: 'a-test-key',
         // This machine's own settings file must not decide what a test does.
-        AI_GRAPH_SETTINGS: join(dir, 'no-settings-here.json'),
+        TW_SETTINGS: join(dir, 'no-settings-here.json'),
       },
     });
     let out = ''; let err = '';
@@ -162,7 +162,7 @@ describe.each(EXAMPLES)('%s', (name) => {
 
   it('can be deployed: it runs from its own folder, with the files it starts on', async () => {
     const graph = await loadGraph(resolve(REPO, 'examples', name));
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-example-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-example-'));
     try {
       await writeBundle(graph, dir, { dataFrom: REPO });
       const { code, out, err } = await runBundle(dir);

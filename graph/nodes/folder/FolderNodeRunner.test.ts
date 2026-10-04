@@ -82,7 +82,7 @@ describe('a folder it lists', () => {
   /** Nothing is written beside a listing: no body chooses its files, a code node after it does. */
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'ai-graph-folder-'));
+    dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-folder-'));
     forgetSeen();
   });
   afterEach(async () => {

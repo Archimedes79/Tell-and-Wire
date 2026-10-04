@@ -1,6 +1,6 @@
 <div align="center">
 
-# AI-Graph
+# Tell-and-Wire
 
 **Wire nodes on a canvas into an AI workflow — then hand the result to someone else<br>
 as a tool that runs on their machine: offline, on a local model, with no account and no cloud bill.**
@@ -10,14 +10,14 @@ pipelines, multi-agent workflows and small local apps. Say in plain words what e
 should do, and AI writes its code or its prompt; give the graph a page — a file picker, a
 chat, a chart — and 🚀 Deploy packs it into a folder someone else can run.
 
-### ⬇ [Windows](https://github.com/Archimedes79/AI_Graph/releases/latest/download/ai-graph-windows.zip) · [Linux](https://github.com/Archimedes79/AI_Graph/releases/latest/download/ai-graph-linux.zip)
+### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
 
 Unzip, start `run.cmd` (Windows) or `./run.sh` (Linux); the editor opens in your browser.<br>
 Node.js is included in the zip.
 
 [Quick start](#quick-start) · [Examples](#the-examples) · [Documentation](#documentation) · [Licence](#licence)
 
-<img src="docs/images/hero.png" alt="The AI-Graph editor: a graph of a file picker, a code node and a chart, the code node's panel open with its text and the files AI wrote from it -- and the same graph delivered as a tool that draws a bar chart" width="100%">
+<img src="docs/images/hero.png" alt="The Tell-and-Wire editor: a graph of a file picker, a code node and a chart, the code node's panel open with its text and the files AI wrote from it -- and the same graph delivered as a tool that draws a bar chart" width="100%">
 
 </div>
 
@@ -55,7 +55,7 @@ Node.js is included in the zip.
 - **Local-LLM chat or report tool** — an AI node on a local model that reads a file
   at its input, paired with a text block on the page: a runnable front-end with zero UI code.
 - **A graph as a standalone tool** — once it works in the editor, 🚀 Deploy hands a
-  non-technical user or a CI job something that runs without the AI-Graph editor at all.
+  non-technical user or a CI job something that runs without the Tell-and-Wire editor at all.
 
 ## Privacy and local processing
 
@@ -230,12 +230,12 @@ node engine/src/main.ts examples/population_plotter
 
 | System | Download | Start it with |
 |---|---|---|
-| Windows (x64) | [ai-graph-windows.zip](https://github.com/Archimedes79/AI_Graph/releases/latest/download/ai-graph-windows.zip) | `run.cmd` |
-| Linux (x64) | [ai-graph-linux.zip](https://github.com/Archimedes79/AI_Graph/releases/latest/download/ai-graph-linux.zip) | `./run.sh` |
+| Windows (x64) | [tell-and-wire-windows.zip](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) | `run.cmd` |
+| Linux (x64) | [tell-and-wire-linux.zip](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip) | `./run.sh` |
 
 Each zip includes Node.js. The editor opens in your browser at <http://127.0.0.1:8000>,
 or the next free port. Older versions are on the
-[releases page](https://github.com/Archimedes79/AI_Graph/releases).
+[releases page](https://github.com/Archimedes79/Tell-and-Wire/releases).
 
 No Docker needed: the engine is TypeScript that Node runs directly, with no
 dependencies. The [container image](docs/install.md#in-a-container) is for servers.
@@ -243,8 +243,8 @@ dependencies. The [container image](docs/install.md#in-a-container) is for serve
 **From the source**, on any system with Node 24 or newer:
 
 ```bash
-git clone https://github.com/Archimedes79/AI_Graph.git
-cd AI_Graph
+git clone https://github.com/Archimedes79/Tell-and-Wire.git
+cd Tell-and-Wire
 .\start.ps1       # Windows, PowerShell (bare `start` is a PowerShell command, not this)
 start.cmd          # Windows, cmd -- double-clicking it works too
 ./start.sh         # macOS, Linux
@@ -274,15 +274,15 @@ node engine/src/main.ts examples/nested_statistics --event measure --value "para
 | [docs/ai-providers.md](docs/ai-providers.md) | Providers, the one AI setting and a node's own, where the API key goes |
 | [docs/deployment.md](docs/deployment.md) | Deploy bundles, containers, the Graph Runner CLI |
 | [docs/mcp-server.md](docs/mcp-server.md) | Letting an AI assistant (any MCP client) generate, check, save and run graphs |
-| [docs/licenses.md](docs/licenses.md) | The licence check: AI-Graph's own terms, every package it is built from, and how each copy carries them |
+| [docs/licenses.md](docs/licenses.md) | The licence check: Tell-and-Wire's own terms, every package it is built from, and how each copy carries them |
 | [docs/wrapper.md](docs/wrapper.md) | The wrapper around the graph core: the runtime API a page uses, the design API the editor uses, and the protocol a graph core speaks -- in-process or as a program of its own |
 | [docs/architecture.md](docs/architecture.md) | How the pieces fit, the decisions that hold them together and why, and what is left out for now; diagrams mapped to files in [arch/](arch/overview.md) |
-| [docs/connection-points.md](docs/connection-points.md) | Where something else meets AI-Graph -- the folder, the graph's names, the runtime API, a body's protocol |
+| [docs/connection-points.md](docs/connection-points.md) | Where something else meets Tell-and-Wire -- the folder, the graph's names, the runtime API, a body's protocol |
 
 ## Project structure
 
 ```
-AI-Graph/
+Tell-and-Wire/
 ├── engine/src/             # Runs a graph, serves the editor, ships as a bundle. No UI framework.
 │   ├── elements/           #   one folder per element: nodes/<kind>/<Kind>NodeRunner.ts, widgets/<kind>/<Kind>WidgetRunner.ts
 │   ├── execution/          #   the executor and what starts a run
@@ -304,7 +304,7 @@ AI-Graph/
 
 ## Licence
 
-AI-Graph is **source-available, not open source**: [PolyForm Noncommercial
+Tell-and-Wire is **source-available, not open source**: [PolyForm Noncommercial
 1.0.0](LICENSE).
 
 - Any **noncommercial** use is permitted — personal, research, teaching, and
@@ -312,7 +312,7 @@ AI-Graph is **source-available, not open source**: [PolyForm Noncommercial
 - **Commercial use needs a separate licence** from the copyright holder. Open an
   issue to ask for one.
 
-**What you build with AI-Graph is yours.** Your graph, and the code generated
+**What you build with Tell-and-Wire is yours.** Your graph, and the code generated
 into it, belong to you. A deploy bundle contains nothing but that, the
 runtime engine and its page — no part of the editor (the canvas, the generator,
 the deploy tool itself) ever travels in one, and `engine/src/cli/bundle.test.ts`
@@ -320,11 +320,11 @@ fails if one starts to. It also carries a copy of the licence, because whoever
 receives the software has to receive the terms with it; the same test fails
 without it.
 
-**No licence conflicts.** What AI-Graph hands on that was not written here —
+**No licence conflicts.** What Tell-and-Wire hands on that was not written here —
 the packages its page is built from — is open source under MIT, ISC or BSD
 terms, and every copy of the page carries their notices in `licenses.txt`. No
 copyleft anywhere, no copied code: [docs/licenses.md](docs/licenses.md) is the
 check, and CI repeats it on every push.
 
-Licensing is not final. If you want to use AI-Graph commercially, open an
+Licensing is not final. If you want to use Tell-and-Wire commercially, open an
 issue — that conversation is welcome.

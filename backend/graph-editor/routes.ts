@@ -179,7 +179,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
 
     async bundle(asked) {
       const graph = parseGraph(asked.graph);
-      const work = await mkdtemp(join(tmpdir(), 'ai-graph-bundle-'));
+      const work = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
       try {
         // The page `--bundle` carries -- a bundle from the editor is the same
         // bundle -- and the project's own, when it has one.

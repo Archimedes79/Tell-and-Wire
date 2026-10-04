@@ -1,6 +1,6 @@
 # Architecture
 
-How AI-Graph is put together, which rules hold it together, and what is knowingly left
+How Tell-and-Wire is put together, which rules hold it together, and what is knowingly left
 untidy. Read this before changing anything structural; the code comments explain the
 *why* of each file, this explains how the files relate. Diagrams with every box mapped to
 its files are in [`arch/overview.md`](../arch/overview.md).
@@ -242,7 +242,7 @@ that the file and the method it names exist.
 
 ## Two processes, one contract
 
-AI-Graph runs in two places: **Node**, which runs graphs and touches files, models and
+Tell-and-Wire runs in two places: **Node**, which runs graphs and touches files, models and
 programs, and **the browser**, which draws them. They talk over HTTP, and the whole
 conversation is written down once, in [`engine/src/host/api.ts`](../engine/src/host/api.ts):
 every route with its method, path, audience and the types going each way. Both ends are
@@ -394,7 +394,7 @@ that count.
 One window, three parts on the Graph tab, and nothing over them but a dialog asked for:
 
 ```
- header   AI-Graph · the graph's name · Graph | Page (| ● App)       File ▾ ↶ ↷ ▶ Run  Generate  Settings  Deploy
+ header   Tell-and-Wire · the graph's name · Graph | Page (| ● App)       File ▾ ↶ ↷ ▶ Run  Generate  Settings  Deploy
  ┌──────┬─────────────────────────────────────────┬──────────────────────────────┐
  │ pal- │ the canvas: a card per node              │ the panel of the node that   │
  │ ette │                                          │ is selected -- or, with none,│
@@ -925,7 +925,7 @@ Each names the tests that hold it; `host/session.test.ts` holds them one by one.
 | What | Lives in | Travels as |
 |---|---|---|
 | keys, endpoints, MCP servers that start programs | `ai-settings.json`, machine-side, never in a graph | — |
-| the one AI setting: what ✨, ▶ Try and every run call unless a node pins its own | `ai-settings.json`'s `ai` (or `AI_GRAPH_AI_PROVIDER`/`_MODEL`), read only by `aiSetting` in [`ai/settings.ts`](../engine/src/ai/settings.ts) | `ProviderStatus.target`, for the editor's "now: …" |
+| the one AI setting: what ✨, ▶ Try and every run call unless a node pins its own | `ai-settings.json`'s `ai` (or `TW_AI_PROVIDER`/`_MODEL`), read only by `aiSetting` in [`ai/settings.ts`](../engine/src/ai/settings.ts) | `ProviderStatus.target`, for the editor's "now: …" |
 | a node's own model | the node's config (`ai_provider`, `ai_model`) | the graph |
 
 ## Security boundaries
@@ -938,7 +938,7 @@ Each names the tests that hold it; `host/session.test.ts` holds them one by one.
 - The server answers its own page, not every page in the browser: a request must name
   127.0.0.1, localhost or [::1] (no DNS rebinding) -- with the server's port on loopback;
   bound wider, with any port, or the address it was bound to, or a name
-  `AI_GRAPH_ALLOWED_HOSTS` lists. An API call that says where it comes from must come
+  `TW_ALLOWED_HOSTS` lists. An API call that says where it comes from must come
   from the server's own origin, one the browser marks cross-site is refused, and a body is
   read only when it is sent as `application/json` (`foreignRequest` and `readJson` in
   `host/http.ts`).

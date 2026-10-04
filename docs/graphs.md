@@ -581,7 +581,7 @@ context of their own (`node:vm`), so they work as an ES module too -- a body tha
 ⚙ Settings (see [ai-providers.md](ai-providers.md)); `system`, `temperature`, `provider`
 and `model` may be given with it. The body runs sandboxed and never sees this machine's
 keys — the call is made *for* it — and may ask at most 25 times each time it runs -- per
-item, for a node that runs once per item -- (`AI_GRAPH_MAX_LLM_CALLS` raises it). Use it
+item, for a node that runs once per item -- (`TW_MAX_LLM_CALLS` raises it). Use it
 when code has to decide what to ask, or ask in a loop; for one question, an AI node is the
 plainer tool. How the body is run is in
 [connection-points.md](connection-points.md#the-body-protocol).

@@ -30,7 +30,7 @@ function launch() {
   const child = spawn(process.execPath, [START, '--port', String(PORT)], {
     cwd: root,
     stdio: 'ignore',
-    env: { ...process.env, AI_GRAPH_NO_BROWSER: '1' },
+    env: { ...process.env, TW_NO_BROWSER: '1' },
   });
   started.push(child);
   return child;
@@ -54,7 +54,7 @@ after(async () => {
 
 test('starts, installing and building whatever the checkout is missing', async () => {
   launch();
-  assert.ok(await until(() => isAiGraph(PORT), 600), `nothing answered as AI-Graph on ${PORT}`);
+  assert.ok(await until(() => isAiGraph(PORT), 600), `nothing answered as Tell-and-Wire on ${PORT}`);
 }, { timeout: 620_000 });
 
 test('starting again replaces the editor instead of failing on a taken port', async () => {
@@ -85,7 +85,7 @@ test('stops it, and says so plainly when there is nothing to stop', async () => 
   assert.match(again.stdout, new RegExp(`No editor is running on port ${PORT}`));
 });
 
-test('refuses to end a program on that port that is not AI-Graph', async () => {
+test('refuses to end a program on that port that is not Tell-and-Wire', async () => {
   // The reason the check exists: the launcher used to end whatever held the
   // port, which on 8000 is somebody's database as often as it is the editor.
   const stranger = createServer((_request, response) => response.end('not me'));
@@ -93,7 +93,7 @@ test('refuses to end a program on that port that is not AI-Graph', async () => {
   try {
     const refused = stop('--port', String(PORT));
     assert.equal(refused.status, 1);
-    assert.match(refused.stderr, /not AI-Graph/);
+    assert.match(refused.stderr, /not Tell-and-Wire/);
     assert.ok(stranger.listening, 'the stranger is still running');
   } finally {
     await new Promise((closed) => stranger.close(closed));

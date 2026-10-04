@@ -1,5 +1,5 @@
 services:
-  ai-graph:
+  tell-and-wire:
     build: .
     # On this machine only: the editor runs code, writes files and keeps keys for
     # whoever reaches it, and asks nobody who they are.

@@ -30,7 +30,7 @@ const FILENAME = 'ai-settings.json';
 /**
  * Where the file is looked for, in order.
  *
- * `AI_GRAPH_SETTINGS` is not the first of several candidates but the only one:
+ * `TW_SETTINGS` is not the first of several candidates but the only one:
  * "use this file" has to mean that even when the file is not there yet, or the
  * search quietly falls through to some other machine-wide file and the answer
  * depends on what else happens to be installed.
@@ -39,13 +39,13 @@ export function candidatePaths(
   cwd = process.cwd(),
   env: Record<string, string | undefined> = process.env,
 ): string[] {
-  if (env.AI_GRAPH_SETTINGS) return [env.AI_GRAPH_SETTINGS];
+  if (env.TW_SETTINGS) return [env.TW_SETTINGS];
   return [...new Set([
     join(cwd, FILENAME),
     // Beside the bundle, which is the deployed equivalent of a config file:
     // a recipient drops one next to `run.sh` and never sets a variable.
     join(installFolder(), FILENAME),
-    join(homedir(), '.ai-graph', 'settings.json'),
+    join(homedir(), '.tell-and-wire', 'settings.json'),
   ])];
 }
 
@@ -63,7 +63,7 @@ export function installFolder(): string {
 /**
  * The file that is in use, or would be written.
  *
- * `AI_GRAPH_SETTINGS` wins outright, whether or not the file exists yet: "use
+ * `TW_SETTINGS` wins outright, whether or not the file exists yet: "use
  * this file" has to hold for the first write too, or a save silently lands
  * somewhere else. Otherwise the first candidate that exists, else the first
  * candidate, which is where a save creates it.
@@ -225,7 +225,7 @@ export async function probeLocal(
  *
  * Read here and nowhere else, so the editor's "now: …" and what a run calls
  * cannot disagree. The file's `ai` section is what ⚙ Settings saves;
- * `AI_GRAPH_AI_PROVIDER` / `AI_GRAPH_AI_MODEL` are the same setting for a
+ * `TW_AI_PROVIDER` / `TW_AI_MODEL` are the same setting for a
  * machine with no dialog, and win over the file. With nothing set it is
  * whichever local provider is running, else Ollama. A provider named without a
  * model takes *its own* default: choosing Google and leaving the model blank
@@ -235,8 +235,8 @@ export async function probeLocal(
 export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Promise<ModelChoice> {
   // Each of the two on its own: a variable naming the model leaves the file's provider standing.
   const saved = readSettingsFile(settingsPath(cwd, env)).ai;
-  let provider = env.AI_GRAPH_AI_PROVIDER || saved?.provider || '';
-  const model = env.AI_GRAPH_AI_MODEL || saved?.model || '';
+  let provider = env.TW_AI_PROVIDER || saved?.provider || '';
+  const model = env.TW_AI_MODEL || saved?.model || '';
   if (!provider) {
     for (const local of LOCAL_PROVIDERS) {
       if (await probeLocal(local, { cwd, env })) { provider = local; break; }
@@ -256,7 +256,7 @@ export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Pr
  * a tool server; what the name *starts* is written here, by whoever owns the
  * machine, in a file that is not in the repository and does not travel with a
  * graph. There is deliberately no environment variable on top, unlike
- * everything else in this file: a command line assembled from `AI_GRAPH_…`
+ * everything else in this file: a command line assembled from `TW_…`
  * variables is one more place a program to run could come from, and one is the
  * right number.
  *

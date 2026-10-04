@@ -39,7 +39,7 @@ describe('a served tool that is told to stop', () => {
 
     const port = await freePort();
     const server = spawn(process.execPath, [MAIN, graphPath, '--serve', '--port', String(port)], {
-      env: { ...process.env, AI_GRAPH_NO_BROWSER: '1' }, stdio: ['ignore', 'ignore', 'pipe'],
+      env: { ...process.env, TW_NO_BROWSER: '1' }, stdio: ['ignore', 'ignore', 'pipe'],
     });
     let said = '';
     server.stderr.on('data', (chunk: Buffer) => { said += chunk.toString(); });

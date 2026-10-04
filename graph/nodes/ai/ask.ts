@@ -121,7 +121,7 @@ export function llmCall(settings: AskSettings, runtime: Runtime): (args: unknown
     asked += 1;
     if (asked > most) {
       throw new Error(`This body has asked the model ${most} times in one run, which is as often as it may. `
-        + 'If it is meant to ask more, raise AI_GRAPH_MAX_LLM_CALLS where the tool runs.');
+        + 'If it is meant to ask more, raise TW_MAX_LLM_CALLS where the tool runs.');
     }
     const args = (raw && typeof raw === 'object' ? raw : {}) as LlmArgs;
     const given = args.inputs && typeof args.inputs === 'object' && !Array.isArray(args.inputs)

@@ -110,8 +110,8 @@ const problemsOf = async (graph: unknown): Promise<Problem[]> =>
   (await answer(toolsWith(), 'validate_graph', { graph: graph as Record<string, unknown> })).json.problems;
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'ai-graph-mcp-'));
-  outside = await mkdtemp(join(tmpdir(), 'ai-graph-mcp-outside-'));
+  root = await mkdtemp(join(tmpdir(), 'tell-and-wire-mcp-'));
+  outside = await mkdtemp(join(tmpdir(), 'tell-and-wire-mcp-outside-'));
   ranBody = '';
 });
 
@@ -758,7 +758,7 @@ describe('serveStdio', () => {
     ]);
     expect(answers).toHaveLength(3);
     const byId = new Map(answers.map((answer) => [answer.id, answer]));
-    expect(byId.get(1).result).toMatchObject({ protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'ai-graph' } });
+    expect(byId.get(1).result).toMatchObject({ protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'tell-and-wire' } });
     expect(byId.get(2).result).toEqual({});
     expect(byId.get(3).result.tools).toHaveLength(9);
     expect(byId.get(3).result.tools[1]).toMatchObject({ name: 'generate_graph', inputSchema: { type: 'object', required: ['description'] } });
@@ -859,14 +859,14 @@ describe('serveStdio', () => {
 describe('node main.ts --mcp', () => {
   // No settings file of this machine's, whatever is lying around: the tests
   // below call no model, and should not depend on whether one is configured.
-  const env = { AI_GRAPH_SETTINGS: join(tmpdir(), 'ai-graph-mcp-no-such-settings.json') };
+  const env = { TW_SETTINGS: join(tmpdir(), 'tell-and-wire-mcp-no-such-settings.json') };
 
   it("serves the repo's own MCP client, end to end", async () => {
     const service = mcpToolService(
-      { 'ai-graph': { command: process.execPath, args: [MAIN, '--mcp', '--mcp-root', root], env } },
+      { 'tell-and-wire': { command: process.execPath, args: [MAIN, '--mcp', '--mcp-root', root], env } },
       { handshakeTimeoutMs: 30_000, callTimeoutMs: 30_000 },
     );
-    const session = await service.open(['ai-graph']);
+    const session = await service.open(['tell-and-wire']);
     try {
       expect(session.specs.map((spec) => spec.name)).toEqual(
         ['authoring_guide', 'generate_graph', 'validate_graph', 'save_graph', 'run_graph', 'describe_graph', 'run_node', 'test_graph', 'list_graphs']);

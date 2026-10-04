@@ -22,7 +22,7 @@ const runtime: Runtime = {
 
 let dir = '';
 beforeAll(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'ai-graph-picker-'));
+  dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-picker-'));
   await writeFile(join(dir, 'x.csv'), 'year,people\n2020,5');
 });
 afterAll(async () => {

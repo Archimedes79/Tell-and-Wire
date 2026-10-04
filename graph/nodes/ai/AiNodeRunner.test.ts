@@ -43,7 +43,7 @@ function recording(): { runtime: Runtime; asked: AiRequest[] } {
 }
 
 async function withImage(run: (path: string) => Promise<void>): Promise<void> {
-  const dir = await mkdtemp(join(tmpdir(), 'ai-graph-ai-'));
+  const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-ai-'));
   try {
     const path = join(dir, 'cat.png');
     await writeFile(path, PNG);

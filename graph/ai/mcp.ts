@@ -48,7 +48,7 @@ export interface McpOptions {
 }
 
 const PROTOCOL_VERSION = '2025-06-18';
-const CLIENT_INFO = { name: 'ai-graph', version: '1.0.0' };
+const CLIENT_INFO = { name: 'tell-and-wire', version: '1.0.0' };
 const HANDSHAKE_TIMEOUT_MS = 30_000;
 const CALL_TIMEOUT_MS = 120_000;
 /** How long a closed server gets to leave by itself before it is made to. */
@@ -214,7 +214,7 @@ function stdioTransport(label: string, config: { command: string; args?: string[
       // only thing it may legitimately ask is whether we are still here.
       if (message.id === undefined || message.id === null) return;
       if (message.method === 'ping') send({ id: message.id, result: {} });
-      else send({ id: message.id, error: { code: -32601, message: `ai-graph does not implement ${message.method}` } });
+      else send({ id: message.id, error: { code: -32601, message: `tell-and-wire does not implement ${message.method}` } });
       return;
     }
 
@@ -562,7 +562,7 @@ const safeName = (name: string): string => name.replace(/[^A-Za-z0-9_-]/g, '_').
 const isUrl = (server: string): boolean => /^https?:\/\//i.test(server);
 
 /**
- * `AI_GRAPH_MCP_TIMEOUT_MS`, or undefined when the machine said nothing.
+ * `TW_MCP_TIMEOUT_MS`, or undefined when the machine said nothing.
  *
  * Two minutes is the default because a tool call that hangs is nearly always a
  * server that died, and a scheduled run has nobody to notice. A tool that
@@ -570,7 +570,7 @@ const isUrl = (server: string): boolean => /^https?:\/\//i.test(server);
  * takes the clock off entirely. Stop ends the call either way.
  */
 function envCallTimeout(env: Record<string, string | undefined> = process.env): number | undefined {
-  const given = env.AI_GRAPH_MCP_TIMEOUT_MS;
+  const given = env.TW_MCP_TIMEOUT_MS;
   const ms = Number(given);
   return given && Number.isFinite(ms) && ms >= 0 ? ms : undefined;
 }

@@ -111,7 +111,7 @@ export interface SessionOptions {
   /** The services a round runs with, told where to say how far it is. A test hands in fakes. */
   runtime?: (report: (event: ProgressEvent) => void) => Runtime;
   /**
-   * What runs its rounds: the graph core `AI_GRAPH_CORE` names, else the
+   * What runs its rounds: the graph core `TW_CORE` names, else the
    * JavaScript core in this process with *runtime* (`core/stdio.ts`).
    */
   core?: () => GraphCore;

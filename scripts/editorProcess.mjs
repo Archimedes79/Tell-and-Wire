@@ -2,7 +2,7 @@
 //
 // Shared by start.mjs (which restarts the editor) and stop.mjs (which only
 // stops it). A port can be held by anything, so a listener is only stopped
-// once it has answered as an AI-Graph server: a launcher that ends whatever
+// once it has answered as an Tell-and-Wire server: a launcher that ends whatever
 // happens to sit on port 8000 would end someone's database or dev server.
 
 import { execFileSync } from 'node:child_process';
@@ -30,7 +30,7 @@ export function isListening(port) {
 }
 
 /**
- * Whether what listens on *port* is an AI-Graph server. Every one -- editor
+ * Whether what listens on *port* is an Tell-and-Wire server. Every one -- editor
  * or deployed tool, holding a graph or not yet -- says which model a run
  * calls, with a `settings_file_exists` flag.
  */
@@ -73,14 +73,14 @@ export function listenerPids(port) {
 }
 
 /**
- * Stop the AI-Graph server on *port*, and wait until the port is free.
+ * Stop the Tell-and-Wire server on *port*, and wait until the port is free.
  * Returns `false` when nothing was listening. Throws, and stops nothing, when
- * the port is held by a program that is not AI-Graph.
+ * the port is held by a program that is not Tell-and-Wire.
  */
 export async function stopEditor(port) {
   if (!await isListening(port)) return false;
   if (!await isAiGraph(port)) {
-    throw new Error(`Port ${port} is used by a program that is not AI-Graph. Stop it, or choose another port with --port.`);
+    throw new Error(`Port ${port} is used by a program that is not Tell-and-Wire. Stop it, or choose another port with --port.`);
   }
   for (const pid of listenerPids(port)) {
     if (pid === process.pid) continue;

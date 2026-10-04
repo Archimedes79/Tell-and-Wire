@@ -98,7 +98,7 @@ async function printed(argv: string[]): Promise<{ code: number; out: string; err
  */
 describe('run-node', () => {
   async function project(config: Record<string, unknown>): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-run-node-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-run-node-'));
     await writeProject(dir, parseGraph({
       metadata: { name: 'Rows' },
       nodes: [{
@@ -142,7 +142,7 @@ describe('run-node', () => {
   }, 30_000);
 
   it('runs a node of another kind -- one with no input.js -- on what the nodes feeding it produce', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-run-node-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-run-node-'));
     await writeProject(dir, parseGraph({
       metadata: { name: 'Say' },
       nodes: [
@@ -196,7 +196,7 @@ describe('a round by name, as a page asks for one', () => {
   });
 
   it('runs what --event starts, on the values --value gives by name, as the page would send them', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-named-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-named-'));
     const graph = join(dir, 'echo.json');
     await writeFile(graph, JSON.stringify(echo()));
     try {
@@ -215,7 +215,7 @@ describe('a round by name, as a page asks for one', () => {
   }, 60_000);
 
   it('sends a start point what --value gives, under names of its own, in one package', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-named-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-named-'));
     const graph = join(dir, 'ask.json');
     await writeFile(graph, JSON.stringify({
       metadata: { name: 'Ask' },
@@ -237,7 +237,7 @@ describe('a round by name, as a page asks for one', () => {
   }, 60_000);
 
   it('keeps a round that ran through as a test of the project, which test runs again -- and fails once the graph hands back otherwise', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-kept-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-kept-'));
     const asking = (code: string) => parseGraph({
       metadata: { name: 'Ask' },
       nodes: [
@@ -267,7 +267,7 @@ describe('a round by name, as a page asks for one', () => {
   }, 60_000);
 
   it('turns down a name the graph does not offer, before anything runs', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-named-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-named-'));
     const graph = join(dir, 'echo.json');
     await writeFile(graph, JSON.stringify(echo()));
     try {
@@ -281,7 +281,7 @@ describe('a round by name, as a page asks for one', () => {
 
 describe('--every', () => {
   it('runs one graph round after round: what a round leaves in a data node is what the next starts from', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-every-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-every-'));
     await writeProject(dir, parseGraph({
       metadata: { name: 'Counter' },
       nodes: [
@@ -310,7 +310,7 @@ describe('--every', () => {
   }, 60_000);
 
   it('says a round that could not even start, and goes on to the next', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-every-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-every-'));
     const graph = join(dir, 'loop.json');
     // Two nodes feeding each other and nothing that remembers: no round can be put in order.
     const code = (id: string) => ({ id, node_type: 'code', inputs: [port('in', 'input')], outputs: [port('out', 'output')], config: { code: 'function run(i) { return { out: i.in }; }' } });
@@ -333,10 +333,10 @@ describe('--every', () => {
 });
 
 /** A server started as a person or a launcher starts one: its own process, told nothing opens a browser. */
-function started(args: string[], env: NodeJS.ProcessEnv = { ...process.env, AI_GRAPH_NO_BROWSER: '1' }, cwd?: string) {
+function started(args: string[], env: NodeJS.ProcessEnv = { ...process.env, TW_NO_BROWSER: '1' }, cwd?: string) {
   const child = spawn(process.execPath, [resolve(__dirname, '..', 'main.ts'), ...args], {
     // Its own settings file, none: what a server says at start must not come from this machine's.
-    env: { ...env, AI_GRAPH_SETTINGS: join(tmpdir(), 'ai-graph-no-settings.json') }, cwd, stdio: ['ignore', 'ignore', 'pipe'],
+    env: { ...env, TW_SETTINGS: join(tmpdir(), 'tell-and-wire-no-settings.json') }, cwd, stdio: ['ignore', 'ignore', 'pipe'],
   });
   let said = '';
   child.stderr.on('data', (chunk: Buffer) => { said += chunk.toString(); });
@@ -378,7 +378,7 @@ describe('--serve and --editor, as they are started', () => {
   it('serves where nothing can open a browser', async () => {
     const port = await freePort();
     // No PATH: whatever opens a browser on this machine cannot be found.
-    const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^(PATH|AI_GRAPH_NO_BROWSER)$/i.test(name)));
+    const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^(PATH|TW_NO_BROWSER)$/i.test(name)));
     const server = started([MINIMAL, '--serve', '--port', String(port)], { ...env, PATH: '' });
     try {
       await server.up();
@@ -415,7 +415,7 @@ describe('--serve and --editor, as they are started', () => {
   }, 30_000);
 
   it('as the editor, serves no graph.json it was started beside -- only one it is given', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-editor-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-editor-'));
     await writeFile(join(dir, 'graph.json'), await readFile(MINIMAL, 'utf8'));
     try {
       const port = await freePort();

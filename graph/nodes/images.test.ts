@@ -25,7 +25,7 @@ const PNG = Buffer.from(
 const runtime = { files: nodeFiles } as Runtime;
 
 async function withFiles(run: (dir: string) => Promise<void>): Promise<void> {
-  const dir = await mkdtemp(join(tmpdir(), 'ai-graph-images-'));
+  const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-images-'));
   try {
     await run(dir);
   } finally {

@@ -21,7 +21,7 @@ describe('a code body', () => {
       import { join } from 'node:path';
       import { tmpdir } from 'node:os';
       export function run() {
-        const path = join(tmpdir(), 'ai-graph-sandbox-probe.txt');
+        const path = join(tmpdir(), 'tell-and-wire-sandbox-probe.txt');
         writeFileSync(path, 'written');
         return { value: readFileSync(path, 'utf8') };
       }
@@ -42,11 +42,11 @@ describe('a code body', () => {
 
   it('is handed no key of the process that runs it: it asks through node.llm', async () => {
     // Fake values, set for this test only: what matters is which names arrive.
-    const planted = { OPENAI_API_KEY: 'sk-planted', GITHUB_TOKEN: 'ghp-planted', SERVICE_PASSWORD: 'planted', AI_GRAPH_PLAIN: 'kept' };
+    const planted = { OPENAI_API_KEY: 'sk-planted', GITHUB_TOKEN: 'ghp-planted', SERVICE_PASSWORD: 'planted', TW_PLAIN: 'kept' };
     Object.assign(process.env, planted);
     try {
       const body = `export function run() { return { names: Object.keys(process.env).filter((name) => ${JSON.stringify(Object.keys(planted))}.includes(name)) }; }`;
-      expect(await nodeCode.run(body, {})).toEqual({ names: ['AI_GRAPH_PLAIN'] });
+      expect(await nodeCode.run(body, {})).toEqual({ names: ['TW_PLAIN'] });
     } finally {
       for (const name of Object.keys(planted)) delete process.env[name];
     }

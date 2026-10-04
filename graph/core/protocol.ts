@@ -1,6 +1,6 @@
 // What the wrapper asks of a graph core, and what a core answers.
 //
-// A graph core is the one part of AI-Graph that runs graphs: it takes the
+// A graph core is the one part of Tell-and-Wire that runs graphs: it takes the
 // graph definition -- nodes, their files, the wires; never the page -- and
 // executes it in its language, asking the model with a client of its own. It
 // can live in the wrapper's process (`localCore.ts`) or be a program of its
@@ -59,7 +59,7 @@ export interface CoreHello {
   protocol: number;
   /** The language graphs run in there: "javascript". */
   language: string;
-  /** What it is, for a person: "AI-Graph JavaScript core". */
+  /** What it is, for a person: "Tell-and-Wire JavaScript core". */
   core: string;
 }
 

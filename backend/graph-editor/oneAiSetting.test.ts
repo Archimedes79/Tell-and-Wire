@@ -24,15 +24,15 @@ const PIN = 'the_nodes_own';
 let dir = '';
 
 beforeAll(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'ai-graph-one-setting-'));
+  dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-one-setting-'));
   const file = join(dir, 'ai-settings.json');
   await writeFile(file, JSON.stringify({
     ai: { provider: SETTING, model: 'm' },
   }));
-  vi.stubEnv('AI_GRAPH_SETTINGS', file);
+  vi.stubEnv('TW_SETTINGS', file);
   // The developer's own shell must not decide this either.
-  vi.stubEnv('AI_GRAPH_AI_PROVIDER', '');
-  vi.stubEnv('AI_GRAPH_AI_MODEL', '');
+  vi.stubEnv('TW_AI_PROVIDER', '');
+  vi.stubEnv('TW_AI_MODEL', '');
 });
 
 afterAll(async () => {

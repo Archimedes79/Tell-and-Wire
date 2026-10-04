@@ -65,12 +65,12 @@ node engine/src/main.ts my_graph.json --serve --port 8123
 Without `--port` it takes the first free port from 8000 up; a port asked for and busy is
 said in a sentence. `--host` binds another address (loopback otherwise): on such a bind the
 server answers only as `localhost`, the address it was bound to, or a name
-`AI_GRAPH_ALLOWED_HOSTS` lists, and the file browser switches itself off
+`TW_ALLOWED_HOSTS` lists, and the file browser switches itself off
 (`host/serve.test.ts`). A bundle serves the page it carries, in `web/` beside its project; a
 graph or project in a checkout is served the page the checkout built (`npm run build`).
 That page draws the graph's blocks -- and, for each start point a call starts, a box for
 every part the graph reads and a button that starts it, as the editor's App tab does.
-`AI_GRAPH_NO_BROWSER` stops it opening a browser.
+`TW_NO_BROWSER` stops it opening a browser.
 
 Without running anything:
 
@@ -125,7 +125,7 @@ start point a call starts is called from the page's boxes, or by a script throug
 runtime API. A graph inside a node being called does not make a tool served -- the graph
 above is what calls it (`cli/bundle.test.ts`: "serves a tool a call starts").
 
-The recipient needs Node 24 or newer and nothing else: no AI-Graph, no Python, no install
+The recipient needs Node 24 or newer and nothing else: no Tell-and-Wire, no Python, no install
 step. The launchers check for Node, say so when it is missing or too old, start from their
 own folder, and use a `node/` folder beside them when there is one (the downloads in
 [install.md](install.md) carry one). `run.sh` comes out of the zip executable, and a
@@ -133,7 +133,7 @@ double-clicked `run.cmd` that fails keeps its window open until the reason has b
 (`cli/launchers.test.ts`).
 
 The editor makes the same zip over the API, which must be sent as `application/json` and
-addressed to `localhost`, `127.0.0.1` or `[::1]` (or a name `AI_GRAPH_ALLOWED_HOSTS` lists
+addressed to `localhost`, `127.0.0.1` or `[::1]` (or a name `TW_ALLOWED_HOSTS` lists
 on a server bound wider):
 
 ```bash

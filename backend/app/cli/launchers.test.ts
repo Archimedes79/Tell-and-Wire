@@ -55,7 +55,7 @@ describe('run.cmd', () => {
     const failed = lines.indexOf(':failed');
     expect(failed).toBeGreaterThan(lines.findIndex((line) => line.includes('if "%CODE%"=="0" exit /b 0')));
     expect(lines.slice(failed)).toContain('  pause');
-    expect(lines.slice(failed).join('\n')).toContain('if not defined AI_GRAPH_NO_PAUSE');
+    expect(lines.slice(failed).join('\n')).toContain('if not defined TW_NO_PAUSE');
     expect(lines.at(-2)).toBe('exit /b %CODE%');
   });
 
@@ -68,14 +68,14 @@ describe('run.cmd', () => {
 describe('zipMode', () => {
   it('makes shell scripts executable and leaves everything else alone', () => {
     expect(zipMode('run.sh')).toBe(0o755);
-    expect(zipMode('ai-graph-v1/run.sh')).toBe(0o755);
+    expect(zipMode('tell-and-wire-v1/run.sh')).toBe(0o755);
     expect(zipMode('run.cmd')).toBeUndefined();
     expect(zipMode('backend/app/main.ts')).toBeUndefined();
   });
 
   it('makes the Node a download carries executable', () => {
-    expect(zipMode('ai-graph-v1/node/node')).toBe(0o755);
-    expect(zipMode('ai-graph-v1/node/LICENSE')).toBeUndefined();
+    expect(zipMode('tell-and-wire-v1/node/node')).toBe(0o755);
+    expect(zipMode('tell-and-wire-v1/node/LICENSE')).toBeUndefined();
   });
 });
 

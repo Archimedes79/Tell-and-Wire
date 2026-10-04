@@ -37,7 +37,7 @@ export default function RuntimeAISettings({ onClose }: { onClose: () => void }) 
         )}
         <p style={{ color: DIM }}>
           To call a different AI, put an <code>ai-settings.json</code> beside the tool, or set{' '}
-          <code>AI_GRAPH_AI_PROVIDER</code> and <code>AI_GRAPH_AI_MODEL</code> before starting it.
+          <code>TW_AI_PROVIDER</code> and <code>TW_AI_MODEL</code> before starting it.
         </p>
         {settings && (
           <p style={{ color: MUTED }} className="font-mono break-all">

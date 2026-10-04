@@ -306,7 +306,7 @@ async function runServer(options: CliOptions): Promise<number> {
 async function open(url: string): Promise<void> {
   // For CI, a container, and a helper another process started: nothing to
   // open a browser in, and the attempt is only noise.
-  if (process.env.AI_GRAPH_NO_BROWSER) return;
+  if (process.env.TW_NO_BROWSER) return;
   const command = process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open';
   const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url];
   // A headless machine is a fine place to serve from; the URL is printed. A
@@ -434,7 +434,7 @@ async function runNodeWith(core: GraphCore, [path, nodeId, given]: string[]): Pr
 /**
  * Be a graph core until stdin ends: the protocol of `core/protocol.ts` on
  * stdin and stdout, for a wrapper that runs its graphs in a process of their
- * own (`AI_GRAPH_CORE`). stdout is the protocol's from the first line, so
+ * own (`TW_CORE`). stdout is the protocol's from the first line, so
  * whatever would print to it goes to stderr.
  */
 async function runCore(): Promise<number> {

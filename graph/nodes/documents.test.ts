@@ -53,7 +53,7 @@ describe('a Word document, read', () => {
 
 describe('a file a node reads', () => {
   it('is its text, a Word document as Markdown, a PDF as itself', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-documents-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-documents-'));
     try {
       await writeFile(join(dir, 'note.txt'), 'hello');
       await writeFile(join(dir, 'report.docx'), docx(p(r('Hallo'))));

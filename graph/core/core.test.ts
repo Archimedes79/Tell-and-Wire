@@ -44,7 +44,7 @@ const ENGINE_MAIN = fileURLToPath(new URL('../../backend/app/main.ts', import.me
 
 describe('a graph core', () => {
   it('says who it is and which protocol it speaks', async () => {
-    expect(await counter.hello()).toEqual({ protocol: PROTOCOL, language: 'javascript', core: 'AI-Graph JavaScript core' });
+    expect(await counter.hello()).toEqual({ protocol: PROTOCOL, language: 'javascript', core: 'Tell-and-Wire JavaScript core' });
   });
 
   it('runs a round: says first how many nodes it runs, and hands back what every node keeps and was left holding', async () => {

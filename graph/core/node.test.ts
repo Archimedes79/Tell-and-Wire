@@ -7,7 +7,7 @@ import { aiSetting } from '../ai/settings.ts';
 
 describe('writing a file', () => {
   it('makes the folders it goes into, as an output writing into a new folder needs', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-write-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-write-'));
     try {
       const path = join(dir, 'results', 'by country', 'items_1.txt');
       await nodeFiles.write(path, 'alpha');
@@ -19,7 +19,7 @@ describe('writing a file', () => {
 
   it('removes a file an earlier run left, and does nothing where there is none', async () => {
     // What an output writing into a folder clears of its earlier run's files.
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-remove-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-remove-'));
     try {
       const path = join(dir, 'value_2.txt');
       await nodeFiles.write(path, 'last run');
@@ -111,7 +111,7 @@ describe('a body that does not keep to the protocol', () => {
   });
 
   it('fails, and only itself, when it writes the engine\'s mark', async () => {
-    const body = 'function run() { console.log("\\u001eai-graph:result {not json"); return { ok: 1 }; }';
+    const body = 'function run() { console.log("\\u001etell-and-wire:result {not json"); return { ok: 1 }; }';
     await expect(nodeCode.run(body, {})).rejects.toThrow(/only the engine may write/);
   });
 
@@ -135,11 +135,11 @@ describe('a body that does not keep to the protocol', () => {
  */
 describe('where a model call goes', () => {
   it('does not hand a provider a node pins, with no model named, the model the one AI setting names for another', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-one-setting-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-one-setting-'));
     const file = join(dir, 'ai-settings.json');
     // A model and no provider: the provider is the local one that answers -- LM Studio, here -- and the model is its.
     await writeFile(file, JSON.stringify({ ai: { model: 'the-settings-model' } }));
-    for (const [name, value] of Object.entries({ AI_GRAPH_SETTINGS: file, AI_GRAPH_AI_PROVIDER: '', AI_GRAPH_AI_MODEL: '', OLLAMA_BASE_URL: '', LMSTUDIO_BASE_URL: '' })) {
+    for (const [name, value] of Object.entries({ TW_SETTINGS: file, TW_AI_PROVIDER: '', TW_AI_MODEL: '', OLLAMA_BASE_URL: '', LMSTUDIO_BASE_URL: '' })) {
       vi.stubEnv(name, value);
     }
     const asked: string[] = [];

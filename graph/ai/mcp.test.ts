@@ -92,7 +92,7 @@ describe('a stdio server', () => {
     const wedged = track(await mcpToolService({ echo: echo() }, { callTimeoutMs: 300 }).open(['echo']));
     await expect(wedged.call('hang', {})).rejects.toThrow(/did not answer tools\/call within 0\.3 s/);
 
-    // With no clock at all -- AI_GRAPH_MCP_TIMEOUT_MS=0 -- the run's own Stop
+    // With no clock at all -- TW_MCP_TIMEOUT_MS=0 -- the run's own Stop
     // is what ends the call, or a stopped run would sit here forever.
     const patient = track(await mcpToolService({ echo: echo() }, { callTimeoutMs: 0 }).open(['echo']));
     const stop = new AbortController();
@@ -129,7 +129,7 @@ describe('a stdio server', () => {
   it.runIf(process.platform === 'win32')('starts a .cmd shim, which is what `npx` is on Windows', async () => {
     // Node will not spawn a .cmd without a shell, and with one it quotes
     // nothing -- so the directory has a space in it, as `Program Files` does.
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph mcp '));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire mcp '));
     try {
       const shim = join(dir, 'server.cmd');
       await writeFile(shim, `@echo off\r\n"${process.execPath}" %*\r\n`);

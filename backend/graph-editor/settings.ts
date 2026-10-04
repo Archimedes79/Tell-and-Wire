@@ -25,7 +25,7 @@ type Env = Record<string, string | undefined>;
 const ENDPOINT_PROVIDERS = Object.keys(ENDPOINT_ENV);
 
 /** The variables that are the one AI setting on a machine without the dialog. */
-const AI_ENV = ['AI_GRAPH_AI_PROVIDER', 'AI_GRAPH_AI_MODEL'];
+const AI_ENV = ['TW_AI_PROVIDER', 'TW_AI_MODEL'];
 
 /** What the dialog shows: the AI saved, endpoints, and whether each credential is set — never the credential. */
 export function status(cwd = process.cwd(), env: Env = process.env): SettingsStatus {

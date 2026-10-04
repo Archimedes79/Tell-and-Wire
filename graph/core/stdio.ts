@@ -275,12 +275,12 @@ export function commandParts(command: string): string[] {
 }
 
 /**
- * The graph core this wrapper runs graphs with: the program `AI_GRAPH_CORE`
+ * The graph core this wrapper runs graphs with: the program `TW_CORE`
  * names, with its arguments -- `node backend/app/main.ts core`, or a core in
  * another language -- else the JavaScript core in this process.
  */
 export function chosenCore(options: LocalCoreOptions = {}): GraphCore {
-  const command = process.env.AI_GRAPH_CORE?.trim();
+  const command = process.env.TW_CORE?.trim();
   if (!command) return localCore(options);
   const [program, ...args] = commandParts(command);
   return processCore(program, args);

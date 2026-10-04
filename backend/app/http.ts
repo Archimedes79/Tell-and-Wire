@@ -180,13 +180,13 @@ export function hostnameOf(name: string): string | null {
 
 /**
  * The names a server bound to *host* answers as, besides this machine's own:
- * the address it was bound to, and each one `AI_GRAPH_ALLOWED_HOSTS` lists
+ * the address it was bound to, and each one `TW_ALLOWED_HOSTS` lists
  * (comma-separated) -- a reverse proxy's, a machine's name on the network.
  * Said outright, because nothing else tells a name someone chose from the
  * name of a page that pointed its own site at this address.
  */
 export function namesFor(host: string, env: Record<string, string | undefined> = process.env): Set<string> {
-  const listed = (env.AI_GRAPH_ALLOWED_HOSTS ?? '').split(',').map((name) => name.trim()).filter(Boolean);
+  const listed = (env.TW_ALLOWED_HOSTS ?? '').split(',').map((name) => name.trim()).filter(Boolean);
   return new Set([host, ...listed].map(hostnameOf).filter((name): name is string => name !== null));
 }
 
@@ -216,7 +216,7 @@ export function foreignRequest(
       return `This server answers only as localhost:${server.port}, not as "${host}".`;
     }
   } else if (!url || !(LOOPBACK_NAMES.has(url.hostname) || server.names.has(url.hostname))) {
-    return `This server answers as localhost, not as "${host}". A name of its own goes in AI_GRAPH_ALLOWED_HOSTS.`;
+    return `This server answers as localhost, not as "${host}". A name of its own goes in TW_ALLOWED_HOSTS.`;
   }
   if (!api) return null;
   const origin = request.headers.origin;

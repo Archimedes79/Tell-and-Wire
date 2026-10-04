@@ -19,8 +19,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const windows = process.platform === 'win32';
-const work = mkdtempSync(join(tmpdir(), 'ai-graph-package-'));
-const folder = join(work, 'ai-graph-test');
+const work = mkdtempSync(join(tmpdir(), 'tell-and-wire-package-'));
+const folder = join(work, 'tell-and-wire-test');
 const launcher = join(folder, windows ? 'run.cmd' : 'run.sh');
 
 /** Every child this file started, so a failure halfway leaves no editor behind. */
@@ -60,7 +60,7 @@ function stopTree(child) {
  * depend on.
  */
 function environment(overrides = {}) {
-  const env = { ...process.env, AI_GRAPH_NO_BROWSER: '1', AI_GRAPH_NO_PAUSE: '1' };
+  const env = { ...process.env, TW_NO_BROWSER: '1', TW_NO_PAUSE: '1' };
   const keyOf = (name) => Object.keys(env).find((key) => key.toUpperCase() === name.toUpperCase());
   for (let key = keyOf('PORT'); key; key = keyOf('PORT')) delete env[key];
   for (const [name, value] of Object.entries(overrides)) env[keyOf(name) ?? name] = value;
@@ -124,9 +124,9 @@ function oldNode() {
 
 test('the zip holds what a person runs', () => {
   assert.ok(existsSync(join(root, 'frontend', 'dist', 'index.html')), 'build the editor first: npm run build');
-  const zip = join(work, 'ai-graph-test.zip');
+  const zip = join(work, 'tell-and-wire-test.zip');
   const packed = spawnSync(process.execPath, [join(root, 'scripts', 'package.mjs'), zip], {
-    cwd: root, encoding: 'utf8', env: { ...process.env, AI_GRAPH_VERSION: 'test' },
+    cwd: root, encoding: 'utf8', env: { ...process.env, TW_VERSION: 'test' },
   });
   assert.equal(packed.status, 0, packed.stderr);
 
@@ -136,7 +136,7 @@ test('the zip holds what a person runs', () => {
   for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/app/main.ts', 'frontend/dist/index.html', 'frontend/dist/licenses.txt']) {
     assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
   }
-  assert.match(readFileSync(join(folder, 'VERSION'), 'utf8'), /^AI-Graph test\ncommit \S+\nbuilt /);
+  assert.match(readFileSync(join(folder, 'VERSION'), 'utf8'), /^Tell-and-Wire test\ncommit \S+\nbuilt /);
   // "Permission denied" was every Mac and Linux user's first ./run.sh.
   if (!windows) assert.ok(statSync(join(folder, 'run.sh')).mode & 0o111, 'run.sh is executable once unzipped');
 });
@@ -196,14 +196,14 @@ test('the download for one system carries its own Node, and needs none on the co
   if (!windows) chmodSync(binary, 0o755);
   writeFileSync(join(nodeFolder, 'LICENSE'), 'Node.js is licensed for use as follows: ...\n');
 
-  const zip = join(work, 'ai-graph-system.zip');
+  const zip = join(work, 'tell-and-wire-system.zip');
   const packed = spawnSync(process.execPath, [join(root, 'scripts', 'package.mjs'), zip, '--node', nodeFolder], {
-    cwd: root, encoding: 'utf8', env: { ...process.env, AI_GRAPH_VERSION: 'test' },
+    cwd: root, encoding: 'utf8', env: { ...process.env, TW_VERSION: 'test' },
   });
   assert.equal(packed.status, 0, packed.stderr);
   const unpacked = unzip(zip, work);
   assert.equal(unpacked.status, 0, unpacked.stderr);
-  const system = join(work, 'ai-graph-system');
+  const system = join(work, 'tell-and-wire-system');
   assert.ok(existsSync(join(system, 'node', 'LICENSE')), "Node's licence travels with it");
   if (!windows) assert.ok(statSync(join(system, 'node', 'node')).mode & 0o111, 'the Node in it is executable once unzipped');
 

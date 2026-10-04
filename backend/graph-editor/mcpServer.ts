@@ -1,4 +1,4 @@
-// AI-Graph, offered to an assistant outside it.
+// Tell-and-Wire, offered to an assistant outside it.
 //
 // A Model Context Protocol server over stdio: Claude Code, Claude Desktop or any
 // other MCP client can have a graph designed, check one, save it and run it.
@@ -213,7 +213,7 @@ export interface GraphTools {
 const SPECS: ToolSpec[] = [
   {
     name: 'authoring_guide',
-    description: 'How to write an AI-Graph graph document yourself: the JSON shape, where each node type keeps what it does, '
+    description: 'How to write an Tell-and-Wire graph document yourself: the JSON shape, where each node type keeps what it does, '
       + 'the port names the engine derives, how a page connects to start and end points, and one complete example. Read this before writing a '
       + 'graph by hand, then use validate_graph and save_graph. No model on this machine is needed for that route.',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
@@ -515,7 +515,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       return [
         GRAPH_SYSTEM,
         '---',
-        'Using this through the ai-graph MCP server',
+        'Using this through the tell-and-wire MCP server',
         '',
         'The instruction above to answer with a fenced json block is written for a model replying in a chat. Here, build the '
         + 'same document and pass it as the "graph" argument: validate_graph checks it, save_graph writes it, run_graph tries it. '
@@ -543,7 +543,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       const otherwise = 'The other way needs no model here: call authoring_guide, write the graph yourself, then validate_graph and save_graph.';
       const target = await options.target();
       if (!target.provider || !target.model) {
-        throw new Refused(`No model is configured on this machine (⚙ Settings in the AI-Graph editor, or AI_GRAPH_AI_PROVIDER and AI_GRAPH_AI_MODEL). ${otherwise}`);
+        throw new Refused(`No model is configured on this machine (⚙ Settings in the Tell-and-Wire editor, or TW_AI_PROVIDER and TW_AI_MODEL). ${otherwise}`);
       }
 
       let generated: { graph: unknown; explanation: string };
@@ -551,7 +551,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         generated = await generateGraph(description, { ai: options.ai, target }, current);
       } catch (error) {
         throw new Refused(`Generation with ${target.provider} / ${target.model} failed: ${message(error).slice(0, ERROR_LIMIT)}\n`
-          + `If that model is not set up or not running, configure one in the AI-Graph editor's Settings. ${otherwise}`);
+          + `If that model is not set up or not running, configure one in the Tell-and-Wire editor's Settings. ${otherwise}`);
       }
 
       const graph = graphFrom(generated.graph, 'the generated document');
@@ -760,7 +760,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
 
 /** Newest first. The client's version is echoed when it is one of these; otherwise it is offered the first. */
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const SERVER_INFO = { name: 'ai-graph', version: '1.0.0' };
+const SERVER_INFO = { name: 'tell-and-wire', version: '1.0.0' };
 
 export interface StdioStreams {
   input: NodeJS.ReadableStream;
@@ -837,7 +837,7 @@ export function serveStdio(
           protocolVersion: typeof wanted === 'string' && PROTOCOL_VERSIONS.includes(wanted) ? wanted : PROTOCOL_VERSIONS[0],
           capabilities: { tools: {} },
           serverInfo: SERVER_INFO,
-          instructions: 'Designs, checks, saves and runs AI-Graph graphs inside one folder. To write a graph yourself, read '
+          instructions: 'Designs, checks, saves and runs Tell-and-Wire graphs inside one folder. To write a graph yourself, read '
             + 'authoring_guide first; to have this machine\'s model write one, use generate_graph. Validate before saving.',
         },
       });
@@ -868,7 +868,7 @@ export function serveStdio(
 
   const start = (line: string): void => {
     const work: Promise<void> = handle(line)
-      .catch((error) => { log?.write(`ai-graph mcp: ${message(error)}\n`); })
+      .catch((error) => { log?.write(`tell-and-wire mcp: ${message(error)}\n`); })
       .finally(() => { running.delete(work); });
     running.add(work);
   };
@@ -955,8 +955,8 @@ export async function runMcpServer(options: { root?: string } = {}): Promise<voi
 
   // A server a client started is not watched by anyone. One rejected promise
   // in a run must cost that run, not every tool call after it.
-  process.on('uncaughtException', (error) => toStderr('ai-graph mcp:', message(error)));
-  process.on('unhandledRejection', (error) => toStderr('ai-graph mcp:', message(error)));
+  process.on('uncaughtException', (error) => toStderr('tell-and-wire mcp:', message(error)));
+  process.on('unhandledRejection', (error) => toStderr('tell-and-wire mcp:', message(error)));
 
   const tools = createGraphTools({
     root,
@@ -969,6 +969,6 @@ export async function runMcpServer(options: { root?: string } = {}): Promise<voi
     secrets: machineSecrets,
   });
 
-  process.stderr.write(`ai-graph MCP server on stdio, confined to ${root}\n`);
+  process.stderr.write(`tell-and-wire MCP server on stdio, confined to ${root}\n`);
   await serveStdio(tools);
 }

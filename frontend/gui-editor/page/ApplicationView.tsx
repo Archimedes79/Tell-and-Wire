@@ -94,7 +94,7 @@ export default function ApplicationView() {
       await holdDocument();
       // Named, so pressing it again reloads the tool's own window instead of
       // leaving a trail of them.
-      const opened = window.open('runtime.html', 'ai-graph-tool');
+      const opened = window.open('runtime.html', 'tell-and-wire-tool');
       setOpening(opened ? '' : 'The browser blocked the window. Allow pop-ups for this page.');
     } catch (error) {
       setOpening(errorText(error, 'The tool could not be opened.'));

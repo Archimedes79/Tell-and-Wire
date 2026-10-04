@@ -70,7 +70,7 @@ export function runSh({ command, portFromEnv = false }: LauncherOptions): string
  *
  * Every way out that is a failure goes through `:failed`, which pauses: a
  * double-clicked window closes the moment the script ends, and a message
- * nobody could read is the same as no message. AI_GRAPH_NO_PAUSE is for
+ * nobody could read is the same as no message. TW_NO_PAUSE is for
  * scripts and tests, which have nobody to press a key.
  */
 export function runCmd({ command, portFromEnv = false }: LauncherOptions): string {
@@ -109,7 +109,7 @@ export function runCmd({ command, portFromEnv = false }: LauncherOptions): strin
     'echo It stopped with an error -- the reason is above.',
     '',
     ':failed',
-    'if not defined AI_GRAPH_NO_PAUSE (',
+    'if not defined TW_NO_PAUSE (',
     '  echo.',
     '  pause',
     ')',

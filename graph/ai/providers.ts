@@ -39,7 +39,7 @@ export interface ProviderSettings {
    * hangs held every ✨ and ▶ Try of a node with it, for as long as the
    * socket lived. Generous, because a local model asked to design a whole
    * graph takes minutes -- and when that is still not enough, the sentence it
-   * ends with names AI_GRAPH_TIMEOUT_MS, which sets another (0: none).
+   * ends with names TW_TIMEOUT_MS, which sets another (0: none).
    */
   timeoutMs: number;
 }
@@ -170,7 +170,7 @@ export class TimedOutError extends Error {
     const minutes = timeoutMs / 60_000;
     const span = Number.isInteger(minutes) ? `${minutes} minute${minutes === 1 ? '' : 's'}` : `${Math.round(timeoutMs / 1000)} seconds`;
     super(`The model did not answer within ${span}, so the call was given up. `
-      + 'AI_GRAPH_TIMEOUT_MS sets how long a call may take, in milliseconds (0: as long as it takes).');
+      + 'TW_TIMEOUT_MS sets how long a call may take, in milliseconds (0: as long as it takes).');
     this.name = 'TimedOutError';
   }
 }
@@ -454,7 +454,7 @@ function outOfBudget(provider: string, model: string, maxTokens: number, thought
   return new OutOfBudgetError(
     `${provider}/${model} used its whole budget of ${maxTokens} tokens`
     + `${thought ? ` thinking (${thought} characters of it)` : ''} and had none left for the answer. `
-    + 'Raise AI_GRAPH_MAX_TOKENS, turn the model\'s thinking off where it is served, or use a model that does not think.',
+    + 'Raise TW_MAX_TOKENS, turn the model\'s thinking off where it is served, or use a model that does not think.',
   );
 }
 
@@ -782,11 +782,11 @@ export function settingsFromEnv(env: Record<string, string | undefined>): Partia
 
   // A number, including 0 for "wait as long as it takes" -- so the knob can put
   // a clock back on as well as take one off.
-  const timeout = Number(env.AI_GRAPH_TIMEOUT_MS);
-  const budget = Number(env.AI_GRAPH_MAX_TOKENS);
+  const timeout = Number(env.TW_TIMEOUT_MS);
+  const budget = Number(env.TW_MAX_TOKENS);
 
   return {
-    ...(Number.isFinite(timeout) && timeout >= 0 && env.AI_GRAPH_TIMEOUT_MS ? { timeoutMs: timeout } : {}),
+    ...(Number.isFinite(timeout) && timeout >= 0 && env.TW_TIMEOUT_MS ? { timeoutMs: timeout } : {}),
     ...(Number.isFinite(budget) && budget > 0 ? { maxTokens: budget } : {}),
     endpoints,
     apiKeys,

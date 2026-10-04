@@ -41,7 +41,7 @@ const MINIMAL = resolve(REPO, 'graph', 'test', 'fixtures', 'minimal.json');
 
 async function bundleOf(path: string): Promise<string> {
   const graph = await loadGraph(path);
-  const dir = await mkdtemp(join(tmpdir(), 'ai-graph-bundle-'));
+  const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
   await writeBundle(graph, dir, { dataFrom: REPO });
   return dir;
 }
@@ -71,7 +71,7 @@ describe('a bundle', () => {
     const graph = await loadGraph(resolve(REPO, 'examples', 'population_plotter'));
     const chart = graph.nodes.find((node) => node.id === 'chart')!;
     chart.config.history = '## 2026-09-28 10:00 · ✨ Input\n\nPrompt:\n\n```\nC:/Users/someone/private/customers.csv\n```';
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-history-bundle-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-history-bundle-'));
     try {
       await writeBundle(graph, dir, { dataFrom: REPO });
       // The project folder, as it was built: its code a file, and no history.md.
@@ -109,7 +109,7 @@ describe('a bundle', () => {
   it('looks for its AI settings beside run.sh, where a recipient drops them, from wherever it is started', async () => {
     // The bundle's own copy is asked: it keeps graph/ at the path a checkout does.
     const dir = await bundleOf(MINIMAL);
-    const elsewhere = await mkdtemp(join(tmpdir(), 'ai-graph-elsewhere-'));
+    const elsewhere = await mkdtemp(join(tmpdir(), 'tell-and-wire-elsewhere-'));
     try {
       const settings = pathToFileURL(join(dir, 'graph', 'ai', 'settings.ts')).href;
       const asked = `const { candidatePaths } = await import(${JSON.stringify(settings)}); process.stdout.write(JSON.stringify(candidatePaths(${JSON.stringify(elsewhere)}, {})));`;
@@ -133,7 +133,7 @@ describe('a bundle', () => {
     // copied the folder would hand the graph editor to someone who was handed
     // a finished tool, so the file list comes out of runtime.html itself.
     const graph = await loadGraph(resolve(REPO, 'examples/population_plotter'));
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-page-bundle-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-page-bundle-'));
     try {
       const written = await writeBundle(graph, dir, { pageDir: resolve(REPO, 'frontend/dist'), dataFrom: REPO });
       // In web/: a project's page/ is the page itself, its blocks in page.json.
@@ -159,7 +159,7 @@ describe('a bundle', () => {
       });
       const server = spawn(process.execPath, [join(dir, 'backend', 'app', 'main.ts'), '.', '--serve', '--port', String(port)], {
         cwd: dir, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'],
-        env: { ...process.env, AI_GRAPH_NO_BROWSER: '1', AI_GRAPH_SETTINGS: join(dir, 'no-settings.json') },
+        env: { ...process.env, TW_NO_BROWSER: '1', TW_SETTINGS: join(dir, 'no-settings.json') },
       });
       let said = '';
       server.stderr.on('data', (chunk) => { said += chunk; });
@@ -258,7 +258,7 @@ describe('a bundle', () => {
   });
 
   it('refuses a graph with nothing in it: a bundle is something handed over', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-empty-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-empty-'));
     try {
       await expect(writeBundle(parseGraph({ nodes: [], edges: [] }), dir)).rejects.toThrow(/nothing to hand over/);
     } finally {
@@ -269,8 +269,8 @@ describe('a bundle', () => {
   it('is handed on whole: a file picked from anywhere comes along, and the tool is told where it is now', async () => {
     // 📂 Browse… picks an absolute path. Left for the recipient to bring, the
     // tool opened on somebody else's machine's path and "no such file".
-    const outside = await mkdtemp(join(tmpdir(), 'ai-graph-outside-'));
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-whole-'));
+    const outside = await mkdtemp(join(tmpdir(), 'tell-and-wire-outside-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-whole-'));
     try {
       await writeFile(join(outside, 'sales.csv'), 'Region,Total\nNorth,3\n');
       const graph = await loadGraph(resolve(REPO, 'examples', 'population_plotter'));
@@ -284,7 +284,7 @@ describe('a bundle', () => {
       expect(await readFile(join(dir, 'README.md'), 'utf8')).toContain('- `data/sales.csv`');
 
       // A file that is not there is no bundle at all -- said, and nothing written.
-      const empty = await mkdtemp(join(tmpdir(), 'ai-graph-refused-'));
+      const empty = await mkdtemp(join(tmpdir(), 'tell-and-wire-refused-'));
       try {
         picker.value = join(outside, 'gone.csv');
         await expect(writeBundle(graph, empty, { dataFrom: REPO })).rejects.toThrow(/cannot be handed on whole: .*gone\.csv" is not there/);
@@ -309,7 +309,7 @@ describe('a bundle', () => {
       expect(readme).toContain('Nothing else');
       // The plotter asks no model, so a page of provider settings would be
       // instructions for something that never happens.
-      expect(readme).not.toContain('AI_GRAPH_AI_PROVIDER');
+      expect(readme).not.toContain('TW_AI_PROVIDER');
       // What a person is handed is a page of blocks, called that.
       expect(readme).toContain('## The page');
       expect(readme).not.toMatch(/\b(interface|widgets?|gui)\b/i);

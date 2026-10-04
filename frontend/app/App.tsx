@@ -28,7 +28,7 @@ import { errorText } from './api/errorText';
 import type { NodeType, Graph } from './graph';
 import { DANGER_TEXT, LINE, MUTED, NEUTRAL_BUTTON, PRIMARY_BUTTON, SUNKEN, TEXT, WELL } from './ui/theme';
 
-const FOLDER_KEY = 'ai-graph.last-folder';
+const FOLDER_KEY = 'tell-and-wire.last-folder';
 
 /** The folder a graph was last opened from or saved to, as this browser remembers it -- '' where it cannot. */
 function rememberedFolder(): string {

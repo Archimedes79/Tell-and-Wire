@@ -34,7 +34,7 @@ function graph(overrides: { output?: string; input?: string } = {}): Graph {
 
 let dir: string;
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'ai-graph-check-'));
+  dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-check-'));
   forgetSeen();
 });
 afterEach(async () => {

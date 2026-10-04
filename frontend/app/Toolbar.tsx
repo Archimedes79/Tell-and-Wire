@@ -235,7 +235,7 @@ export default function Toolbar({
         className="flex items-center gap-2 xl:gap-3 px-3 xl:px-5 h-14 flex-shrink-0 min-w-0 overflow-x-auto overflow-y-hidden"
         style={{ background: SURFACE, borderBottom: `1px solid ${LINE}`, scrollbarWidth: 'thin' }}
       >
-        <span className="shrink-0 whitespace-nowrap text-base font-bold" style={{ color: ACCENT_TEXT }}>AI-Graph</span>
+        <span className="shrink-0 whitespace-nowrap text-base font-bold" style={{ color: ACCENT_TEXT }}>Tell-and-Wire</span>
 
         {/* The graph's name; where it is saved is its tooltip and the File menu's first line.
             Inside a node's graph the trail names where you are, the top graph

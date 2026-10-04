@@ -48,7 +48,7 @@ export function localCore(options: LocalCoreOptions = {}): GraphCore {
 
   return {
     async hello() {
-      return { protocol: PROTOCOL, language: 'javascript', core: 'AI-Graph JavaScript core' };
+      return { protocol: PROTOCOL, language: 'javascript', core: 'Tell-and-Wire JavaScript core' };
     },
 
     async open(held = {}) {

@@ -61,7 +61,7 @@ function sample(): Graph {
 
 let dir: string;
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'ai-graph-project-'));
+  dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-project-'));
   forgetSeen();
 });
 afterEach(async () => {

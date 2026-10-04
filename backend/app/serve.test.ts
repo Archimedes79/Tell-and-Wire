@@ -179,7 +179,7 @@ describe('a web page elsewhere in the same browser', () => {
   });
 
   it('served beyond loopback, answers as a name it was given, and still only to that origin', async () => {
-    process.env.AI_GRAPH_ALLOWED_HOSTS = 'Tool.lan, other.lan';
+    process.env.TW_ALLOWED_HOSTS = 'Tool.lan, other.lan';
     try {
       const { server, url } = await serve({ graphPath: MINIMAL, port: 0, host: '0.0.0.0' });
       started.push(server);
@@ -188,7 +188,7 @@ describe('a web page elsewhere in the same browser', () => {
       expect(await ask(url, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://evil.example' }, '{}')).toBe(403);
       expect(await ask(url, '/', { Host: 'evil.example' })).toBe(403);
     } finally {
-      delete process.env.AI_GRAPH_ALLOWED_HOSTS;
+      delete process.env.TW_ALLOWED_HOSTS;
     }
   });
 });
@@ -232,7 +232,7 @@ describe('a server bound to ::1', () => {
 
 describe('the page it serves', () => {
   it('serves the built page, and the same page for a deep link', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-page-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-page-'));
     try {
       await mkdir(join(dir, 'assets'), { recursive: true });
       await writeFile(join(dir, 'runtime.html'), '<!doctype html><title>tool</title>');
@@ -250,7 +250,7 @@ describe('the page it serves', () => {
   });
 
   it('will not serve its way out of the page directory', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-page-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-page-'));
     try {
       await writeFile(join(dir, 'runtime.html'), '<!doctype html><title>tool</title>');
       const { url } = await serveGraph(MINIMAL, dir);

@@ -1,5 +1,5 @@
 // Stop the editor: `node scripts/stop.mjs [--port 8000]`, which stop.cmd,
-// stop.ps1 and stop.sh call. Only an AI-Graph server is stopped; see
+// stop.ps1 and stop.sh call. Only an Tell-and-Wire server is stopped; see
 // editorProcess.mjs.
 
 import { readPort, stopEditor } from './editorProcess.mjs';

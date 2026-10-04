@@ -2,7 +2,7 @@
 
 Which model answers a graph and writes its code, and where the credentials live.
 
-**AI-Graph is usable without paying anyone.** Run a local model, or use a hosted free
+**Tell-and-Wire is usable without paying anyone.** Run a local model, or use a hosted free
 tier; add a paid provider only where you want the extra quality. The provider picker
 says which is which, so the choice is visible rather than something to look up.
 
@@ -16,7 +16,7 @@ says which is which, so the choice is visible rather than something to look up.
 | Anthropic (`anthropic`) | paid | `claude-opus-5` | `ANTHROPIC_API_KEY` |
 | OpenAI-compatible endpoint (`openai_compatible`) | depends | none: name one | `OPENAI_COMPATIBLE_BASE_URL`, optional `OPENAI_COMPATIBLE_API_KEY` |
 
-The ids are what `AI_GRAPH_AI_PROVIDER` and the settings file take. The defaults are
+The ids are what `TW_AI_PROVIDER` and the settings file take. The defaults are
 `DEFAULT_MODELS` in `engine/src/ai/settings.ts` and `DEFAULT_SETTINGS` in
 `engine/src/ai/providers.ts`. Google's and GitHub Models' addresses can also be moved with
 `GOOGLE_BASE_URL` and `GITHUB_MODELS_BASE_URL`; an `endpoints` entry in the settings file
@@ -69,13 +69,13 @@ Ollama. `ai-settings.example.json` beside the README shows the shape.
 
 **Which file.** The first of these that exists: `ai-settings.json` in the working directory,
 in the folder that holds `engine/` (the checkout, the download, a bundle -- beside its
-`run.sh`), and `~/.ai-graph/settings.json`; where none does, a save creates the first. When
-`AI_GRAPH_SETTINGS` is set, that one file is the only one, even before it exists
+`run.sh`), and `~/.tell-and-wire/settings.json`; where none does, a save creates the first. When
+`TW_SETTINGS` is set, that one file is the only one, even before it exists
 (`engine/src/ai/settings.test.ts`; `cli/bundle.test.ts`: "looks for its AI settings beside
 run.sh"). The file is never committed (`.gitignore`) and is never opened by an MCP tool.
 
-**Which wins.** An environment variable of the same name wins over the file: `AI_GRAPH_AI_PROVIDER`
-and `AI_GRAPH_AI_MODEL` each on its own (one naming only the model leaves the file's provider
+**Which wins.** An environment variable of the same name wins over the file: `TW_AI_PROVIDER`
+and `TW_AI_MODEL` each on its own (one naming only the model leaves the file's provider
 standing), and every key and address variable in the table.
 
 Two provider names are worth spelling out:
@@ -104,18 +104,18 @@ credentials would put a key in a file nobody asked for.
 ## Local models: LM Studio and Ollama
 
 Start LM Studio's server (`lms server start`, or the *Developer* tab) and load a model;
-AI-Graph finds it at `http://localhost:1234/v1` with no key. Name the model as LM Studio
+Tell-and-Wire finds it at `http://localhost:1234/v1` with no key. Name the model as LM Studio
 lists it — `google/gemma-4-26b-a4b-qat` — in ⚙ Settings or on the node.
 
 **A body that asks a model.** A code node asks through `node.llm` — the call is made
 for it, by the process that holds the keys. One run of a
 body may ask 25 times, so a loop that forgot to end costs a finite amount;
-`AI_GRAPH_MAX_LLM_CALLS` raises or lowers that where the tool runs.
+`TW_MAX_LLM_CALLS` raises or lowers that where the tool runs.
 
 **Models that think before they answer** (most recent local ones) spend the same token
 budget on the thinking. On a laptop that is slow — minutes rather than seconds — and if
-the budget runs out mid-thought the answer is empty. AI-Graph says so once instead of
-retrying; the fixes are to raise `AI_GRAPH_MAX_TOKENS` (default 4096), to switch thinking
+the budget runs out mid-thought the answer is empty. Tell-and-Wire says so once instead of
+retrying; the fixes are to raise `TW_MAX_TOKENS` (default 4096), to switch thinking
 off where the model is served, or to use a model that does not think. For ✨ a
 non-thinking coder model is the better choice. The same holds for a Claude model that
 thinks, whose answer is cut off by the token budget before its first word.
@@ -160,10 +160,10 @@ leaves nothing running. The model gets at most eight rounds of tool calls per an
 
 **Clocks.** A tool call is given two minutes, which is about a wedged server rather than a
 slow one: a scheduled run has nobody watching it. A tool that genuinely takes longer — a
-crawl, a build — gets more with `AI_GRAPH_MCP_TIMEOUT_MS`, and `0` takes the clock off
+crawl, a build — gets more with `TW_MCP_TIMEOUT_MS`, and `0` takes the clock off
 entirely. Stop ends a call either way, so nothing waits forever for a run that was
 abandoned. A model call is given ten minutes -- generous, since a local model asked for a
 whole graph is slow, and a hosted one that hangs otherwise holds a node's ✨ for as long as
 its connection lives. One that runs past it is given up, not asked again, and says so:
-"The model did not answer within 10 minutes". `AI_GRAPH_TIMEOUT_MS` sets another clock, in
+"The model did not answer within 10 minutes". `TW_TIMEOUT_MS` sets another clock, in
 milliseconds, and `0` takes it off.

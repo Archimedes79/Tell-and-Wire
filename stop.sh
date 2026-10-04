@@ -1,5 +1,5 @@
 #!/bin/sh
-# Stop the editor through the shared launcher, which only stops an AI-Graph
+# Stop the editor through the shared launcher, which only stops an Tell-and-Wire
 # server: see scripts/editorProcess.mjs.
 set -e
 cd "$(dirname "$0")"

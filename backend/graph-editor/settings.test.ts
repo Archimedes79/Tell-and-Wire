@@ -10,7 +10,7 @@ import { aiSetting, configuredSettings, probeLocal, readSettingsFile, settingsPa
  * The settings dialog's contract: what it may see, what a save may change, and
  * where a request ends up when nobody named a model.
  *
- * Every test names its own file through AI_GRAPH_SETTINGS and an empty
+ * Every test names its own file through TW_SETTINGS and an empty
  * environment, so nothing here can read the developer's real keys or write
  * into their real file -- the way a test once did in the Python half.
  */
@@ -19,7 +19,7 @@ async function own(contents?: unknown) {
   const dir = await mkdtemp(join(tmpdir(), 'ai-settings-'));
   const file = join(dir, 'ai-settings.json');
   if (contents !== undefined) await writeFile(file, JSON.stringify(contents));
-  const env = { AI_GRAPH_SETTINGS: file } as Record<string, string | undefined>;
+  const env = { TW_SETTINGS: file } as Record<string, string | undefined>;
   return { file, env, dir };
 }
 
@@ -90,7 +90,7 @@ describe('what a save may change', () => {
   it('creates the file, and its folder, on first save', async () => {
     const { dir } = await own();
     const nested = join(dir, 'deep', 'ai-settings.json');
-    const seen = await save({ endpoints: { ollama: 'http://x' } }, '/nowhere', { AI_GRAPH_SETTINGS: nested });
+    const seen = await save({ endpoints: { ollama: 'http://x' } }, '/nowhere', { TW_SETTINGS: nested });
     expect(seen.settings_file).toBe(nested);
     expect(existsSync(nested)).toBe(true);
   });
@@ -113,8 +113,8 @@ describe('what a save may change', () => {
 
   it('says which variables set the AI on this machine instead', async () => {
     const { env } = await own({ ai: { provider: 'openai', model: 'gpt-5' } });
-    expect(status('/nowhere', { ...env, AI_GRAPH_AI_MODEL: 'other' }).ai)
-      .toEqual({ provider: 'openai', model: 'gpt-5', environment: ['AI_GRAPH_AI_MODEL'] });
+    expect(status('/nowhere', { ...env, TW_AI_MODEL: 'other' }).ai)
+      .toEqual({ provider: 'openai', model: 'gpt-5', environment: ['TW_AI_MODEL'] });
   });
 });
 
@@ -122,7 +122,7 @@ describe('the one AI setting', () => {
   it('is the file\'s `ai`, and the environment wins over it', async () => {
     const { env } = await own({ ai: { provider: 'openai', model: 'gpt-4o-mini' } });
     expect(await aiSetting('/nowhere', env)).toEqual({ provider: 'openai', model: 'gpt-4o-mini' });
-    expect(await aiSetting('/nowhere', { ...env, AI_GRAPH_AI_PROVIDER: 'google', AI_GRAPH_AI_MODEL: 'g' }))
+    expect(await aiSetting('/nowhere', { ...env, TW_AI_PROVIDER: 'google', TW_AI_MODEL: 'g' }))
       .toEqual({ provider: 'google', model: 'g' });
   });
 

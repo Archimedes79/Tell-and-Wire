@@ -1,8 +1,8 @@
 # Connection points
 
-Where something else meets AI-Graph: another page, a script, a model over MCP, a body
+Where something else meets Tell-and-Wire: another page, a script, a model over MCP, a body
 in a process of its own. There are four. Each section says what crosses the point, which code holds it,
-and which test holds each claim. How AI-Graph works inside is
+and which test holds each claim. How Tell-and-Wire works inside is
 [architecture.md](architecture.md).
 
 ```
@@ -24,7 +24,7 @@ and which test holds each claim. How AI-Graph works inside is
 Test paths are under `engine/src/` unless they say otherwise.
 
 What crosses a point is all the other side has to speak -- files of JSON and text, names,
-JSON over HTTP, lines of JSON -- and none of it is AI-Graph's code. Some of the tests meet
+JSON over HTTP, lines of JSON -- and none of it is Tell-and-Wire's code. Some of the tests meet
 a point from outside, as anything else that spoke it would: `host/runtimeApi.test.ts` and
 `host/frontend.test.ts` over HTTP, `core/node.test.ts` through ④'s lines, and
 `examples.test.ts` with a folder in and a bundle run from its own folder. They check what
@@ -218,9 +218,9 @@ How a node's code is run: `elements/body.ts` (`runBody`) decides when, `core/nod
 
   ```
   stdin   {"inputs": {…}, "calls": ["llm", …]}                       one line: what it is handed
-  stdout  ␞ai-graph:call {"id": 1, "name": "llm", "args": …}          a question, on a line of its own
+  stdout  ␞tell-and-wire:call {"id": 1, "name": "llm", "args": …}          a question, on a line of its own
   stdin   {"id": 1, "result": …}   or   {"id": 1, "error": "…"}       its answer
-  stdout  ␞ai-graph:result {…}                                        what it made; the run is over
+  stdout  ␞tell-and-wire:result {…}                                        what it made; the run is over
   ```
 
   `␞` is U+001E. Anything else a body prints is its own ("may print what it likes: only

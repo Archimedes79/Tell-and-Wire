@@ -1,6 +1,6 @@
 # The MCP server
 
-Lets an assistant outside AI-Graph — Claude Code, Claude Desktop, any
+Lets an assistant outside Tell-and-Wire — Claude Code, Claude Desktop, any
 [Model Context Protocol](https://modelcontextprotocol.io) client — design a graph,
 check it, save it and run it, without the editor being open.
 
@@ -22,7 +22,7 @@ direction, tools a *graph's* AI node may call.)
 Claude Code:
 
 ```sh
-claude mcp add ai-graph -- node <repo>/engine/src/main.ts --mcp --mcp-root <project folder>
+claude mcp add tell-and-wire -- node <repo>/engine/src/main.ts --mcp --mcp-root <project folder>
 ```
 
 Claude Desktop, in `claude_desktop_config.json`:
@@ -30,7 +30,7 @@ Claude Desktop, in `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "ai-graph": {
+    "tell-and-wire": {
       "command": "node",
       "args": ["<repo>/engine/src/main.ts", "--mcp", "--mcp-root", "<project folder>"]
     }
@@ -49,8 +49,8 @@ command line. Put the `mcpServers` block above in a file and name it — given t
 inline, the Inspector takes `--mcp` for a flag of its own and the server never starts:
 
 ```sh
-npx @modelcontextprotocol/inspector --cli --config servers.json --server ai-graph --method tools/list
-npx @modelcontextprotocol/inspector --cli --config servers.json --server ai-graph \
+npx @modelcontextprotocol/inspector --cli --config servers.json --server tell-and-wire --method tools/list
+npx @modelcontextprotocol/inspector --cli --config servers.json --server tell-and-wire \
     --method tools/call --tool-name run_graph --tool-arg path=graphs/count_rows.json
 ```
 

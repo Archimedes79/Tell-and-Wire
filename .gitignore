@@ -34,10 +34,9 @@ ai-settings.json
 # Local editor/agent scratch, not part of the project.
 .claude/
 
-
 # What a session of a graph keeps beside it: never deployed, gone after a reset.
 state.json
 *.state.json
 
 # The downloadable package, built by scripts/package.mjs.
-ai-graph*.zip
+tell-and-wire*.zip

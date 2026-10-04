@@ -62,7 +62,7 @@ export default defineConfig({
   plugins: [react(), licenses()],
   // Dropbox syncs this workspace and locks files mid-write, causing EBUSY
   // errors when Vite's dep cache lives under node_modules/.vite. Keep it outside.
-  cacheDir: path.join(os.tmpdir(), 'ai-graph-editor-vite-cache'),
+  cacheDir: path.join(os.tmpdir(), 'tell-and-wire-editor-vite-cache'),
   build: {
     rollupOptions: {
       // Two entry points, one bundle of shared chunks: index.html is the

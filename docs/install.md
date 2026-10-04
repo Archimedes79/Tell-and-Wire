@@ -1,4 +1,4 @@
-# Installing and running AI-Graph
+# Installing and running Tell-and-Wire
 
 One runtime: Node 24 or newer. The engine is TypeScript that Node runs directly, so
 there is no build step for it and no interpreter to find — a graph runs on any machine
@@ -6,8 +6,8 @@ that can run Node, and so does the editor. The version is written down in `.nvmr
 each `package.json`, so `nvm use` picks it and npm says so when it is too old.
 
 ```bash
-git clone https://github.com/Archimedes79/AI_Graph.git
-cd AI_Graph
+git clone https://github.com/Archimedes79/Tell-and-Wire.git
+cd Tell-and-Wire
 npm ci
 ```
 
@@ -36,7 +36,7 @@ editor's requests. It listens on loopback only.
 
 Starting `start.cmd`, `start.ps1` or `start.sh` again while the editor is already
 running stops the existing editor on the same port first, rebuilds the page when
-editor or engine sources are newer, and starts one fresh instance. Only an AI-Graph
+editor or engine sources are newer, and starts one fresh instance. Only an Tell-and-Wire
 server is stopped: if another program holds the port, the launcher says so and leaves
 it alone (`--port 8001` picks another). Closing the browser tab
 does not stop the Node server. Use `stop.cmd`, `./stop.ps1` or `./stop.sh` to stop
@@ -72,13 +72,13 @@ first.
 
 ## The download, without a checkout
 
-The [releases page](https://github.com/Archimedes79/AI_Graph/releases) has zips that
+The [releases page](https://github.com/Archimedes79/Tell-and-Wire/releases) has zips that
 hold the engine's source, the editor's built page and the examples:
 
 | Release | Zip | What it is |
 |---|---|---|
-| `vX.Y.Z` | `ai-graph-windows.zip`, `ai-graph-linux.zip` | A version for Windows or Linux on x64, with the Node.js it runs on in `node/`. Published when the tag is pushed, and never changed afterwards. `releases/latest/download/<name>` is always the newest. |
-| `latest` (pre-release) | `ai-graph-latest.zip` | Whatever `main` is, without Node: for any computer with Node 24 or newer. Rebuilt on every green push to `main`, at an address that stays the same. |
+| `vX.Y.Z` | `tell-and-wire-windows.zip`, `tell-and-wire-linux.zip` | A version for Windows or Linux on x64, with the Node.js it runs on in `node/`. Published when the tag is pushed, and never changed afterwards. `releases/latest/download/<name>` is always the newest. |
+| `latest` (pre-release) | `tell-and-wire-latest.zip` | Whatever `main` is, without Node: for any computer with Node 24 or newer. Rebuilt on every green push to `main`, at an address that stays the same. |
 
 The *Source code (zip)* GitHub adds to every release is the bare repository — no built
 page and no `run.cmd` — and needs the checkout route above.
@@ -120,7 +120,7 @@ nobody who they are, so a port published on every interface hands all of that to
 network. On such a bind the server also answers only a request addressed to `localhost`,
 `127.0.0.1` or `[::1]`, whatever port led there, so a web page that points a name of its
 own at the machine gets nowhere; a name you reach it by yourself — a reverse proxy's —
-goes in `AI_GRAPH_ALLOWED_HOSTS`, comma-separated. The file browser switches itself off
+goes in `TW_ALLOWED_HOSTS`, comma-separated. The file browser switches itself off
 there rather than list the host's filesystem.
 
 ### The published image
@@ -129,7 +129,7 @@ Every push to `main` that passes CI is built and pushed to GitHub's own registry
 checkout is not required to run the editor in a container:
 
 ```bash
-docker run -p 127.0.0.1:8000:8000 -v ./data:/app/data ghcr.io/archimedes79/ai_graph:latest
+docker run -p 127.0.0.1:8000:8000 -v ./data:/app/data ghcr.io/archimedes79/tell-and-wire:latest
 ```
 
 A tagged release (`vX.Y.Z`) additionally publishes that version and its `X.Y`/`X`

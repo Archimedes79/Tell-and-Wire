@@ -7,10 +7,10 @@ import { aiSetting, candidatePaths, configuredMcpServers, configuredSettings, fr
 /**
  * A key belongs in a file, not in a terminal on every run — and not in the
  * repository. This is the file, and the rule that an explicit variable still
- * wins over it, so a one-off `AI_GRAPH_AI_MODEL=x` needs no editing.
+ * wins over it, so a one-off `TW_AI_MODEL=x` needs no editing.
  */
 async function withSettings(contents: string, run: (dir: string) => Promise<void>) {
-  const dir = await mkdtemp(join(tmpdir(), 'ai-graph-settings-'));
+  const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-settings-'));
   try {
     await writeFile(join(dir, 'ai-settings.json'), contents);
     await run(dir);
@@ -34,7 +34,7 @@ describe('ai-settings.json', () => {
     await withSettings(
       JSON.stringify({ ai: { provider: 'google', model: 'gemini-2.5-flash' }, api_keys: { google: 'k' } }),
       async (dir) => {
-        const env = { AI_GRAPH_AI_MODEL: 'gemini-2.5-pro' };
+        const env = { TW_AI_MODEL: 'gemini-2.5-pro' };
         expect(await aiSetting(dir, env)).toEqual({ provider: 'google', model: 'gemini-2.5-pro' });
         const settings = configuredSettings(env, dir);
         // and the key from the file survives, rather than the variable
@@ -52,13 +52,13 @@ describe('ai-settings.json', () => {
   });
 
   it('is nothing at all when there is no file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-empty-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-empty-'));
     try {
       // Named outright, so the search cannot fall through to a real settings
       // file on this machine -- which is how this test used to pass by luck,
       // and how it started reading a developer's own key when one appeared
       // beside the engine.
-      const env = { AI_GRAPH_SETTINGS: join(dir, 'ai-settings.json') };
+      const env = { TW_SETTINGS: join(dir, 'ai-settings.json') };
       expect(fromFile(dir, env)).toEqual({});
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -98,7 +98,7 @@ describe('ai-settings.json', () => {
     await withSettings('{}', async (dir) => {
       // Named outright, for the reason given below: the search must not fall
       // through to this machine's real file, which may well have servers in it.
-      expect(configuredMcpServers({ AI_GRAPH_SETTINGS: join(dir, 'not-there.json') }, dir)).toEqual({});
+      expect(configuredMcpServers({ TW_SETTINGS: join(dir, 'not-there.json') }, dir)).toEqual({});
     });
   });
 
@@ -106,7 +106,7 @@ describe('ai-settings.json', () => {
     // Everything else in this file can be overridden by a variable. A command
     // line cannot: the settings file is the one place a program to start is named.
     await withSettings(JSON.stringify({ mcp_servers: { files: { command: 'node' } } }), async (dir) => {
-      const servers = configuredMcpServers({ AI_GRAPH_MCP_SERVERS: '{"evil":{"command":"calc"}}' }, dir);
+      const servers = configuredMcpServers({ TW_MCP_SERVERS: '{"evil":{"command":"calc"}}' }, dir);
       expect(Object.keys(servers)).toEqual(['files']);
     });
   });
@@ -114,10 +114,10 @@ describe('ai-settings.json', () => {
   it('uses the named file and only that one, even before it exists', async () => {
     // `save()` has to land where the variable says, or the first write goes
     // somewhere else than every read after it.
-    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-named-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-named-'));
     try {
       const named = join(dir, 'elsewhere.json');
-      expect(candidatePaths(dir, { AI_GRAPH_SETTINGS: named })).toEqual([named]);
+      expect(candidatePaths(dir, { TW_SETTINGS: named })).toEqual([named]);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

@@ -1,4 +1,4 @@
-// Build the downloadable package: AI-Graph, ready to run, nothing to install.
+// Build the downloadable package: Tell-and-Wire, ready to run, nothing to install.
 //
 // The engine has no runtime dependencies -- only devDependencies -- and Node
 // runs its TypeScript unbuilt. So everything a recipient needs is source plus
@@ -55,8 +55,8 @@ function version() {
     try { return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim(); } catch { return ''; }
   };
   const commit = process.env.GITHUB_SHA || git('rev-parse', 'HEAD') || 'unknown';
-  const name = process.env.AI_GRAPH_VERSION || git('describe', '--tags', '--always', '--dirty') || 'unknown';
-  return `AI-Graph ${name}\ncommit ${commit}\nbuilt ${new Date().toISOString()}\n`;
+  const name = process.env.TW_VERSION || git('describe', '--tags', '--always', '--dirty') || 'unknown';
+  return `Tell-and-Wire ${name}\ncommit ${commit}\nbuilt ${new Date().toISOString()}\n`;
 }
 
 // `--node <folder>`: an unpacked Node.js download for one system -- node.exe
@@ -96,7 +96,7 @@ built. Nothing is installed, and nothing is installed while a graph runs.
 The launchers check this before starting and say so if it is missing or too
 old; on Windows the window stays open until you have read it.`;
 
-const README = `# AI-Graph
+const README = `# Tell-and-Wire
 
 Unzip, then:
 
@@ -122,7 +122,7 @@ ${NEEDS}
     frontend/dist the editor's page, built; its licenses.txt names the
                 packages it is built from, each with its licence
     examples/   project folders to open from the editor's Open dialog
-    LICENSE     the terms AI-Graph comes under
+    LICENSE     the terms Tell-and-Wire comes under
 
 A graph you build here can be handed on with the Deploy button, which writes a
 folder of its own -- that one holds a single graph and no editor.
@@ -138,7 +138,7 @@ const files = [
   'LICENSE',
 ];
 
-const out = args[0] ?? join(ROOT, 'ai-graph.zip');
+const out = args[0] ?? join(ROOT, 'tell-and-wire.zip');
 // Everything sits under one folder named after the file, so unzipping in a
 // downloads directory produces one directory rather than scattering 87 files
 // across it.
