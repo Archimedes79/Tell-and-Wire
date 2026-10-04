@@ -1,0 +1,14 @@
+{
+  "name": "Chat",
+  "description": "A chatbot is a chat block and a model. Sending a message fires the start point \"send\", whose package carries the message and the conversation so far; the assistant answers, and its answer arrives at the end point \"reply\", which the chat shows and adds to the conversation.",
+  "nodes": {
+    "send": "start",
+    "assistant": "ai",
+    "reply": "end"
+  },
+  "wires": [
+    "send.data -> assistant.message",
+    "send.data -> assistant.history",
+    "assistant.output -> reply.value"
+  ]
+}

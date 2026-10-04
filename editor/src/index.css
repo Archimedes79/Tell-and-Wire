@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* ReactFlow overrides */
+.react-flow__handle {
+  cursor: crosshair !important;
+}
+
+.react-flow__controls button {
+  background: var(--ui-surface, #1a1d2e) !important;
+  border-color: var(--ui-line, #2d3148) !important;
+  color: var(--ui-text, #e2e8f0) !important;
+}
+
+.react-flow__controls button:hover {
+  background: var(--ui-line, #2d3148) !important;
+}
+
+/* The zoom glyphs ship as black SVG paths, which vanishes on a dark scheme;
+   taking the button's own colour makes them follow every scheme. */
+.react-flow__controls button svg {
+  fill: currentColor !important;
+}
+
+/* The map's shade over what is out of view, in the scheme's own: it shipped as
+   a light grey, which glared from the corner of every dark canvas. */
+.react-flow__minimap-mask {
+  fill: var(--ui-scrim, rgba(0,0,0,0.70));
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ui-sunken, #0f1117);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ui-line, #2d3148);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ui-dimmer, #3d4168);
+}
+
+/* Smooth transitions */
+button {
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* A row or button under the pointer -- or reached with the keyboard, as a
+   menu's entries are. Tailwind's `hover:bg-white/5` was doing this job and is
+   invisible on a light scheme -- white over cream is cream. */
+.hover-raise:hover,
+.hover-raise:focus-visible {
+  background: var(--ui-hover, rgba(255,255,255,0.06));
+}
+
+/* A chat block waiting for its answer: three dots, breathing. */
+.chat-typing { letter-spacing: 2px; animation: chat-typing 1.2s ease-in-out infinite; }
+@keyframes chat-typing { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }

@@ -1,0 +1,58 @@
+{
+  "read": {
+    "x": 520,
+    "y": 160
+  },
+  "scientific": {
+    "x": 900,
+    "y": -100
+  },
+  "adversarial": {
+    "x": 900,
+    "y": 30
+  },
+  "claims": {
+    "x": 900,
+    "y": 160
+  },
+  "references": {
+    "x": 900,
+    "y": 290
+  },
+  "figures": {
+    "x": 900,
+    "y": 420
+  },
+  "judge": {
+    "x": 1300,
+    "y": 160
+  },
+  "review": {
+    "x": 160,
+    "y": 160
+  },
+  "verdict": {
+    "x": 1700,
+    "y": 160
+  },
+  "scientific_review": {
+    "x": 1300,
+    "y": -260
+  },
+  "adversarial_review": {
+    "x": 1300,
+    "y": -380
+  },
+  "claims_review": {
+    "x": 1300,
+    "y": 560
+  },
+  "references_review": {
+    "x": 1300,
+    "y": 680
+  },
+  "figures_review": {
+    "x": 1300,
+    "y": 800
+  }
+}

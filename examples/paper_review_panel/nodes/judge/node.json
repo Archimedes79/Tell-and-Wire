@@ -1,0 +1,7 @@
+{
+  "label": "Judge",
+  "description": "Merges the five reviews into one ranked list and a recommendation",
+  "config": {
+    "batch_mode": "whole_list"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "label": "Draw",
+  "description": "Choosing a file starts it; its package carries the chosen CSV file.",
+  "config": {}
+}

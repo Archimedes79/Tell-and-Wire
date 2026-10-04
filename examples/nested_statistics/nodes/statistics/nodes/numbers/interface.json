@@ -1,0 +1,10 @@
+{
+  "inputs": [
+    {
+      "port": "value",
+      "name": "Value",
+      "type": "any"
+    }
+  ],
+  "outputs": []
+}

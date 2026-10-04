@@ -1,0 +1,7 @@
+{
+  "label": "Adversarial",
+  "description": "Adversarial reviewer: to argue against the paper as a hostile but fair referee would.",
+  "config": {
+    "batch_mode": "whole_list"
+  }
+}

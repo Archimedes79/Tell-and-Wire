@@ -1,0 +1,26 @@
+[
+  {
+    "extensions": ".csv",
+    "fires": "draw",
+    "h": 2,
+    "id": "file",
+    "kind": "input_picker",
+    "label": "CSV file",
+    "mode": "file",
+    "sends_to": [
+      "draw"
+    ],
+    "tone": "sunken",
+    "value": "examples/data/population.csv",
+    "w": 16
+  },
+  {
+    "h": 9,
+    "id": "plot",
+    "kind": "plot_window",
+    "label": "",
+    "shows": "plot",
+    "tone": "plain",
+    "w": 16
+  }
+]

@@ -1,0 +1,113 @@
+import { describe, it, expect } from 'vitest';
+import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { Graph, GraphNode } from '../graph.ts';
+import type { Runtime } from '../elements/Runtime.ts';
+import { registry } from '../elements/registry.ts';
+import { Session } from '../host/session.ts';
+import { edge, graphOf, quietRuntime } from '../../test/fakes.ts';
+import { keptRound, readKeptRounds, replayRound, writeKeptRound, TESTS_DIR } from './keptRounds.ts';
+import { localCore } from '../core/localCore.ts';
+
+/**
+ * A round kept as a test, and run again: what came from outside or from
+ * before is handed in, everything else runs, and the end points must hand
+ * back what they did -- with no model asked.
+ */
+
+const port = (id: string, kind: 'input' | 'output', field?: string) =>
+  ({ id, name: id, kind, data_type: 'any' as const, multi: false, required: false, description: '', ...(field ? { field } : {}) });
+
+function node(id: string, type: string, config: Record<string, unknown> = {}, ports: { in?: string[]; out?: string[] } = {}): GraphNode {
+  return {
+    id, node_type: type as GraphNode['node_type'], label: id, description: `The ${id}.`, position: { x: 0, y: 0 }, config,
+    inputs: (ports.in ?? []).map((spec) => port(spec.split(':')[0], 'input', spec.split(':')[1])),
+    outputs: (ports.out ?? []).map((name) => port(name, 'output')),
+  };
+}
+
+/** A start point a call starts, a model that answers, a code node that counts the answer's words, an end point. */
+function asker(count = 'function run(i) { return { n: String(i.text).split(" ").length }; }'): Graph {
+  return graphOf([
+    node('ask', 'start', { started_by: 'call' }),
+    node('answer', 'ai', { prompt: 'Answer.' }, { in: ['question:question'], out: ['output'] }),
+    node('count', 'code', { code: count }, { in: ['text'], out: ['n'] }),
+    node('words', 'end', {}, { in: ['value'] }),
+  ], [
+    edge('q', 'ask', 'data', 'answer', 'question'),
+    edge('a', 'answer', 'output', 'count', 'text'),
+    edge('n', 'count', 'n', 'words', 'value'),
+  ]);
+}
+
+const inProcess: Runtime['code'] = {
+  run: async (body, inputs) => new Function('inputs', `${body}; return run(inputs);`)(inputs) as Record<string, unknown>,
+};
+/** A model that answers with three words, every time. */
+const answering = quietRuntime({ code: inProcess, ai: { complete: async () => 'three short words' } });
+
+/** A round of *graph*, run in a session as a call, kept. */
+async function keptOf(graph: Graph) {
+  const session = await Session.open(graph, { runtime: () => answering });
+  const { id, outcome } = session.start({ node_id: 'ask', port_id: 'data' }, { values: { question: 'How long?' } });
+  const result = await outcome;
+  return keptRound(graph, result, session.snapshot(id)!.started, registry);
+}
+
+describe('a round, kept', () => {
+  it('hands in what came from outside or from before -- the package, the answer -- and keeps what came back', async () => {
+    const kept = await keptOf(asker());
+    expect(kept.event).toBe('ask');
+    expect(kept.by).toBe('call');
+    expect(Object.keys(kept.given).sort()).toEqual(['answer', 'ask']);
+    expect(kept.given.ask.data).toEqual({ event: { name: 'ask', by: 'call' }, values: { question: 'How long?' } });
+    expect(kept.given.answer).toEqual({ output: 'three short words' });
+    expect(kept.outputs).toEqual({ words: 3 });
+  });
+
+  it('runs again to what it handed back, asking no model', async () => {
+    const kept = await keptOf(asker());
+    const noModel = quietRuntime({ code: inProcess, ai: { complete: async () => { throw new Error('asked a model'); } } });
+    expect(await replayRound(asker(), kept, { core: localCore({ runtime: () => noModel }), registry })).toEqual({ status: 'pass', details: [], outputs: { words: 3 } });
+  });
+
+  it('fails, saying what differs, when what runs again hands back otherwise', async () => {
+    const kept = await keptOf(asker());
+    const changed = asker('function run(i) { return { n: String(i.text).length }; }');
+    const replayed = await replayRound(changed, kept, { core: localCore({ runtime: () => answering }), registry });
+    expect(replayed.status).toBe('fail');
+    expect(replayed.details).toEqual(['"words" handed back 17; the kept round, 3.']);
+  });
+
+  it('fails where the graph changed so that a model would be asked that was not asked then', async () => {
+    const kept = await keptOf(asker());
+    const { answer: _answer, ...given } = kept.given;
+    const replayed = await replayRound(asker(), { ...kept, given }, { core: localCore({ runtime: () => answering }), registry });
+    expect(replayed.status).not.toBe('pass');
+    expect(replayed.details.join(' ')).toMatch(/asks no model/);
+  });
+});
+
+describe('the rounds a project keeps', () => {
+  it('are files in its tests/ folder, named after their event, read back as they were written', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'kept-'));
+    const kept = await keptOf(asker());
+    expect(await writeKeptRound(folder, kept)).toBe('ask-1');
+    expect(await writeKeptRound(folder, kept)).toBe('ask-2');
+    expect(JSON.parse(await readFile(join(folder, TESTS_DIR, 'ask-1.json'), 'utf8'))).toEqual(kept);
+    expect((await readKeptRounds(folder)).map(({ name, round }) => [name, round?.event])).toEqual([['ask-1', 'ask'], ['ask-2', 'ask']]);
+  });
+
+  it('say of a file that is no kept round what is wrong with it, and of a project without tests/ that there are none', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'kept-'));
+    expect(await readKeptRounds(folder)).toEqual([]);
+    await mkdir(join(folder, TESTS_DIR));
+    await writeFile(join(folder, TESTS_DIR, 'broken.json'), '{ not json');
+    await writeFile(join(folder, TESTS_DIR, 'other.json'), '{"name": "something else"}');
+    const read = await readKeptRounds(folder);
+    expect(read.map(({ name, round }) => [name, round])).toEqual([['broken', null], ['other', null]]);
+    expect(read[0].problem).toMatch(/cannot be read/);
+    expect(read[1].problem).toMatch(/needs "event", "given" and "outputs"/);
+  });
+});

@@ -1,0 +1,18 @@
+[
+  {
+    "fires": "send",
+    "h": 10,
+    "id": "chat",
+    "kind": "chat",
+    "sends_to": [
+      "send"
+    ],
+    "shows": "reply",
+    "tone": "plain",
+    "value": {
+      "messages": [],
+      "pending": ""
+    },
+    "w": 16
+  }
+]

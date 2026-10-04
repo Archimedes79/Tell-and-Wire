@@ -1,0 +1,7 @@
+{
+  "label": "Scientific",
+  "description": "Scientific reviewer: scientific soundness.",
+  "config": {
+    "batch_mode": "whole_list"
+  }
+}

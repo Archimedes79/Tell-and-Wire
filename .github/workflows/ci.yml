@@ -1,0 +1,266 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The engine is TypeScript that Node runs unbuilt, so the Node here is
+      # the Node a recipient needs: 24 or newer.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      # One workspace, one lockfile: the engine and the editor share it.
+      - name: Install
+        run: npm ci
+
+      # Every installed package against the licences it may come under, so a
+      # dependency on other terms fails the push that brings it in
+      # (docs/licenses.md).
+      - name: Licences
+        run: npm run licenses
+
+      # `npm test` is vitest, which does not type-check: for a while a push
+      # could be green while `npm run build` was broken, and the first anyone
+      # heard of it was at release time.
+      - name: Types
+        run: npm run typecheck
+
+      # The editor only: what the compiler does not see, above all the rules of
+      # hooks. The engine has no linter; its types and tests are the check.
+      - name: Lint
+        run: npm run lint
+
+      # Before the tests: the bundle test asserts that a bundle carries the
+      # built page, so the page has to exist by then -- and a checkout that
+      # cannot build has no page to carry.
+      - name: Build the editor
+        run: npm run build
+
+      - name: Tests
+        run: npm test
+
+      # What a person would find broken by opening one: an edge to a port that
+      # is not there, a file nothing reads, an interface naming a lost output.
+      - name: Check the examples
+        run: node engine/src/main.ts check $(ls -d examples/*/ | grep -v '^examples/data/$')
+
+      # Each node run once on the example in its input.js and held to its
+      # output.js, without a model: there is no key here, so an AI node is
+      # skipped, not failed.
+      - name: Test the examples' nodes
+        run: node engine/src/main.ts test --offline $(ls -d examples/*/ | grep -v '^examples/data/$')
+
+  # The launcher, on a checkout that has nothing installed yet -- which is what
+  # a person has when they clone this and double-click start. It installs and
+  # builds on its own, so there is deliberately no Install step above it.
+  launcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Start, restart and stop the editor
+        run: node --test scripts/launcher.test.mjs
+
+  # The download, unzipped and started the way a person starts it -- on
+  # Windows too, where run.cmd is the only way in. v0.2.0's zip was intact and
+  # still "did not start": its run.cmd assumed a new enough Node, always asked
+  # for port 8000, and closed its window before the error could be read, and
+  # its run.sh came out of the archive without an executable bit. Nothing else
+  # here unzips anything, so nothing else could have noticed.
+  package-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the editor
+        run: npm run build
+
+      - name: Unzip it and start it
+        run: node --test scripts/package.test.mjs
+
+  # The download for people who do not want a container: one zip holding the
+  # engine's source, the built page and the examples. The engine has no runtime
+  # dependencies and Node runs its TypeScript unbuilt, so a recipient unzips it
+  # and runs it -- no npm install, no build step, no Docker.
+  #
+  # On a vX.Y.Z tag only: a release is a thing people link to, so it gets a
+  # version rather than moving under them.
+  package:
+    needs: [test, package-test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the editor
+        run: npm run build
+
+      # Windows and Linux, each with the Node it runs on, so nothing needs to
+      # be installed first -- the two systems CI starts the download on.
+      # Named without the version, so the README's links to
+      # releases/latest/download/<name> always mean the newest release.
+      # Node is the official download of the very version this job ran the
+      # tests on, checked against the checksums nodejs.org publishes for it.
+      - name: Package
+        env:
+          AI_GRAPH_VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          v=$(node -p process.version)
+          base="https://nodejs.org/dist/$v"
+          curl -fsSLO "$base/SHASUMS256.txt"
+          for pair in win-x64:windows linux-x64:linux; do
+            target=${pair%%:*}; name=${pair##*:}
+            case $target in win-*) file="node-$v-$target.zip" ;; *) file="node-$v-$target.tar.gz" ;; esac
+            curl -fsSLO "$base/$file"
+            grep " $file\$" SHASUMS256.txt | sha256sum -c -
+            case $file in *.zip) unzip -q "$file" ;; *) tar -xzf "$file" ;; esac
+            node scripts/package.mjs "ai-graph-$name.zip" --node "node-$v-$target"
+          done
+          ls -la ai-graph-*.zip
+
+      # `gh` is on the runner already, so the release needs no third-party
+      # action and no token beyond the one this job is given.
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" ai-graph-*.zip \
+            --title "AI-Graph ${{ github.ref_name }}" \
+            --generate-notes
+
+  # The same zip, for whoever wants what main is today rather than the last
+  # version: rebuilt on every green push to main and published as the pre-release
+  # `latest`, so its download address never changes. The versioned releases
+  # above are untouched -- a link to v0.2.0 still means v0.2.0, and `latest` is
+  # never marked as the repository's latest release.
+  #
+  # A newer push cancels this run (see `concurrency` at the top), possibly
+  # between moving the tag and swapping the file. That newer run is by
+  # definition on its way and finishes the job, so the two are never apart for
+  # longer than one run takes.
+  latest:
+    needs: [test, package-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the editor
+        run: npm run build
+
+      - name: Package
+        env:
+          AI_GRAPH_VERSION: latest (main @ ${{ github.sha }})
+        run: node scripts/package.mjs ai-graph-latest.zip
+
+      # The tag is moved with the job's own token, and a push made with that
+      # token starts no workflow -- so this cannot trigger itself.
+      - name: Publish as the latest pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          notes="What main was at ${GITHUB_SHA::7}, built $(date -u +'%Y-%m-%d %H:%M UTC'). Rebuilt on every push to main -- VERSION inside the zip says which commit. For a version that stays put, take a vX.Y.Z release."
+          git tag -f latest "$GITHUB_SHA"
+          git push -f origin refs/tags/latest
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest ai-graph-latest.zip --clobber
+            gh release edit latest --prerelease --latest=false --title "AI-Graph latest (main)" --notes "$notes"
+          else
+            gh release create latest ai-graph-latest.zip --verify-tag --prerelease --latest=false \
+              --title "AI-Graph latest (main)" --notes "$notes"
+          fi
+
+  # Publishes the same one-process image docs/install.md and docker-compose.yml
+  # describe -- built here, not by hand, so what a `docker pull` gets is what
+  # this run just tested. Skipped for a pull request: nobody should be able to
+  # publish an image by opening one.
+  publish:
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # `main` -> the `latest` tag; a `vX.Y.Z` push additionally tags that
+      # version and its `X.Y` / `X` shorthands, the way most images on this
+      # registry are tagged.
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

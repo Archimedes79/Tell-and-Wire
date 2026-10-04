@@ -1,0 +1,10 @@
+{
+  "label": "Text",
+  "description": "Handed down by the graph above; run on its own, its design's",
+  "config": {
+    "started_by": "call",
+    "values": {
+      "text": "One sentence, and it has exactly eight words."
+    }
+  }
+}

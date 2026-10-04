@@ -1,0 +1,54 @@
+{
+  // Node 24 runs the engine's TypeScript directly, so a debug session needs no
+  // build step and no loader -- the program below is the source that runs, and
+  // a breakpoint sits in the file you are looking at.
+  //
+  // The first entry is what F5 starts. It takes no graph: the editor opens
+  // empty, and you load one from inside it.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start the editor (empty)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/engine/src/main.ts",
+      "args": ["--editor", "editor/dist", "--port", "8000"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Start the editor, building its page first",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/engine/src/main.ts",
+      "args": ["--editor", "editor/dist", "--port", "8000"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "build the editor page",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // Breakpoints in an element's execute() are hit here without a browser
+      // anywhere in the picture.
+      "name": "Run one graph, no editor",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/engine/src/main.ts",
+      "args": ["examples/population_plotter"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Run the test file I am looking at",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "${relativeFile}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

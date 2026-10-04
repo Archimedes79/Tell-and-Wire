@@ -1,0 +1,21 @@
+{
+  "name": "File reader & summarizer",
+  "description": "Pick a text file, read it, and have a model summarize it. Choosing a file, changing the length or pressing Summarize again fires the start point \"summarize\"; its package carries the file -- its path and what is in it -- and the length.",
+  "nodes": {
+    "summarize": "start",
+    "reader": "code",
+    "summarizer": "ai",
+    "summary": "end",
+    "about": "end",
+    "content": "end"
+  },
+  "wires": [
+    "summarize.data -> reader.file",
+    "summarize.data -> reader.path",
+    "reader.text -> summarizer.text",
+    "summarize.data -> summarizer.length",
+    "summarizer.output -> summary.value",
+    "reader.info -> about.value",
+    "reader.text -> content.value"
+  ]
+}

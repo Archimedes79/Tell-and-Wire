@@ -1,0 +1,19 @@
+# What `COPY . .` in the Dockerfile must never see.
+#
+# Above everything else: ai-settings.json can hold a real API key, and data/
+# is whatever local runs have left there -- an older editor kept the files
+# attached to nodes in it. Neither belongs in an image built once and shared.
+
+.git/
+node_modules/
+engine/node_modules/
+editor/node_modules/
+editor/dist/
+editor/.vite/
+data/
+ai-settings.json
+*.log
+.vscode/
+.idea/
+.claude/
+*.tsbuildinfo

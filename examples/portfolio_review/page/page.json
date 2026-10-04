@@ -1,0 +1,47 @@
+[
+  {
+    "extensions": "",
+    "fires": "review",
+    "h": 3,
+    "id": "input_picker",
+    "kind": "input_picker",
+    "label": "Portfolio export (CSV, any broker)",
+    "mode": "file",
+    "recursive": false,
+    "sends_to": [
+      "review"
+    ],
+    "tone": "sunken",
+    "value": "examples/data/portfolio_review/broker_export.csv",
+    "w": 16
+  },
+  {
+    "h": 4,
+    "id": "plot_window",
+    "kind": "plot_window",
+    "label": "Allocation by theme",
+    "shows": "allocation",
+    "tone": "plain",
+    "w": 8
+  },
+  {
+    "h": 4,
+    "id": "table",
+    "kind": "table",
+    "label": "Master action list",
+    "shows": "actions",
+    "tone": "plain",
+    "w": 16
+  },
+  {
+    "h": 7,
+    "id": "text_io",
+    "kind": "text_io",
+    "label": "Report",
+    "mode": "output",
+    "shows": "report",
+    "tone": "plain",
+    "value": "",
+    "w": 16
+  }
+]

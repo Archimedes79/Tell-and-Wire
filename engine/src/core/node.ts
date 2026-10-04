@@ -1,0 +1,309 @@
+// The engine on a machine with a filesystem: Node today, Deno unchanged.
+//
+// This is the only file in the engine that knows an operating system exists.
+// Everything above it takes a `Runtime` and therefore also runs in a browser
+// tab, or in a test with three fakes, without knowing the difference — which is
+// the whole reason the services are passed in rather than imported.
+
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { dirname, extname, join, resolve } from 'node:path';
+import { lent, type CodeService, type FileService, type Runtime } from '../elements/Runtime.ts';
+import { aiService, CREDENTIALS } from '../ai/providers.ts';
+import { mcpToolService } from '../ai/mcp.ts';
+import { aiSetting, configuredMcpServers, configuredSettings } from '../ai/settings.ts';
+
+export const nodeFiles: FileService = {
+  resolve: (path: string) => resolve(path),
+  exists: async (path: string) => existsSync(path),
+  size: async (path: string) => (await stat(path)).size,
+  async read(path: string, mode: 'text' | 'binary' = 'text') {
+    if (mode === 'binary') return (await readFile(path)).toString('base64');
+    return readFile(path, 'utf8');
+  },
+  async write(path: string, content: string, mode: 'text' | 'binary' = 'text') {
+    // An end point told to write into "results/" means a folder it may have
+    // to make: one file per value into a folder that is not there yet failed
+    // on the first value.
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, mode === 'binary' ? Buffer.from(content, 'base64') : content);
+  },
+  async remove(path: string) {
+    await rm(path, { force: true });
+  },
+  async list(path: string, options = {}) {
+    const { recursive = false, extensions } = options;
+    const found: string[] = [];
+    const walk = async (dir: string): Promise<void> => {
+      for (const entry of await readdir(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (recursive) await walk(full);
+        } else if (!extensions || extensions.includes(extname(entry.name).toLowerCase())) {
+          found.push(full);
+        }
+      }
+    };
+    if ((await stat(path)).isDirectory()) await walk(path);
+    // Sorted, because a directory listing is an input: two runs over the same
+    // folder must hand the graph the same order or nothing downstream is
+    // reproducible. With `/`, which Windows reads as well: a path that came
+    // from a listing ends up in a graph -- an example file, a value kept --
+    // and a graph is opened elsewhere.
+    return found.sort().map((full) => full.replace(/\\/g, '/'));
+  },
+};
+
+/**
+ * What a body is allowed to do, as flags to its own interpreter.
+ *
+ * Node's permission system denies everything once it is on, so what is listed
+ * here is the whole list. Files stay open — reading and writing them is most
+ * of what a body is *for*, and a graph that cannot touch a file is a graph
+ * that cannot do its job.
+ *
+ * What closes: starting other programs, loading native addons, spawning
+ * worker threads, opening a debugger port. A body has no business doing any
+ * of those, and a generated one is run by the sweep before anybody has read
+ * it.
+ *
+ * What this does **not** close is the network: Node has no flag for it (Deno
+ * does). A body can still reach out. Worth knowing rather than assuming.
+ */
+const SANDBOX = ['--permission', '--allow-fs-read=*', '--allow-fs-write=*'];
+
+/** What a variable is called that unlocks something: a key, a token, a password. */
+export const SECRET_NAME = /KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH/i;
+
+/**
+ * This process's environment as a body's process is handed it: without a
+ * provider's credential (`CREDENTIALS`) or anything else named like one. This
+ * process asks models, so its environment may hold their keys -- and a body,
+ * one a model wrote or one in a folder somebody handed over, would read them
+ * there, which is what `node.llm` exists to spare it. The rest stays: Node
+ * needs PATH, SYSTEMROOT and TEMP to start at all.
+ */
+function bodyEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const credentials = new Set(Object.values(CREDENTIALS).map((credential) => credential.env.toUpperCase()));
+  return Object.fromEntries(Object.entries(env).filter(([name]) => !credentials.has(name.toUpperCase()) && !SECRET_NAME.test(name)));
+}
+
+/**
+ * What marks a line on a body's stdout as the wrapper's own: a question for
+ * this process, or the result. Anything else a body prints is its own business
+ * and is ignored, so logging after the result cannot break it.
+ */
+const MARK = '\u001eai-graph:';
+/** How long a body that has handed over its result may take to end by itself. */
+const LINGER_MS = 1500;
+
+/**
+ * Running an authored body.
+ *
+ * A separate process, not `eval`: a body that loops forever, exits, or writes
+ * to stdout costs a subprocess rather than the run. It is handed plain JSON on
+ * stdin and nothing of this engine, so nothing about how the graph executes
+ * leaks into what someone writes.
+ *
+ * The interpreter is the one already running this engine. That is the whole
+ * reason bodies are JavaScript: a recipient who can run the engine can run
+ * every body in it, with no interpreter to find and no packages to install.
+ */
+export const nodeCode: CodeService = {
+  async run(body, inputs, signal, context) {
+    const dir = await mkdtemp(join(tmpdir(), 'ai-graph-'));
+    const file = join(dir, 'body.mjs');
+
+    // A body runs as an ES module, where `require` and `module` do not exist.
+    // Yet a model writes both styles: `import`, and `require` or code.js ended
+    // with `module.exports = { run };` -- as input.js and output.js end, and as
+    // code.js is run on its own (`node code.js`, a CommonJS file). So both
+    // work: the bridge below defines `require`, `module` and `exports`, and
+    // `import` needs nothing.
+    const lead = "import { createRequire } from 'node:module';\n"
+      + "import { createInterface as __lines } from 'node:readline';\n"
+      + 'const require = createRequire(import.meta.url);\n'
+      + 'const module = { exports: {} };\nconst exports = module.exports;\n'
+      // The inputs arrive on stdin, not as an argument. A command line has a
+      // ceiling -- about 32 KB on Windows -- and a wired file is an input like
+      // any other: a 100 KB log failed with `spawn ENAMETOOLONG`, a message
+      // about creating processes, for someone who had wired a CSV into a node.
+      //
+      // One line in, then one line per answer: a body may ask the process that
+      // started it for what it is not allowed itself (`BodyContext.calls`), by
+      // printing a marked line and waiting for the reply with its number.
+      + 'const __stdin = __lines({ input: process.stdin })[Symbol.asyncIterator]();\n'
+      + 'const __given = JSON.parse((await __stdin.next()).value);\n'
+      // stdin keeps the process alive only while a question is out. Otherwise a
+      // `run` that never settles would wait for ever, instead of ending the way
+      // Node ends a top-level await nobody resolves.
+      + 'process.stdin.unref?.();\n'
+      + 'const __asked = new Map();\nlet __count = 0;\n'
+      + '(async () => { for (;;) { const { value, done } = await __stdin.next(); if (done) return; '
+      + 'const reply = JSON.parse(value); const waiting = __asked.get(reply.id); __asked.delete(reply.id); '
+      + 'if (!__asked.size) process.stdin.unref?.(); '
+      + "if (waiting) ('error' in reply ? waiting.fail(new Error(reply.error)) : waiting.ok(reply.result)); } })();\n"
+      // A marked line starts on a line of its own, whatever the body printed
+      // before it: `process.stdout.write('50%')` has no newline to end on.
+      + 'const __ask = (name) => (args) => new Promise((ok, fail) => { const id = ++__count; process.stdin.ref?.(); '
+      + `__asked.set(id, { ok, fail }); process.stdout.write('\\n' + ${JSON.stringify(MARK)} + 'call ' + JSON.stringify({ id, name, args: args ?? null }) + '\\n'); });\n`
+      + 'const __node = Object.fromEntries(__given.calls.map((name) => [name, __ask(name)]));\n\n';
+    // What cannot be written as JSON -- a function -- is "not an object", said below.
+    const tail = '\n\nconst __out = await run(__given.inputs, __node);\n'
+      + `process.stdout.write('\\n' + ${JSON.stringify(MARK)} + 'result ' + (JSON.stringify(__out ?? null) ?? 'null') + '\\n', () => process.stdin.unref?.());\n`;
+    const wrapper = `${lead}${body}${tail}`;
+
+    try {
+      await writeFile(file, wrapper, 'utf8');
+      const given = { inputs, calls: Object.keys(context?.calls ?? {}) };
+      const result = await converse(process.execPath, [...SANDBOX, file], JSON.stringify(given), context?.calls ?? {}, signal);
+      if (result === undefined) throw new Error('the body returned nothing; does it return an object?');
+      if (result === null || typeof result !== 'object') throw new Error('the body must return an object keyed by output port.');
+      return result as Record<string, unknown>;
+    } catch (error) {
+      throw inBodyLines(error, lead);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  },
+};
+
+/**
+ * A failure in the body, counted in the body's own lines.
+ *
+ * Node reports `/tmp/ai-graph-x9/body.mjs:7:24` -- a file that is deleted
+ * before anyone reads the message, at a line the wrapper above moved. The
+ * person looking at the error wrote line 1 of a body, and that is what it now
+ * says.
+ */
+function inBodyLines(error: unknown, lead: string): unknown {
+  if (!(error instanceof Error)) return error;
+  const offset = lead.split('\n').length - 1;
+  error.message = error.message.replace(
+    /\S*body\.mjs:(\d+)(?::(\d+))?/g,
+    (whole, line: string, column?: string) => {
+      const inBody = Number(line) - offset;
+      return inBody > 0 ? `line ${inBody}${column ? `, column ${column}` : ''}` : whole;
+    },
+  );
+  return error;
+}
+
+/**
+ * Run the body's process and hold up this end of the conversation: hand it its
+ * inputs, answer what it asks, and return what it says its result is.
+ */
+function converse(
+  command: string,
+  args: string[],
+  given: string,
+  calls: Record<string, (args: unknown) => Promise<unknown>>,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  return new Promise((fulfil, fail) => {
+    if (signal?.aborted) return fail(new Error('Stopped.'));
+    const child = spawn(command, args, { windowsHide: true, env: bodyEnvironment() });
+    // Text, decoded across chunk boundaries: a line is split on, and a character must not be.
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    // Stop means stop: a body in a loop is a process, and a process can be ended.
+    const stop = () => { child.kill(); };
+    signal?.addEventListener('abort', stop, { once: true });
+    child.on('close', () => signal?.removeEventListener('abort', stop));
+    // A body that exits before reading its input closes the pipe under the
+    // write. That is the body's failure, and its exit code reports it.
+    child.stdin.on('error', () => {});
+    const say = (line: string): void => { if (child.stdin.writable) child.stdin.write(`${line}\n`); };
+    say(given);
+    // Nothing it could ask: nothing more to say, and an open pipe would only
+    // keep a body alive that forgot to return.
+    if (!Object.keys(calls).length) child.stdin.end();
+
+    let result: unknown;
+    let answered = false;
+    let pending = '';
+    let err = '';
+
+    const answer = async (asked: { id: number; name: string; args: unknown }): Promise<void> => {
+      const call = calls[asked.name];
+      try {
+        if (!call) throw new Error(`This body may not ask for "${asked.name}".`);
+        say(JSON.stringify({ id: asked.id, result: (await call(asked.args)) ?? null }));
+      } catch (error) {
+        say(JSON.stringify({ id: asked.id, error: error instanceof Error ? error.message : String(error) }));
+      }
+    };
+
+    child.stdout.on('data', (chunk) => {
+      pending += chunk;
+      const lines = pending.split('\n');
+      pending = lines.pop() ?? '';
+      for (const line of lines) {
+        if (answered || !line.startsWith(MARK)) continue;
+        const rest = line.slice(MARK.length);
+        try {
+          if (rest.startsWith('call ')) void answer(JSON.parse(rest.slice(5)));
+          if (rest.startsWith('result ')) {
+            result = JSON.parse(rest.slice(7));
+            answered = true;
+            child.stdin.end();
+            // It has said what it made. A timer or a socket the body left open
+            // must not keep the node running after that.
+            setTimeout(() => child.kill(), LINGER_MS).unref();
+          }
+        } catch {
+          // The body wrote the mark itself, with something after it that is not
+          // JSON. Its mistake, and never a reason for this process to fall.
+          fail(new Error('the body wrote a line that only the engine may write.'));
+          child.kill();
+        }
+      }
+    });
+    child.stderr.on('data', (chunk) => { err += chunk; });
+    child.on('error', (error) => fail(error));
+    child.on('close', (code) => {
+      if (answered) return fulfil(result);
+      if (code === 0) return fulfil(undefined);
+      if (signal?.aborted) return fail(new Error('Stopped.'));
+      // The sentence a person needs is the one naming the error. A thrown
+      // error puts it at the bottom of the traceback; a syntax error puts it
+      // near the top, above the stack -- so it is looked for, not assumed.
+      const lines = err.trim().split('\n');
+      const named = lines.findIndex((line) => /^\w*Error\b/.test(line.trim()));
+      const message = named >= 0 ? lines.slice(named, named + 2).join('\n') : lines.slice(-3).join('\n');
+      fail(new Error(message.trim() || `exited with ${code}`));
+    });
+  });
+}
+
+/**
+ * The engine wired to this machine.
+ *
+ * The model provider is configured from the environment and the settings
+ * file, so a double-clicked build is configurable without a terminal. A node
+ * that pins its own provider and model is sent there; everything else goes
+ * where the one AI setting says (`aiSetting`).
+ *
+ * Tool servers come from the settings file and from nowhere else. A graph
+ * names the servers it wants; which program a name starts is this machine's
+ * decision, never the graph's -- `ai/mcp.ts` is where that line is held.
+ * Nothing is started here: a server runs for the length of one node's run.
+ */
+export function nodeRuntime(overrides: Partial<Runtime> = {}): Runtime {
+  const ai = aiService(configuredSettings());
+  return {
+    files: nodeFiles,
+    code: nodeCode,
+    // Whatever a request does not name, the one AI setting fills (`lent`) --
+    // the same answer the editor shows as "now: …", because it is the same
+    // function. Asked per call, so a setting saved in ⚙ Settings while the
+    // editor runs is the one the next call uses.
+    ai: { complete: async (request) => ai.complete({ ...request, ...lent(request, await aiSetting()) }), setting: () => aiSetting() },
+    tools: mcpToolService(configuredMcpServers()),
+    ...(Number(process.env.AI_GRAPH_MAX_LLM_CALLS) > 0 ? { llmCallsPerBody: Number(process.env.AI_GRAPH_MAX_LLM_CALLS) } : {}),
+    ...overrides,
+  };
+}
+

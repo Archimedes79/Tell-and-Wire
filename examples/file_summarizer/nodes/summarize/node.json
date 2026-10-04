@@ -1,0 +1,5 @@
+{
+  "label": "Summarize",
+  "description": "Choosing a file, changing the length or pressing the button starts it; its package carries the file and the length.",
+  "config": {}
+}

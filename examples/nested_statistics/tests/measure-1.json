@@ -1,0 +1,24 @@
+{
+  "event": "measure",
+  "by": "call",
+  "given": {
+    "measure": {
+      "data": {
+        "event": {
+          "name": "measure",
+          "by": "call"
+        },
+        "values": {
+          "paragraph": "A graph grows in two directions. It grows wider, and it grows deeper."
+        }
+      }
+    }
+  },
+  "outputs": {
+    "report": {
+      "words": 13,
+      "sentences": 2,
+      "longest": "directions"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "label": "Read manuscript",
+  "description": "Reads the chosen manuscript once and passes its text on, unchanged, to every reviewer.",
+  "config": {
+    "batch_mode": "whole_list"
+  }
+}

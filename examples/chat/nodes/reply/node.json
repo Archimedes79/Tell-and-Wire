@@ -1,0 +1,5 @@
+{
+  "label": "Reply",
+  "description": "The assistant's answer: the chat shows it and adds it to the conversation.",
+  "config": {}
+}

@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "port": "prompt",
+      "name": "Prompt",
+      "type": "text",
+      "description": "The chosen export's content, as the page sends it",
+      "field": "input_picker.content"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "output",
+      "name": "Output",
+      "type": "text",
+      "description": "The answer."
+    }
+  ]
+}

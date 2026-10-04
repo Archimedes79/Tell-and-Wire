@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "port": "story",
+      "name": "Story",
+      "type": "file_path",
+      "list": true,
+      "field": "folder"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "output",
+      "name": "Summary",
+      "type": "text",
+      "list": true
+    }
+  ]
+}

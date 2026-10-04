@@ -1,0 +1,13 @@
+{
+  "name": "Summarize a folder",
+  "description": "Choose a folder and read a summary of every text file in it. Choosing a folder fires the start point \"chosen\"; the AI node takes the folder's files from its package and runs once per file, and the page shows the end point \"summaries\" one under the other.",
+  "nodes": {
+    "chosen": "start",
+    "summarize": "ai",
+    "summaries": "end"
+  },
+  "wires": [
+    "chosen.data -> summarize.story",
+    "summarize.output -> summaries.value"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "label": "References",
+  "description": "References reviewer: the references.",
+  "config": {
+    "batch_mode": "whole_list"
+  }
+}

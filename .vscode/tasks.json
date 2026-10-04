@@ -1,0 +1,53 @@
+{
+  // The same commands package.json holds, so a task and a terminal never
+  // disagree about how this project starts.
+  //
+  // "start the editor" is the default build task, which is what Ctrl+Shift+B
+  // runs: one keystroke from an open editor to a running one. It takes no
+  // graph -- the editor opens empty and you load one from inside it.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start the editor",
+      "type": "npm",
+      "script": "start",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "reveal": "always" },
+      "detail": "Serves the editor on http://127.0.0.1:8000 and opens a browser"
+    },
+    {
+      // Engine on :8000 and Vite on :3000, so an edit to the editor shows on
+      // save. The page to open is the Vite one.
+      "label": "develop the editor",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "reveal": "always" },
+      "detail": "Engine on :8000, Vite on :3000 -- edits show on save"
+    },
+    {
+      "label": "build the editor page",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": ["$tsc"],
+      "detail": "Needed once, and after pulling changes to the editor"
+    },
+    {
+      "label": "test",
+      "type": "npm",
+      "script": "test",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": [],
+      "detail": "Both suites"
+    },
+    {
+      "label": "typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "problemMatcher": ["$tsc"],
+      "detail": "Both workspaces, with the compiler"
+    }
+  ]
+}

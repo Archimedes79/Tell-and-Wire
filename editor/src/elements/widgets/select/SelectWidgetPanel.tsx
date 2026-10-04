@@ -1,0 +1,26 @@
+import { DIM, FIELD_ON_SURFACE, MUTED } from '@/ui/theme';
+import type { WidgetPanelProps } from '../../WidgetGuiBuilder';
+
+export default function SelectWidgetPanel({ widget, onUpdate }: WidgetPanelProps) {
+  const options = typeof widget.options === 'string' ? widget.options : '';
+
+  return (
+    <div className="space-y-2">
+      <label className="block">
+        <span className="block text-xs font-medium mb-1" style={{ color: MUTED }}>
+          Options — one per line
+        </span>
+        <textarea
+          className="w-full rounded-lg px-2 py-1.5 text-sm font-mono"
+          style={{ ...FIELD_ON_SURFACE, minHeight: 90 }}
+          value={options}
+          onChange={(e) => onUpdate({ options: e.target.value })}
+          placeholder={'Small\nMedium\nLarge'}
+        />
+      </label>
+      <p className="text-xs" style={{ color: DIM }}>
+        Emits whichever option is selected on the page. The first line is the default.
+      </p>
+    </div>
+  );
+}

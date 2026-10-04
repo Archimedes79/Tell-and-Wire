@@ -1,0 +1,18 @@
+{
+  "inputs": [
+    {
+      "port": "paper",
+      "name": "Paper",
+      "type": "text",
+      "description": "The manuscript as text"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "output",
+      "name": "Findings",
+      "type": "text",
+      "description": "One finding per line"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "extensions": ".txt",
+    "fires": "chosen",
+    "h": 2,
+    "id": "folder",
+    "kind": "input_picker",
+    "label": "Folder",
+    "mode": "directory",
+    "sends_to": [
+      "chosen"
+    ],
+    "tone": "sunken",
+    "value": "examples/data/stories",
+    "w": 16
+  },
+  {
+    "h": 10,
+    "id": "summaries",
+    "kind": "text_io",
+    "label": "Summaries",
+    "mode": "output",
+    "shows": "summaries",
+    "tone": "raised",
+    "w": 16
+  }
+]

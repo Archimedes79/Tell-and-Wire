@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "name": "Hello World",
+    "version": "1.0.0",
+    "description": "The smallest possible graph: a text the graph holds, wired straight to the run's result.",
+    "author": "",
+    "tags": [
+      "example"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "greeting",
+      "node_type": "data",
+      "label": "Greeting",
+      "description": "The greeting the run hands back.",
+      "position": {
+        "x": 80,
+        "y": 120
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "output",
+          "name": "Output",
+          "kind": "output",
+          "data_type": "text",
+          "multi": false,
+          "required": false,
+          "description": ""
+        }
+      ],
+      "config": {
+        "data_value": "Hello, World!"
+      }
+    },
+    {
+      "id": "result",
+      "node_type": "end",
+      "label": "Result",
+      "description": "",
+      "position": {
+        "x": 420,
+        "y": 120
+      },
+      "inputs": [
+        {
+          "id": "value",
+          "name": "Value",
+          "kind": "input",
+          "data_type": "any",
+          "multi": true,
+          "required": false,
+          "description": ""
+        }
+      ],
+      "outputs": [],
+      "config": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source_node_id": "greeting",
+      "source_port_id": "output",
+      "target_node_id": "result",
+      "target_port_id": "value"
+    }
+  ]
+}

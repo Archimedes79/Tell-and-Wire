@@ -1,0 +1,7 @@
+{
+  "label": "Figures & tables",
+  "description": "Figures & tables reviewer: the figures and tables.",
+  "config": {
+    "batch_mode": "whole_list"
+  }
+}

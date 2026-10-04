@@ -1,0 +1,45 @@
+# Local environment.
+.env
+
+# Node
+node_modules/
+editor/dist/
+editor/.vite/
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+# ...but keep the shared workspace config (test discovery, run tasks)
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+
+# Data
+# Attachments and other things a running editor keeps beside the project.
+/data/
+*.log
+
+# AI credentials written by ⚙ Settings → Keys and addresses. Its default location
+# is the working directory, which for a dev run is this repo -- never commit it.
+ai-settings.json
+
+# Local editor/agent scratch, not part of the project.
+.claude/
+
+# The engine's installed packages.
+engine/node_modules/
+
+# What a session of a graph keeps beside it: never deployed, gone after a reset.
+state.json
+*.state.json
+
+# The downloadable package, built by scripts/package.mjs.
+ai-graph*.zip

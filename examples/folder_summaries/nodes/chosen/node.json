@@ -1,0 +1,5 @@
+{
+  "label": "Folder chosen",
+  "description": "Choosing a folder starts it; its package carries the folder's text files.",
+  "config": {}
+}

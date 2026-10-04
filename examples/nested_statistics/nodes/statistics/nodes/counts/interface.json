@@ -1,0 +1,17 @@
+{
+  "inputs": [
+    {
+      "port": "text",
+      "name": "Text",
+      "type": "text",
+      "field": "text"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "output",
+      "name": "Output",
+      "type": "json"
+    }
+  ]
+}

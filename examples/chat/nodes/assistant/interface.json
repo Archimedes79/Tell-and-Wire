@@ -1,0 +1,24 @@
+{
+  "inputs": [
+    {
+      "port": "history",
+      "name": "History",
+      "type": "text",
+      "field": "chat.history"
+    },
+    {
+      "port": "message",
+      "name": "Message",
+      "type": "text",
+      "required": true,
+      "field": "chat.message"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "output",
+      "name": "Reply",
+      "type": "text"
+    }
+  ]
+}

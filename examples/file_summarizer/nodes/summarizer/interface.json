@@ -1,0 +1,25 @@
+{
+  "inputs": [
+    {
+      "port": "text",
+      "name": "Text",
+      "type": "text",
+      "description": "What to summarize"
+    },
+    {
+      "port": "length",
+      "name": "Length",
+      "type": "text",
+      "description": "How long the summary should be",
+      "field": "length"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "output",
+      "name": "Output",
+      "type": "text",
+      "description": "What the model answered"
+    }
+  ]
+}
