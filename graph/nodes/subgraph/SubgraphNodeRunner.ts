@@ -79,7 +79,7 @@ export class SubgraphNodeRunner extends NodeRunner {
   async execute(node: GraphNode, inputs: Record<string, unknown>, runtime: Runtime): Promise<Record<string, unknown>> {
     const graph = this.nestedGraph(node);
     if (!graph) throw new Error('This node holds no graph that can be read.');
-    if (!runtime.subgraph) throw new Error('A graph inside a node can only be run by the engine that runs graphs.');
+    if (!runtime.subgraph) throw new Error('A graph inside a node can only be run as part of a graph run.');
     const elements = runtime.subgraph.elements;
 
     const given: Record<string, Record<string, unknown>> = {};
@@ -115,7 +115,7 @@ export class SubgraphNodeRunner extends NodeRunner {
   // ── Build time ────────────────────────────────────────────────────────────
 
   override whatRuns(): WhatRuns {
-    return this.engineRuns('Runs the graph in its folder, whole, with what arrives on each port sent to the start point of that name, and hands on what reaches its end points.');
+    return this.graphRuns('Runs the graph in its folder, whole, with what arrives on each port sent to the start point of that name, and hands on what reaches its end points.');
   }
 
   /**

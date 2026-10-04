@@ -9,9 +9,9 @@
 //
 // **These are the standard prompts, and a node may keep its own.** The editor
 // shows each under the ✨ it belongs to, and a node keeps one only when someone
-// changed it (`config.prompts.input | output | body`). After it the engine adds
+// changed it (`config.prompts.input | output | body`). After it the backend adds
 // its own frame, which is not the person's to edit: the file format and how to
-// answer (`host/editor/generate.ts`).
+// answer (`backend/graph-editor/generate.ts`).
 //
 // **Variables are filled by their exact names**, and nothing else in braces is
 // touched: a prompt that holds JSON reaches the model as it was written. A

@@ -7,7 +7,7 @@ import { bundleNeeds } from '../../../backend/app/cli/bundle.ts';
 import { edge, quietRuntime } from '../../test/fakes.ts';
 
 /**
- * A graph inside a node, run by the engine that runs graphs.
+ * A graph inside a node, run by the executor that runs every graph.
  *
  * Every test here goes through `executeGraph`, never through the element on
  * its own: the point of the design is that the outer run and the inner run are

@@ -15,7 +15,7 @@ import { errorText } from '../../app/api/errorText';
 import { call } from '../../app/api/client';
 import { interfaceOf } from '../../../backend/gui-editor/graphInterface.ts';
 import { pageStarts } from '../../../graph/execution/triggers.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { DANGER_TEXT, DIMMER, LINE, MUTED, NEUTRAL_BUTTON, SUNKEN } from '../../app/ui/theme';
 
 /** Hand the server the document, so what runs is what is being edited. */
@@ -52,11 +52,11 @@ export default function ApplicationView() {
   );
   // Whether using the page starts the graph -- or only shows what its start
   // points that start themselves, or its one run at start, made.
-  const starts = pageStarts(graph, engineRegistry);
+  const starts = pageStarts(graph, runnerRegistry);
   // The graph's names, as the runtime API tells a delivered tool them: which
   // block fires which start point, which blocks a round is sent, and what a
   // page without blocks shows -- the outputs, under their labels.
-  const offered = useMemo(() => interfaceOf(graph, engineRegistry), [graph]);
+  const offered = useMemo(() => interfaceOf(graph, runnerRegistry), [graph]);
   const called = offered.events.some((event) => event.started_by === 'call');
   const session = useSession();
   const round = useRound(holdDocument);

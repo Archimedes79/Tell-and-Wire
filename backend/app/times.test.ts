@@ -76,7 +76,7 @@ describe('the base classes', () => {
   it('name as build time what only building asks', () => {
     // Said here in full, so that making something build time -- or taking it
     // out -- is a decision somebody made, not a bar that moved.
-    expect(buildTime.sort()).toEqual(['asksModel', 'deployNeeds', 'engineRuns', 'generation', 'graphAuthorNote', 'problems', 'receives', 'referencedPaths', 'valueIsDesign', 'whatRuns']);
+    expect(buildTime.sort()).toEqual(['asksModel', 'deployNeeds', 'generation', 'graphAuthorNote', 'graphRuns', 'problems', 'receives', 'referencedPaths', 'valueIsDesign', 'whatRuns']);
   });
 });
 
@@ -176,10 +176,10 @@ describe('what runs', () => {
 
   it('names a file only when the node keeps one of that name', () => {
     const element = registry.node('folder')!;
-    // A folder is listed by the engine: no body chooses its files.
+    // A folder is listed by its runner's own code: no body chooses its files.
     const subject = node('folder', { path: 'docs' });
     const kept = element.texts(subject).map((text) => text.file);
     for (const named of element.whatRuns(subject).does.match(/\b[\w.-]+\.(?:js|md|json)\b/g) ?? []) expect(kept).toContain(named);
-    expect(element.whatRuns(subject).by).toBe('engine');
+    expect(element.whatRuns(subject).by).toBe('graph');
   });
 });

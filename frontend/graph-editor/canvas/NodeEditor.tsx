@@ -21,7 +21,7 @@ import {
 import { inputSources, outputTargets } from '../authoring/generationContext';
 import { fileFromTheGraph, inputFilesOf } from '../authoring/exampleFile';
 import { runsPerItem } from '../authoring/perItem';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { GenerationReport } from '../authoring/GenerationTranscript';
 import HeadingField from '../authoring/HeadingField';
 import WhatRuns from '../fields/WhatRuns';
@@ -150,7 +150,7 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
   const fromStart = (port: Port) => graphEdges
     .filter((edge) => edge.target === node.id && edge.targetHandle === port.id)
     .map((edge) => graphNodes.find((candidate) => candidate.id === edge.source))
-    .filter((source): source is GraphNode => !!source && engineRegistry.node(source.node_type)?.takesPackage === true);
+    .filter((source): source is GraphNode => !!source && runnerRegistry.node(source.node_type)?.takesPackage === true);
   const takes = Object.fromEntries(node.inputs.map((port) => [port.id, fromStart(port).flatMap((source) => fieldChoices(page, source))]));
   const setPorts = (ports: { inputs: Port[]; outputs: Port[] }, step?: UndoStep) => panel.change((current) => withPorts(current, ports), step);
   // The ports are the person's to name, rather than following a setting.
@@ -165,7 +165,7 @@ export default function NodeEditor({ nodeId, onClose }: NodeEditorProps) {
       hints={{ inputs: element.portHint('inputs', node), outputs: element.portHint('outputs', node) }}
       wiring={wiring}
       takes={takes}
-      readsFiles={engineRegistry.node(node.node_type)?.readsFileInputs ?? false}
+      readsFiles={runnerRegistry.node(node.node_type)?.readsFileInputs ?? false}
       compact={defined}
       perItem={defined && runsPerItem(node)}
       caught={caught}

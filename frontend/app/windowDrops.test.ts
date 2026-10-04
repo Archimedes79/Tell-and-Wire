@@ -4,13 +4,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import CodeField, { CODE_FIELD } from '../graph-editor/authoring/CodeField';
 import { droppedProject, landedInCodeField } from './windowDrops';
 
-/** The engine's search, finding *paths*, and saying where it looked as `fileSearch` says it. */
+/** The backend's search, finding *paths*, and saying where it looked as `fileSearch` says it. */
 const found = (...paths: string[]) => async () => ({
   paths, searched: 'D:\\work and 3 levels of folders below it, leaving out node_modules, dist, build and every name that begins with a dot',
 });
 
 describe('a folder dropped onto the window', () => {
-  it('is the one project of its name the engine finds', async () => {
+  it('is the one project of its name the backend finds', async () => {
     expect(await droppedProject('chat', found('D:\\work\\examples\\chat'))).toBe('D:\\work\\examples\\chat');
   });
 

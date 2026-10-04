@@ -35,19 +35,19 @@ process.exitCode = 1;`;
  * is told by the file Node was asked to run, and input.js is run apart, in a
  * context of its own (`node:vm`) that gives it the `module` it assigns. A few
  * lines a person can read at the end of every code.js, rather than a parser:
- * the engine reads input.js without running it (`definitionExample`), and for
+ * Tell & Wire reads input.js without running it (`definitionExample`), and for
  * the plain JSON it holds both come to the same example.
  */
 export const RUN_ON_ITS_OWN = `// ── Run on its own ─────────────────────────────────────────────────────────
 // "node code.js" runs this node on the example in input.js and prints what
-// comes out. In a graph the engine runs this node, and this part is left out.
+// comes out. In a graph Tell & Wire runs this node, and this part is left out.
 if (/^code(\\.js)?$/.test(process.getBuiltinModule('node:path').basename(process.argv[1] ?? ''))) {
   const input = { exports: null };
   const file = process.getBuiltinModule('node:path').join(process.argv[1], '..', 'input.js');
   process.getBuiltinModule('node:vm').runInNewContext(process.getBuiltinModule('node:fs').readFileSync(file, 'utf8'), { module: input });
   const example = input.exports;
   if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input.js has no example yet -- an object keyed by input, written by ✨ Input.');
-  const node = { llm: async () => { throw new Error('node.llm needs the engine: node backend/app/main.ts run-node <project> <node id>'); } };
+  const node = { llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/app/main.ts run-node <project> <node id>'); } };
   Promise.resolve(run(example, node)).then((out) => console.log(JSON.stringify(out, null, 2)));
 }`;
 
@@ -67,7 +67,7 @@ const CODE_TEXTS: readonly TextFile[] = [
  *
  * The body is `run(inputs) -> outputs`, both plain JSON objects keyed by port
  * id. JavaScript, and only JavaScript: it is the one language a recipient
- * already has once they have the engine, so a bundle asks for Node and nothing
+ * already has once they can run the graph, so a bundle asks for Node and nothing
  * else — no interpreter to find, no packages to install, no second sandbox.
  * Everything that is JavaScript about writing and trying a body is its
  * language (`javascript.ts`): a node for another language declares its own.

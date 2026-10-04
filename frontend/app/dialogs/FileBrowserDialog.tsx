@@ -29,11 +29,11 @@ interface FileBrowserDialogProps {
  *
  * The obvious implementation — `<input type="file">` — cannot work here: a
  * browser deliberately never reveals a chosen file's location, only its name,
- * while the engine resolves real absolute paths server-side. The native dialog
+ * while the server resolves real absolute paths. The native dialog
  * therefore produced a name that failed later with a file-not-found from
  * whatever the working directory happened to be. This walks the server's
  * filesystem over `/api/files/browse` instead, so what it returns is a path the
- * engine can actually open.
+ * server can actually open.
  */
 export default function FileBrowserDialog({
   mode, initialPath, extensions, defaultName, projects, onPick, onClose,

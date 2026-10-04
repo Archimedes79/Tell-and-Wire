@@ -1,6 +1,6 @@
-// The engine on a machine with a filesystem: Node today, Deno unchanged.
+// The graph's code on a machine with a filesystem: Node today, Deno unchanged.
 //
-// This is the only file in the engine that knows an operating system exists.
+// This is the only file in graph/ that knows an operating system exists.
 // Everything above it takes a `Runtime` and therefore also runs in a browser
 // tab, or in a test with three fakes, without knowing the difference — which is
 // the whole reason the services are passed in rather than imported.
@@ -104,11 +104,11 @@ const LINGER_MS = 1500;
  *
  * A separate process, not `eval`: a body that loops forever, exits, or writes
  * to stdout costs a subprocess rather than the run. It is handed plain JSON on
- * stdin and nothing of this engine, so nothing about how the graph executes
+ * stdin and nothing of the graph's code, so nothing about how the graph executes
  * leaks into what someone writes.
  *
- * The interpreter is the one already running this engine. That is the whole
- * reason bodies are JavaScript: a recipient who can run the engine can run
+ * The interpreter is the one already running the graph. That is the whole
+ * reason bodies are JavaScript: a recipient who can run the graph can run
  * every body in it, with no interpreter to find and no packages to install.
  */
 export const nodeCode: CodeService = {
@@ -256,7 +256,7 @@ function converse(
         } catch {
           // The body wrote the mark itself, with something after it that is not
           // JSON. Its mistake, and never a reason for this process to fall.
-          fail(new Error('the body wrote a line that only the engine may write.'));
+          fail(new Error('the body wrote a line that only Tell & Wire may write.'));
           child.kill();
         }
       }
@@ -279,7 +279,7 @@ function converse(
 }
 
 /**
- * The engine wired to this machine.
+ * Everything a run needs, wired to this machine.
  *
  * The model provider is configured from the environment and the settings
  * file, so a double-clicked build is configurable without a terminal. A node

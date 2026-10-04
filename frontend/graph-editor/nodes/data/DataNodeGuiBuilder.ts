@@ -74,7 +74,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
 
   /**
    * What it stores is what it hands on, until something new arrives: asked of
-   * the engine's element, which a run asks. An empty text is nothing to hand on.
+   * its runner, which a run asks. An empty text is nothing to hand on.
    */
   override restingValue(node: GraphNode): unknown {
     const handed = DATA.config(node as never).value;

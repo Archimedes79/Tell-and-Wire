@@ -1,6 +1,6 @@
 # User guide
 
-How to build a tool in Tell-and-Wire, step by step. The running example is
+How to build a tool in Tell & Wire, step by step. The running example is
 [examples/population_plotter](../examples/population_plotter/): choose a CSV, see a bar
 chart. `frontend/app/masterExamples.test.ts` builds this example, folder_summaries and
 chat the way this guide does (blocks added, a node dropped, a wire dragged) and runs them.

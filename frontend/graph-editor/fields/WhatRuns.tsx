@@ -1,16 +1,16 @@
 import type { GraphNode } from '../../app/graph';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { DIMMER, LINE, MUTED } from '../../app/ui/theme';
 
 /**
- * What runs when this node runs: the file in its folder, or the engine class
+ * What runs when this node runs: the file in its folder, or the runner class
  * that does the work, and in one sentence what that is.
  *
- * Asked of the engine's element (`whatRuns`), so the panel and the documentation
+ * Asked of the node's runner (`whatRuns`), so the panel and the documentation
  * say the same thing in the same words.
  */
 export default function WhatRuns({ node, folded }: { node: GraphNode; folded?: boolean }) {
-  const runs = engineRegistry.node(node.node_type)?.whatRuns(node as never);
+  const runs = runnerRegistry.node(node.node_type)?.whatRuns(node as never);
   if (!runs?.does) return null;
   if (folded) {
     return (
@@ -27,7 +27,7 @@ export default function WhatRuns({ node, folded }: { node: GraphNode; folded?: b
       <div className="font-medium" style={{ color: MUTED }}>
         What this node runs{' '}
         <span style={{ color: DIMMER }}>
-          — <code>{runs.where}</code>{runs.by === 'body' ? ', in a sandboxed process of its own' : ', in the engine'}
+          — <code>{runs.where}</code>{runs.by === 'body' ? ', in a sandboxed process of its own' : ', in the process that runs the graph'}
         </span>
       </div>
       <p className="mt-1" style={{ color: DIMMER }}>{runs.does}</p>

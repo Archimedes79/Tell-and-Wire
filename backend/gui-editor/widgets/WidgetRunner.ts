@@ -21,7 +21,7 @@ export interface RuntimeRequirement {
 
 /**
  * How a block sits on the page. Nothing an element ever reads to decide what
- * it does: the page draws from these, the engine only carries them.
+ * it does: the page draws from these, the backend only carries them.
  */
 export interface WidgetPresentation {
   w: number;

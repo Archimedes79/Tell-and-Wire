@@ -3,7 +3,7 @@
 // One authored copy: the image block shows a picture with it (`imageDataUrl`),
 // and `documents.ts` hands a node that reads a file a picture or a PDF with it,
 // which an AI node sends as it is. Both need it for the same reason: the
-// engine's filesystem is not the browser's, and it is not the model provider's
+// filesystem a run reads is not the browser's, and it is not the model provider's
 // either — a path means nothing to either of them.
 
 import type { FileService } from './Runtime.ts';

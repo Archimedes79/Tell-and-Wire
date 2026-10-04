@@ -40,7 +40,7 @@ export function errorOutput(description: string): Port {
   return port(ERROR_PORT, 'Error', 'output', 'text', false, description);
 }
 
-/** The ports *node* really has -- derived where the engine derives them, declared where a person names them. */
+/** The ports *node* really has -- derived where its kind derives them, declared where a person names them. */
 function portsOf(node: GraphNode, registry: Runners): { inputs: Set<string>; outputs: Set<string>; derived: boolean } {
   const element = registry.node(node.node_type);
   let derived: ReturnType<NonNullable<typeof element>['derivedPorts']> = null;

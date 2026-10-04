@@ -126,7 +126,7 @@ describe('a block edited on the page', () => {
   });
 
   it('changes a block on the page as it is by then, keeping what was added, renamed and deleted meanwhile', () => {
-    // A change that lands late -- an answer from the engine -- wrote back the
+    // A change that lands late -- an answer from the server -- wrote back the
     // page from when it was asked for.
     insertBlock(WIDGET_BUILDERS.plot_window.create('chart', 'Chart'));
     insertBlock(WIDGET_BUILDERS.text.create('gone', 'Gone'));

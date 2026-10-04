@@ -184,7 +184,7 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
   }
 
   override whatRuns(): WhatRuns {
-    return this.engineRuns('Hands on one package: the event, when this round began here, and the values it was sent -- the last ones, in a round it did not begin.');
+    return this.graphRuns('Hands on one package: the event, when this round began here, and the values it was sent -- the last ones, in a round it did not begin.');
   }
 
   override problems(node: GraphNode, _elements: Runners, where: string): Problem[] {

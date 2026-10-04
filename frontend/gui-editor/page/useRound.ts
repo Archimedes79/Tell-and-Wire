@@ -43,7 +43,7 @@ export function useRound(before?: () => Promise<void>, values?: () => Record<str
       }
     } catch {
       // Requirements are an optimisation; if the check fails, just run and let
-      // the engine report a missing value properly.
+      // the backend report a missing value properly.
     }
     await startRound(event, ask);
   };

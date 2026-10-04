@@ -1,4 +1,4 @@
-# Working on Tell-and-Wire
+# Working on Tell & Wire
 
 ## Principles
 

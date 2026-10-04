@@ -9,7 +9,7 @@
 // The table is the security boundary, and it is written out in one place
 // (`api.ts`) rather than assembled from a router someone might extend later
 // without noticing where it ends up. A route this server has no handler for is
-// a server that cannot start: the page and the engine never disagree about
+// a server that cannot start: the page and the server never disagree about
 // what exists.
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';

@@ -4,7 +4,7 @@ import { NODE_BUILDERS } from '../../app/elements/registry';
 import { inputSources, lastRunInputs, outputTargets } from './generationContext';
 import type { ExecutionResult } from '../../app/graph';
 import { filePorts } from '../../../graph/execution/fileInputs.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 
 const edge = (source: string, target: string) => ({ source, target, sourceHandle: 'output', targetHandle: 'input' });
 
@@ -133,11 +133,11 @@ describe('a node that is handed the text of a file', () => {
   };
 
   it('names the ports the server must read before it tries generated code on the sample: the ones ticked to read', () => {
-    expect(filePorts(reader(), engineRegistry)).toEqual(['csv']);
+    expect(filePorts(reader(), runnerRegistry)).toEqual(['csv']);
     // A kind that takes a path as a path reads nothing, whatever its ports say.
     const out = NODE_KINDS.end.create('sink');
     expect(out.inputs.some((port) => port.data_type === 'file_path')).toBe(true);
-    expect(filePorts(out, engineRegistry)).toEqual([]);
+    expect(filePorts(out, runnerRegistry)).toEqual([]);
   });
 
   it('never reads an input that did not say so, however it is wired', () => {
@@ -145,7 +145,7 @@ describe('a node that is handed the text of a file', () => {
     // somewhere that declared a path became "no such file".
     const node = NODE_KINDS.code.create('worker');
     expect(node.inputs[0].data_type).toBe('any');
-    expect(filePorts(node, engineRegistry)).toEqual([]);
+    expect(filePorts(node, runnerRegistry)).toEqual([]);
   });
 
   it('keeps the path a run recorded on the port it read, which is the file ✨ Input may write from', () => {
@@ -154,7 +154,7 @@ describe('a node that is handed the text of a file', () => {
       node_results: [{ node_id: 'worker', status: 'success', inputs: { csv: 'data/people.csv', top: '5' }, outputs: {} }],
     } as ExecutionResult;
     expect(lastRunInputs('worker', result)?.csv).toBe('data/people.csv');
-    expect(filePorts(reader(), engineRegistry)).toEqual(['csv']);
+    expect(filePorts(reader(), runnerRegistry)).toEqual(['csv']);
   });
 });
 

@@ -191,7 +191,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
         const name = (graph.metadata.name || 'graph').replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/^_+|_+$/g, '') || 'graph';
         return new Download(zip(entries), `${name}_bundle.zip`, 'application/zip');
       } catch (error) {
-        throw new Refusal(500, `The engine could not write the bundle: ${message(error)}`);
+        throw new Refusal(500, `The server could not write the bundle: ${message(error)}`);
       } finally {
         await rm(work, { recursive: true, force: true });
       }

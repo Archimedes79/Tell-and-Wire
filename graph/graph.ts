@@ -1,4 +1,4 @@
-// The graph as it is stored and as the engine sees it.
+// The graph as it is stored and as a run sees it.
 //
 // One difference from the Python model this replaces, and it is the point of
 // the rewrite: **a node's config is opaque here.** It used to be a record of 32
@@ -8,7 +8,7 @@
 // written down separately, as `config_fields`, and enforced by a test that
 // parsed each element's source code — a lint doing a type system's job.
 //
-// Here the element owns its config type (see `elements/ElementRunner.ts`). This file knows a
+// Here the element owns its config type (see `graph/nodes/ElementRunner.ts`). This file knows a
 // config is an object; only the element knows what is in it.
 
 export type NodeType = 'start' | 'folder' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
@@ -22,7 +22,7 @@ export type PortKind = 'input' | 'output';
 
 /**
  * What a port carries. A label for people and for generation, with one
- * exception the engine acts on: a code or AI node is handed the content of the
+ * exception a run acts on: a code or AI node is handed the content of the
  * file on a `file_path` input ("Read the file at this path"). One list, used
  * by the editor too.
  */
@@ -82,7 +82,7 @@ export interface GraphMetadata {
  * The page a graph is used through: its blocks, in order, each as the file
  * keeps it. Not a node: a block connects itself to the graph by name -- where
  * its data goes, which start point it fires, which end point it shows
- * (`elements/page.ts`) -- and nothing is wired to it.
+ * (`backend/gui-editor/widgets/page.ts`) -- and nothing is wired to it.
  */
 export interface Page {
   blocks: RawConfig[];
@@ -118,7 +118,7 @@ export interface NodeResult {
 /**
  * What a run produced. What memory nodes kept is not in it: the run settled
  * that into the copy of the graph it ran on, which is what a session keeps
- * (`host/session.ts`).
+ * (`backend/gui-editor/session.ts`).
  */
 export interface ExecutionResult {
   status: 'success' | 'error' | 'partial' | 'cancelled';

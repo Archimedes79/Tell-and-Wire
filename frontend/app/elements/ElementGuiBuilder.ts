@@ -8,9 +8,9 @@
 //
 // **The name is the whole point.** Two axes cross here. `Runner` against
 // `GuiBuilder` is *what the class is for*: running the application, or building
-// it. `Gui` in the middle is *where it lives*: the engine holds the graph and
-// runs it, and everything a person clicks is in the browser, which the engine
-// never imports. So a builder is the browser's build-time half, and it is the
+// it. `Gui` in the middle is *where it lives*: the runners (graph/, backend/) hold the graph and
+// run it, and everything a person clicks is in the browser, which they
+// never import. So a builder is the browser's build-time half, and it is the
 // only one of the three roles that a delivered tool must not contain -- see
 // `page/blocks.ts` for the third, which is neither.
 //

@@ -17,7 +17,7 @@ interface SettingsDialogProps {
  * `ai-settings.json` beside the keys it needs and never in a graph, so a graph
  * handed to someone else runs on whatever they chose.
  *
- * "Now" is the engine's answer (`aiSetting`, through the status route), not
+ * "Now" is the backend's answer (`aiSetting`, through the status route), not
  * worked out here: it is what a run will call, environment and all.
  */
 function OneAiSetting() {

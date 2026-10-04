@@ -2,12 +2,12 @@
 // start.ps1 and start.sh call.
 //
 // Starting is also restarting. An editor already on the port is stopped first
-// -- only an Tell-and-Wire one, see editorProcess.mjs -- because the usual reason to
-// start again is that the engine changed, and a server keeps running the
-// engine it was started with while serving whatever page was built since.
+// -- only a Tell & Wire one, see editorProcess.mjs -- because the usual reason to
+// start again is that the code changed, and a server keeps running the
+// code it was started with while serving whatever page was built since.
 // Dependencies are installed on first use, and the page is rebuilt when any
-// source it is built from is newer than it, the engine's included: the page
-// bundles the engine's elements, so an engine change is a page change too.
+// source it is built from is newer than it, graph/ and backend/ included: the
+// page bundles their elements, so a change there is a page change too.
 
 import { spawn, spawnSync } from 'node:child_process';
 import { readdir, stat } from 'node:fs/promises';

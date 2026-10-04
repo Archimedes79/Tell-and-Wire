@@ -49,13 +49,13 @@ const fetchStatus = () => {
   return statusPromise;
 };
 
-/** Ask the engine again: after the one AI setting is saved, every picker's "now" is stale. */
+/** Ask the backend again: after the one AI setting is saved, every picker's "now" is stale. */
 export function refreshProviderStatus(): void {
   statusPromise = null;
   fetchStatus().then((status) => listeners.forEach((listener) => listener(status)));
 }
 
-/** The engine's answer to what runs where: the one AI setting as it resolves now, and the local providers. */
+/** The backend's answer to what runs where: the one AI setting as it resolves now, and the local providers. */
 export function useProviderStatus(): ProviderStatus | null {
   const [status, setStatus] = useState<ProviderStatus | null>(null);
   useEffect(() => {
@@ -75,7 +75,7 @@ export const nowText = (status: ProviderStatus | null): string =>
  * What the model box offers: the models served by the provider chosen -- for
  * `default`, by the one AI setting -- and what it shows while empty.
  *
- * On a node (`lendsFromSetting`) an empty model is filled by the engine's own
+ * On a node (`lendsFromSetting`) an empty model is filled by a run's own
  * rule (`lent`) from the one setting, and only for the provider it names: left
  * empty with nothing to fill it, a run refuses, so the box says a model must
  * be named rather than showing one a run would never send. The setting itself

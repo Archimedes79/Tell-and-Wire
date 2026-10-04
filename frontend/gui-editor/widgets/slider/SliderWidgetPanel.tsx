@@ -4,7 +4,7 @@ import type { WidgetPanelProps } from '../WidgetGuiBuilder';
 import { sliderRange } from '../../../../backend/gui-editor/widgets/slider/range.ts';
 
 export default function SliderWidgetPanel({ widget, onUpdate }: WidgetPanelProps) {
-  // The fields show what the run uses: an emptied Max reads as the engine's
+  // The fields show what the run uses: an emptied Max reads as the runner's
   // default, not a number of the panel's own.
   const shown = sliderRange({ min: widget.min, max: widget.max, step: widget.step });
   const typed = (value: unknown, fallback: number) => (typeof value === 'number' && Number.isFinite(value) ? value : fallback);

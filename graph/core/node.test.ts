@@ -110,9 +110,9 @@ describe('a body that does not keep to the protocol', () => {
     await expect(nodeCode.run('function run() { return () => 1; }', {})).rejects.toThrow(/must return an object/);
   });
 
-  it('fails, and only itself, when it writes the engine\'s mark', async () => {
+  it('fails, and only itself, when it writes Tell & Wire\'s mark', async () => {
     const body = 'function run() { console.log("\\u001etell-and-wire:result {not json"); return { ok: 1 }; }';
-    await expect(nodeCode.run(body, {})).rejects.toThrow(/only the engine may write/);
+    await expect(nodeCode.run(body, {})).rejects.toThrow(/only Tell & Wire may write/);
   });
 
   it('is not waited for once it has said what it made', async () => {

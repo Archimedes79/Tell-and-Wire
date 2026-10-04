@@ -6,7 +6,7 @@ import { useGraphStore } from '../../app/store/graphStore';
 import FileBrowserDialog from '../../app/dialogs/FileBrowserDialog';
 import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
 import { STANDARD_PROMPTS, VARIABLES, type PromptKind } from '../../../graph/authoring/prompts.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { headingFromText, isNumberedHeading } from '../../app/document/heading';
 import { bodyOf, hasDefinitions, isWritten, outputsAsDefined, writeName, writesFor, type Write } from './generation';
 import { filesOf } from '../../app/document/givenFiles';
@@ -21,12 +21,12 @@ import { ACCENT_FILL, ACCENT_TEXT, DIMMER, FIELD, LINE, MUTED, NEUTRAL_BUTTON, S
 
 /**
  * Where a node keeps what *write*'s ✨ writes: the setting, and the file it is
- * kept in with that file's stub -- asked of the engine's element, which says
+ * kept in with that file's stub -- asked of the node's runner, which says
  * which of a node's settings are files (`NodeRunner.texts`).
  */
 function keptIn(node: GraphNode, write: Write): { field: string; file: string; stub: string } {
   const field = write === 'input' ? 'input_definition' : write === 'output' ? 'output_definition' : bodyOf(node)?.field ?? 'code';
-  const text = engineRegistry.node(node.node_type)?.texts(node as never).find((candidate) => candidate.field === field);
+  const text = runnerRegistry.node(node.node_type)?.texts(node as never).find((candidate) => candidate.field === field);
   return { field, file: text?.file ?? field, stub: text?.standard ?? '' };
 }
 

@@ -7,8 +7,8 @@
 
 import type { GraphNode, Port, Wire } from '../../app/graph';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
-import { runsPerItem as engineRunsPerItem } from '../../../graph/execution/batching.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { runsPerItem as executorRunsPerItem } from '../../../graph/execution/batching.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 
 /**
  * An input ticked "whole list" takes a list whole, whatever else does: a
@@ -47,13 +47,13 @@ export function listPorts(node: GraphNode, example: Record<string, unknown> | un
 
 /**
  * Whether the node runs once per item of a list: what "Run once per item"
- * shows. The engine's answer (`execution/batching.ts`), asked of the node's
+ * shows. The executor's answer (`graph/execution/batching.ts`), asked of the node's
  * element -- a kind that takes what arrives whole does so whatever its
  * setting says.
  */
 export function runsPerItem(node: GraphNode): boolean {
-  const element = engineRegistry.node(node.node_type);
-  return !!element && engineRunsPerItem(node, element.batchMode(node));
+  const element = runnerRegistry.node(node.node_type);
+  return !!element && executorRunsPerItem(node, element.batchMode(node));
 }
 
 /**

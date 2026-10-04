@@ -1,4 +1,4 @@
-// The wire between the page and the engine: every route, and what travels each way.
+// The wire between the page and the server: every route, and what travels each way.
 //
 // Two processes talk over HTTP -- Node runs graphs, the browser draws them --
 // and a conversation described twice, once by the server's replies and once by
@@ -186,7 +186,7 @@ export interface HeldGraph {
 
 /**
  * A path a round the page starts needs before it can run, as the "before
- * running" dialog asks for it: the engine's own question, keyed by the block
+ * running" dialog asks for it: the backend's own question, keyed by the block
  * that answers it, so no end takes the key apart or builds it again.
  */
 export type Requirement = RuntimeRequirement;

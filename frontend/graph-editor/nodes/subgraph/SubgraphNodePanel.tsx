@@ -1,7 +1,7 @@
 import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED, PRIMARY_BUTTON } from '../../../app/ui/theme';
 import { useGraphStore } from '../../../app/store/graphStore';
 import { SubgraphNodeRunner } from '../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
-import { registry as engineRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 import RunOncePerItem from '../../fields/RunOncePerItem';
 
@@ -32,7 +32,7 @@ export default function SubgraphNodePanel({ node, setConfig, updateNode, setDesc
   // canvas (`openSubgraph`). Pressed then, the button closed the panel and
   // opened nothing, and said nothing.
   const running = useGraphStore((s) => s.isExecuting);
-  const ports = ELEMENT.derivedPorts(node as never, engineRegistry) ?? { inputs: [], outputs: [] };
+  const ports = ELEMENT.derivedPorts(node as never, runnerRegistry) ?? { inputs: [], outputs: [] };
   const inner = ELEMENT.nestedGraph(node as never);
   const count = inner?.nodes.length ?? 0;
 

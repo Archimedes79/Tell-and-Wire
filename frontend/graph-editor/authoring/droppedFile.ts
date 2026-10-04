@@ -8,7 +8,7 @@
 // keeps paths -- and a data node what the file says, parsed when it is JSON. A
 // browser hands a page a dropped file's name, size and content, never where it
 // is: the path comes from the drop where it names one (a `file:` URI), and
-// otherwise the engine is asked for the one file of that name and size under
+// otherwise the backend is asked for the one file of that name and size under
 // the folder it runs in (`findFile`).
 
 import { call } from '../../app/api/client';
@@ -56,13 +56,13 @@ export function uriPath(uri: string): string {
 /** How a dropped file is looked for (`findFile`): the files found, and where it looked, in words. */
 type FindFile = (name: string, size: number) => Promise<{ paths: string[]; searched: string }>;
 
-/** The files of *name* and *size* under the folder the engine runs in. */
+/** The files of *name* and *size* under the folder the server runs in. */
 const findFile: FindFile = (name, size) => call('findFile', { name, size: String(size) });
 
 /**
  * Where *file* is on the machine the graph runs on: the path its drop named,
- * else the one file of its name and size the engine finds. None, or several,
- * is said -- none with where the engine looked -- with the way that always
+ * else the one file of its name and size the backend finds. None, or several,
+ * is said -- none with where the backend looked -- with the way that always
  * works.
  */
 export async function droppedPath(file: Dropped, find: FindFile = findFile): Promise<string> {

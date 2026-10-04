@@ -57,10 +57,10 @@ describe('a watched generation', () => {
 });
 
 /**
- * A download is named once, by the engine (`routes.ts` bundle, sent as
+ * A download is named once, by the server (`routes.ts` bundle, sent as
  * Content-Disposition). The page used to work the name out again, lowercased
  * and with only spaces replaced, so "My Graph!" saved as `my_graph!_bundle.zip`
- * while the engine said `My_Graph_bundle.zip`.
+ * while the server said `My_Graph_bundle.zip`.
  */
 describe('a download', () => {
   afterEach(() => { vi.unstubAllGlobals(); });

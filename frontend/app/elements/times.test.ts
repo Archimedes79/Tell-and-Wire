@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
 /**
- * Build time and run time in a builder: the bars of the engine's
- * `elements/times.test.ts`, mirrored.
+ * Build time and run time in a builder: the bars of
+ * `backend/app/times.test.ts`, mirrored.
  *
  * A builder is one class per kind, and its name now says what the bars below
  * once had to: `GuiBuilder` is build time, all of it. That was not always so --

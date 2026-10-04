@@ -17,7 +17,7 @@
       "detail": "Serves the editor on http://127.0.0.1:8000 and opens a browser"
     },
     {
-      // Engine on :8000 and Vite on :3000, so an edit to the editor shows on
+      // The backend on :8000 and Vite on :3000, so an edit to the editor shows on
       // save. The page to open is the Vite one.
       "label": "develop the editor",
       "type": "npm",
@@ -25,7 +25,7 @@
       "problemMatcher": [],
       "isBackground": true,
       "presentation": { "panel": "dedicated", "reveal": "always" },
-      "detail": "Engine on :8000, Vite on :3000 -- edits show on save"
+      "detail": "Backend on :8000, Vite on :3000 -- edits show on save"
     },
     {
       "label": "build the editor page",

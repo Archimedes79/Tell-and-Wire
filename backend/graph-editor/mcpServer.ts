@@ -1,4 +1,4 @@
-// Tell-and-Wire, offered to an assistant outside it.
+// Tell & Wire, offered to an assistant outside it.
 //
 // A Model Context Protocol server over stdio: Claude Code, Claude Desktop or any
 // other MCP client can have a graph designed, check one, save it and run it.
@@ -15,9 +15,9 @@
 //   runMcpServer       the real machine wired into the two above; `cli.ts`
 //                      calls it for `--mcp`, and nothing else does.
 //
-// No SDK, for the reason the client has none: the engine has no runtime
-// dependencies. It lives under `host/editor/` because it is authoring, and
-// authoring is what a bundle does not carry -- `bundle.ts` skips every `editor/`
+// No SDK, for the reason the client has none: Tell & Wire has no runtime
+// dependencies. It lives under `backend/graph-editor/` because it is authoring, and
+// authoring is what a bundle does not carry -- `bundle.ts` skips that
 // folder, which is why `cli.ts` reaches this file with a dynamic import.
 //
 // THE CONFINEMENT RULES. The caller is a model acting on text it read somewhere,
@@ -213,8 +213,8 @@ export interface GraphTools {
 const SPECS: ToolSpec[] = [
   {
     name: 'authoring_guide',
-    description: 'How to write an Tell-and-Wire graph document yourself: the JSON shape, where each node type keeps what it does, '
-      + 'the port names the engine derives, how a page connects to start and end points, and one complete example. Read this before writing a '
+    description: 'How to write a Tell & Wire graph document yourself: the JSON shape, where each node type keeps what it does, '
+      + 'the port names some node types derive from their settings, how a page connects to start and end points, and one complete example. Read this before writing a '
       + 'graph by hand, then use validate_graph and save_graph. No model on this machine is needed for that route.',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
   },
@@ -521,7 +521,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         + 'same document and pass it as the "graph" argument: validate_graph checks it, save_graph writes it, run_graph tries it. '
         + 'Fix what validate_graph reports before saving; save_graph refuses a graph with problems.',
         '',
-        `Node types this engine runs: ${registry.nodeTypes().join(', ')}.`,
+        `Node types this server runs: ${registry.nodeTypes().join(', ')}.`,
         `The port every node accepts without declaring it: "${RUN_PORT}". A node with config.catch_errors = true also has an output "${ERROR_PORT}".`,
         'Paths inside a graph (the folder a folder node lists, an end point\'s target, a picker\'s file) are relative to the server\'s folder.',
       ].join('\n');
@@ -543,7 +543,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       const otherwise = 'The other way needs no model here: call authoring_guide, write the graph yourself, then validate_graph and save_graph.';
       const target = await options.target();
       if (!target.provider || !target.model) {
-        throw new Refused(`No model is configured on this machine (⚙ Settings in the Tell-and-Wire editor, or TW_AI_PROVIDER and TW_AI_MODEL). ${otherwise}`);
+        throw new Refused(`No model is configured on this machine (⚙ Settings in the Tell & Wire editor, or TW_AI_PROVIDER and TW_AI_MODEL). ${otherwise}`);
       }
 
       let generated: { graph: unknown; explanation: string };
@@ -551,7 +551,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         generated = await generateGraph(description, { ai: options.ai, target }, current);
       } catch (error) {
         throw new Refused(`Generation with ${target.provider} / ${target.model} failed: ${message(error).slice(0, ERROR_LIMIT)}\n`
-          + `If that model is not set up or not running, configure one in the Tell-and-Wire editor's Settings. ${otherwise}`);
+          + `If that model is not set up or not running, configure one in the Tell & Wire editor's Settings. ${otherwise}`);
       }
 
       const graph = graphFrom(generated.graph, 'the generated document');
@@ -837,7 +837,7 @@ export function serveStdio(
           protocolVersion: typeof wanted === 'string' && PROTOCOL_VERSIONS.includes(wanted) ? wanted : PROTOCOL_VERSIONS[0],
           capabilities: { tools: {} },
           serverInfo: SERVER_INFO,
-          instructions: 'Designs, checks, saves and runs Tell-and-Wire graphs inside one folder. To write a graph yourself, read '
+          instructions: 'Designs, checks, saves and runs Tell & Wire graphs inside one folder. To write a graph yourself, read '
             + 'authoring_guide first; to have this machine\'s model write one, use generate_graph. Validate before saving.',
         },
       });
@@ -946,7 +946,7 @@ export async function runMcpServer(options: { root?: string } = {}): Promise<voi
   }
   process.chdir(root);
 
-  // stdout belongs to the protocol. Nothing in the engine prints to it, and
+  // stdout belongs to the protocol. Nothing in Tell & Wire prints to it, and
   // this is for the dependency-free day somebody adds a `console.log` anyway.
   const toStderr = (...parts: unknown[]): void => { process.stderr.write(`${parts.map(String).join(' ')}\n`); };
   console.log = toStderr;

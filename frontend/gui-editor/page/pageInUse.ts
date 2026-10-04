@@ -9,7 +9,7 @@ import type { PageModel } from './GuiPage';
  * host knows of it before anything is used. Which blocks start a round, at
  * which start point, and which a round is sent what they hold, is the
  * graph's to say (`InterfaceEntry.fired_by`, `sends`) -- the delivered tool
- * is told it by the runtime API, the editor asks the engine, and the page
+ * is told it by the runtime API, the editor asks the backend, and the page
  * asks neither (`connectionsOf`).
  */
 export interface PageDesign {

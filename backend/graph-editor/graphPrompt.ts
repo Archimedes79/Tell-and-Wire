@@ -5,7 +5,7 @@
 //
 // The shape of the document alone gets a graph that parses and does nothing:
 // code in a key no element reads, edges wired to port names a folder node
-// never emits, because some ports are derived by the engine rather than taken
+// never emits, because some ports are derived from a node's settings rather than taken
 // from the document. So the facts below are the ones a graph is *wrong* without.
 
 import { registry } from '../../graph/nodes/registry.ts';
@@ -74,13 +74,13 @@ const PAGE = pageAuthorNote();
 const MUST_SHOW = `Every graph must end in something a person can see. A run computes values and then stops; unless a node hands them on, the answer exists only inside the run and the tool looks broken. So the last node of every branch must be an "end" node, an end point: what arrives there is the run's result, shown to whoever ran the graph under the node's label -- and on the page, on the block whose "shows" names it. Give each end point a label of its own; with config.write_mode = "file" or "directory" it is also written to a file. Never leave a code or ai node as the end of a branch: its result would go nowhere.`;
 
 /**
- * The ports the engine derives rather than reads.
+ * The ports derived from a node's settings rather than read from the document.
  *
  * These names are not a convention a graph may choose: the kinds that derive
  * their ports say which above, from the code that derives them, and an edge
  * naming anything else is attached to a port that will never carry a value.
  */
-const DERIVED_PORTS = `Where a node type's ports are DERIVED by the engine from its settings -- as said above for the ones that do -- declare exactly those ports, or the edges will carry nothing. Every other node type names its own ports, and a code node's returned keys must match its output port ids exactly.`;
+const DERIVED_PORTS = `Where a node type's ports are DERIVED from its settings -- as said above for the ones that do -- declare exactly those ports, or the edges will carry nothing. Every other node type names its own ports, and a code node's returned keys must match its output port ids exactly.`;
 
 /**
  * One worked document.

@@ -1,6 +1,6 @@
 # Architecture
 
-How Tell-and-Wire is put together: the parts and their folders, the rules between them,
+How Tell & Wire is put together: the parts and their folders, the rules between them,
 how a round runs, the project format, the wrapper's APIs and the core protocol, and how to
 extend it. Code comments explain each file; this explains how the files relate. Where a
 test holds a claim, the test is named.
@@ -162,7 +162,7 @@ my_tool/
 
 ## The wrapper
 
-Tell-and-Wire is three layers. A **graph core** runs graphs. The **wrapper** around it holds
+Tell & Wire is three layers. A **graph core** runs graphs. The **wrapper** around it holds
 the graph in use and talks to everything outside. **Frontends** talk only to the wrapper.
 
 ```
@@ -356,7 +356,7 @@ stdin   {"id": 1, "result": …}  or  {"id": 1, "error": "…"}      its answer
 stdout  ␞tell-and-wire:result {…}                               what it made; the run is over
 ```
 
-`node.llm` is answered by the engine (`graph/nodes/ai/ask.ts`), at most 25 times per run
+`node.llm` is answered by the process running the graph (`graph/nodes/ai/ask.ts`), at most 25 times per run
 (`TW_MAX_LLM_CALLS`).
 
 ## What a deployed bundle carries

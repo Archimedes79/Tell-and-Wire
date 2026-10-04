@@ -9,7 +9,7 @@ import { fileSearch, findFiles, findProjects } from './files.ts';
  * opened in the person's own editor -- get from the machine.
  *
  * Browsing is not here: it is the same picker a deployed tool serves, and it
- * is tested in `host/browse.test.ts` beside the code.
+ * is tested in `backend/app/browse.test.ts` beside the code.
  */
 
 async function sandbox() {

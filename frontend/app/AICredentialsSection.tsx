@@ -19,15 +19,15 @@ const label = (id: string): string => AI_PROVIDER_LABELS[id as AIProvider] ?? id
 
 /**
  * One row per provider that takes a key, and one per provider whose address
- * can be changed -- the engine's own lists (`CREDENTIALS`, `ENDPOINT_ENV`), as
- * its status names them. Two tables of their own here disagreed with it:
+ * can be changed -- the lists in `graph/ai/providers.ts` (`CREDENTIALS`, `ENDPOINT_ENV`), as
+ * the backend's status names them. Two tables of their own here disagreed with it:
  * GitHub Models' address could be set by the environment and not here.
  */
 export function keyRows(status: SettingsStatus): { id: string; label: string; hint: string }[] {
   return Object.keys(status.credentials).map((id) => ({ id, label: label(id), hint: KEY_HINTS[id] ?? 'Its API key' }));
 }
 
-/** See `keyRows`. What an address box shows while empty is the address the engine uses then. */
+/** See `keyRows`. What an address box shows while empty is the address a run uses then. */
 export function addressRows(status: SettingsStatus): { id: string; label: string; placeholder: string }[] {
   return Object.keys(status.endpoints).map((id) => ({
     id, label: label(id), placeholder: DEFAULT_SETTINGS.endpoints[id] || 'https://my-endpoint.example.com/v1',

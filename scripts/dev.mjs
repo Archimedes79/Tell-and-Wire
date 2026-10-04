@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Development: the engine on :8000 and Vite on :3000, in one terminal.
+// Development: the backend on :8000 and Vite on :3000, in one terminal.
 //
 // Two processes because the editor's page is served by Vite while it is being
-// written and by the engine once it is built; the API is the engine either way,
+// written and by the backend once it is built; the API is the backend either way,
 // and Vite proxies /api to it. Ctrl+C stops both.
 
 import { spawn } from 'node:child_process';

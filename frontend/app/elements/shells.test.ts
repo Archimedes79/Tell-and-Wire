@@ -6,7 +6,7 @@
  * the page designer, the toolbar, the generation sweep -- may not compare a node's type or a widget's kind with a
  * literal. What such a comparison would decide belongs to the element's class
  * (`NodeGuiBuilder`, `WidgetGuiBuilder` and their subclasses), where a new kind answers for
- * itself and nothing shared has to change. The same rule holds in the engine,
+ * itself and nothing shared has to change. The same rule holds in graph/,
  * where the executor asks `NodeRunner` and never names a type.
  */
 import { describe, expect, it } from 'vitest';

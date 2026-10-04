@@ -1,6 +1,6 @@
 // What a block is, to the page: the half of a widget that is delivered.
 //
-// A widget has three roles and they belong in three places. The engine's
+// A widget has three roles and they belong in three places. The backend's
 // `WidgetRunner` is what it contributes to a *run* -- a picker produces its
 // path, a chat its message, a slider its number. `WidgetGuiBuilder` is what
 // the builder needs: a settings panel, what the palette drops. And this is the

@@ -1,12 +1,12 @@
 import type { NodeConfig } from '../graph';
 
 /**
- * Every setting's one default: what the engine reads a key as when a graph
+ * Every setting's one default: what a run reads a key as when a graph
  * leaves it out.
  *
  * So it is three things at once. What a node read from a file is filled with
  * where the file says nothing (`normalizeGraphNode`); what a save leaves out,
- * key by key, because it says nothing the engine would not assume
+ * key by key, because it says nothing a run would not assume
  * (`savedNode`); and what every `NODE_KINDS[type].create()` starts from, so a
  * panel can read any field with a type. A new node that starts differently
  * -- a code node per item, an ai node with a system prompt -- says so in
@@ -14,7 +14,7 @@ import type { NodeConfig } from '../graph';
  *
  * One default per key: a second one, for what a *loaded* node lacks, is what
  * turned a graph written by hand into a different graph after one Save.
- * `savedConfig.test.ts` and `graphStore.test.ts` hold these to the engine.
+ * `savedConfig.test.ts` and `graphStore.test.ts` hold these to graph/.
  */
 export function baseNodeConfig(): NodeConfig {
   return {

@@ -10,7 +10,7 @@ import type { FileService, Runtime } from './Runtime.ts';
 /**
  * Pictures, on the way to a browser or to a model.
  *
- * Both need the same thing for the same reason — the engine's filesystem is
+ * Both need the same thing for the same reason — the filesystem a run reads is
  * neither of theirs — and both refuse the same two things by name: a file that
  * is not an image, and one too large to inline. Refusing late means a broken
  * picture in one case and a bill in the other.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The executable entry point: `node src/main.ts graph.json`.
+// The executable entry point: `node backend/app/main.ts graph.json`.
 //
 // Separate from cli.ts so that everything there stays importable and testable
 // without a process exiting in the middle of a test run.

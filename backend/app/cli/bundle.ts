@@ -1,15 +1,15 @@
 // Handing the graph to someone else.
 //
 // A bundle is the tool as its project folder -- flow.json, its page in page/,
-// a folder per node, as it was built -- the engine that runs it, and one
+// a folder per node, as it was built -- the code that runs it, and one
 // command. One format: what a recipient opens is what the editor opens. Nothing is
-// generated: the engine files are copied verbatim, so what a recipient runs is
+// generated: the files of graph/ and backend/ are copied verbatim, so what a recipient runs is
 // what was tested here, byte for byte. Code generation would produce a second
 // implementation that is right on the day it is written and drifts from that
-// afternoon on — the reason the older bundles vendor their engine too.
+// afternoon on — the reason the older bundles vendor the code that runs them too.
 //
 // What a recipient needs installed: Node. That is the whole list -- every
-// authored body is JavaScript, so the interpreter that runs the engine runs
+// authored body is JavaScript, so the interpreter that runs the graph runs
 // them too.
 
 import { chmod, copyFile, cp, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
@@ -187,7 +187,7 @@ export async function filesIn(dir: string, under = ''): Promise<string[]> {
 }
 
 /** Every source file a tool runs on, so the copy is complete without a list to maintain. */
-async function engineFiles(dir = ROOT, top = true): Promise<string[]> {
+async function sourceFiles(dir = ROOT, top = true): Promise<string[]> {
   const found: string[] = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
@@ -196,7 +196,7 @@ async function engineFiles(dir = ROOT, top = true): Promise<string[]> {
     // handed a tool and not an editor. `bundle.test.ts` is the check that says so.
     if (entry.isDirectory()) {
       if (top ? !['graph', 'backend'].includes(entry.name) : ['graph-editor', 'test', 'node_modules'].includes(entry.name)) continue;
-      found.push(...await engineFiles(full, false));
+      found.push(...await sourceFiles(full, false));
     }
     // Tests stay behind: a recipient runs the graph, not its test suite.
     else if (!top && entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) found.push(full);
@@ -277,14 +277,14 @@ export async function writeBundle(
   await writeProject(target, withoutAuthoring(moved(graph, data)));
   written.push(...await filesIn(target));
 
-  for (const file of await engineFiles()) {
+  for (const file of await sourceFiles()) {
     const relativePath = relative(ROOT, file).replace(/\\/g, '/');
     const path = resolve(target, relativePath);
     await mkdir(dirname(path), { recursive: true });
     await copyFile(file, path);
     written.push(relativePath);
   }
-  // And the terms it comes under: whoever is handed any part of the engine is
+  // And the terms it comes under: whoever is handed any part of the code is
   // handed those with it (LICENSE, "Notices").
   await copyFile(join(installFolder(), 'LICENSE'), resolve(target, 'LICENSE'));
   written.push('LICENSE');
@@ -336,8 +336,8 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
     `# ${name}`,
     '',
     'A tool, as the project folder it was built as -- flow.json, its page in',
-    'page/, a folder per node with its code -- and the engine that runs it.',
-    'Nothing here was generated: the engine is a verbatim copy of the one the',
+    'page/, a folder per node with its code -- and the code that runs it.',
+    'Nothing here was generated: that code is a verbatim copy of the one the',
     'graph was built and tested on, so this runs what was tested rather than a',
     'second implementation of it.',
     '',
@@ -370,7 +370,7 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
     // What the launchers check before they start: one number, said once.
     `- **Node ${NODE_MAJOR} or newer.** Nothing to install and nothing to build.`,
     '- Nothing else. Every code node in this graph is JavaScript, so the',
-    '  interpreter that runs the engine runs them too.',
+    '  interpreter that runs the graph runs them too.',
   ];
 
   if (needs.ai) {

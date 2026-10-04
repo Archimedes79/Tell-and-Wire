@@ -1,12 +1,12 @@
 // What the wrapper asks of a graph core, and what a core answers.
 //
-// A graph core is the one part of Tell-and-Wire that runs graphs: it takes the
+// A graph core is the one part of Tell & Wire that runs graphs: it takes the
 // graph definition -- nodes, their files, the wires; never the page -- and
 // executes it in its language, asking the model with a client of its own. It
 // can live in the wrapper's process (`localCore.ts`) or be a program of its
 // own that speaks this protocol on stdin and stdout (`stdio.ts`), one JSON
 // object per line. Everything a page, a script or the editor sees goes through
-// the wrapper (`host/`), never to a core directly.
+// the wrapper (`backend/`), never to a core directly.
 //
 // What stays the wrapper's: the session -- what nodes keep between rounds, the
 // page and what its blocks hold, state.json, the clock, the queue of rounds --
@@ -59,7 +59,7 @@ export interface CoreHello {
   protocol: number;
   /** The language graphs run in there: "javascript". */
   language: string;
-  /** What it is, for a person: "Tell-and-Wire JavaScript core". */
+  /** What it is, for a person: "Tell & Wire JavaScript core". */
   core: string;
 }
 

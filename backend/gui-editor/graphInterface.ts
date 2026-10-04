@@ -6,7 +6,7 @@
 // of way out, an end point, each by its own id (`NodeRunner.offers`). What a
 // round is sent goes into the start point it fires, as one package; nothing
 // else of the graph is set from outside. The page's blocks are not among the
-// names: they connect themselves to them (`elements/page.ts`). A graph inside
+// names: they connect themselves to them (`backend/gui-editor/widgets/page.ts`). A graph inside
 // a node meets the graph above it the same way (`subgraph/boundary.ts`).
 //
 // Not to be mistaken for `interface.ts`, which is the shape of what one node

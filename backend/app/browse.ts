@@ -38,7 +38,7 @@ function filesystemRoots(): string[] {
 /**
  * One page of a file browser: the directory, its parent, its children.
  *
- * Exists because the engine resolves *real* paths while a browser's file input
+ * Exists because the server resolves *real* paths while a browser's file input
  * only ever reveals a name — so a picker has to browse the machine the graph
  * will run on. Hidden entries are left out; an unreadable child is skipped
  * rather than failing the page, since one denied entry should not make a

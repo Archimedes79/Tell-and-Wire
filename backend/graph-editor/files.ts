@@ -4,7 +4,7 @@
 // Editor-only, on purpose: none of it belongs in a bundle, which is why this
 // folder is skipped by the bundle walk along with every other `editor/`.
 // Browsing is not here: a deployed tool needs a file picker that can be
-// navigated too, so it is `host/browse.ts`, which a bundle carries.
+// navigated too, so it is `backend/app/browse.ts`, which a bundle carries.
 
 import { existsSync, type Dirent } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';

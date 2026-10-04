@@ -1,14 +1,14 @@
 // The editor's settings dialog, and the one file behind it.
 //
 // Two questions live here. Which endpoints and keys are configured, and which
-// AI the one setting names. The file is the same one the engine reads at run
-// time (`ai/settings.ts`), so a key or a model saved in the dialog is the one a
+// AI the one setting names. The file is the same one the graph's code reads at run
+// time (`graph/ai/settings.ts`), so a key or a model saved in the dialog is the one a
 // run uses; the dialog never reads a key back, only whether one is set and
 // where it came from.
 //
 // Editor-only: a deployed tool is configured through its environment, and a
 // page that could write credentials into a file nobody asked for is not a page
-// a recipient should be handed. Hence `host/editor/`.
+// a recipient should be handed. Hence `backend/graph-editor/`.
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';

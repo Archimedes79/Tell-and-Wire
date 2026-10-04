@@ -10,7 +10,7 @@
 //
 // **Why `Runner` and not `Element`.** An element has two halves, and the names
 // say which is which rather than leaving it to the folder. This is the half the
-// application is *made of*: it lives in the engine, it runs the graph, and it
+// application is *made of*: it lives in graph/, it runs the graph, and it
 // would still do so with no browser anywhere. Its counterpart is
 // `frontend/app/elements/ElementGuiBuilder.ts` -- the half that exists only so a
 // person can build the thing. Each concrete class is named the same way:
@@ -68,5 +68,5 @@ export abstract class ElementRunner<S extends { id: string; config: RawConfig },
   // ── Build time ────────────────────────────────────────────────────────────
   // Nothing both branches share: what only building asks is a node's
   // (`NodeRunner`) or a block's (`WidgetRunner`). Nothing a run calls may reach
-  // it (`elements/times.test.ts` holds that line).
+  // it (`frontend/app/elements/times.test.ts` holds that line).
 }

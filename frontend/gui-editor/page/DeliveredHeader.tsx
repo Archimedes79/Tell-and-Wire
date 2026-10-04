@@ -42,7 +42,7 @@ export default function DeliveredHeader({ name, description, round, tools, note 
       style={{ background: SURFACE, borderBottom: `1px solid ${LINE}` }}
     >
       <span className="text-sm font-semibold" style={{ color: TEXT }}>
-        {name || 'Tell-and-Wire'}
+        {name || 'Tell & Wire'}
       </span>
       {description && (
         <span className="text-xs truncate" style={{ color: DIM }}>{description}</span>

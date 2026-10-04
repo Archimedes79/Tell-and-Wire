@@ -18,7 +18,7 @@
 //   changed: the design wins.
 // - The page is used the same way: what its blocks hold -- typed, chosen, a
 //   conversation -- is kept beside the nodes' slots, and what the end points
-//   handed back is settled into the blocks that show them (`elements/page.ts`).
+//   handed back is settled into the blocks that show them (`backend/gui-editor/widgets/page.ts`).
 //   A round the page starts is sent what its blocks hold, in one package.
 // - All of it is written to `state.json` after every round that commits, read
 //   back when the session opens, and deleted by a reset.

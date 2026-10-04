@@ -4,7 +4,7 @@ import { blocksAt } from '../../../app/document/page';
 import { DIMMER, FIELD, MUTED } from '../../../app/ui/theme';
 import { EndNodeRunner } from '../../../../graph/nodes/end/EndNodeRunner.ts';
 import { resultKeys } from '../../../../graph/nodes/NodeRunner.ts';
-import { registry as engineRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
 const END = new EndNodeRunner();
@@ -28,7 +28,7 @@ export default function EndNodePanel({ node, setConfig, setDescription }: NodePa
   const nodes = useGraphStore((s) => s.rfNodes);
   const page = useGraphStore((s) => s.page);
   const label = END.resultLabel(node as never);
-  const key = resultKeys(nodes.map((n) => (n.id === node.id ? node : n.data.graphNode)) as never, engineRegistry).get(node.id) ?? label;
+  const key = resultKeys(nodes.map((n) => (n.id === node.id ? node : n.data.graphNode)) as never, runnerRegistry).get(node.id) ?? label;
   const shownBy = blocksAt(page, node.id).show.map((block) => `“${block.label || block.id}”`);
 
   return (

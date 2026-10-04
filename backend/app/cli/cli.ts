@@ -1,18 +1,18 @@
 // Running a graph from a command line.
 //
-//     node src/main.ts graph.json                     once
-//     node src/main.ts my_project/                    the same, for a project folder
-//     node src/main.ts check my_project/ other.json   what is wrong, without running
-//     node src/main.ts test my_project/ --offline     each node on its input.js, held to its output.js
-//     node src/main.ts run-node my_project/ count     one node, on its input.js (or '{"input": …}')
-//     node src/main.ts graph.json --event go          the round one start point starts
-//     node src/main.ts graph.json --event go --value name=text   ...sent a value, by name
-//     node src/main.ts my_project/ --event go --keep  ...and keep the round as a test, in tests/
-//     node src/main.ts graph.json --every 5m           again, after each run
-//     node src/main.ts graph.json --bundle ./out       hand it to someone else
-//     node src/main.ts graph.json --serve             open its page in a browser
+//     node backend/app/main.ts graph.json                     once
+//     node backend/app/main.ts my_project/                    the same, for a project folder
+//     node backend/app/main.ts check my_project/ other.json   what is wrong, without running
+//     node backend/app/main.ts test my_project/ --offline     each node on its input.js, held to its output.js
+//     node backend/app/main.ts run-node my_project/ count     one node, on its input.js (or '{"input": …}')
+//     node backend/app/main.ts graph.json --event go          the round one start point starts
+//     node backend/app/main.ts graph.json --event go --value name=text   ...sent a value, by name
+//     node backend/app/main.ts my_project/ --event go --keep  ...and keep the round as a test, in tests/
+//     node backend/app/main.ts graph.json --every 5m           again, after each run
+//     node backend/app/main.ts graph.json --bundle ./out       hand it to someone else
+//     node backend/app/main.ts graph.json --serve             open its page in a browser
 //     node backend/app/main.ts --editor frontend/dist   the editor itself, on :8000
-//     node src/main.ts --mcp --mcp-root ./project     graph tools for an assistant, on stdio
+//     node backend/app/main.ts --mcp --mcp-root ./project     graph tools for an assistant, on stdio
 //
 // The same entry point a bundle uses, so what someone receives is the thing
 // that was tested rather than a second launcher written for them. It is also
@@ -69,7 +69,7 @@ export interface CliOptions {
   /** Bind address. Loopback unless said otherwise; see `serve` for what that switches off. */
   host?: string;
   port?: number;
-  /** Be an MCP server on stdio instead of running anything: see `host/editor/mcpServer.ts`. */
+  /** Be an MCP server on stdio instead of running anything: see `backend/graph-editor/mcpServer.ts`. */
   mcp?: boolean;
   /** The one folder that server may touch. Where it was started, unless said otherwise. */
   mcpRoot?: string;
@@ -200,7 +200,7 @@ async function runEvery(graph: Graph, trigger: Trigger | null, options: CliOptio
   return code;
 }
 
-/** Write the graph and the engine somewhere someone else can run them. */
+/** Write the graph and the code that runs it somewhere someone else can run them. */
 async function makeBundle(options: CliOptions): Promise<number> {
   const graph = await loadGraph(options.graphPath);
   // A bundle without the built page still runs once on the terminal; with it,
@@ -328,7 +328,7 @@ async function runMcp(options: CliOptions): Promise<number> {
     server = await import('../../graph-editor/mcpServer.ts');
   } catch (error) {
     if ((error as { code?: string })?.code !== 'ERR_MODULE_NOT_FOUND') throw error;
-    throw new Error('This copy of the engine has no MCP server: it is part of the editor, which a bundle does not carry.');
+    throw new Error('This copy of Tell & Wire has no MCP server: it is part of the editor, which a bundle does not carry.');
   }
   await server.runMcpServer({ root: options.mcpRoot || undefined });
   return 0;

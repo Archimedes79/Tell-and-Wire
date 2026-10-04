@@ -9,7 +9,7 @@ import { DANGER_SOFT, DIMMER, LINE, MUTED } from '../../../app/ui/theme';
  * 📂 Browse… browses the machine the graph runs on. A native
  * `<input type="file">` used to be wired up here, but a browser only ever
  * exposes a chosen file's name, never its location -- so it could not produce
- * a path the engine resolves.
+ * a path the server resolves.
  */
 export default function InputPickerWidgetView({ widget, value, onChange, onTrigger, fires, busy }: WidgetViewProps) {
   const isDir = widget.mode === 'directory';

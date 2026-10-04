@@ -17,7 +17,7 @@ import { blockCan, blocksAt, startsOn } from '../../app/document/page';
 import { lastRunInputs } from './generationContext';
 import { fieldOf } from '../../../graph/execution/executor.ts';
 import { filePorts } from '../../../graph/execution/fileInputs.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 
 /** A path in *value*: a text, or the first text of a list. */
 function firstPath(value: unknown): string | undefined {
@@ -43,11 +43,11 @@ function sentFile(start: GraphNode, page: GuiWidget[], field: string | undefined
 /**
  * The file the graph hands one of *node*'s file-reading inputs, without
  * running anything -- or undefined. Which inputs read their file is the
- * engine's own rule (`filePorts`): the ones ticked "Read the file at this
+ * rule a run follows (`filePorts`): the ones ticked "Read the file at this
  * path", of a kind that reads its files.
  */
 function graphFileOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, page: GuiWidget[]): string | undefined {
-  const ports = filePorts(node, engineRegistry);
+  const ports = filePorts(node, runnerRegistry);
   const last = lastRunInputs(node.id, result);
   for (const port of ports) {
     const path = firstPath(last?.[port]);
@@ -83,7 +83,7 @@ export async function fileFromTheGraph(
   node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, graph: () => Graph,
 ): Promise<string | undefined> {
   const known = graphFileOf(node, nodes, edges, result, graph().page?.blocks ?? []);
-  const ports = filePorts(node, engineRegistry);
+  const ports = filePorts(node, runnerRegistry);
   if (known || !ports.length) return known;
   const got = await call('nodeInputs', { ...graph(), node_id: node.id });
   if (got.error) throw new Error(`What feeds it failed: ${got.error}`);

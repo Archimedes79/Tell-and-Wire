@@ -13,7 +13,7 @@
 // use, a call to make, a clock to tick -- and ends by itself where nothing is:
 // a graph that only computes, like a program that has returned.
 //
-// The clock is the server's, as a served tool's is (`host/session.ts`): the
+// The clock is the server's, as a served tool's is (`backend/gui-editor/session.ts`): the
 // document is handed to the server's session, which keeps the time of its
 // start points from ▶ Run to ■ Stop, so a round comes due in the editor when
 // it would in a bundle, and asks nobody anything. It is the document that
@@ -28,14 +28,14 @@ import { useGraphStore } from './store/graphStore';
 import { call } from './api/client';
 import { stopRound } from './api/session';
 import { startEvents } from '../../graph/execution/triggers.ts';
-import { registry as engineRegistry } from '../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../graph/nodes/registry.ts';
 
 /**
  * Whether ▶ Run opens the App tab for *graph*: it has a page to use, or a
  * start point a call starts -- the App tab is its caller then.
  */
 export function opensApp(graph: Pick<Graph, 'nodes' | 'page'>): boolean {
-  return !!graph.page?.blocks.length || graph.nodes.some((node) => engineRegistry.node(node.node_type)?.startedBy(node as never) === 'call');
+  return !!graph.page?.blocks.length || graph.nodes.some((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'call');
 }
 
 export const useApplication = create<{
@@ -97,7 +97,7 @@ export async function startApplication(graph: Graph, runWhole: () => Promise<voi
   await useGraphStore.getState().holdDocument();
   whileRunning = [followEdits(), stopWhenLeft()];
   const { ticks } = await call('startApplication', {});
-  if (startEvents(graph, engineRegistry).includes(null)) await runWhole();
+  if (startEvents(graph, runnerRegistry).includes(null)) await runWhole();
   // Nothing left to happen: no page to use, no call to make, no clock to tick.
   if (!opensApp(graph) && !ticks) await end();
 }

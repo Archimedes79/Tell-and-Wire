@@ -40,11 +40,11 @@ const counter = localCore({
   }),
 });
 
-const ENGINE_MAIN = fileURLToPath(new URL('../../backend/app/main.ts', import.meta.url));
+const BACKEND_MAIN = fileURLToPath(new URL('../../backend/app/main.ts', import.meta.url));
 
 describe('a graph core', () => {
   it('says who it is and which protocol it speaks', async () => {
-    expect(await counter.hello()).toEqual({ protocol: PROTOCOL, language: 'javascript', core: 'Tell-and-Wire JavaScript core' });
+    expect(await counter.hello()).toEqual({ protocol: PROTOCOL, language: 'javascript', core: 'Tell & Wire JavaScript core' });
   });
 
   it('runs a round: says first how many nodes it runs, and hands back what every node keeps and was left holding', async () => {
@@ -94,7 +94,7 @@ describe('a graph core as a program of its own', () => {
     const trigger = eventOf(graph, kept!.event, registry);
     const asked = { graph, trigger, given: kept!.given, offline: true };
     const own = await localCore().round(asked);
-    const program = processCore(process.execPath, [ENGINE_MAIN, 'core']);
+    const program = processCore(process.execPath, [BACKEND_MAIN, 'core']);
     try {
       expect((await program.hello()).language).toBe('javascript');
       const there = await program.round(asked);
@@ -130,7 +130,7 @@ describe('the wrapper\'s half of a core program', () => {
   ], [edge('e', 'go', 'data', 'wait', 'in')]);
 
   it('stops a round going in the program, and one stopped before it was even asked', async () => {
-    const program = processCore(process.execPath, [ENGINE_MAIN, 'core']);
+    const program = processCore(process.execPath, [BACKEND_MAIN, 'core']);
     try {
       const stop = new AbortController();
       const began = Date.now();
@@ -147,7 +147,7 @@ describe('the wrapper\'s half of a core program', () => {
   }, 30_000);
 
   it('answers two requests at once, each with its own reply', async () => {
-    const program = processCore(process.execPath, [ENGINE_MAIN, 'core']);
+    const program = processCore(process.execPath, [BACKEND_MAIN, 'core']);
     try {
       const project = fileURLToPath(new URL('../../examples/population_plotter', import.meta.url));
       const graph = await loadGraph(project);

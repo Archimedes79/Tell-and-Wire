@@ -1,7 +1,7 @@
 // The clock of a tool that runs by itself: what its start points start by themselves, one
 // round after another.
 //
-// Kept by the server's session (`host/session.ts`) -- for the tool it serves,
+// Kept by the server's session (`backend/gui-editor/session.ts`) -- for the tool it serves,
 // and for the application the editor's ▶ Run starts -- so there is one clock,
 // and it goes on whether or not a page is open: a second one, in the browser,
 // would come to disagree with it about when a round is due.

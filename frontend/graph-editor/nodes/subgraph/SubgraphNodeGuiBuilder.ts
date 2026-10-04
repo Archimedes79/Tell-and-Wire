@@ -1,7 +1,7 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { SubgraphNodeRunner } from '../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
-import { registry as engineRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 
 const ELEMENT = new SubgraphNodeRunner();
@@ -12,7 +12,7 @@ const ELEMENT = new SubgraphNodeRunner();
  * Its ports are the graph inside it: a start point in there is a port here, an
  * end point in there is a port here. So there is nothing to edit on this
  * node itself -- the panel is a way in, and what it lists it lists by asking
- * the engine the same question the canvas asks.
+ * its runner the same question the canvas asks.
  */
 export class SubgraphNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'subgraph';
@@ -36,7 +36,7 @@ export class SubgraphNodeGuiBuilder extends NodeGuiBuilder {
   override readonly Panel = lazy(() => import('./SubgraphNodePanel'));
 
   override describeOutput(node: GraphNode): string {
-    const ports = ELEMENT.derivedPorts(node as never, engineRegistry)?.outputs ?? [];
+    const ports = ELEMENT.derivedPorts(node as never, runnerRegistry)?.outputs ?? [];
     return ports.length
       ? `Whatever the graph inside puts on: ${ports.map((port) => port.name).join(', ')}.`
       : 'Nothing yet: the graph inside has no end point.';

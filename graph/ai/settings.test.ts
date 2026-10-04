@@ -57,7 +57,7 @@ describe('ai-settings.json', () => {
       // Named outright, so the search cannot fall through to a real settings
       // file on this machine -- which is how this test used to pass by luck,
       // and how it started reading a developer's own key when one appeared
-      // beside the engine.
+      // in the folder the code came in.
       const env = { TW_SETTINGS: join(dir, 'ai-settings.json') };
       expect(fromFile(dir, env)).toEqual({});
     } finally {

@@ -13,7 +13,7 @@ import { fileValue } from './readAsRun';
  */
 
 const dropped = (name: string, text: string, uri?: string): Dropped => ({ name, size: text.length, text: async () => text, ...(uri ? { uri } : {}) });
-/** The engine's search, finding *paths*, and saying where it looked as `fileSearch` says it. */
+/** The backend's search, finding *paths*, and saying where it looked as `fileSearch` says it. */
 const found = (...paths: string[]) => async () => ({ paths, searched: 'D:\\work and 3 levels of folders below it, leaving out node_modules, dist, build and every name that begins with a dot' });
 const one = (path: string) => found(path);
 const as = async (path: string) => path;

@@ -136,13 +136,13 @@ test('the zip holds what a person runs', () => {
   for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/app/main.ts', 'frontend/dist/index.html', 'frontend/dist/licenses.txt']) {
     assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
   }
-  assert.match(readFileSync(join(folder, 'VERSION'), 'utf8'), /^Tell-and-Wire test\ncommit \S+\nbuilt /);
+  assert.match(readFileSync(join(folder, 'VERSION'), 'utf8'), /^Tell & Wire test\ncommit \S+\nbuilt /);
   // "Permission denied" was every Mac and Linux user's first ./run.sh.
   if (!windows) assert.ok(statSync(join(folder, 'run.sh')).mode & 0o111, 'run.sh is executable once unzipped');
 });
 
 test('it runs the graphs it ships with, a graph inside a node included', () => {
-  // Serving the page is half of it; the other half is that the engine in the
+  // Serving the page is half of it; the other half is that the code in the
   // zip runs a graph, without a model and without anything installed.
   const ran = spawnSync(process.execPath, [join('backend', 'app', 'main.ts'), join('examples', 'nested_statistics')], {
     cwd: folder, encoding: 'utf8', env: environment(),

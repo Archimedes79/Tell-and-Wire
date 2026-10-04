@@ -147,7 +147,7 @@ function runBundle(dir: string): Promise<{ code: number; out: string; err: strin
 }
 
 describe.each(EXAMPLES)('%s', (name) => {
-  it('is a graph the engine can order', async () => {
+  it('is a graph the executor can order', async () => {
     const graph = await load(name);
     const feedback = memoryFeedbackEdges(graph.nodes, graph.edges, registry);
     expect(() => topologicalLevels(graph.nodes, graph.edges, feedback)).not.toThrow();

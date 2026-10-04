@@ -9,7 +9,7 @@
 // blocks that show its end points, settled here.
 //
 // The page's own state -- what was typed or chosen, a conversation -- is kept
-// by whoever uses the graph: the session (`host/session.ts`), as it keeps each
+// by whoever uses the graph: the session (`backend/gui-editor/session.ts`), as it keeps each
 // node's.
 
 import type { Graph, RawConfig, WidgetKind } from '../../../graph/graph.ts';

@@ -1,19 +1,19 @@
 <div align="center">
 
-# Tell-and-Wire
+# Tell & Wire
 
 **A visual editor for small AI tools: wire nodes into a graph, give it a page,
 and hand it on as a folder that runs wherever Node runs.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
 
-<img src="docs/images/hero.png" alt="The Tell-and-Wire editor: a graph of a file picker, a code node and a chart, the code node's panel open with its text and the files AI wrote from it -- and the same graph delivered as a tool that draws a bar chart" width="100%">
+<img src="docs/images/hero.png" alt="The Tell & Wire editor: a graph of a file picker, a code node and a chart, the code node's panel open with its text and the files AI wrote from it -- and the same graph delivered as a tool that draws a bar chart" width="100%">
 
 </div>
 
 ## What it is
 
-A tool in Tell-and-Wire has two halves.
+A tool in Tell & Wire has two halves.
 
 - **The graph** (Graph tab): nodes wired together. A round begins at a **start point**,
   runs through **code nodes**, **AI nodes**, **data nodes** (values kept between rounds),
@@ -29,7 +29,7 @@ you can read it, change it and diff it.
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A round that went well
 can be kept as an offline test. **Deploy** writes a zip that anyone with Node can unzip and
-start. Tell-and-Wire also serves an MCP server, so an assistant can build and test graphs.
+start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
 The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 
 ## Download and start
@@ -95,7 +95,7 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
 | Anthropic (`anthropic`) | paid | `ANTHROPIC_API_KEY` |
 | OpenAI-compatible (`openai_compatible`) | depends | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` |
 
-With nothing set, Tell-and-Wire uses a local model server that is running (Ollama or
+With nothing set, Tell & Wire uses a local model server that is running (Ollama or
 LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
 
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
@@ -133,7 +133,7 @@ portfolio_review are teams of AI reviewers.
 - [docs/user-guide.md](docs/user-guide.md): how to build a tool, step by step.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
   between them, the project format, the wrapper's APIs and the core protocol, and how to
-  extend Tell-and-Wire.
+  extend Tell & Wire.
 
 ## Licence
 

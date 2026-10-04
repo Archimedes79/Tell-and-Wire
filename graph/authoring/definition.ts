@@ -10,7 +10,7 @@
 // JavaScript, so a definition reads as code, opens with its types in an IDE and
 // can be required. Its first half says the general format, in JSDoc; its second
 // is one example of it, and that example is plain JSON after `module.exports =`
-// -- so the engine reads it without running anything, and what ▶ Try and `test`
+// -- so Tell & Wire reads it without running anything, and what ▶ Try and `test`
 // run a node on is data, not code somebody wrote.
 //
 // **A definition is of one call.** `input.js` is what `run(inputs)` is handed,

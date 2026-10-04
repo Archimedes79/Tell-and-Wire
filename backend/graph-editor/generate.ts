@@ -177,7 +177,7 @@ interface Shape {
   language?: Language;
 }
 
-/** Said of every definition's example: what the engine reads without running it. */
+/** Said of every definition's example: what Tell & Wire reads without running it. */
 const PLAIN_JSON = 'plain JSON: double-quoted keys and strings, no comments, no trailing commas';
 
 /**
@@ -216,7 +216,7 @@ const EMPTY_INPUT = 'Handle an input that is missing or empty as well as a full 
 
 /**
  * The frame after the prompt: the file's format and how to answer. The
- * engine's, not the person's to edit. *restating*: a change was asked, and
+ * backend's, not the person's to edit. *restating*: a change was asked, and
  * the node's text comes back restated after the block (`RESTATE`) -- which a
  * frame that said "and nothing else" would forbid; *asked*: an output.js may
  * come back after the body too (`OutputAsked`).
@@ -420,7 +420,7 @@ async function probe(
   const clock = setTimeout(() => stop.abort(), PROBE_TIMEOUT_MS);
   clock.unref();
   try {
-    // Run as a graph runs it (`elements/body.ts`): generated code that asks a
+    // Run as a graph runs it (`graph/nodes/body.ts`): generated code that asks a
     // model through `node.llm` is tried with a `node` that can be asked.
     // What it asks is answered by the model that wrote it, which is the one
     // AI setting -- where the same call in a run goes, too.

@@ -84,10 +84,10 @@ export interface TextFile {
  */
 export interface WhatRuns {
   /**
-   * `engine`: this class's `execute`, in the process that holds the graph.
-   * `body`: a file in the node's own folder, run sandboxed (`elements/body.ts`).
+   * `graph`: this class's `execute`, in the process that holds the graph.
+   * `body`: a file in the node's own folder, run sandboxed (`graph/nodes/body.ts`).
    */
-  by: 'engine' | 'body';
+  by: 'graph' | 'body';
   /** The source file and method, or the body's file name in the node's folder. */
   where: string;
   /** One sentence: what it does with what arrives. */
@@ -395,7 +395,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * changes about it, as against how it was designed -- a data node's
    * `data_value`, what a start point was sent. A session reads it
    * after a round and puts it back before the next (`setState`), on a copy, so
-   * that using a graph never changes its design (`host/session.ts`). Nothing,
+   * that using a graph never changes its design (`backend/gui-editor/session.ts`). Nothing,
    * for a node that keeps nothing. A slot that holds nothing is `null`.
    */
   state(_node: GraphNode): Record<string, unknown> {
@@ -408,7 +408,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   // ── Build time ────────────────────────────────────────────────────────────
   // What only building asks: the editor, `check`, `test`, a bundle being made.
   // It travels with the class -- one class per kind is worth more than a
-  // smaller tool -- but nothing a run calls may reach it (`elements/times.test.ts`).
+  // smaller tool -- but nothing a run calls may reach it (`backend/app/times.test.ts`).
 
   /**
    * How an AI writes this node's body, or undefined if none does: a code
@@ -436,7 +436,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * What someone writing a graph for this kind must know about its settings:
    * which keys hold what it does, and what goes wrong if they are put anywhere
    * else. A sentence or a paragraph, without a heading -- the prompt that
-   * designs a whole graph (`host/editor/graphPrompt.ts`) collects one from
+   * designs a whole graph (`backend/graph-editor/graphPrompt.ts`) collects one from
    * every kind, so a new kind is described in its own file.
    *
    * None means a generated graph is not meant to use this kind, and it is left
@@ -453,7 +453,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    */
   whatRuns(_node: GraphNode): WhatRuns {
     // Every kind in the registry says more than this (`times.test.ts`).
-    return this.engineRuns('');
+    return this.graphRuns('');
   }
 
   /**
@@ -461,9 +461,9 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * it. Spelled from the node type, never from `constructor.name`: in the
    * editor's bundle a class is called `Kg`.
    */
-  protected engineRuns(does: string): WhatRuns {
+  protected graphRuns(does: string): WhatRuns {
     const kind = this.nodeType.charAt(0).toUpperCase() + this.nodeType.slice(1);
-    return { by: 'engine', where: `graph/nodes/${this.nodeType}/${kind}NodeRunner.ts › execute`, does };
+    return { by: 'graph', where: `graph/nodes/${this.nodeType}/${kind}NodeRunner.ts › execute`, does };
   }
 
   /**

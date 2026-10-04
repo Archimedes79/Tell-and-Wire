@@ -1,6 +1,6 @@
 // Running a graph: initialise, wire, order, execute.
 //
-// The whole engine is four ideas.
+// The whole of it is four ideas.
 //
 // **Order.** Kahn's algorithm over the edges gives levels; everything in a
 // level can run at once because nothing in it feeds anything else in it.
@@ -926,7 +926,7 @@ async function runNode(
  * a feedback edge is put into this round's own result as well, so whoever
  * reads the round sees the value just kept instead of the one from last time.
  *
- * That copy is the whole of it: a session keeps it (`host/session.ts`), and
+ * That copy is the whole of it: a session keeps it (`backend/gui-editor/session.ts`), and
  * nobody works the same thing out a second time.
  *
  * Per port, as the round delivers: a port fed by several wires keeps the list

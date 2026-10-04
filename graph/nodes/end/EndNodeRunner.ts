@@ -126,11 +126,11 @@ export class EndNodeRunner extends NodeRunner<EndConfig> {
 
   override whatRuns(node: GraphNode): WhatRuns {
     const { mode } = this.config(node);
-    if (mode === 'file') return this.engineRuns('Writes what arrives to its file and hands it on, with "written_path".');
+    if (mode === 'file') return this.graphRuns('Writes what arrives to its file and hands it on, with "written_path".');
     if (mode === 'directory') {
-      return this.engineRuns('Writes each value that arrives -- each item of a list -- to a file of its own in its folder, and hands it on, with "written_paths".');
+      return this.graphRuns('Writes each value that arrives -- each item of a list -- to a file of its own in its folder, and hands it on, with "written_paths".');
     }
-    return this.engineRuns('Hands on what arrives: the run\'s result, under its label, to whoever ran the graph.');
+    return this.graphRuns('Hands on what arrives: the run\'s result, under its label, to whoever ran the graph.');
   }
 }
 

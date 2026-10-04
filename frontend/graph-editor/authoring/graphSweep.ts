@@ -5,7 +5,7 @@
 // graph that is empty: every node is generated against a guess, because the
 // node it reads from has not been written yet.
 //
-// So the order matters, and it is the *execution* order — asked of the engine
+// So the order matters, and it is the *execution* order — asked of the executor
 // (`topologicalLevels`) rather than derived again here, so a graph is generated
 // in the order it will run, including the memory-feedback rule that keeps
 // a loop through a data node from looking like a cycle.
@@ -63,7 +63,7 @@ interface SweepDeps {
  * Flattened: a stage's nodes are independent of each other, so any order within
  * one is as good as another, and a flat list is what a progress line shows.
  *
- * Throws on a cycle the memory rule cannot absolve — the engine's own refusal,
+ * Throws on a cycle the memory rule cannot absolve — the executor's own refusal,
  * raised here rather than worked around. A graph that cannot run has no order to
  * generate in, and inventing one would write every node against a guess while
  * looking like it worked.

@@ -28,9 +28,9 @@ const findProjects: FindProjects = (name) => call('findProjects', { name });
 
 /**
  * Where the project folder *name*, dropped onto the window, is: a browser says
- * a dropped folder's name and never where it is, so the engine looks for the
+ * a dropped folder's name and never where it is, so the backend looks for the
  * one project of that name. None, or several, is said -- none with where the
- * engine looked -- with the way that always works.
+ * backend looked -- with the way that always works.
  */
 export async function droppedProject(name: string, find: FindProjects = findProjects): Promise<string> {
   const { paths, searched } = await find(name);

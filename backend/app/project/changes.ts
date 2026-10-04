@@ -1,7 +1,7 @@
 // What changed in a project folder, as whoever has it open is told.
 //
-// A leaf on purpose: it imports nothing. The engine half writes these in
-// `folder.ts`, which reads files; the editor half takes them in its store,
+// A leaf on purpose: it imports nothing. The backend writes these in
+// `folder.ts`, which reads files; the page takes them in its store,
 // which runs in a browser and must never import a file system. Both need the
 // same two words, so the two words live where either can reach them.
 

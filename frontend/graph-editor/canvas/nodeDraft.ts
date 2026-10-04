@@ -3,7 +3,7 @@ import { derivedNodePorts } from '../../app/document/ports';
 import { useGraphStore } from '../../app/store/graphStore';
 import { portRenames, renamedPorts, untracked } from '../../app/store/portRenames';
 import { definitionFollowingPorts } from '../authoring/definitionPorts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { ERROR_PORT, errorOutput } from '../../../graph/execution/wiring.ts';
 
 /** What the output a node grows when it is told to catch its own failures says it is. */
@@ -33,7 +33,7 @@ export function withSetting(draft: GraphNode, key: string, value: unknown): Grap
   // should have to add an output by hand and guess that it must be called
   // `error` for the executor to fill it. Which setting that is, the element
   // says (`catchesErrors`), and the port is touched only when its answer turns.
-  const element = engineRegistry.node(draft.node_type);
+  const element = runnerRegistry.node(draft.node_type);
   const catches = element?.catchesErrors(next) ?? false;
   if (element && catches !== element.catchesErrors(draft)) {
     const without = next.outputs.filter((port) => port.id !== ERROR_PORT);

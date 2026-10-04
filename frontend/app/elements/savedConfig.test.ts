@@ -1,25 +1,25 @@
 /**
  * A saved node carries what is not a default, not every field every node starts
- * with -- and the engine cannot tell the difference.
+ * with -- and a run cannot tell the difference.
  *
  * `savedNode` drops every key that still holds its one default
- * (`baseNodeConfig`). That is only safe while the engine reads a missing key
- * the same way it reads that value, so this asks the engine's own element,
+ * (`baseNodeConfig`). That is only safe while a run reads a missing key
+ * the same way it reads that value, so this asks the node's own runner,
  * for every node type and every mode, the questions a run asks, and holds the
  * lean node to the full node's answers.
  */
 import { describe, it, expect } from 'vitest';
 import { NODE_KINDS, savedNode } from '../document/nodeKinds';
 import type { GraphNode, NodeConfig } from '../graph';
-import { answers as engineAnswers } from '../../test/engineAnswers';
+import { answers as runAnswers } from '../../test/runAnswers';
 
 /**
- * The engine's answers, with an ai node's provider as a run takes it: left out
+ * The runner's answers, with an ai node's provider as a run takes it: left out
  * and 'default' are one provider, the one AI setting (`lent`), and `config`
  * spells them apart.
  */
 function answers(node: GraphNode): Record<string, string> {
-  const all = engineAnswers(node);
+  const all = runAnswers(node);
   const config = JSON.parse(all.config ?? '{}') as { provider?: string };
   if (config.provider === '') config.provider = 'default';
   return { ...all, config: JSON.stringify(config) };
@@ -37,7 +37,7 @@ function variants(): GraphNode[] {
 
 describe('NodeGuiBuilder.saved', () => {
   it.each(variants().map((node) => [`${node.node_type} (${node.config.write_mode})`, node]))(
-    '%s: the engine sees the lean node exactly as the full one',
+    '%s: a run sees the lean node exactly as the full one',
     (_name, node) => {
       const lean = savedNode(node);
       expect(answers(lean)).toEqual(answers(node));
@@ -46,7 +46,7 @@ describe('NodeGuiBuilder.saved', () => {
 
   it('writes, for a new node, only what it starts with that is no default', () => {
     // One default per key: a key a new node holds at its default says nothing
-    // the engine would not assume, and is left out of its file.
+    // a run would not assume, and is left out of its file.
     const saved = Object.fromEntries(Object.entries(NODE_KINDS).map(([type, kind]) => [type, savedNode(kind.create('n')).config]));
     expect(saved.folder).toEqual({});
     expect(saved.data).toEqual({});

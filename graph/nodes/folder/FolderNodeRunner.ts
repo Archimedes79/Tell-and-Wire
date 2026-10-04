@@ -96,7 +96,7 @@ export class FolderNodeRunner extends NodeRunner<FolderConfig> {
   }
 
   override whatRuns(): WhatRuns {
-    return this.engineRuns('Lists the folder whose path arrives on "path" (or the one it names) -- its file types, and its subfolders when it looks into them -- and hands on the files as "files".');
+    return this.graphRuns('Lists the folder whose path arrives on "path" (or the one it names) -- its file types, and its subfolders when it looks into them -- and hands on the files as "files".');
   }
 
   override referencedPaths(node: GraphNode): string[] {

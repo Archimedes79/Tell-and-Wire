@@ -1,5 +1,5 @@
 {
-  // Node 24 runs the engine's TypeScript directly, so a debug session needs no
+  // Node 24 runs Tell & Wire's TypeScript directly, so a debug session needs no
   // build step and no loader -- the program below is the source that runs, and
   // a breakpoint sits in the file you are looking at.
   //

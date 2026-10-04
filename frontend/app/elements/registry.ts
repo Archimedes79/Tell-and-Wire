@@ -12,7 +12,7 @@ import { DataNodeGuiBuilder } from '../../graph-editor/nodes/data/DataNodeGuiBui
 import { EndNodeGuiBuilder } from '../../graph-editor/nodes/end/EndNodeGuiBuilder';
 import { SubgraphNodeGuiBuilder } from '../../graph-editor/nodes/subgraph/SubgraphNodeGuiBuilder';
 
-/** Every node type's GuiBuilder, by type, in the engine's order. */
+/** Every node type's GuiBuilder, by type, in the order of `graph/nodes/registry.ts`. */
 export const NODE_BUILDERS: Record<NodeType, NodeGuiBuilder> = {
   start: new StartNodeGuiBuilder(),
   folder: new FolderNodeGuiBuilder(),

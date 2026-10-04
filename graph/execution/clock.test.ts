@@ -5,7 +5,7 @@ import { startClock } from './clock.ts';
 import type { Trigger } from './triggers.ts';
 
 // The one clock every host keeps a tool's time with: the server's schedule
-// and the editor's ▶ Run. Its timing is held in host/schedule.test.ts too,
+// and the editor's ▶ Run. Its timing is held in backend/gui-editor/session.test.ts too,
 // through the server; here what only the clock itself decides.
 
 const trigger = (id: string, config: Record<string, unknown>) => ({ id, node_type: 'start', label: id, config: { started_by: 'itself', ...config } });

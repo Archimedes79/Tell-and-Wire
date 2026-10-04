@@ -19,9 +19,9 @@ describe('"Run once per item"', () => {
     expect(runsPerItem(perItem)).toBe(true);
   });
 
-  it('is what the engine does: a kind that takes what arrives whole runs so, whatever its setting says', () => {
+  it('is what a run does: a kind that takes what arrives whole runs so, whatever its setting says', () => {
     // An end point that fanned out wrote each item over the same file, so
-    // the engine never runs one per item; the editor said it did.
+    // the executor never runs one per item; the editor said it did.
     const output = NODE_KINDS.end.create('out');
     const told = { ...output, config: { ...output.config, batch_mode: 'per_item' as const }, inputs: output.inputs.map((port) => ({ ...port, multi: true })) };
     expect(runsPerItem(told)).toBe(false);

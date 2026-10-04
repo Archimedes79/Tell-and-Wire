@@ -125,12 +125,12 @@ afterEach(async () => {
 // ---------------------------------------------------------------------------
 
 describe('authoring_guide', () => {
-  it('hands over the authoring prompt and what this engine actually has', async () => {
+  it('hands over the authoring prompt and what this server actually has', async () => {
     const { text, isError } = await toolsWith().call('authoring_guide', {});
     expect(isError).toBeUndefined();
     expect(text).toContain('Graph DSL');
     expect(text).toContain('__run');
-    expect(text).toMatch(/Node types this engine runs: start, .*\bend\b/);
+    expect(text).toMatch(/Node types this server runs: start, .*\bend\b/);
     // The block kinds are the prompt's own, listed by the page from the roster.
     expect(text).toContain('  - button');
   });
@@ -290,7 +290,7 @@ describe('validate_graph', () => {
     expect(problems[0].fix).toMatch(/"in"/);
   });
 
-  it('checks a folder node against the ports the engine derives, not the ones the document claims', async () => {
+  it('checks a folder node against the ports its kind derives, not the ones the document claims', async () => {
     // The mistake the authoring prompt warns about: a folder node has `files`
     // and `count`, whatever the document declares.
     const lying = {

@@ -1,8 +1,8 @@
 // The language a code node's body is written in, as whoever writes and tries
-// it needs it said: JavaScript, run by the Node the engine runs on.
+// it needs it said: JavaScript, run by the Node the graph runs on.
 //
 // Everything that is JavaScript about writing a body is here, declared by the
-// code node (`CodeNodeRunner.generation`), so the writer (`host/editor/
+// code node (`CodeNodeRunner.generation`), so the writer (`backend/graph-editor/
 // generate.ts`) names no language: a node for another one declares its own.
 
 import type { Language } from '../../authoring/generation.ts';
@@ -46,7 +46,7 @@ export const JAVASCRIPT: Language = {
     + 'inside a markdown code block, followed by a brief explanation outside the block. Do not add '
     + 'extra prose before the code block. The returned object\'s keys must exactly match the '
     + 'requested output names - downstream nodes look up values by these exact keys. '
-    // Every body may ask (`elements/body.ts`), and a generator that is not told so
+    // Every body may ask (`graph/nodes/body.ts`), and a generator that is not told so
     // writes a word list where a question was wanted -- or guesses at an API.
     + 'When the task needs the judgement of a model -- classifying, summarising, extracting meaning -- declare '
     + 'the function as "async function run(inputs, node)" and ask with '

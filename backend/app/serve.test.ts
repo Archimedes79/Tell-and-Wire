@@ -263,7 +263,7 @@ describe('the page it serves', () => {
   });
 });
 
-describe('the engine as the front door of the editor', () => {
+describe('the server as the front door of the editor', () => {
   async function editor() {
     const dist = await mkdtemp(join(tmpdir(), 'editor-dist-'));
     await writeFile(join(dist, 'index.html'), '<!doctype html><title>the editor</title>');

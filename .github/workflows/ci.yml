@@ -15,14 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # The engine is TypeScript that Node runs unbuilt, so the Node here is
+      # Tell & Wire is TypeScript that Node runs unbuilt, so the Node here is
       # the Node a recipient needs: 24 or newer.
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
 
-      # One workspace, one lockfile: the engine and the editor share it.
+      # One workspace, one lockfile: graph/, backend/ and frontend/ share it.
       - name: Install
         run: npm ci
 
@@ -38,8 +38,8 @@ jobs:
       - name: Types
         run: npm run typecheck
 
-      # The editor only: what the compiler does not see, above all the rules of
-      # hooks. The engine has no linter; its types and tests are the check.
+      # frontend/ only: what the compiler does not see, above all the rules of
+      # hooks. graph/ and backend/ have no linter; their types and tests are the check.
       - name: Lint
         run: npm run lint
 
@@ -109,8 +109,8 @@ jobs:
         run: node --test scripts/package.test.mjs
 
   # The download for people who do not want a container: one zip holding the
-  # engine's source, the built page and the examples. The engine has no runtime
-  # dependencies and Node runs its TypeScript unbuilt, so a recipient unzips it
+  # source of graph/ and backend/, the built page and the examples. The source has no
+  # runtime dependencies and Node runs its TypeScript unbuilt, so a recipient unzips it
   # and runs it -- no npm install, no build step, no Docker.
   #
   # On a vX.Y.Z tag only: a release is a thing people link to, so it gets a
@@ -166,7 +166,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ github.ref_name }}" tell-and-wire-*.zip \
-            --title "Tell-and-Wire ${{ github.ref_name }}" \
+            --title "Tell & Wire ${{ github.ref_name }}" \
             --generate-notes
 
   # The same zip, for whoever wants what main is today rather than the last
@@ -215,10 +215,10 @@ jobs:
           git push -f origin refs/tags/latest
           if gh release view latest >/dev/null 2>&1; then
             gh release upload latest tell-and-wire-latest.zip --clobber
-            gh release edit latest --prerelease --latest=false --title "Tell-and-Wire latest (main)" --notes "$notes"
+            gh release edit latest --prerelease --latest=false --title "Tell & Wire latest (main)" --notes "$notes"
           else
             gh release create latest tell-and-wire-latest.zip --verify-tag --prerelease --latest=false \
-              --title "Tell-and-Wire latest (main)" --notes "$notes"
+              --title "Tell & Wire latest (main)" --notes "$notes"
           fi
 
   # Publishes the same one-process image README.md and docker-compose.yml

@@ -10,9 +10,9 @@
 // learned all of this; the copies handed to other people had not.
 
 /**
- * The oldest Node the engine runs on. It runs its TypeScript unbuilt, which is
+ * The oldest Node Tell & Wire runs on. It runs its TypeScript unbuilt, which is
  * also why the check has to happen in the launcher: an older Node does not get
- * as far as reading the engine's first line.
+ * as far as reading the first line of `backend/app/main.ts`.
  */
 export const NODE_MAJOR = 24;
 
@@ -24,7 +24,7 @@ export interface LauncherOptions {
   command: string;
   /**
    * Hand `--port $PORT` on when PORT is set. Left unset, nothing is passed and
-   * the engine takes the first free port from 8000 -- which is the behaviour
+   * the server takes the first free port from 8000 -- which is the behaviour
    * that matters, because a launcher that always passed 8000 turned "something
    * else is already on 8000" into a crash.
    */

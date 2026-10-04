@@ -93,7 +93,7 @@ describe('▶ Run', () => {
 describe('the header', () => {
   it('says the app\'s name, the graph\'s, and holds the three views', () => {
     const html = toolbar();
-    expect(html).toContain('>Tell-and-Wire</span>');
+    expect(html).toContain('>Tell &amp; Wire</span>');
     expect(html).toMatch(/<input[^>]*aria-label="The graph&#x27;s name"[^>]*value="Graph"/);
     expect([...html.matchAll(/<button[^>]*aria-current="page"[^>]*>([^<]*)/g)].map((match) => match[1])).toEqual(['Graph']);
   });

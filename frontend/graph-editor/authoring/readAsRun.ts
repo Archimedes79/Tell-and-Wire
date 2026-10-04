@@ -1,8 +1,8 @@
 // Files, read the way a run reads them.
 //
 // A data node can hold what a file says, and a folder listing shows the files
-// it lists. Each of those is a read, and each is done by the engine's own
-// element, run on its own by the route a run of one node uses (`runNode`): the same
+// it lists. Each of those is a read, and each is done by the node's own
+// runner, run on its own by the route a run of one node uses (`runNode`): the same
 // path resolved against the same folder, the same text read, the same
 // extensions and recursion applied to a listing. A second way of reading a
 // file here would be a second answer to "what does the node get".
@@ -87,7 +87,7 @@ export async function fileValue(
 }
 
 /**
- * *path* as a graph keeps it: relative to *home* -- the folder the engine
+ * *path* as a graph keeps it: relative to *home* -- the folder the server
  * runs in, which is what a run resolves a relative path against -- when it is
  * inside it, with forward slashes, so the graph opens the same on another
  * machine and in another checkout. Anywhere else it stays as it is.
@@ -104,7 +104,7 @@ function relativeTo(home: string, path: string): string {
 
 let home: Promise<string> | null = null;
 
-/** A picked path as it is stored: see `relativeTo`. The engine's folder is asked once. */
+/** A picked path as it is stored: see `relativeTo`. The server's folder is asked once. */
 async function storedPath(path: string): Promise<string> {
   // A failed answer is not kept: the next pick asks again.
   home ??= call('browse', { path: '' }).then((page) => page.path).catch(() => { home = null; return ''; });

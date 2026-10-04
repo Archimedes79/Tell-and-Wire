@@ -5,7 +5,7 @@
 // sampling and the rest of the protocol are not here, because nothing in a
 // graph can use them yet and a client that half-implements them would have to
 // be believed rather than read. The official SDK is not here either -- the
-// engine has no runtime dependencies, which is what lets a bundle be a copy.
+// graph's code has no runtime dependencies, which is what lets a bundle be a copy.
 //
 // **The security boundary is in `resolve` below, and it is one rule.** A graph
 // names its tool servers, and a graph is a file somebody hands you. If that file
@@ -21,7 +21,7 @@
 // There is no third form, and no "just this once" parameter to add one.
 //
 // Like `core/node.ts`, this file knows an operating system exists: it starts
-// processes. It is reached only from there, so the engine above still runs in a
+// processes. It is reached only from there, so everything above it still runs in a
 // browser tab, where `runtime.tools` is simply absent.
 
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -242,7 +242,7 @@ function stdioTransport(label: string, config: { command: string; args?: string[
   child.stderr?.setEncoding('utf8');
   child.stderr?.on('data', (chunk: string) => { stderr = (stderr + chunk).slice(-STDERR_TAIL * 2); });
   // Writing to a child that has already exited raises EPIPE on the *stream*,
-  // and an unhandled stream error takes the whole engine down with it.
+  // and an unhandled stream error takes the whole process down with it.
   child.stdin?.on('error', () => {});
   child.on('error', (error) => die(`Could not start \`${config.command}\`: ${error.message}`));
   child.on('close', (code) => die(`\`${config.command}\` exited${code === null ? '' : ` with code ${code}`} before answering.`));

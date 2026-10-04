@@ -8,7 +8,7 @@
 import type { ExecutionResult, Graph } from '../graph.ts';
 import type { Runners } from './NodeRunner.ts';
 
-/** Reading and writing files, wherever this engine happens to run. */
+/** Reading and writing files, wherever the graph happens to run. */
 export interface FileService {
   read(path: string, mode?: 'text' | 'binary'): Promise<string>;
   /** Creates the folders the path runs through when they are not there yet. */
@@ -112,7 +112,7 @@ export interface ModelChoice {
  * can only fail. A *home* that names no provider still lends its model to a
  * request that names none either.
  *
- * The running engine applies it (`core/node.ts`, `aiService`), and the
+ * A run applies it (`core/node.ts`, `aiService`), and the
  * editor's model box applies it to say what an empty model will mean, so it
  * lives here, where both halves and the page can read it.
  */
@@ -173,7 +173,7 @@ export interface Runtime {
   tools?: ToolService;
   /** Absent outside a run: only the executor can offer it. */
   subgraph?: SubgraphService;
-  /** How often one run of a body may ask for the model (`node.llm`). Absent: the engine's own limit. */
+  /** How often one run of a body may ask for the model (`node.llm`). Absent: the standard limit. */
   llmCallsPerBody?: number;
   /**
    * Whether this node's port is the event this round began with.

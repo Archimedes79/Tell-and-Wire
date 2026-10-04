@@ -60,8 +60,8 @@ export function handedDown(node: GraphNode, value: unknown, elements: Runners): 
 
 /** The holding node's ports, as the graph inside it describes them. */
 export function boundaryPorts(graph: Graph, elements: Runners): { inputs: Port[]; outputs: Port[] } {
-  // `any` throughout: of the data types only `file_path` means anything to the
-  // engine, and it would mean the wrong thing here -- a path that crosses this
+  // `any` throughout: of the data types only `file_path` means anything to a
+  // run, and it would mean the wrong thing here -- a path that crosses this
   // boundary is a path, not a file to read on the way in.
   const named = (node: GraphNode): string => node.label || node.id;
   return {

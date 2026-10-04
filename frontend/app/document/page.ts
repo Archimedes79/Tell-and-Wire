@@ -2,14 +2,14 @@
 // start and end points by name.
 //
 // What a block can do with the graph -- send its data, fire a start point,
-// show an end point -- is the engine's answer (`WidgetRunner.sends`, `event`,
+// show an end point -- is the runner's answer (`WidgetRunner.sends`, `event`,
 // `showsEnd`), asked of the same element a round asks, so the Gui tab never
 // offers a connection a round then ignores and `check` names.
 
 import type { DataType, GraphNode, GuiWidget, Port } from '../graph';
 import type { Sent } from '../../../backend/gui-editor/widgets/WidgetRunner.ts';
 import { parseWidget, widgetElement } from '../../../backend/gui-editor/widgets/page.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 
 /** What *widget* can do with the graph: what it sends -- none, for a heading or a button --, whether using it is an event, whether it shows an end point. */
 export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolean; shows: boolean } {
@@ -22,7 +22,7 @@ export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolea
   };
 }
 
-/** Whether a person sets what this block sends, and a round the page starts is given it by the block's id -- the engine's answer. */
+/** Whether a person sets what this block sends, and a round the page starts is given it by the block's id -- the runner's answer. */
 export function widgetTakesValue(widget: GuiWidget): boolean {
   return widgetElement(widget.kind)?.takesValue(parseWidget(widget)) ?? false;
 }
@@ -30,7 +30,7 @@ export function widgetTakesValue(widget: GuiWidget): boolean {
 /**
  * Whether what this block holds is part of the page's design, set while the
  * page is built -- not a conversation, which is only ever the session's -- the
- * engine's answer (`WidgetRunner.valueIsDesign`).
+ * runner's answer (`WidgetRunner.valueIsDesign`).
  */
 export function widgetValueIsDesign(widget: GuiWidget): boolean {
   return widgetElement(widget.kind)?.valueIsDesign(parseWidget(widget)) ?? true;
@@ -41,7 +41,7 @@ export function blockReceives(widget: GuiWidget): string | undefined {
   return widgetElement(widget.kind)?.receives(parseWidget(widget));
 }
 
-/** The files and folders *widget* starts on -- what a picker is set to -- the engine's answer (`WidgetRunner.referencedPaths`). */
+/** The files and folders *widget* starts on -- what a picker is set to -- the runner's answer (`WidgetRunner.referencedPaths`). */
 export function startsOn(widget: GuiWidget): string[] {
   return widgetElement(widget.kind)?.referencedPaths(parseWidget(widget)) ?? [];
 }
@@ -55,14 +55,14 @@ export interface Point {
 /** The start points a block can send to and fire: the ones the page starts. */
 export function pageStartPoints(nodes: GraphNode[]): Point[] {
   return nodes
-    .filter((node) => engineRegistry.node(node.node_type)?.startedBy(node as never) === 'page')
+    .filter((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'page')
     .map((node) => ({ id: node.id, label: node.label || node.id }));
 }
 
 /** The end points a block can show: what the graph hands back, by name. */
 export function endPoints(nodes: GraphNode[]): Point[] {
   return nodes.flatMap((node) => {
-    const element = engineRegistry.node(node.node_type);
+    const element = runnerRegistry.node(node.node_type);
     return element?.isResult ? [{ id: node.id, label: element.resultLabel(node as never) }] : [];
   });
 }

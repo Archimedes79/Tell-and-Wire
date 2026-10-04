@@ -5,7 +5,7 @@
  * compare a node's type with a literal. What such a comparison would decide is a
  * member of the element's class (`isResult`, `takesPackage`, `problems`,
  * `readsFileInputs`), so a new kind answers for itself and nothing shared has to
- * change. The editor holds the same line in `elements/shells.test.ts`.
+ * change. The editor holds the same line in `frontend/app/elements/shells.test.ts`.
  *
  * One file is allowed to read the document without asking: `graph/execution/triggers.ts`
  * lists a graph's start points that start themselves, from the file alone.

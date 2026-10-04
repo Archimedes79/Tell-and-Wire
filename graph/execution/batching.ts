@@ -1,7 +1,7 @@
 // Running a node once per item instead of once for the list.
 //
 // Three rules, and every one of them was found by running the same graph
-// through this engine and the older one and diffing:
+// through this code and the older one and diffing:
 //
 // **The size comes from the ports, not from the values.** A node fans out over
 // its *declared-multi* inputs; a list arriving on a single-valued port is one

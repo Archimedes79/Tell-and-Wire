@@ -3,7 +3,7 @@ import type { GraphNode, GuiWidget } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
 
-// What a listing would post, caught instead of posted, and what the engine answers.
+// What a listing would post, caught instead of posted, and what the server answers.
 const posted: { route: string; body: Record<string, unknown> }[] = [];
 let answer: Record<string, unknown> = { status: 'success', outputs: {}, error: null };
 vi.mock('../../app/api/client', async (original) => ({

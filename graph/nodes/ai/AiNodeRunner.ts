@@ -144,7 +144,7 @@ export class AiNodeRunner extends NodeRunner<AiConfig> {
   }
 
   override whatRuns(): WhatRuns {
-    return this.engineRuns('Sends prompt.md -- or the standard instructions, while it says nothing of its own -- with its description '
+    return this.graphRuns('Sends prompt.md -- or the standard instructions, while it says nothing of its own -- with its description '
       + 'and output.js filled in, then what arrived, each input under its port id where there are several. The answer is text on '
       + 'its one output; where output.js names several outputs or a value that is not text, it is parsed as JSON and each key '
       + 'handed on its output port.');

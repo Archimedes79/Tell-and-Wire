@@ -96,7 +96,7 @@ describe('a bundle', () => {
     }
   }, 120_000);
 
-  it('carries the terms its engine comes under: whoever is handed a copy is handed those', async () => {
+  it('carries the terms its code comes under: whoever is handed a copy is handed those', async () => {
     const dir = await bundleOf(MINIMAL);
     try {
       expect(await readFile(join(dir, 'LICENSE'), 'utf8')).toBe(await readFile(join(REPO, 'LICENSE'), 'utf8'));
@@ -305,7 +305,7 @@ describe('a bundle', () => {
       // The Node the launchers check for: it said 22 while run.sh refused anything below 24.
       expect(readme).toContain(`Node ${NODE_MAJOR} or newer`);
       // The one thing a recipient has to be told, and now the only one: the
-      // interpreter that runs the engine runs every body in the graph too.
+      // interpreter that runs the graph runs every body in it too.
       expect(readme).toContain('Nothing else');
       // The plotter asks no model, so a page of provider settings would be
       // instructions for something that never happens.

@@ -1,6 +1,6 @@
-// Build the downloadable package: Tell-and-Wire, ready to run, nothing to install.
+// Build the downloadable package: Tell & Wire, ready to run, nothing to install.
 //
-// The engine has no runtime dependencies -- only devDependencies -- and Node
+// Tell & Wire has no runtime dependencies -- only devDependencies -- and Node
 // runs its TypeScript unbuilt. So everything a recipient needs is source plus
 // the already-built page: unzip, run the script, no `npm install`, no build,
 // no Docker.
@@ -38,7 +38,7 @@ async function walk(dir, keep = () => true) {
 // The same launchers every deploy bundle gets (backend/app/cli/launchers.ts):
 // they check for Node before it is needed, start from their own folder, and
 // keep a Windows window open long enough to read a failure. No port is passed
-// unless PORT is set, so the engine takes the first free one from 8000 --
+// unless PORT is set, so the server takes the first free one from 8000 --
 // the version before always passed 8000, and died on a machine that already
 // had an editor running there.
 const LAUNCHER = { command: 'backend/app/main.ts --editor frontend/dist', portFromEnv: true };
@@ -56,7 +56,7 @@ function version() {
   };
   const commit = process.env.GITHUB_SHA || git('rev-parse', 'HEAD') || 'unknown';
   const name = process.env.TW_VERSION || git('describe', '--tags', '--always', '--dirty') || 'unknown';
-  return `Tell-and-Wire ${name}\ncommit ${commit}\nbuilt ${new Date().toISOString()}\n`;
+  return `Tell & Wire ${name}\ncommit ${commit}\nbuilt ${new Date().toISOString()}\n`;
 }
 
 // `--node <folder>`: an unpacked Node.js download for one system -- node.exe
@@ -96,7 +96,7 @@ built. Nothing is installed, and nothing is installed while a graph runs.
 The launchers check this before starting and say so if it is missing or too
 old; on Windows the window stays open until you have read it.`;
 
-const README = `# Tell-and-Wire
+const README = `# Tell & Wire
 
 Unzip, then:
 
@@ -122,7 +122,7 @@ ${NEEDS}
     frontend/dist the editor's page, built; its licenses.txt names the
                 packages it is built from, each with its licence
     examples/   project folders to open from the editor's Open dialog
-    LICENSE     the terms Tell-and-Wire comes under
+    LICENSE     the terms Tell & Wire comes under
 
 A graph you build here can be handed on with the Deploy button, which writes a
 folder of its own -- that one holds a single graph and no editor.

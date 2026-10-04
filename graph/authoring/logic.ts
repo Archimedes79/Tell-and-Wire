@@ -27,7 +27,7 @@ export class Logic {
   readonly fields: LogicFields;
 
   // Fields declared and assigned rather than written as constructor parameter
-  // properties: the engine has to survive Node's type stripping, and a
+  // properties: graph/ has to survive Node's type stripping, and a
   // parameter property is one of the few TypeScript spellings that emits code
   // rather than only removing types. `strippable.test.ts` holds every file here
   // to that.

@@ -6,7 +6,7 @@
 // back. Oldest first, newest last, and beyond `HISTORY_LIMIT` the oldest are
 // dropped whole, so a node written a hundred times does not carry a book.
 //
-// The engine owns the format; the editor appends after each exchange, and the
+// graph/ owns the format; the editor appends after each exchange, and the
 // file is the node's like its code: read, diffed and opened as what it is.
 
 /** One request to a model, as it happened: for looking at when an answer is wrong or missing. */

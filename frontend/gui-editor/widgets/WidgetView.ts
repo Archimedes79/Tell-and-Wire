@@ -1,7 +1,7 @@
 import type { GuiWidget } from '../../app/graph';
 
 /**
- * What every widget view is handed (`elements/widgets/<kind>/<Kind>WidgetView.tsx`).
+ * What every widget view is handed (`gui-editor/widgets/<kind>/<Kind>WidgetView.tsx`).
  *
  * The two values are deliberately separate. `value` is what the widget itself
  * holds -- the user's edit, or its stored value -- and is what it sends.
@@ -34,7 +34,7 @@ export interface WidgetViewProps {
   /**
    * Using this block starts a round, so it waits while one is going. Said by
    * whoever draws the page: a delivered tool by the graph's events, which it
-   * is told by name; the editor by the engine.
+   * is told by name; the editor by the backend.
    */
   fires?: boolean;
   /** A run is in flight. For a block that shows waiting: a chat's typing dots. */

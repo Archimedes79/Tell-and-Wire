@@ -11,7 +11,7 @@ import { quietRuntime } from '../../../../graph/test/fakes.ts';
  */
 const element = new PlotWindowWidgetRunner();
 
-describe('a chart, from the engine', () => {
+describe('a chart, from the backend', () => {
   it('says what it takes, for the node wired into its end point and for the graph designer alike', () => {
     for (const said of [element.receives(), element.graphAuthorNote()]) {
       expect(said).toContain('{"label": string, "value": number}');

@@ -7,7 +7,7 @@ const MOVES = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'
 
 /** Runtime slider widget: a range input with its current number shown beside it. */
 export default function SliderWidgetView({ widget, value, onChange, onTrigger, fires, busy }: WidgetViewProps) {
-  // The range and the number are read by the engine's rule, the one a run
+  // The range and the number are read by the runner's rule, the one a run
   // emits by: a value left from before the range was narrowed would otherwise
   // stand beside the handle while the graph is handed the edge of the range.
   // The page stores what the input reports, a string, which the rule reads as

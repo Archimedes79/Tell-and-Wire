@@ -5,10 +5,10 @@ import { baseNodeConfig } from '../document/baseNodeConfig';
 import { WIDGET_BUILDERS } from '../elements/registry';
 import { NESTED_GRAPH_FIELD } from '../../../backend/app/project/changes.ts';
 import { NODE_KINDS } from '../document/nodeKinds';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { parseGraph } from '../../../graph/graph.ts';
 import { executeGraph } from '../../../graph/execution/executor.ts';
-import { answers as runAnswers } from '../../test/engineAnswers';
+import { answers as runAnswers } from '../../test/runAnswers';
 
 // The same defaults every node type is created with. Copied out field by field
 // here once, which meant adding a field to NodeConfig broke this file for a
@@ -65,7 +65,7 @@ describe('graphStore.addNode', () => {
 });
 
 describe('graphStore.newGraph', () => {
-  it('starts from the engine\'s defaults, keeping nothing of the graph before it', () => {
+  it('starts from the format\'s defaults, keeping nothing of the graph before it', () => {
     // "New graph" used to merge a name and four other keys into the old
     // metadata: a colour scheme was saved into the new one, and Undo brought
     // the old graph's nodes back.
@@ -127,7 +127,7 @@ describe('graphStore.updateNode edge pruning', () => {
 });
 
 describe('graphStore.loadGraph derived ports', () => {
-  it('gives a start point the port the engine derives, whatever the file said', () => {
+  it('gives a start point the port its runner derives, whatever the file said', () => {
     const stale = graphNode({
       id: 'go',
       node_type: 'start',
@@ -167,15 +167,15 @@ describe('graphStore: the page', () => {
 
 /**
  * A graph written by hand, by the MCP server or by a model leaves keys out, and
- * the engine reads each missing one some way. Opening such a graph and saving
+ * a run reads each missing one some way. Opening such a graph and saving
  * it must not change what it does: the editor used to fill a missing key with
  * what a *new* node starts with, and then save that. A code node with no
  * batch_mode ran once on the whole list from the command line and once per
  * item after one Save in the editor; an end point with no label came back
  * keyed "Result" instead of by its id.
  *
- * The mirror of `elements/savedConfig.test.ts`, asking the same questions
- * (`test/engineAnswers.ts`): that one holds a saved node to the full one, this
+ * The mirror of `frontend/app/elements/savedConfig.test.ts`, asking the same questions
+ * (`test/runAnswers.ts`): that one holds a saved node to the full one, this
  * one holds a loaded node to the file it was loaded from.
  * Not `config()` itself: it spells a setting as it is stored, and a missing
  * provider and 'default' are one and the same provider to a run.
@@ -190,7 +190,7 @@ describe('graphStore.loadGraph: a key the file leaves out', () => {
   });
 
   it.each(bare.map((node) => [node.node_type, node]))(
-    '%s: opened and saved, the engine runs it as the file said',
+    '%s: opened and saved, it runs as the file said',
     (_type, node) => {
       loadTestGraph([node]);
       const saved = useGraphStore.getState().exportGraph().nodes[0];
@@ -199,7 +199,7 @@ describe('graphStore.loadGraph: a key the file leaves out', () => {
   );
 
   it('keeps a structure data node without a value holding nothing, not ""', () => {
-    // The engine reads a missing value as null for a structure; filled from a
+    // A run reads a missing value as null for a structure; filled from a
     // new node's '' it came back from one Save as a string.
     const node = { ...NODE_KINDS.data.create('n'), config: { data_format: 'structure' } as GraphNode['config'] };
     loadTestGraph([node]);
@@ -219,7 +219,7 @@ describe('graphStore.loadGraph: a key the file leaves out', () => {
       ],
     };
     const run = async (graph: Graph) => Object.keys((await executeGraph(parseGraph(JSON.parse(JSON.stringify(graph))), {
-      registry: engineRegistry,
+      registry: runnerRegistry,
       runtime: {
         files: { resolve: (path) => path, exists: async () => false, read: async () => '', write: async () => {}, list: async () => [] },
         code: { run: async () => ({}) },
@@ -294,10 +294,10 @@ describe('graphStore.isDirty', () => {
 });
 
 describe('graphStore.loadGraph: a node of a type this editor does not know', () => {
-  it('opens the graph, and saves the node as it came, wires and all -- as the engine and a project folder keep it', () => {
+  it('opens the graph, and saves the node as it came, wires and all -- as the backend and a project folder keep it', () => {
     // Opening such a graph threw "Cannot read properties of undefined".
     const later = {
-      id: 'later', node_type: 'vision', label: 'Later', description: 'A kind of a newer engine.', position: { x: 5, y: 6 },
+      id: 'later', node_type: 'vision', label: 'Later', description: 'A kind of a newer version.', position: { x: 5, y: 6 },
       inputs: [{ id: 'picture', name: 'Picture', kind: 'input', data_type: 'image', multi: false, required: false, description: '' }],
       outputs: [], config: { batch_mode: 'whole_list', lens: 'wide' },
     } as unknown as GraphNode;
@@ -590,7 +590,7 @@ describe('a graph inside a node', () => {
     loadTestGraph([holder()]);
     store().markSaved();
 
-    // What the engine reports for a node whose folder changed: the graph it
+    // What the backend reports for a node whose folder changed: the graph it
     // holds, whole. An end point appeared in there while we were away.
     store().takeDiskChanges([{
       node_id: 'part',

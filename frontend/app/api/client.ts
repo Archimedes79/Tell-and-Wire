@@ -2,7 +2,7 @@
 //
 // The mirror of `serve.ts`. The server serves that table and this calls it, so
 // a route's path, method and the shapes going each way are written once, in
-// the engine, and both ends are checked against them by the compiler. What is
+// the backend (`api.ts`), and both ends are checked against them by the compiler. What is
 // left here is the calling: how a request becomes a URL and a body, and a
 // failure an `ApiError` whose message is the server's own `detail`.
 //
@@ -13,7 +13,7 @@ import {
   API, pathFor,
   type AICall, type Failure, type RequestOf, type ResponseOf, type RouteName,
 } from '../../../backend/app/api.ts';
-import type { EngineGraph, Graph } from '../graph';
+import type { FormatGraph, Graph } from '../graph';
 
 export type {
   AICall, BrowseEntry, BrowsePage, GenerateRequest, GenerateResponse, ProbeReport,
@@ -32,12 +32,12 @@ export class ApiError extends Error {
 }
 
 /**
- * A response as the editor holds it: a graph the engine sends back is taken as
+ * A response as the editor holds it: a graph the server sends back is taken as
  * the editor's typed view of the same document (see `graph.ts`).
  */
 type EditorView<T> =
-  T extends EngineGraph ? Graph
-    : T extends { graph: EngineGraph } ? Omit<T, 'graph'> & { graph: Graph }
+  T extends FormatGraph ? Graph
+    : T extends { graph: FormatGraph } ? Omit<T, 'graph'> & { graph: Graph }
       : T;
 
 /**
@@ -85,7 +85,7 @@ export async function call<K extends RouteName>(
  * A generation is several model calls over a minute or more. Asking every half
  * second what has gone out turns that wait into something a person can read
  * and judge -- the prompt, the context, each step. *run* is handed the id to
- * send as `progress_id`, which is what the engine files the calls under. A
+ * send as `progress_id`, which is what the server files the calls under. A
  * poll that fails changes nothing: the generation is what matters. A node's
  * panel and ✨ Describe a graph each wrote this out.
  *
@@ -121,7 +121,7 @@ export async function watchGeneration<T>(
   }
 }
 
-/** Save the deploy bundle the way a browser saves any download, under the name the engine gave it. */
+/** Save the deploy bundle the way a browser saves any download, under the name the server gave it. */
 export async function downloadBundle(asked: RequestOf<'bundle'>): Promise<void> {
   const zip = await call('bundle', asked);
   const url = URL.createObjectURL(zip);

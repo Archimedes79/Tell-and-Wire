@@ -74,7 +74,7 @@ function ExampleSent({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConf
 export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
   const startedBy = String(node.config.started_by ?? 'page');
   const every = String(node.config.every ?? '');
-  // Said while it is being typed, in the engine's own words: the same function
+  // Said while it is being typed, in the runner's own words: the same function
   // reads this field when the tool runs, so what it rejects here it would
   // reject there -- at three in the morning, in a log nobody is reading.
   let problem = '';

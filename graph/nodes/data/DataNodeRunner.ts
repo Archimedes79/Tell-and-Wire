@@ -93,7 +93,7 @@ export class DataNodeRunner extends NodeRunner<DataConfig> {
   }
 
   override whatRuns(): WhatRuns {
-    return this.engineRuns('Hands on what arrives this round, or else what it kept; what arrives is kept for the next round.');
+    return this.graphRuns('Hands on what arrives this round, or else what it kept; what arrives is kept for the next round.');
   }
 
   /**

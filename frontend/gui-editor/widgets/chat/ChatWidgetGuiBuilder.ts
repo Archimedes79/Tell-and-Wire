@@ -4,7 +4,7 @@ import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
  * A conversation. Nothing to set: the start point it fires and the end point
  * it shows are the whole of what it does. Its value is the conversation,
  * which the widget clears turn by turn
- * itself (the engine's `ChatWidgetRunner.settle`), not as a box a run empties
+ * itself (the backend's `ChatWidgetRunner.settle`), not as a box a run empties
  * (`WidgetRunner.clearsValueAfterRun`).
  */
 export class ChatWidgetGuiBuilder extends WidgetGuiBuilder {

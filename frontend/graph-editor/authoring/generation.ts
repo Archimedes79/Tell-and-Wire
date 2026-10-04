@@ -1,4 +1,4 @@
-// ✨ for one node: what its buttons ask the engine, and what comes back, written in.
+// ✨ for one node: what its buttons ask the backend, and what comes back, written in.
 //
 // A node's ✨ writes one of its files -- its input definition (input.js), its
 // output definition (output.js), or its body: code.js, prompt.md, or what a
@@ -16,7 +16,7 @@ import { call, type AICall, type GenerateRequest, type GenerateResponse, type Pr
 import type { Refine } from '../../../backend/app/api.ts';
 import { definitionExample, definitionKeys } from '../../../graph/authoring/definition.ts';
 import { exchangeEntry, withExchange } from '../../../graph/authoring/history.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
 import { inputSources, outputTargets } from './generationContext';
 import { graphContext } from './graphContext';
@@ -28,20 +28,20 @@ export type Write = 'input' | 'output' | 'body';
 
 export type { Refine };
 
-/** Where a node keeps its body, and what the body is: the engine element's own answer (`NodeRunner.generation`). */
+/** Where a node keeps its body, and what the body is: the runner's own answer (`NodeRunner.generation`). */
 export function bodyOf(node: GraphNode): { field: string; kind: 'code' | 'prompt' | 'data' } | undefined {
-  const generation = engineRegistry.node(node.node_type)?.generation();
+  const generation = runnerRegistry.node(node.node_type)?.generation();
   return generation && { field: generation.fields.body, kind: generation.kind };
 }
 
 /** Whether a ✨ of *node*'s writes definitions as well as a body: a code or an ai node's. */
 export function hasDefinitions(node: GraphNode): boolean {
-  return engineRegistry.node(node.node_type)?.definitions(node as never) !== undefined;
+  return runnerRegistry.node(node.node_type)?.definitions(node as never) !== undefined;
 }
 
-/** *node*'s definitions as the engine reads them: '' for one it has none of. */
+/** *node*'s definitions as its runner reads them: '' for one it has none of. */
 function definitionsOf(node: GraphNode): { input: string; output: string } {
-  return engineRegistry.node(node.node_type)?.definitions(node as never) ?? { input: '', output: '' };
+  return runnerRegistry.node(node.node_type)?.definitions(node as never) ?? { input: '', output: '' };
 }
 
 /** What *write*'s ✨ writes into, as the node holds it: the definition, or the body as text. */
@@ -147,7 +147,7 @@ export function generateRequest(node: GraphNode, write: Write, around: Around, i
   };
 }
 
-/** What ✨ would send, without sending it: the engine builds the same request and stops at the model. */
+/** What ✨ would send, without sending it: the backend builds the same request and stops at the model. */
 export async function previewGeneration(request: GenerateRequest): Promise<AICall[]> {
   const response = await call('generate', { ...request, preview: true });
   return response.calls ?? [];
@@ -227,7 +227,7 @@ export function writtenInto(
 
 /**
  * What a data node holds from what ✨ Data wrote, into *field*: parsed where
- * it is kept as structure (the engine refused what does not parse). Kept as
+ * it is kept as structure (the backend refused what does not parse). Kept as
  * text, an answer that is JSON of anything but a string -- a list, a record, a
  * number -- makes it a structure from now on: left text, the list of capitals
  * went to data.txt and the node it fed was handed one string.
@@ -250,7 +250,7 @@ export function withHistory(node: GraphNode, name: string, calls: AICall[], at =
 
 /**
  * What to say once *write*'s ✨ is done: that it was written -- or changed, as
- * *refine* asked -- and, where the engine tried it, on what and how that went,
+ * *refine* asked -- and, where the backend tried it, on what and how that went,
  * so a body that does not fit its output.js is said now rather than by the
  * next run. ✨ Fix (a *refine* with no change) says what the repair came to.
  */

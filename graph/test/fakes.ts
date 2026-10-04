@@ -1,9 +1,9 @@
-// What the engine's tests stand a run on when the world it runs in is not
+// What the tests of graph/ stand a run on when the world it runs in is not
 // what they are about.
 //
-// Beside `src`, not in it: a deploy bundle and the downloadable package copy
-// every file of `graph/` and `backend/` that is not a test, and a helper for tests that
-// sat there would ship with them. Nothing here is a test of its own either --
+// In `test/`, which a deploy bundle and the downloadable package leave out:
+// they copy every other file of `graph/` and `backend/` that is not a test, and
+// a helper for tests elsewhere would ship with them. Nothing here is a test of its own either --
 // vitest only runs `*.test.ts` -- so it is imported, and that is all.
 import type { Graph, GraphEdge, GraphNode } from '../graph.ts';
 import type { Runtime } from '../nodes/Runtime.ts';

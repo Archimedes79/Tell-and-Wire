@@ -10,7 +10,7 @@ import { cut } from '../../app/ui/cut';
 import { hasOutputs, statusTone } from '../../app/store/executionStatus';
 import { blocksAt } from '../../app/document/page';
 import { firstLine } from '../../app/document/heading';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { carriesFiles, dropExample, droppedFile } from '../authoring/droppedFile';
 import { errorText } from '../../app/api/errorText';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
@@ -135,7 +135,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
     ? executionResult.messages?.[0] ?? status?.title
     : status?.title;
   // Where a round begins: its ports are events, and nothing gates it.
-  const events = new Set(engineRegistry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
+  const events = new Set(runnerRegistry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
   const connected = useGraphStore((s) => pageLine(graphNode, s.page));
   const summary = builder?.canvasSummary?.(graphNode);
   // Its text's first line, which is what a card has room for: the rest is the panel's.

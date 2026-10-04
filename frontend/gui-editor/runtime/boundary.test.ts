@@ -17,7 +17,7 @@ import { describe, it, expect } from 'vitest';
  * held to the same rule before it is wired in. It follows imports through
  * every area, which the editor's layer rule (`layers.test.ts`) cannot: that one
  * sees a single import at a time, and `runtime` ranks above the store. And it
- * follows them into the engine, where the page is held to load nothing that
+ * follows them into graph/ and backend/, where the page is held to load nothing that
  * runs a graph. An import of types only is erased and ships nothing, so it is
  * not followed.
  *
@@ -29,12 +29,12 @@ import { describe, it, expect } from 'vitest';
 // gui-editor/runtime silently omits the folder itself, and the walker then starts nowhere.
 const SOURCES = import.meta.glob('/{app,graph-editor,gui-editor}/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 // The graph's code and the backend, beside the page rather than inside it.
-const ENGINE_SOURCES = import.meta.glob(['../../../graph/**/*.ts', '../../../backend/**/*.ts', '!**/node_modules/**'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const GRAPH_AND_BACKEND = import.meta.glob(['../../../graph/**/*.ts', '../../../backend/**/*.ts', '!**/node_modules/**'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 /** Every source by its path: the page's from its root, the graph's and the backend's from theirs (`graph/…`, `backend/…`). */
 const BY_PATH = new Map([
   ...Object.entries(SOURCES).map(([key, source]) => [key.slice(1), source] as const),
-  ...Object.entries(ENGINE_SOURCES).map(([key, source]) => [key.replace(/^(\.\.\/)+/, ''), source] as const),
+  ...Object.entries(GRAPH_AND_BACKEND).map(([key, source]) => [key.replace(/^(\.\.\/)+/, ''), source] as const),
 ]);
 
 /**
@@ -156,7 +156,7 @@ describe('deployment boundary', () => {
    * a `GuiBuilder` class, nor either registry that hands them out. That is the
    * bytes being absent, not only the calls, so a member added to a
    * `GuiBuilder` tomorrow is kept out of a tool whichever bar it lands under
-   * (`elements/times.test.ts` holds that the run-time bar is empty).
+   * (`frontend/app/elements/times.test.ts` holds that the run-time bar is empty).
    *
    * It used to have one exception, `store/graphStore.ts`: a tool loaded its
    * graph into the editor's store, and loading and running reached into the
@@ -176,18 +176,18 @@ describe('deployment boundary', () => {
   });
 
   /**
-   * The engine, as far as a tool's page loads it: the contract
-   * (`host/api.ts`), and the shapes of a few values its views read -- a
+   * graph/ and backend/, as far as a tool's page loads them: the contract
+   * (`backend/app/api.ts`), and the shapes of a few values its views read -- a
    * chat's conversation, a dropdown's choice, a slider's range. Which blocks
    * start a round and which are given a value are the graph's events and
    * values, which the runtime API tells the page by name. It used to ask the
-   * engine's element registry, and so loaded every runner, the executor and
-   * the authoring code with it: fifty modules of the engine, for two answers.
+   * element registry of graph/, and so loaded every runner, the executor and
+   * the authoring code with it: fifty modules of graph/, for two answers.
    */
-  it('loads of the engine only the contract and the shapes of the values its views read', () => {
-    const engine = [...reachable].filter((path) => path.startsWith('graph/') || path.startsWith('backend/'));
-    expect(engine).toContain('backend/app/api.ts');
-    const more = engine.filter((path) => !/^backend\/(app\/api\.ts|gui-editor\/widgets\/[a-z_]+\/[a-z][A-Za-z]*\.ts)$/.test(path));
+  it('loads of graph/ and backend/ only the contract and the shapes of the values its views read', () => {
+    const loaded = [...reachable].filter((path) => path.startsWith('graph/') || path.startsWith('backend/'));
+    expect(loaded).toContain('backend/app/api.ts');
+    const more = loaded.filter((path) => !/^backend\/(app\/api\.ts|gui-editor\/widgets\/[a-z_]+\/[a-z][A-Za-z]*\.ts)$/.test(path));
     expect(more.map(chain)).toEqual([]);
   });
 

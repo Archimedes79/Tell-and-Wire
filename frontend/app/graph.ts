@@ -1,22 +1,22 @@
 // The graph as the editor sees it.
 //
-// The engine's `graph.ts` is the format's home, and everything the *graph
+// `graph/graph.ts` is the format's home, and everything the *graph
 // file* means comes from there: ports, edges, node types, block kinds, a run's
-// result. What this adds is one view the engine deliberately does not have:
+// result. What this adds is one view graph/ deliberately does not have:
 // every element's settings spelled out in `NodeConfig`, because a config panel
-// reads `node.config.temperature` and wants a type there, while the engine
+// reads `node.config.temperature` and wants a type there, while graph/
 // treats a config as opaque and lets each element read its own.
 //
-// That is the only difference, and it is a narrowing: an editor graph *is* an
-// engine graph (it is sent as one), and an engine graph read back is taken as
+// That is the only difference, and it is a narrowing: an editor graph *is* a
+// format graph (it is sent as one), and a format graph read back is taken as
 // the editor's view in one place, `api/client.ts`.
 
 import type {
-  DataType, ExecutionResult, Graph as EngineGraph, GraphEdge, GraphMetadata as EngineMetadata,
-  GraphNode as EngineNode, NodeResult, NodeType, Port, PortKind, WidgetKind,
+  DataType, ExecutionResult, Graph as FormatGraph, GraphEdge, GraphMetadata as FormatMetadata,
+  GraphNode as FormatNode, NodeResult, NodeType, Port, PortKind, WidgetKind,
 } from '../../graph/graph.ts';
 
-export type { DataType, EngineGraph, ExecutionResult, GraphEdge, NodeResult, NodeType, Port, PortKind, WidgetKind };
+export type { DataType, FormatGraph, ExecutionResult, GraphEdge, NodeResult, NodeType, Port, PortKind, WidgetKind };
 
 /**
  * An edge as the canvas holds it, which port of which node feeds which: the
@@ -44,17 +44,17 @@ export interface Page {
   blocks: GuiWidget[];
 }
 
-export interface GraphMetadata extends EngineMetadata {
+export interface GraphMetadata extends FormatMetadata {
   gui_scheme: 'night' | 'paper' | 'office' | 'graphite' | 'anthracite';
 }
 
-export interface GraphNode extends Omit<EngineNode, 'config'> {
+export interface GraphNode extends Omit<FormatNode, 'config'> {
   config: NodeConfig;
 }
 
 /**
  * Every element's settings, in one type. A type, not an interface, so an
- * editor node is assignable to the engine's `Record<string, unknown>` config.
+ * editor node is assignable to the format's `Record<string, unknown>` config.
  */
 export type NodeConfig = {
   ai_model: string;
@@ -70,11 +70,11 @@ export type NodeConfig = {
    * filled in when it runs: `prompt.md` in a project. Empty: the standard ones.
    */
   prompt: string;
-  /** What one call of a code or ai node is handed: `input.js`, a JSDoc typedef and one example. See engine `authoring/definition.ts`. */
+  /** What one call of a code or ai node is handed: `input.js`, a JSDoc typedef and one example. See `graph/authoring/definition.ts`. */
   input_definition?: string;
   /** What one call of a code or ai node returns: `output.js`. Its example's keys are the outputs. */
   output_definition?: string;
-  /** Every exchange with the model about the node: `history.md`. See engine `authoring/history.ts`. */
+  /** Every exchange with the model about the node: `history.md`. See `graph/authoring/history.ts`. */
   history?: string;
   /** The ✨ prompts someone changed, by what they write; the others are the standard ones (`authoring/prompts.ts`). */
   prompts?: Partial<Record<'input' | 'output' | 'body', string>>;

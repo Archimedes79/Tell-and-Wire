@@ -2,7 +2,7 @@ import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../app/grap
 // This module reads the element registry, so no element's `…GuiBuilder.ts` may import
 // it: that would be a cycle through the registry (see `document/givenFiles.ts`).
 import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../app/elements/registry';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { fieldOf } from '../../../graph/execution/executor.ts';
 import { blockCan, blockReceives, blocksAt } from '../../app/document/page';
 import { blockSize } from '../../app/document/layout';
@@ -18,7 +18,7 @@ import { cut } from '../../app/ui/cut';
  * They are facts, not sentences: which node feeds each input and what it hands
  * on (`inputSources`), where each output goes and what the node there wants
  * (`outputTargets`), what arrived on the last run (`lastRunInputs`). The
- * engine's brief (`backend/graph-editor/brief.ts`) is the one place they are
+ * backend's brief (`backend/graph-editor/brief.ts`) is the one place they are
  * put into words: {Input Definition} and {Output Definition} while a node has
  * none of its own.
  *
@@ -134,7 +134,7 @@ export function inputSources(
     // The port's own words first, then what the node declares of its output
     // (`NodeGuiBuilder.describeOutput`) -- for a start point, what the page or
     // a call sends it, which says it all.
-    const sent = engineRegistry.node(source.node_type)?.takesPackage && (page.length || exampleAt(source)) ? sentWords(source, page, field) : '';
+    const sent = runnerRegistry.node(source.node_type)?.takesPackage && (page.length || exampleAt(source)) ? sentWords(source, page, field) : '';
     const emits = !withEmits ? ''
       : sent || [...new Set([port?.description?.trim(), NODE_BUILDERS[source.node_type]?.describeOutput(source)].filter(Boolean))].join('; ');
     if (emits) said += `, which hands on: ${emits}`;
@@ -171,7 +171,7 @@ export function outputTargets(
     // point, by the block that shows it (a chart: a figure).
     const wants = withWants && edge.targetHandle ? NODE_BUILDERS[target.node_type]?.wantsOn(target, edge.targetHandle) : undefined;
     if (wants) said += `, which wants ${wants}`;
-    const shown = engineRegistry.node(target.node_type)?.isResult && edge.targetHandle !== 'path' ? shownWords(target, page) : [];
+    const shown = runnerRegistry.node(target.node_type)?.isResult && edge.targetHandle !== 'path' ? shownWords(target, page) : [];
     if (shown.length) said += `; ${shown.join('; ')}`;
     (byPort[edge.sourceHandle ?? 'output'] ??= []).push(said);
   }

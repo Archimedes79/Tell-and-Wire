@@ -15,7 +15,7 @@ import type { GraphNode } from '../../graph/graph.ts';
  * get a graph that parses and does nothing: the code went into a key no
  * element reads, and edges named ports a folder node never emits. These tests
  * hold the facts that fixed that against the code they describe, so the prompt
- * cannot quietly drift away from the engine it is teaching.
+ * cannot quietly drift away from the code it is teaching.
  */
 
 /** The one worked document the prompt hands over, taken back out of it. */

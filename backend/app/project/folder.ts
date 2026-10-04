@@ -97,7 +97,7 @@ export function projectFolderOf(path: string): string | null {
 /**
  * A page of a project's own, written by hand: served at `/` in place of the
  * built page when it holds an `index.html`, and carried by a bundle. It uses
- * the graph only through the runtime API, by name (`host/api.ts`). Not `page/`:
+ * the graph only through the runtime API, by name (`backend/app/api.ts`). Not `page/`:
  * that is the built-in page's, its blocks in `page.json`.
  */
 export const FRONTEND_DIR = 'frontend';
@@ -114,7 +114,7 @@ export const STATE_FILE = 'state.json';
 
 /**
  * Where a session of the graph at *path* keeps what using it leaves behind
- * (`host/session.ts`): `state.json` in a project folder, `<file>.state.json`
+ * (`backend/gui-editor/session.ts`): `state.json` in a project folder, `<file>.state.json`
  * beside a single graph file.
  */
 export function stateFileOf(path: string): string {
@@ -422,7 +422,7 @@ export async function readProject(folder: string, guard?: Guard): Promise<Graph>
 
 /**
  * Whatever *path* is: a project folder (or its `flow.json`), or a single
- * graph file. The one way anything in this engine opens a graph.
+ * graph file. The one way anything in the backend opens a graph.
  */
 export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
   const full = resolve(path);
@@ -466,7 +466,7 @@ interface Plan {
   /**
    * The folders under `nodes/` that `tidy` leaves alone: those holding a
    * project of their own, whose own save tidies them, and those of a node of a
-   * type this engine does not know, which claims no files it can name.
+   * type this version does not know, which claims no files it can name.
    */
   untouched: Set<string>;
 }

@@ -12,8 +12,8 @@ import { NODE_KINDS, savedNode } from '../document/nodeKinds';
 import { baseNodeConfig } from '../document/baseNodeConfig';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
-import { defaultMetadata as engineDefaults, mergeResults } from '../../../graph/graph.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { defaultMetadata as formatDefaults, mergeResults } from '../../../graph/graph.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import type { TextChange } from '../../../backend/app/api.ts';
 import { NESTED_GRAPH_FIELD } from '../../../backend/app/project/changes.ts';
 import { withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
@@ -187,7 +187,7 @@ export interface GraphStore {
   setExecutionResult: (result: ExecutionResult | null) => void;
   loadGraph: (graph: Graph) => void;
   /**
-   * An empty graph with the engine's default settings, as a document of its
+   * An empty graph with the format's default settings, as a document of its
    * own: nothing of the one before it -- its pinned AI, its colour scheme,
    * its undo steps -- carries over.
    */
@@ -290,7 +290,7 @@ export interface GraphStore {
 
 /** Whether a wire dropped on *node* becomes a new input of it: a code or AI node, whose inputs are its own to name. */
 export function takesNewInputs(node: GraphNode): boolean {
-  return derivedNodePorts(node) === null && engineRegistry.node(node.node_type)?.readsFileInputs === true;
+  return derivedNodePorts(node) === null && runnerRegistry.node(node.node_type)?.readsFileInputs === true;
 }
 
 /**
@@ -305,7 +305,7 @@ export function untouchedInput(node: GraphNode, wired: boolean): string | undefi
   const [made, ...madeMore] = NODE_KINDS[node.node_type]?.create(node.id).inputs ?? [];
   if (!only || more.length || wired || !made || madeMore.length) return undefined;
   if (only.id !== made.id || only.name !== made.name || only.data_type !== made.data_type || only.multi !== made.multi || only.field) return undefined;
-  const element = engineRegistry.node(node.node_type);
+  const element = runnerRegistry.node(node.node_type);
   const body = element?.generation()?.fields.body;
   const written = !!element?.definitions(node as never)?.input.trim() || (!!body && !!String(node.config[body as keyof typeof node.config] ?? '').trim());
   return written ? undefined : only.id;
@@ -353,8 +353,8 @@ function normalizeGraphNode(rawNode: Partial<GraphNode>): GraphNode {
   const nodeType = rawNode.node_type ?? ('' as NodeType);
   const nodeId = rawNode.id ?? newId(nodeType || 'node');
   const kind = NODE_KINDS[nodeType];
-  // A type this editor does not know -- one of a newer engine, say -- is kept
-  // as it came, as the engine and a project folder keep it: opening such a
+  // A type this editor does not know -- one of a newer version, say -- is kept
+  // as it came, as the backend and a project folder keep it: opening such a
   // graph threw, and a save must not lose the node. `check` names it.
   if (!kind) {
     return {
@@ -378,7 +378,7 @@ function normalizeGraphNode(rawNode: Partial<GraphNode>): GraphNode {
     },
     inputs: Array.isArray(rawNode.inputs) ? rawNode.inputs : defaults.inputs,
     outputs: Array.isArray(rawNode.outputs) ? rawNode.outputs : defaults.outputs,
-    // A key the file left out means what the engine reads it as -- its one
+    // A key the file left out means what a run reads it as -- its one
     // default -- not what a new node starts with: loading and saving must not
     // change what a graph does.
     config: { ...baseNodeConfig(), ...(rawNode.config ?? {}) },
@@ -387,7 +387,7 @@ function normalizeGraphNode(rawNode: Partial<GraphNode>): GraphNode {
   // Where the element derives its ports -- a start point, a folder node from
   // its settings, a subgraph node from the graph it holds -- they
   // come from the element, never from what a file, an import or a model said.
-  // The engine works them out the same way (`portsOf` in `wiring.ts`), and a
+  // A run works them out the same way (`portsOf` in `wiring.ts`), and a
   // second answer here is a second answer that can disagree.
   const derived = derivedNodePorts(node);
   return derived ? { ...node, ...derived } : node;
@@ -404,7 +404,7 @@ function withNested(outer: Graph, nodeId: string, inner: Graph): Graph {
     nodes: outer.nodes.map((node) => {
       if (node.id !== nodeId) return node;
       const held = { ...node, config: { ...node.config } };
-      engineRegistry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
+      runnerRegistry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
       return { ...held, ...(derivedNodePorts(held) ?? {}) };
     }),
   };
@@ -435,7 +435,7 @@ function exported(rfNodes: Node<RFNodeData>[], rfEdges: Edge[], metadata: GraphM
  * level leaves out.
  */
 function keptNested(node: GraphNode): GraphNode {
-  const element = engineRegistry.node(node.node_type);
+  const element = runnerRegistry.node(node.node_type);
   const held = element?.nestedGraph(node as never) as Graph | null | undefined;
   if (!element || !held) return node;
   const graph = normalizeGraph(held);
@@ -449,7 +449,7 @@ function normalizeGraph(graph: Graph): Graph {
   const nodes = Array.isArray(graph.nodes) ? graph.nodes.map((node) => normalizeGraphNode(node)) : [];
   const nodeIds = new Set(nodes.map((node) => node.id));
   // A wire is taken as the graph says it (`GraphEdge`); one to a node that is
-  // not there is dropped, as the engine's `check` would report it.
+  // not there is dropped, as `check` would report it.
   const edges = Array.isArray(graph.edges)
     ? graph.edges.filter((edge) => nodeIds.has(edge.source_node_id) && nodeIds.has(edge.target_node_id))
     : [];
@@ -464,8 +464,8 @@ function normalizeGraph(graph: Graph): Graph {
   };
 }
 
-/** The engine's defaults (`defaultMetadata`), in the editor's typed view of them. */
-const defaultMetadata = (): GraphMetadata => engineDefaults() as GraphMetadata;
+/** The format's defaults (`defaultMetadata` in `graph/graph.ts`), in the editor's typed view of them. */
+const defaultMetadata = (): GraphMetadata => formatDefaults() as GraphMetadata;
 
 /**
  * Which document the server's session holds -- the `opened` count when it was
@@ -639,17 +639,17 @@ export const useGraphStore = create<GraphStore>()(
         // its example the input is named after, or its one part. A port that
         // follows from its node's settings takes the part and keeps its type.
         // Its ports can say otherwise.
-        const sent = source && to && engineRegistry.node(source.node_type)?.takesPackage ? defaultField(state.page as GuiWidget[], source, to) : undefined;
+        const sent = source && to && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(state.page as GuiWidget[], source, to) : undefined;
         if (sent && to && !to.field) Object.assign(to, takenAs(to, sent.choice, own));
         // Only on a node that reads its files (`readsFileInputs`): a data node
         // or an end point takes a path as a path, and was retyped all the
         // same. And not on one whose ports follow from its settings: those are
         // recomputed.
         const into = target(state);
-        const reads = !!into && engineRegistry.node(into.node_type)?.readsFileInputs === true && derivedNodePorts(into) === null;
+        const reads = !!into && runnerRegistry.node(into.node_type)?.readsFileInputs === true && derivedNodePorts(into) === null;
         // Only a port with nobody's word on it. A port typed `text` said what it
         // wants -- a file reader takes the same picker twice, one to read and one
-        // to keep the name -- and the engine reads it the same way
+        // to keep the name -- and a run reads it the same way
         // (`execution/fileInputs.ts`: the target's own type wins).
         if (reads && from?.data_type === 'file_path' && to && to.data_type === 'any') {
           to.data_type = 'file_path';
@@ -657,8 +657,8 @@ export const useGraphStore = create<GraphStore>()(
         }
         // A list wired into what an end point hands back is a list it hands
         // back: so the graph's interface says, and a block that shows it.
-        const result = !!into && engineRegistry.node(into.node_type)?.isResult === true
-          && engineRegistry.node(into.node_type)!.valuePorts(into as never).some((port) => port.id === to?.id);
+        const result = !!into && runnerRegistry.node(into.node_type)?.isResult === true
+          && runnerRegistry.node(into.node_type)!.valuePorts(into as never).some((port) => port.id === to?.id);
         if (result && from?.multi && to) to.multi = true;
       });
     },
@@ -670,7 +670,7 @@ export const useGraphStore = create<GraphStore>()(
       const source = nodeOf(wire.source);
       const from = source?.outputs.find((port) => port.id === wire.sourceHandle);
       // From a start point the page sends one block to: named after that block.
-      const sent = source && engineRegistry.node(source.node_type)?.takesPackage ? defaultField(get().page, source) : undefined;
+      const sent = source && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(get().page, source) : undefined;
       // From a node with one output, named after that node: a judge's inputs
       // were "output" and "output2", beside its own output "output".
       const one = source && source.outputs.filter((port) => port.id !== ERROR_PORT).length === 1 ? source.label : undefined;
@@ -852,7 +852,7 @@ export const useGraphStore = create<GraphStore>()(
       // Whether there is a graph to go into is the same question as whether
       // this node holds one, so it is asked once. A `NodeGuiBuilder.opensNestedGraph`
       // beside it said the same thing a line earlier.
-      const held = node && engineRegistry.node(node.node_type)?.nestedGraph(node as never) as Graph | null;
+      const held = node && runnerRegistry.node(node.node_type)?.nestedGraph(node as never) as Graph | null;
       if (!held) return;
 
       const frame = { nodeId, graph: get().exportGraph(), past: get().past, future: get().future };
@@ -1032,7 +1032,7 @@ export const useGraphStore = create<GraphStore>()(
           }
           const node = state.rfNodes.find((n: RFNode) => n.id === change.node_id)!.data.graphNode;
           // Where a node keeps the graph it holds is the element's business.
-          if (change.field === NESTED_GRAPH_FIELD) engineRegistry.node(node.node_type)?.setNestedGraph(node as never, change.value as never);
+          if (change.field === NESTED_GRAPH_FIELD) runnerRegistry.node(node.node_type)?.setNestedGraph(node as never, change.value as never);
           else (node.config as unknown as Record<string, unknown>)[change.field] = change.value;
           // The ports follow from the graph it holds.
           Object.assign(node, derivedNodePorts(node) ?? {});

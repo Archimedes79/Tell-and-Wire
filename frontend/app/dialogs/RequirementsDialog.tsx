@@ -20,7 +20,7 @@ export default function RequirementsDialog({ requirements, onSubmit, onCancel }:
   const [values, setValues] = useState<Record<string, string>>({});
 
   // Answers are kept by each question's own key: the block that asked, which
-  // the engine hands each answer to.
+  // the backend hands each answer to.
   useEffect(() => {
     if (requirements) {
       setValues(Object.fromEntries(requirements.map((r) => [r.key, r.current || ''])));

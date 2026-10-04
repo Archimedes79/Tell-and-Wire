@@ -25,7 +25,7 @@ const named = (point: Point) => (point.label && point.label !== point.id ? `${po
 /**
  * How the block connects to the graph -- by name, since nothing is wired to
  * it: where its data goes, which start point using it fires, which end point
- * it shows. Only what the block can do is offered (`blockCan`, the engine's
+ * it shows. Only what the block can do is offered (`blockCan`, the runner's
  * answer), and only the points it may name: the start points the page starts,
  * the graph's end points. A point it needs and the graph lacks is one choice
  * away, made beside the rest of the canvas.

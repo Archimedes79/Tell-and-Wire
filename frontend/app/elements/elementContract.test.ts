@@ -4,7 +4,7 @@
  * Walks every registered `NodeGuiBuilder` and `WidgetGuiBuilder` (`registry.ts`) and asserts
  * the handful of properties each must have. A new node type or widget kind is
  * held to them by being registered; what it does when a graph runs is the
- * engine's to test, beside the element (`graph/nodes/`, `backend/gui-editor/widgets/`).
+ * runner's to test, beside the element (`graph/nodes/`, `backend/gui-editor/widgets/`).
  */
 import { describe, it, expect } from 'vitest';
 import { NODE_KINDS } from '../document/nodeKinds';
@@ -51,13 +51,13 @@ describe.each(Object.entries(NODE_BUILDERS))('node element: %s', (nodeType, elem
     if (element.AdvancedPanel) expect(isLazy(element.AdvancedPanel)).toBe(true);
   });
 
-  it('draws its own text where ✨ writes for it, and defines itself exactly where the engine keeps its definitions', () => {
+  it('draws its own text where ✨ writes for it, and defines itself exactly where its runner keeps its definitions', () => {
     const node = kind.create(`${nodeType}-gen`);
     // Its panel draws the text ✨ writes from above the ✨ rows: the side panel's
     // own box above that would be a second text.
     if (bodyOf(node)) expect(element.ownsDescription).toBe(true);
     // Its ports folded away, its input.js and output.js in its panel: the
-    // side panel's answer and the engine's are one.
+    // side panel's answer and the runner's are one.
     expect(element.definesItself).toBe(hasDefinitions(node));
   });
 
@@ -70,7 +70,7 @@ describe.each(Object.entries(NODE_BUILDERS))('node element: %s', (nodeType, elem
 });
 
 describe.each(Object.entries(WIDGET_BUILDERS))('block element: %s', (widgetKind, element) => {
-  it('says what it can connect to through the engine, which is the only place that is said', () => {
+  it('says what it can connect to through its runner, which is the only place that is said', () => {
     // Not a copy here: two answers to "what can this block do" would be the
     // Gui tab offering a connection the run then ignores. The answers
     // themselves are asserted in backend/gui-editor/widgets/connections.test.ts.

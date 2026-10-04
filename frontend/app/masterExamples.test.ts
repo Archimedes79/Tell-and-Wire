@@ -49,7 +49,7 @@ import type { Runtime } from '../../graph/nodes/Runtime.ts';
  * offers -- is a trick, and this is where it is caught.
  */
 
-/** The examples as the engine reads their folders: the flow, each node's settings and ports, its files, and the page. */
+/** The examples as the backend reads their folders: the flow, each node's settings and ports, its files, and the page. */
 const EXAMPLES: Record<string, Graph> = {};
 beforeAll(async () => {
   for (const name of ['population_plotter', 'folder_summaries', 'chat']) {
@@ -185,7 +185,7 @@ const FILES: Record<string, string> = {
   'stories/b.txt': 'The Map. A cartographer leaves one valley blank on purpose.',
 };
 
-/** The engine, with a disk of three files, bodies run in this process, and a model that says what it was asked. */
+/** A runtime, with a disk of three files, bodies run in this process, and a model that says what it was asked. */
 function runtime(asked: string[]): Runtime {
   return {
     files: {

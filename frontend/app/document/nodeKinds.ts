@@ -8,8 +8,8 @@
 // On a builder, loading a graph would reach into the editor's element
 // registry -- the whole builder, panels and ✨ generation contracts included.
 //
-// Their natural home is the engine, beside `NodeRunner.config`: what a node
-// stores is the element's business, and the engine already owns reading it.
+// Their natural home is graph/, beside `NodeRunner.config`: what a node
+// stores is the element's business, and graph/ already owns reading it.
 // What keeps them here is `NodeConfig`, the one spelled-out settings shape,
 // which lives in the editor's `graph.ts`.
 
@@ -17,7 +17,7 @@ import type { GraphNode, NodeType } from '../graph';
 import { derivedNodePorts } from './ports';
 import { SubgraphNodeRunner } from '../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
 import { StartNodeRunner } from '../../../graph/nodes/start/StartNodeRunner.ts';
-import { registry as engineRegistry } from '../../../graph/nodes/registry.ts';
+import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { baseNodeConfig } from './baseNodeConfig';
 import { numberedHeading } from './heading';
 import { freeId } from './ids';
@@ -81,7 +81,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
   folder: {
     create(id) {
-      // Its ports follow from its settings -- asked of the engine rather than
+      // Its ports follow from its settings -- asked of its runner rather than
       // listed again here.
       const node: GraphNode = {
         id,
@@ -178,7 +178,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
     // that is a result.
     placedAmong(node, others) {
       const taken = others.flatMap((other) => {
-        const element = engineRegistry.node(other.node_type);
+        const element = runnerRegistry.node(other.node_type);
         return element?.isResult ? [element.resultLabel(other)] : [];
       });
       return { ...node, label: freeId('Result', taken, ' ') };
@@ -196,7 +196,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
       // nothing in there yet.
       inputs: [],
       outputs: [],
-      // The engine's own idea of an empty graph, rather than a second copy
+      // The runner's own idea of an empty graph, rather than a second copy
       // of what a graph's metadata starts as.
       config: { ...baseNodeConfig(), subgraph: SUBGRAPH.nestedGraph({ config: {} } as never) },
     }),
@@ -205,7 +205,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
 /**
  * The node as a graph file keeps it: every setting that is not its default
- * (`baseNodeConfig`), and none that is -- the engine reads a key left out as
+ * (`baseNodeConfig`), and none that is -- a run reads a key left out as
  * that default, and loading fills it back in, so nothing is lost either way.
  */
 export function savedNode(node: GraphNode): GraphNode {

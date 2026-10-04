@@ -7,7 +7,7 @@ import type { GraphEdge, GraphNode } from '../../app/graph';
 /**
  * Generating a graph front to back.
  *
- * The order is the engine's — asserted here only in that this uses it, not
+ * The order is the executor's — asserted here only in that this uses it, not
  * a second copy of it — and the rules around it are what this file is about:
  * what stops a sweep, what merely reports, and what it refuses to guess at.
  */
@@ -43,7 +43,7 @@ describe('the order a graph is generated in', () => {
     expect(order.map((n) => n.id)).toEqual(['a', 'b', 'c']);
   });
 
-  it('refuses a graph that cannot run, the way the engine does', () => {
+  it('refuses a graph that cannot run, the way a run does', () => {
     // A two-node cycle with no memory element to absolve it. There is no order
     // to generate in, and inventing one would write every node against a guess
     // while looking like it worked.

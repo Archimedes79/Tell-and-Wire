@@ -3,7 +3,7 @@
 // an image.
 //
 // Nothing to write and nothing to choose: its panel says, in one sentence, what
-// it shows, in the words the engine half tells the node wired into that end
+// it shows, in the words the runner half tells the node wired into that end
 // point. Sending nothing and firing nothing, its settings offer it only "It shows".
 
 import { lazy } from 'react';
@@ -14,6 +14,6 @@ import { WidgetGuiBuilder, type WidgetPanelProps } from './WidgetGuiBuilder';
 export abstract class DisplayWidgetGuiBuilder extends WidgetGuiBuilder {
   override readonly Panel: ComponentType<WidgetPanelProps> = lazy(() => import('./DisplayWidgetPanel'));
 
-  /** The kind's engine half, which says what it draws (`draws`). */
+  /** The kind's runner half, which says what it draws (`draws`). */
   abstract readonly runner: DisplayWidgetRunner;
 }
