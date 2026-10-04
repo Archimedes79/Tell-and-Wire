@@ -180,6 +180,11 @@ export abstract class WidgetRunner<C = unknown> extends ElementRunner<Widget, C>
     return [];
   }
 
+  /** Whether what a person sets here is a path this machine reads: a picker's file or folder. */
+  readsPath(_widget: Widget): boolean {
+    return false;
+  }
+
   /** Whether a person sets what this block sends: a choice, a text, a path, a message -- not a button's press. */
   takesValue(widget: Widget): boolean {
     return this.sends(widget) !== null;

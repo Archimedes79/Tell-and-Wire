@@ -9,6 +9,7 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { Graph } from '../../../graph/graph.ts';
+import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 import { names, type Problem } from '../../../graph/execution/wiring.ts';
 import { INTERFACE_FILE } from './interfaceFile.ts';
 import {
@@ -100,7 +101,11 @@ export async function checkPath(path: string): Promise<{ problems: Problem[]; gr
   try {
     graph = await loadGraph(path);
   } catch (error) {
-    return { problems: [{ where: path, problem: (error as Error).message, fix: 'Fix the file so it can be read.' }], graph: null };
+    // What is wrong says itself; the way out depends on whether it is not there, not a graph, or cannot be read.
+    const fix = error instanceof NotFound ? 'Check the path.'
+      : error instanceof NotAGraph ? 'Correct the file as the problem says.'
+        : 'Make the file readable: close what holds it, or allow reading it.';
+    return { problems: [{ where: path, problem: (error as Error).message, fix }], graph: null };
   }
   const problems = problemsIn(graph);
   const folder = projectFolderOf(path);

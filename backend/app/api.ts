@@ -13,7 +13,8 @@
 //
 // `for` is the security boundary. A `tool` route is what a deployed tool
 // serves to whoever opens it; an `editor` route exists only while building,
-// and a server without the editor answers it with 404.
+// and a server without the editor answers it with 404. A `local` route is also
+// refused by a server bound wider than loopback.
 
 import type { ExecutionResult, Graph, GraphNode, NodeResult } from '../../graph/graph.ts';
 import type { TextChange } from './project/changes.ts';
@@ -194,7 +195,7 @@ export type Requirement = RuntimeRequirement;
 /** `project`: a folder with a `flow.json` in it, which opens rather than being walked into. */
 export interface BrowseEntry { name: string; path: string; is_dir: boolean; project?: boolean }
 /**
- * One directory, for a picker -- loopback only: it is for the person at the keyboard.
+ * One directory, for a picker -- on this machine only: it is for the person at the keyboard.
  * `project`: the directory shown is a project itself.
  */
 export interface BrowsePage { path: string; parent: string | null; entries: BrowseEntry[]; roots: string[]; project?: boolean }
@@ -374,12 +375,23 @@ export interface Route<Req, Res> {
   /** `:name` segments are path parameters, handed over as `name`. */
   path: string;
   for: 'tool' | 'editor';
+  /**
+   * Answered only by a server bound to this machine (loopback): it looks at
+   * the machine's files or starts a program for the person at the keyboard.
+   * `serve.ts` refuses it otherwise, for every route here and nowhere else.
+   */
+  local?: true;
   /** Phantom: carries the types, never set. */
   readonly types?: { request: Req; response: Res };
 }
 
 function route<Req, Res>(method: Method, path: string, audience: 'tool' | 'editor'): Route<Req, Res> {
   return { method, path, for: audience };
+}
+
+/** *one*, answered on this machine only. */
+function local<Req, Res>(one: Route<Req, Res>): Route<Req, Res> {
+  return { ...one, local: true };
 }
 
 type OnNode = Graph & { node_id: string };
@@ -412,8 +424,8 @@ export const API = {
   page: route<InSession, PageView>('GET', '/api/runtime/page', 'tool'),
   /** Which model the tool calls. Read-only: a recipient configures it in a file, not in a page. */
   toolAiSettings: route<void, ToolAiSettings>('GET', '/api/runtime/ai-settings', 'tool'),
-  /** Loopback only: listing directories is for the person at the keyboard. */
-  browse: route<{ path: string; extensions?: string }, BrowsePage>('POST', '/api/files/browse', 'tool'),
+  /** Listing directories is for the person at the keyboard. */
+  browse: local(route<{ path: string; extensions?: string }, BrowsePage>('POST', '/api/files/browse', 'tool')),
 
   // -- what only the editor serves ------------------------------------------
   /** One node on the inputs given, as a run runs it: files read, lists fanned out. How the editor reads a file the way a run does. */
@@ -446,13 +458,13 @@ export const API = {
    * dropped onto the page -- and where that search looked, in words, for a drop
    * that finds none to say.
    */
-  findProjects: route<{ name: string }, { paths: string[]; searched: string }>('GET', '/api/graphs/find', 'editor'),
+  findProjects: local(route<{ name: string }, { paths: string[]; searched: string }>('GET', '/api/graphs/find', 'editor')),
   /**
    * Files of this name and size under where the editor runs: for a file
    * dropped onto a node, whose path a browser never says -- and where that
    * search looked, in words, for a drop that finds none to say.
    */
-  findFile: route<{ name: string; size: string }, { paths: string[]; searched: string }>('GET', '/api/files/find', 'editor'),
+  findFile: local(route<{ name: string; size: string }, { paths: string[]; searched: string }>('GET', '/api/files/find', 'editor')),
   /** The code and prompts of an open project that changed on disk since last asked. */
   projectChanges: route<{ path: string }, { changes: TextChange[] }>('GET', '/api/graphs/file/changes', 'editor'),
 
@@ -497,9 +509,9 @@ export const API = {
    * named from the node's folder -- `input.js`, `history.md` -- or, without
    * it, its body (`nodes/<id>/code.js`). The node is one of the graph
    * `inside` leads down to: the ids of the nodes that hold it, outermost
-   * first (`nodeFileOf`). Loopback only: it starts a program.
+   * first (`nodeFileOf`). It starts a program.
    */
-  openExternal: route<{ graph_path: string; inside?: string[]; node_id: string; file?: string }, { path: string; with: string }>('POST', '/api/files/open-external', 'editor'),
+  openExternal: local(route<{ graph_path: string; inside?: string[]; node_id: string; file?: string }, { path: string; with: string }>('POST', '/api/files/open-external', 'editor')),
 } as const;
 
 export type Api = typeof API;

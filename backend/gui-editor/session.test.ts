@@ -168,9 +168,15 @@ describe('a design that changed', () => {
     const file = await scratch();
     const session = await open(counter(), file);
     await session.run(null);
+    // Where a node is drawn is no design: dragging one does not make a page draw itself again.
+    const dragged = counter();
+    dragged.nodes[1].position = { x: 400, y: 80 };
+    session.hold(dragged);
+    expect(session.designRevision).toBe(0);
     const relabelled = counter();
     relabelled.nodes[1].label = 'Add one';
     expect(session.hold(relabelled)).toEqual([]);
+    expect(session.designRevision).toBe(1);
     expect(session.kept().nodes).toEqual({ count: { data_value: 1 } });
 
     const restarted = counter();

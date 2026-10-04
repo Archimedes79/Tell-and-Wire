@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { AiService, Runtime } from '../../graph/nodes/Runtime.ts';
 import { mcpToolService } from '../../graph/ai/mcp.ts';
+import { forgetSeen } from '../app/project/folder.ts';
 import { createGraphTools, serveStdio, type GraphTools, type Problem } from './mcpServer.ts';
 
 const MAIN = resolve(__dirname, '..', 'app', 'main.ts');
@@ -195,6 +196,38 @@ describe('save_graph', () => {
     const ran = await answer(toolsWith(), 'run_graph', { path: 'proj/flow.json' });
     expect(ran.json.status).toBe('success');
     expect(ranBody).toContain('function run');
+  });
+
+  it('over a project keeps what a document cannot carry -- history, ✨ prompts -- and does not write over a text changed since it was read', async () => {
+    const tools = toolsWith();
+    const document = (body: string) => graphOf([textData('greeting'), code('work', body), output('result')],
+      [edge('e1', 'greeting.output', 'work.in'), edge('e2', 'work.out', 'result.value')]);
+    const path = (...parts: string[]) => join(root, 'proj', ...parts);
+    expect((await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 1 }; }') })).isError).toBeUndefined();
+
+    // What the person's own editor keeps beside it, as a server that never read the project meets it: the node's history, and a ✨ prompt they changed.
+    forgetSeen();
+    await writeFile(path('nodes', 'work', 'history.md'), '## 2026-10-04 12:00 · ✨ Code\n\nNothing was sent.\n');
+    const settings = JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8'));
+    await writeFile(path('nodes', 'work', 'node.json'), `${JSON.stringify({ ...settings, config: { ...settings.config, prompts: { body: 'Mine.' } } }, null, 2)}\n`);
+
+    const again = await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 2 }; }') });
+    expect(again.isError).toBeUndefined();
+    expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 2');
+    expect(await readFile(path('nodes', 'work', 'history.md'), 'utf8')).toContain('Nothing was sent.');
+    expect(JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8')).config.prompts).toEqual({ body: 'Mine.' });
+
+    // The code was edited elsewhere since this process wrote it: that is said, not overwritten.
+    await writeFile(path('nodes', 'work', 'code.js'), 'function run() { return { out: "by hand, in an editor" }; }\n');
+    const refused = await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 3 }; }') });
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toMatch(/"nodes\/work\/code\.js" of "proj\/flow\.json" was changed on disk/);
+    expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('by hand');
+
+    // Read again, it is saved over.
+    await tools.call('describe_graph', { path: 'proj/flow.json' });
+    expect((await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 3 }; }') })).isError).toBeUndefined();
+    expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 3');
   });
 });
 

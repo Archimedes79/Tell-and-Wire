@@ -39,11 +39,11 @@ const PICK_B = { event: 'picked', values: { pick: 'b' }, by: 'pick' };
 const served: Served[] = [];
 afterAll(async () => { for (const one of served) await one.shutdown(); });
 
-/** A tool serving the echo graph, from a file of its own. */
-async function tool(): Promise<{ url: string; graphPath: string }> {
+/** A tool serving the echo graph, or *graph*, from a file of its own. */
+async function tool(graph: unknown = ECHO, host?: string): Promise<{ url: string; graphPath: string }> {
   const graphPath = join(await mkdtemp(join(tmpdir(), 'runtime-api-')), 'echo.json');
-  await writeFile(graphPath, JSON.stringify(ECHO));
-  const one = await serve({ graphPath, port: 0 });
+  await writeFile(graphPath, JSON.stringify(graph));
+  const one = await serve({ graphPath, port: 0, ...(host ? { host } : {}) });
   served.push(one);
   return { url: one.url, graphPath };
 }
@@ -102,5 +102,17 @@ describe('the runtime API', () => {
     expect(reset.status).toBe(200);
     expect(reset.body).toMatchObject({ page: { pick: 'a', shown: null }, shown: {}, outputs: {}, rounds: 0 });
     expect(existsSync(`${graphPath}.state.json`)).toBe(false);
+  }, 30_000);
+
+  it('answers a request from a server bound beyond this machine without browsing its disk or setting the file a picker reads', async () => {
+    const picker = { ...ECHO, page: { blocks: [{ id: 'pick', kind: 'input_picker', mode: 'file', send: 'path', sends_to: ['picked'], fires: 'picked' }] } };
+    const here = await tool(picker);
+    const there = await tool(picker, '0.0.0.0');
+    const choose = { event: 'picked', by: 'pick', values: { pick: 'notes.txt' } };
+
+    expect((await post(`${here.url}/api/runtime/run`, choose)).status).toBe(200);
+    expect((await post(`${here.url}/api/files/browse`, { path: '' })).status).toBe(200);
+    expect((await post(`${there.url}/api/runtime/run`, choose)).status).toBe(403);
+    expect((await post(`${there.url}/api/files/browse`, { path: '' })).status).toBe(403);
   }, 30_000);
 });

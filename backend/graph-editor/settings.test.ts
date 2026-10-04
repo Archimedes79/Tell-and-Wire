@@ -10,7 +10,7 @@ import { readSettingsFile } from '../../graph/ai/settings.ts';
  *
  * Every test names its own file through TW_SETTINGS and an empty
  * environment, so nothing here can read the developer's real keys or write
- * into their real file -- the way a test once did in the Python half.
+ * into their real file.
  */
 
 async function own(contents?: unknown) {

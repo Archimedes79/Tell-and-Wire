@@ -47,7 +47,7 @@ import {
 } from './widgets/page.ts';
 import type { ProgressEvent, Runtime } from '../../graph/nodes/Runtime.ts';
 import { stateFileOf } from '../app/project/folder.ts';
-import { Refusal } from '../app/http.ts';
+import { NotFound } from '../../graph/errors.ts';
 import { nodeRuntime } from '../../graph/core/node.ts';
 import { Rounds, type RoundWork } from './rounds.ts';
 import { chosenCore } from '../../graph/core/stdio.ts';
@@ -136,7 +136,7 @@ export class Session {
   private finishedAt: number | null = null;
   private notes: string[] = [];
   private lastRound: string | null = null;
-  /** The design as it was handed over, written out, and how often it changed since the session began. */
+  /** The design as it was handed over, written out (`designText`), and how often it changed since the session began. */
   private designText: string;
   private revision = 0;
   /** The clock, while the application runs, and what stops the rounds it started. */
@@ -152,7 +152,7 @@ export class Session {
   private constructor(id: string, design: Graph, options: SessionOptions) {
     this.id = id;
     this.design = design;
-    this.designText = JSON.stringify(design);
+    this.designText = designText(design);
     this.file = options.file ?? null;
     this.runtime = options.runtime ?? ((report) => nodeRuntime({ report }));
     this.core = options.core?.() ?? chosenCore({ runtime: options.runtime });
@@ -282,7 +282,7 @@ export class Session {
     this.design = graph;
     // Handed over before every round and after every edit: most often it is
     // the same design again, which changes nothing a page drew.
-    const text = JSON.stringify(graph);
+    const text = designText(graph);
     const changed = text !== this.designText;
     this.designText = text;
     if (changed) this.revision += 1;
@@ -513,19 +513,20 @@ export class Session {
     const file = this.file;
     if (!file) return Promise.resolve();
     this.writing = this.writing.then(async () => {
-      const kept: StateFile = {
-        session: this.id,
-        graph: this.design.metadata?.name ?? '',
-        saved_at: new Date().toISOString(),
-        slots: Object.fromEntries([...this.slots].map(([node, slots]) => [node, Object.fromEntries(slots)])),
-        page: Object.fromEntries(this.pageSlots),
-        page_shown: this.pageShown,
-        held: Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))),
-        shown: this.shown,
-        rounds: this.count,
-        finished_at: this.finishedAt,
-      };
+      // All of it inside the try: one failure here must not end the chain, or no write would ever follow.
       try {
+        const kept: StateFile = {
+          session: this.id,
+          graph: this.design.metadata?.name ?? '',
+          saved_at: new Date().toISOString(),
+          slots: Object.fromEntries([...this.slots].map(([node, slots]) => [node, Object.fromEntries(slots)])),
+          page: Object.fromEntries(this.pageSlots),
+          page_shown: this.pageShown,
+          held: Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))),
+          shown: this.shown,
+          rounds: this.count,
+          finished_at: this.finishedAt,
+        };
         await writeFile(`${file}.tmp`, `${JSON.stringify(kept, null, 2)}\n`);
         await rename(`${file}.tmp`, file);
       } catch {
@@ -583,9 +584,9 @@ export function holderOf(session: Session | null = null, options: Omit<SessionOp
   return {
     session,
     asked(id) {
-      if (!this.session) throw new Refusal(404, 'This server holds no graph yet.');
+      if (!this.session) throw new NotFound('This server holds no graph yet.');
       if (id && id !== this.session.id) {
-        throw new Refusal(404, `No session "${id}" here: this server's is "${this.session.id}". Ask for its interface again.`);
+        throw new NotFound(`No session "${id}" here: this server's is "${this.session.id}". Ask for its interface again.`);
       }
       return this.session;
     },
@@ -609,6 +610,16 @@ export function holderOf(session: Session | null = null, options: Omit<SessionOp
       return () => { watchers.delete(listener); };
     },
   };
+}
+
+/** Where a node is drawn on the canvas: not part of what a graph does or a page shows. */
+const DRAWN = new Set(['position', 'width', 'height']);
+
+/** *graph* written out without where its nodes are drawn: dragging one is no new design. */
+function designText(graph: Graph): string {
+  return JSON.stringify(graph, function (this: Record<string, unknown>, key, value) {
+    return DRAWN.has(key) && 'node_type' in this ? undefined : value;
+  });
 }
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);

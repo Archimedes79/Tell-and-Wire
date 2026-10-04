@@ -335,7 +335,7 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
   const lines = [
     `# ${name}`,
     '',
-    'A tool, as the project folder it was built as -- flow.json, its page in',
+    'A tool, as the folder it was built as -- flow.json, its page in',
     'page/, a folder per node with its code -- and the code that runs it.',
     'Nothing here was generated: that code is a verbatim copy of the one the',
     'graph was built and tested on, so this runs what was tested rather than a',

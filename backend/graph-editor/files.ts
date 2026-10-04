@@ -1,8 +1,8 @@
 // The editor's view of the machine's files: finding projects and dropped
 // files, and handing a node's file to the editor the person works in.
 //
-// Editor-only, on purpose: none of it belongs in a bundle, which is why this
-// folder is skipped by the bundle walk along with every other `editor/`.
+// Editor-only, on purpose: none of it belongs in a bundle, which is why
+// `backend/app/cli/bundle.ts` leaves this folder out.
 // Browsing is not here: a deployed tool needs a file picker that can be
 // navigated too, so it is `backend/app/browse.ts`, which a bundle carries.
 
@@ -127,10 +127,15 @@ export async function openExternal(projectDir: string, relative: string): Promis
   }
   if (!existsSync(path)) throw new NotFound(`${path} does not exist yet. Save the graph first: saving is what writes it.`);
 
+  const windows = platform() === 'win32';
+  // On Windows a program is looked for in the working directory first (by cmd.exe, and by
+  // Node itself): a `code.cmd` or `notepad.exe` put there would run. So it is started from
+  // the system folder, which only an administrator writes to.
+  const cwd = windows ? process.env.SystemRoot : undefined;
   const { spawn } = await import('node:child_process');
   const start = (command: string, args: string[], shell: boolean): Promise<boolean> => new Promise((done) => {
     try {
-      const child = spawn(command, args, { detached: !shell, stdio: 'ignore', shell, windowsHide: true });
+      const child = spawn(command, args, { detached: !shell, stdio: 'ignore', shell, windowsHide: true, cwd });
       child.on('error', () => done(false));
       if (shell) {
         // Through a shell, "started" only means the shell did. Whether the
@@ -146,7 +151,6 @@ export async function openExternal(projectDir: string, relative: string): Promis
     }
   });
 
-  const windows = platform() === 'win32';
   // `code` is a .cmd shim on Windows, which only a shell can start; quoted, because a path may hold spaces.
   if (await start(windows ? `code -g "${path}"` : 'code', windows ? [] : ['-g', path], windows)) {
     return { path, with: 'VS Code' };

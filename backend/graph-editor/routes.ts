@@ -7,7 +7,7 @@
 // Each handler takes the request the table promises and returns its response;
 // a refusal is thrown as a `Refusal` with its status. What the handlers do is
 // done elsewhere: running by the executor, files by `files.ts`, the project by
-// `project/folder.ts`, generation by `generate.ts`, settings by `settings.ts`.
+// `backend/app/project/folder.ts`, generation by `generate.ts`, settings by `settings.ts`.
 
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';

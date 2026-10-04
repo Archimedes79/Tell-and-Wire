@@ -1,10 +1,11 @@
-import { describe, it, expect, afterAll } from 'vitest';
-import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
+import { describe, it, expect, afterAll, vi } from 'vitest';
+import { mkdir, mkdtemp, writeFile, readFile } from 'node:fs/promises';
 import { copyFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { request as httpRequest, type Server } from 'node:http';
 import { serve } from './serve.ts';
+import { Session } from '../gui-editor/session.ts';
 import { API, pathFor } from './api.ts';
 
 /**
@@ -82,6 +83,18 @@ describe('what a deployed tool serves', () => {
     expect(snapshot).toHaveProperty('idle_seconds');
     expect((snapshot.result as { status: string }).status).toBe('success');
   }, 60_000);
+
+  it('ends an answer that failed once it had begun, and goes on serving', async () => {
+    // A stream is one: its head is sent before anything can go wrong, and a second head would throw where nothing catches it.
+    const url = await serveGraph();
+    const broken = vi.spyOn(Session.prototype, 'view').mockImplementation(() => { throw new Error('boom'); });
+    try {
+      await fetch(`${url}/api/runtime/stream`).then((reply) => reply.text()).catch(() => 'cut off');
+    } finally {
+      broken.mockRestore();
+    }
+    expect((await fetch(`${url}/api/runtime/interface`)).status).toBe(200);
+  });
 
   // That the editor serves every route is not tested by calling them -- some
   // write settings or ask a model -- but by starting it: a server with a route
@@ -161,16 +174,25 @@ describe('a web page elsewhere in the same browser', () => {
 });
 
 describe('the server as the front door of the editor', () => {
-  it('serves the editor page for any deep link and never a file from above it, refuses what nothing serves, and serves the page of the graph it is handed', async () => {
-    const dist = await mkdtemp(join(tmpdir(), 'editor-dist-'));
+  it('serves the editor page for any deep link, a file by its decoded name and never one from above it, forbids being framed, refuses what nothing serves, and serves the page of the graph it is handed', async () => {
+    const parent = await mkdtemp(join(tmpdir(), 'editor-dist-'));
+    const dist = join(parent, 'dist');
+    await mkdir(dist);
     await writeFile(join(dist, 'index.html'), '<!doctype html><title>the editor</title>');
+    await writeFile(join(dist, 'my file.js'), 'inside');
+    await writeFile(join(parent, 'secret.txt'), 'above');
     const { server, url } = await serve({ port: 0, editor: { dist } });
     started.push(server);
     const { host } = new URL(url);
 
     expect((await ask(url, '/some/route', { Host: host })).text).toContain('the editor');
-    // Not normalised on the way, as `fetch` would: whatever this resolves to is not a file from above the page.
-    expect((await ask(url, '/../../package.json', { Host: host })).text).toContain('the editor');
+    expect((await ask(url, '/my%20file.js', { Host: host })).text).toBe('inside');
+    // A file name that is not there is a 404, not the page; so is one from above, however it is spelt.
+    expect(await status(url, '/gone.js', { Host: host })).toBe(404);
+    expect(await status(url, '/..%2fsecret.txt', { Host: host })).toBe(404);
+    expect(await status(url, '/../../package.json', { Host: host })).toBe(404);
+    const page = await fetch(`${url}/some/route`);
+    expect([page.headers.get('x-frame-options'), page.headers.get('content-security-policy')]).toEqual(['DENY', "frame-ancestors 'none'"]);
     expect(await status(url, '/api/nothing/here', { Host: host })).toBe(404);
 
     // "Open as tool": the editor hands its session the graph it is editing, and the runtime page then

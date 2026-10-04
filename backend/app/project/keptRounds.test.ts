@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest';
+import { existsSync } from 'node:fs';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Graph, GraphNode } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { Session } from '../../gui-editor/session.ts';
 import { edge, graphOf, quietRuntime } from '../../../graph/test/fakes.ts';
-import { keptRound, replayRound } from './keptRounds.ts';
+import { keptRound, replayRound, writeKeptRound } from './keptRounds.ts';
 import { localCore } from '../../../graph/core/localCore.ts';
 
 /**
@@ -68,5 +72,12 @@ describe('a round, kept', () => {
     const replayed = await replayRound(changed, kept, { core: localCore({ runtime: () => noModel }), registry });
     expect(replayed.status).toBe('fail');
     expect(replayed.details).toEqual(['"words" handed back 17; the kept round, 3.']);
+  });
+
+  it('is kept under a file name of its own folder, whatever its start point is called', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'kept-'));
+    const name = await writeKeptRound(folder, { event: '../..\\up: a/b', given: {}, outputs: {} });
+    expect(name).not.toMatch(/[\\/:]/);
+    expect(existsSync(join(folder, 'tests', `${name}.json`))).toBe(true);
   });
 });

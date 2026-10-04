@@ -11,7 +11,7 @@ import { problemsIn } from './check.ts';
 import { RUN_ON_ITS_OWN } from '../../../graph/nodes/code/CodeNodeRunner.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import {
-  FileChanged, changesOnDisk, forgetSeen, isProjectFolder, loadGraph, readProject, writeProject,
+  FileChanged, changesOnDisk, forgetSeen, graphAt, isProjectFolder, loadGraph, readProject, saveGraph, writeProject,
 } from './folder.ts';
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
@@ -198,6 +198,20 @@ describe('a project folder', () => {
     await expect(writeProject(dir, parseGraph({ metadata: { name: 'Order' }, nodes: [code('b', 'x'), code('2', 'y'), code('1', 'z')], edges: [] }))).rejects.toThrow(/is a number/);
     // Refused before anything happened.
     expect(existsSync(join(dir, 'flow.json'))).toBe(false);
+  });
+
+  it('refuses to read a page file that is no list of blocks as "no page", which a save would delete, and to save over a .json file that holds no graph', async () => {
+    await writeProject(dir, sample());
+    for (const wrong of ['{"blocks": []}', '{}', 'null', '[1]']) {
+      await writeFile(join(dir, 'page/page.json'), wrong);
+      await expect(readProject(dir), wrong).rejects.toThrow(/must be a list of blocks/);
+    }
+
+    const other = join(dir, 'package.json');
+    await writeFile(other, '{"name": "not a graph"}');
+    expect(graphAt(other)).toBeNull();
+    await expect(saveGraph(other, sample())).rejects.toThrow(/holds no graph/);
+    expect(await text('package.json')).toBe('{"name": "not a graph"}');
   });
 });
 

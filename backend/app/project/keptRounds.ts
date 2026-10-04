@@ -23,6 +23,7 @@ import type { ExecutionResult, Graph } from '../../../graph/graph.ts';
 import type { Runners } from '../../../graph/nodes/NodeRunner.ts';
 import type { GraphCore } from '../../../graph/core/protocol.ts';
 import { eventOf, outputsOf } from '../../gui-editor/graphInterface.ts';
+import { folderName } from './names.ts';
 
 /** Where a project keeps its rounds: `tests/<name>.json`, beside `flow.json`. */
 export const TESTS_DIR = 'tests';
@@ -156,11 +157,14 @@ export async function replayKeptRounds(
   return replayed;
 }
 
-/** Keep *round* in the project *folder*, under a name of its event's that no kept round has yet: `send-1`, `send-2`. Returns the name. */
+/**
+ * Keep *round* in the project *folder*, under a name of its event's that no kept round has yet: `send-1`, `send-2`. Returns the name.
+ * A start point's id may hold anything, so the name is made of it as a folder's name is (`folderName`): no separator, no `:`, no `..`.
+ */
 export async function writeKeptRound(folder: string, round: KeptRound): Promise<string> {
   const dir = join(folder, TESTS_DIR);
   await mkdir(dir, { recursive: true });
-  const stem = round.event ?? 'whole';
+  const stem = folderName(round.event ?? 'whole');
   let name = '';
   for (let n = 1; !name || existsSync(join(dir, `${name}.json`)); n += 1) name = `${stem}-${n}`;
   await writeFile(join(dir, `${name}.json`), `${JSON.stringify(round, null, 2)}\n`);

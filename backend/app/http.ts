@@ -5,7 +5,7 @@
 // refusal -- is here, once, so a handler reads as what the route does.
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import type { RequestOf, ResponseOf, RouteName } from './api.ts';
 
@@ -227,44 +227,66 @@ export function foreignRequest(
   return null;
 }
 
+/**
+ * A failure no handler turned into an answer: a 500 -- or, once the answer has
+ * begun, its end. The status is sent, and writing another head would throw
+ * where nothing catches it.
+ */
+export function sendFailure(response: ServerResponse, error: unknown): void {
+  if (response.headersSent) response.destroy();
+  else sendJson(response, 500, { detail: message(error) });
+}
+
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.map': 'application/json; charset=utf-8',
   // licenses.txt, which the page links: read in the browser, not downloaded.
   '.txt': 'text/plain; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  '.wasm': 'application/wasm',
 };
+
+/** Every page forbids being framed: the editor and a tool run code, and a frame could click for the person. */
+const PAGE_HEADERS = { 'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'" };
 
 /**
  * A file of the built page, or the page itself.
  *
- * Anything that is not a file is the entry page: the page is a single page, so
- * a deep link is still that page rather than a 404.
+ * A name without an extension that is no file is a route of the single page, so
+ * a deep link is still that page; a file name that is not there is a 404.
  */
 export async function servePage(response: ServerResponse, path: string, dir: string, entry: string): Promise<void> {
-  const wanted = path === '/' ? `/${entry}` : path;
+  let wanted: string;
+  try {
+    wanted = decodeURIComponent(path === '/' ? `/${entry}` : path);
+  } catch {
+    return sendJson(response, 400, { detail: 'That is not a path.' });
+  }
   const full = join(dir, normalize(wanted).replace(/^([/\\])+/, ''));
   if (!full.startsWith(resolve(dir) + sep) && full !== resolve(dir)) {
     return sendJson(response, 403, { detail: 'Outside the page.' });
   }
-  try {
-    const found = await stat(full);
-    if (!found.isFile()) throw new Error('not a file');
-    response.writeHead(200, { 'Content-Type': MIME[extname(full)] ?? 'application/octet-stream' });
-    response.end(await readFile(full));
-  } catch {
-    try {
-      const html = await readFile(join(dir, entry));
-      response.writeHead(200, { 'Content-Type': MIME['.html'] });
-      response.end(html);
-    } catch {
-      sendJson(response, 404, { detail: `No ${entry} in ${dir}. Build the editor first: npm run build` });
-    }
+  // Read before the head is sent: a file that cannot be read is a 404, not a half answer.
+  let file = full;
+  let bytes = await readFile(file).catch(() => null);
+  if (!bytes && !extname(full)) {
+    file = join(dir, entry);
+    bytes = await readFile(file).catch(() => null);
   }
+  if (!bytes) {
+    const entryPage = file === join(dir, entry);
+    return sendJson(response, 404, { detail: entryPage ? `No ${entry} in ${dir}. Build the editor first: npm run build` : `No ${path} here.` });
+  }
+  response.writeHead(200, { 'Content-Type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream', ...PAGE_HEADERS });
+  response.end(bytes);
 }

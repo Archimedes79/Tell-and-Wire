@@ -33,8 +33,9 @@
 // tool and the MCP server open a project the same way, which is the point: a
 // node's code in `code.js` is the node's code wherever the graph is run from.
 
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile } from 'node:fs/promises';
+import { platform } from 'node:os';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 
 import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts';
@@ -261,11 +262,18 @@ function heldIn(content: string, text: ProjectText, path: string): { value: unkn
   }
   if (text.standard !== undefined && said.trim() === text.standard.trim()) return undefined;
   if (!text.json) return { value: said };
+  let value: unknown;
   try {
-    return { value: JSON.parse(said) };
+    value = JSON.parse(said);
   } catch (error) {
     throw new NotAGraph(`${path} is not valid JSON: ${(error as Error).message}`);
   }
+  // The page's file is its list of blocks and nothing else: `{"blocks": […]}` or `null` would read as
+  // no page at all, and the next save would delete the file.
+  if (text.node_id === null && !(Array.isArray(value) && value.every((block) => !!block && typeof block === 'object' && !Array.isArray(block)))) {
+    throw new NotAGraph(`${path} must be a list of blocks: [ { "id": …, "kind": … }, … ].`);
+  }
+  return { value };
 }
 
 /**
@@ -289,7 +297,38 @@ function isBlank(value: unknown): boolean {
 // promise.
 
 const ABSENT = 'absent';
-const seen = new Map<string, string>();
+
+/** The real path of each folder asked about, so the many files in it cost one look. */
+const folderKeys = new Map<string, string>();
+
+/**
+ * *path* as one key however it was spelled: through its folder's real path (a
+ * link, a short name), and without case where the disk has none (Windows) --
+ * `C:\x` and `c:\x` are one project.
+ */
+function keyOf(path: string): string {
+  const folder = dirname(path);
+  let real = folderKeys.get(folder);
+  if (real === undefined) {
+    try {
+      real = realpathSync.native(folder);
+      folderKeys.set(folder, real);
+    } catch {
+      real = folder; // not made yet: as spelled
+    }
+  }
+  const key = join(real, basename(path));
+  return platform() === 'win32' ? key.toLowerCase() : key;
+}
+
+class Seen extends Map<string, string> {
+  override get(path: string) { return super.get(keyOf(path)); }
+  override set(path: string, signed: string) { return super.set(keyOf(path), signed); }
+  override has(path: string) { return super.has(keyOf(path)); }
+  override delete(path: string) { return super.delete(keyOf(path)); }
+}
+
+const seen = new Seen();
 
 async function signature(path: string): Promise<string> {
   try {
@@ -307,6 +346,7 @@ async function remember(path: string): Promise<void> {
 /** Forget every file: for tests, which reuse paths a real session would not. */
 export function forgetSeen(): void {
   seen.clear();
+  folderKeys.clear();
 }
 
 // ---------------------------------------------------------------------------
@@ -317,8 +357,11 @@ async function readJson(path: string, what: string): Promise<unknown> {
   let text: string;
   try {
     text = await readFile(path, 'utf8');
-  } catch {
-    throw new NotFound(`No ${what} at ${path}`);
+  } catch (error) {
+    // Only a file that is not there is "no flow": one that is locked or not allowed is said as it is.
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT' || code === 'ENOTDIR') throw new NotFound(`No ${what} at ${path}`);
+    throw new Error(`The ${what} at ${path} cannot be read (${code ?? (error as Error).message}).`);
   }
   try {
     return JSON.parse(text);
@@ -630,22 +673,39 @@ async function writeGraphFile(path: string, graph: Graph, guard?: Guard): Promis
   await writeFile(path, `${JSON.stringify(graph, null, 2)}\n`, 'utf8');
 }
 
+/** Whether the file at *path* is a graph: JSON with a "nodes" list (`asGraph`'s first test). */
+function isGraphFile(path: string): boolean {
+  try {
+    return Array.isArray((JSON.parse(readFileSync(path, 'utf8')) as { nodes?: unknown } | null)?.nodes);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * The graph a save to *path* would write over -- the project folder there, or
  * the graph file -- or null where there is none and the save makes one.
  */
 export function graphAt(path: string): string | null {
   const full = resolve(path);
-  return projectFolderOf(full) ?? (extname(full).toLowerCase() === '.json' && existsSync(full) ? full : null);
+  return projectFolderOf(full) ?? (extname(full).toLowerCase() === '.json' && isGraphFile(full) ? full : null);
 }
 
-/** Save to *path* as what it names: a `.json` path outside a project is one file, anything else a folder. */
+/**
+ * Save to *path* as what it names: a `.json` path outside a project is one
+ * file, anything else a folder. A `.json` file that is no graph -- a
+ * `package.json` -- is nobody's to replace.
+ */
 export async function saveGraph(path: string, graph: Graph, guard?: Guard): Promise<void> {
   const full = resolve(path);
   const folder = projectFolderOf(full);
   if (folder) return writeProject(folder, graph, guard);
   if (basename(full) === FLOW_FILE) return writeProject(dirname(full), graph, guard);
-  if (extname(full).toLowerCase() === '.json') return writeGraphFile(full, graph, guard);
+  if (extname(full).toLowerCase() === '.json') {
+    await guard?.(full);
+    if (existsSync(full) && !isGraphFile(full)) throw new NotAGraph(`${full} is a file that holds no graph, and saving would replace it. Save under another name.`);
+    return writeGraphFile(full, graph, guard);
+  }
   return writeProject(full, graph, guard);
 }
 

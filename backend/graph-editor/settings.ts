@@ -10,7 +10,7 @@
 // page that could write credentials into a file nobody asked for is not a page
 // a recipient should be handed. Hence `backend/graph-editor/`.
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import {
   aiSetting, LOCAL_PROVIDERS, parseSettingsFile, probeLocal, readSettingsFile, settingsPath, type SettingsFile,
@@ -105,7 +105,16 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
     if (!provider && !model) delete next.ai;
   }
   await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`);
+  // Beside, then over: a crash mid-write leaves the old file whole. It holds keys, so
+  // it is the owner's alone (0600, where the OS honours a mode).
+  const beside = `${path}.${process.pid}.tmp`;
+  try {
+    await writeFile(beside, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+    await rename(beside, path);
+  } catch (error) {
+    await rm(beside, { force: true });
+    throw error;
+  }
   return status(cwd, env);
 }
 

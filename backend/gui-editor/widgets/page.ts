@@ -145,6 +145,14 @@ export function applyPageValues(graph: Graph, values: Record<string, unknown>): 
   }
 }
 
+/** Of the block ids *ids*, those of blocks whose value is a path this machine reads. */
+export function pathBlocks(graph: Graph, ids: string[]): string[] {
+  return ids.filter((id) => {
+    const stored = pageBlock(graph, id);
+    return !!stored && !!widgetElement(String(stored.kind))?.readsPath(parseWidget(stored));
+  });
+}
+
 /** Whether *id* is a block of the page a person sets: what a round the page starts is sent by. */
 export function takesPageValue(graph: Graph, id: string): boolean {
   const stored = pageBlock(graph, id);

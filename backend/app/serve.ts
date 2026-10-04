@@ -3,8 +3,8 @@
 // One server for both uses. A deployed tool gets its page and the `tool` rows
 // of the table -- the graph it ships, a way to run it, the file picker its own
 // blocks need. The editor gets its page and every row, the `editor` ones
-// loaded from `editor/routes.ts` only when this is the editor, so none of that
-// code is ever vendored into a bundle.
+// loaded from `graph-editor/routes.ts` only when this is the editor, so none of
+// that code is ever vendored into a bundle.
 //
 // The table is the security boundary, and it is written out in one place
 // (`api.ts`) rather than assembled from a router someone might extend later
@@ -18,15 +18,16 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { registry } from '../../graph/nodes/registry.ts';
 import { startEvents } from '../../graph/execution/triggers.ts';
-import { pageBlocks } from '../gui-editor/widgets/page.ts';
+import { pageBlocks, pathBlocks } from '../gui-editor/widgets/page.ts';
+import { names } from '../../graph/execution/wiring.ts';
 import { aiSetting, settingsPath } from '../../graph/ai/settings.ts';
-import { API, matchRoute, type RouteName } from './api.ts';
+import { API, matchRoute, type RequestOf, type RouteName } from './api.ts';
 import {
-  Download, EventStream, Refusal, foreignRequest, hostnameOf, message, namesFor, readJson, sendDownload, sendEvents, sendJson, servePage,
+  Download, EventStream, Refusal, foreignRequest, hostnameOf, message, namesFor, readJson, sendDownload, sendEvents, sendFailure, sendJson, servePage,
   type Exchange, type Handlers,
 } from './http.ts';
 import { NotOffered, eventOf, interfaceOf, outputsOf } from '../gui-editor/graphInterface.ts';
-import { browse } from './browse.ts';
+import { browse, startFolder } from './browse.ts';
 import { extensionFilter } from '../../graph/nodes/folderListing.ts';
 import { NotFound } from '../../graph/errors.ts';
 import { Session, holderOf, type SessionHolder } from '../gui-editor/session.ts';
@@ -55,6 +56,8 @@ export interface ServeOptions {
 export interface Served {
   server: Server;
   url: string;
+  /** Bound to this machine only: what a `local` route (`api.ts`) needs. */
+  loopback: boolean;
   /** Stop the clock, end the runs in flight, then close. Resolves to what would not stop in time. */
   shutdown: (graceMs?: number) => Promise<string[]>;
 }
@@ -78,7 +81,6 @@ export async function serve(options: ServeOptions): Promise<Served> {
     ? await Session.open(await loadGraph(options.graphPath), { file: stateFileOf(options.graphPath) })
     : null);
   const frontend = options.graphPath ? frontendOf(options.graphPath) : null;
-  if (held.session && !options.editor) void held.session.startApplication();
   lifecycle.own('the clock', async () => { await held.session?.stopApplication(); });
   lifecycle.own('rounds in flight', async () => { await held.session?.close(); });
 
@@ -86,13 +88,14 @@ export async function serve(options: ServeOptions): Promise<Served> {
     // Where an empty path opens the picker, decided here and nowhere else. A
     // tool's opens where its graph is — a bundle's own folder, which is also
     // what its paths are relative to. The editor's opens where the editor was
-    // started, which is the same idea one level up, even when it was given a
-    // graph to serve as well.
+    // started, even when it was given a graph to serve as well -- or in the
+    // person's home, when that is the program's own folder (`startFolder`).
     ...toolRoutes(held, options.editor || !options.graphPath
-      ? process.cwd()
+      ? await startFolder()
       : (projectFolderOf(options.graphPath) ?? dirname(resolve(options.graphPath)))),
-    // Loaded, not imported: a bundle carries this file without the `editor/`
-    // folder beside it, and a static import would stop every deployed tool.
+    // Loaded, not imported: a bundle carries this file without the
+    // `graph-editor/` folder beside it, and a static import would stop every
+    // deployed tool.
     // `held` goes in so the editor can hand this server the graph it is
     // editing and then open `runtime.html` against it: the delivered page, in
     // its own window, served by the same route a bundle serves.
@@ -119,6 +122,10 @@ export async function serve(options: ServeOptions): Promise<Served> {
       const handler = found ? handlers[found.name] as ((request: unknown, exchange: Exchange) => unknown) | undefined : undefined;
       if (!found || !handler) return sendJson(response, 404, { detail: 'Not part of this server.' });
       const route = API[found.name];
+      // The one place the loopback rule is kept: the table says which routes it holds for.
+      if (route.local && !loopback) {
+        return sendJson(response, 403, { detail: `This works on the machine the server runs on only, and it is bound to ${host}.` });
+      }
       try {
         // Inside the try: a body that is not JSON, or is too big to accept, is
         // this request being turned down -- 400 or 413, not a server that broke.
@@ -135,6 +142,8 @@ export async function serve(options: ServeOptions): Promise<Served> {
         if (error instanceof Refusal) return sendJson(response, error.status, { detail: error.message, ...error.extra });
         // A name the graph does not offer is the caller's mistake, said as one.
         if (error instanceof NotOffered) return sendJson(response, 400, { detail: error.message });
+        // A session or graph that is not there.
+        if (error instanceof NotFound) return sendJson(response, 404, { detail: error.message });
         throw error;
       }
     }
@@ -147,7 +156,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
   }
 
   const server = createServer((request, response) => {
-    handle(request, response).catch((error: unknown) => sendJson(response, 500, { detail: message(error) }));
+    handle(request, response).catch((error: unknown) => sendFailure(response, error));
   });
   // Closed directly -- a test, an embedding program -- it still lets go of the rest.
   server.on('close', () => { void lifecycle.shutdown(); });
@@ -171,10 +180,12 @@ export async function serve(options: ServeOptions): Promise<Served> {
     });
   });
   self.port = (server.address() as AddressInfo).port;
+  // Only now: a server that could not listen (the next port is tried) must not have run what starts with a tool.
+  if (held.session && !options.editor) void held.session.startApplication();
   // An IPv6 address in brackets, as a browser takes it -- and every address,
   // which no browser can open, as this machine's own.
   const named = WILDCARD.get(host) ?? hostnameOf(host) ?? host;
-  return { server, url: `http://${named}:${self.port}`, shutdown: (graceMs) => lifecycle.shutdown(graceMs) };
+  return { server, url: `http://${named}:${self.port}`, loopback, shutdown: (graceMs) => lifecycle.shutdown(graceMs) };
 }
 
 /** A bind to every address, and the one of them a browser here opens: this machine's own. */
@@ -183,6 +194,17 @@ const WILDCARD = new Map([['0.0.0.0', '127.0.0.1'], ['::', '[::1]']]);
 /** Whether a failure to start is "something else is already on that port". */
 export function portTaken(error: unknown): boolean {
   return (error as { code?: string } | null)?.code === 'EADDRINUSE';
+}
+
+/**
+ * A round asked from beyond this machine sets no picker's file or folder: the
+ * path would be read here, for whoever asked. What a picker was designed with
+ * is read as ever.
+ */
+function refuseFarPaths(session: Session, asked: RequestOf<'startRound'>, { loopback }: Exchange): void {
+  if (loopback) return;
+  const named = pathBlocks(session.graph, Object.keys({ ...asked.values, ...asked.answers }));
+  if (named.length) throw new Refusal(403, `A file or folder is chosen on the machine the server runs on, so a request from elsewhere may not set ${names(named)}.`);
 }
 
 /** The `tool` rows: what any server answers, a deployed tool's included. */
@@ -219,8 +241,9 @@ function toolRoutes(
       return session.requirements(eventOf(session.graph, asked.event, registry), asked);
     },
 
-    startRound(asked) {
+    startRound(asked, exchange) {
       const session = sessionAsked(asked);
+      refuseFarPaths(session, asked, exchange);
       const { id, total } = session.start(eventOf(session.graph, asked.event, registry), asked);
       return { session: session.id, round_id: id, total };
     },
@@ -233,8 +256,9 @@ function toolRoutes(
 
     stopRound: (asked) => ({ stopped: sessionAsked(asked).stop(asked.id) }),
 
-    async runRound(asked) {
+    async runRound(asked, exchange) {
       const session = sessionAsked(asked);
+      refuseFarPaths(session, asked, exchange);
       const { id, outcome } = session.start(eventOf(session.graph, asked.event, registry), asked);
       const ended = await outcome.then((result) => result, (error: unknown) => {
         // Stopped while it waited: a round that did not run, not a graph that cannot.
@@ -290,10 +314,9 @@ function toolRoutes(
     },
 
     // The one picker, the editor's too: folders, the parent and the drives, so
-    // whoever was handed the tool can move about. Loopback only: it is the
+    // whoever was handed the tool can move about. A `local` route: it is the
     // person at the keyboard, browsing their own machine.
-    async browse(asked, { loopback }) {
-      if (!loopback) throw new Refusal(403, 'Browsing is disabled.');
+    async browse(asked) {
       try {
         // Empty path means the tool's own folder -- where its graph and the
         // data beside it live -- rather than wherever it happened to be

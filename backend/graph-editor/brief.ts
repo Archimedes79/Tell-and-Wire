@@ -36,22 +36,20 @@ export const BUDGET = {
   preview: 900,
 } as const;
 
-/** *text*, cut to *limit* characters, saying how much was left out. */
-export function clip(text: string, limit: number): string {
-  const trimmed = text.trim();
-  if (trimmed.length <= limit) return trimmed;
-  return `${trimmed.slice(0, limit)}… (${trimmed.length - limit} more characters not shown)`;
-}
-
-/** A value as the model should read it: JSON, so a string's line breaks and a list's length are visible. */
-export function shown(value: unknown, limit: number): string {
+/**
+ * *value* short enough to send: kept as it is when it fits *limit* characters (a
+ * text trimmed), else its beginning as text -- JSON, for what is not text --
+ * saying how much was left out.
+ */
+export function clip<T>(value: T, limit: number): T | string {
   let text: string;
   try {
-    text = JSON.stringify(value) ?? String(value);
+    text = typeof value === 'string' ? value.trim() : JSON.stringify(value) ?? String(value);
   } catch {
     text = String(value);
   }
-  return (Array.isArray(value) ? `a list of ${value.length}: ` : '') + clip(text, limit);
+  if (text.length <= limit) return typeof value === 'string' ? text : value;
+  return `${text.slice(0, limit)}… (${text.length - limit} more characters not shown)`;
 }
 
 /** A port's type in words, as the body is handed it. */

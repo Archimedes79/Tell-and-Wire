@@ -63,6 +63,10 @@ export class InputPickerWidgetRunner extends WidgetRunner<PickerConfig> {
     return settings.content ? { path, content: await fileContent(path, runtime.files) } : path;
   }
 
+  override readsPath(): boolean {
+    return true;
+  }
+
   /** With nothing chosen it is a question, and this block is who to ask. */
   override runtimeRequirements(widget: Widget) {
     const settings = this.config(widget);

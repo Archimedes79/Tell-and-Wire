@@ -15,11 +15,9 @@
 //     node backend/app/main.ts --mcp --mcp-root ./project     graph tools for an assistant, on stdio
 //
 // The same entry point a bundle uses, so what someone receives is the thing
-// that was tested rather than a second launcher written for them. It is also
-// what `deno compile` turns into a single file with nothing to install.
+// that was tested rather than a second launcher written for them.
 //
-// One rule about the two streams, learned the hard way in the older runner:
-// **stdout is the result and nothing else.** Progress and errors go to
+// One rule about the two streams: **stdout is the result and nothing else.** Progress and errors go to
 // stderr, so `run graph.json | jq` works. A prompt printed to stdout put
 // "Text for 'Greeting': " in front of the JSON and nobody could parse it.
 
@@ -66,7 +64,7 @@ export interface CliOptions {
   serve?: boolean;
   /** Serve the built editor from this folder. */
   editor?: string;
-  /** Bind address. Loopback unless said otherwise; see `serve` for what that switches off. */
+  /** Bind address. Loopback unless said otherwise; `local` routes (`api.ts`) are off for any other. */
   host?: string;
   port?: number;
   /** Be an MCP server on stdio instead of running anything: see `backend/graph-editor/mcpServer.ts`. */
@@ -256,7 +254,7 @@ async function runServer(options: CliOptions): Promise<number> {
   // is different -- it was asked for -- and a busy one is said in a sentence
   // rather than as an unhandled 'error' event over a stack trace, which is
   // what a recipient running a bundle on a machine with anything on 8000 saw.
-  const { url, shutdown } = await (async () => {
+  const { url, loopback, shutdown } = await (async () => {
     if (options.port !== undefined) {
       try {
         return await start(options.port);
@@ -283,10 +281,15 @@ async function runServer(options: CliOptions): Promise<number> {
     );
   })();
   process.stderr.write(`Serving on ${url}\n`);
+  if (!loopback) {
+    const says = options.editor ? 'run code, open and save files and use the keys' : 'run this tool';
+    const local = options.editor ? 'Browsing, finding and opening files work' : 'Browsing the disk works';
+    process.stderr.write(`Warning: bound to ${options.host}: anyone who can reach this port can ${says}. ${local} on this machine only.\n`);
+  }
   // Only the editor: a deployed tool is configured by whoever runs it, and its
   // terminal is a log rather than something a person is sitting in front of.
   if (options.editor) {
-    // Imported here for the reason `runMcp` gives: a bundle has no `editor/`.
+    // Imported here for the reason `runMcp` gives: a bundle has no `graph-editor/`.
     const { setupLines } = await import('../../graph-editor/settings.ts');
     for (const line of await setupLines()) process.stderr.write(`${line}\n`);
   }
@@ -318,9 +321,9 @@ async function open(url: string): Promise<void> {
 /**
  * Be an MCP server until the client hangs up.
  *
- * Imported here and not at the top: the server is authoring, it lives under an
- * `editor/` folder, and a bundle leaves every one of those behind. A static
- * import would make each bundle fail on a file it was never meant to have.
+ * Imported here and not at the top: the server is authoring, it lives under
+ * `graph-editor/`, and a bundle leaves that folder behind. A static import
+ * would make each bundle fail on a file it was never meant to have.
  */
 async function runMcp(options: CliOptions): Promise<number> {
   let server: typeof import('../../graph-editor/mcpServer.ts');
@@ -360,11 +363,7 @@ async function runCheck(paths: string[]): Promise<number> {
  * asks no model: an ai node is skipped, which is how CI runs it. Exit code 1
  * when one fails.
  */
-async function runTests(argv: string[]): Promise<number> {
-  return withCore((core) => testWith(core, argv));
-}
-
-async function testWith(core: GraphCore, argv: string[]): Promise<number> {
+async function runTests(core: GraphCore, argv: string[]): Promise<number> {
   const offline = argv.includes('--offline');
   const only = argv.includes('--node') ? argv[argv.indexOf('--node') + 1] : '';
   const paths = argv.filter((arg, index) => !arg.startsWith('--') && argv[index - 1] !== '--node');
@@ -405,11 +404,7 @@ async function testWith(core: GraphCore, argv: string[]): Promise<number> {
  * of another kind has no example, and runs on what the nodes feeding it
  * produce, as the MCP server's `run_node` runs it.
  */
-async function runNodeCommand(argv: string[]): Promise<number> {
-  return withCore((core) => runNodeWith(core, argv));
-}
-
-async function runNodeWith(core: GraphCore, [path, nodeId, given]: string[]): Promise<number> {
+async function runNode(core: GraphCore, [path, nodeId, given]: string[]): Promise<number> {
   if (!path || !nodeId) throw new Error('Usage: run-node <graph or project> <node id> [\'{"port": value}\']');
   const graph = await loadGraph(path);
   const node = graph.nodes.find((candidate) => candidate.id === nodeId);
@@ -448,8 +443,8 @@ async function runCore(): Promise<number> {
 export async function main(argv: string[]): Promise<number> {
   if (argv[0] === 'core') return runCore();
   if (argv[0] === 'check') return runCheck(argv.slice(1));
-  if (argv[0] === 'test') return runTests(argv.slice(1));
-  if (argv[0] === 'run-node') return runNodeCommand(argv.slice(1));
+  if (argv[0] === 'test') return withCore((core) => runTests(core, argv.slice(1)));
+  if (argv[0] === 'run-node') return withCore((core) => runNode(core, argv.slice(1)));
   const options = parseArgs(argv);
   // First, and needing no graph: nothing below may get the chance to write a
   // line to stdout, which from here on belongs to the protocol.
