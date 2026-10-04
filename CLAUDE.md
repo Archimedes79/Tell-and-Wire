@@ -23,7 +23,7 @@ and `backend/gui-editor/`. Imports are relative. More in `docs/architecture.md`.
 ## How a change is made
 
 1. **Plan** the architecture for bigger changes, as modules: where it lives, what it
-   replaces, what goes. A change to the surface: a mockup first.
+   replaces, what goes.
 2. **Code**: high-quality code whose working you understand. Simplify; remove what is not
    needed.
 3. **Test**: write and run automated tests. Keep their number low; remove the least
