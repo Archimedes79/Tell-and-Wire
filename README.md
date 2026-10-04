@@ -15,7 +15,8 @@ folder that runs wherever Node runs -- offline, with a local model, if you like.
 ## What it is
 
 Tell & Wire is a node-based, no-code editor for AI workflows: you describe what each step
-should do, and a model writes it. The tools you build run on your own computer, with a
+should do, and a model writes it. The tools you build -- a chart from a CSV, a summary of
+every file in a folder, a chat, a panel of AI reviewers -- run on your own computer, with a
 local LLM (Ollama, LM Studio) or a model API of your choice.
 
 A tool in Tell & Wire has two halves.
