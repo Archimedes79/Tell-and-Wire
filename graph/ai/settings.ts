@@ -174,11 +174,10 @@ export const LOCAL_PROVIDERS = ['ollama', 'lmstudio'] as const;
 /**
  * Cached per provider, but only for a few seconds.
  *
- * It used to be cached for the life of the process, so swapping the loaded
- * model in LM Studio was invisible until something asked with `refresh` --
- * which only the status route does. A local probe is one request to a machine
- * you are already talking to, so the cache is here to keep a burst of calls
- * from making a burst of probes, nothing more.
+ * A local probe is one request to a machine you are already talking to, so
+ * the cache is here to keep a burst of calls from making a burst of probes,
+ * nothing more: a model swapped in LM Studio shows within seconds, and
+ * `refresh` (the status route's) asks again at once.
  */
 const probed = new Map<string, { models: string[] | null; at: number }>();
 const PROBE_TTL_MS = 5_000;

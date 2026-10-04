@@ -28,6 +28,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { delimiter, extname, join } from 'node:path';
 import type { ToolService, ToolSession, ToolSpec } from '../nodes/Runtime.ts';
+import { withoutKeys } from './providers.ts';
 
 /**
  * One configured server: a program to start, or a URL to talk to.
@@ -159,7 +160,8 @@ function launchPlan(
 }
 
 function stdioTransport(label: string, config: { command: string; args?: string[]; env?: Record<string, string>; cwd?: string }): Transport {
-  const env = { ...process.env, ...config.env };
+  // Without the keys this process holds, as a body is: what the server is to have, its entry in the settings file says.
+  const env = { ...withoutKeys(), ...config.env };
   const plan = launchPlan(config.command, config.args ?? [], env);
 
   const pending = new Map<number, { fulfil(value: unknown): void; fail(error: Error): void; release(): void }>();

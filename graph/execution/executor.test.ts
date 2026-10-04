@@ -27,7 +27,8 @@ describe('a loop', () => {
     const forgetful = [node('a'), node('b')];
     const forgetfulLoop = [edge('e1', 'a', 'o', 'b', 'i'), edge('e2', 'b', 'o', 'a', 'i')];
     expect(memoryFeedbackEdges(forgetful, forgetfulLoop, registry).size).toBe(0);
-    expect(() => topologicalLevels(forgetful, forgetfulLoop, new Set())).toThrow(/cycle/);
+    // Said by name, with the way out.
+    expect(() => topologicalLevels(forgetful, forgetfulLoop, new Set())).toThrow(/cycle through code node "a", code node "b".*data node/);
 
     // data remembers; code does not: the value the data node holds is what breaks the loop.
     const store = node('store', 'data', { data_value: 'old' });
@@ -70,6 +71,18 @@ describe('a failure', () => {
     const unwired = await run([failing({ catch_errors: true })], []);
     expect(unwired.status).toBe('partial');
     expect(unwired.error).toBeNull();
+  });
+
+  it('a node that catches its failure leaves the data node it feeds as it was, and hands it only the reason', async () => {
+    // A counter that held 6 went to null, and the next round counted from 1.
+    const counter = node('counter', 'data', { data_value: 6 });
+    const reason = node('reason', 'data', {});
+    await run(
+      [failing({ catch_errors: true }), counter, reason],
+      [edge('v', 'bad', 'value', 'counter', 'input'), edge('r', 'bad', 'error', 'reason', 'input')],
+    );
+    expect(counter.config.data_value).toBe(6);
+    expect(reason.config.data_value).toBe('the body blew up');
   });
 });
 

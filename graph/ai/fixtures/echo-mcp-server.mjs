@@ -49,7 +49,8 @@ const text = (value) => ({ content: [{ type: 'text', text: String(value) }] });
 
 function call(name, args) {
   if (name === 'add') return text(Number(args.a) + Number(args.b));
-  if (name === 'echo') return text(args.text);
+  // `$NAME` says what the server's environment holds under that name.
+  if (name === 'echo') return text(args.text.startsWith('$') ? process.env[args.text.slice(1)] ?? '(not set)' : args.text);
   if (name === 'fail') return { ...text('it did not work'), isError: true };
   return undefined;
 }

@@ -188,6 +188,16 @@ describe('retrying', () => {
     expect(calls).toHaveLength(1);
   });
 
+  it('an answer cut off by the token budget is an error that names TW_MAX_TOKENS, asked once', async () => {
+    const cutOff = { body: { choices: [{ finish_reason: 'length', message: { content: 'The total is 12' } }] } };
+    const calls = stubFetch([cutOff]);
+    await expect(service({ provider: 'lmstudio', model: 'local', retryDelay: 0 }).complete({ prompt: 'x' })).rejects.toThrow(/TW_MAX_TOKENS/);
+    expect(calls).toHaveLength(1);
+
+    stubFetch([{ body: { stop_reason: 'max_tokens', content: [{ type: 'text', text: 'The total is 12' }] } }]);
+    await expect(service({ provider: 'anthropic', model: 'claude', apiKeys: { anthropic: 'k' } }).complete({ prompt: 'x' })).rejects.toThrow(/TW_MAX_TOKENS/);
+  });
+
   it('gives up a call that runs past the clock, says so, and does not ask the same again', async () => {
     vi.useFakeTimers();
     try {

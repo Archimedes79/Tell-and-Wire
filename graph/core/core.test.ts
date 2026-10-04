@@ -47,6 +47,13 @@ describe('a graph core', () => {
     const events: CoreEvent[] = [];
     const ended = await counter.round({ graph: counting, trigger: { node_id: 'go', port_id: 'data' } }, (event) => events.push(event));
     expect(events[0]).toEqual({ type: 'plan', total: 3 });
+    // Progress ends at its total: every node counted is reported done, and one handed its answer is not counted.
+    const done = (list: CoreEvent[]) => list.filter((event) => event.type === 'node_done').length;
+    expect(done(events)).toBe(3);
+    const handed: CoreEvent[] = [];
+    await counter.round({ graph: counting, trigger: null, given: { go: { data: { event: null, values: { text: 'a' } } } } }, (event) => handed.push(event));
+    expect(handed[0]).toEqual({ type: 'plan', total: 2 });
+    expect(done(handed)).toBe(2);
     expect(ended.result.status).toBe('success');
     expect(ended.result.node_results.find((one) => one.node_id === 'count')?.outputs).toEqual({ words: 3 });
     expect(ended.nodes.go).toEqual({ values: { text: 'a b c' } });

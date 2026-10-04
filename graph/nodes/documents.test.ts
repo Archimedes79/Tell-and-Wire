@@ -33,6 +33,12 @@ describe('a file a node reads', () => {
     ));
     expect(said).toBe('# Bericht\n\n## Einleitung\n\nein **fettes** *Wort* & mehr\n\n- a\n- b\n1. eins\n\n| A | B |\n| --- | --- |\n| 1 | x \\| y |\n');
 
+    // A code point that does not exist is left out; a file that is broken says it is not a readable Word file.
+    expect(await docxMarkdown(docx(p(r('a&#99999999;b'))))).toBe('ab\n');
+    const damaged = docx(p(r('x')));
+    new DataView(damaged.buffer).setUint32(damaged.length - 22 + 16, 0xfffffff0, true);
+    await expect(docxMarkdown(damaged)).rejects.toThrow(/Not a readable Word file/);
+
     const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-documents-'));
     try {
       await writeFile(join(dir, 'note.txt'), 'hello');

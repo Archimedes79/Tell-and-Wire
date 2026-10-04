@@ -62,7 +62,9 @@ export function localCore(options: LocalCoreOptions = {}): GraphCore {
       const runtime = asked.offline ? offline(runtimeFor(report)) : runtimeFor(report);
       const trigger = asked.trigger;
       const only = trigger ? triggeredNodes(graph, trigger, memoryFeedbackEdges(graph.nodes, graph.edges, registry)) : null;
-      report({ type: 'plan', total: only?.size ?? graph.nodes.length });
+      // The nodes the round is asked for, less the ones it is handed an answer for: those are not run, and report nothing.
+      const planned = only ?? new Set(graph.nodes.map((node) => node.id));
+      report({ type: 'plan', total: [...planned].filter((id) => !(id in (asked.given ?? {}))).length });
       // A kept round is its own: what it answers is given, and nothing it does stands for the next.
       const replay = !!asked.given;
       const round = replay ? undefined : new RoundLatch(latch);

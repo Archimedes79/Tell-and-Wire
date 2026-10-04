@@ -209,7 +209,8 @@ export function neededFor(graph: Graph, nodeIds: Iterable<string>, feedback: Set
   return needed;
 }
 
-function walk(from: Iterable<string>, edges: GraphEdge[], forward: boolean): Set<string> {
+/** *from* and every node reached along *edges* -- downstream when *forward*, else upstream. */
+export function walk(from: Iterable<string>, edges: GraphEdge[], forward: boolean): Set<string> {
   const seen = new Set(from);
   const queue = [...seen];
   while (queue.length) {

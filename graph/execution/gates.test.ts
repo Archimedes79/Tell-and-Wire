@@ -166,7 +166,7 @@ describe('what stood still is not news', () => {
 
 describe('what a node holds belongs to its own graph', () => {
   it('is never handed to another graph of the same name', async () => {
-    // Two projects, both "Untitled Graph", with the same node `c`: the second
+    // Two projects, both "Untitled tool", with the same node `c`: the second
     // never ran it, and must not be handed what the first one's `c` made.
     const latch = new Latch();
     const build = (secret: string, open: boolean) => graphOf(

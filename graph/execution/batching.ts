@@ -92,15 +92,20 @@ export function mergeBatchOutputs(
     for (const port of node.outputs) if (port.id !== ERROR_PORT) merged[port.id] = [];
   }
 
+  // An item that leaves a port out is a null on it, or its list would run
+  // short and every later item would sit under the wrong one.
+  const keys = new Set(results.flatMap((result) => Object.keys(result ?? {})));
   for (const result of results) {
-    for (const [key, value] of Object.entries(result ?? {})) {
+    const own = result ?? {};
+    for (const key of keys) {
+      const value = key in own ? own[key] : null;
       if (!fanned && !multi.has(key)) {
         merged[key] = value;
         continue;
       }
       const target = (merged[key] ??= []) as unknown[];
       if (multi.has(key) && Array.isArray(value)) target.push(...value);
-      else target.push(value);
+      else if (!multi.has(key) || key in own) target.push(value);
     }
   }
   return merged;

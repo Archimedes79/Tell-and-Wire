@@ -52,6 +52,17 @@ describe('a stdio server', () => {
     expect(await session.call('subtract', {})).toMatch(/^Tool error: there is no tool named "subtract"/);
   });
 
+  it('is handed the environment of this process without its keys, and the ones its own entry sets', async () => {
+    process.env.TW_PLANTED_KEY = 'planted';
+    try {
+      const session = track(await mcpToolService({ echo: { ...echo(), env: { TW_GIVEN_TOKEN: 'given' } } }).open(['echo']));
+      expect(await session.call('echo', { text: '$TW_PLANTED_KEY' })).toBe('(not set)');
+      expect(await session.call('echo', { text: '$TW_GIVEN_TOKEN' })).toBe('given');
+    } finally {
+      delete process.env.TW_PLANTED_KEY;
+    }
+  });
+
   it('gives up on a tool that never answers, and lets Stop do it sooner', async () => {
     const wedged = track(await mcpToolService({ echo: echo() }, { callTimeoutMs: 300 }).open(['echo']));
     await expect(wedged.call('hang', {})).rejects.toThrow(/did not answer tools\/call within 0\.3 s/);

@@ -14,7 +14,6 @@ import { definitionShape, type Definitions } from '../authoring/definition.ts';
 import { ElementRunner } from './ElementRunner.ts';
 import type { Runtime } from './Runtime.ts';
 
-/** What a deploy bundle must carry for this node to run elsewhere. */
 /**
  * Who starts an event: the page -- one of its blocks, so the graph needs a
  * page --, a call from outside -- a script, a model over MCP, the graph
@@ -39,6 +38,7 @@ export interface Offer {
   startedBy?: StartedBy;
 }
 
+/** What a deploy bundle must carry for this node to run elsewhere. */
 export interface DeployNeeds {
   /** The bundle needs the page: the graph is used through it, not only from a terminal. */
   needsInterface: boolean;
@@ -322,7 +322,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * What this node offers whoever uses the graph from outside -- a page, a
    * script, the graph above: an event that starts a round, or an output it
    * hands back. Each under a name a caller uses, never a port:
-   * `execution/graphInterface.ts` gathers them into the graph's own.
+   * `backend/gui-editor/graphInterface.ts` gathers them into the graph's own.
    */
   offers(_node: GraphNode): Offer[] {
     return [];

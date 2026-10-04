@@ -32,9 +32,9 @@ export interface FileService {
 /**
  * What a body is handed besides its inputs: its second argument, `node`.
  *
- * A body runs where the keys are not -- a separate process that may read files
- * and nothing else of this machine's. So what needs the keys is not given to
- * it; it is *asked for*. `calls` are those questions: each becomes an async
+ * A body runs where the keys are not -- a separate process with no key in its
+ * environment and no leave to read the settings file. So what needs the keys is
+ * not given to it; it is *asked for*. `calls` are those questions: each becomes an async
  * function on `node` that sends its one argument out to the process holding
  * the graph and resolves to the answer, which must survive `JSON.stringify`.
  */

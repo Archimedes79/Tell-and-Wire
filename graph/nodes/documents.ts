@@ -30,13 +30,40 @@ export async function fileContent(path: string, files: FileService): Promise<str
   return mediaType ? inlineDataUrl(path, mediaType, files) : files.read(path);
 }
 
+/** A Word file that cannot be read, said the same way whatever is wrong with it. */
+class NotReadable extends Error {}
+const notReadable = (why: string): NotReadable => new NotReadable(`Not a readable Word file: ${why}.`);
+
+/** The most a Word file may unpack to: a few kilobytes of zip can claim gigabytes. */
+const UNPACKED_LIMIT = 100 * 1024 * 1024;
+
+/** *packed* inflated, if it unpacks to no more than *room* bytes. */
+async function inflate(packed: Uint8Array<ArrayBuffer>, room: number): Promise<Uint8Array> {
+  const reader = new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+    size += chunk.value.length;
+    if (size > room) {
+      await reader.cancel();
+      throw notReadable('it unpacks to more than 100 MB');
+    }
+    chunks.push(chunk.value);
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const chunk of chunks) { bytes.set(chunk, at); at += chunk.length; }
+  return bytes;
+}
+
 /** The files of a zip archive that *wanted* names, unpacked. */
 async function unzip(zip: Uint8Array, wanted: string[]): Promise<Map<string, string>> {
   const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
   let end = zip.length - 22;
   while (end >= 0 && view.getUint32(end, true) !== 0x06054b50) end -= 1;
-  if (end < 0) throw new Error('Not a Word document: it is no zip archive.');
+  if (end < 0) throw notReadable('it is no zip archive');
   const found = new Map<string, string>();
+  let room = UNPACKED_LIMIT;
   let at = view.getUint32(end + 16, true);
   for (let n = view.getUint16(end + 10, true); n > 0; n -= 1) {
     const method = view.getUint16(at + 10, true);
@@ -48,9 +75,8 @@ async function unzip(zip: Uint8Array, wanted: string[]): Promise<Map<string, str
     if (!wanted.includes(name)) continue;
     const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
     const packed = zip.slice(start, start + size);
-    const bytes = method === 0
-      ? packed
-      : new Uint8Array(await new Response(new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    const bytes = method === 0 ? packed : await inflate(packed, room);
+    room -= bytes.length;
     found.set(name, new TextDecoder().decode(bytes));
   }
   return found;
@@ -58,7 +84,10 @@ async function unzip(zip: Uint8Array, wanted: string[]): Promise<Map<string, str
 
 const entities = (text: string): string => text
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
-  .replace(/&#(x?)([0-9a-f]+);/gi, (_, hex: string, code: string) => String.fromCodePoint(parseInt(code, hex ? 16 : 10)))
+  .replace(/&#(x?)([0-9a-f]+);/gi, (_, hex: string, code: string) => {
+    const point = parseInt(code, hex ? 16 : 10);
+    return point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff) ? String.fromCodePoint(point) : '';
+  })
   .replace(/&amp;/g, '&');
 
 /** Whether a run property such as `<w:b/>` is on: present, and not set to off. */
@@ -90,9 +119,11 @@ function runsOf(paragraph: string): string {
  * footnotes, equations -- is left out rather than guessed at.
  */
 export async function docxMarkdown(zip: Uint8Array): Promise<string> {
-  const parts = await unzip(zip, ['word/document.xml', 'word/numbering.xml', 'word/styles.xml']);
+  // What is not a zip, or is one that lies about itself, ends in a RangeError or a failed inflate: all of it "not readable".
+  const parts = await unzip(zip, ['word/document.xml', 'word/numbering.xml', 'word/styles.xml'])
+    .catch((error: unknown) => { throw error instanceof NotReadable ? error : notReadable('it is damaged'); });
   const document = parts.get('word/document.xml');
-  if (!document) throw new Error('Not a Word document: there is no word/document.xml in it.');
+  if (!document) throw notReadable('there is no word/document.xml in it');
 
   // A style's name says what it is, whatever its id in this language.
   const styleNames = new Map<string, string>();

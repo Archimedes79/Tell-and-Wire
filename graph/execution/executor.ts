@@ -2,8 +2,9 @@
 //
 // The whole of it is four ideas.
 //
-// **Order.** Kahn's algorithm over the edges gives levels; everything in a
-// level can run at once because nothing in it feeds anything else in it.
+// **Order.** Kahn's algorithm over the edges gives levels: nothing in a level
+// feeds anything else in it. The nodes run one after another, level by level
+// and in the graph's own node order inside one, so a run is reproducible.
 //
 // **Memory edges.** A graph with a loop — a counter: a data node, and a code
 // node adding one to it — is not a mistake, it is how a tool remembers. The minimal
@@ -26,11 +27,47 @@ import { resultKeys, type NodeRunner, type Runners } from '../nodes/NodeRunner.t
 import type { Runtime } from '../nodes/Runtime.ts';
 import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from './batching.ts';
 import { Unread, filePorts, readPorts } from './fileInputs.ts';
-import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from './triggers.ts';
+import { RUN_PORT, firedNodes, neededFor, triggeredNodes, walk, type Trigger } from './triggers.ts';
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from './interface.ts';
 import { ERROR_PORT, fatalProblems, unrunnable } from './wiring.ts';
+
+/**
+ * Kahn's algorithm over *edges* but those in *skip*: the nodes in levels, each
+ * level waiting only for earlier ones, and the nodes it could not place, which
+ * sit in a loop or below one. The graph's own node order holds inside a level,
+ * so a run is reproducible.
+ */
+function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { levels: string[][]; stuck: Set<string> } {
+  const ids = new Set(nodes.map((n) => n.id));
+  const inDegree = new Map([...ids].map((id) => [id, 0]));
+  const successors = new Map<string, string[]>();
+
+  for (const e of edges) {
+    if (skip.has(e.id) || !ids.has(e.source_node_id) || !ids.has(e.target_node_id)) continue;
+    inDegree.set(e.target_node_id, (inDegree.get(e.target_node_id) ?? 0) + 1);
+    successors.set(e.source_node_id, [...(successors.get(e.source_node_id) ?? []), e.target_node_id]);
+  }
+
+  const levels: string[][] = [];
+  const stuck = new Set(ids);
+  let current = nodes.filter((n) => inDegree.get(n.id) === 0).map((n) => n.id);
+  while (current.length) {
+    levels.push(current);
+    const next = new Set<string>();
+    for (const id of current) {
+      stuck.delete(id);
+      for (const successor of successors.get(id) ?? []) {
+        const left = (inDegree.get(successor) ?? 0) - 1;
+        inDegree.set(successor, left);
+        if (left === 0) next.add(successor);
+      }
+    }
+    current = nodes.filter((n) => next.has(n.id)).map((n) => n.id);
+  }
+  return { levels, stuck };
+}
 
 /** Ids of the fewest edges that must be ignored to make the graph acyclic. */
 export function memoryFeedbackEdges(
@@ -47,53 +84,19 @@ export function memoryFeedbackEdges(
   };
 
   for (;;) {
-    const active = edges.filter(
-      (e) => !feedback.has(e.id) && byId.has(e.source_node_id) && byId.has(e.target_node_id),
-    );
-    const inDegree = new Map([...byId.keys()].map((id) => [id, 0]));
-    const successors = new Map<string, GraphEdge[]>();
-    for (const e of active) {
-      inDegree.set(e.target_node_id, (inDegree.get(e.target_node_id) ?? 0) + 1);
-      successors.set(e.source_node_id, [...(successors.get(e.source_node_id) ?? []), e]);
-    }
-
-    const queue = [...inDegree].filter(([, d]) => d === 0).map(([id]) => id);
-    const visited = new Set(queue);
-    while (queue.length) {
-      const id = queue.shift()!;
-      for (const e of successors.get(id) ?? []) {
-        const left = (inDegree.get(e.target_node_id) ?? 0) - 1;
-        inDegree.set(e.target_node_id, left);
-        if (left === 0 && !visited.has(e.target_node_id)) {
-          visited.add(e.target_node_id);
-          queue.push(e.target_node_id);
-        }
-      }
-    }
-
-    if (visited.size === byId.size) return feedback;
+    const { stuck } = levelsOf(nodes, edges, feedback);
+    if (!stuck.size) return feedback;
 
     // Cut one more edge into a node that remembers -- one that closes a loop:
-    // a node below a loop is unvisited too, and cutting the wire into it
+    // a node below a loop is stuck too, and cutting the wire into it
     // settles its value a round late for nothing. By the graph's node order
     // and by id, never by the order the wires happen to be stored in. If
     // there is none, the cycle is a real one and `topologicalLevels` reports it
     // as such.
-    const reaches = (from: string, to: string): boolean => {
-      const seen = new Set([from]);
-      const queue = [from];
-      while (queue.length) {
-        const id = queue.shift()!;
-        if (id === to) return true;
-        for (const e of successors.get(id) ?? []) {
-          if (!seen.has(e.target_node_id)) { seen.add(e.target_node_id); queue.push(e.target_node_id); }
-        }
-      }
-      return false;
-    };
+    const active = edges.filter((e) => !feedback.has(e.id) && byId.has(e.source_node_id) && byId.has(e.target_node_id));
     const order = new Map(nodes.map((n, index) => [n.id, index]));
     const [candidate] = active
-      .filter((e) => !visited.has(e.target_node_id) && remembers(e.target_node_id) && reaches(e.target_node_id, e.source_node_id))
+      .filter((e) => stuck.has(e.target_node_id) && remembers(e.target_node_id) && walk([e.target_node_id], active, true).has(e.source_node_id))
       .sort((a, b) => order.get(a.target_node_id)! - order.get(b.target_node_id)! || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     if (!candidate) return feedback;
     feedback.add(candidate.id);
@@ -106,37 +109,14 @@ export function topologicalLevels(
   edges: GraphEdge[],
   feedback: Set<string>,
 ): string[][] {
-  const ids = new Set(nodes.map((n) => n.id));
-  const inDegree = new Map([...ids].map((id) => [id, 0]));
-  const successors = new Map<string, string[]>();
-
-  for (const e of edges) {
-    if (feedback.has(e.id)) continue;
-    if (!ids.has(e.source_node_id) || !ids.has(e.target_node_id)) continue;
-    inDegree.set(e.target_node_id, (inDegree.get(e.target_node_id) ?? 0) + 1);
-    successors.set(e.source_node_id, [...(successors.get(e.source_node_id) ?? []), e.target_node_id]);
+  const { levels, stuck } = levelsOf(nodes, edges, feedback);
+  if (stuck.size) {
+    // The nodes the wires go round through, not the ones that merely hang below.
+    const live = edges.filter((e) => !feedback.has(e.id));
+    const round = nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
+    throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
+      + 'A loop is only allowed through a data node: route the value back through one, or remove a wire.');
   }
-
-  const levels: string[][] = [];
-  let current = nodes.filter((n) => inDegree.get(n.id) === 0).map((n) => n.id);
-  let seen = 0;
-
-  while (current.length) {
-    levels.push(current);
-    seen += current.length;
-    const next = new Set<string>();
-    for (const id of current) {
-      for (const successor of successors.get(id) ?? []) {
-        const left = (inDegree.get(successor) ?? 0) - 1;
-        inDegree.set(successor, left);
-        if (left === 0) next.add(successor);
-      }
-    }
-    // Keep the graph's own node order inside a level, so a run is reproducible.
-    current = nodes.filter((n) => next.has(n.id)).map((n) => n.id);
-  }
-
-  if (seen !== ids.size) throw new Error('Graph contains a cycle; execution is not possible.');
   return levels;
 }
 
@@ -297,6 +277,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const results: NodeResult[] = [];
   const failed = new Set<string>();
   const partial = new Set<string>();
+  // Nodes that threw and caught it: nulls on every port but `error`, nothing for memory to keep.
+  const caught = new Set<string>();
   // Nodes that had nothing to do. Not a failure and not a success: a chat
   // opened and ▶ Run pressed before anyone has said anything.
   const idle = new Set<string>();
@@ -343,6 +325,12 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
     return '';
   };
 
+  /** A node's result, and the node done: each one the round was asked for is counted once, ran or not. */
+  const finish = (result: NodeResult): void => {
+    results.push(result);
+    runtime.report?.({ type: 'node_done', node_id: result.node_id, status: result.status });
+  };
+
   // Answered before anything is asked. Put in before the levels rather than
   // inside them, because a node whose result is already known has nothing the
   // loop does to it: no element to find, no upstream failure to inherit, no
@@ -370,7 +358,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
 
       if (!element) {
         failed.add(nodeId);
-        results.push({
+        finish({
           node_id: nodeId, status: 'error', inputs: {}, outputs: {},
           error: `Unknown node type: ${node.node_type}`,
         });
@@ -383,7 +371,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         const before = edges.find((e) => e.target_node_id === nodeId && !feedback.has(e.id) && failed.has(e.source_node_id));
         const culprit = before && byId.get(before.source_node_id);
         const message = culprit ? `${nodeName(culprit)} failed before it, so it could not run.` : 'Something before it failed, so it could not run.';
-        results.push({ node_id: nodeId, status: 'skipped', inputs: {}, outputs: {}, error: null, messages: [message] });
+        finish({ node_id: nodeId, status: 'skipped', inputs: {}, outputs: {}, error: null, messages: [message] });
         continue;
       }
 
@@ -399,10 +387,10 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         if (kept) {
           held.add(nodeId);
           outputs.set(nodeId, kept);
-          results.push({ node_id: nodeId, status: 'skipped', inputs, outputs: kept, held: true, error: null, messages: [`${shut} What it produced last stands.`] });
+          finish({ node_id: nodeId, status: 'skipped', inputs, outputs: kept, held: true, error: null, messages: [`${shut} What it produced last stands.`] });
         } else {
           idle.add(nodeId);
-          results.push({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: [`${shut} It has produced nothing yet, so what needs it waits.`] });
+          finish({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: [`${shut} It has produced nothing yet, so what needs it waits.`] });
         }
         continue;
       }
@@ -417,7 +405,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         : nothingToDo(element, node, inputs, edges, feedback);
       if (why) {
         idle.add(nodeId);
-        results.push({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: [why] });
+        finish({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: [why] });
         continue;
       }
 
@@ -436,11 +424,10 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
           outputs.set(nodeId, kept);
           // What it hands on now is what it made last, for a later round its ◆ stays shut in.
           options.latch?.set(latchKey(node), kept);
-          results.push({
+          finish({
             node_id: nodeId, status: 'success', inputs, outputs: kept, error: null, reused: true,
             messages: ['Reused from an earlier run: nothing it depends on has changed.'],
           });
-          runtime.report?.({ type: 'node_done', node_id: nodeId, status: 'success' });
           continue;
         }
         const { produced, failures } = await runNode(
@@ -453,25 +440,23 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         if (key && !failures.length) options.reuse!.set(key, produced);
         const result = ranTo(element, node, inputs, produced, failures);
         if (result.status === 'partial') partial.add(nodeId);
-        results.push(result);
-        runtime.report?.({ type: 'node_done', node_id: nodeId, status: result.status });
+        finish(result);
       } catch (error) {
         // Stopped in the middle of this node: not the node's failure, and not
         // something a catch-errors port should turn into data.
         if (signal?.aborted) {
-          results.push({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: ['Stopped.'] });
-          runtime.report?.({ type: 'node_done', node_id: nodeId, status: 'skipped' });
+          finish({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: ['Stopped.'] });
           continue;
         }
         const result = failedWith(element, node, inputs, error);
         if (result.status === 'partial') {
           outputs.set(nodeId, result.outputs);
           partial.add(nodeId);
+          caught.add(nodeId);
         } else {
           failed.add(nodeId);
         }
-        results.push(result);
-        runtime.report?.({ type: 'node_done', node_id: nodeId, status: result.status });
+        finish(result);
       }
     }
   }
@@ -479,7 +464,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // What stood still is not news: a reply held from the last round must not be
   // added to the conversation a second time, nor handed back as this round's result.
   for (const nodeId of held) outputs.delete(nodeId);
-  settleMemory(graph, feedback, outputs, results, registry);
+  settleMemory(graph, feedback, outputs, results, registry, caught);
 
   const status: ExecutionResult['status'] = signal?.aborted
     ? 'cancelled'
@@ -938,6 +923,7 @@ function settleMemory(
   outputs: Map<string, Record<string, unknown>>,
   results: NodeResult[],
   registry: Runners,
+  caught: Set<string>,
 ): void {
   const byId = new Map(graph.nodes.map((n) => [n.id, n]));
 
@@ -955,7 +941,9 @@ function settleMemory(
   }
 
   for (const { target, element, port, wires, loops } of ports.values()) {
-    const delivered = wires.filter((edge) => edge.source_port_id in (outputs.get(edge.source_node_id) ?? {}));
+    // What a node that caught its failure put on its ports is "nothing arrived", not a value to keep: a counter would go 6, null, 1.
+    const delivered = wires.filter((edge) => edge.source_port_id in (outputs.get(edge.source_node_id) ?? {})
+      && !(caught.has(edge.source_node_id) && edge.source_port_id !== ERROR_PORT));
     if (!delivered.length) continue;
     const values = delivered.map((edge) => outputs.get(edge.source_node_id)![edge.source_port_id]);
     const value = wires.length > 1 ? values : values[0];

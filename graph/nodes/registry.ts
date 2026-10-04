@@ -3,8 +3,8 @@
 // One list, built from the element classes themselves. The editor keeps its own
 // registry of subclasses that add the config panels — this one is what a bundle
 // imports, and it is the reason a bundle contains no editor. The blocks of a
-// page are not run by the executor: the page asks them (`page.ts`), and
-// `widgets/roster.ts` is their list.
+// page are not run by the executor: the page asks them
+// (`backend/gui-editor/widgets/page.ts`), and `widgets/roster.ts` there is their list.
 
 import type { NodeRunner } from './NodeRunner.ts';
 import type { NodeType } from '../graph.ts';

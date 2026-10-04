@@ -6,14 +6,16 @@
 // the whole reason the services are passed in rather than imported.
 
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, realpathSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { lent, type CodeService, type FileService, type Runtime } from '../nodes/Runtime.ts';
-import { aiService, CREDENTIALS } from '../ai/providers.ts';
+import { aiService, withoutKeys } from '../ai/providers.ts';
 import { mcpToolService } from '../ai/mcp.ts';
-import { aiSetting, configuredMcpServers, configuredSettings } from '../ai/settings.ts';
+import { aiSetting, candidatePaths, configuredMcpServers, configuredSettings } from '../ai/settings.ts';
+
+export { SECRET_NAME } from '../ai/providers.ts';
 
 export const nodeFiles: FileService = {
   resolve: (path: string) => resolve(path),
@@ -56,13 +58,40 @@ export const nodeFiles: FileService = {
   },
 };
 
+/** Whether *path* is *folder* or lies in it (compared the way the platform compares names). */
+function inside(folder: string, path: string): boolean {
+  const way = relative(folder, path);
+  return way === '' || (!way.startsWith('..') && !isAbsolute(way));
+}
+
+/**
+ * *root* and all it holds except the *keys*. A folder that holds one is not
+ * handed over whole but entry by entry, the way to the key only.
+ */
+function opened(root: string, keys: string[]): string[] {
+  // The keys as this root spells the way to them: a root reached through a
+  // link or a short Windows name would else never be seen to hold one.
+  const real = realpathSync(root);
+  const hidden = keys.filter((key) => inside(real, key)).map((key) => join(root, relative(real, key)));
+  const open = (path: string): string[] => {
+    if (hidden.some((key) => inside(key, path))) return [];
+    if (!hidden.some((key) => inside(path, key))) return [path];
+    return readdirSync(path).flatMap((name) => open(join(path, name)));
+  };
+  return open(root);
+}
+
 /**
  * What a body is allowed to do, as flags to its own interpreter.
  *
  * Node's permission system denies everything once it is on, so what is listed
- * here is the whole list. Files stay open — reading and writing them is most
- * of what a body is *for*, and a graph that cannot touch a file is a graph
- * that cannot do its job.
+ * here is the whole list, and it only ever allows -- there is no flag for "all
+ * but". So the list is made: a body reads the working directory, where a
+ * graph's files are, less the settings file that holds the keys (`aiSetting`'s
+ * file, every one `candidatePaths` names), and the temp folder; it writes the
+ * temp folder only. A file elsewhere reaches it as an input typed `file_path`,
+ * which the executor reads for it (`readsFileInputs`), and what it makes
+ * leaves as an output, which an end point writes.
  *
  * What closes: starting other programs, loading native addons, spawning
  * worker threads, opening a debugger port. A body has no business doing any
@@ -70,24 +99,18 @@ export const nodeFiles: FileService = {
  * it.
  *
  * What this does **not** close is the network: Node has no flag for it (Deno
- * does). A body can still reach out. Worth knowing rather than assuming.
+ * does). A body can still reach out. Nor a link in the working directory that
+ * points at the settings file: Node follows links past its own list.
  */
-const SANDBOX = ['--permission', '--allow-fs-read=*', '--allow-fs-write=*'];
-
-/** What a variable is called that unlocks something: a key, a token, a password. */
-export const SECRET_NAME = /KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH/i;
-
-/**
- * This process's environment as a body's process is handed it: without a
- * provider's credential (`CREDENTIALS`) or anything else named like one. This
- * process asks models, so its environment may hold their keys -- and a body,
- * one a model wrote or one in a folder somebody handed over, would read them
- * there, which is what `node.llm` exists to spare it. The rest stays: Node
- * needs PATH, SYSTEMROOT and TEMP to start at all.
- */
-function bodyEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
-  const credentials = new Set(Object.values(CREDENTIALS).map((credential) => credential.env.toUpperCase()));
-  return Object.fromEntries(Object.entries(env).filter(([name]) => !credentials.has(name.toUpperCase()) && !SECRET_NAME.test(name)));
+function sandbox(): string[] {
+  const keys = candidatePaths().filter((path) => existsSync(path)).flatMap((path) => [path, realpathSync(path)]);
+  const temp = [...new Set([tmpdir(), realpathSync(tmpdir())])].flatMap((path) => opened(path, keys));
+  const flags = ['--permission', ...[...opened(process.cwd(), keys), ...temp].map((path) => `--allow-fs-read=${path}`),
+    ...temp.map((path) => `--allow-fs-write=${path}`)];
+  // Windows ends a command line at 32 KB: a folder with that many
+  // entries beside the settings file is a failure to say, not `ENAMETOOLONG`.
+  if (flags.join(' ').length > 30_000) throw new Error('the folders a body may read hold too many entries beside the settings file: keep it in a folder of its own.');
+  return flags;
 }
 
 /**
@@ -98,6 +121,12 @@ function bodyEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEn
 const MARK = '\u001etell-and-wire:';
 /** How long a body that has handed over its result may take to end by itself. */
 const LINGER_MS = 1500;
+
+/** How long a body may run, in ms: `TW_BODY_TIMEOUT_MS`, 0 for as long as it takes. */
+function bodyTimeoutMs(): number {
+  const given = Number(process.env.TW_BODY_TIMEOUT_MS);
+  return process.env.TW_BODY_TIMEOUT_MS && given >= 0 ? given : 600_000;
+}
 
 /**
  * Running an authored body.
@@ -158,7 +187,7 @@ export const nodeCode: CodeService = {
     try {
       await writeFile(file, wrapper, 'utf8');
       const given = { inputs, calls: Object.keys(context?.calls ?? {}) };
-      const result = await converse(process.execPath, [...SANDBOX, file], JSON.stringify(given), context?.calls ?? {}, signal);
+      const result = await converse(process.execPath, [...sandbox(), file], JSON.stringify(given), context?.calls ?? {}, signal);
       if (result === undefined) throw new Error('the body returned nothing; does it return an object?');
       if (result === null || typeof result !== 'object') throw new Error('the body must return an object keyed by output port.');
       return result as Record<string, unknown>;
@@ -204,14 +233,18 @@ function converse(
 ): Promise<unknown> {
   return new Promise((fulfil, fail) => {
     if (signal?.aborted) return fail(new Error('Stopped.'));
-    const child = spawn(command, args, { windowsHide: true, env: bodyEnvironment() });
+    const child = spawn(command, args, { windowsHide: true, env: withoutKeys() });
     // Text, decoded across chunk boundaries: a line is split on, and a character must not be.
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
     // Stop means stop: a body in a loop is a process, and a process can be ended.
     const stop = () => { child.kill(); };
     signal?.addEventListener('abort', stop, { once: true });
-    child.on('close', () => signal?.removeEventListener('abort', stop));
+    // Nor does a body that never ends hold the run for ever.
+    const limit = bodyTimeoutMs();
+    let late = false;
+    const timer = limit > 0 ? setTimeout(() => { late = true; child.kill(); }, limit) : undefined;
+    child.on('close', () => { signal?.removeEventListener('abort', stop); clearTimeout(timer); });
     // A body that exits before reading its input closes the pipe under the
     // write. That is the body's failure, and its exit code reports it.
     child.stdin.on('error', () => {});
@@ -265,6 +298,7 @@ function converse(
     child.on('error', (error) => fail(error));
     child.on('close', (code) => {
       if (answered) return fulfil(result);
+      if (late) return fail(new Error(`ran longer than ${limit / 1000} s (TW_BODY_TIMEOUT_MS)`));
       if (code === 0) return fulfil(undefined);
       if (signal?.aborted) return fail(new Error('Stopped.'));
       // The sentence a person needs is the one naming the error. A thrown
@@ -273,7 +307,9 @@ function converse(
       const lines = err.trim().split('\n');
       const named = lines.findIndex((line) => /^\w*Error\b/.test(line.trim()));
       const message = named >= 0 ? lines.slice(named, named + 2).join('\n') : lines.slice(-3).join('\n');
-      fail(new Error(message.trim() || `exited with ${code}`));
+      // Node's "Use --allow-fs-write" is advice for whoever starts the interpreter, not for the person reading this.
+      const denied = /Use --allow-fs-\w+ to manage permissions\./;
+      fail(new Error(message.replace(denied, 'A body may read the working directory (not the settings file) and write the temp folder only.').trim() || `exited with ${code}`));
     });
   });
 }

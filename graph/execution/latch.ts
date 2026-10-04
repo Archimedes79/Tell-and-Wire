@@ -19,7 +19,7 @@
 // hand on, and what needs it waits for the event that opens the gate.
 //
 // **Whose value it is.** A graph carries no identity of its own -- a new one
-// is "Untitled Graph", like every other -- so a held value is kept under what
+// is "Untitled tool", like every other -- so a held value is kept under what
 // made it: the graph's name and shape (its nodes and wires), the node as
 // written, and every node upstream of it as written. Two graphs that differ
 // anywhere a value could come from never hand each other one; edit a node's
@@ -64,9 +64,9 @@ export class Latch {
       return from ? [from.id, from.node_type, keepsItsOwn(from) ? null : from.config, from.inputs, from.outputs] : [id];
     });
     const key = createHash('sha256').update(JSON.stringify([graphKey(graph), node.id, made])).digest('hex');
-    this.owners.set(key, node.id);
-    // Asked for far more often than kept: what nothing was kept under is let go.
+    // Asked for far more often than kept: what nothing was kept under is let go -- before this one is added, which nothing is kept under yet.
     if (this.owners.size > 4 * LIMIT) for (const asked of this.owners.keys()) if (!this.kept.has(asked)) this.owners.delete(asked);
+    this.owners.set(key, node.id);
     return key;
   }
 

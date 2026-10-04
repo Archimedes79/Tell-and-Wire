@@ -88,6 +88,22 @@ export const CREDENTIALS: Record<string, { key: string; env: string }> = {
   github_copilot: { key: 'github_copilot', env: 'GITHUB_TOKEN' },
 };
 
+/** What a variable is called that unlocks something: a key, a token, a password. */
+export const SECRET_NAME = /KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH/i;
+
+/**
+ * *env* as a process this one starts is handed it -- a code body, a tool
+ * server -- without a provider's credential (`CREDENTIALS`) or anything else
+ * named like one. This process asks models, so its environment may hold their
+ * keys, and what it starts would read them there: a body, one a model wrote or
+ * one in a folder somebody handed over, which is what `node.llm` exists to
+ * spare it. The rest stays: Node needs PATH, SYSTEMROOT and TEMP to start at all.
+ */
+export function withoutKeys(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const credentials = new Set(Object.values(CREDENTIALS).map((credential) => credential.env.toUpperCase()));
+  return Object.fromEntries(Object.entries(env).filter(([name]) => !credentials.has(name.toUpperCase()) && !SECRET_NAME.test(name)));
+}
+
 /** A provider that speaks the OpenAI chat-completions API. Its credential slot, if any, is in `CREDENTIALS`. */
 interface OpenAIStyle {
   /** Which key in `endpoints` holds its base URL. */
@@ -140,7 +156,8 @@ export class EmptyCompletionError extends Error {
 }
 
 /**
- * The model ran out of tokens before it said anything.
+ * The model ran out of tokens before it finished: before it said anything, or
+ * in the middle of its answer.
  *
  * Its own type because it must not be retried: the same request with the same
  * budget ends the same way, only slower.
@@ -449,13 +466,16 @@ function sampling(request: AiRequest): { temperature?: number } {
   return request.temperature === undefined ? {} : { temperature: request.temperature };
 }
 
-/** The model's budget spent before it said a word: said as that, and not retried for the same nothing. */
-function outOfBudget(provider: string, model: string, maxTokens: number, thought = 0): OutOfBudgetError {
-  return new OutOfBudgetError(
-    `${provider}/${model} used its whole budget of ${maxTokens} tokens`
-    + `${thought ? ` thinking (${thought} characters of it)` : ''} and had none left for the answer. `
-    + 'Raise TW_MAX_TOKENS, turn the model\'s thinking off where it is served, or use a model that does not think.',
-  );
+/**
+ * The model's budget spent before it finished -- a cut-off answer is no answer --
+ * said as that, and not retried for the same cut.
+ */
+function outOfBudget(provider: string, model: string, maxTokens: number, cut: boolean, thought = 0): OutOfBudgetError {
+  const spent = `${provider}/${model} used its whole budget of ${maxTokens} tokens`;
+  return new OutOfBudgetError(cut
+    ? `${spent} and its answer stops short. Raise TW_MAX_TOKENS, or ask for a shorter one.`
+    : `${spent}${thought ? ` thinking (${thought} characters of it)` : ''} and had none left for the answer. `
+      + 'Raise TW_MAX_TOKENS, turn the model\'s thinking off where it is served, or use a model that does not think.');
 }
 
 /**
@@ -520,16 +540,16 @@ function openAiStyle(
       }[] | undefined;
       const message = choices?.[0]?.message;
 
+      const asked = (Array.isArray(message?.tool_calls) ? message.tool_calls : []) as
+        { id?: string; function?: { name?: string; arguments?: unknown } }[];
       // A model that thinks before it answers -- most local ones do now -- spends
       // the same token budget on the thinking. When the budget runs out there,
       // the answer is empty, and an empty answer is otherwise retried: three
-      // long waits for the same nothing. Said as what it is, once.
-      if (choices?.[0]?.finish_reason === 'length' && !message?.content?.trim()
-          && !(Array.isArray(message?.tool_calls) && message.tool_calls.length)) {
-        throw outOfBudget(provider, String(request.model), settings.maxTokens, message?.reasoning_content?.length ?? 0);
+      // long waits for the same nothing. And an answer that runs out in the
+      // middle is not a success. Said as what it is, once.
+      if (choices?.[0]?.finish_reason === 'length' && !asked.length) {
+        throw outOfBudget(provider, String(request.model), settings.maxTokens, Boolean(message?.content?.trim()), message?.reasoning_content?.length ?? 0);
       }
-      const asked = (Array.isArray(message?.tool_calls) ? message.tool_calls : []) as
-        { id?: string; function?: { name?: string; arguments?: unknown } }[];
       said = message;
       calls = asked.map((call, index) => ({
         id: call.id ?? `call_${index}`,
@@ -605,8 +625,8 @@ function anthropic(request: AiRequest, settings: ProviderSettings): Conversation
       }));
       const text = content?.map((part) => part.text ?? '').join('') ?? '';
       // A model that thinks spends the same budget on it, and may have none left to answer with.
-      if (body.stop_reason === 'max_tokens' && !text.trim() && !calls.length) {
-        throw outOfBudget('anthropic', String(request.model), settings.maxTokens);
+      if (body.stop_reason === 'max_tokens' && !calls.length) {
+        throw outOfBudget('anthropic', String(request.model), settings.maxTokens, Boolean(text.trim()));
       }
       return { text, calls };
     },

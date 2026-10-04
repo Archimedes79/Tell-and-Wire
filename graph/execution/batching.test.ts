@@ -32,6 +32,8 @@ describe('running once per item', () => {
     expect(mergeBatchOutputs(n, [{ out: 1 }, { out: 2 }], true)).toEqual({ out: [1, 2] });
     expect(mergeBatchOutputs(n, [{ out: 1 }], true)).toEqual({ out: [1] });
     expect(mergeBatchOutputs(n, [], true)).toEqual({ out: [] });
+    // An item that leaves a port out is a null there: the lists stay as long as the items are many.
+    expect(mergeBatchOutputs(n, [{ out: 1 }, { out: 2, note: 'b' }, { out: 3 }], true)).toEqual({ out: [1, 2, 3], note: [null, 'b', null] });
     // A port declared multi is flattened.
     expect(mergeBatchOutputs(node([], [port('out', 'output', true)]), [{ out: [1, 2] }, { out: [3] }], true)).toEqual({ out: [1, 2, 3] });
   });

@@ -1,15 +1,7 @@
 // The graph as it is stored and as a run sees it.
 //
-// One difference from the Python model this replaces, and it is the point of
-// the rewrite: **a node's config is opaque here.** It used to be a record of 32
-// fields shared by six node types, and a widget's a record of 18 shared by
-// eight kinds, so a divider carried a file-selector prompt and a data node
-// carried twenty-eight fields it never read. Which fields belonged to whom was
-// written down separately, as `config_fields`, and enforced by a test that
-// parsed each element's source code — a lint doing a type system's job.
-//
-// Here the element owns its config type (see `graph/nodes/ElementRunner.ts`). This file knows a
-// config is an object; only the element knows what is in it.
+// **A node's config is opaque here.** Its element owns the type (`nodes/ElementRunner.ts`):
+// this file knows a config is an object, and only the element knows what is in it.
 
 export type NodeType = 'start' | 'folder' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
 
@@ -151,7 +143,7 @@ export function mergeResults(previous: ExecutionResult, fresh: ExecutionResult):
  */
 export function defaultMetadata(): GraphMetadata {
   return {
-    name: 'Untitled Graph',
+    name: 'Untitled tool',
     description: '',
     gui_scheme: 'night',
   };
