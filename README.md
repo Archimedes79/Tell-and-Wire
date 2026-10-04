@@ -21,22 +21,25 @@ local LLM (Ollama, LM Studio) or a model API of your choice.
 
 A tool in Tell & Wire has two halves.
 
-- **The graph** (Graph tab): nodes wired together. A round begins at a **start point**,
-  runs through **code nodes**, **AI nodes**, **data nodes** (values kept between rounds),
+- **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
+  runs through **code nodes**, **AI nodes**, **data nodes** (values kept between runs),
   **folder nodes** and **subgraphs**, and ends at **end points**.
-- **The page** (Gui tab): blocks such as text, a file picker, a dropdown, a slider, a
+- **The page** (Page tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
   what an end point hands back. It connects by name; nothing is wired to the page.
 
 A node is a heading and a short text that says what it should do. ✨ writes the node's
 files from that text: `input.js` and `output.js` (what goes in and out, each with an
-example) and `code.js` or `prompt.md`. Every file is plain text in the project folder, so
+example) and `code.js` or `prompt.md`. Every file is plain text in the tool's folder, so
 you can read it, change it and diff it.
 
-**▶ Run** runs the tool in the App tab, as its user will see it. A round that went well
+**▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **Deploy** writes a zip that anyone with Node can unzip and
 start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
 The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
+A code node's JavaScript runs in a process of its own: it reads the working directory
+(not `ai-settings.json`), writes only the temp folder, starts no program and holds no key.
+The network stays open to it.
 
 ## Download and start
 
@@ -70,22 +73,24 @@ directory, so run the examples from the repository root:
 ```bash
 node backend/app/main.ts examples/population_plotter          # run once, print the result as JSON
 node backend/app/main.ts check examples/population_plotter    # what is wrong, without running
-node backend/app/main.ts test --offline examples/nested_statistics   # node examples and kept rounds
-node backend/app/main.ts my_project --serve                   # serve its page
-node backend/app/main.ts my_project --bundle ./out            # write a deployable folder
-node backend/app/main.ts --mcp --mcp-root ./projects          # an MCP server on stdio
+node backend/app/main.ts test --offline examples/nested_statistics   # node examples and kept runs
+node backend/app/main.ts my_tool --serve                      # serve its page
+node backend/app/main.ts my_tool --bundle ./out               # write a deployable folder
+node backend/app/main.ts --mcp --mcp-root ./tools             # an MCP server on stdio
 ```
 
 ## Set up a model
 
 ✨ asks a model to write a node's files, and an AI node asks one each time it runs.
 
-- **⚙ Settings → Keys and addresses**: paste an API key or a server address. Keys are
-  write-only: saved on this machine, never shown again.
-- **⚙ Settings → AI**: choose the provider and model. This one setting serves ✨, ▶ Try
-  and every AI node that does not name its own model.
+Open **⚙ Settings**, fill in what you need, press **Save**:
 
-Both are saved in `ai-settings.json`. It is looked for in the working directory, then in the
+- **AI**: the provider and model. This one setting serves ✨, ▶ Try and every AI node
+  that does not name its own model.
+- **Keys** and **Server addresses**: paste an API key or a server address. Keys are
+  write-only: saved on this machine, never shown again.
+
+Settings are saved in `ai-settings.json`. It is looked for in the working directory, then in the
 folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as
 `~/.tell-and-wire/settings.json`; `TW_SETTINGS` names one file instead. The file is
 gitignored; `ai-settings.example.json` shows its shape. Environment variables win over the
@@ -115,8 +120,10 @@ servers: list them under *Advanced → Tools the model may use*, one per line --
 ```
 
 A graph can name a server but never the command that starts one, so a graph someone hands
-you cannot start a program of its choosing. A tool call gets two minutes
-(`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight rounds of calls per answer.
+you cannot start a program of its choosing. A server started by `command` does not
+inherit variables named like keys, tokens, secrets or passwords from the environment: give
+it what it needs in its own `env`. A tool call gets two minutes
+(`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight turns of calls per answer.
 
 ## Docker
 
@@ -127,10 +134,10 @@ docker run -p 127.0.0.1:8000:8000 -v ./data:/app/data ghcr.io/archimedes79/tell-
 
 ## Examples
 
-[`examples/`](examples/) holds seven project folders; open one with **File → Open…**. The
+[`examples/`](examples/) holds seven tools, each a folder; open one with **File → Open…**. The
 simplest are population_plotter (choose a CSV, see a chart; no model), folder_summaries
 (a summary of each file in a folder) and chat (a chat block and an AI node).
-file_summarizer starts one round from a picker, a dropdown and a button. nested_statistics
+file_summarizer starts one run from a picker, a dropdown and a button. nested_statistics
 shows a subgraph, a hand-written page and a kept test. paper_review_panel and
 portfolio_review are teams of AI reviewers.
 
@@ -138,7 +145,7 @@ portfolio_review are teams of AI reviewers.
 
 - [docs/user-guide.md](docs/user-guide.md): how to build a tool, step by step.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
-  between them, the project format, the wrapper's APIs and the core protocol, and how to
+  between them, the tool's folder format, the wrapper's APIs and the core protocol, and how to
   extend Tell & Wire.
 
 ## Licence

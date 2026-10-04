@@ -1,18 +1,18 @@
 # Architecture
 
 How Tell & Wire is put together: the parts and their folders, the rules between them,
-how a round runs, the project format, the wrapper's APIs and the core protocol, and how to
-extend it. Code comments explain each file; this explains how the files relate. Where a
-test holds a claim, the test is named.
+how a round runs (the editor says *run*), the project format, the wrapper's APIs and the
+core protocol, and how to extend it. Code comments explain each file; this explains how
+the files relate. Where a test holds a claim, the test is named.
 
 ## The parts
 
 | Part | Folder | What it holds |
 |---|---|---|
 | Graph editor, frontend | `frontend/graph-editor/` | `canvas/` (the graph on screen), `nodes/<kind>/` (each node kind's `<Kind>NodeGuiBuilder.ts` and panels), `authoring/` (a node's text, its ✨ rows, ▶ Try), `fields/` |
-| Graph editor, backend | `backend/graph-editor/` | `routes.ts` (the `editor` routes: save, open, run one node), `generate.ts`, `brief.ts`, `graphPrompt.ts` (✨), `files.ts`, `settings.ts`, `zip.ts` (Deploy), `mcpServer.ts`. Not in a deployed tool |
+| Graph editor, backend | `backend/graph-editor/` | `routes.ts` (the `editor` routes: save, open, run one node), `generate.ts`, `generatePrompts.ts` (what ✨ sends), `brief.ts`, `graphPrompt.ts` (✨), `files.ts`, `settings.ts`, `zip.ts` (Deploy), `mcpServer.ts` with `mcp/` (spec, confinement, tools, transport). Not in a deployed tool |
 | The graph's code and execution | `graph/` | `graph.ts` (format types), `execution/` (the executor, what starts a round), `core/` (the graph core: `protocol.ts`, `localCore.ts`, `stdio.ts`, `node.ts`), `nodes/<kind>/` (`<Kind>NodeRunner.ts`, `registry.ts`, base classes), `ai/` (model client, settings), `authoring/` (definitions, ✨ prompts, examples) |
-| Gui editor, frontend | `frontend/gui-editor/` | `page/` (the Gui and App tabs), `widgets/<kind>/` (each block kind's builder, view and panel), `runtime/` (the page a deployed tool serves) |
+| Gui editor, frontend | `frontend/gui-editor/` | `page/` (the Page and App tabs), `widgets/<kind>/` (each block kind's builder, view and panel), `runtime/` (the page a deployed tool serves) |
 | Gui editor, backend | `backend/gui-editor/` | `session.ts` (the graph in use and its state), `rounds.ts` (the queue of rounds), `graphInterface.ts` (the graph's names), `widgets/<kind>/` (`<Kind>WidgetRunner.ts`), `widgets/page.ts` |
 | The shell, frontend | `frontend/app/` | `App.tsx`, toolbar, File menu, settings, `store/` (the open document, undo), `document/`, `api/`, `ui/`, `dialogs/`, `fields/`, `elements/` (the builders' registry) |
 | The shell, backend | `backend/app/` | `main.ts`, `cli/` (command line, deploy bundle, launchers), `http.ts`, `serve.ts`, `api.ts` (every route), `project/` (project folders, `check`, kept rounds) |
@@ -34,7 +34,7 @@ start when a route has no handler, and the page calls routes by name
 Every kind of node and block is an **element**: one folder per kind, under the same name on
 both sides.
 
-| | Node (Graph tab) | Block (Gui tab) |
+| | Node (Graph tab) | Block (Page tab) |
 |---|---|---|
 | Runs (Node) | `graph/nodes/<kind>/<Kind>NodeRunner.ts` | `backend/gui-editor/widgets/<kind>/<Kind>WidgetRunner.ts` |
 | Builds (browser) | `frontend/graph-editor/nodes/<kind>/<Kind>NodeGuiBuilder.ts`, panels | `frontend/gui-editor/widgets/<kind>/<Kind>WidgetGuiBuilder.ts`, `<Kind>WidgetView.tsx`, panel |
@@ -125,14 +125,15 @@ an AI node may name its own model in its settings.
 
 ## The project folder
 
-A folder is a project when it has a `flow.json`. Each fact is in one place, keys are
-sorted, and an unchanged save changes no byte (`backend/app/project/folder.test.ts`).
+A tool is saved as a project folder: a folder with a `flow.json`. Each fact is in one
+place, keys are sorted, and an unchanged save changes no byte
+(`backend/app/project/folder.test.ts`).
 
 ```
 my_tool/
   flow.json            name, description, nodes (id -> kind), every wire as one line: "draw.data -> chart.csv"
   layout.json          positions and sizes on the canvas
-  page/page.json       the page: its blocks in order, each with sends_to / fires / shows
+  page/page.json       the page: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/
     node.json          heading, text and settings (only what differs from the default)
     interface.json     ports: { port, name, type, list?, required?, field? }
@@ -218,7 +219,7 @@ For the editor only; a bundle leaves `backend/graph-editor/` behind.
 | Route | What it does |
 |---|---|
 | `POST /api/graphs/file/load`, `POST /api/graphs/file/save` | Open and save a graph file or a project folder (save replaces one only when told) |
-| `GET /api/graphs/find`, `GET /api/files/find` | Find projects and files that a drop names |
+| `GET /api/graphs/find`, `GET /api/files/find` | Find projects and files that a drop names (loopback only) |
 | `GET /api/graphs/file/changes` | What changed on disk since the editor last asked |
 | `POST /api/runtime/hold` | Hand the document being edited to the session, which goes on with it |
 | `POST /api/runtime/application/start`, `POST /api/runtime/application/stop` | ▶ Run and ■ Stop: the clock and what starts by itself |
@@ -344,9 +345,14 @@ node's `Language` (`JAVASCRIPT` in `graph/nodes/code/javascript.ts`; the interfa
    what starts a round) are inside the JavaScript runners today; taking them out of
    `graph/` is the first step of this way.
 
-A JavaScript body runs in a Node process of its own under `--permission` (files yes; child
-processes, addons, workers no; the network stays open), with no key in its environment. It
-talks in lines (`graph/core/node.ts`; `node.test.ts`, `sandbox.test.ts`):
+A JavaScript body runs in a Node process of its own under `--permission` (child processes,
+addons, workers no; the network stays open), with no key in its environment. It reads the
+working directory except the settings file, and the temp folder; it writes the temp folder
+only. Node's permission flags only allow, so the entries it may read are listed for every
+body; a link in the working directory that points at the settings file is followed anyway.
+A file elsewhere reaches it as an input typed `file_path`, which the executor reads for it.
+It ends after `TW_BODY_TIMEOUT_MS`. It talks in lines (`graph/core/node.ts`; `node.test.ts`,
+`sandbox.test.ts`):
 
 ```
 stdin   {"inputs": {…}, "calls": ["llm", …]}                  what it is handed
@@ -374,14 +380,20 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
 ## Security boundaries
 
 - Everything binds to loopback; nothing asks who is calling. Bound wider (`--host`, a
-  container), every route is open to whoever reaches the port, so `docker-compose.yml`
-  publishes on the host's `127.0.0.1`, and browsing and opening files switch off.
+  container), the server prints a warning and every route it serves is open to whoever
+  reaches the port, except the ones `api.ts` marks `local` (browsing, finding projects and
+  files, opening a node's file in an editor) and a round that sets a picker's file or
+  folder: those answer 403. What stays open includes opening and saving at any path, running
+  code and the settings with their keys, so `docker-compose.yml` publishes on the host's
+  `127.0.0.1`.
 - A request must name `127.0.0.1`, `localhost`, `[::1]` or a name in `TW_ALLOWED_HOSTS`, come
   from the server's own origin and send `application/json` (`foreignRequest`,
-  `backend/app/http.ts`).
-- A graph can name an MCP tool server; only `ai-settings.json` says which program it starts.
+  `backend/app/http.ts`). Every page it serves forbids being framed (`servePage`).
+- A graph can name an MCP tool server; only `ai-settings.json` says which program it starts,
+  and it starts without this process's keys and tokens (its own `env` gives what it needs).
   The MCP server confines paths to `--mcp-root`, never opens `ai-settings.json` and filters
   keys from its answers (`mcpServer.test.ts`, "confinement").
+- A code body runs in a sandbox of its own: see "A language" above (`sandbox.test.ts`).
 
 ## Environment variables
 
@@ -395,7 +407,8 @@ Besides the provider keys and addresses in the README:
 | `TW_ALLOWED_HOSTS` | Host names a server bound wider than loopback answers to, comma-separated |
 | `TW_NO_BROWSER` | Do not open a browser on start |
 | `TW_TIMEOUT_MS`, `TW_MCP_TIMEOUT_MS` | How long a model call (10 min) or an MCP tool call (2 min) may take; `0`: no limit |
-| `TW_MAX_TOKENS`, `TW_MAX_LLM_CALLS` | A model answer's token budget (4096); `node.llm` calls per body run (25) |
+| `TW_MAX_TOKENS`, `TW_MAX_LLM_CALLS` | A model answer's token budget (4096; an answer cut off by it is an error); `node.llm` calls per body run (25) |
+| `TW_BODY_TIMEOUT_MS` | How long a code body may run (10 min); `0`: no limit |
 | `TW_NO_PAUSE` | A failing `run.cmd` does not wait for a key |
 
 ## Checks
