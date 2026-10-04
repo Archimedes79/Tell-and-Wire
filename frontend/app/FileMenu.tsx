@@ -33,7 +33,7 @@ export function fileActions({ busyWith, isProject, onNew, onDesign, onOpen, onSa
   return [
     { label: 'New', hint: 'An empty graph', blocked: busyWith, onSelect: onNew },
     // Designing a new graph lives beside New: changing this one is the bar under the canvas.
-    { label: '✨ AI Graph…', hint: 'Describe a graph and let the AI build it', onSelect: onDesign },
+    { label: '✨ Describe a graph…', hint: 'Say what it should do; the AI builds it', onSelect: onDesign },
     { label: 'Open…', hint: 'A graph file or a project folder', blocked: busyWith, onSelect: onOpen },
     { label: 'Save', shortcut: 'Ctrl+S', divided: true, onSelect: onSave },
     { label: 'Save as…', onSelect: onSaveAs },

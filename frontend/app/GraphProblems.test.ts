@@ -22,7 +22,7 @@ const tool = (fires: string) => ({
 });
 const said = (graph: unknown) => renderToStaticMarkup(createElement(GraphProblems, { graph: graph as Graph }));
 
-describe('a graph about to be loaded from outside -- designed by ✨ AI Graph, pasted as JSON', () => {
+describe('a graph about to be loaded from outside -- designed by ✨ Describe a graph, pasted as JSON', () => {
   it('has what `check` finds in it said before Load: a button firing a start point the graph lacks', () => {
     // Loaded without a word, the button would have started nothing.
     const html = said(tool('gone'));

@@ -29,7 +29,7 @@ export function changeGoesTo(target: GraphNode | null): 'panel' | 'graph' {
   return target && bodyOf(target) ? 'panel' : 'graph';
 }
 
-/** What ✨ AI Graph is asked to do, for *text* said on *target*. */
+/** What ✨ Describe a graph is asked to do, for *text* said on *target*. */
 export function graphRequest(target: GraphNode | null, text: string): string {
   return target ? `In the node "${target.label || target.id}" (id "${target.id}"): ${text}` : text;
 }

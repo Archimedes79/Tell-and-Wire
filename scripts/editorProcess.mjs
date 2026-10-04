@@ -34,7 +34,7 @@ export function isListening(port) {
  * or deployed tool, holding a graph or not yet -- says which model a run
  * calls, with a `settings_file_exists` flag.
  */
-export async function isAiGraph(port) {
+export async function isTellAndWire(port) {
   try {
     const response = await fetch(`http://127.0.0.1:${port}/api/runtime/ai-settings`, { signal: AbortSignal.timeout(1500) });
     const body = await response.json();
@@ -79,7 +79,7 @@ export function listenerPids(port) {
  */
 export async function stopEditor(port) {
   if (!await isListening(port)) return false;
-  if (!await isAiGraph(port)) {
+  if (!await isTellAndWire(port)) {
     throw new Error(`Port ${port} is used by a program that is not Tell-and-Wire. Stop it, or choose another port with --port.`);
   }
   for (const pid of listenerPids(port)) {

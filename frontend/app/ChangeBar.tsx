@@ -191,7 +191,7 @@ export default function ChangeBar() {
           title={target && changeGoesTo(target) === 'panel'
             // A data node has no ▶ Try: what its panel writes is what it holds.
             ? `Change ${targetName(target)} as said: its panel writes it${hasDefinitions(target) ? ', and tries it' : ''}`
-            : 'Ask ✨ AI Graph to change the graph as said: you see what it changes before it is applied'}
+            : 'Change the whole graph as said, with ✨: you see what it changes before it is applied'}
         >
           Change
         </button>

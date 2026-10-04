@@ -10,7 +10,7 @@ import type { Graph } from './graph';
  * that change -- and not once another step came after it.
  */
 
-// ✨ AI Graph's server: the graph it was sent, with its first node renamed.
+// ✨ Describe a graph's server: the graph it was sent, with its first node renamed.
 vi.mock('./api/client', async (actual) => ({
   ...(await actual<typeof import('./api/client')>()),
   call: vi.fn(async (route: string, body: { graph: Graph }) => {

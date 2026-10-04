@@ -500,7 +500,7 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
     // A typo in flow.json must not cost the node its code on the next save.
     if (!element) untouched.add(join(folder, nodeFolder(node.id)));
     else {
-      // A node that became another kind -- by ✨ AI Graph, the bar, a model
+      // A node that became another kind -- by ✨ Describe a graph, the bar, a model
       // over MCP -- keeps none of the old kind's writing: in node.json it
       // would be a setting nothing reads. Its file goes as one no node keeps.
       const own = new Set(element.texts(node).map((text) => text.field));

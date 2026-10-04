@@ -96,7 +96,7 @@ Save in the panel: a change is in the graph at once, and Undo takes it back.
   whole graph when none is selected. A graph change shows what it adds, removes and changes
   before you **Apply** it.
 - **Generate** in the toolbar writes every empty node, in the order the graph runs.
-  **File → ✨ AI Graph…** designs a whole graph from a description: good for a first sketch.
+  **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
 Two things save the most time. Give ✨ Input a real file before ✨ Code: **⟳ From the graph**
 takes what the graph hands the node, **📂 Add a file…** picks one, or drop a file on the

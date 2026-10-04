@@ -55,9 +55,9 @@ describe('opening another graph', () => {
 });
 
 describe('the File menu', () => {
-  it('holds every file action -- New, ✨ AI Graph, Open, Save, Save as, Reload in a project, JSON -- with Save\'s key', () => {
+  it('holds every file action -- New, ✨ Describe a graph, Open, Save, Save as, Reload in a project, JSON -- with Save\'s key', () => {
     expect(entries(null).map((entry) => entry.label)).toEqual([
-      'New', '✨ AI Graph…', 'Open…', 'Save', 'Save as…', 'Reload from disk', 'Copy / paste as JSON…',
+      'New', '✨ Describe a graph…', 'Open…', 'Save', 'Save as…', 'Reload from disk', 'Copy / paste as JSON…',
     ]);
     expect(entries(null).find((entry) => entry.label === 'Save')?.shortcut).toBe('Ctrl+S');
     // A graph that is not a project has nothing to reload.

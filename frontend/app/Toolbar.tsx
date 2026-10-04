@@ -59,7 +59,7 @@ interface ToolbarProps {
  * The header: the app's name, the graph's, its views -- and on the
  * right what is done to the graph as a whole: ▶ Run first, then Generate,
  * Settings and Deploy. What is done now and then is in the File menu (New,
- * ✨ AI Graph, Open, Save, Save as…, Reload, JSON); Undo and Redo are icons.
+ * ✨ Describe a graph, Open, Save, Save as…, Reload, JSON); Undo and Redo are icons.
  * Changing the graph as said is the bar under the canvas.
  */
 export default function Toolbar({
@@ -94,7 +94,7 @@ export default function Toolbar({
   // Asking what the graph needs, then running: the delivered page's own steps.
   const delivered = useRound(() => useGraphStore.getState().holdDocument());
 
-  const [showAiGraph, setShowAiGraph] = useState(false);
+  const [showDescribe, setShowDescribe] = useState(false);
   const [aiDescription, setAiDescription] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -163,18 +163,18 @@ export default function Toolbar({
       await downloadBundle({ graph: rootGraph(), path: currentFilePath });
     });
 
-  const handleOpenAiGraph = () => {
+  const handleOpenDescribe = () => {
     setAiDescription('');
     setAiError('');
     setAiResult(null);
-    setShowAiGraph(true);
+    setShowDescribe(true);
   };
 
-  const handleCloseAiGraph = () => {
+  const handleCloseDescribe = () => {
     // What is still on its way is no longer wanted: nothing it brings is shown.
     aiAsked.current.cancel();
     setAiGenerating(false);
-    setShowAiGraph(false);
+    setShowDescribe(false);
     setAiResult(null);
     setAiError('');
   };
@@ -206,13 +206,13 @@ export default function Toolbar({
     }
   };
 
-  const handleConfirmAiGraph = () => {
+  const handleConfirmDescribe = () => {
     if (!aiResult) return;
     // The user came here to explore an idea; loading the result must not
     // silently destroy the graph they already had open.
     if (!confirmDiscard('Replace the current graph with the generated one?')) return;
     loadGraph(aiResult.graph);
-    setShowAiGraph(false);
+    setShowDescribe(false);
     setAiResult(null);
     setAiError('');
   };
@@ -322,7 +322,7 @@ export default function Toolbar({
           where={currentFilePath ?? 'Not saved to a file yet'}
           actions={fileActions({
             busyWith, isProject,
-            onNew: onNewGraph, onDesign: handleOpenAiGraph, onOpen: onLoad, onSave, onSaveAs, onReload: onReloadProject, onJson: onInjectJson,
+            onNew: onNewGraph, onDesign: handleOpenDescribe, onOpen: onLoad, onSave, onSaveAs, onReload: onReloadProject, onJson: onInjectJson,
           })}
         />
         <div className="flex shrink-0 items-center">
@@ -413,18 +413,18 @@ export default function Toolbar({
         onCancel={delivered.cancel}
       />
 
-      {/* AI Graph modal */}
-      {showAiGraph && (
+      {/* Describe-a-graph dialog */}
+      {showDescribe && (
         <Modal
           title="✨ Generate Graph with AI"
-          onClose={handleCloseAiGraph}
+          onClose={handleCloseDescribe}
           maxWidth="max-w-2xl"
           dismissOnBackdrop={!aiGenerating}
           dismissOnEscape={!aiGenerating}
           footer={
             <>
               <button
-                onClick={handleCloseAiGraph}
+                onClick={handleCloseDescribe}
                 className="px-4 py-2 text-sm rounded-lg"
                 style={NEUTRAL_BUTTON}
               >
@@ -432,7 +432,7 @@ export default function Toolbar({
               </button>
               {aiResult ? (
                 <button
-                  onClick={handleConfirmAiGraph}
+                  onClick={handleConfirmDescribe}
                   className="px-4 py-2 text-sm rounded-lg font-semibold"
                   style={{ background: SUCCESS, color: 'white' }}
                 >

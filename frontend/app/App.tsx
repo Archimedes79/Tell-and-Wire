@@ -80,7 +80,7 @@ export default function App() {
 
   /**
    * Ask before replacing the current graph. Every path that calls `loadGraph`
-   * goes through here -- New, Load, Paste JSON and ✨ AI Graph all destroy
+   * goes through here -- New, Load, Paste JSON and ✨ Describe a graph all destroy
    * unsaved work otherwise, and only New used to say so.
    */
   const confirmDiscard = useCallback(

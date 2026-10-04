@@ -15,7 +15,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isAiGraph, isListening, listenerPids } from './editorProcess.mjs';
+import { isTellAndWire, isListening, listenerPids } from './editorProcess.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 /** Out of the way of the editor a person has open on 8000, and of the examples' ports. */
@@ -54,7 +54,7 @@ after(async () => {
 
 test('starts, installing and building whatever the checkout is missing', async () => {
   launch();
-  assert.ok(await until(() => isAiGraph(PORT), 600), `nothing answered as Tell-and-Wire on ${PORT}`);
+  assert.ok(await until(() => isTellAndWire(PORT), 600), `nothing answered as Tell-and-Wire on ${PORT}`);
 }, { timeout: 620_000 });
 
 test('starting again replaces the editor instead of failing on a taken port', async () => {
@@ -67,7 +67,7 @@ test('starting again replaces the editor instead of failing on a taken port', as
   const replaced = await until(
     async () => {
       const now = listenerPids(PORT);
-      return now.length > 0 && now.every((pid) => !before.includes(pid)) && await isAiGraph(PORT);
+      return now.length > 0 && now.every((pid) => !before.includes(pid)) && await isTellAndWire(PORT);
     },
     300,
   );

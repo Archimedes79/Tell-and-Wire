@@ -358,7 +358,7 @@ describe('a project folder', () => {
   it('keeps nothing of a node\'s old kind once it is another: not in its node.json, not in its folder', async () => {
     await writeProject(dir, sample());
     const read = await readProject(dir);
-    // The code node is an ai node now, and the ai node a data node -- as ✨ AI Graph or a model over MCP may hand them back.
+    // The code node is an ai node now, and the ai node a data node -- as ✨ Describe a graph or a model over MCP may hand them back.
     read.nodes[1].node_type = 'ai';
     read.nodes[2].node_type = 'data';
     await writeProject(dir, read);

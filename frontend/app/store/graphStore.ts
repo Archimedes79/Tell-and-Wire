@@ -818,7 +818,7 @@ export const useGraphStore = create<GraphStore>()(
         state.page = (normalizedGraph.page?.blocks ?? []) as never;
         state.executionResult = null;
         // Whoever loaded a graph without going through the file-path flow
-        // (Paste JSON, AI Graph, etc.) doesn't know its file path; the caller
+        // (Paste JSON, ✨ Describe a graph, etc.) doesn't know its file path; the caller
         // sets `currentFilePath` explicitly right after loadGraph when it does.
         state.currentFilePath = null;
         state.isProject = false;
