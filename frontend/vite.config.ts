@@ -88,11 +88,13 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // The address the backend binds (`serve.ts`), not `localhost`: where that
+        // resolves to ::1 first, the page would load and its API calls would not.
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         // The backend answers only its own origin (backend/app/http.ts `foreignRequest`);
         // the dev page on :3000 is the editor all the same.
-        headers: { origin: 'http://localhost:8000' },
+        headers: { origin: 'http://127.0.0.1:8000' },
       },
     },
   },

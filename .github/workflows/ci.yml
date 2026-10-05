@@ -38,8 +38,8 @@ jobs:
       - name: Types
         run: npm run typecheck
 
-      # frontend/ only: what the compiler does not see, above all the rules of
-      # hooks. graph/ and backend/ have no linter; their types and tests are the check.
+      # What the compiler does not see: the rules of hooks in frontend/, a promise
+      # nobody waits for in graph/ and backend/ (an unhandled rejection ends a server).
       - name: Lint
         run: npm run lint
 

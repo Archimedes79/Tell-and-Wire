@@ -428,7 +428,8 @@ Besides the provider keys and addresses in the README:
 
 ## Checks
 
-`npm run typecheck` (all three workspaces), `npm run lint` (`frontend/`), `npm run build`
+`npm run typecheck` (all three workspaces), `npm run lint` (hooks in `frontend/`, a promise nobody
+waits for in `graph/` and `backend/`), `npm run build`
 (`frontend/dist`; the package test needs it), `npm test` (Vitest in all three workspaces),
 `npm run licenses` (every installed package against the licences it may have,
 `scripts/licenses.mjs`). CI (`.github/workflows/ci.yml`) runs these, then
