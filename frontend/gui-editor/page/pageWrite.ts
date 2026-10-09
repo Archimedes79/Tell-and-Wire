@@ -174,6 +174,17 @@ export function insertBlock(widget: GuiWidget, at?: number): void {
 }
 
 /**
+ * The blocks of a page drawn from the graph (`pageFromGraph`), added at the
+ * end in one undo step -- with the start points a call started that the person
+ * put on the page, which are then started by it.
+ */
+export function addBlocks(blocks: GuiWidget[], toPage: GraphNode[] = []): void {
+  const step = 'page.from-graph';
+  rewrite((widgets) => [...widgets, ...blocks], step);
+  for (const start of toPage) useGraphStore.getState().updateNode(start.id, { config: { ...start.config, started_by: 'page' } }, undefined, step);
+}
+
+/**
  * Connect block *widgetId* to a start or end point made for it: what its
  * settings' "New start point" and "New end point" do. *as* says how: its data
  * sent there, its event firing it, or the point it shows.

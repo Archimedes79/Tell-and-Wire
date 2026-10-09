@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { GraphEdge, GraphNode, Port } from '../graph';
 import { useGraphStore } from './graphStore';
 import { trackPorts } from './portRenames';
-import { saveDraft } from '../../graph-editor/canvas/nodeDraft';
+import { saveDraft } from '../../graph-editor/node/nodeDraft';
 import { baseNodeConfig } from '../document/baseNodeConfig';
 
 /**

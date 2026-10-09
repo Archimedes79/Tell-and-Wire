@@ -27,8 +27,8 @@ export function baseNodeConfig(): NodeConfig {
     ai_model: '',
     code: '',
     prompt: '',
-    data_value: null,
-    data_format: 'text',
+    // A data node's fields (`DataNodeRunner`): none to start with.
+    data_value: {},
     write_mode: 'none',
     // Once on the whole list (`NodeRunner.batchMode`), as many at once as the run allows.
     batch_mode: 'whole_list',

@@ -53,7 +53,7 @@ export function fileActions({ busyWith, isProject, onNew, onDesign, onOpen, onSa
  * Drawn fixed under its button rather than inside the header, which scrolls
  * sideways in a window too narrow for it and would cut a menu off. Opened, the
  * first entry has the focus: arrows move it, Enter chooses, Escape closes --
- * and Escape goes no further, so the panel beside the canvas stays open.
+ * and Escape goes no further, so the node open stays open.
  */
 export default function FileMenu({ actions, where }: { actions: FileAction[]; where: string }) {
   const [at, setAt] = useState<{ left: number; top: number } | null>(null);

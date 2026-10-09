@@ -136,7 +136,7 @@ export function inputSources(
     // a call sends it, which says it all.
     const sent = runnerRegistry.node(source.node_type)?.takesPackage && (page.length || exampleAt(source)) ? sentWords(source, page, field) : '';
     const emits = !withEmits ? ''
-      : sent || [...new Set([port?.description?.trim(), NODE_BUILDERS[source.node_type]?.describeOutput(source)].filter(Boolean))].join('; ');
+      : sent || [...new Set([port?.description?.trim(), NODE_BUILDERS[source.node_type]?.describeOutput(source, edge.sourceHandle ?? undefined)].filter(Boolean))].join('; ');
     if (emits) said += `, which hands on: ${emits}`;
     (byPort[edge.targetHandle ?? 'input'] ??= []).push(said);
   }

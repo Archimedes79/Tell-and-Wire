@@ -1,13 +1,12 @@
 // A node's build-time half, in the browser: the mirror of `graph/nodes/NodeRunner.ts`.
 
 import type { ComponentType } from 'react';
-import type { AICall } from '../../app/api/client';
-import type { Graph, GraphNode, NodeType } from '../../app/graph';
-import type { Press, Refine, Write } from '../authoring/generation';
+import type { LucideIcon } from 'lucide-react';
+import type { GraphNode, NodeType } from '../../app/graph';
 import { ElementGuiBuilder } from '../../app/elements/ElementGuiBuilder';
 
 /**
- * Which undo step a change made in a node's panel is (`canvas/nodePanel.ts`).
+ * Which undo step a change made in a node's panel is (`node/nodePanel.ts`).
  * Typing is one step with what was typed into the same field a moment before:
  * the setting's own field, unless `{ field }` names the one typed into. `ONCE`
  * is what is not typing -- a file dropped in, a box ticked, what ✨ wrote --
@@ -17,9 +16,10 @@ export const ONCE = 'once';
 export type UndoStep = typeof ONCE | { field: string };
 
 /**
- * What the node editor hands every node panel. A panel takes the part it needs.
+ * What the node view hands every panel of a node: the node, and the two ways to
+ * change it. A panel takes the part it needs.
  *
- * What a panel changes is in the graph a moment later (`canvas/nodePanel.ts`):
+ * What a panel changes is in the graph a moment later (`node/nodePanel.ts`):
  * there is no Save to wait for. So what cannot be stored yet -- JSON that does
  * not parse, a name another port has -- is not handed on at all: the field
  * keeps it as typed and says why (`useTyped`).
@@ -36,38 +36,9 @@ export interface NodePanelProps {
   setConfig: (key: string, value: unknown, step?: UndoStep) => void;
   /** Changes the node as a whole, for a setting that is a port and a key at once ("Run once per item"). */
   updateNode: (change: (node: GraphNode) => GraphNode, step?: UndoStep) => void;
-  /** Writes the node's text -- what it should do, in words -- as typed. */
-  setDescription: (text: string) => void;
-  /** ✨ is writing now. */
-  generating: boolean;
-  /** What the last ✨ said. */
-  message?: string;
-  /**
-   * ✨: write *write* -- for the body of a node with definitions, what is
-   * missing first; for `all`, ✨ Generate (`writesFor`) -- or, asked with
-   * *refine*, change the body there is ("Say what to change", ✨ Fix).
-   * Resolves to whether something was written.
-   */
-  onGenerate: (write: Press, refine?: Refine) => Promise<boolean>;
-  /** Stop the ✨ that is writing: nothing more is waited for, and what it still brings back is dropped. */
-  onStop?: () => void;
-  /** What only the side panel has, for a panel of a node ✨ writes for. */
-  shell?: {
-    /** The graph on the canvas with this node as the side panel shows it: what ▶ Try is asked of is the edit. */
-    graph: () => Graph;
-    /** What *write*'s ✨ would send, filled in, without sending it. */
-    preview: (write: Write) => Promise<AICall[]>;
-    /** The file the graph hands one of this node's file-reading inputs -- a picker's value, a path the last run brought -- or undefined. */
-    graphFile: () => Promise<string | undefined>;
-    /** Write what the side panel still holds into the graph now: before a project is saved to open one of its files. */
-    flush: () => void;
-  };
 }
 
 export type PortEditing = 'edit' | 'fixed' | 'none';
-
-/** The folded-away settings most people never touch, drawn after the node's ports (`NodeEditor`). */
-export type NodeAdvancedPanelProps = Pick<NodePanelProps, 'node' | 'setConfig' | 'updateNode'>;
 
 export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   // ── What it is ────────────────────────────────────────────────────────────
@@ -90,6 +61,12 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   /** The node's tint on the canvas: its `NODE` colour (`app/ui/theme.ts`). */
   abstract readonly color: string;
 
+  /** Its icon, on its card and in the palette: with `ink`, what tells one kind from another at a glance. */
+  abstract readonly icon: LucideIcon;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`, `app/ui/theme.ts`). */
+  abstract readonly ink: string;
+
   /**
    * The heading the node palette offers it under -- "Processing" -- or none,
    * for a kind it does not offer. The palette's headings are these, in the
@@ -100,18 +77,14 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
 
   /**
    * The settings most people never touch -- once per item, catching failures,
-   * the model --, drawn in the one folded Advanced section under everything
-   * else, after the ports where the node has ports to edit: opening a node
-   * shows what it *does*, not a form.
+   * the model --, drawn in the node's settings after its ports, where the node
+   * has ports to edit: opening a node shows what it *does*, not a form.
    */
-  readonly AdvancedPanel?: ComponentType<NodeAdvancedPanelProps>;
-
-  /** What Advanced holds for this node, in a few words: shown on the fold. A node with no ports to edit and no panel here has no fold. */
-  readonly advancedSummary?: string;
+  readonly AdvancedPanel?: ComponentType<NodePanelProps>;
 
   /**
    * A node that says what its ports carry in its definitions (input.js,
-   * output.js): a code or an ai node. Its ports are edited in Advanced,
+   * output.js): a code or an ai node. Its ports are edited in its settings,
    * without a type per port -- an input's follows its wire -- and
    * its outputs follow its output definition.
    */
@@ -133,9 +106,10 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   /**
    * What this node hands on, in words, for the nodes it feeds: their ✨ is
    * told it beside the wire. Nothing by default; a node whose output
-   * definition says it, or whose kind does, says that.
+   * definition says it, or whose kind does, says that. *port*: the output the
+   * wire leaves from, for a node whose outputs hand on different things.
    */
-  describeOutput(_node: GraphNode): string {
+  describeOutput(_node: GraphNode, _port?: string): string {
     return '';
   }
 

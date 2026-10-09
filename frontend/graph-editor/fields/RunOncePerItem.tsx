@@ -5,7 +5,7 @@ import { useGraphStore } from '../../app/store/graphStore';
 import { listPorts, runsPerItem, withPerItem } from '../authoring/perItem';
 import { hasDefinitions } from '../authoring/generation';
 import { definitionExample, definitionsIn } from '../../../graph/authoring/definition.ts';
-import { ONCE, type NodeAdvancedPanelProps } from '../nodes/NodeGuiBuilder';
+import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
 import { DIMMER, MUTED } from '../../app/ui/theme';
 
 /** The example in *node*'s input.js, where it has one that can be read. */
@@ -22,8 +22,8 @@ function exampleOf(node: GraphNode): Record<string, unknown> | undefined {
  * list is taken an item at a time and what comes out is a list of the results;
  * an input can then be taken whole beside it ("whole list", in the ports).
  */
-export default function RunOncePerItem({ node, updateNode, subject }: Pick<NodeAdvancedPanelProps, 'node' | 'updateNode'> & { subject: string }) {
-  // Compared node by node: a fresh list is a new one on every change of the store (`NodeEditor`).
+export default function RunOncePerItem({ node, updateNode, subject }: Pick<NodePanelProps, 'node' | 'updateNode'> & { subject: string }) {
+  // Compared node by node: a fresh list is a new one on every change of the store (`SettingsPane`).
   const nodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
   const edges = useGraphStore((s) => s.rfEdges);
   const lists = listPorts(node, exampleOf(node), nodes, edges);

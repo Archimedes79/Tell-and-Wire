@@ -2,44 +2,45 @@ import { describe, it, expect } from 'vitest';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
 import { inputSources, outputTargets } from './generationContext';
 
-const edge = (source: string, target: string) => ({ source, target, sourceHandle: 'output', targetHandle: 'input' });
+const edge = (source: string, target: string, targetHandle = 'input', sourceHandle = 'output') => ({ source, target, sourceHandle, targetHandle });
 
 describe('what ✨ is told of a node\'s neighbours', () => {
-  it('describes data nodes on both sides by their format and their own words', () => {
+  it('describes data nodes on both sides by their fields and their own words', () => {
     const source = NODE_KINDS.data.create('source');
     source.label = 'Input records';
-    source.config.data_format = 'structure';
+    source.config.data_value = { id: 1, name: 'Ada' };
     source.description = 'columns: id integer, name text';
     const processor = NODE_KINDS.code.create('processor');
     const target = NODE_KINDS.data.create('target');
     target.label = 'Result map';
-    target.config.data_format = 'structure';
+    target.config.data_value = { total: 0 };
     const nodes = [source, processor, target];
-    const wires = [edge('source', 'processor'), edge('processor', 'target')];
+    const wires = [edge('source', 'processor', 'input', 'all'), edge('processor', 'target', 'total')];
 
     const fed = inputSources('processor', nodes, wires, true).input;
     expect(fed).toContain('"Input records"');
-    expect(fed).toContain('structure: columns: id integer, name text');
+    expect(fed).toContain('a struct of the fields "id", "name": columns: id integer, name text');
+    // One field's wire carries that field alone.
+    expect(inputSources('processor', nodes, [edge('source', 'processor', 'input', 'name')], true).input).toContain('the field "name" of a struct: columns: id integer, name text -- it holds: "Ada"');
     const stored = outputTargets('processor', nodes, wires, true).output;
     expect(stored).toContain('"Result map"');
-    expect(stored).toContain('structure');
+    expect(stored).toContain('the field "total" it stores');
   });
 
   it('tells what a data node holds, the start of it as JSON: its keys are what the node after it reads', () => {
     const capitals = NODE_KINDS.data.create('capitals');
     capitals.label = 'Capitals';
     capitals.description = 'Ten European capitals with their population';
-    capitals.config.data_format = 'structure';
-    capitals.config.data_value = [{ capital: 'Paris', country: 'France', population: 2102650 }, { capital: 'Rome', country: 'Italy', population: 2749031 }];
+    capitals.config.data_value = { capitals: [{ capital: 'Paris', country: 'France', population: 2102650 }, { capital: 'Rome', country: 'Italy', population: 2749031 }] };
     const sorter = NODE_KINDS.code.create('sorter');
-    const said = () => inputSources('sorter', [capitals, sorter], [edge('capitals', 'sorter')], true).input;
-    expect(said()).toContain('structure: Ten European capitals with their population -- it holds: '
-      + '[{"capital":"Paris","country":"France","population":2102650},{"capital":"Rome","country":"Italy","population":2749031}]');
+    const said = () => inputSources('sorter', [capitals, sorter], [edge('capitals', 'sorter', 'input', 'all')], true).input;
+    expect(said()).toContain('a struct of the fields "capitals": Ten European capitals with their population; "all" is all of them -- it holds: '
+      + '{"capitals":[{"capital":"Paris","country":"France","population":2102650},{"capital":"Rome","country":"Italy","population":2749031}]}');
     // A long one is cut, saying how much was left out; one that holds nothing says only what it is.
-    capitals.config.data_value = Array.from({ length: 100 }, (_, n) => ({ capital: `City ${n}`, population: n }));
-    expect(said()).toMatch(/it holds: \[\{"capital":"City 0","population":0\},[^]{500,}… \(\d+ more characters\)$/);
-    capitals.config.data_value = null;
-    expect(said()).toMatch(/structure: Ten European capitals with their population$/);
+    capitals.config.data_value = { capitals: Array.from({ length: 100 }, (_, n) => ({ capital: `City ${n}`, population: n })) };
+    expect(said()).toMatch(/it holds: \{"capitals":\[\{"capital":"City 0","population":0\},[^]{500,}… \(\d+ more characters\)$/);
+    capitals.config.data_value = {};
+    expect(said()).toMatch(/a struct of no fields yet: Ten European capitals with their population; "all" is all of them$/);
   });
 
   it('tells a node fed by a start point what the page sends it -- the one value its input takes, by its field', () => {

@@ -10,7 +10,7 @@ import { call, type RoundSnapshot } from '../api/client';
 import { forgetSession, stopRound, useSession, watchSession } from '../api/session';
 import { NODE_KINDS } from '../document/nodeKinds';
 import {
-  buildReactFlowGraph, defaultMetadata, exported, normalizeGraph, pageOf, takeIn, withDiskChanges, withNested,
+  buildReactFlowGraph, defaultMetadata, exported, lostWire, normalizeGraph, pageOf, takeIn, withDiskChanges, withNested,
 } from '../document/graphDoc';
 import { HISTORY_LIMIT, endCoalescing, historyActions } from './history';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
@@ -94,25 +94,11 @@ export interface GraphStore {
   future: string[];
 
   // UI state
-  /** The node whose panel is open beside the canvas: the one the person is on. */
+  /** The node open in the node view, in place of the canvas: the one the person is working on. */
   editingNodeId: string | null;
-  /**
-   * A change said in the bar under the canvas for one node, waiting for that
-   * node's panel to make it -- with when it was said, so the same words said
-   * twice are two changes. Gone with the graph it was said in.
-   */
-  pendingChange: { nodeId: string; text: string; at: number } | null;
 
   // Actions
-  /** Ask node *nodeId*'s panel to change the node as *text* says (`pendingChange`). */
-  askChange: (nodeId: string, text: string) => void;
-  /** The waiting change was taken up, or is no longer wanted. */
-  clearChange: () => void;
-  /**
-   * Nothing selected: no node's panel open, and nothing marked on the canvas.
-   * What ✕ and Escape on a panel, a click on the empty canvas and the bar's
-   * "on:" do alike, so the canvas never marks a node the bar is not on.
-   */
+  /** Nothing selected and no node open: what a click on the empty canvas does. */
   clearSelection: () => void;
   /**
    * The graph on the canvas replaced by *graph* -- this graph, changed, its
@@ -138,9 +124,17 @@ export interface GraphStore {
   /**
    * Add a node and return its id, so a caller can immediately fill it in --
    * or, with *fill*, as it is made, in the same undo step: a block and the
-   * start point it makes are one change.
+   * start point it makes are one change. *step* names the undo step (`commit`),
+   * so what the caller does next under the same name is part of it.
    */
-  addNode: (nodeType: NodeType, position: { x: number; y: number }, fill?: (node: GraphNode) => GraphNode) => string;
+  addNode: (nodeType: NodeType, position: { x: number; y: number }, fill?: (node: GraphNode) => GraphNode, step?: string) => string;
+  /**
+   * Add a node where a wire was let go on empty canvas, and wire it to what
+   * the wire came from: on a new input where the node's inputs are its own to
+   * name (a code or AI node), else on its first. One undo step, the node and
+   * its wire. A node with no input takes no wire, and is only added.
+   */
+  addNodeFrom: (nodeType: NodeType, position: { x: number; y: number }, from: { source: string; sourceHandle: string }) => string;
   /**
    * `renamed` maps a port's old id to its new one, per side, so the wires
    * follow the rename instead of being pruned as "a port that vanished" --
@@ -164,9 +158,10 @@ export interface GraphStore {
    * Wire an output to a new input of *target*, named after what arrives: what
    * dropping a wire on a node rather than on one of its dots does. Only on a
    * node whose inputs are its own to name -- a code or AI node -- and not on
-   * the node the wire starts at. Whether it wired anything.
+   * the node the wire starts at. Whether it wired anything. *step* names the
+   * undo step, as in `addNode`; a step of its own without it.
    */
-  connectToNewInput: (wire: { source: string; sourceHandle: string; target: string }) => boolean;
+  connectToNewInput: (wire: { source: string; sourceHandle: string; target: string }, step?: string) => boolean;
   /**
    * Take *nodeIds* off the graph with every wire into or out of them, and the
    * wires *wireIds* besides: one undo step, however much goes. Nothing is asked.
@@ -345,7 +340,6 @@ export const useGraphStore = create<GraphStore>()(
     executionResult: null,
     heldElsewhere: false,
     editingNodeId: null,
-    pendingChange: null,
     subgraphStack: [],
     document: 0,
     opened: 0,
@@ -375,8 +369,8 @@ export const useGraphStore = create<GraphStore>()(
         state.isProject = path !== null && isProject;
       }),
 
-    addNode: (nodeType, position, fill) => {
-      get().commit();
+    addNode: (nodeType, position, fill, step) => {
+      get().commit(step);
       const kind = NODE_KINDS[nodeType];
       const id = freeId(kind.idBase ?? nodeType, get().rfNodes.map((existing) => existing.id));
       // Inside a graph a node holds, a node may start otherwise (`placedInside`).
@@ -455,7 +449,17 @@ export const useGraphStore = create<GraphStore>()(
       });
     },
 
-    connectToNewInput: (wire) => {
+    addNodeFrom: (nodeType, position, from) => {
+      // The node and its wire are one change: undone, both go.
+      const step = `add ${nodeType} from ${from.source}.${from.sourceHandle}`;
+      const id = get().addNode(nodeType, position, undefined, step);
+      if (get().connectToNewInput({ ...from, target: id }, step)) return id;
+      const first = (get().rfNodes.find((node: RFNode) => node.id === id)?.data.graphNode as GraphNode | undefined)?.inputs[0];
+      if (first) get().connect({ ...from, target: id, targetHandle: first.id }, step);
+      return id;
+    },
+
+    connectToNewInput: (wire, coalesce) => {
       const nodeOf = (id: string) => get().rfNodes.find((node: RFNode) => node.id === id)?.data.graphNode as GraphNode | undefined;
       const target = nodeOf(wire.target);
       if (!target || wire.target === wire.source || !takesNewInputs(target)) return false;
@@ -473,7 +477,7 @@ export const useGraphStore = create<GraphStore>()(
       // An id a body can use as a key.
       const id = freeId(slugOf(name).replace(/-/g, '_') || 'input', kept.map((port) => port.id), '');
       // The port and its wire are one step: undone, the port goes with the wire.
-      const step = `new input ${target.id}.${id}`;
+      const step = coalesce ?? `new input ${target.id}.${id}`;
       get().updateNode(target.id, {
         inputs: [...kept, { id, name, kind: 'input', data_type: 'any', multi: false, required: false, description: '' }],
       }, undefined, step);
@@ -562,16 +566,6 @@ export const useGraphStore = create<GraphStore>()(
         state.editingNodeId = nodeId;
       }),
 
-    askChange: (nodeId, text) =>
-      set((state) => {
-        state.pendingChange = { nodeId, text, at: Date.now() };
-      }),
-
-    clearChange: () =>
-      set((state) => {
-        state.pendingChange = null;
-      }),
-
     clearSelection: () => {
       // The panel first, on its own: a panel closed while the graph stays
       // writes what still waits in it (`nodePanel.watch`), and the marks
@@ -626,7 +620,6 @@ export const useGraphStore = create<GraphStore>()(
         state.future = [];
         state.subgraphStack = [];
         state.editingNodeId = null;
-        state.pendingChange = null;
         state.document += 1;
         state.opened += 1;
       });
@@ -665,8 +658,6 @@ export const useGraphStore = create<GraphStore>()(
         // Its own level, its own history: an undo in here cannot reach out.
         state.past = [];
         state.future = [];
-        // A change said for a node out there is not for one of the same id in here.
-        state.pendingChange = null;
         state.document += 1;
       });
     },
@@ -690,7 +681,6 @@ export const useGraphStore = create<GraphStore>()(
         // keystroke, and nothing to say it was about to happen.
         state.past = changed ? [...frame.past, before].slice(-HISTORY_LIMIT) : frame.past;
         state.future = changed ? [] : frame.future;
-        state.pendingChange = null;
         state.document += 1;
       });
     },
@@ -763,6 +753,9 @@ export const useGraphStore = create<GraphStore>()(
           if (change.node_id === null) state.page = pageOf(change) as never;
           else takeIn(state.rfNodes.find((n: RFNode) => n.id === change.node_id)!.data.graphNode, change);
         }
+        const touched = new Set(taken.flatMap((change) => change.node_id ?? []));
+        const nodes = state.rfNodes.map((n: RFNode) => n.data.graphNode);
+        state.rfEdges = state.rfEdges.filter((edge: Edge) => !lostWire(nodes, graphEdge(edge), touched));
         state.past = state.past.map((snapshot) => withDiskChanges(snapshot, taken));
         state.future = state.future.map((snapshot) => withDiskChanges(snapshot, taken));
         // What is on disk is saved: with unsaved work here, the saved state has it too, so only that work is unsaved.

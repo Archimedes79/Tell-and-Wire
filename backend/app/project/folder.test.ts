@@ -75,7 +75,7 @@ const touch = async (path: string, content: string) => {
 };
 
 describe('a project folder', () => {
-  it('keeps each piece of writing in a file named for what it is, the flow once in flow.json, and a data node\'s value as JSON where it is structure, as text otherwise', async () => {
+  it('keeps each piece of writing in a file named for what it is, the flow once in flow.json, and a data node\'s fields as JSON in data.json', async () => {
     await writeProject(dir, sample());
     expect(await text('nodes/count/code.js')).toBe(`function run(inputs) {\n  return { total: inputs.files.length };\n}\n\n${RUN_ON_ITS_OWN}\n`);
     expect(await text('nodes/count/input.js')).toBe('module.exports = { "files": ["a.csv"] };\n');
@@ -105,22 +105,19 @@ describe('a project folder', () => {
     expect(JSON.stringify(ports)).not.toContain('folder');
     expect(JSON.parse(await text('layout.json')).count).toEqual({ x: 300, y: 20, width: 360, height: 180 });
 
-    const data = (id: string, config: Record<string, unknown>) => ({
-      id, node_type: 'data', label: id, inputs: [port('input', 'input')], outputs: [port('output', 'output')], config,
-    });
+    const data = (id: string, fields: Record<string, unknown>) => ({ id, node_type: 'data', label: id, inputs: [], outputs: [], config: { data_value: fields } });
     const held = join(dir, 'held');
     await writeProject(held, parseGraph({
       metadata: { name: 'Held' },
-      nodes: [
-        data('count', { data_format: 'structure', data_value: { count: 2, names: ['Ada'] } }),
-        data('note', { data_format: 'text', data_value: 'Line one.\nLine two.' }),
-      ],
+      nodes: [data('count', { count: 2, names: ['Ada'] }), data('note', { text: 'Line one.\nLine two.' })],
       edges: [],
     }));
+    // A data node's fields are one file, data.json, whatever they hold; its ports follow them.
     expect(JSON.parse(await readFile(join(held, 'nodes/count/data.json'), 'utf8'))).toEqual({ count: 2, names: ['Ada'] });
-    expect(await readFile(join(held, 'nodes/note/data.txt'), 'utf8')).toBe('Line one.\nLine two.\n');
+    expect(JSON.parse(await readFile(join(held, 'nodes/note/data.json'), 'utf8'))).toEqual({ text: 'Line one.\nLine two.' });
+    expect(JSON.parse(await readFile(join(held, 'nodes/note/interface.json'), 'utf8')).outputs.map((one: { port: string }) => one.port)).toEqual(['text', 'all']);
     forgetSeen();
-    expect((await readProject(held)).nodes.map((node) => node.config.data_value)).toEqual([{ count: 2, names: ['Ada'] }, 'Line one.\nLine two.']);
+    expect((await readProject(held)).nodes.map((node) => node.config.data_value)).toEqual([{ count: 2, names: ['Ada'] }, { text: 'Line one.\nLine two.' }]);
   });
 
   it('reads back exactly what was written', async () => {

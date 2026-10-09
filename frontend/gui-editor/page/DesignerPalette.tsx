@@ -3,11 +3,14 @@ import type { GuiWidget, WidgetKind } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { freeId } from '../../app/document/ids';
 import type { PaletteEntry as KindEntry } from '../widgets/WidgetGuiBuilder';
-import { ACCENT_TEXT, DIMMER, LINE, SURFACE, TEXT } from '../../app/ui/theme';
+import { Wand2 } from 'lucide-react';
+import Button from '../../app/ui/Button';
+import { DIMMER, LINE, SURFACE } from '../../app/ui/theme';
 
 /**
- * The element palette, in the same place and the same shape as the node palette
- * on the graph tab: a list on the left, click or drag to add.
+ * The element palette, in the same place and the same look as the node palette
+ * on the graph tab (`.palette-tile`): a slim column on the left, click or drag
+ * to add. The two share a look and no code.
  *
  * Grouped the way a page is built rather than by implementation: the words that
  * hold a page together, the things a person operates, the things a run fills in.
@@ -97,58 +100,75 @@ export function matchesEntry(entry: PaletteEntry, query: string): boolean {
   return `${entry.label} ${entry.also ?? ''} ${entry.kind}`.toLowerCase().includes(needle);
 }
 
-export default function DesignerPalette({
-  onAdd, onDragStart,
-}: {
+interface PaletteProps {
   onAdd: (kind: WidgetKind, mode?: string) => void;
   /** Begin a pointer drag of a new element; the surface decides where it lands. */
   onDragStart: (entry: PaletteEntry, event: React.MouseEvent) => void;
-}) {
+}
+
+/** The page drawn from the graph: how many start and end points still lack their blocks, and the way to make them. */
+interface FromGraph {
+  points: number;
+  onGenerate: () => void;
+}
+
+function Tile({ entry, onAdd, onDragStart }: PaletteProps & { entry: PaletteEntry }) {
+  const Icon = entry.icon;
+  return (
+    <button
+      type="button"
+      className="palette-tile"
+      onClick={() => onAdd(entry.kind, entry.mode)}
+      // Without preventDefault the browser starts a text selection instead,
+      // which looks exactly like a drag that does nothing.
+      onMouseDown={(event) => { event.preventDefault(); onDragStart(entry, event); }}
+      title={entry.label}
+    >
+      <span className="palette-chip"><Icon size={14} strokeWidth={2} aria-hidden="true" /></span>
+      <span className="truncate">{entry.label}</span>
+    </button>
+  );
+}
+
+export default function DesignerPalette({ onAdd, onDragStart, fromGraph }: PaletteProps & { fromGraph?: FromGraph }) {
   const [more, setMore] = useState(false);
 
   return (
     <aside
-      className="flex flex-col h-full overflow-y-auto"
-      style={{ width: 200, background: SURFACE, borderRight: `1px solid ${LINE}`, flexShrink: 0 }}
+      className="flex flex-col h-full overflow-y-auto gap-1.5 px-3 py-3"
+      style={{ width: 168, background: SURFACE, borderRight: `1px solid ${LINE}`, flexShrink: 0 }}
     >
-      <div className="px-4 pt-4 pb-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: ACCENT_TEXT }}>
-          Blocks
-        </h2>
-        <p className="text-xs mt-1" style={{ color: DIMMER }}>
-          Click or drag — or press <kbd>/</kbd> on the page
+      {PALETTE.map((group) => (
+        <section key={group.label} className="flex flex-col gap-1.5">
+          <h3 className="px-1 pt-3 text-[11px] font-medium uppercase tracking-wider select-none" style={{ color: DIMMER }}>
+            {group.folded ? (
+              <button type="button" className="uppercase tracking-wider" aria-expanded={more} onClick={() => setMore((was) => !was)}>
+                {`${more ? '▾' : '▸'} ${group.label}`}
+              </button>
+            ) : group.label}
+          </h3>
+          {(!group.folded || more) && group.entries.map((entry) => (
+            <Tile key={`${entry.kind}:${entry.mode ?? ''}`} entry={entry} onAdd={onAdd} onDragStart={onDragStart} />
+          ))}
+        </section>
+      ))}
+      <div className="mt-auto pt-4 flex flex-col gap-2">
+        {fromGraph && (
+          <Button
+            size="sm"
+            onClick={fromGraph.onGenerate}
+            disabled={!fromGraph.points}
+            title={fromGraph.points
+              ? 'Add a block for each start point and end point of the graph that has none: what a start point reads, a button, a text for what an end point hands back'
+              : 'Every start point and end point of the graph has its blocks'}
+          >
+            <span className="inline-flex items-center gap-1.5"><Wand2 size={13} strokeWidth={2} aria-hidden="true" /> From the graph</span>
+          </Button>
+        )}
+        <p className="text-[11px] leading-snug" style={{ color: DIMMER }}>
+          Drag onto the page, or press <kbd>/</kbd>.
         </p>
       </div>
-
-      {PALETTE.map((group) => {
-        const open = !group.folded || more;
-        return (
-          <div key={group.label} className="py-2">
-            <h3 className="px-4 text-xs font-medium uppercase tracking-wider mb-1 select-none" style={{ color: DIMMER }}>
-              {group.folded ? (
-                <button type="button" className="uppercase tracking-wider" aria-expanded={more} onClick={() => setMore((was) => !was)}>
-                  {`${more ? '▾' : '▸'} ${group.label}`}
-                </button>
-              ) : group.label}
-            </h3>
-            {open && group.entries.map((entry) => (
-              <button
-                key={`${entry.kind}:${entry.mode ?? ''}`}
-                className="w-full flex items-center gap-3 px-4 py-1.5 text-sm text-left transition-colors hover-raise"
-                style={{ color: TEXT }}
-                onClick={() => onAdd(entry.kind, entry.mode)}
-                // Without preventDefault the browser starts a text selection instead,
-                // which looks exactly like a drag that does nothing.
-                onMouseDown={(e) => { e.preventDefault(); onDragStart(entry, e); }}
-                title={entry.label}
-              >
-                <span className="text-base w-5 text-center">{entry.icon}</span>
-                <span className="truncate">{entry.label}</span>
-              </button>
-            ))}
-          </div>
-        );
-      })}
     </aside>
   );
 }

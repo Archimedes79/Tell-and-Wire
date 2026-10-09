@@ -40,7 +40,7 @@ beforeEach(async () => {
   document.body.appendChild(screen);
   root = createRoot(screen);
   await act(async () => {
-    root.render(createElement(ReactFlowProvider, null, createElement(GraphCanvas, { active: true, onOpenPage: () => {} })));
+    root.render(createElement(ReactFlowProvider, null, createElement(GraphCanvas, { active: true })));
   });
 });
 
@@ -94,5 +94,18 @@ describe('Delete on the canvas', () => {
     expect(node('shown')).toBeDefined();
     expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);
     expect(store().page[0].shows).toBe('shown');
+  });
+});
+
+describe('Opening a node', () => {
+  it('is a double-click or Enter on it; a click only chooses it', () => {
+    choose('count');
+    expect(store().rfNodes.find((item) => item.id === 'count')?.selected).toBe(true);
+    expect(store().editingNodeId).toBeNull();
+    mouse(card('count'), 'dblclick');
+    expect(store().editingNodeId).toBe('count');
+    done(() => store().setEditingNode(null));
+    press(card('count'), 'Enter');
+    expect(store().editingNodeId).toBe('count');
   });
 });

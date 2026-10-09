@@ -3,8 +3,9 @@ import type { GraphNode } from '../../../app/graph';
 import { ERROR_PORT } from '../../../../graph/execution/wiring.ts';
 import { definitionsIn } from '../../../../graph/authoring/definition.ts';
 import { withFile } from '../../../app/document/givenFiles';
-import { NODE } from '../../../app/ui/theme';
+import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
+import { Code2 } from 'lucide-react';
 
 export class CodeNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'code';
@@ -19,15 +20,17 @@ export class CodeNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly color = NODE.code;
 
+  /** Its icon, on its card and in the palette. */
+  readonly icon = Code2;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
+  readonly ink = INK.code;
+
   override readonly paletteGroup = 'Processing';
 
   override readonly definesItself = true;
 
-  override readonly Panel = lazy(() => import('./CodeNodePanel'));
-
   override readonly AdvancedPanel = lazy(() => import('./CodeNodeAdvancedPanel'));
-
-  override readonly advancedSummary = 'ports, once per item, failures';
 
   override portHint(side: 'inputs' | 'outputs', node: GraphNode): string {
     if (side === 'inputs') {

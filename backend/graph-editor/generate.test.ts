@@ -81,6 +81,17 @@ describe('✨ writes a node\'s files', () => {
     expect(reply.result).not.toContain('<description>');
   }, 30_000);
 
+  it('writes a definition with what was said to its chat, and changes the one there is as said, whole', async () => {
+    const wider = 'module.exports = { "lines": 2, "words": 4 };';
+    const ai = scripted([js(OUTPUT), js(wider)]);
+    const first = await generate({ node: node('code'), write: 'output', ask: 'Also the words.' }, deps(ai));
+    expect(first.result).toBe(OUTPUT);
+    expect(ai.asked[0].prompt).toContain('## What is asked of it\nAlso the words.');
+    const changed = await generate({ node: node('code', { output_definition: OUTPUT }), write: 'output', refine: { change: 'Also the words.' } }, deps(ai));
+    expect(changed.result).toBe(wider);
+    expect(ai.asked[1].prompt).toContain(`## output.js as it is now\n\n${OUTPUT}\n\n## What to change\n\nAlso the words.`);
+  });
+
   it('refuses what ✨ does not write, and hands the transcript back with a failure', async () => {
     const quiet = deps(scripted([]));
     await expect(generate({ node: node('end') }, quiet)).rejects.toBeInstanceOf(GenerationRefused);
@@ -88,7 +99,7 @@ describe('✨ writes a node\'s files', () => {
     // What arrives over the wire is not held to the type: a request without a node.
     await expect(generate({} as GenerateRequest, quiet)).rejects.toBeInstanceOf(GenerationRefused);
     // A data node's answer that is not JSON is refused, not saved.
-    const held = node('data', { data_format: 'structure' }, { inputs: ['input'], outputs: ['output'] });
+    const held = node('data', {}, { inputs: ['note'], outputs: ['note'] });
     await expect(generate({ node: held }, deps(scripted(['```json\n{count: 0}\n```'])))).rejects.toThrow(/not JSON/);
 
     const ai: AiService = { complete: async () => { throw new Error('no content'); } };
@@ -169,7 +180,7 @@ describe('a whole graph, changed as said', () => {
       metadata: { name: 'Words' },
       nodes: [
         { id: 'count', node_type: 'code', label: 'Count', description: 'Counts the words.', config: {
-          code: 'function run() { return {}; }', prompts: { body: 'Mine.' },
+          code: 'function run() { return {}; }', input_files: ['data/accounts.csv'],
           history: '## 2026-09-27 10:00 · ✨ Code\n\nPrompt:\n\n```\nIBAN DE00 1234\n```',
         } },
         { id: 'say', node_type: 'ai', label: 'Say', description: 'Says the count.', config: {
@@ -183,16 +194,16 @@ describe('a whole graph, changed as said', () => {
       nodes: [
         { id: 'count', node_type: 'code', label: 'Count', description: 'Counts the words.', config: { code: 'function run() { return {}; }', history: 'made up' } },
         { id: 'say', node_type: 'ai', label: 'Say', description: 'Says the count kindly.', config: { prompt: 'Say it kindly.' } },
-        { id: 'note', node_type: 'data', label: 'Note', description: 'Keeps a note.', config: { data_format: 'text', data_value: 'hi' } },
+        { id: 'note', node_type: 'data', label: 'Note', description: 'Keeps a note.', config: { data_value: { note: 'hi' } } },
       ],
       edges: [],
     };
     const ai = scripted([`\`\`\`json\n${JSON.stringify(answer)}\n\`\`\``]);
     const reply = await generateGraph('Say it kindly, and keep a note.', { ai, target }, written);
-    expect(ai.asked[0].prompt).not.toMatch(/IBAN|Mine\.|✨ Prompt/);
+    expect(ai.asked[0].prompt).not.toMatch(/IBAN|accounts\.csv|✨ Prompt/);
     const [count, say, note] = parseGraph(reply.graph).nodes;
-    // Kept and untouched: its history and its ✨ prompts, as they were sent.
-    expect(count.config).toMatchObject({ history: written.nodes[0].config.history, prompts: { body: 'Mine.' } });
+    // Kept and untouched: its history and the files its chats were given, as they were sent.
+    expect(count.config).toMatchObject({ history: written.nodes[0].config.history, input_files: ['data/accounts.csv'] });
     // Touched: the exchange at the end of its history, as after every ✨; new: its history begins with it.
     expect(String(say.config.history)).toMatch(/^## 2026-09-27 11:00 · ✨ Prompt\n\nNothing was sent\.\n\n## \d{4}-\d\d-\d\d \d\d:\d\d · Change of the graph: Say it kindly/);
     expect(String(note.config.history)).toMatch(/^## \d{4}-\d\d-\d\d \d\d:\d\d · Change of the graph: Say it kindly/);

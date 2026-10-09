@@ -1,4 +1,5 @@
 import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
+import { RectangleHorizontal } from 'lucide-react';
 
 /** A button: pressing it fires the start point it names. Nothing to set beyond its label and that. */
 export class ButtonWidgetGuiBuilder extends WidgetGuiBuilder {
@@ -14,7 +15,7 @@ export class ButtonWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly label = 'Button';
 
   paletteEntries() {
-    return [{ label: this.label, icon: '🔘', also: 'run start go trigger' }];
+    return [{ label: this.label, icon: RectangleHorizontal, also: 'run start go trigger' }];
   }
 
   protected override defaultSpan() {

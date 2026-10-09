@@ -50,9 +50,11 @@ describe('what ✨ sends', () => {
     const output = generateRequest(node, 'output', around(node), ['data/a.csv']);
     expect(output.output_files).toEqual([{ path: 'spec.md' }]);
     expect(output.input_files).toBeUndefined();
-    const body = generateRequest(node, 'body', around(node), ['data/a.csv'], { change: 'shout' });
+    const body = generateRequest(node, 'body', around(node), ['data/a.csv'], { refine: { change: 'shout' } });
     expect(body).toMatchObject({ write: 'body', refine: { change: 'shout' }, input_sources: {}, output_targets: {} });
     expect(body.input_files).toBeUndefined();
+    // What was said to a chat for a file not written yet goes with it, trimmed.
+    expect(generateRequest(node, 'output', around(node), [], { ask: '  also the words ' }).ask).toBe('also the words');
   });
 });
 
@@ -83,16 +85,12 @@ describe('what comes back, written in', () => {
     expect(kept.outputs).toBe(node.outputs);
   });
 
-  it('is what a data node holds, as what it is: structure parsed, text as it is, JSON of anything but a string a structure', () => {
-    const structure = made('data', { data_format: 'structure' });
-    expect(writtenInto(structure, 'body', answer('{ "count": 3 }'), '✨ Data', at).config.data_value).toEqual({ count: 3 });
-    expect(writtenInto(made('data'), 'body', answer('three'), '✨ Data', at).config.data_value).toBe('three');
-    // A JSON list kept as text went to data.txt, and the node it fed was handed one string.
-    const capitals = writtenInto(made('data'), 'body', answer('[{ "capital": "Paris", "population": 2102650 }]'), '✨ Data', at);
-    expect(capitals.config).toMatchObject({ data_format: 'structure', data_value: [{ capital: 'Paris', population: 2102650 }] });
-    for (const text of ['Dear reader,', '"quoted"', '{ not json']) {
-      expect(writtenInto(made('data'), 'body', answer(text), '✨ Data', at).config, text).toMatchObject({ data_format: 'text', data_value: text });
-    }
+  it('is the fields a data node was written as -- JSON that is no object is one field -- and its ports follow them', () => {
+    const written = writtenInto(made('data'), 'body', answer('{ "recent": [], "seen": 0 }'), '✨ Fields', at);
+    expect(written.config.data_value).toEqual({ recent: [], seen: 0 });
+    expect(written.inputs.map((port) => port.id)).toEqual(['recent', 'seen']);
+    expect(written.outputs.map((port) => port.id)).toEqual(['recent', 'seen', 'all']);
+    expect(writtenInto(made('data'), 'body', answer('[1, 2]'), '✨ Fields', at).config.data_value).toEqual({ value: [1, 2] });
   });
 });
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trash2 } from 'lucide-react';
 import type { GuiWidget } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { blockValue, GuiBlock, PageGrid } from './GuiPage';
@@ -23,9 +24,10 @@ import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../app/ui
  *    and typing, not by selecting it and finding a box in a side panel;
  *  - **`/` inserts.** Type what you want, Enter, carry on;
  *  - **a block's size is a fraction of the page** — ¼ ½ ¾ Full — on a small
- *    toolbar over the selected block, which also moves and removes it. The grid
+ *    toolbar over the selected block, which also removes it. The grid
  *    underneath still counts cells, and the corner can still be dragged to any
- *    of them; nobody has to know that to get two things side by side.
+ *    of them; nobody has to know that to get two things side by side. A block
+ *    is moved by its grip.
  *
  * None of it is reachable from the runtime entry point, which is the whole
  * point of the split (see the note at the top of GuiPage.tsx).
@@ -187,11 +189,6 @@ export default function DesignerSurface({
                   <BlockToolbar
                     width={placement.w}
                     onWidth={(w) => patchBlock(widget.id, { w })}
-                    onTaller={() => patchBlock(widget.id, { h: placement.h + 1 })}
-                    onShorter={() => patchBlock(widget.id, { h: Math.max(1, placement.h - 1) })}
-                    onUp={index > 0 ? () => moveBlock(widget.id, index - 1) : undefined}
-                    onDown={index < placements.length - 1 ? () => moveBlock(widget.id, index + 1) : undefined}
-                    onInsertBelow={() => onInsertAt(index + 1)}
                     onRemove={() => remove(widget.id)}
                   />
                 )}
@@ -294,21 +291,14 @@ const WIDTHS: { label: string; title: string; w: number }[] = [
 ];
 
 /**
- * What you do to a block, on the block.
- *
- * Size, order, a neighbour, the bin — the four things that were a number field,
- * a keyboard shortcut, a trip to the palette and a button in a side panel.
+ * What you do to a block, on the block: how wide it is, and the bin. The rest
+ * has a way of its own -- the grip moves it (Ctrl+↑↓ too), the corner sizes it
+ * to any cell, `/` adds a neighbour -- so the bar carries only what is quicker
+ * as a button than as anything else.
  */
-function BlockToolbar({
-  width, onWidth, onTaller, onShorter, onUp, onDown, onInsertBelow, onRemove,
-}: {
+function BlockToolbar({ width, onWidth, onRemove }: {
   width: number;
   onWidth: (w: number) => void;
-  onTaller: () => void;
-  onShorter: () => void;
-  onUp?: () => void;
-  onDown?: () => void;
-  onInsertBelow: () => void;
   onRemove: () => void;
 }) {
   const gap = <span style={{ width: 1, alignSelf: 'stretch', background: LINE, margin: '2px 3px' }} />;
@@ -344,16 +334,9 @@ function BlockToolbar({
         </Button>
       ))}
       {gap}
-      <Button variant="quiet" size="sm" title="Shorter" onClick={onShorter}>−</Button>
-      <span style={{ fontSize: 11, color: MUTED }}>height</span>
-      <Button variant="quiet" size="sm" title="Taller" onClick={onTaller}>＋</Button>
-      {gap}
-      <Button variant="quiet" size="sm" title="Move up (Ctrl+↑)" onClick={onUp} disabled={!onUp}>↑</Button>
-      <Button variant="quiet" size="sm" title="Move down (Ctrl+↓)" onClick={onDown} disabled={!onDown}>↓</Button>
-      {gap}
-      <Button variant="quiet" size="sm" title="Add a block below (/)" onClick={onInsertBelow}>＋ block</Button>
-      {gap}
-      <Button variant="danger" size="sm" title="Delete block (Del)" aria-label="Delete block" onClick={onRemove}>🗑</Button>
+      <Button variant="danger" size="sm" title="Delete block (Del)" aria-label="Delete block" onClick={onRemove}>
+        <Trash2 size={14} aria-hidden="true" />
+      </Button>
     </div>
   );
 }

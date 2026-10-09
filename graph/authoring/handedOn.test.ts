@@ -7,7 +7,6 @@ import { AUTHORING_KEYS, withoutAuthoring } from './handedOn.ts';
 const written = {
   code: 'function run(inputs) { return { output: inputs.input }; }',
   history: '## 2026-09-28 09:30 · ✨ Input\n\nPrompt:\n```\nIBAN DE00 1234 …\n```',
-  prompts: { input: 'Mine.' },
   input_files: ['data/accounts.csv'],
   output_files: ['spec.md'],
 };
@@ -25,7 +24,7 @@ const graph = () => parseGraph({
 });
 
 describe('a graph handed on', () => {
-  it('carries no history, no ✨ prompts and no files ✨ was given -- in the graphs its nodes hold too -- and what runs, whole', () => {
+  it('carries no history and no files ✨ was given -- in the graphs its nodes hold too -- and what runs, whole', () => {
     const original = graph();
     const handed = withoutAuthoring(original);
     const inner = (handed.nodes[1].config.subgraph as { nodes: { config: Record<string, unknown> }[] }).nodes[0].config;

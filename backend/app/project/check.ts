@@ -10,7 +10,7 @@
 import type { Graph, GraphEdge, GraphNode } from '../../../graph/graph.ts';
 import { NESTING_LIMIT, fieldOf, memoryFeedbackEdges, topologicalLevels } from '../../../graph/execution/executor.ts';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
-import { fieldSender, pageProblems, widgetElement } from '../../gui-editor/widgets/page.ts';
+import { fieldSender, pageProblems, showsMemory, widgetElement } from '../../gui-editor/widgets/page.ts';
 import { ERROR_PORT, names, wiringProblems, type Problem } from '../../../graph/execution/wiring.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { resultKeys } from '../../../graph/nodes/NodeRunner.ts';
@@ -155,8 +155,9 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
 
   // What a graph hands back leaves through its end points: a block on the page
   // shows one, a script reads one, and a graph inside a node hands its answer
-  // up through them -- in there an end point *is* a port.
-  if (!graph.nodes.some((node) => registry.node(node.node_type)?.isResult)) {
+  // up through them -- in there an end point *is* a port. A page that shows
+  // what a memory node holds is something a person sees, with no end point.
+  if (!graph.nodes.some((node) => registry.node(node.node_type)?.isResult) && (inside || !showsMemory(graph, registry))) {
     problems.push(inside ? {
       where: `${inside}graph`,
       problem: 'Nothing comes out: a graph inside a node hands its answer up through its end points, and there are none.',

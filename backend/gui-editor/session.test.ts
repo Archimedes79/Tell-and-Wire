@@ -53,10 +53,10 @@ const NOTHING = { nodes: {}, page: {} };
 function counter(add = 'function run(i) { return { next: i.n + 1 }; }'): Graph {
   return graphOf(
     [
-      node('count', 'data', { data_format: 'structure', data_value: 0 }, { in: ['input'], out: ['output'] }),
+      node('count', 'data', { data_value: { total: 0 } }),
       node('add', 'code', { code: add }, { in: ['n'], out: ['next'] }),
     ],
-    [edge('n', 'count', 'output', 'add', 'n'), edge('next', 'add', 'next', 'count', 'input')],
+    [edge('n', 'count', 'total', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total')],
   );
 }
 
@@ -94,9 +94,17 @@ describe('state', () => {
     const session = await open(design);
     await session.run(null);
     await session.run(null);
-    expect(session.kept()).toEqual({ nodes: { count: { data_value: 2 } }, page: {} });
-    expect(design.nodes[0].config.data_value).toBe(0);
-    expect(session.graph.nodes[0].config.data_value).toBe(0);
+    expect(session.kept()).toEqual({ nodes: { count: { data_value: { total: 2 } } }, page: {} });
+    expect(design.nodes[0].config.data_value).toEqual({ total: 0 });
+    expect(session.graph.nodes[0].config.data_value).toEqual({ total: 0 });
+  });
+
+  it('lists what each memory node holds, by name and whole -- from its design on, with no round -- and a block of the page shows it', async () => {
+    const session = await open({ ...counter(), page: { blocks: [{ id: 'total', kind: 'text_io', mode: 'output', shows: 'count' }] } });
+    expect(session.view()).toMatchObject({ state: { count: { total: 0 } }, shown: { total: { total: 0 } } });
+    await session.run(null);
+    await session.run(null);
+    expect(session.view()).toMatchObject({ state: { count: { total: 2 } }, shown: { total: { total: 2 } } });
   });
 
   it('is committed only by a round that ran to its end: a stopped one or one that could not start commits nothing', async () => {
@@ -108,7 +116,7 @@ describe('state', () => {
     session.stop(id);
     for (let i = 0; i < 50 && !session.snapshot(id)?.done; i += 1) await wait(10);
     expect(session.snapshot(id)).toMatchObject({ done: true, cancelled: true });
-    expect(session.kept().nodes).toEqual({ count: { data_value: 1 } });
+    expect(session.kept().nodes).toEqual({ count: { data_value: { total: 1 } } });
 
     const loop = graphOf(
       [node('a', 'code', {}, { in: ['x'], out: ['y'] }), node('b', 'code', {}, { in: ['y'], out: ['x'] })],
@@ -141,7 +149,7 @@ describe('state', () => {
     expect(second.id).toBe(first.id);
     expect(second.dropped).toEqual([]);
     await second.run(null);
-    expect(second.kept().nodes).toEqual({ count: { data_value: 3 } });
+    expect(second.kept().nodes).toEqual({ count: { data_value: { total: 3 } } });
 
     const pageFile = await scratch();
     await picked(await open(echo(), pageFile), { pick: 'b' });
@@ -177,13 +185,13 @@ describe('a design that changed', () => {
     relabelled.nodes[1].label = 'Add one';
     expect(session.hold(relabelled)).toEqual([]);
     expect(session.designRevision).toBe(1);
-    expect(session.kept().nodes).toEqual({ count: { data_value: 1 } });
+    expect(session.kept().nodes).toEqual({ count: { data_value: { total: 1 } } });
 
     const restarted = counter();
-    restarted.nodes[0].config.data_value = 10;
+    restarted.nodes[0].config.data_value = { total: 10 };
     expect(session.hold(restarted)).toEqual(['What "count" kept in "data_value" was dropped: its design changed.']);
     await session.run(null);
-    expect(session.kept().nodes).toEqual({ count: { data_value: 11 } });
+    expect(session.kept().nodes).toEqual({ count: { data_value: { total: 11 } } });
 
     // The same is said when the design changed while the tool was not running.
     const reopened = await open(counter(), file);
@@ -316,7 +324,7 @@ describe('the document the editor hands over', () => {
     expect(again).not.toBe(first);
     // From its own file: the same session, as a restarted server's would be.
     expect(again.id).toBe(first.id);
-    expect(again.kept().nodes).toEqual({ count: { data_value: 1 } });
+    expect(again.kept().nodes).toEqual({ count: { data_value: { total: 1 } } });
     await again.run(null);
     expect(await roundsIn(mine)).toBe(2);
     expect(existsSync(stateFileOf(theirs))).toBe(false);
@@ -328,13 +336,13 @@ describe('the application a session runs', () => {
     const graph = graphOf(
       [
         node('tick', 'start', { started_by: 'itself', on_start: true, every: '0.05' }, { out: ['data'] }),
-        node('count', 'data', { data_format: 'structure', data_value: 0 }, { in: ['input'], out: ['output'] }),
+        node('count', 'data', { data_value: { total: 0 } }),
         node('add', 'code', { code: 'function run(i) { return { next: i.n + 1 }; }' }, { in: ['n'], out: ['next'] }),
       ],
-      [edge('n', 'count', 'output', 'add', 'n'), edge('next', 'add', 'next', 'count', 'input'), edge('go', 'tick', 'data', 'add', RUN_PORT)],
+      [edge('n', 'count', 'total', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total'), edge('go', 'tick', 'data', 'add', RUN_PORT)],
     );
     const session = await open(graph);
-    const counted = () => (session.kept().nodes.count?.data_value as number | undefined) ?? 0;
+    const counted = () => ((session.kept().nodes.count?.data_value as { total: number } | undefined)?.total ?? 0);
     expect(await session.startApplication()).toEqual({ ticks: true });
     expect(counted()).toBeGreaterThanOrEqual(1);
     expect(session.view().clock).toMatchObject({ running: true, ticks: true });

@@ -101,6 +101,23 @@ export const NODE = {
   start: 'var(--ui-node-start, #4a3a12)',
 } as const;
 
+/**
+ * One ink per kind of node, to draw its icon in: on its card, in its palette
+ * chip. `NODE` is the dark fill a tag sits on; this is the same kind in a
+ * colour that reads on the editor's own surfaces. Literals, because the editor
+ * is Night under every scheme. A start and an end point are the amber of an
+ * event: where a run begins and ends is one colour, on the canvas and the page.
+ */
+export const INK = {
+  folder: '#86c5fa',
+  ai: '#cdaef2',
+  code: '#69d3c6',
+  data: '#f2a3c1',
+  end: '#f5b75b',
+  subgraph: '#b3bfd2',
+  start: '#f5b75b',
+} as const;
+
 /** A form control on a panel. The single most copied style object in the app. */
 export const FIELD = { background: SUNKEN, color: TEXT, border: `1px solid ${LINE}` } as const;
 

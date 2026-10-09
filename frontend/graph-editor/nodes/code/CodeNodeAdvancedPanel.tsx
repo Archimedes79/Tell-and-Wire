@@ -1,9 +1,9 @@
 import RunOptions from '../../fields/RunOptions';
 import RunOncePerItem from '../../fields/RunOncePerItem';
-import type { NodeAdvancedPanelProps } from '../NodeGuiBuilder';
+import type { NodePanelProps } from '../NodeGuiBuilder';
 
 /** The switches with good defaults, after its ports: see `AdvancedPanel`. */
-export default function CodeNodeAdvancedPanel({ node, setConfig, updateNode }: NodeAdvancedPanelProps) {
+export default function CodeNodeAdvancedPanel({ node, setConfig, updateNode }: NodePanelProps) {
   return (
     <>
       <RunOncePerItem node={node} updateNode={updateNode} subject="this code" />

@@ -1,114 +1,23 @@
 import { Suspense } from 'react';
-import { useShallow } from 'zustand/react/shallow';
-import type { GraphNode, GuiWidget } from '../../app/graph';
+import type { GuiWidget } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
-import { useGraphStore } from '../../app/store/graphStore';
-import { blockCan, endPoints, pageStartPoints, type Point } from '../../app/document/page';
-import { connectToNewPoint } from './pageWrite';
+import { entryOf } from './DesignerPalette';
+import OnTheGraph from './OnTheGraph';
 import { GUI_GRID_COLUMNS } from '../../app/document/layout';
 import { TONES, TONE_LABELS, type Tone } from '../../app/ui/tone';
 import Button from '../../app/ui/Button';
-import { DIMMER, FIELD_ON_SURFACE, LINE, MUTED, NODE, PURPLE_TEXT, WELL } from '../../app/ui/theme';
+import { DIMMER, FIELD_ON_SURFACE, LINE, MUTED } from '../../app/ui/theme';
 
 interface WidgetEditorProps {
-  widget: GuiWidget | null;
+  widget: GuiWidget;
   onChange: (patch: Partial<GuiWidget>) => void;
-}
-
-/** What a select offers for a point made there and then: "+ New start point". */
-const NEW = '__new__';
-
-/** One point to choose, as the graph names it and a person reads it. */
-const named = (point: Point) => (point.label && point.label !== point.id ? `${point.label} (${point.id})` : point.id);
-
-/**
- * How the block connects to the graph -- by name, since nothing is wired to
- * it: where its data goes, which start point using it fires, which end point
- * it shows. Only what the block can do is offered (`blockCan`, the runner's
- * answer), and only the points it may name: the start points the page starts,
- * the graph's end points. A point it needs and the graph lacks is one choice
- * away, made beside the rest of the canvas.
- */
-function Connections({ widget, onChange }: { widget: GuiWidget; onChange: (patch: Partial<GuiWidget>) => void }) {
-  const nodes = useGraphStore(useShallow((s) => s.rfNodes.map((node) => node.data.graphNode as GraphNode)));
-  const can = blockCan(widget);
-  if (!can.sends && !can.fires && !can.shows) return null;
-  const starts = pageStartPoints(nodes);
-  const ends = endPoints(nodes);
-  const sendsTo = widget.sends_to ?? [];
-  const hint = WIDGET_BUILDERS[widget.kind].firesHint;
-  const choose = (value: string, as: 'fires' | 'shows') => {
-    if (value === NEW) connectToNewPoint(widget.id, as);
-    else onChange({ [as]: value || null });
-  };
-
-  return (
-    <div className="mb-3 flex flex-col gap-3">
-      {can.sends && (
-        <fieldset>
-          <legend className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Its data goes to</legend>
-          {starts.map((start) => (
-            <label key={start.id} className="flex items-center gap-2 text-xs" style={{ color: MUTED }}>
-              <input
-                type="checkbox"
-                checked={sendsTo.includes(start.id)}
-                onChange={(e) => onChange({
-                  sends_to: e.target.checked ? [...sendsTo, start.id] : sendsTo.filter((id) => id !== start.id),
-                })}
-              />
-              {named(start)}
-            </label>
-          ))}
-          <Button variant="quiet" size="sm" onClick={() => connectToNewPoint(widget.id, 'sends_to')}>
-            + New start point
-          </Button>
-          <p className="text-xs mt-1" style={{ color: DIMMER }}>
-            Sent as “{widget.id}” in the package of each: {can.sends?.description}.
-          </p>
-        </fieldset>
-      )}
-
-      {can.fires && (
-        <label className="block">
-          <span className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Using it fires</span>
-          <select
-            className="w-full rounded-lg px-2 py-1.5 text-sm"
-            style={FIELD_ON_SURFACE}
-            value={widget.fires ?? ''}
-            onChange={(e) => choose(e.target.value, 'fires')}
-          >
-            <option value="">Nothing</option>
-            {starts.map((start) => <option key={start.id} value={start.id}>⚡ {named(start)}</option>)}
-            <option value={NEW}>+ New start point</option>
-          </select>
-          {widget.fires && <p className="text-xs mt-1" style={{ color: DIMMER }}>{hint}</p>}
-        </label>
-      )}
-
-      {can.shows && (
-        <label className="block">
-          <span className="block text-xs font-medium mb-1" style={{ color: MUTED }}>It shows</span>
-          <select
-            className="w-full rounded-lg px-2 py-1.5 text-sm"
-            style={FIELD_ON_SURFACE}
-            value={widget.shows ?? ''}
-            onChange={(e) => choose(e.target.value, 'shows')}
-          >
-            <option value="">Nothing</option>
-            {ends.map((end) => <option key={end.id} value={end.id}>{named(end)}</option>)}
-            <option value={NEW}>+ New end point</option>
-          </select>
-        </label>
-      )}
-    </div>
-  );
 }
 
 /**
  * What the widget selected on the designer canvas *is*: its label, how it
- * connects to the graph, its own settings drawn by its own panel, and how it
- * looks. A block has no body to write: a chart, a table or an image says in
- * one sentence what it shows, and what reshapes a value is a node.
+ * meets the graph (`OnTheGraph`), its own settings drawn by its own panel, and
+ * how it looks. A block has no body to write: a chart, a table or an image says
+ * in one sentence what it shows, and what reshapes a value is a node.
  *
  * The canvas owns arrangement; this owns identity, and only for the one widget
  * in hand -- not a second editable list of every widget beside the canvas.
@@ -116,26 +25,19 @@ function Connections({ widget, onChange }: { widget: GuiWidget; onChange: (patch
  * the element's own `Panel` rather than knowing any widget kind.
  */
 export default function WidgetEditor({ widget, onChange }: WidgetEditorProps) {
-  if (!widget) {
-    return (
-      <p className="text-xs" style={{ color: DIMMER }}>
-Select a block on the page — or press <kbd>/</kbd> to add one.
-      </p>
-    );
-  }
-
   const element = WIDGET_BUILDERS[widget.kind];
   const Panel = element.Panel;
+  const entry = entryOf(widget.kind, widget.mode);
+  const Icon = entry?.icon;
 
   return (
-    <div className="px-3 py-3 rounded-lg" style={WELL}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: NODE.ai, color: PURPLE_TEXT }}>
-          {element.label}
-        </span>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2 text-xs font-medium" style={{ color: MUTED }}>
+        {Icon && <Icon size={14} aria-hidden="true" />}
+        {entry?.label ?? element.label}
       </div>
 
-      <label className="block mb-3">
+      <label className="block">
         <span className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Label</span>
         <input
           className="w-full rounded-lg px-2 py-1.5 text-sm"
@@ -146,7 +48,7 @@ Select a block on the page — or press <kbd>/</kbd> to add one.
         />
       </label>
 
-      <Connections widget={widget} onChange={onChange} />
+      <OnTheGraph widget={widget} onChange={onChange} />
 
       {/* A panel is its own chunk, loaded when a widget is first opened.
           Keyed by the block: what one block's panel holds -- a listing -- is
@@ -160,7 +62,7 @@ Select a block on the page — or press <kbd>/</kbd> to add one.
       {/* Everything that is a preference rather than a decision: how it looks,
           its exact size. Folded, because a block is finished without any of
           it -- the page used to open on these. */}
-      <details className="mt-3 rounded-lg" style={{ border: `1px solid ${LINE}` }}>
+      <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}>
         <summary className="px-3 py-2 text-xs font-medium cursor-pointer select-none" style={{ color: MUTED }}>
           Look & size
         </summary>

@@ -1,4 +1,5 @@
 import { StaticWidgetGuiBuilder } from '../StaticWidgetGuiBuilder';
+import { Minus, SeparatorVertical } from 'lucide-react';
 
 /** A rule between sections. */
 export class DividerWidgetGuiBuilder extends StaticWidgetGuiBuilder {
@@ -10,8 +11,8 @@ export class DividerWidgetGuiBuilder extends StaticWidgetGuiBuilder {
 
   paletteEntries() {
     return [
-      { mode: 'horizontal', label: this.label, icon: '➖', also: 'line rule hr' },
-      { mode: 'vertical', label: 'Vertical divider', icon: '│' },
+      { mode: 'horizontal', label: this.label, icon: Minus, also: 'line rule hr' },
+      { mode: 'vertical', label: 'Vertical divider', icon: SeparatorVertical },
     ];
   }
 

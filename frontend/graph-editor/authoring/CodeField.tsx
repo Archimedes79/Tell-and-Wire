@@ -20,6 +20,8 @@ interface CodeFieldProps {
   language: CodeLanguage;
   placeholder?: string;
   minHeight?: number;
+  /** How tall the box grows before it scrolls, as a CSS length. */
+  maxHeight?: string;
   /** What the enlarged editor is called: "Draw chart -- code.js". */
   title?: string;
   /** The editor across the window is open. Opened and closed from outside: the file's chip opens it. */
@@ -49,7 +51,7 @@ interface CodeFieldProps {
  * afternoon you spend in VS Code.
  */
 export default function CodeField({
-  value, onChange, language, placeholder, minHeight = 160, title, large, onLarge, header,
+  value, onChange, language, placeholder, minHeight = 160, maxHeight = '46vh', title, large, onLarge, header,
 }: CodeFieldProps) {
   // What is there for the moment the editor takes to arrive: the same text in
   // a plain box, editable, so nothing about the panel waits on a download.
@@ -89,7 +91,7 @@ export default function CodeField({
       <Suspense fallback={plain}>
         <Surface
           value={value} onChange={onChange} language={language} placeholder={placeholder}
-          height={{ min: minHeight, max: '46vh' }}
+          height={{ min: minHeight, max: maxHeight }}
         />
       </Suspense>
 

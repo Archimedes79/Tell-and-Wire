@@ -1,14 +1,22 @@
-import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
-import { DataNodeRunner } from '../../../../graph/nodes/data/DataNodeRunner.ts';
-import { NODE } from '../../../app/ui/theme';
+import { DataNodeRunner, ALL_FIELDS, hasField } from '../../../../graph/nodes/data/DataNodeRunner.ts';
+import { derivedNodePorts } from '../../../app/document/ports';
+import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
-import { describeDataFormat } from './dataFormat';
+import { Database } from 'lucide-react';
 
 const DATA = new DataNodeRunner();
 
 /** How much of what a data node holds the nodes wired to it are told, in characters: enough for its keys and a few records. */
 const HELD_SHOWN = 600;
+
+/** A value in a few words, for the card: a list as its length, a record as braces, a text cut short. */
+function briefly(value: unknown): string {
+  if (typeof value === 'string') return JSON.stringify(value.length > 24 ? `${value.slice(0, 23)}…` : value);
+  if (Array.isArray(value)) return `${value.length} ${value.length === 1 ? 'item' : 'items'}`;
+  if (value && typeof value === 'object') return '{…}';
+  return String(value);
+}
 
 export class DataNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'data';
@@ -17,72 +25,79 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly label = 'Data';
 
-  readonly hint = 'Remember a value between runs, so a loop can build on its own last result';
+  readonly hint = 'Remember fields between runs, so a loop can build on its own last result';
 
-  readonly example = 'e.g. The ten largest capitals, with their population';
+  readonly example = 'e.g. The three latest summaries, newest first, and how many summaries it has seen';
 
   readonly color = NODE.data;
 
+  /** Its icon, on its card and in the palette. */
+  readonly icon = Database;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
+  readonly ink = INK.data;
+
   override readonly paletteGroup = 'Processing';
 
-  // A data node IS the graph's register: it holds its value between runs,
-  // which is what lets a feedback edge into it close a cycle. Its panel is that
-  // value -- its kind and what it holds -- and ✨ Data, which writes it from the text.
-  override readonly Panel = lazy(() => import('./DataNodePanel'));
+  // A data node IS the graph's register: a struct that holds its fields between
+  // runs, which is what lets a feedback edge into a field close a cycle. Its ports
+  // are its fields (`DataNodeRunner.derivedPorts`), so there are none to edit, and
+  // its one file, data.json, is edited in its file's pane and written by its chat.
 
-  override readonly advancedSummary = 'ports';
-
-  // The node reads "input" and hands on "output" by those names.
-  override readonly portEditing = { inputs: 'fixed', outputs: 'fixed' } as const;
-
-  override portHint(side: 'inputs' | 'outputs'): string {
-    return side === 'inputs'
-      ? 'Optional. What arrives here replaces what it holds, and is kept for the next run.'
-      : 'What it holds: what arrived last, or the value above until something does.';
-  }
-
-  /** A file dropped on it on the canvas is what it holds from now on: what the file says. */
+  /** A file dropped on it on the canvas is its fields from now on: what the file says, an object -- or one field, "value". */
   override dropPort(): 'text' {
     return 'text';
   }
 
   override withDropped(node: GraphNode, value: unknown): GraphNode {
-    return { ...node, config: { ...node.config, data_value: value } };
+    const fields = value && typeof value === 'object' && !Array.isArray(value) ? value : { value };
+    const next = { ...node, config: { ...node.config, data_value: fields } };
+    return { ...next, ...(derivedNodePorts(next) ?? {}) };
   }
 
   /**
-   * Its kind, what its text says it holds, and the start of what it holds, as
-   * JSON: what the nodes wired to it are told it hands on. The value itself,
-   * since its keys are in it: told only "structure: ten capitals", ✨ Input
-   * wrote "Capital" where the records say "capital", and the table stayed empty.
+   * What a wire from it carries -- one field, or all of them (*port*) -- what
+   * its text says, and the start of what it holds, as JSON: what the nodes
+   * wired to it are told it hands on. The value itself, since its keys are in
+   * it: told only "ten capitals", ✨ Input wrote "Capital" where the records
+   * say "capital", and the table stayed empty.
    */
-  override describeOutput(node: GraphNode): string {
-    const said = describeDataFormat(node);
-    const value = this.restingValue(node);
-    if (value === null || value === undefined) return said;
-    const json = JSON.stringify(value) ?? '';
-    const start = json.length > HELD_SHOWN ? `${json.slice(0, HELD_SHOWN)}… (${json.length - HELD_SHOWN} more characters)` : json;
-    return `${said} -- it holds: ${start}`;
+  override describeOutput(node: GraphNode, port?: string): string {
+    const { fields } = DATA.config(node as never);
+    const names = Object.keys(fields);
+    const details = node.description?.trim();
+    const start = (value: unknown) => {
+      const json = JSON.stringify(value) ?? '';
+      return json.length > HELD_SHOWN ? `${json.slice(0, HELD_SHOWN)}… (${json.length - HELD_SHOWN} more characters)` : json;
+    };
+    if (port !== undefined && hasField(fields, port)) return `the field "${port}" of a struct${details ? `: ${details}` : ''} -- it holds: ${start(fields[port])}`;
+    const said = `a struct of ${names.length ? `the fields ${names.map((name) => `"${name}"`).join(', ')}` : 'no fields yet'}${details ? `: ${details}` : ''}; "${ALL_FIELDS}" is all of them`;
+    return names.length ? `${said} -- it holds: ${start(fields)}` : said;
   }
 
-  /** What it remembers, the start of it, under its ports. */
-  override canvasSummary(node: GraphNode): string | undefined {
-    const value = node.config.data_value;
-    if (value === null || value === undefined) return undefined;
-    return typeof value === 'string' ? value : JSON.stringify(value);
+  /** What it remembers, the start of it, under its ports: each field and a few words of what it holds. */
+  override canvasSummary(node: GraphNode): string {
+    const { fields } = DATA.config(node as never);
+    const entries = Object.entries(fields);
+    return entries.length ? entries.map(([name, value]) => `${name} ${briefly(value)}`).join(' · ') : 'no fields yet';
   }
 
   /**
-   * What it stores is what it hands on, until something new arrives: asked of
-   * its runner, which a run asks. An empty text is nothing to hand on.
+   * What a field stores is what it hands on, until something new arrives:
+   * asked of its runner, which a run asks. Nothing, for an empty field -- or
+   * a port that is none of its fields.
    */
-  override restingValue(node: GraphNode): unknown {
-    const handed = DATA.config(node as never).value;
-    return handed === '' ? undefined : handed;
+  override restingValue(node: GraphNode, port: string): unknown {
+    const { fields } = DATA.config(node as never);
+    const value = port === ALL_FIELDS ? fields : hasField(fields, port) ? fields[port] : undefined;
+    return value === '' || value === null ? undefined : value;
   }
 
-  override wantsOn(node: GraphNode): string {
-    return `what it stores: ${describeDataFormat(node)}`;
+  /** What a field is: it holds what arrives on it, and now this. The gate says nothing of the sort. */
+  override wantsOn(node: GraphNode, port: string): string | undefined {
+    const { fields } = DATA.config(node as never);
+    if (!hasField(fields, port)) return super.wantsOn(node, port);
+    const now = JSON.stringify(fields[port]);
+    return `the field "${port}" it stores: what arrives replaces its value${now === undefined ? '' : ` -- it holds ${now.length > 200 ? `${now.slice(0, 200)}…` : now} now`}`;
   }
-
 }

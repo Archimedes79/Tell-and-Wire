@@ -76,15 +76,11 @@ export type NodeConfig = {
   output_definition?: string;
   /** Every exchange with the model about the node: `history.md`. See `graph/authoring/history.ts`. */
   history?: string;
-  /** The ✨ prompts someone changed, by what they write; the others are the standard ones (`authoring/prompts.ts`). */
-  prompts?: Partial<Record<'input' | 'output' | 'body', string>>;
-  /** The files ✨ Input writes a code or ai node's input definition from -- examples, a spec; none: the one the graph hands it. */
+  /** The files the Input chat writes a code or ai node's input definition from -- examples, a spec; none: the one the graph hands it. */
   input_files?: string[];
-  /** The files ✨ Output writes its output definition from, where it is given some. */
+  /** The files the Output chat writes its output definition from, where it is given some. */
   output_files?: string[];
-  /** A data node: what kind of value it holds. */
-  data_format: 'text' | 'structure';
-  /** A data node: the value it holds, and hands on until something arrives. */
+  /** A data node: its fields -- an object, each key a field -- which it holds between runs, hands on until something arrives on one, and `data.json` keeps. */
   data_value?: unknown;
   extensions: string;
   /** Tool servers an ai node may call, one per line: a URL, or a name this machine configured. */

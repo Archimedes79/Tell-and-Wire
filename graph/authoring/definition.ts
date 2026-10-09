@@ -149,6 +149,44 @@ export function definitionExample(text: string): DefinitionExample {
   return { example: value as Record<string, unknown> };
 }
 
+/** One property of a definition's JSDoc: what it is called, its type as written, and what the comment says of it. */
+export interface TypedefProperty { id: string; type: string; description: string }
+
+/**
+ * The properties the JSDoc gives *type*: each `@property {…} <id> <what it
+ * is>` in the comment that says `@typedef {Object} <type>`. A type may hold
+ * braces of its own -- `{Array<{label: string}>}` -- so it is read to its
+ * matching brace. A nested one -- `output.wordCount` -- is a part of a port,
+ * not one.
+ */
+export function typedefProperties(text: string, type: string): TypedefProperty[] {
+  const comment = [...text.matchAll(/\/\*\*[\s\S]*?\*\//g)].map(([found]) => found)
+    .find((found) => new RegExp(String.raw`@typedef\s+\{Object\}\s+${type}\b`).test(found));
+  if (!comment) return [];
+  const found: TypedefProperty[] = [];
+  for (const { index } of comment.matchAll(/@property\s*\{/g)) {
+    const open = comment.indexOf('{', index);
+    let at = open;
+    for (let depth = 0; at < comment.length; at += 1) {
+      if (comment[at] === '{') depth += 1;
+      else if (comment[at] === '}' && --depth === 0) break;
+    }
+    const rest = comment.slice(at + 1);
+    const name = /^\s*\[?([\w$.]+)\]?/.exec(rest);
+    if (!name || name[1].includes('.')) continue;
+    // What is said after the name: up to the next tag or the end of the comment, its line marks taken out.
+    const after = rest.slice(name[0].length);
+    const next = after.search(/@\w/);
+    const said = next < 0 ? after : after.slice(0, next);
+    const description = said.replace(/\*\/\s*$/, '').replace(/\s*\n\s*\*?\s*/g, ' ').replace(/^\s*[-–]\s*/, '').trim();
+    found.push({ id: name[1], type: comment.slice(open + 1, at).trim(), description });
+  }
+  return found;
+}
+
+/** The ids of the properties the JSDoc gives *type* (`typedefProperties`). */
+export const typedefKeys = (text: string, type: string): string[] => typedefProperties(text, type).map((property) => property.id);
+
 /** The ports *text* names: its example's keys, none when it cannot be read. */
 export function definitionKeys(text: string): string[] {
   const read = definitionExample(text);

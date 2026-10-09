@@ -46,10 +46,12 @@ export function startsOn(widget: GuiWidget): string[] {
   return widgetElement(widget.kind)?.referencedPaths(parseWidget(widget)) ?? [];
 }
 
-/** A start or end point, as a block's settings offer it: what it is called by, and what a person reads. */
+/** A start or end point, or a memory node, as a block's settings offer it: what it is called by, and what a person reads. */
 export interface Point {
   id: string;
   label: string;
+  /** A memory node: what it holds is shown, with no round. */
+  memory?: boolean;
 }
 
 /** The start points a block can send to and fire: the ones the page starts. */
@@ -65,6 +67,12 @@ export function endPoints(nodes: GraphNode[]): Point[] {
     const element = runnerRegistry.node(node.node_type);
     return element?.isResult ? [{ id: node.id, label: element.resultLabel(node as never) }] : [];
   });
+}
+
+/** The memory nodes a block can show: what each holds, by name, whether or not a round has run. */
+export function memoryPoints(nodes: GraphNode[]): Point[] {
+  return nodes.flatMap((node) => (runnerRegistry.node(node.node_type)?.offers(node as never).some((offer) => offer.kind === 'state')
+    ? [{ id: node.id, label: node.label || node.id, memory: true }] : []));
 }
 
 /** The blocks of *blocks* that name one of the points *ids*: what the page loses with them. */

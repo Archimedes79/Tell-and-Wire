@@ -5,7 +5,7 @@ import RunOncePerItem from '../../fields/RunOncePerItem';
 import ProviderModelSelect from '../../../app/fields/ProviderModelSelect';
 import Button from '../../../app/ui/Button';
 import { DIMMER, FIELD, MUTED } from '../../../app/ui/theme';
-import type { NodeAdvancedPanelProps } from '../NodeGuiBuilder';
+import type { NodePanelProps } from '../NodeGuiBuilder';
 
 /**
  * The knobs after its ports: once per item, which model, how freely, which
@@ -14,7 +14,7 @@ import type { NodeAdvancedPanelProps } from '../NodeGuiBuilder';
  * controls in a row made a node look like it needed eleven decisions before
  * it would run.
  */
-export default function AiNodeAdvancedPanel({ node, setConfig, updateNode }: NodeAdvancedPanelProps) {
+export default function AiNodeAdvancedPanel({ node, setConfig, updateNode }: NodePanelProps) {
   const model = useId();
   const temperature = useId();
   const tools = useId();

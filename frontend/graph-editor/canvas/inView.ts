@@ -7,16 +7,13 @@ interface Box { x: number; y: number; width: number; height: number }
  * is about is drawn and measured.
  */
 export interface ViewDue {
-  /** The document it was last told of (`graphStore.document`), its node count, and the node whose panel was open. */
+  /** The document it was last told of (`graphStore.document`), and its node count. */
   document: number;
   count: number;
-  open: string | null;
   fit: boolean;
   show: string | null;
   /** *show* is a node just added: the graph is shown whole where it fits readably (`READABLE_ZOOM`). */
   added: boolean;
-  /** The canvas's size when it was last told, as `width x height`. */
-  size?: string;
 }
 
 /**
@@ -31,24 +28,16 @@ export const READABLE_ZOOM = 0.6;
  * level in or out -- is fitted whole: the view the last one was left at put a
  * new node at x -100 and a start point off the screen. One node more -- from the
  * palette, or the start point a first block made while the canvas was hidden -- is
- * brought into sight, and so is a node whose panel opens, which narrows the
- * canvas under it -- again once the canvas has its new size: a node added from
- * the palette was shown at the canvas's width before its panel took the right
- * of it, and stayed there, behind the panel.
+ * brought into sight.
  */
-export function viewDue(due: ViewDue, now: { document: number; ids: string[]; open: string | null; size?: string }): ViewDue {
-  if (now.document !== due.document) return { document: now.document, count: now.ids.length, open: now.open, fit: true, show: null, added: false, size: now.size };
+export function viewDue(due: ViewDue, now: { document: number; ids: string[] }): ViewDue {
+  if (now.document !== due.document) return { document: now.document, count: now.ids.length, fit: true, show: null, added: false };
   let { show, added } = due;
   if (now.ids.length === due.count + 1) {
     show = now.ids[now.ids.length - 1];
     added = true;
   }
-  if (now.open && now.open !== due.open && now.open !== show) {
-    show = now.open;
-    added = false;
-  }
-  if (now.open && !show && due.size && now.size !== due.size) show = now.open;
-  return { ...due, count: now.ids.length, open: now.open, show, added, size: now.size };
+  return { ...due, count: now.ids.length, show, added };
 }
 
 /** Whether every one of *boxes* is in *view*, *margin* from its edges: nothing to move for. */
@@ -63,9 +52,6 @@ export function allInView(boxes: Box[], view: Box, margin = 24): boolean {
  * How far to move the canvas so *node* is in *view*, *margin* from its edges
  * -- by as little as that takes, and not at all when it already is. When the
  * node is bigger than the view, its top left corner is what is shown.
- *
- * A node clicked near the right edge was covered by its own panel the moment
- * the panel opened beside it: the canvas got narrower under it.
  */
 export function panToShow(node: Box, view: Box, margin = 24): { dx: number; dy: number } {
   const along = (start: number, size: number, from: number, room: number): number => {

@@ -236,9 +236,8 @@ function toFile(value: unknown, json: boolean): string {
 
 /**
  * What the file of *text* says for *value*: the text -- or the JSON, of a
- * value kept as JSON or of what a run left in a data node kept as text -- with
- * the footer after it; the stub while the node holds nothing there; or null,
- * for no file at all.
+ * value kept as JSON -- with the footer after it; the stub while the node
+ * holds nothing there; or null, for no file at all.
  */
 function fileFor(value: unknown, text: ProjectText): string | null {
   if (isBlank(value)) return text.standard === undefined ? null : toFile(text.standard, false);
@@ -277,9 +276,9 @@ function heldIn(content: string, text: ProjectText, path: string): { value: unkn
 }
 
 /**
- * Nothing written: no file for it, or its stub. An empty record is not
- * nothing -- a data node's map nobody has put anything in yet -- and taken for
- * it, it came back null.
+ * Nothing written: no file for it, or its stub. An empty object is not
+ * nothing -- a data node nobody has given a field yet -- and taken for it, it
+ * came back null.
  */
 function isBlank(value: unknown): boolean {
   return value === undefined || value === null || (typeof value === 'string' && !value.trim());

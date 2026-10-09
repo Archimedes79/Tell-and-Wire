@@ -2,8 +2,9 @@ import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { SubgraphNodeRunner } from '../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
-import { NODE } from '../../../app/ui/theme';
+import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
+import { Boxes } from 'lucide-react';
 
 const ELEMENT = new SubgraphNodeRunner();
 
@@ -28,6 +29,12 @@ export class SubgraphNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly color = NODE.subgraph;
 
+  /** Its icon, on its card and in the palette. */
+  readonly icon = Boxes;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
+  readonly ink = INK.subgraph;
+
   // A graph of its own, one node wide from out here: the way a graph grows
   // in depth rather than in width.
   override readonly paletteGroup = 'Structure';
@@ -35,8 +42,6 @@ export class SubgraphNodeGuiBuilder extends NodeGuiBuilder {
   override readonly Panel = lazy(() => import('./SubgraphNodePanel'));
 
   override readonly AdvancedPanel = lazy(() => import('./SubgraphNodeAdvancedPanel'));
-
-  override readonly advancedSummary = 'ports, once per item, failures';
 
   override describeOutput(node: GraphNode): string {
     const ports = ELEMENT.derivedPorts(node as never, runnerRegistry)?.outputs ?? [];

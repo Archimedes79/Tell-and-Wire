@@ -3,7 +3,8 @@
 // A page, a script, a model over MCP, a frontend somebody wrote: each starts a
 // round with an event and values, and reads back what it produced -- by name,
 // never by node or port. There is one kind of way in, a start point, and one
-// of way out, an end point, each by its own id (`NodeRunner.offers`). What a
+// of way out, an end point, each by its own id (`NodeRunner.offers`) -- and
+// what a memory node holds can be watched, by its id, without a round. What a
 // round is sent goes into the start point it fires, as one package; nothing
 // else of the graph is set from outside. The page's blocks are not among the
 // names: they connect themselves to them (`backend/gui-editor/widgets/page.ts`). A graph inside
@@ -43,10 +44,12 @@ export interface InterfaceEntry {
   reads?: InterfaceEntry[];
 }
 
-/** What a graph offers: what starts a round, and what it hands back. */
+/** What a graph offers: what starts a round, what it hands back, and what it holds that can be watched. */
 export interface GraphInterface {
   events: InterfaceEntry[];
   outputs: InterfaceEntry[];
+  /** Each memory node, by its id: its whole content is in every session (`SessionView.state`), and a block of the page can show it. */
+  state: InterfaceEntry[];
 }
 
 /** A name the graph does not offer, asked for by a caller: the caller's mistake, said as one. */
@@ -59,7 +62,7 @@ interface Offered {
 
 /** Every offer of *graph*, by kind and name: a node's id, which no other node has (`wiring.ts` refuses a second). */
 function offered(graph: Graph, registry: Runners): Record<OfferKind, Map<string, Offered>> {
-  const found: Record<OfferKind, Map<string, Offered>> = { event: new Map(), output: new Map() };
+  const found: Record<OfferKind, Map<string, Offered>> = { event: new Map(), output: new Map(), state: new Map() };
   for (const node of graph.nodes) {
     for (const offer of registry.node(node.node_type)?.offers(node) ?? []) {
       if (!found[offer.kind].has(offer.name)) found[offer.kind].set(offer.name, { node, offer });
@@ -103,7 +106,8 @@ function readOf(graph: Graph, start: GraphNode, port: string | undefined): Inter
  * What *graph* offers, as a caller is told it: each start point with what
  * the graph reads of what it is sent -- and, for one the page starts, which
  * blocks fire it and what the page sends with it, so a script that starts it
- * in the page's place knows what to send -- and each end point.
+ * in the page's place knows what to send -- each end point, and each memory
+ * node whose content can be watched.
  */
 export function interfaceOf(graph: Graph, registry: Runners): GraphInterface {
   const found = offered(graph, registry);
@@ -114,7 +118,7 @@ export function interfaceOf(graph: Graph, registry: Runners): GraphInterface {
     const reads = readOf(graph, node, offer.port);
     return { ...said, ...(fired.length ? { fired_by: fired } : {}), ...(sends.length ? { sends } : {}), ...(reads.length ? { reads } : {}) };
   });
-  return { events, outputs: [...found.output.values()].map(({ offer }) => entry(offer)) };
+  return { events, outputs: [...found.output.values()].map(({ offer }) => entry(offer)), state: [...found.state.values()].map(({ offer }) => entry(offer)) };
 }
 
 /** The round the event *name* starts, as the executor is handed it -- none, for the whole graph. */
@@ -184,4 +188,9 @@ export function outputsOf(graph: Graph, result: ExecutionResult | null, registry
     if (shown !== undefined) outputs[name] = shown;
   }
   return outputs;
+}
+
+/** What each memory node of *graph* holds as it is now, by its name: whole, from the design's own values on. */
+export function stateOf(graph: Graph, registry: Runners): Record<string, unknown> {
+  return Object.fromEntries([...offered(graph, registry).state].map(([name, { node }]) => [name, registry.node(node.node_type)?.holds(node) ?? null]));
 }

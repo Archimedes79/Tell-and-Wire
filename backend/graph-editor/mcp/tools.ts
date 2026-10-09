@@ -77,8 +77,8 @@ const json = (value: unknown): string => JSON.stringify(value, null, 2);
 
 /**
  * *graph* with what it says nothing of put back from *kept*, the graph it is to
- * replace: each node's history, ✨ prompts and files (`AUTHORING_KEYS`), by node id,
- * in the graphs nodes hold too. A document written by a model has none of them, and
+ * replace: each node's history and the files ✨ was given (`AUTHORING_KEYS`), by node
+ * id, in the graphs nodes hold too. A document written by a model has none of them, and
  * a save would delete them.
  */
 function withAuthoringOf(graph: Graph, kept: Graph): Graph {
@@ -98,8 +98,8 @@ function withAuthoringOf(graph: Graph, kept: Graph): Graph {
 }
 
 /**
- * What the project in *folder* keeps only for writing it -- each node's history, ✨ prompts
- * and files (`AUTHORING_KEYS`) -- in the graphs nodes hold too. Read without being
+ * What the project in *folder* keeps only for writing it -- each node's history and the
+ * files ✨ was given (`AUTHORING_KEYS`) -- in the graphs nodes hold too. Read without being
  * *read*: `loadProject` records every file as seen, and a save would then find nothing
  * changed since.
  */
@@ -230,8 +230,8 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     // As the editor saves: into a project, the wiring to `flow.json` and each
     // node to its own folder; anywhere else, one file (`confine` lets only a
     // `.json` path through). The guard holds for the one file too. Over a graph that
-    // is there, what the document says nothing of stays: history and ✨ prompts are the
-    // project's. A file changed on disk since this process read the project is not
+    // is there, what the document says nothing of stays: the history and the files ✨ was
+    // given are the project's. A file changed on disk since this process read the project is not
     // written over (`FileChanged`); the read for what stays is not that read (`authoringOf`).
     if (folder) kept = await authoringOf(folder, insideRoot);
     try {

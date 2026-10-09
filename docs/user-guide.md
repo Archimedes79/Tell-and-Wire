@@ -32,7 +32,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 | **Folder** | Lists the files in a folder, filtered by file types, optionally with subfolders. Reads no file. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
 | **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
-| **Data** | A value kept between runs: text or a structure. What arrives replaces it for the next run. A loop goes through a data node. |
+| **Data** | A struct kept between runs: its fields are in `data.json`, and each field is an input and an output of the node, plus `all`, which carries every field. What arrives on a field replaces it for the next run. A loop goes through a data node. A page block can show what it holds, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
@@ -43,28 +43,41 @@ folder**, then **Chart** in the left column (or type `/` on the page). Each bloc
 connected: what the picker holds goes to a new start point, *Start*, and the chart shows a
 new end point, *Chart*.
 
-Click a block to see its settings on the right:
+Click a block to see everything about it in the right column: its label, one small box
+**On the graph**, and the block's own settings. The box shows how the block meets the graph,
+by name:
 
-- **Its data goes to**: the start points whose package carries what the block holds.
-- **Using it fires**: the start point a run begins at when the block is used.
-- **It shows**: the end point whose value the block draws.
+- **Sends to**: the start points whose package carries what the block holds.
+- **Starts a run**: a switch for whether using the block begins a run. With several start
+  points it becomes *Starts a run at*, and you choose which.
+- **Shows**: the end point, or the memory node, whose value the block draws.
+
+With no block selected the right column holds the page's own settings: its colour scheme.
 
 The first block that can fire a start point fires it, so choosing a file runs the graph. A
 button or a chat always fires its start point. A dropdown that only sends is a setting: it
 starts nothing, and the next run picks up its value.
 
+A graph built first can draw its own page: **From the graph**, at the foot of the left
+column, adds a block for each start point and end point that has none -- an input for what
+a start point reads, a button that starts it, a text for what an end point hands back. A start
+point a call starts is put on the page only if you say so, one at a time: the page can only
+start one the page starts, and switched, it no longer serves the command line or a script.
+
 ## 2. Add a node and wire it
 
 On the **Graph** tab the two points are already there. A start point's card says which
 blocks fire it and send to it; an end point's card says which blocks show it. Click
-**Code** in the palette: the node appears right of the selected one, with its panel open
-on the right.
+**Code** in the palette: the node appears right of the selected one, chosen. Every node is
+one card: its icon, its heading, a row for each port with the port's name, and below them
+what it holds or made. A click chooses a node; **a double-click, or Enter, opens it** (the
+next section). Drag a node from the palette to put it where you want it.
 
 Drag from the start point's *Data* dot (the amber diamond) to the code node's input, and
-from the code node's output to the end point's *Value* dot. A dot's name shows while the
-pointer is on the card. The first wire also sets what the input **takes** of the package:
-here the chosen file's content (`file.content`). Advanced in the panel shows it and lets
-you change it.
+from the code node's output to the end point's *Value* dot. A wire let go on **empty canvas**
+opens a search: type `code` and press Enter, and the node arrives already wired. The first
+wire also sets what the input **takes** of the package: here the chosen file's content
+(`file.content`). The node's settings show it and let you change it.
 
 An empty Graph tab says where to start. A node's card has a 🗑 to delete it, as the Delete
 key does: nothing is asked, and Ctrl+Z brings it back. A **⚠ N problems** chip in the bar
@@ -73,43 +86,70 @@ a block connected to nothing.
 
 ## 3. Say what the node does; ✨ writes its files
 
-Every node's panel is built the same: **What it does** on top, the kind's own
-controls, one folded **Advanced** (ports, *Run once per item*, *Catch failures*, the model,
-tools) and **What runs, technically** last. The top box is the node in your words:
+Double-click a node (or press Enter on it) and it opens where the canvas was: **Esc**, or
+**← Graph**, goes back, and ‹ › step to the node before and the node after. On the left is
+the node in your words, and what it is made of; on the right, the one thing you chose to
+work on. There is no Save: a change is in the graph at once, and Undo takes it back.
+
+The box on top, **What it does**, is the node in your words:
 
 > Read the population CSV (a country column and a population column) and show a bar chart
 > of the population per country.
 
-Press **✨ Generate** under it: it writes `input.js`, `output.js` and `code.js` (an AI node:
-`prompt.md`), each from the ones before it. Pressed again, it writes each anew, one after
-another. To write one file only, press its own ✨ in its row -- **✨ Input**, **✨ Output**,
-**✨ Code** or **✨ Prompt**. A data node has one file, what it holds, and only ✨ Generate.
+Below it, **Auto generate** writes everything in order, each file from the ones before it. It
+stops after **Pull input** where a wired input has no example to pull -- the message says why --
+rather than write against nothing. Under that are the node's files, a row each, with a button for
+each way of working on it:
 
-| File | What it holds |
-|---|---|
-| `input.js` | What one call is handed: a JSDoc typedef, then one example as plain JSON. |
-| `output.js` | What one call returns, the same way. Its keys are the node's outputs. |
-| `code.js` / `prompt.md` | The body: the code, or the AI node's instructions. |
-| `history.md` | Every exchange with the model about this node. |
+| Row | Buttons | File |
+|---|---|---|
+| **Input** | **Pull input**, **File** | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
+| **Output** | **Chat**, **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
+| **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
+| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct it holds. |
 
-The body's own ✨ first writes whichever definition is missing. New code is tried on
-the example in `input.js` and repaired once if it fails. Each file shows in its row, editable
-in place; its chip opens it in a large window, which has *Open in my editor*. There is no
-Save in the panel: a change is in the graph at once, and Undo takes it back.
+- **Pull input** writes `input.js` from the graph, with no model: its types from the
+  `output.js` of the node wired before it, its example from running what comes before it on
+  the example data -- a file an input reads is read for you. If a node before it asks a model,
+  that is a model call, and the button says so.
+- **Chat** says what you want, in your words: *the number of words, and how long it takes to
+  read*. The first message writes the file; each message after that changes the file as said.
+  Under the line, *Sent with it* lists what goes along with your words -- the node's text, its
+  input, its output and the graph around it, the same for every file of every kind of node --
+  and **Show what is sent** shows the prompt word for word.
+- **File** is the file itself, editable in place; **Larger** opens it in a large window, and
+  **Open in my editor** opens it in your own. A dot says whether anything is written in it.
+  Files an input or an output is written from -- examples, a spec -- are folded under the
+  file; drop one on the node on the canvas to add it.
+- The gear holds the settings: the ports where they are yours to name, *Run once per item*,
+  *Catch failures*, the model and tools, **What runs, technically**, and `history.md` -- every
+  exchange with the model about this node. Each chat also lists its own exchanges.
+- **Last run** at the foot of the pane, once the tool has run, says how the node went and what
+  arrived and what it made.
 
-- **▶ Try** runs the node once on the example in `input.js` and holds the result to
-  `output.js`. **✨ Fix** repairs the body where it failed.
-- **What ✨ sends** shows the prompt word for word. Each ✨ shows its prompt; change it
-  for this node, or Reset it.
-- **The bar under the canvas** (*Say what to change*) changes the selected node, or the
-  whole graph when none is selected. A graph change shows what it adds, removes and changes
-  before you **Apply** it.
+New code is tried on the example in `input.js` and repaired once if it fails. Under the code,
+**▶ Try** runs the node once on that example and holds the result to `output.js`; **✨ Fix**
+repairs the body where it failed. An AI node's **▶ Try** asks the model on the example.
+
+- **The bar under the canvas** (*Say what to change in the graph*) changes the whole graph, and
+  shows what it adds, removes and changes before you **Apply** it. A change to one node is said
+  in that node's Chat.
 - **Generate all** in the toolbar writes every empty node, in the order the graph runs.
   **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
-Two things save the most time. Give ✨ Input a real file before ✨ Code: **From the graph**
-takes what the graph hands the node, **Add a file…** picks one, or drop a file on the
-node. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
+A start point, a folder, an end point and a subgraph have no files: they open on their
+settings. **Edit the page** on a node a block uses goes to the Page tab.
+
+Two things save the most time. Wire a node to what feeds it before **Pull input**, so the
+example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
+
+**A data node is a struct.** Its **Fields** file, `data.json`, is an object: each key is a field,
+with its starting value. Each field is an input and an output of the node under its name, and
+`all` carries every field as one object. A field takes what arrives on it, and keeps its value
+when nothing does. It holds no code: working out a new value (a count plus one) is a code node,
+wired from the field's output back to the same field's input -- the one kind of loop a graph
+allows. What it holds can be watched without a run: a block of the page can show it, and the
+session reads it by the node's name.
 
 ## 4. Wiring in more detail
 
@@ -122,14 +162,14 @@ node. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the 
   An input takes one part of it by a dotted path (`file.content`, `chat.message`), or the
   whole package.
 - **Once per item.** A new node runs once on what arrives. Tick **Run once per item**
-  (Advanced; it shows when a list arrives) and each item of a list is its own call; *Items
-  at once* sets how many run together (four by default).
+  (in the node's settings; it shows when a list arrives) and each item of a list is its own
+  call; *Items at once* sets how many run together (four by default).
 - **The ◆ gate.** Every node but a start point has a ◆ on its top edge. Unwired, the node
   runs whenever a run reaches it. Wired, it runs only when the run began at a start
   point wired to it, or a node put `true` on it. A code node that returns booleans is the
   filter and the router. A node whose gate stays shut keeps what it made last.
-- **Failures.** A failed node skips what depends on it. **Catch failures** (Advanced) puts
-  the reason on an `error` output instead; a data node it feeds keeps what it held.
+- **Failures.** A failed node skips what depends on it. **Catch failures** (in the node's
+  settings) puts the reason on an `error` output instead; a data node it feeds keeps what it held.
 
 ## 5. Start points and end points
 
@@ -148,10 +188,12 @@ file in a folder.
 ## 6. The Page tab and its blocks
 
 The page is built like a document. Type headings and text in place. Press `/` to insert a
-block. A selected block has a small toolbar: ¼ ½ ¾ Full, shorter or taller, move, add
-below, and a 🗑 that deletes it (so does the Delete key). *Look & size* holds the tone,
-frame and background. *Colour scheme of the page* recolours the page; the editor keeps its
-own colours. Blocks are live while you build: a button pressed here runs the graph.
+block, or drag one from the left column onto the page. A selected block has a small toolbar:
+¼ ½ ¾ Full for its width, and a 🗑 that deletes it (so does the Delete key); drag a block
+by its grip to move it, and its corner to size it. *Look & size* holds the tone, frame and
+background. With no block selected, the right column shows the page: *Colour scheme*
+recolours the page; the editor keeps its own colours. Blocks are live while you build: a
+button pressed here runs the graph.
 
 | Block | Sends | Fires | Shows |
 |---|---|---|---|
@@ -264,8 +306,8 @@ home folder.
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
 - **✨ does nothing or fails.** Check **⚙ Settings**: its AI section says *Now: provider / model*.
   A missing key or a local server that is not running ends here.
-- **Using the page starts nothing.** No block fires the start point: set **Using it fires**
-  on the block that should. `check` names this too.
+- **Using the page starts nothing.** No block fires the start point: switch **Starts a run**
+  on for the block that should. `check` names this too.
 - **The page stays empty.** The block shows an end point nothing is wired into, or a wire
   is on the wrong dot. The end point's card says which blocks show it.
 - **A model's answer is empty or ends short.** A model that thinks spends the same token

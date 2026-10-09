@@ -22,7 +22,7 @@ local LLM (Ollama, LM Studio) or a model API of your choice.
 A tool in Tell & Wire has two halves.
 
 - **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
-  runs through **code nodes**, **AI nodes**, **data nodes** (values kept between runs),
+  runs through **code nodes**, **AI nodes**, **data nodes** (a struct kept between runs),
   **folder nodes** and **subgraphs**, and ends at **end points**.
 - **The page** (Page tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
@@ -30,7 +30,8 @@ A tool in Tell & Wire has two halves.
 
 A node is a heading and a short text that says what it should do. ✨ writes the node's
 files from that text: `input.js` and `output.js` (what goes in and out, each with an
-example) and `code.js` or `prompt.md`. Every file is plain text in the tool's folder, so
+example) and `code.js` or `prompt.md`. **Pull input** reads `input.js` off the graph, and a
+chat for each file changes it as you say. Every file is plain text in the tool's folder, so
 you can read it, change it and diff it.
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
@@ -110,7 +111,7 @@ With nothing set, Tell & Wire uses a local model server that is running (Ollama 
 LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
 
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
-servers: list them under *Advanced → Tools the model may use*, one per line -- an
+servers: list them under *the node's settings → Tools the model may use*, one per line -- an
 `https://…/mcp` address, or a name this machine's `ai-settings.json` defines:
 
 ```json

@@ -11,10 +11,9 @@ import { DIMMER, FIELD, LINE, MUTED, PURPLE_TEXT } from '../../app/ui/theme';
  * finished, and then only through a collapsed transcript nobody opens unless
  * something has already gone wrong.
  *
- * So this stands in the body's place while the body is being written, and is
- * gone the moment the result arrives. It is deliberately the *sent* text: a
- * bad answer is usually a bad question, and the question is the thing you
- * cannot otherwise see.
+ * So this is shown while a file is being written, and gone the moment the
+ * result arrives. It is deliberately the *sent* text: a bad answer is usually
+ * a bad question, and the question is the thing you cannot otherwise see.
  */
 export default function LiveGeneration({ calls, minHeight }: { calls: AICall[]; minHeight: number }) {
   const box = useRef<HTMLDivElement>(null);

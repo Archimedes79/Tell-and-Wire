@@ -29,7 +29,7 @@ const told = (type: 'session' | 'round', data: unknown) => streams[streams.lengt
 
 /** The session as the server tells it, *page* what each block holds. */
 const view = (page: Record<string, unknown>, session = 's1'): SessionView => ({
-  session, sent: {}, page, shown: {}, kept: { nodes: {}, page: {} }, outputs: {}, rounds: 0, finished_at: null, round: null, dropped: [], design_revision: 0,
+  session, sent: {}, page, shown: {}, kept: { nodes: {}, page: {} }, outputs: {}, state: {}, rounds: 0, finished_at: null, round: null, dropped: [], design_revision: 0,
   clock: { running: false, runs_by_itself: false, ticks: false, next_at: null, problem: null },
 });
 const round = (id: string, over: Partial<RoundSnapshot> = {}): RoundSnapshot => ({

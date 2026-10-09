@@ -77,6 +77,12 @@ export interface SessionView {
   /** What each end point handed back last, by its name, laid over from every round. */
   outputs: Record<string, unknown>;
   /**
+   * What each memory node holds now, by its name: its whole content -- every
+   * field -- from the design's values on, kept by the rounds that settled it.
+   * Watched without a round: a block of the page can show it, a script read it.
+   */
+  state: Record<string, unknown>;
+  /**
    * What each block of the page holds now, by the block's id: what was typed
    * or chosen, a conversation, what an end point handed back -- else its
    * design. Beside `sent`, not in it: a block and a start point may share a name.
@@ -222,8 +228,8 @@ export interface Watched { progress_id?: string }
 export interface GenerateRequest {
   /**
    * The node as the editor holds it: its kind, id, heading and text -- what
-   * everything is written from -- its ports, its definitions, its body, and
-   * the ✨ prompts someone changed (`config.prompts`). Its history is not needed.
+   * everything is written from -- its ports, its definitions and its body.
+   * Its history is not needed.
    */
   node: GraphNode;
   /** What to write: `input` (input.js), `output` (output.js), or the body (the default). */
@@ -250,10 +256,16 @@ export interface GenerateRequest {
    */
   output_targets?: Record<string, string>;
   /**
-   * Change the body there is, instead of writing one from nothing: "Say what
-   * to change" and ✨ Fix. The answer brings the node's text back restated
-   * where there was something to change (`GenerateResponse.description`), so
-   * the two are changed together.
+   * What the person said to this file's chat, for a file not written yet: put
+   * into the prompt after the standard one. Where there is a file to change,
+   * the same words go in `refine.change`.
+   */
+  ask?: string;
+  /**
+   * Change the file there is, instead of writing one from nothing: a chat's
+   * message and, for the body, ✨ Fix. A body's answer brings the node's text
+   * back restated where there was something to change
+   * (`GenerateResponse.description`), so the two are changed together.
    */
   refine?: Refine;
   /**
@@ -263,11 +275,11 @@ export interface GenerateRequest {
   preview?: boolean;
 }
 
-/** What came of the body there is, and what to change about it (`GenerateRequest.refine`). */
+/** What came of the file there is, and what to change about it (`GenerateRequest.refine`). */
 export interface Refine {
-  /** What to change, in the person's words. Absent: repair it from how it failed (✨ Fix). */
+  /** What to change, in the person's words. Absent: repair the body from how it failed (✨ Fix). */
   change?: string;
-  /** What it gave on its example: its outputs as JSON, or a model's answer. */
+  /** What the body gave on its example: its outputs as JSON, or a model's answer. */
   outcome?: string;
   /** The error it raised on its example. */
   error?: string;

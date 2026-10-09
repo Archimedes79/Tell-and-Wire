@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
+import { ChevronsUpDown } from 'lucide-react';
 
 export class SelectWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'select';
@@ -9,7 +10,7 @@ export class SelectWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly label = 'Dropdown';
 
   paletteEntries() {
-    return [{ label: this.label, icon: '▾', also: 'select choice options' }];
+    return [{ label: this.label, icon: ChevronsUpDown, also: 'select choice options' }];
   }
 
   override readonly Panel = lazy(() => import('./SelectWidgetPanel'));

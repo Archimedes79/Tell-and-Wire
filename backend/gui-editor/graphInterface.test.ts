@@ -24,7 +24,7 @@ const tool = (): Graph => parseGraph({
     { id: 'ask', node_type: 'start', label: 'Ask', config: { started_by: 'page' } },
     { id: 'api', node_type: 'start', config: { started_by: 'call' } },
     { id: 'clock', node_type: 'start', config: { started_by: 'itself', every: '5m' } },
-    { id: 'topic', node_type: 'data', label: 'Topic', config: { data_value: 'cats' } },
+    { id: 'topic', node_type: 'data', label: 'Topic', config: { data_value: { topic: 'cats' } } },
     {
       id: 'write', node_type: 'code', label: 'Write',
       inputs: [input('topic', 'text', 'topic'), input('size', 'number', 'options.size'), input('again', 'text', 'topic'), input('all', 'json')],

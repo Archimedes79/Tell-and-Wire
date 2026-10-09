@@ -1,4 +1,5 @@
 import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
+import { MessageSquare } from 'lucide-react';
 
 /**
  * A conversation. Nothing to set: the start point it fires and the end point
@@ -20,7 +21,7 @@ export class ChatWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly label = 'Chat';
 
   paletteEntries() {
-    return [{ label: this.label, icon: '💬', also: 'conversation messages bot' }];
+    return [{ label: this.label, icon: MessageSquare, also: 'conversation messages bot' }];
   }
 
   /**

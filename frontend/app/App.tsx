@@ -9,8 +9,7 @@ import DesignerTab from '../gui-editor/page/DesignerTab';
 import ApplicationView from '../gui-editor/page/ApplicationView';
 import TopGraphOnly from '../gui-editor/page/TopGraphOnly';
 import type { EditorView } from './ViewTabs';
-import NodeEditor from '../graph-editor/canvas/NodeEditor';
-import ResultsPanel from './ResultsPanel';
+import NodeView from '../graph-editor/node/NodeView';
 import ChangeBar from './ChangeBar';
 
 import SettingsDialog from './SettingsDialog';
@@ -50,9 +49,10 @@ function rememberFolder(folder: string): void {
 
 export default function App() {
   const addNode = useGraphStore((s) => s.addNode);
-  // The node whose panel is open beside the canvas, while it is there.
+  // The node open in place of the canvas, while it is there.
   const openNodeId = useGraphStore((s) => (s.rfNodes.some((n) => n.id === s.editingNodeId) ? s.editingNodeId : null));
-  const clearSelection = useGraphStore((s) => s.clearSelection);
+  const setEditingNode = useGraphStore((s) => s.setEditingNode);
+  const closeNode = useCallback(() => setEditingNode(null), [setEditingNode]);
   const loadGraph = useGraphStore((s) => s.loadGraph);
   // Saving, exporting and running are about the whole document, whichever
   // level of it the canvas is showing.
@@ -93,8 +93,8 @@ export default function App() {
   const heard = said.document === documentOpen ? said : { text: '', problem: false };
 
   // Editing the page means the Page tab -- at the size it will really be, next
-  // to the blocks it will really sit beside -- which double-clicking a start
-  // or end point the page uses opens.
+  // to the blocks it will really sit beside -- which a start or end point the
+  // page uses offers from its own view.
   const openPage = useCallback(() => setView('design'), []);
 
   // The folder the last graph was opened from or saved to -- '' before one
@@ -292,13 +292,11 @@ export default function App() {
     };
   });
 
-  // Add a node from a palette click: beside what is already there, with its
-  // panel open -- the next click was always on it. The canvas brings it into
-  // sight (`viewDue`).
+  // Add a node from a palette click: beside what is already there, and chosen
+  // -- a double-click opens it. The canvas brings it into sight (`viewDue`).
   const handleAddNode = useCallback(
     (nodeType: NodeType) => {
-      const { rfNodes, setEditingNode } = useGraphStore.getState();
-      setEditingNode(addNode(nodeType, placement(rfNodes)));
+      addNode(nodeType, placement(useGraphStore.getState().rfNodes));
     },
     [addNode]
   );
@@ -435,19 +433,18 @@ export default function App() {
         />
 
         {/* Both views stay mounted: the graph keeps its ReactFlow viewport, and
-            switching back does not reset the canvas, lose a selection or close
-            a panel with a ✨ still writing in it. */}
+            switching back does not reset the canvas or lose a selection. A node
+            opened takes the canvas's place, hidden and not unmounted for the
+            same reason. */}
         <div className="flex flex-1 min-h-0 overflow-hidden" style={{ display: view === 'graph' ? 'flex' : 'none' }}>
-          <Sidebar onAddNode={handleAddNode} />
-          <div className="flex flex-col flex-1 min-w-0">
-            <GraphCanvas active={view === 'graph'} onOpenPage={openPage} />
-            <ChangeBar />
+          <div className="flex flex-1 min-w-0 min-h-0" style={{ display: openNodeId ? 'none' : 'flex' }}>
+            <Sidebar onAddNode={handleAddNode} />
+            <div className="flex flex-col flex-1 min-w-0">
+              <GraphCanvas active={view === 'graph' && !openNodeId} />
+              <ChangeBar />
+            </div>
           </div>
-          {/* Beside the canvas: the panel of the node the person is on -- or,
-              on none, what the last run gave. One at a time, so the canvas
-              keeps its room at 1024 pixels. */}
-          {openNodeId && <NodeEditor key={openNodeId} nodeId={openNodeId} onClose={clearSelection} />}
-          {!openNodeId && <ResultsPanel />}
+          {openNodeId && <NodeView key={openNodeId} nodeId={openNodeId} onClose={closeNode} onOpenPage={openPage} />}
         </div>
         {/* The page is the top graph's: inside a node's graph there is none to
             build or try, and these would act on the graph in there. */}

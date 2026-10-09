@@ -1,12 +1,12 @@
-// ✨ for one node: what its buttons ask the backend, and what comes back, written in.
+// ✨ for one node: what its chats ask the backend, and what comes back, written in.
 //
 // A node's ✨ writes one of its files -- its input definition (input.js), its
 // output definition (output.js), or its body: code.js, prompt.md, or what a
 // data node holds -- through one route (`generate`), from one request built
-// here: the node as the panel holds it, the graph around it in words
+// here: the node as the view holds it, the graph around it in words
 // ({Context}, `graphContext.ts`), what feeds each input and what each output
-// feeds, and the files ✨ Input and ✨ Output are given. A node's panel,
-// the toolbar's sweep and "what ✨ sends" all build it here, so none of them
+// feeds, and the files the Input and Output chats are given. A node's view,
+// the toolbar's sweep and "what is sent" all build it here, so none of them
 // can tell the model less than the others. What comes back is written into the
 // node by one pure function (`writtenInto`), and the exchange into its
 // history.md.
@@ -15,13 +15,14 @@ import type { Graph, GraphNode, GuiWidget, Port, Wire } from '../../app/graph';
 import { call, type AICall, type GenerateRequest, type GenerateResponse, type ProbeReport } from '../../app/api/client';
 import type { Refine } from '../../../backend/app/api.ts';
 import { definitionExample, definitionKeys } from '../../../graph/authoring/definition.ts';
-import { exchangeEntry, withExchange } from '../../../graph/authoring/history.ts';
+import { exchangeEntry, exchangeLabel, withExchange } from '../../../graph/authoring/history.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
 import { inputSources, outputTargets } from './generationContext';
 import { graphContext } from './graphContext';
 import { runsPerItem } from './perItem';
 import { filesOf } from '../../app/document/givenFiles';
+import { derivedNodePorts } from '../../app/document/ports';
 
 /** What one ✨ writes: a node's input definition, its output definition, or its body. */
 export type Write = 'input' | 'output' | 'body';
@@ -44,12 +45,30 @@ function definitionsOf(node: GraphNode): { input: string; output: string } {
   return runnerRegistry.node(node.node_type)?.definitions(node as never) ?? { input: '', output: '' };
 }
 
-/** What *write*'s ✨ writes into, as the node holds it: the definition, or the body as text. */
+/**
+ * Where a node keeps what *write* writes: the setting, and the file it is kept
+ * in with that file's stub -- asked of the node's runner, which says which of
+ * a node's settings are files (`NodeRunner.texts`).
+ */
+export function fileOf(node: GraphNode, write: Write): { field: string; file: string; stub: string; json: boolean } {
+  const field = write === 'input' ? 'input_definition' : write === 'output' ? 'output_definition' : bodyOf(node)?.field ?? 'code';
+  const text = runnerRegistry.node(node.node_type)?.texts(node as never).find((candidate) => candidate.field === field);
+  return { field, file: text?.file ?? field, stub: text?.standard ?? '', json: text?.json === true };
+}
+
+/**
+ * What *write*'s ✨ writes into, as the node holds it: the definition, or the
+ * body as text. A struct with no fields -- what a data node starts as -- holds
+ * nothing.
+ */
 export function heldBy(node: GraphNode, write: Write): string {
   if (write !== 'body') return definitionsOf(node)[write];
   const field = bodyOf(node)?.field;
   const value = field ? (node.config as Record<string, unknown>)[field] : undefined;
-  return typeof value === 'string' ? value : value === undefined || value === null ? '' : JSON.stringify(value, null, 2);
+  if (typeof value === 'string') return value;
+  if (value === undefined || value === null) return '';
+  const empty = typeof value === 'object' && !Array.isArray(value) && !Object.keys(value).length;
+  return empty ? '' : JSON.stringify(value, null, 2);
 }
 
 /**
@@ -61,22 +80,32 @@ export function isWritten(node: GraphNode, write: Write): boolean {
   return !!heldBy(node, write).trim();
 }
 
-/** What a ✨ button asks for: one of a node's files, or -- ✨ Generate -- all of them. */
+/** What a press asks for: one of a node's files, or -- Auto generate -- all of them. */
 export type Press = Write | 'all';
+
+/**
+ * The files a node's chats write, in the order they are worked on: its input
+ * definition where something comes in, its output definition, its body -- or
+ * the body alone, for a data node. None for a node nothing is written for.
+ */
+export function partsOf(node: GraphNode): Write[] {
+  if (!bodyOf(node)) return [];
+  if (!hasDefinitions(node)) return ['body'];
+  return [...(node.inputs.length ? ['input' as const] : []), 'output', 'body'];
+}
 
 /**
  * What one press writes, in order. For the body of a node that has
  * definitions, what is missing first -- its input definition where it takes
  * something in and has none, its output definition where it has none -- so
- * one press does the whole node. ✨ Generate does that the first time; once
- * the body is written it writes each again, as pressing ✨ Input, ✨ Output
- * and the body's ✨ one after another would. A data node has its body only.
+ * one press does the whole node. Auto generate does that the first time; once
+ * the body is written it writes each again, as the Input, Output and body
+ * chats would one after another. A data node has its body only.
  */
 export function writesFor(node: GraphNode, write: Press): Write[] {
   if (write === 'all') {
     if (!hasDefinitions(node)) return ['body'];
-    if (!isWritten(node, 'body')) return writesFor(node, 'body');
-    return [...(node.inputs.length ? ['input' as const] : []), 'output', 'body'];
+    return isWritten(node, 'body') ? partsOf(node) : writesFor(node, 'body');
   }
   if (write !== 'body' || !hasDefinitions(node)) return [write];
   return [
@@ -99,18 +128,27 @@ export function unfitDefinition(write: Write, probe: ProbeReport | undefined): s
 
 const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1);
 
-/** What a ✨ is called: on its button, in a message, in history.md. */
-export function writeName(node: GraphNode, write: Write): string {
-  if (write === 'input') return '✨ Input';
-  if (write === 'output') return '✨ Output';
+/** What a file is called on its row, in its chat and in history.md: its part. */
+export function partName(node: GraphNode, write: Write): string {
+  if (write === 'input') return 'Input';
+  if (write === 'output') return 'Output';
   const kind = bodyOf(node)?.kind;
-  return kind === 'prompt' ? '✨ Prompt' : kind === 'data' ? '✨ Data' : '✨ Code';
+  return kind === 'prompt' ? 'Prompt' : kind === 'data' ? 'Fields' : 'Code';
 }
 
-/** What an exchange is called in history.md: which ✨, the change asked for, or a fix. */
-export function exchangeName(node: GraphNode, write: Write, refine?: Refine): string {
-  if (!refine) return writeName(node, write);
-  return refine.change?.trim() ? `Change: ${refine.change.trim()}` : '✨ Fix';
+/** What a ✨ is called in a message. */
+export function writeName(node: GraphNode, write: Write): string {
+  return `✨ ${partName(node, write)}`;
+}
+
+/**
+ * What an exchange is called in history.md (`exchangeLabel`): its part, and the
+ * words said to the chat -- the change asked for, or the first words -- or that
+ * it was a fix; *failed* marks one that brought nothing back.
+ */
+export function exchangeName(node: GraphNode, write: Write, how: { refine?: Refine; ask?: string; failed?: boolean } = {}): string {
+  const { refine, ask, failed } = how;
+  return exchangeLabel(partName(node, write), refine ? refine.change : ask, { fix: !!refine && !refine.change?.trim(), failed });
 }
 
 /** Why ✨ cannot write for *node* yet, or undefined: everything is written from its text. */
@@ -129,10 +167,15 @@ interface Around {
 
 /**
  * The request *write*'s ✨ sends for *node*, exactly -- built in one place,
- * so "what ✨ sends" and the real button cannot describe two different
- * requests. Its history is not sent: nothing is written from it.
+ * so "what is sent" and the real chat cannot describe two different
+ * requests. Its history is not sent: nothing is written from it. *say* is
+ * what the person said to the chat: the words for a file not written yet
+ * (`ask`), or the change to the file there is (`refine`).
  */
-export function generateRequest(node: GraphNode, write: Write, around: Around, inputFiles: string[] = [], refine?: Refine): GenerateRequest {
+export function generateRequest(
+  node: GraphNode, write: Write, around: Around, inputFiles: string[] = [], say: { refine?: Refine; ask?: string } = {},
+): GenerateRequest {
+  const { refine, ask } = say;
   const config = { ...node.config } as Record<string, unknown>;
   delete config.history;
   return {
@@ -143,6 +186,7 @@ export function generateRequest(node: GraphNode, write: Write, around: Around, i
     ...(write === 'output' && filesOf(node, 'output').length ? { output_files: filesOf(node, 'output').map((path) => ({ path })) } : {}),
     input_sources: inputSources(node.id, around.nodes, around.edges, true, around.page),
     output_targets: outputTargets(node.id, around.nodes, around.edges, true, around.page),
+    ...(ask?.trim() ? { ask: ask.trim() } : {}),
     ...(refine ? { refine } : {}),
   };
 }
@@ -212,35 +256,28 @@ export function writtenInto(
   else if (write === 'output') definesOutputs(response.result);
   else {
     const body = bodyOf(node);
-    if (body?.kind === 'data') Object.assign(config, heldFrom(node, body.field, response.result));
+    if (body?.kind === 'data') config[body.field] = fieldsFrom(response.result);
     else if (body) config[body.field] = response.result;
     if (response.output_definition?.trim()) definesOutputs(response.output_definition);
   }
   config.history = withHistory(node, name, response.calls, at);
-  return {
+  const written: GraphNode = {
     ...node,
     ...(response.description?.trim() ? { description: response.description.trim() } : {}),
     outputs,
     config: config as GraphNode['config'],
   };
+  // Where the ports follow from what was written -- a data node's fields -- they follow it now.
+  return { ...written, ...(derivedNodePorts(written) ?? {}) };
 }
 
 /**
- * What a data node holds from what ✨ Data wrote, into *field*: parsed where
- * it is kept as structure (the backend refused what does not parse). Kept as
- * text, an answer that is JSON of anything but a string -- a list, a record, a
- * number -- makes it a structure from now on: left text, the list of capitals
- * went to data.txt and the node it fed was handed one string.
+ * The fields ✨ wrote, from its answer: the object it is -- or, for any other
+ * JSON, a struct of the one field "value" (the backend refused what does not parse).
  */
-function heldFrom(node: GraphNode, field: string, text: string): Record<string, unknown> {
-  if (node.config.data_format === 'structure') return { [field]: JSON.parse(text) };
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return { [field]: text };
-  }
-  return typeof parsed === 'string' ? { [field]: text } : { [field]: parsed, data_format: 'structure' };
+export function fieldsFrom(text: string): unknown {
+  const parsed: unknown = JSON.parse(text);
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : { value: parsed };
 }
 
 /** *node*'s history.md with one more exchange at its end: *calls*, under *name*. */

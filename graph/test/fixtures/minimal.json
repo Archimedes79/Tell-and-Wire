@@ -2,7 +2,7 @@
   "metadata": {
     "name": "Hello World",
     "version": "1.0.0",
-    "description": "The smallest possible graph: a text the graph holds, wired straight to the run's result.",
+    "description": "The smallest possible graph: a struct with one field, the text the graph holds, wired straight to the run's result.",
     "author": "",
     "tags": [
       "example"
@@ -18,20 +18,41 @@
         "x": 80,
         "y": 120
       },
-      "inputs": [],
-      "outputs": [
+      "inputs": [
         {
-          "id": "output",
-          "name": "Output",
-          "kind": "output",
-          "data_type": "text",
+          "id": "greeting",
+          "name": "greeting",
+          "kind": "input",
+          "data_type": "any",
           "multi": false,
           "required": false,
-          "description": ""
+          "description": "Replaces \"greeting\" when something arrives; kept for the next round"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "greeting",
+          "name": "greeting",
+          "kind": "output",
+          "data_type": "any",
+          "multi": false,
+          "required": false,
+          "description": "\"greeting\", as it holds now"
+        },
+        {
+          "id": "all",
+          "name": "All",
+          "kind": "output",
+          "data_type": "json",
+          "multi": false,
+          "required": false,
+          "description": "Every field, as one object"
         }
       ],
       "config": {
-        "data_value": "Hello, World!"
+        "data_value": {
+          "greeting": "Hello, World!"
+        }
       }
     },
     {
@@ -62,7 +83,7 @@
     {
       "id": "e1",
       "source_node_id": "greeting",
-      "source_port_id": "output",
+      "source_port_id": "greeting",
       "target_node_id": "result",
       "target_port_id": "value"
     }

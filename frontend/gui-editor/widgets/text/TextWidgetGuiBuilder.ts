@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { StaticWidgetGuiBuilder } from '../StaticWidgetGuiBuilder';
 import TextInPlace from './TextInPlace';
+import { AlignLeft, Captions, Heading1 } from 'lucide-react';
 
 /** Prose on the page, rendered as markdown: a heading, a paragraph, a caption. */
 export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
@@ -12,9 +13,9 @@ export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
 
   paletteEntries() {
     return [
-      { mode: 'heading', label: 'Heading', icon: '🔠', also: 'title h1' },
-      { mode: 'body', label: 'Text', icon: '📝', also: 'paragraph markdown body' },
-      { mode: 'caption', label: 'Caption', icon: '🏷️', also: 'small note' },
+      { mode: 'heading', label: 'Heading', icon: Heading1, also: 'title h1' },
+      { mode: 'body', label: 'Text', icon: AlignLeft, also: 'paragraph markdown body' },
+      { mode: 'caption', label: 'Caption', icon: Captions, also: 'small note' },
     ];
   }
 

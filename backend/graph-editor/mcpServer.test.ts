@@ -18,10 +18,10 @@ const MAIN = resolve(__dirname, '..', 'app', 'main.ts');
 const port = (id: string, kind: 'input' | 'output') =>
   ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 
-/** A data node holding a text: what a graph starts from when nobody sends it anything. */
+/** A data node holding a text in a field called "text": what a graph starts from when nobody sends it anything. */
 const textData = (id: string, value = 'hello') => ({
   id, node_type: 'data', label: id, description: 'A greeting to hand on.', position: { x: 0, y: 0 },
-  inputs: [], outputs: [port('output', 'output')], config: { data_value: value },
+  inputs: [], outputs: [port('text', 'output'), port('all', 'output')], config: { data_value: { text: value } },
 });
 
 const code = (id: string, body = 'function run(inputs) { return { out: inputs.in }; }') => ({
@@ -46,7 +46,7 @@ const graphOf = (nodes: unknown[], edges: unknown[] = [], name = 'Test') =>
 
 /** The smallest graph with nothing wrong with it. */
 const hello = (value = 'hello') =>
-  graphOf([textData('greeting', value), output('result')], [edge('e1', 'greeting.output', 'result.value')], 'Hello');
+  graphOf([textData('greeting', value), output('result')], [edge('e1', 'greeting.text', 'result.value')], 'Hello');
 
 // ---------------------------------------------------------------------------
 // A machine made of fakes
@@ -172,27 +172,27 @@ describe('save_graph', () => {
     expect(await readFile(join(root, 'notes.json'), 'utf8')).toBe('not even json');
   });
 
-  it('saves into a project the way the editor does, runs it from there, keeps what a document cannot carry -- history, ✨ prompts -- and does not write over a text changed since it was read', async () => {
+  it('saves into a project the way the editor does, runs it from there, keeps what a document cannot carry -- history, the files a chat was given -- and does not write over a text changed since it was read', async () => {
     const tools = toolsWith();
     const document = (body: string) => graphOf([textData('greeting'), code('work', body), output('result')],
-      [edge('e1', 'greeting.output', 'work.in'), edge('e2', 'work.out', 'result.value')]);
+      [edge('e1', 'greeting.text', 'work.in'), edge('e2', 'work.out', 'result.value')]);
     const path = (...parts: string[]) => join(root, 'proj', ...parts);
     expect((await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 1 }; }') })).isError).toBeUndefined();
-    expect(JSON.parse(await readFile(path('flow.json'), 'utf8')).wires).toEqual(['greeting.output -> work.in', 'work.out -> result.value']);
+    expect(JSON.parse(await readFile(path('flow.json'), 'utf8')).wires).toEqual(['greeting.text -> work.in', 'work.out -> result.value']);
     expect((await answer(tools, 'run_graph', { path: 'proj/flow.json' })).json.status).toBe('success');
     expect(ranBody).toContain('out: 1');
 
-    // What the person's own editor keeps beside it, as a server that never read the project meets it: the node's history, and a ✨ prompt they changed.
+    // What the person's own editor keeps beside it, as a server that never read the project meets it: the node's history, and a file its chat was given.
     forgetSeen();
-    await writeFile(path('nodes', 'work', 'history.md'), '## 2026-10-04 12:00 · ✨ Code\n\nNothing was sent.\n');
+    await writeFile(path('nodes', 'work', 'history.md'), '## 2026-10-04 12:00 · Code\n\nNothing was sent.\n');
     const settings = JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8'));
-    await writeFile(path('nodes', 'work', 'node.json'), `${JSON.stringify({ ...settings, config: { ...settings.config, prompts: { body: 'Mine.' } } }, null, 2)}\n`);
+    await writeFile(path('nodes', 'work', 'node.json'), `${JSON.stringify({ ...settings, config: { ...settings.config, input_files: ['data/a.csv'] } }, null, 2)}\n`);
 
     const again = await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 2 }; }') });
     expect(again.isError).toBeUndefined();
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 2');
     expect(await readFile(path('nodes', 'work', 'history.md'), 'utf8')).toContain('Nothing was sent.');
-    expect(JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8')).config.prompts).toEqual({ body: 'Mine.' });
+    expect(JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8')).config.input_files).toEqual(['data/a.csv']);
 
     // The code was edited elsewhere since this process wrote it: that is said, not overwritten.
     await writeFile(path('nodes', 'work', 'code.js'), 'function run() { return { out: "by hand, in an editor" }; }\n');

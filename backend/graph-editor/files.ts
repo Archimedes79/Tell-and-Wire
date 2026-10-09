@@ -85,11 +85,11 @@ export class NotOpenable extends Error {}
 
 /**
  * What a node keeps its writing in -- input.js, code.js, prompt.md, data.json,
- * data.txt, history.md: the files the nodes say they keep (`NodeRunner.texts`),
- * so a node for another language brings its own. Nothing else is ever handed
- * to another program.
+ * history.md: the files the nodes say they keep (`NodeRunner.texts`), so a
+ * node for another language brings its own. Nothing else is ever handed to
+ * another program.
  */
-const OPENABLE = new Set(['.json', '.txt', ...NODES.flatMap((element) => element.texts({ config: {} } as never).map((text) => extname(text.file).toLowerCase()))]);
+const OPENABLE = new Set(NODES.flatMap((element) => element.texts({ config: {} } as never).map((text) => extname(text.file).toLowerCase())));
 
 /**
  * What opens *path* when VS Code is not there: a text editor, never the

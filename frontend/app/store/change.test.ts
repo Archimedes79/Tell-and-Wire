@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { GraphNode } from '../graph';
 import { useGraphStore } from './graphStore';
 import { NODE_KINDS } from '../document/nodeKinds';
-import { nodePanel } from '../../graph-editor/canvas/nodePanel';
+import { nodePanel } from '../../graph-editor/node/nodePanel';
 
-// What the bar under the canvas and the panel beside it ask of the store: a
-// graph changed as a whole, taken as one step of the same document, and a
-// panel that writes what it still holds before it is left.
+// What the bar under the canvas and the node view ask of the store: a graph
+// changed as a whole, taken as one step of the same document, and a node's
+// view that writes what it still holds before it is left.
 
 const store = () => useGraphStore.getState();
 const stored = (id: string) => store().rfNodes.find((item) => item.id === id)?.data.graphNode as GraphNode | undefined;
@@ -46,7 +46,7 @@ describe('a graph changed as said', () => {
   });
 });
 
-describe('the panel beside the canvas', () => {
+describe('a node opened', () => {
   it('writes what it still holds when another node is chosen or the selection is cleared', () => {
     store().setEditingNode('count');
     const panel = nodePanel('count');

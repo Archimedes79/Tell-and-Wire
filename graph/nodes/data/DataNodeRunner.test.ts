@@ -3,35 +3,48 @@ import { DataNodeRunner } from './DataNodeRunner.ts';
 import { quietRuntime } from '../../test/fakes.ts';
 import type { GraphNode } from '../../graph.ts';
 
-function dataNode(config: Record<string, unknown>): GraphNode {
+function dataNode(value: unknown): GraphNode {
   return {
     id: 'store', node_type: 'data', label: 'Store', description: '',
-    position: { x: 0, y: 0 }, inputs: [], outputs: [], config,
-  };
+    position: { x: 0, y: 0 }, inputs: [], outputs: [], config: { data_value: value },
+  } as unknown as GraphNode;
 }
 
 const nowhere = quietRuntime({ files: { exists: async () => false } });
 const element = new DataNodeRunner();
 
 describe('a data node', () => {
-  it('hands on what it holds -- null for an empty structure, "" for an empty text -- and keeps it in a file of its own', async () => {
-    const hands = (config: Record<string, unknown>, inputs = {}) => element.execute(dataNode(config), inputs, nowhere);
-    expect(await hands({ data_format: 'structure', data_value: [1, 2] })).toEqual({ output: [1, 2] });
-    expect(await hands({ data_format: 'structure', data_value: null }, { input: [3] })).toEqual({ output: [3] });
-    // Handed on as "" a cleared structure would be text, and the node after it would call .push on it.
-    expect(await hands({ data_format: 'structure', data_value: null })).toEqual({ output: null });
-    expect(await hands({ data_format: 'text', data_value: null })).toEqual({ output: '' });
-    expect(await hands({})).toEqual({ output: '' });
+  it('is a struct: a port in and out for each field and one for all, what arrives replaces a field and what does not leaves it, and it is kept in data.json', async () => {
+    // Its ports follow its fields; what is no object has none.
+    expect(element.derivedPorts(dataNode({ recent: [], seen: 0 }))).toMatchObject({
+      inputs: [{ id: 'recent' }, { id: 'seen' }],
+      outputs: [{ id: 'recent' }, { id: 'seen' }, { id: 'all', data_type: 'json' }],
+    });
+    expect(element.derivedPorts(dataNode('hello')).inputs).toEqual([]);
+    expect(element.derivedPorts(dataNode(null)).outputs.map((port) => port.id)).toEqual(['all']);
 
-    // It keeps its value in a file of its own, as JSON where it holds structure, and holds structure once a run hands it a number.
-    expect(element.texts(dataNode({ data_format: 'structure', data_value: { count: 2 } }))).toEqual([
-      { field: 'data_value', file: 'data.json', json: true, standard: 'null' },
+    // What arrives on a field replaces it, every other hands on what it kept, and all carries them all.
+    const held = { recent: ['a'], seen: 1 };
+    expect(await element.execute(dataNode(held), { seen: 2 }, nowhere)).toEqual({ recent: ['a'], seen: 2, all: { recent: ['a'], seen: 2 } });
+    expect(await element.execute(dataNode(held), {}, nowhere)).toEqual({ recent: ['a'], seen: 1, all: held });
+    // A field is its own, whatever an object inherits.
+    expect(await element.execute(dataNode({ toString: 'kept' }), {}, nowhere)).toMatchObject({ toString: 'kept' });
+
+    // It keeps what arrives for the next round field by field; what arrives on a port that is no field is nobody's.
+    const counter = dataNode({ seen: 1, recent: [] });
+    element.settleMemory(counter, 'seen', 2);
+    element.settleMemory(counter, 'nothing', 3);
+    expect(element.state(counter)).toEqual({ data_value: { seen: 2, recent: [] } });
+    element.setState(counter, { data_value: { seen: 0, recent: [] } });
+    expect(counter.config.data_value).toEqual({ seen: 0, recent: [] });
+
+    // The fields are a file of its own, as JSON; a name a port cannot have is said, and so is a file that is no object.
+    expect(element.texts()).toEqual([
+      { field: 'data_value', file: 'data.json', json: true, standard: '{}' },
       { field: 'history', file: 'history.md' },
     ]);
-    const counter = dataNode({ data_format: 'text', data_value: '' });
-    element.settleMemory(counter, 'input', 'one');
-    expect(counter.config).toMatchObject({ data_format: 'text', data_value: 'one' });
-    element.settleMemory(counter, 'input', 1);
-    expect(counter.config).toMatchObject({ data_format: 'structure', data_value: 1 });
+    expect(element.problems(dataNode({ all: 1, 'two words': 2, __run: 3, fine: 4 }), null, 'Store')).toHaveLength(3);
+    expect(element.problems(dataNode('hello'), null, 'Store')).toHaveLength(1);
+    expect(element.problems(dataNode(null), null, 'Store')).toEqual([]);
   });
 });

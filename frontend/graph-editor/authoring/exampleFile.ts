@@ -9,8 +9,7 @@
 // holds -- a path a data node stores -- or, from a start point, the file a
 // block of the page that sends into it starts on.
 
-import type { ExecutionResult, Graph, GraphNode, GuiWidget, Wire } from '../../app/graph';
-import { call } from '../../app/api/client';
+import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../app/graph';
 import { NODE_BUILDERS } from '../../app/elements/registry';
 import { filesOf } from '../../app/document/givenFiles';
 import { blockCan, blocksAt, startsOn } from '../../app/document/page';
@@ -20,7 +19,7 @@ import { filePorts } from '../../../graph/execution/fileInputs.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 
 /** A path in *value*: a text, or the first text of a list. */
-function firstPath(value: unknown): string | undefined {
+export function firstPath(value: unknown): string | undefined {
   const one = Array.isArray(value) ? value.find((item) => typeof item === 'string' && item.trim()) : value;
   return typeof one === 'string' && one.trim() ? one.trim() : undefined;
 }
@@ -71,25 +70,4 @@ export function inputFilesOf(node: GraphNode, nodes: GraphNode[], edges: Wire[],
   if (own.length) return own;
   const graphs = graphFileOf(node, nodes, edges, result, page);
   return graphs ? [graphs] : [];
-}
-
-/**
- * "⟳ From the graph": the file the graph hands one of *node*'s file-reading
- * inputs -- without running anything where it can say, and otherwise what the
- * nodes that feed it deliver when they are run now (the node itself is not).
- * *graph* is the canvas as the panel asking holds it.
- */
-export async function fileFromTheGraph(
-  node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, graph: () => Graph,
-): Promise<string | undefined> {
-  const known = graphFileOf(node, nodes, edges, result, graph().page?.blocks ?? []);
-  const ports = filePorts(node, runnerRegistry);
-  if (known || !ports.length) return known;
-  const got = await call('nodeInputs', { ...graph(), node_id: node.id });
-  if (got.error) throw new Error(`What feeds it failed: ${got.error}`);
-  for (const port of ports) {
-    const path = firstPath(got.inputs[port]);
-    if (path) return path;
-  }
-  return undefined;
 }

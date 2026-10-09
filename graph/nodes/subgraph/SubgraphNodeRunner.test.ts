@@ -71,7 +71,7 @@ describe('a node that holds a graph', () => {
     // A node that is no way in -- data, a folder listing -- is no port, and
     // neither is a start point that starts itself: nobody above can start it.
     const held = inner() as { nodes: GraphNode[] };
-    held.nodes.push(node('kept', 'data', { data_value: 'x' }, { outputs: ['output'] }));
+    held.nodes.push(node('kept', 'data', { data_value: { x: 1 } }));
     held.nodes.push(node('listed', 'folder', { path: 'docs' }));
     held.nodes.push(node('ticks', 'start', { started_by: 'itself', every: '5m' }));
     const ports = registry.node('subgraph')!.derivedPorts(node('part', 'subgraph', { subgraph: held }), registry)!;
@@ -81,11 +81,11 @@ describe('a node that holds a graph', () => {
     const part = holder();
     const before = JSON.stringify(part.config.subgraph);
     const outer = graph([
-      node('source', 'data', { data_value: 'from outside' }, { outputs: ['output'] }),
+      node('source', 'data', { data_value: { value: 'from outside' } }),
       part,
       node('show', 'end', {}, { inputs: ['value'] }),
     ], [
-      edge('in', 'source', 'output', 'part', 'subject'),
+      edge('in', 'source', 'value', 'part', 'subject'),
       edge('out', 'part', 'loud', 'show', 'value'),
     ]);
     const result = await executeGraph(outer, { runtime: shouting, registry });

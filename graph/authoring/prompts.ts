@@ -2,15 +2,16 @@
 // standard texts, and the variables they name.
 //
 // A node says what should happen in its heading and its text; everything else
-// is generated. Each ✨ -- the node's input definition, its output definition,
+// is generated. Each chat -- the node's input definition, its output definition,
 // its body -- is sent a prompt that puts the text together with what the node
 // and the graph already hold, through variables (`VARIABLES` says what each
-// is filled with; the editor lists them under every prompt it shows).
+// is filled with).
 //
-// **These are the standard prompts, and a node may keep its own.** The editor
-// shows each under the ✨ it belongs to, and a node keeps one only when someone
-// changed it (`config.prompts.input | output | body`). After it the backend adds
-// its own frame, which is not the person's to edit: the file format and how to
+// **Every standard prompt names the same four** (`SENT_WITH`): the node's text,
+// its input, its output and the graph around it. That is what each chat tells
+// a person it sends, so a node of any kind is written from the same facts.
+// After the prompt the backend adds what the person said to the chat and its
+// own frame, which is not the person's to edit: the file format and how to
 // answer (`backend/graph-editor/generate.ts`).
 //
 // **Variables are filled by their exact names**, and nothing else in braces is
@@ -32,6 +33,14 @@ export const VARIABLES = {
 
 export type Variable = keyof typeof VARIABLES;
 
+/** What every chat sends with what the person says, by the variable that carries it (`STANDARD_PROMPTS`). */
+export const SENT_WITH = {
+  'Node Description': 'its text',
+  'Input Definition': 'input',
+  'Output Definition': 'output',
+  Context: 'the graph around',
+} as const satisfies Partial<Record<Variable, string>>;
+
 /**
  * What a ✨ writes: a node's input definition, its output definition, or its
  * body -- code, an ai node's prompt, a data node's data -- each with a
@@ -46,6 +55,9 @@ export const STANDARD_PROMPTS: Record<PromptKind, string> = {
 
 Its input definition, and what the graph hands it:
 {Input Definition}
+
+Its output definition, and what the nodes it feeds want:
+{Output Definition}
 
 Context:
 {Context}
@@ -99,13 +111,16 @@ Task: write the instructions a model is given to do this task with the input it 
 
   data: `${DESCRIBED}
 
+What feeds it:
+{Input Definition}
+
 What it feeds:
 {Output Definition}
 
 Context:
 {Context}
 
-Task: write the data this node holds, shaped as the nodes it feeds want it.`,
+Task: write the fields this node holds, as one JSON object: each field's name and its starting value, shaped as what feeds it and the nodes it feeds want it.`,
 };
 
 const VARIABLE = new RegExp(`\\{(${Object.keys(VARIABLES).join('|')})\\}`, 'g');

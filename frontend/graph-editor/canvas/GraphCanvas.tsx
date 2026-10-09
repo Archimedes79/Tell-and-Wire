@@ -18,12 +18,13 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { useGraphStore } from '../../app/store/graphStore';
+import { NODE_BUILDERS } from '../../app/elements/registry';
+import { NODE_KINDS } from '../../app/document/nodeKinds';
+import QuickPick from '../../app/ui/QuickPick';
 import GraphNodeView from './GraphNodeView';
 import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
-import { blocksAt } from '../../app/document/page';
-import { HEADING_FIELD } from '../authoring/HeadingField';
 import type { NodeType } from '../../app/graph';
 import { LINE, MUTED, PANEL, SUNKEN, SURFACE } from '../../app/ui/theme';
 import { scheme } from '../../app/ui/scheme';
@@ -31,17 +32,27 @@ import { scheme } from '../../app/ui/scheme';
 const nodeTypes = { graphNode: GraphNodeView };
 
 /**
- * @param active Whether the graph tab is the one on screen.
- * @param onOpenPage Show the Page tab: what double-clicking a start or end
- *   point the page uses does, since the page is built there.
- *
- * The canvas stays mounted while another tab is shown, so switching back keeps
- * the viewport and the selection. Its keyboard shortcuts stayed live with it:
- * pressing Delete on the surface designer removed the selected block *and* the
- * node selected back on the canvas -- so Delete looked like it deleted more
- * than it was pressed for. Keys belong to the view you are looking at.
+ * What a wire let go on empty canvas can lead to: each kind the palette offers
+ * that has an input to take the wire -- a start point has none.
  */
-export default function GraphCanvas({ active, onOpenPage }: { active: boolean; onOpenPage: () => void }) {
+const PICKABLE = Object.values(NODE_BUILDERS)
+  .filter((builder) => builder.paletteGroup && NODE_KINDS[builder.nodeType].create('probe').inputs.length > 0)
+  .map((builder) => ({ type: builder.nodeType, label: builder.label, icon: builder.icon, ink: builder.ink, also: builder.hint }));
+
+/**
+ * @param active Whether the canvas is the one on screen: the graph tab, and no
+ *   node open in its place.
+ *
+ * A click on a node chooses it; a double-click, or Enter on it, opens it in the
+ * node view (`editingNodeId`).
+ *
+ * The canvas stays mounted while another tab or a node is shown, so coming
+ * back keeps the viewport and the selection. Its keyboard shortcuts stayed
+ * live with it: pressing Delete on the surface designer removed the selected
+ * block *and* the node selected back on the canvas -- so Delete looked like it
+ * deleted more than it was pressed for. Keys belong to the view you are looking at.
+ */
+export default function GraphCanvas({ active }: { active: boolean }) {
   const rfNodes = useGraphStore((s) => s.rfNodes);
   const rfEdges = useGraphStore((s) => s.rfEdges);
   const setRFNodes = useGraphStore((s) => s.setRFNodes);
@@ -52,8 +63,7 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
   const clearSelection = useGraphStore((s) => s.clearSelection);
   // The nodes whose wires are drawn in the accent, as one string: it changes
   // when the selection does, not on every frame of a drag.
-  const lit = useGraphStore((s) => [s.editingNodeId, ...s.rfNodes.filter((n) => n.selected).map((n) => n.id)]
-    .filter(Boolean).join('\n'));
+  const lit = useGraphStore((s) => s.rfNodes.filter((n) => n.selected).map((n) => n.id).join('\n'));
   const edges = useMemo(() => {
     const selected = new Set(lit.split('\n'));
     return rfEdges.map((edge) => drawnWire(edge, selected));
@@ -63,31 +73,20 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
   const [rfInstance, setRfInstance] = React.useState<ReactFlowInstance | null>(null);
 
   // What the view owes (`viewDue`): another graph fitted whole; a node added
-  // shown with the rest where they fit readably; one whose panel opens brought
-  // into sight by as little as that takes.
+  // shown with the rest where they fit readably.
   // Paid once the canvas is on screen and what it is about is measured, at the
   // canvas's own size as it is then: a fit on a timer ran before the node was
   // measured, and did nothing -- a palette node stayed out of sight, and New
   // kept the last graph's view.
   const documentOpen = useGraphStore((s) => s.document);
-  const openId = useGraphStore((s) => s.editingNodeId);
   const minZoom = useStore((s) => s.minZoom);
-  const canvasSize = useStore((s) => `${s.width}x${s.height}`);
-  const due = useRef<ViewDue>({ document: documentOpen, count: rfNodes.length, open: openId, fit: false, show: null, added: false });
-  // The size the node whose panel is open was last measured at.
-  const openSize = useRef({ id: null as string | null, size: '' });
+  const due = useRef<ViewDue>({ document: documentOpen, count: rfNodes.length, fit: false, show: null, added: false });
   React.useEffect(() => {
-    due.current = viewDue(due.current, { document: documentOpen, ids: rfNodes.map((node) => node.id), open: openId, size: canvasSize });
+    due.current = viewDue(due.current, { document: documentOpen, ids: rfNodes.map((node) => node.id) });
     const owed = due.current;
     const wrapper = reactFlowWrapper.current;
     if (!rfInstance || !wrapper || !active || !wrapper.clientWidth || !wrapper.clientHeight) return;
     const measured = (node: { width?: number | null; height?: number | null }) => !!node.width && !!node.height;
-    // The node whose panel is open grew -- ✨ gave it outputs, a longer text --
-    // and its new ports went under the panel: it is brought back into sight.
-    const open = openId ? rfInstance.getNode(openId) : undefined;
-    const size = open && measured(open) ? `${open.width}x${open.height}` : '';
-    if (size && openSize.current.id === openId && openSize.current.size !== size && !owed.show && !owed.fit) owed.show = openId;
-    if (size) openSize.current = { id: openId, size };
     if (owed.fit) {
       const nodes = rfInstance.getNodes();
       if (!nodes.every(measured)) return;
@@ -127,9 +126,9 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
     }
     const { dx, dy } = panToShow(onScreen(node), view);
     if (dx || dy) rfInstance.setViewport({ x: x + dx, y: y + dy, zoom }, { duration: 250 });
-  }, [rfNodes, rfInstance, active, documentOpen, openId, minZoom, canvasSize]);
+  }, [rfNodes, rfInstance, active, documentOpen, minZoom]);
   // The map of the whole graph, only where the canvas has room for it beside
-  // what it maps: beside a node's panel at 1024 it covered a third of it.
+  // what it maps: in a narrow window it covered a third of it.
   const roomy = useStore((s) => s.width >= 640);
 
   // The wire itself is the store's to make (`connect`): a canvas is one way
@@ -149,14 +148,39 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
     started.current = params;
     wired.current = false;
   }, []);
+  // The node a wire let go on empty canvas is to lead to: where it was let go, and what it came from.
+  const [next, setNext] = React.useState<{
+    at: { x: number; y: number };
+    position: { x: number; y: number };
+    from: { source: string; sourceHandle: string };
+    hint?: string;
+  } | null>(null);
   const onConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
     const start = started.current;
     started.current = null;
     if (!start?.nodeId || !start.handleId || start.handleType !== 'source' || wired.current) return;
     const point = 'changedTouches' in event ? event.changedTouches[0] : event;
-    const target = document.elementFromPoint(point.clientX, point.clientY)?.closest('.react-flow__node')?.getAttribute('data-id');
-    if (target) useGraphStore.getState().connectToNewInput({ source: start.nodeId, sourceHandle: start.handleId, target });
-  }, []);
+    const under = document.elementFromPoint(point.clientX, point.clientY);
+    const target = under?.closest('.react-flow__node')?.getAttribute('data-id');
+    if (target) {
+      useGraphStore.getState().connectToNewInput({ source: start.nodeId, sourceHandle: start.handleId, target });
+      return;
+    }
+    // Let go on empty canvas: which node comes next is asked there.
+    const wrapper = reactFlowWrapper.current;
+    if (!under?.closest('.react-flow__pane') || !wrapper || !rfInstance) return;
+    const bounds = wrapper.getBoundingClientRect();
+    const at = { x: point.clientX - bounds.left, y: point.clientY - bounds.top };
+    const { rfNodes: nodes } = useGraphStore.getState();
+    const from = nodes.find((node) => node.id === start.nodeId)?.data.graphNode;
+    const port = from?.outputs.find((one) => one.id === start.handleId);
+    setNext({
+      at,
+      position: rfInstance.project(at),
+      from: { source: start.nodeId, sourceHandle: start.handleId },
+      hint: from && port ? `Adds it, wired to ${port.name} of ${from.label}` : undefined,
+    });
+  }, [rfInstance]);
 
   const onDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
@@ -174,9 +198,8 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
         y: event.clientY - bounds.top,
       });
 
-      // With its panel open, as a palette click adds one: the next click was always on it.
-      const store = useGraphStore.getState();
-      store.setEditingNode(store.addNode(nodeType, position));
+      // Chosen, as a palette click adds one.
+      useGraphStore.getState().addNode(nodeType, position);
     },
     [rfInstance]
   );
@@ -195,13 +218,15 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
       className="relative flex-1 min-h-0 outline-none"
       tabIndex={-1}
       onKeyDown={(event) => {
-        if (deletes(event.key, active)) deleteSelected();
-        // ReactFlow's Enter on a focused card selects it and fires no click: it
-        // opens the card's panel, as a click does, and the keys go to it.
+        // A key typed into a field -- the search a wire opens -- is the field's, not the canvas's.
+        const typing = (event.target as HTMLElement).closest?.('input, textarea, select, [contenteditable]');
+        if (!typing && deletes(event.key, active)) deleteSelected();
+        // Enter on a focused card opens it, as a double-click does. Not left to type
+        // itself into the view's first box, which takes the keyboard as it opens.
         const card = (event.target as HTMLElement).closest?.<HTMLElement>('.react-flow__node');
         if (event.key === 'Enter' && active && card && card === event.target && card.dataset.id) {
+          event.preventDefault();
           setEditingNode(card.dataset.id);
-          window.setTimeout(() => document.getElementById(HEADING_FIELD)?.focus(), 0);
         }
       }}
     >
@@ -223,17 +248,9 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
         isValidConnection={(wire) => wire.source !== wire.target}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
-        // One click on a node is the node the person is on: its panel opens
-        // beside the canvas, and the bar under it speaks of it. With Shift or
-        // Ctrl held a click only adds to what is selected, to move or delete.
-        onNodeClick={(event, node) => {
-          if (event.shiftKey || event.ctrlKey || event.metaKey) return;
-          setEditingNode(node.id);
-        }}
-        onNodeDoubleClick={(_, node) => {
-          const used = blocksAt(useGraphStore.getState().page, node.id);
-          if (used.fire.length || used.send.length || used.show.length) onOpenPage();
-        }}
+        // A click chooses a node (ReactFlow does that itself), to move or
+        // delete; a double-click opens it where the canvas was.
+        onNodeDoubleClick={(_, node) => setEditingNode(node.id)}
         onPaneClick={clearSelection}
         nodeTypes={nodeTypes}
         fitView
@@ -251,6 +268,9 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
         // ReactFlow's Delete took a node's wires before it asked about the
         // node, one undo step each: the wrapper above handles the key instead.
         deleteKeyCode={null}
+        // ReactFlow's Space, held to pan, cancels the click of every button the
+        // keyboard presses with it -- on the node view and the bars as much as here.
+        panActivationKeyCode={null}
         style={{ background: SUNKEN }}
       >
         <Background
@@ -271,6 +291,25 @@ export default function GraphCanvas({ active, onOpenPage }: { active: boolean; o
           />
         )}
       </ReactFlow>
+      {next && (
+        <QuickPick
+          entries={PICKABLE}
+          keyOf={(entry) => entry.type}
+          onPick={(entry) => {
+            useGraphStore.getState().addNodeFrom(entry.type, next.position, next.from);
+            setNext(null);
+          }}
+          onClose={() => setNext(null)}
+          label="Search nodes"
+          placeholder="Add a node… code, ai, folder"
+          footer={next.hint}
+          style={{
+            position: 'absolute', zIndex: 10,
+            left: Math.max(8, Math.min(next.at.x, (reactFlowWrapper.current?.clientWidth ?? 800) - 296)),
+            top: Math.max(8, Math.min(next.at.y, (reactFlowWrapper.current?.clientHeight ?? 600) - 330)),
+          }}
+        />
+      )}
       {!rfNodes.length && (
         <p className="pointer-events-none absolute inset-x-0 top-1/3 mx-auto w-fit max-w-sm rounded-xl px-5 py-4 text-center text-sm" style={{ ...PANEL, color: MUTED }}>
           Add a start point from the left, or say what the tool should do in the bar below.

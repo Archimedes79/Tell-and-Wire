@@ -10,6 +10,7 @@ import type { TextChange } from '../../../backend/app/api.ts';
 import { NESTED_GRAPH_FIELD } from '../../../backend/app/project/changes.ts';
 import { defaultMetadata as formatDefaults } from '../../../graph/graph.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
+import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { derivedNodePorts } from './ports';
 import { NODE_KINDS, savedNode } from './nodeKinds';
 import { baseNodeConfig } from './baseNodeConfig';
@@ -135,6 +136,17 @@ export function takeIn(node: GraphNode, change: TextChange): void {
   Object.assign(node, derivedNodePorts(node) ?? {});
 }
 
+/**
+ * Whether *edge* is a wire of one of the nodes *touched* to a port its node has
+ * not: a field a file on disk left out is a port gone, and a wire left on it
+ * is one nobody can see to delete.
+ */
+export function lostWire(nodes: GraphNode[], edge: GraphEdge, touched: Set<string>): boolean {
+  const lacks = (id: string, port: string, side: 'inputs' | 'outputs') =>
+    touched.has(id) && port !== RUN_PORT && !nodes.find((node) => node.id === id)?.[side].some((one) => one.id === port);
+  return lacks(edge.source_node_id, edge.source_port_id, 'outputs') || lacks(edge.target_node_id, edge.target_port_id, 'inputs');
+}
+
 /** The undo state *snapshot* with what came in from disk (*changes*) in it, as it is kept (`exported`). */
 export function withDiskChanges(snapshot: string, changes: TextChange[]): string {
   const graph = normalizeGraph(JSON.parse(snapshot) as Graph);
@@ -146,6 +158,8 @@ export function withDiskChanges(snapshot: string, changes: TextChange[]): string
       if (node) takeIn(node, change);
     }
   }
+  const touched = new Set(changes.flatMap((change) => change.node_id ?? []));
+  graph.edges = graph.edges.filter((edge) => !lostWire(graph.nodes, edge, touched));
   const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
   return JSON.stringify(exported(rfNodes, rfEdges, graph.metadata, blocks));
 }

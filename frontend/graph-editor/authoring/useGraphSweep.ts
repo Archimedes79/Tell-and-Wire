@@ -1,7 +1,7 @@
 // The toolbar's Generate: every node of the graph written, front to back.
 //
 // `graphSweep.ts` decides the order and the rules; this assembles one node's
-// writing the way the node's panel does -- the same request (`generateRequest`),
+// writing the way the node's view does -- the same request (`generateRequest`),
 // the same answer written in (`writtenInto`), what is missing first
 // (`writesFor`) -- and writes what comes back into the store, file by file.
 
@@ -12,7 +12,7 @@ import { useGraphStore } from '../../app/store/graphStore';
 import { portRenames } from '../../app/store/portRenames';
 import { graphEdge } from '../../app/document/wires';
 import {
-  bodyOf, exchangeName, generateRequest, generationGuard, isWritten, unfitDefinition, withHistory, writesFor, writtenInto, type Write,
+  bodyOf, exchangeName, generateRequest, generationGuard, isWritten, unfitDefinition, withHistory, writeName, writesFor, writtenInto, type Write,
 } from './generation';
 import { inputFilesOf } from './exampleFile';
 import { missingExamples, sweep, type SweepUnit } from './graphSweep';
@@ -79,21 +79,20 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
           if (!now || !stillOpen()) throw new Error(ANOTHER_GRAPH);
           const around = { nodes: nodesOf(), edges: live().rfEdges, metadata: live().metadata, page: live().page };
           const request = generateRequest(now, write, around, inputFilesOf(now, around.nodes, around.edges, live().executionResult, around.page));
-          const name = exchangeName(now, write);
           try {
             const response = await call('generate', request);
             const latest = nodeNow(node.id);
             if (!latest || !stillOpen()) throw new Error(ANOTHER_GRAPH);
-            put(latest, writtenInto(latest, write, response, name));
+            put(latest, writtenInto(latest, write, response, exchangeName(latest, write)));
             // Written, to be seen; the rest of the node would be written against it.
             const unfit = unfitDefinition(write, response.probe);
-            if (unfit) throw new Error(`${name}: ${unfit}`);
+            if (unfit) throw new Error(`${writeName(latest, write)}: ${unfit}`);
           } catch (error) {
             // A failed exchange is history too, where it is still this graph's.
             const calls = error instanceof ApiError ? error.body.calls : undefined;
             const latest = nodeNow(node.id);
             if (calls?.length && latest && stillOpen()) {
-              live().updateNode(node.id, { config: { ...latest.config, history: withHistory(latest, `${name} (failed)`, calls) } });
+              live().updateNode(node.id, { config: { ...latest.config, history: withHistory(latest, exchangeName(latest, write, { failed: true }), calls) } });
             }
             throw error;
           }

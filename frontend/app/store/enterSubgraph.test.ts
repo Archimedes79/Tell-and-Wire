@@ -2,7 +2,7 @@ import { beforeEach, describe, it, expect } from 'vitest';
 import type { GraphNode } from '../graph';
 import { useGraphStore } from './graphStore';
 import { NODE_KINDS } from '../document/nodeKinds';
-import { nodePanel } from '../../graph-editor/canvas/nodePanel';
+import { nodePanel } from '../../graph-editor/node/nodePanel';
 import { enterGraphOf } from '../../graph-editor/nodes/subgraph/SubgraphNodePanel';
 
 // Held here, beside the store it goes in and out of, because the rule is its

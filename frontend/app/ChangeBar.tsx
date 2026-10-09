@@ -3,27 +3,20 @@ import { Sparkles } from 'lucide-react';
 import { useGraphStore } from './store/graphStore';
 import Button from './ui/Button';
 import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
-import { hasDefinitions } from '../graph-editor/authoring/generation';
 import GraphProblems from './GraphProblems';
 import ProblemsChip from './ProblemsChip';
 import { useGraphAsk, type GraphAsk } from './graphAsk';
-import { changeGoesTo, changeTarget, describeChange, graphChange, graphRequest, targetName } from './graphChange';
+import { describeChange, graphChange } from './graphChange';
 import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from './ui/theme';
 
 /**
- * The bar under the canvas, always there: say what to change, on the node the
- * person is on -- or, with none, on the whole graph.
- *
- * On a node whose body ✨ writes, the words go to the node's panel
- * (`askChange`), which changes the body as said. On the whole graph -- and on
- * a node whose settings are all it is, a change of that node in it -- ✨ Describe
- * a graph is sent the graph and the words, and what comes back is shown, with
- * what it adds, removes and changes and what `check` finds in it, before it is
- * applied as one undo step.
+ * The bar under the canvas, always there: say what to change in the graph.
+ * ✨ Describe a graph is sent the graph and the words, and what comes back is
+ * shown, with what it adds, removes and changes and what `check` finds in it,
+ * before it is applied as one undo step. A change to one node's files is said
+ * in that node's chats, with the node open.
  */
 export default function ChangeBar() {
-  const target = useGraphStore((s) => changeTarget(s.rfNodes.map((n) => n.data.graphNode), s.editingNodeId));
-  const clearSelection = useGraphStore((s) => s.clearSelection);
   const lastStep = useGraphStore((s) => s.past[s.past.length - 1]);
   const [text, setText] = useState('');
   // One request at a time, and only the last is still wanted: Stop leaves the one on its way unwanted.
@@ -50,17 +43,10 @@ export default function ChangeBar() {
   const submit = async () => {
     const words = text.trim();
     if (!words || asking) return;
-    const store = useGraphStore.getState();
-    if (target && changeGoesTo(target) === 'panel') {
-      store.askChange(target.id, words);
-      setText('');
-      reset();
-      return;
-    }
     setText('');
     setApplied(null);
     // The words go back where they were, to be sent again or said otherwise.
-    if (await send(words, graphRequest(target, words), store.exportGraph()) === 'failed') setText(words);
+    if (await send(words, words, useGraphStore.getState().exportGraph()) === 'failed') setText(words);
   };
 
   const stop = () => {
@@ -122,16 +108,6 @@ export default function ChangeBar() {
       )}
 
       <div className="flex items-center gap-2.5 min-w-0">
-        {/* A quarter of the row at most, whole in its title: at 40 % beside a
-            panel at 1024 pixels it left the field 147 pixels to say anything in. */}
-        <Button
-          onClick={clearSelection}
-          disabled={!target}
-          className="h-10 shrink-0 max-w-[25%] truncate"
-          title={target ? `On ${targetName(target)}. Click to say it about the whole graph instead` : 'Nothing is selected: what you say changes the graph itself'}
-        >
-          {target ? `on: ${targetName(target)}` : 'whole graph'}
-        </Button>
         <label
           className="flex h-10 flex-1 min-w-0 items-center gap-2.5 rounded-lg px-3"
           style={{ background: SUNKEN, border: `1px solid ${LINE}` }}
@@ -146,7 +122,7 @@ export default function ChangeBar() {
               void submit();
             }}
             disabled={asking}
-            placeholder="Say what to change…"
+            placeholder="Say what to change in the graph…"
             aria-label="Say what to change"
             className="flex-1 min-w-0 bg-transparent text-sm outline-none"
             style={{ color: TEXT }}
@@ -157,10 +133,7 @@ export default function ChangeBar() {
           onClick={() => { void submit(); }}
           disabled={asking || !text.trim()}
           className="h-10 shrink-0"
-          title={target && changeGoesTo(target) === 'panel'
-            // A data node has no ▶ Try: what its panel writes is what it holds.
-            ? `Change ${targetName(target)} as said: its panel writes it${hasDefinitions(target) ? ', and tries it' : ''}`
-            : 'Change the whole graph as said, with ✨: you see what it changes before it is applied'}
+          title="Change the graph as said, with ✨: you see what it changes before it is applied"
         >
           Change
         </Button>

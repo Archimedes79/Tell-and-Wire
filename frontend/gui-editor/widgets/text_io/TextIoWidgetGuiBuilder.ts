@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { BOX_TEXT } from '../../../app/document/layout';
 import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
+import { ArrowLeftRight, FileText, TextCursorInput } from 'lucide-react';
 
 export class TextIoWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'text_io';
@@ -11,9 +12,9 @@ export class TextIoWidgetGuiBuilder extends WidgetGuiBuilder {
 
   paletteEntries() {
     return [
-      { mode: 'input', label: 'Text input', icon: '⌨️', also: 'field box type prompt' },
-      { mode: 'output', label: 'Text output', icon: '📄', also: 'result answer display' },
-      { mode: 'both', label: 'Text in & out', icon: '↔️', also: 'both editable' },
+      { mode: 'input', label: 'Text input', icon: TextCursorInput, also: 'field box type prompt' },
+      { mode: 'output', label: 'Text output', icon: FileText, also: 'result answer display' },
+      { mode: 'both', label: 'Text in & out', icon: ArrowLeftRight, also: 'both editable' },
     ];
   }
 

@@ -2,20 +2,21 @@
 //
 // One entry point for every ✨: a node's input definition (input.js), its
 // output definition (output.js), and its body -- code, an ai node's prompt, a
-// data node's data. What is sent is a prompt -- the standard one for that ✨,
-// or the node's own where someone changed it (`authoring/prompts.ts`) -- with
-// its variables filled from what the node and the graph hold (`brief.ts`), and
+// data node's data. What is sent is the standard prompt for that ✨
+// (`authoring/prompts.ts`) with its variables filled from what the node and the
+// graph hold (`brief.ts`), what the person said to the file's chat (`ask`), and
 // after it the frame (`generatePrompts.ts`, where all the prose is): the file
 // format and how to answer, which is what makes an answer usable and not what
 // the person asks.
 //
-// A body can also be changed rather than written anew (`refine`): "Say what to
-// change" sends the body there is, its output.js, what came of it and what to
-// change, and gets the body back with the node's text restated to fit it -- and
-// a new output.js where the change outgrows the one there is, which the body is
-// then held to; ✨ Fix sends how it failed, and gets the repair a generation
-// makes of its own first attempt (an output.js that cannot be read, corrected
-// with it). Same prompt, same verify-and-repair: not a second generator.
+// A file can also be changed rather than written anew (`refine`): a chat's
+// message sends the file there is and what to change. For a body that includes
+// its output.js, what came of it, and the answer brings the node's text back
+// restated to fit it -- and a new output.js where the change outgrows the one
+// there is, which the body is then held to; ✨ Fix sends how it failed, and gets
+// the repair a generation makes of its own first attempt (an output.js that
+// cannot be read, corrected with it). Same prompt, same verify-and-repair: not
+// a second generator.
 //
 // Code is not one call. It is written, run once on the example in the node's
 // input.js, held to its output.js, and repaired once with the evidence when
@@ -34,7 +35,7 @@ import type { NodeRunner, Runners } from '../../graph/nodes/NodeRunner.ts';
 import { PLAIN_ASK } from '../../graph/nodes/ai/ask.ts';
 import type { Generation, Language } from '../../graph/authoring/generation.ts';
 import { STANDARD_PROMPTS, fillPrompt, type PromptKind } from '../../graph/authoring/prompts.ts';
-import { definitionExample, definitionKeys, misfits, unreadableOutput, type Definitions } from '../../graph/authoring/definition.ts';
+import { definitionExample, definitionKeys, misfits, typedefKeys, unreadableOutput, type Definitions } from '../../graph/authoring/definition.ts';
 import { filePorts } from '../../graph/execution/fileInputs.ts';
 import { fileContent, isInlineFile } from '../../graph/nodes/documents.ts';
 import { runsPerItem } from '../../graph/execution/batching.ts';
@@ -46,7 +47,7 @@ import { exchangeEntry, withExchange } from '../../graph/authoring/history.ts';
 import { BUDGET, clip, variables } from './brief.ts';
 import { GRAPH_SYSTEM } from './graphPrompt.ts';
 import {
-  OUTGROWN, SYSTEMS, bodyChange, changePrompt, codeChange, frame, mendPrompt, repairPrompt, type OutputAsked, type Shape,
+  OUTGROWN, SYSTEMS, bodyChange, changePrompt, codeChange, definitionChange, frame, mendPrompt, repairPrompt, type OutputAsked, type Shape,
 } from './generatePrompts.ts';
 import type { AICall, GenerateRequest, GenerateResponse, ProbeReport, Target } from '../app/api.ts';
 
@@ -322,29 +323,6 @@ function definitionFaults(kind: 'input' | 'output', text: string, shape: Shape):
   return faults;
 }
 
-/**
- * The properties the JSDoc gives *type*: each `@property {…} <id>` in the
- * comment that says `@typedef {Object} <type>`. A type may hold braces of its
- * own -- `{Array<{label: string}>}` -- so it is read to its matching brace.
- * A nested one -- `output.wordCount` -- is a part of an output, not one.
- */
-function typedefKeys(text: string, type: string): string[] {
-  const comment = [...text.matchAll(/\/\*\*[\s\S]*?\*\//g)].map(([found]) => found)
-    .find((found) => new RegExp(String.raw`@typedef\s+\{Object\}\s+${type}\b`).test(found));
-  if (!comment) return [];
-  const keys: string[] = [];
-  for (const { index } of comment.matchAll(/@property\s*\{/g)) {
-    let at = comment.indexOf('{', index);
-    for (let depth = 0; at < comment.length; at += 1) {
-      if (comment[at] === '{') depth += 1;
-      else if (comment[at] === '}' && --depth === 0) break;
-    }
-    const name = /^\s*\[?([\w$.]+)/.exec(comment.slice(at + 1));
-    if (name && !name[1].includes('.')) keys.push(name[1]);
-  }
-  return keys;
-}
-
 // ---------------------------------------------------------------------------
 // The one entry point
 // ---------------------------------------------------------------------------
@@ -460,6 +438,7 @@ function shapeOf(
     // missing a key and "repaired".
     outputs: node.outputs.map((port) => port.id).filter((id) => id !== ERROR_PORT),
     wired: Object.keys(request.output_targets ?? {}).filter((id) => id !== ERROR_PORT),
+    fed: Object.keys(request.input_sources ?? {}),
     reads: filePorts(node, elements),
     perItem: runsPerItem(node, element.batchMode(node)),
     definitions,
@@ -471,12 +450,12 @@ function shapeOf(
 /**
  * The prompt as sent: the template filled -- for a repair, from the node as
  * the first attempt left it (*left*: the text a change restated, the
- * output.js it brought) -- then *evidence*, then the frame, which says what
- * may come back besides the body (*asked*).
+ * output.js it brought) -- then what the person said to the file's chat
+ * (`request.ask`), then *evidence*, then the frame, which says what may come
+ * back besides the body (*asked*).
  */
 function promptFor(node: GraphNode, request: GenerateRequest, write: Job['write'], kind: PromptKind, shape: Shape): Job['prompt'] {
-  const own = (node.config.prompts as Partial<Record<string, string>> | undefined)?.[write];
-  const template = own?.trim() ? own : STANDARD_PROMPTS[kind];
+  const said = request.ask?.trim();
   // ✨ Input and ✨ Output write their file anew, from the text: shown the one
   // there was, a model copied it -- a description that named its output
   // "optimisation" kept "output" through three presses.
@@ -492,7 +471,8 @@ function promptFor(node: GraphNode, request: GenerateRequest, write: Job['write'
     };
     const held = left.output ? { ...shape, outputs: definitionKeys(left.output), definitions: { input: shape.definitions?.input ?? '', output: left.output } } : shape;
     return [
-      fillPrompt(template, left.description || left.output ? variables({ ...request, node: now }, shape.reads) : values),
+      fillPrompt(STANDARD_PROMPTS[kind], left.description || left.output ? variables({ ...request, node: now }, shape.reads) : values),
+      said ? `## What is asked of it\n${said}` : '',
       evidence, frame(kind, held, !!request.refine?.change?.trim(), asked),
     ].filter(Boolean).join('\n\n');
   };
@@ -514,14 +494,21 @@ async function jobOf(given: GenerateRequest, deps: GenerateDeps): Promise<Job> {
   return { request, node, spec, write, kind, shape, prompt: promptFor(node, request, write, kind, shape), ai, calls, deps };
 }
 
-/** ✨ Input and ✨ Output: the whole file, asked for once more, with what is wrong, where its example cannot be used. */
+/**
+ * The Input and Output chats: the whole file, written from the text -- or, said
+ * to change (`refine.change`), the file there is changed as said -- and asked
+ * for once more, with what is wrong, where its example cannot be used.
+ */
 async function writeDefinition({ request, shape, prompt, ai, calls, deps }: Job, write: 'input' | 'output'): Promise<GenerateResponse> {
-  const ask = async (evidence: string) => fileIn(await ai.complete({ prompt: prompt(evidence, undefined), system: SYSTEMS[write], ...deps.target }));
-  let text = await ask('');
+  const change = request.refine?.change?.trim();
+  const opening = change ? definitionChange(`${write}.js`, shape.definitions?.[write] ?? '', change) : '';
+  const complete = async (evidence: string) => fileIn(await ai.complete({ prompt: prompt(evidence, undefined), system: SYSTEMS[write], ...deps.target }));
+  let text = await complete(opening);
   let faults = definitionFaults(write, text, shape);
   if (faults.length) {
     // Once, with what is wrong: a definition nobody can read is no definition.
-    const again = await ask(`Your last answer was this file:\n\n${text}\n\nIt cannot be used as it is: ${faults.join(' ')} Write the whole file again, corrected.`);
+    const again = await complete([opening, `Your last answer was this file:\n\n${text}\n\nIt cannot be used as it is: ${faults.join(' ')} Write the whole file again, corrected.`]
+      .filter(Boolean).join('\n\n'));
     const left = definitionFaults(write, again, shape);
     if (left.length <= faults.length) [text, faults] = [again, left];
   }
@@ -529,7 +516,7 @@ async function writeDefinition({ request, shape, prompt, ai, calls, deps }: Job,
   return { result: text, probe: faults.length ? { status: 'failed', error: '', problems: faults } : notProbed(), calls };
 }
 
-/** What the node's body holds now, as text: a structure as JSON. */
+/** What the node's body holds now, as text: fields as JSON. */
 function bodyOf(node: GraphNode, spec: Generation): string {
   const held = node.config[spec.fields.body];
   return typeof held === 'string' ? held : held === undefined || held === null ? '' : JSON.stringify(held, null, 2);
@@ -578,7 +565,7 @@ async function writeText(job: Job, kind: Exclude<PromptKind, 'code'>): Promise<G
   const { request: { refine }, node, spec, shape, prompt, ai, calls, deps } = job;
   const body = bodyOf(node, spec);
   const { output, mending, asked } = mayBring(job);
-  const what = kind === 'prompt' ? 'The instructions (prompt.md)' : 'What the node holds';
+  const what = kind === 'prompt' ? 'The instructions (prompt.md)' : 'The fields (data.json)';
   const evidence = !refine ? '' : mending ? mendPrompt('instructions', body, output, mending, refine)
     : bodyChange(refine, body, what, kind === 'prompt' ? output : undefined);
   const reply = await ai.complete({ prompt: prompt(evidence, asked), system: SYSTEMS[kind], ...deps.target });

@@ -11,12 +11,14 @@ import { describe, expect, it } from 'vitest';
  *   2 app/document     what a graph *is* to the editor: node kinds, the page's connections, grid placement
  *     app/api          the contract's client, and the session a page follows
  *   3 app/store        the open graph, its undo, what a round shows on it
+ *     graph-editor/views   the node view's drawing, pure: props in, callbacks out
  *   4 app/dialogs      small dialogs that ask the server something
  *   5 the elements     app/elements (the registry), graph-editor/nodes, gui-editor/widgets,
  *                      the fields their panels are made of, and graph-editor/authoring
  *   6 gui-editor/page  a page, drawn and designed
  *     graph-editor/canvas  the graph, drawn
- *   7 app (its files)  toolbar, sidebar, results
+ *     graph-editor/node    one node, opened: what the view's rows and chats do
+ *   7 app (its files)  toolbar, sidebar, changes
  *   8 app/App, gui-editor/runtime   the two things that are served
  *   9 app/main         the entry
  *
@@ -32,9 +34,9 @@ import { describe, expect, it } from 'vitest';
  */
 const ELEMENTS = ['app/elements', 'app/fields', 'graph-editor/nodes', 'graph-editor/fields', 'graph-editor/authoring', 'gui-editor/widgets'];
 const RANK: Record<string, number> = {
-  'app/ui': 0, 'app/graph': 1, 'app/document': 2, 'app/api': 2, 'app/store': 3, 'app/dialogs': 4,
+  'app/ui': 0, 'app/graph': 1, 'app/document': 2, 'app/api': 2, 'app/store': 3, 'graph-editor/views': 3, 'app/dialogs': 4,
   ...Object.fromEntries(ELEMENTS.map((area) => [area, 5])),
-  'gui-editor/page': 6, 'graph-editor/canvas': 6, app: 7, 'app/App': 8, 'gui-editor/runtime': 8, 'app/main': 9,
+  'gui-editor/page': 6, 'graph-editor/canvas': 6, 'graph-editor/node': 6, app: 7, 'app/App': 8, 'gui-editor/runtime': 8, 'app/main': 9,
 };
 const SIBLINGS = new Set(ELEMENTS.flatMap((from) => ELEMENTS.map((to) => `${from}>${to}`)));
 

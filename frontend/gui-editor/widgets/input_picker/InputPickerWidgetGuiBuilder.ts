@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import type { GuiWidget } from '../../../app/graph';
 import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
+import { FolderOpen } from 'lucide-react';
 
 export class InputPickerWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'input_picker';
@@ -10,7 +11,7 @@ export class InputPickerWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly label = 'File or folder';
 
   paletteEntries() {
-    return [{ label: this.label, icon: '📂', also: 'picker open browse upload' }];
+    return [{ label: this.label, icon: FolderOpen, also: 'picker open browse upload' }];
   }
 
   /** One palette entry for both modes; in a sentence, the one it is in. */

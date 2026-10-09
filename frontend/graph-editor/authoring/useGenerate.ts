@@ -96,8 +96,9 @@ export function useGenerate(nodeId: string) {
     const stopping = new AbortController();
     inFlight.set(key, stopping);
     // What has gone out so far, while it runs: a wrong answer can then be
-    // understood rather than only re-rolled.
-    say(key, { busy: true, message: options.pending ?? 'Generating…', live: [] });
+    // understood rather than only re-rolled. The last run's exchange is not
+    // this one's: a pull, which asks nothing, would show it as its own.
+    say(key, { busy: true, message: options.pending ?? 'Generating…', live: [], transcript: [] });
     try {
       const result = await watchGeneration(options.run, (live) => say(key, { live }), stopping.signal);
       // Kept whether or not it worked out: a transcript is opened when

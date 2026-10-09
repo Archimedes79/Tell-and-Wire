@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import { WidgetGuiBuilder } from '../WidgetGuiBuilder';
+import { SlidersHorizontal } from 'lucide-react';
 
 export class SliderWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'slider';
@@ -9,7 +10,7 @@ export class SliderWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly label = 'Slider';
 
   paletteEntries() {
-    return [{ label: this.label, icon: '🎚️', also: 'number range' }];
+    return [{ label: this.label, icon: SlidersHorizontal, also: 'number range' }];
   }
 
   override readonly Panel = lazy(() => import('./SliderWidgetPanel'));

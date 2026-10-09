@@ -213,6 +213,21 @@ export async function settlePage(graph: Graph, outputs: Record<string, unknown>,
 }
 
 /**
+ * What each block that shows a memory node shows: the whole content as it is
+ * now (*state*, by the node's name), by the block's id -- there from the
+ * design's values on, with no round: a round settles end points into blocks
+ * (`settlePage`), never a memory node.
+ */
+export function shownFromState(graph: Graph, state: Record<string, unknown>): Record<string, unknown> {
+  const shown: Record<string, unknown> = {};
+  for (const stored of pageBlocks(graph)) {
+    const widget = parseWidget(stored);
+    if (widgetElement(widget.kind)?.showsEnd(widget) && widget.shows && widget.shows in state) shown[widget.id] = state[widget.shows];
+  }
+  return shown;
+}
+
+/**
  * What the page asks before a round of start point *name* runs: what the blocks
  * that send to it ask -- a picker with nothing chosen --, each under its block's
  * id. None for a round the page does not send.
@@ -223,18 +238,26 @@ export function pageRequirements(graph: Graph, name: string | null): RuntimeRequ
     .map((asked) => ({ key: widget.id, ...asked })));
 }
 
-/** The graph's start points and end points, by name, as its nodes offer them: what a block may name. */
-function points(graph: Graph, registry: Runners): { starts: Map<string, string>; ends: Set<string> } {
+/** The graph's start points, end points and memory nodes, by name, as its nodes offer them: what a block may name. */
+function points(graph: Graph, registry: Runners): { starts: Map<string, string>; ends: Set<string>; states: Set<string> } {
   const starts = new Map<string, string>();
   const ends = new Set<string>();
+  const states = new Set<string>();
   for (const node of graph.nodes) {
     const element = registry.node(node.node_type);
     for (const offer of element?.offers(node) ?? []) {
       if (offer.kind === 'event') starts.set(offer.name, offer.startedBy ?? 'page');
       if (offer.kind === 'output') ends.add(offer.name);
+      if (offer.kind === 'state') states.add(offer.name);
     }
   }
-  return { starts, ends };
+  return { starts, ends, states };
+}
+
+/** Whether a block of the page shows a memory node: what a person sees of the graph where it has no end point. */
+export function showsMemory(graph: Graph, registry: Runners): boolean {
+  const { states } = points(graph, registry);
+  return pageWidgets(graph).some((block) => !!block.shows && states.has(block.shows));
 }
 
 /**
@@ -250,7 +273,7 @@ export function pageProblems(graph: Graph, registry: Runners, where = 'the page'
   const found: Problem[] = [];
   const blocks = pageWidgets(graph);
   if (!blocks.length) return found;
-  const { starts, ends } = points(graph, registry);
+  const { starts, ends, states } = points(graph, registry);
   const seen = new Set<string>();
   for (const block of blocks) {
     const at = `${where}, block "${block.id || block.kind}"`;
@@ -295,8 +318,12 @@ export function pageProblems(graph: Graph, registry: Runners, where = 'the page'
     if (block.shows) {
       if (!element.showsEnd(block)) {
         found.push({ where: at, problem: `It shows "${block.shows}", but it shows nothing.`, fix: 'Leave "shows" out, or let a chart, a table, an image, a text box or a chat show it.' });
-      } else if (!ends.has(block.shows)) {
-        found.push({ where: at, problem: `It shows "${block.shows}", which is no end point of the graph: it ends at ${names(ends)}.`, fix: `Add an end point called "${block.shows}", or show one the graph has.` });
+      } else if (!ends.has(block.shows) && !states.has(block.shows)) {
+        found.push({
+          where: at,
+          problem: `It shows "${block.shows}", which is no end point or memory node of the graph: it ends at ${names(ends)}${states.size ? ` and holds ${names(states)}` : ''}.`,
+          fix: `Add an end point called "${block.shows}", or show one the graph has.`,
+        });
       }
     }
     const can = [

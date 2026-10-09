@@ -1,4 +1,5 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Handle, Position, NodeProps, useStore, useUpdateNodeInternals } from 'reactflow';
 import type { RFNodeData } from '../../app/store/nodeData';
 import type { GraphNode, GuiWidget, NodeResult, Port } from '../../app/graph';
@@ -9,13 +10,11 @@ import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, S
 import { cut } from '../../app/ui/cut';
 import { hasOutputs, statusTone } from '../../app/store/executionStatus';
 import { blocksAt } from '../../app/document/page';
-import { firstLine } from '../../app/document/heading';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { carriesFiles, dropExample, droppedFile } from '../authoring/droppedFile';
 import { errorText } from '../../app/api/errorText';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import ResultPreview, { ErrorPreview } from './ResultPreview';
-import NodeKind from './NodeKind';
 import Button from '../../app/ui/Button';
 import { useIsWriting } from '../authoring/useGenerate';
 
@@ -24,7 +23,7 @@ import { useIsWriting } from '../authoring/useGenerate';
 // One for every status a run reports, so none goes without a dot.
 const statusStyles: Record<NodeResult['status'] | 'held', { color: string; glyph: string; title: string }> = {
   success: { color: SUCCESS, glyph: '✓', title: 'Succeeded' },
-  // Delivered, with items lost: the warning colour, as in the results panel.
+  // Delivered, with items lost: the warning colour, as in the node view's last run.
   partial: { color: WARNING, glyph: '◐', title: 'Some items failed; the others delivered' },
   error: { color: DANGER, glyph: '!', title: 'Failed' },
   // Something it needs failed, the run was stopped, or its ◆ stayed shut.
@@ -34,19 +33,30 @@ const statusStyles: Record<NodeResult['status'] | 'held', { color: string; glyph
 };
 
 /**
+ * The card is built of fixed rows -- a header, then one row per port -- so a
+ * port's dot stands at the middle of its row, beside the name the row says.
+ * The names are always on the card: they show what goes in and out without
+ * the pointer having to be over it.
+ */
+const HEADER = 38;
+const ROW = 20;
+const dotTop = (index: number): number => HEADER + index * ROW + ROW / 2;
+
+/** A port's name on its row: a list is marked ∞, as its dot is a ring. */
+const portName = (port: Port): string => `${port.name}${port.multi ? ' ∞' : ''}`;
+
+/**
  * One port, as a dot on the card's edge -- or, for a start point's, where a
  * run begins, the amber diamond an event wears everywhere. The dot is drawn
  * inside a bare handle rather than as it, so the diamond can turn while the
- * name beside it stays level. The name shows while the card is under the
- * pointer -- which is while a wire is being dragged to it -- and is always the
- * handle's title.
+ * name beside it stays level. Its title says what it carries.
  */
 function PortDot({ port, type, side, top, lit, fires }: {
   port: Port;
   type: 'source' | 'target';
   side: 'left' | 'right';
-  /** Where on the edge, from the top of what holds it. */
-  top: string | number;
+  /** Where on the edge, in pixels from the top of the card: the middle of the port's row. */
+  top: number;
   /** The card is the one selected: its dots take the accent, as its wires do. */
   lit: boolean;
   fires?: boolean;
@@ -68,18 +78,9 @@ function PortDot({ port, type, side, top, lit, fires }: {
       style={{ width: 12, height: 12, top, [side]: -7, background: 'transparent', border: 'none', borderRadius: 0 }}
     >
       <span className="absolute pointer-events-none" style={{ inset: 1, ...dot }} />
-      <span
-        className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] leading-4 pointer-events-none opacity-0 transition-opacity group-hover:opacity-100"
-        style={{ [side === 'left' ? 'right' : 'left']: 16, background: SURFACE, border: `1px solid ${LINE}`, color: TEXT }}
-      >
-        {port.name}{port.multi && ' ∞'}
-      </span>
     </Handle>
   );
 }
-
-/** Where each of *count* dots stands on an edge: spread evenly down it, one alone in the middle. */
-const spread = (index: number, count: number): string => `${((index + 1) / (count + 1)) * 100}%`;
 
 /** The blocks *blocks* name, by their labels: "Go, Length". */
 const labelsOf = (blocks: GuiWidget[]): string => blocks.map((block) => block.label || block.id).join(', ');
@@ -100,24 +101,24 @@ function pageLine(node: GraphNode, page: GuiWidget[]): string | undefined {
 }
 
 /**
- * A node on the canvas: a card that says what it is -- its kind in its kind's
- * tint, its id, its heading and the first line of what it should do -- and,
- * after a run, how it went and a small picture of what it made. Its ports are
- * dots on its edges, and a start or end point says which blocks of the page
- * connect to it. Clicking it opens its panel beside the canvas (the canvas's
- * `onNodeClick`), and the card with its panel open wears the accent.
+ * A node on the canvas: one card for every kind -- its kind's icon in its
+ * colour, its heading, a row for each port with the port's name and its dot on
+ * the edge, and below them what it holds or made: after a run how it went and
+ * a small picture of what it made, and for a start or end point which blocks of
+ * the page connect to it. What it should do is its tooltip; the rest of it is
+ * the node view's. A click chooses it, a double-click opens it (the canvas's
+ * `onNodeDoubleClick`), and the card chosen wears the accent.
  */
 const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const { graphNode } = data;
-  const open = useGraphStore((s) => s.editingNodeId === id);
-  // ✨ is writing for it, whether or not its panel is open.
+  // ✨ is writing for it, whether or not its view is open.
   const writing = useIsWriting(id);
   const executionResult = useGraphStore((s) =>
     s.executionResult?.node_results.find((r) => r.node_id === id)
   );
 
   const builder = NODE_BUILDERS[graphNode.node_type];
-  const lit = selected || open;
+  const lit = selected;
 
   // ReactFlow finds a wire's ends by the handles it measured when the card was
   // drawn: a port renamed on a card that kept its size was a handle it did not
@@ -141,8 +142,9 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const events = new Set(runnerRegistry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
   const connected = useGraphStore((s) => pageLine(graphNode, s.page));
   const summary = builder?.canvasSummary?.(graphNode);
-  // Its text's first line, which is what a card has room for: the rest is the panel's.
-  const said = firstLine(graphNode.description);
+  const Icon = builder?.icon;
+  // What it is, for the pointer: its heading, its kind and id, then what it should do.
+  const tip = [graphNode.label, `${builder?.label ?? graphNode.node_type} (${graphNode.id})`, graphNode.description.trim()].filter(Boolean).join('\n');
   // What it made last, beside the port each value stands at, read by its
   // shape. Faded while it stood still.
   const previews = executionResult && hasOutputs(executionResult)
@@ -159,7 +161,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
 
   // A file dropped on a node fills what the element says (`dropPort`): a
   // file a code or ai node's ✨ Input writes from, what a data node holds.
-  // Nothing to browse for; its own panel opens on it (`dropExample`).
+  // Nothing to browse for; the node view opens on it (`dropExample`).
   const dropInto = builder?.dropPort(graphNode);
   const [fileOver, setFileOver] = useState(false);
   const [dropFailed, setDropFailed] = useState('');
@@ -193,7 +195,8 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const takesWire = wireComing && takesNewInputs(graphNode);
 
   const failedDrop = statusTone('error');
-  const ports = Math.max(graphNode.inputs.length, graphNode.outputs.length);
+  const rows = Math.max(graphNode.inputs.length, graphNode.outputs.length);
+  const hasFoot = !!connected || summary !== undefined || shown.length > 0 || !!failure || takesWire || !!dropFailed;
 
   return (
     <div
@@ -206,7 +209,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         border: `1px ${fileOver || takesWire ? 'dashed' : 'solid'} ${lit || fileOver || takesWire ? ACCENT : LINE}`,
         // The accent, doubled to two pixels without moving anything, and its glow.
         boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : undefined,
-        minWidth: 200, maxWidth: 260, minHeight: ports * 16 + 16,
+        minWidth: 200, maxWidth: 260,
       }}
     >
       {/* The run port: every node has it and no node declares it. A start
@@ -227,95 +230,100 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         </Handle>
       )}
 
-      <div className="flex flex-col gap-1 px-3.5 pt-3 pb-3 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <NodeKind node={graphNode} />
-          <span className="flex-1" />
-          {writing && (
-            <span className="shrink-0 text-xs animate-pulse" role="img" aria-label="✨ is writing for this node" title="✨ is writing for this node">✨</span>
-          )}
-          {status && (
-            <span
-              className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
-              style={{ background: status.color, color: SUNKEN }}
-              role="img"
-              aria-label={`Last run: ${statusTitle}`}
-              title={statusTitle}
-            >
-              {status.glyph}
-            </span>
-          )}
-          {/* Out of the way until it is wanted: on the card under the pointer,
-              or the one selected. `nodrag`: pressing it does not start a move. */}
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={handleDelete}
-            className={`nodrag shrink-0 -my-1 -mr-1.5 transition-opacity group-hover:opacity-100 focus:opacity-100 ${lit ? 'opacity-100' : 'opacity-0'}`}
-            title="Delete node"
-            aria-label={`Delete node ${graphNode.label}`}
-          >
-            🗑
-          </Button>
-        </div>
-        <div className="truncate text-sm font-semibold" style={{ color: TEXT }} title={graphNode.label}>
+      <div className="flex items-center gap-2 px-3.5 min-w-0" style={{ height: HEADER }}>
+        {Icon && <Icon size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" style={{ color: builder.ink }} />}
+        <span className="flex-1 min-w-0 truncate text-sm font-semibold" style={{ color: TEXT }} title={tip}>
           {graphNode.label}
-        </div>
-        {said && (
-          <div className="line-clamp-2 text-xs leading-snug" style={{ color: DIM }} title={graphNode.description}>
-            {said}
-          </div>
+        </span>
+        {writing && (
+          <span className="shrink-0 text-xs animate-pulse" role="img" aria-label="✨ is writing for this node" title="✨ is writing for this node">✨</span>
         )}
-
-        {/* Which blocks of the page fire it, send to it or show it. */}
-        {connected && (
-          <div className="mt-1 truncate text-xs" style={{ color: MUTED }} title={connected}>
-            {connected}
-          </div>
-        )}
-
-        {/* What the node holds, when its element says: a data node's value, the
-            folder a folder node lists, where an end point writes, who starts a
-            start point. */}
-        {summary !== undefined && (
-          <div
-            className="mt-1 truncate rounded px-1 py-0.5 font-mono text-xs"
-            style={{ background: HOVER, color: MUTED }}
-            title={summary}
+        {status && (
+          <span
+            className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
+            style={{ background: status.color, color: SUNKEN }}
+            role="img"
+            aria-label={`Last run: ${statusTitle}`}
+            title={statusTitle}
           >
-            {cut(summary, 30)}
-          </div>
+            {status.glyph}
+          </span>
         )}
-
-        {shown.map(([port, preview]) => (
-          <div key={port.id} className="mt-1 flex min-w-0 flex-col gap-0.5">
-            {shown.length > 1 && <span className="text-[10px]" style={{ color: DIM }}>{port.name}</span>}
-            <ResultPreview preview={preview!} status={executionResult?.status} held={held} />
-          </div>
-        ))}
-        {failure && <div className="mt-1">{failure}</div>}
-        {takesWire && (
-          <div className="mt-1 rounded px-1 py-0.5 text-xs" style={{ background: HOVER, color: ACCENT }}>
-            Drop the wire here for a new input
-          </div>
-        )}
-        {/* A file dropped here that could not become its example, and why --
-            whole, since it says what to do instead. */}
-        {dropFailed && (
-          <div className="mt-1 rounded px-1 py-0.5 text-xs" style={{ background: failedDrop.bg, color: failedDrop.fg }}>
-            {dropFailed}
-          </div>
-        )}
+        {/* Out of the way until it is wanted: on the card under the pointer,
+            or the one selected. `nodrag`: pressing it does not start a move. */}
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={handleDelete}
+          className={`nodrag shrink-0 -mr-1.5 transition-opacity group-hover:opacity-100 focus:opacity-100 ${lit ? 'opacity-100' : 'opacity-0'}`}
+          title="Delete node"
+          aria-label={`Delete node ${graphNode.label}`}
+        >
+          <Trash2 size={14} aria-hidden="true" />
+        </Button>
       </div>
 
+      {/* A row per port: what goes in on the left, what comes out on the right. */}
+      {rows > 0 && (
+        <div style={{ paddingBottom: 6 }}>
+          {Array.from({ length: rows }, (_, index) => (
+            <div key={index} className="flex items-center justify-between gap-3 px-3.5 text-xs" style={{ height: ROW, color: MUTED }}>
+              <span className="min-w-0 truncate">{graphNode.inputs[index] && portName(graphNode.inputs[index])}</span>
+              <span className="min-w-0 truncate text-right">{graphNode.outputs[index] && portName(graphNode.outputs[index])}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasFoot && (
+        <div className="flex flex-col gap-1 px-3.5 py-2.5 min-w-0" style={{ borderTop: `1px solid ${LINE}` }}>
+          {/* Which blocks of the page fire it, send to it or show it. */}
+          {connected && (
+            <div className="truncate text-xs" style={{ color: MUTED }} title={connected}>
+              {connected}
+            </div>
+          )}
+
+          {/* What the node holds, when its element says: a data node's value, the
+              folder a folder node lists, where an end point writes, who starts a
+              start point. */}
+          {summary !== undefined && (
+            <div
+              className="truncate rounded px-1 py-0.5 font-mono text-xs"
+              style={{ background: HOVER, color: MUTED }}
+              title={summary}
+            >
+              {cut(summary, 30)}
+            </div>
+          )}
+
+          {shown.map(([port, preview]) => (
+            <div key={port.id} className="flex min-w-0 flex-col gap-0.5">
+              {shown.length > 1 && <span className="text-[10px]" style={{ color: DIM }}>{port.name}</span>}
+              <ResultPreview preview={preview!} status={executionResult?.status} held={held} />
+            </div>
+          ))}
+          {failure}
+          {takesWire && (
+            <div className="rounded px-1 py-0.5 text-xs" style={{ background: HOVER, color: ACCENT }}>
+              Drop the wire here for a new input
+            </div>
+          )}
+          {/* A file dropped here that could not become its example, and why --
+              whole, since it says what to do instead. */}
+          {dropFailed && (
+            <div className="rounded px-1 py-0.5 text-xs" style={{ background: failedDrop.bg, color: failedDrop.fg }}>
+              {dropFailed}
+            </div>
+          )}
+        </div>
+      )}
+
       {graphNode.inputs.map((port, index) => (
-        <PortDot key={`in:${port.id}`} port={port} type="target" side="left" top={spread(index, graphNode.inputs.length)} lit={lit} />
+        <PortDot key={`in:${port.id}`} port={port} type="target" side="left" top={dotTop(index)} lit={lit} />
       ))}
       {graphNode.outputs.map((port, index) => (
-        <PortDot
-          key={`out:${port.id}`} port={port} type="source" side="right" top={spread(index, graphNode.outputs.length)} lit={lit}
-          fires={events.has(port.id)}
-        />
+        <PortDot key={`out:${port.id}`} port={port} type="source" side="right" top={dotTop(index)} lit={lit} fires={events.has(port.id)} />
       ))}
     </div>
   );

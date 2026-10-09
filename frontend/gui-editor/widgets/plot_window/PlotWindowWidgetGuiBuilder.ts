@@ -1,6 +1,7 @@
 import { PlotWindowWidgetRunner } from '../../../../backend/gui-editor/widgets/plot_window/PlotWindowWidgetRunner.ts';
 import { DisplayWidgetGuiBuilder } from '../DisplayWidgetGuiBuilder';
 import { CHART_TEXT } from './PlotChart';
+import { BarChart3 } from 'lucide-react';
 
 export class PlotWindowWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   readonly widgetKind = 'plot_window';
@@ -10,7 +11,7 @@ export class PlotWindowWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   readonly label = 'Chart';
 
   paletteEntries() {
-    return [{ label: this.label, icon: '📊', also: 'plot graph diagram svg' }];
+    return [{ label: this.label, icon: BarChart3, also: 'plot graph diagram svg' }];
   }
 
   readonly runner = new PlotWindowWidgetRunner();

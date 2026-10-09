@@ -52,34 +52,28 @@ export function OpenInEditor({ nodeId, file, before }: { nodeId: string; file: s
 }
 
 /**
- * One of a node's files, as a chip: `input.js`, `code.js`, `history.md`.
- * Shown whether or not the node holds anything there yet: the folder has
- * every file from the start, a stub until ✨ writes it (*written* false says
- * so).
- *
- * With *onLarge* a click opens the file in the large window (⤢), where
- * "Open in my editor" is. Without one -- a file the panel has no editor of
- * its own for -- it opens the file in the person's own editor (↗): greyed
- * in a tool not saved to a folder, which has no file to open.
+ * A file of a node the node view has no editor of its own for -- `history.md`
+ * -- as a chip that opens it in the person's own editor (↗). Shown whether or
+ * not the node holds anything there yet: the folder has every file from the
+ * start, a stub until ✨ writes it (*written* false says so). Greyed in a tool
+ * not saved to a folder, which has no file to open.
  */
-export default function FileChip({ nodeId, file, written, before, onLarge }: {
+export default function FileChip({ nodeId, file, written, before }: {
   nodeId: string;
   file: string;
   /** The node holds something there; otherwise the file is its stub. */
   written: boolean;
   before?: () => void;
-  onLarge?: () => void;
 }) {
   const { isProject, status, open } = useOpenInEditor(nodeId, file, before);
-  const title = onLarge ? `Edit ${file} in a large window (Esc to come back)`
-    : !isProject ? NOT_ON_DISK
-      : `Open ${file} in your own editor (the tool is saved first)${written ? '' : ' -- not written yet: it holds its stub'}`;
+  const title = !isProject ? NOT_ON_DISK
+    : `Open ${file} in your own editor (the tool is saved first)${written ? '' : ' -- not written yet: it holds its stub'}`;
   return (
     <span className="inline-flex items-center gap-1.5">
-      <Button size="sm" className="font-mono" onClick={onLarge ?? open} disabled={!onLarge && !isProject} title={title} aria-label={onLarge ? `Edit ${file}` : `Open ${file}`}>
-        {file} {onLarge ? '⤢' : '↗'}
+      <Button size="sm" className="font-mono" onClick={open} disabled={!isProject} title={title} aria-label={`Open ${file}`}>
+        {file} ↗
       </Button>
-      {/* Unsaved, every chip would say the same: the panel says it once (`NodeDefinition`). */}
+      {/* Unsaved, every chip would say the same: the node view says it once (`NodeView`). */}
       {!written && isProject && <span className="text-xs" style={{ color: DIMMER }}>not written yet</span>}
       {status && <span className="text-xs" style={{ color: MUTED }}>{status}</span>}
     </span>

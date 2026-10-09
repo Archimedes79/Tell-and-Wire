@@ -143,16 +143,21 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
   },
 
   data: {
-    create: (id) => ({
-      id,
-      node_type: 'data',
-      label: 'Data 1',
-      description: '',
-      position: { x: 0, y: 0 },
-      inputs: [{ id: 'input', name: 'Update', kind: 'input', data_type: 'any', multi: false, required: false, description: 'Optional new value' }],
-      outputs: [{ id: 'output', name: 'Value', kind: 'output', data_type: 'any', multi: false, required: false, description: 'Persisted value' }],
-      config: baseNodeConfig(),
-    }),
+    create(id) {
+      // Its ports follow the fields it holds -- asked of its runner, as a
+      // folder's are: with none yet, it has `all` and nothing else.
+      const node: GraphNode = {
+        id,
+        node_type: 'data',
+        label: 'Data 1',
+        description: '',
+        position: { x: 0, y: 0 },
+        inputs: [],
+        outputs: [],
+        config: baseNodeConfig(),
+      };
+      return { ...node, ...(derivedNodePorts(node) ?? {}) };
+    },
     placedAmong: numbered('Data'),
   },
 

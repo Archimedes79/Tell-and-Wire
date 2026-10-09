@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { GuiWidget, WidgetKind } from '../../app/graph';
+import { useShallow } from 'zustand/react/shallow';
+import type { GraphNode, GuiWidget, WidgetKind } from '../../app/graph';
 import { useGraphStore } from '../../app/store/graphStore';
 import DesignerSurface from './DesignerSurface';
 import DesignerPalette, { newBlock, type PaletteEntry } from './DesignerPalette';
@@ -7,12 +8,15 @@ import { useRound } from './useRound';
 import RequirementsDialog from '../../app/dialogs/RequirementsDialog';
 import { roundGoing, setEdit, useSession } from '../../app/api/session';
 import { blockCan, widgetTakesValue, widgetValueIsDesign } from '../../app/document/page';
-import { insertBlock, moveBlock, patchBlock, removeBlock } from './pageWrite';
+import { addBlocks, insertBlock, moveBlock, patchBlock, removeBlock } from './pageWrite';
+import { pageFromGraph } from './pageFromGraph';
+import { useDialogs } from '../../app/dialogs/useDialogs';
 import { liveTypedValues } from './typedValues';
 import PageHeading from './PageHeading';
 import WidgetEditor from './WidgetEditor';
-import { SCHEMES, schemeVars, type SchemeId } from '../../app/ui/scheme';
-import { ACCENT, FIELD_ON_SURFACE, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../app/ui/theme';
+import PageSettings from './PageSettings';
+import { schemeVars } from '../../app/ui/scheme';
+import { ACCENT, LINE, SUNKEN, SURFACE, TEXT } from '../../app/ui/theme';
 
 /**
  * The graph's page, built on the page itself. One graph, one tool, one page --
@@ -41,6 +45,38 @@ export default function DesignerTab() {
   const overrides = liveTypedValues(typed, widgets);
 
   const selected = widgets.find((widget) => widget.id === selectedId) ?? null;
+
+  // What the graph's start and end points still lack on the page, and the
+  // question of the ones a call starts.
+  const nodes = useGraphStore(useShallow((s) => s.rfNodes.map((node) => node.data.graphNode as GraphNode)));
+  const edges = useGraphStore((s) => s.rfEdges);
+  const lacking = pageFromGraph(nodes, edges, widgets);
+  const dialogs = useDialogs();
+
+  /**
+   * Draw the page's missing blocks from the graph. A start point a call starts
+   * is put on the page only when the person says so, one at a time: the page
+   * can only start one the page starts, and switched it no longer serves a call.
+   */
+  const generate = async () => {
+    const added = lacking.now.flatMap((made) => made.blocks);
+    const switched: GraphNode[] = [];
+    for (const made of lacking.ifSwitched) {
+      const name = made.point.label || made.point.id;
+      const answer = await dialogs.ask<'switch'>({
+        title: `Start “${name}” from the page?`,
+        text: `A call starts “${name}” now: a script, the command line, or a model. The page can only start a start point the page starts, so `
+          + 'switched, it serves the page and no longer a call. Cancel leaves it as it is, and makes no block for it.',
+        answers: [{ value: 'switch', label: 'Switch it to the page', variant: 'primary' }],
+      });
+      if (answer !== 'switch') continue;
+      switched.push(made.point);
+      added.push(...made.blocks);
+    }
+    if (!added.length) return;
+    addBlocks(added, switched);
+    setSelectedId(added[0].id);
+  };
 
   // Every change to the page goes through `pageWrite`, which reads it from the
   // store when the change lands: a block's editor may hand its change on long
@@ -187,7 +223,11 @@ export default function DesignerTab() {
 
   return (
     <div className="flex-1 flex overflow-hidden" style={{ background: SUNKEN }}>
-      <DesignerPalette onAdd={addWidget} onDragStart={(entry) => setDragEntry(entry)} />
+      <DesignerPalette
+        onAdd={addWidget}
+        onDragStart={(entry) => setDragEntry(entry)}
+        fromGraph={{ points: lacking.now.length + lacking.ifSwitched.length, onGenerate: () => void generate() }}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <PageHeading name={metadata.name} description={metadata.description} onChange={setMetadata} />
@@ -216,40 +256,19 @@ export default function DesignerTab() {
         </div>
       </div>
 
+      {/* Always there, so the page does not move when a block is selected: the
+          block's settings -- or, with none, the page's. */}
       <aside
-        className="overflow-y-auto px-3 py-4"
-        style={{ width: 340, background: SURFACE, borderLeft: `1px solid ${LINE}`, flexShrink: 0 }}
+        className="overflow-y-auto px-4 py-4"
+        style={{ width: 300, background: SURFACE, borderLeft: `1px solid ${LINE}`, flexShrink: 0 }}
       >
-        {/* One choice for the whole page, from a closed set -- `tone` says what a
-            block is, this says what the tool looks like. Every accent is picked
-            to sit on the same surfaces, so no combination can come out wrong. */}
-        <label className="block mb-5">
-          <span className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: MUTED }}>
-            Colour scheme of the page
-          </span>
-          <select
-            className="w-full rounded-lg px-2 py-1.5 text-sm"
-            style={FIELD_ON_SURFACE}
-            value={metadata.gui_scheme}
-            onChange={(e) => setMetadata({ gui_scheme: e.target.value as SchemeId })}
-          >
-            {SCHEMES.map((entry) => (
-              <option key={entry.id} value={entry.id}>{entry.label}</option>
-            ))}
-          </select>
-        </label>
-
-        <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: MUTED }}>
-          The selected block
-        </h3>
-        <WidgetEditor
-          widget={selected}
-          onChange={(patch) => { if (selected) patchBlock(selected.id, patch); }}
-        />
-
+        {selected
+          ? <WidgetEditor widget={selected} onChange={(patch) => patchBlock(selected.id, patch)} />
+          : <PageSettings />}
       </aside>
 
       <RequirementsDialog requirements={round.requirements} onSubmit={round.submit} onCancel={round.cancel} />
+      {dialogs.dialogs}
 
       {/* The element under the cursor while it is being dragged. Without it the
           only feedback was the result, which on a failed drop is no feedback. */}
@@ -261,7 +280,7 @@ export default function DesignerTab() {
             background: SURFACE, border: `1px solid ${ACCENT}`, color: TEXT, opacity: 0.95,
           }}
         >
-          <span>{dragEntry.icon}</span>
+          <dragEntry.icon size={14} aria-hidden="true" />
           <span>{dragEntry.label}</span>
         </div>
       )}

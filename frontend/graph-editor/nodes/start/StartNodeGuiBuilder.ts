@@ -1,8 +1,9 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { StartNodeRunner } from '../../../../graph/nodes/start/StartNodeRunner.ts';
-import { NODE } from '../../../app/ui/theme';
+import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
+import { Play } from 'lucide-react';
 
 const ELEMENT = new StartNodeRunner();
 
@@ -22,6 +23,12 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
   readonly example = 'e.g. The text to summarise, typed on the page';
 
   readonly color = NODE.start;
+
+  /** Its icon, on its card and in the palette. */
+  readonly icon = Play;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
+  readonly ink = INK.start;
 
   override readonly paletteGroup = 'Input';
 

@@ -2,8 +2,9 @@ import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
 import { definitionsIn } from '../../../../graph/authoring/definition.ts';
 import { withFile } from '../../../app/document/givenFiles';
-import { NODE } from '../../../app/ui/theme';
+import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
+import { Bot } from 'lucide-react';
 
 export class AiNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'ai';
@@ -18,15 +19,17 @@ export class AiNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly color = NODE.ai;
 
+  /** Its icon, on its card and in the palette. */
+  readonly icon = Bot;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
+  readonly ink = INK.ai;
+
   override readonly paletteGroup = 'Processing';
 
   override readonly definesItself = true;
 
-  override readonly Panel = lazy(() => import('./AiNodePanel'));
-
   override readonly AdvancedPanel = lazy(() => import('./AiNodeAdvancedPanel'));
-
-  override readonly advancedSummary = 'ports, model, tools, images, failures';
 
   // Its outputs are what its output definition names: ✨ Output sets them.
   override readonly portEditing = { inputs: 'edit', outputs: 'fixed' } as const;

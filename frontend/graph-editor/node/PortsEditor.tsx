@@ -51,7 +51,7 @@ const TYPES: { value: DataType; label: string }[] = [
 ];
 
 /** A fresh port, named so two in a row do not collide: `input`, `input2`. */
-function fresh(kind: 'input' | 'output', taken: Set<string>): Port {
+export function freshPort(kind: 'input' | 'output', taken: Set<string>): Port {
   const id = freeId(kind, taken, '');
   return { id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' };
 }
@@ -282,7 +282,7 @@ function Side({ title, hint, kind, ports, fixed, editing, wiring, takes, readsFi
         {editable && (
           <Button
             size="sm"
-            onClick={() => onChange([...ports, fresh(kind, new Set(ports.map((p) => p.id)))], ONCE)}
+            onClick={() => onChange([...ports, freshPort(kind, new Set(ports.map((p) => p.id)))], ONCE)}
             title={`Add an ${kind}: name it, and wire it on the canvas`}
           >
             + {kind}

@@ -12,7 +12,7 @@ import { WRITE_AFTER_MS, nodePanel, writeBeforeKey } from './nodePanel';
 
 const store = () => useGraphStore.getState();
 const stored = (id: string) => store().rfNodes.find((item) => item.id === id)!.data.graphNode as GraphNode;
-/** The node's text typed into its box, as the panel writes it (`NodeEditor`'s `setDescription`). */
+/** The node's text typed into its box, as the panel writes it (`NodeView`'s `setDescription`). */
 const say = (panel: ReturnType<typeof nodePanel>, text: string) =>
   panel.change((node) => ({ ...node, description: text }), { field: 'description' });
 

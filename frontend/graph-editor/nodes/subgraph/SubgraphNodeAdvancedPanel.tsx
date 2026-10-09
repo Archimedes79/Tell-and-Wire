@@ -3,7 +3,7 @@ import { SubgraphNodeRunner } from '../../../../graph/nodes/subgraph/SubgraphNod
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import { CatchFailures } from '../../fields/RunOptions';
 import RunOncePerItem from '../../fields/RunOncePerItem';
-import type { NodeAdvancedPanelProps } from '../NodeGuiBuilder';
+import type { NodePanelProps } from '../NodeGuiBuilder';
 
 const ELEMENT = new SubgraphNodeRunner();
 
@@ -15,7 +15,7 @@ const ELEMENT = new SubgraphNodeRunner();
  * live. Catching matters more here than elsewhere: anything short of a clean
  * run inside fails this node, so this is how the graph above carries on.
  */
-export default function SubgraphNodeAdvancedPanel({ node, setConfig, updateNode }: NodeAdvancedPanelProps) {
+export default function SubgraphNodeAdvancedPanel({ node, setConfig, updateNode }: NodePanelProps) {
   const ports = ELEMENT.derivedPorts(node as never, runnerRegistry) ?? { inputs: [], outputs: [] };
   return (
     <>

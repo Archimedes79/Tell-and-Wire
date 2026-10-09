@@ -69,7 +69,7 @@ export const SPECS: ToolSpec[] = [
     description: 'Validate a graph and write it: as one pretty-printed .json file, or -- given a project\'s flow.json -- as that '
       + 'project, each node\'s files in its folder. Refuses, and returns the problems, when validation finds any. Only .json '
       + 'paths inside the server\'s folder; an existing file is replaced only if it is already a graph. Over a graph that is '
-      + 'there, each node\'s history and ✨ prompts stay; a file changed on disk since this server last read the project '
+      + 'there, each node\'s history and the files its ✨ was given stay; a file changed on disk since this server last read the project '
       + 'makes the call write nothing and say which, until describe_graph has read the project again.',
     parameters: {
       type: 'object',

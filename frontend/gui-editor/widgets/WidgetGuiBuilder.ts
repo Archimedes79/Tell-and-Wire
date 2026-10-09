@@ -1,6 +1,7 @@
 // A widget's build-time half, in the browser: the mirror of `backend/gui-editor/widgets/WidgetRunner.ts`.
 
 import type { ComponentType } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import type { GuiWidget, WidgetKind } from '../../app/graph';
 import { BOX_TEXT, DEFAULT_WIDGET_SPAN } from '../../app/document/layout';
 import type { Tone } from '../../app/ui/tone';
@@ -19,7 +20,7 @@ export interface PaletteEntry {
   /** Omitted: the kind's `defaultMode`. */
   mode?: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   /** Other words someone might type for this when searching. */
   also?: string;
 }

@@ -1,7 +1,8 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../app/graph';
-import { NODE } from '../../../app/ui/theme';
+import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
+import { Flag } from 'lucide-react';
 
 /** Where a result goes, in words, for the node that makes it. */
 function destination(node: GraphNode): string {
@@ -28,11 +29,15 @@ export class EndNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly color = NODE.end;
 
+  /** Its icon, on its card and in the palette. */
+  readonly icon = Flag;
+
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
+  readonly ink = INK.end;
+
   override readonly paletteGroup = 'Output';
 
   override readonly Panel = lazy(() => import('./EndNodePanel'));
-
-  override readonly advancedSummary = 'ports';
 
   // Its text is what the result is, which the node feeding it is told (`wantsOn`).
   // It ends a branch: nothing comes out of it. "path" is read by name.

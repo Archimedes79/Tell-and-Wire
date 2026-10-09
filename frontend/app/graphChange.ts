@@ -1,38 +1,12 @@
-// What the bar under the canvas is on, where what is said there goes, and what
-// a change of the whole graph would change -- the parts of the bar that are
-// rules rather than drawing, so a test can hold them.
+// What a change of the whole graph, said in the bar under the canvas, would
+// change -- the part of the bar that is a rule rather than drawing, so a test
+// can hold it. A change to one node is said in that node's chats.
 
 import type { Graph, GraphNode, Port } from './graph';
-import { bodyOf } from '../graph-editor/authoring/generation';
 import { baseNodeConfig } from './document/baseNodeConfig';
 import { derivedNodePorts } from './document/ports';
 import { savedNode } from './document/nodeKinds';
 import { wireOf } from '../../backend/app/project/flow.ts';
-
-/** What the bar is on: the node whose panel is open -- or, with none, the whole graph (null). */
-export function changeTarget(nodes: GraphNode[], openId: string | null): GraphNode | null {
-  return nodes.find((node) => node.id === openId) ?? null;
-}
-
-/** The bar's "on: …", in words. */
-export function targetName(target: GraphNode | null): string {
-  return target ? target.label || target.id : 'the whole graph';
-}
-
-/**
- * Where a change said on *target* goes: to the node's panel, which changes the
- * body ✨ writes for it (`bodyOf`) -- or to the graph, as a change of that
- * node, for a node whose settings are all it is: a folder node's folder, a
- * start point's starter, an output's file. Those are the graph's to change, wires and all.
- */
-export function changeGoesTo(target: GraphNode | null): 'panel' | 'graph' {
-  return target && bodyOf(target) ? 'panel' : 'graph';
-}
-
-/** What ✨ Describe a graph is asked to do, for *text* said on *target*. */
-export function graphRequest(target: GraphNode | null, text: string): string {
-  return target ? `In the node "${target.label || target.id}" (id "${target.id}"): ${text}` : text;
-}
 
 /** What a change of the whole graph changes: nodes by id, and wires by what they join. */
 interface GraphChange {

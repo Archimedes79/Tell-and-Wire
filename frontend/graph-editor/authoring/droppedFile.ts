@@ -79,7 +79,7 @@ export async function droppedPath(file: Dropped, find: FindFile = findFile): Pro
  * *file*, dropped on node *nodeId* on the canvas, taken as *how* says
  * (`NodeGuiBuilder.dropPort`) -- its path, or what it says -- and given to the
  * node (`withDropped`): one undo step, written into the graph that was open
- * when it was dropped, and the node's panel opened on it.
+ * when it was dropped, and the node opened on it.
  */
 export async function dropExample(
   nodeId: string,

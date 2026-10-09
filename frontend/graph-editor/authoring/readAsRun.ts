@@ -58,6 +58,23 @@ export async function listBlockAsRun(widget: GuiWidget): Promise<string[]> {
   });
 }
 
+/**
+ * The text of the file at *path*, as a run hands it to an input that reads
+ * it -- a Word document as its text, a picture as the file itself -- by a code
+ * node with such an input, run on its own: the run's one way of reading a file.
+ */
+export async function textAsRun(path: string): Promise<string> {
+  const code = NODE_KINDS.code.create('reader');
+  const reader: GraphNode = {
+    ...code,
+    inputs: [{ id: 'file', name: 'file', kind: 'input', data_type: 'file_path', multi: false, required: true, description: '' }],
+    outputs: [{ id: 'text', name: 'text', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }],
+    config: { ...code.config, code: 'function run(inputs) { return { text: inputs.file }; }' },
+  };
+  const { text } = await readAlone(reader, { file: path });
+  return typeof text === 'string' ? text : JSON.stringify(text);
+}
+
 /** What a node is handed when the files are read: JSON when it is JSON, the text otherwise. */
 export function contentValue(text: string): unknown {
   const trimmed = text.trim();

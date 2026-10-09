@@ -14,13 +14,12 @@ export function useLiveGeneration(): AICall[] {
 }
 
 /**
- * Hand the transcript of a node panel's ✨ to whatever draws its result.
+ * Hand the transcript of a node's ✨ to whatever draws its result.
  *
- * A context rather than a prop because the path from the panel, which owns
- * `useGenerate`, down to where the exchange is drawn runs through the node's
- * own panel (`NodeDefinition`), which does nothing with it but pass it on. A
- * row of forwarding props like that is what let the ✨ buttons drift apart in
- * the first place.
+ * A context rather than a prop because the path from the node view, which owns
+ * `useGenerate`, down to where the exchange is drawn runs through whichever
+ * pane is open, which does nothing with it but pass it on. A row of forwarding
+ * props like that is what let the ✨ buttons drift apart in the first place.
  */
 export function GenerationReport(
   { calls, live = NOTHING, children }:
@@ -98,19 +97,15 @@ export default function GenerationTranscript() {
 }
 
 /**
- * One side of one exchange.
+ * One side of one exchange, for anything that shows a request: the preview
+ * beside ✨ too.
  *
  * Scrolls rather than truncates: a prompt gets opened precisely when it might
  * be too long, and a transcript that hides the end hides the thing being looked
  * for. Empty parts are dropped, so a generation with no system prompt does not
  * show a labelled empty box.
  */
-/** One side of an exchange, for anything that shows a request: the preview beside ✨ too. */
-export function SentPart({ label, text }: { label: string; text: string }) {
-  return <Part label={label} text={text} />;
-}
-
-function Part({ label, text, tone }: { label: string; text: string; tone?: string }) {
+export function Part({ label, text, tone }: { label: string; text: string; tone?: string }) {
   if (!text.trim()) return null;
   return (
     <div>

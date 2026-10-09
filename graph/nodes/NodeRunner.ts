@@ -23,7 +23,8 @@ export type StartedBy = 'page' | 'call' | 'itself';
 
 /** One thing a node offers whoever uses the graph from outside. */
 export interface Offer {
-  kind: 'event' | 'output';
+  /** An event starts a round, an output is what a round hands back, a state is what a node holds -- watched without a round. */
+  kind: 'event' | 'output' | 'state';
   /** What a caller calls it: the node's id. */
   name: string;
   /** What a person reads: the node's label. */
@@ -61,7 +62,7 @@ export interface TextFile {
   field: string;
   /** Its name in the node's folder. */
   file: string;
-  /** A value kept as JSON rather than as text: what a data node holds as structure. */
+  /** A value kept as JSON rather than as text: what a data node holds, its fields. */
   json?: boolean;
   /**
    * What the file says while the node holds nothing of its own there: written
@@ -137,11 +138,11 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * Two kinds of node, and the difference is worth naming. A start point's
    * ports follow from what it is -- one package on `data` --, a folder node's
    * from its settings -- `files`, `count`, and `error` when it catches --,
-   * and a subgraph's from the graph it holds. Nobody names those, and a copy
-   * of them in the editor is a copy that can disagree with what the element
-   * emits.
+   * a data node's from the fields it holds, and a subgraph's from the graph
+   * it holds. Nobody names those, and a copy of them in the editor is a copy
+   * that can disagree with what the element emits.
    *
-   * A code, AI or data node, or an end point, is the other kind: a person names its ports
+   * A code or AI node, or an end point, is the other kind: a person names its ports
    * to match the code they wrote or the prompt they gave. `count_per_file` has
    * an input called `file`; `total` produces `bla_count` and `summary`. Those
    * are the graph's, not the element's, and returning null says so — the test
@@ -382,6 +383,16 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
     inputs: Record<string, unknown>,
     runtime: Runtime,
   ): Promise<Record<string, unknown>>;
+
+  /**
+   * What this node holds as it is now, to be watched without a round: a
+   * memory node's whole content -- offered under its name as a `state`
+   * (`offers`), and told by every session (`SessionView.state`). Nothing, for a
+   * node that holds nothing to watch.
+   */
+  holds(_node: GraphNode): unknown {
+    return undefined;
+  }
 
   /**
    * Store a value that arrived on *portId* as this node's remembered state.

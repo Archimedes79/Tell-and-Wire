@@ -35,14 +35,14 @@ import { readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { mergeResults, type ExecutionResult, type Graph } from '../../graph/graph.ts';
 import { triggeredNodes, type Trigger } from '../../graph/execution/triggers.ts';
 import { memoryFeedbackEdges } from '../../graph/execution/executor.ts';
-import { NotOffered, applySent, checkSent, outputsOf, sentOf } from './graphInterface.ts';
+import { NotOffered, applySent, checkSent, outputsOf, sentOf, stateOf } from './graphInterface.ts';
 import { names } from '../../graph/execution/wiring.ts';
 import type { RuntimeRequirement } from './widgets/WidgetRunner.ts';
 import { startClock, type Clock } from '../../graph/execution/clock.ts';
 import type { Held } from '../../graph/execution/latch.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import {
-  applyPageValues, clearDeliveredPage, firedBy, pageBlock, pageRequirements, pageSends, pageState, sentBy, setPageState, settlePage,
+  applyPageValues, clearDeliveredPage, firedBy, pageBlock, pageRequirements, pageSends, pageState, sentBy, setPageState, settlePage, shownFromState,
   startFromPage, takesPageValue,
 } from './widgets/page.ts';
 import type { ProgressEvent, Runtime } from '../../graph/nodes/Runtime.ts';
@@ -225,12 +225,16 @@ export class Session {
   view(): SessionView {
     const clock = this.application?.clock;
     const copy = withState(this.design, this.slots, this.pageSlots);
+    const state = stateOf(copy, registry);
     return {
       session: this.id,
       sent: sentOf(copy, registry),
       outputs: outputsOf(this.design, this.shown, registry),
+      state,
       page: pageState(copy),
-      shown: this.pageShown,
+      // What a block shows of a memory node is what it holds now, over what the block showed before it was
+      // pointed at it: no round settles a memory node into a block (`settlePage`).
+      shown: { ...this.pageShown, ...shownFromState(copy, state) },
       kept: this.kept(),
       rounds: this.count,
       finished_at: this.finishedAt,

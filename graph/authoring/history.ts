@@ -50,8 +50,43 @@ function told(call: AICall, n: number, of: number): string {
 }
 
 /**
- * One exchange as history.md keeps it: *which* it was -- "✨ Code", "Change:
- * also count the words" -- at *at*, local time, and each of its *calls*.
+ * What an exchange is called in its heading: its *part* ("Output"), then the
+ * words said to that part's chat after a colon -- or, with none, that it was
+ * written from the node's text; `fix`: a repair of the body, not said at all.
+ * `partExchanges` reads it back, so the two are written together.
+ */
+export function exchangeLabel(part: string, said?: string, how: { fix?: boolean; failed?: boolean } = {}): string {
+  const words = said?.replace(/\s+/g, ' ').trim();
+  const label = how.fix ? `${part} (fix)` : words ? `${part}: ${words}` : part;
+  return how.failed ? `${label} (failed)` : label;
+}
+
+/** One exchange of a part, as its chat lists it. */
+export interface PartExchange {
+  /** Local date and time: "2026-10-09 14:05". */
+  at: string;
+  /** The words said to the chat; '' for a part written from the node's text, or a repair. */
+  said: string;
+  fix: boolean;
+  failed: boolean;
+}
+
+/** The exchanges of *part* in *history*, oldest first (`exchangeLabel`). Anything else in it -- a change of the whole graph, an older heading -- is not the part's. */
+export function partExchanges(history: string, part: string): PartExchange[] {
+  const found: PartExchange[] = [];
+  for (const [, at, heading] of history.matchAll(/^## (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) · (.+)$/gm)) {
+    const failed = heading.endsWith(' (failed)');
+    const label = failed ? heading.slice(0, -' (failed)'.length) : heading;
+    if (label === `${part} (fix)`) found.push({ at, said: '', fix: true, failed });
+    else if (label === part) found.push({ at, said: '', fix: false, failed });
+    else if (label.startsWith(`${part}: `)) found.push({ at, said: label.slice(part.length + 2), fix: false, failed });
+  }
+  return found;
+}
+
+/**
+ * One exchange as history.md keeps it: *which* it was (`exchangeLabel`) at
+ * *at*, local time, and each of its *calls*.
  */
 export function exchangeEntry(which: string, calls: AICall[], at: Date): string {
   const when = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`;

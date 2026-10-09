@@ -13,12 +13,6 @@ function node(id: string, type = 'code', config: Record<string, unknown> = {}): 
   };
 }
 
-/** A data node holding *value*, on its `output`. */
-const held = (id: string, value: unknown): GraphNode => ({
-  ...node(id, 'data', { data_value: value }),
-  outputs: [{ id: 'output', name: 'output', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }],
-});
-
 /** A runtime with no world attached: these tests are about ordering, not doing. */
 const nowhere = quietRuntime();
 
@@ -31,13 +25,13 @@ describe('a loop', () => {
     expect(() => topologicalLevels(forgetful, forgetfulLoop, new Set())).toThrow(/cycle through code node "a", code node "b".*data node/);
 
     // data remembers; code does not: the value the data node holds is what breaks the loop.
-    const store = node('store', 'data', { data_value: 'old' });
+    const store = node('store', 'data', { data_value: { value: 'old' } });
     const step = node('step', 'code', { code: 'x', language: 'js' });
     step.outputs = [{ id: 'output', name: 'o', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
-    const loop = [edge('read', 'store', 'output', 'step', 'input'), edge('write', 'step', 'output', 'store', 'input')];
+    const loop = [edge('read', 'store', 'value', 'step', 'input'), edge('write', 'step', 'output', 'store', 'value')];
     expect([...memoryFeedbackEdges([store, step], loop, registry)]).toEqual(['write']);
     await executeGraph(graphOf([store, step], loop), { runtime: { ...nowhere, code: { run: async () => ({ output: 'fresh' }) } }, registry });
-    expect(store.config.data_value).toBe('fresh');
+    expect(store.config.data_value).toEqual({ value: 'fresh' });
   });
 });
 
@@ -58,7 +52,7 @@ describe('a failure', () => {
   const status = (result: Awaited<ReturnType<typeof run>>) => Object.fromEntries(result.node_results.map((r) => [r.node_id, r.status]));
 
   it('skips what depended on it and goes on with the rest -- unless the node catches its failure', async () => {
-    const plain = await run([failing({}), node('after', 'end'), held('elsewhere', 'x')], [edge('e', 'bad', 'value', 'after', 'value')]);
+    const plain = await run([failing({}), node('after', 'end'), node('elsewhere', 'data', { data_value: { value: 'x' } })], [edge('e', 'bad', 'value', 'after', 'value')]);
     expect(status(plain)).toEqual({ bad: 'error', after: 'skipped', elsewhere: 'success' });
     expect(plain.status).toBe('partial');
     expect(plain.error).toMatch(/"bad" failed: the body blew up/);
@@ -75,14 +69,14 @@ describe('a failure', () => {
 
   it('a node that catches its failure leaves the data node it feeds as it was, and hands it only the reason', async () => {
     // A counter that held 6 went to null, and the next round counted from 1.
-    const counter = node('counter', 'data', { data_value: 6 });
-    const reason = node('reason', 'data', {});
+    const counter = node('counter', 'data', { data_value: { count: 6 } });
+    const reason = node('reason', 'data', { data_value: { because: null } });
     await run(
       [failing({ catch_errors: true }), counter, reason],
-      [edge('v', 'bad', 'value', 'counter', 'input'), edge('r', 'bad', 'error', 'reason', 'input')],
+      [edge('v', 'bad', 'value', 'counter', 'count'), edge('r', 'bad', 'error', 'reason', 'because')],
     );
-    expect(counter.config.data_value).toBe(6);
-    expect(reason.config.data_value).toBe('the body blew up');
+    expect(counter.config.data_value).toEqual({ count: 6 });
+    expect(reason.config.data_value).toEqual({ because: 'the body blew up' });
   });
 });
 
@@ -121,7 +115,7 @@ describe('a node run once per item', () => {
     return {
       metadata: { name: 'g' } as Graph['metadata'],
       nodes: [
-        { ...node('a', 'data', { data_value: items, data_format: 'structure' }), outputs: [{ id: 'output', name: 'O', kind: 'output', data_type: 'json', multi: true, required: false, description: '' }] },
+        node('a', 'data', { data_value: { items } }),
         {
           ...node('work', 'code', { code: 'function run(i) { return i; }', batch_mode: 'per_item', ...(catches ? { catch_errors: true } : {}) }),
           inputs: [{ id: 'items', name: 'Items', kind: 'input', data_type: 'any', multi: true, required: false, description: '' }],
@@ -131,7 +125,7 @@ describe('a node run once per item', () => {
           ],
         },
       ],
-      edges: [edge('e', 'a', 'output', 'work', 'items')],
+      edges: [edge('e', 'a', 'items', 'work', 'items')],
     };
   }
   const picky: Runtime = {

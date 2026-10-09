@@ -3,6 +3,7 @@ import type { Graph, GraphNode } from '../../app/graph';
 import { call } from '../../app/api/client';
 import { errorText } from '../../app/api/errorText';
 import type { ExampleRun } from '../../../graph/authoring/examples.ts';
+import { AUTHORING_KEYS } from '../../../graph/authoring/handedOn.ts';
 import type { Refine } from './generation';
 import Button from '../../app/ui/Button';
 import { ACCENT_TEXT, DANGER_TEXT, DIMMER, SUCCESS, SUNKEN, TEXT } from '../../app/ui/theme';
@@ -13,8 +14,8 @@ interface Tried {
   failure?: string;
 }
 
-/** Settings that do not change what a try runs: the ✨ prompts, the history, the files ✨ writes the definitions from. */
-const NOT_RUN = new Set(['history', 'prompts', 'input_files', 'output_files']);
+/** Settings that do not change what a try runs: those a node keeps only for writing it -- its history, the files ✨ writes the definitions from. */
+const NOT_RUN = new Set<string>(AUTHORING_KEYS);
 
 /**
  * What a try is a try of: the node as it runs -- its ports and its settings,

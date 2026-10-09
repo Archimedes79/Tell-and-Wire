@@ -2,7 +2,7 @@
 // a whole graph: the prose around what the node and the graph hold.
 //
 // Its own file because it is prose, and prose has to be readable to be corrected.
-// The prompt a person may change (`authoring/prompts.ts`) and its variables (`brief.ts`)
+// The standard prompts (`graph/authoring/prompts.ts`) and their variables (`brief.ts`)
 // are elsewhere; what is here is what the backend adds -- who the model is told it is,
 // how to answer, and what a change or a repair is shown.
 
@@ -10,6 +10,7 @@ import type { PromptKind } from '../../graph/authoring/prompts.ts';
 import type { Language } from '../../graph/authoring/generation.ts';
 import { textOutput, type Definitions } from '../../graph/authoring/definition.ts';
 import { names } from '../../graph/execution/wiring.ts';
+import { ALL_FIELDS } from '../../graph/nodes/data/DataNodeRunner.ts';
 import type { Graph } from '../../graph/graph.ts';
 import { withoutAuthoring } from '../../graph/authoring/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
@@ -24,8 +25,9 @@ export const SYSTEMS: Record<Exclude<PromptKind, 'code'>, string> = {
   // Not "only the block": a change asks for the node's text restated after it (`RESTATE`), and the frame says which.
   prompt: 'You are an expert prompt engineer. You write the instructions one node of a graph tool gives a model every time '
     + 'it runs: concise, effective, and about the task. Output the instructions in one ```md block, and nothing the request does not ask for.',
-  data: 'You write the data one node of a graph tool holds between runs: realistic, and shaped as the nodes it feeds want '
-    + 'it. Output the data in one fenced block, and nothing the request does not ask for.',
+  data: 'You write the fields one node of a graph tool holds between runs, as one JSON object: a key for each field and its '
+    + 'starting value -- realistic, shaped as what feeds it and the nodes it feeds want it. Output the object in one ```json block, '
+    + 'and nothing the request does not ask for.',
 };
 
 /**
@@ -44,12 +46,14 @@ export interface Shape {
   outputs: string[];
   /** The outputs wired to other nodes: their ids are what the wires use. */
   wired: string[];
+  /** The inputs other nodes are wired to, the same way. */
+  fed: string[];
   /** The inputs that are handed a file's text. */
   reads: string[];
   /** A list arrives one item at a time. */
   perItem: boolean;
   definitions: Definitions | undefined;
-  /** The body is kept as JSON, the element says (`TextFile.json`): a data node holding structure. */
+  /** The body is kept as JSON, the element says (`TextFile.json`): a data node's fields. */
   json: boolean;
   /** For a body of code, the language the node declares it is written in. */
   language?: Language;
@@ -94,13 +98,13 @@ const EMPTY_INPUT = 'Handle an input that is missing or empty as well as a full 
 
 /**
  * The frame after the prompt: the file's format and how to answer. The
- * backend's, not the person's to edit. *restating*: a change was asked, and
+ * backend's own. *restating*: a change was asked, and
  * the node's text comes back restated after the block (`RESTATE`) -- which a
  * frame that said "and nothing else" would forbid; *asked*: an output.js may
  * come back after the body too (`OutputAsked`).
  */
 export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked: OutputAsked): string {
-  const { inputs, outputs, wired, reads, perItem } = shape;
+  const { inputs, outputs, wired, fed, reads, perItem } = shape;
   const lines = ['## How to answer'];
   switch (kind) {
     case 'input': {
@@ -172,9 +176,12 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
     }
     case 'data': {
       const after = restating ? ' -- then, after the block, the node\'s text restated as asked above, and nothing else' : ', and nothing else';
-      lines.push(shape.json
-        ? `Answer with what the node holds, in one \`\`\`json block, as plain JSON${after}.`
-        : `Answer with what the node holds, in one \`\`\`text block, the text itself${after}.`);
+      lines.push(`Answer with the fields the node holds, in one \`\`\`json block: one JSON object with a key for each field -- its name -- and its starting value, as ${PLAIN_JSON}${after}.`,
+        'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores, and never "all", which carries every field. '
+        + 'What arrives on a field replaces its value, so give it the shape of what arrives; the nodes it feeds read it as it is.');
+      // A field is a port: one renamed or left out loses its wires.
+      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS);
+      if (kept.length) lines.push(`Keep ${names(kept)}: ${kept.length > 1 ? 'they are' : 'it is'} wired to other nodes by ${kept.length > 1 ? 'those names' : 'that name'}.`);
       break;
     }
   }
@@ -259,6 +266,16 @@ export function bodyChange(refine: Refine, body: string, what: string, output?: 
 }
 
 /**
+ * What changing a definition is written from: the file as it is and what to
+ * change, asked for again whole. The node's text is not restated -- that is the
+ * person's; a definition is changed in its chat, and the body after it.
+ */
+export function definitionChange(file: 'input.js' | 'output.js', held: string, change: string): string {
+  return [`## ${file} as it is now`, held.trim() || '(none yet)', '## What to change', change,
+    'Write the whole file again with that change, keeping what the change does not touch.'].join('\n\n');
+}
+
+/**
  * ✨ Fix where output.js cannot be read (*why*, `unreadableOutput`): no body
  * mends that, so the file is shown and asked for corrected after the body --
  * told only to repair the body, a model rewrote a function that was right.
@@ -276,7 +293,7 @@ export function mendPrompt(what: string, body: string, output: string, why: stri
 }
 
 /** Said where a change does not fit the output.js from before it, and brought none of its own. */
-export const OUTGROWN = 'if the change needs other outputs, ✨ Output writes output.js for it from the node\'s text';
+export const OUTGROWN = 'if the change needs other outputs, the Output chat changes output.js for it';
 
 // A whole graph: its system prompt is `graphPrompt.ts`.
 

@@ -15,10 +15,10 @@ function reader(config: Record<string, unknown> = {}): GraphNode {
   return { ...node, inputs: [{ ...node.inputs[0], id: 'csv', name: 'csv', data_type: 'file_path' }], config: { ...node.config, ...config } };
 }
 
-/** A data node holding *path*, wired into the reader's `csv`. */
+/** A data node holding *path* in a field of that name, wired into the reader's `csv`. */
 function typed(path: string): { nodes: GraphNode[]; edges: Wire[] } {
-  const source = { ...NODE_KINDS.data.create('path'), config: { ...NODE_KINDS.data.create('path').config, data_value: path } };
-  return { nodes: [source, reader()], edges: [{ source: 'path', sourceHandle: 'output', target: 'reader', targetHandle: 'csv' }] };
+  const source = { ...NODE_KINDS.data.create('path'), config: { ...NODE_KINDS.data.create('path').config, data_value: { path } } };
+  return { nodes: [source, reader()], edges: [{ source: 'path', sourceHandle: 'path', target: 'reader', targetHandle: 'csv' }] };
 }
 
 const ran = (inputs: Record<string, unknown>): ExecutionResult => ({
