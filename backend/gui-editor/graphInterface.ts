@@ -48,7 +48,7 @@ export interface InterfaceEntry {
 export interface GraphInterface {
   events: InterfaceEntry[];
   outputs: InterfaceEntry[];
-  /** Each memory node, by its id: its whole content is in every session (`SessionView.state`), and a block of the page can show it. */
+  /** Each memory node, by its id, and each part of it -- a field -- by the id and its name: what it holds is in every session (`SessionView.state`), and a block of the page can show it. */
   state: InterfaceEntry[];
 }
 
@@ -60,7 +60,7 @@ interface Offered {
   offer: Offer;
 }
 
-/** Every offer of *graph*, by kind and name: a node's id, which no other node has (`wiring.ts` refuses a second). */
+/** Every offer of *graph*, by kind and name: a node's id, which no other node has (`wiring.ts` refuses a second) -- and for a part of what a node holds, the id and the part. */
 function offered(graph: Graph, registry: Runners): Record<OfferKind, Map<string, Offered>> {
   const found: Record<OfferKind, Map<string, Offered>> = { event: new Map(), output: new Map(), state: new Map() };
   for (const node of graph.nodes) {
@@ -190,7 +190,20 @@ export function outputsOf(graph: Graph, result: ExecutionResult | null, registry
   return outputs;
 }
 
-/** What each memory node of *graph* holds as it is now, by its name: whole, from the design's own values on. */
+/** What each memory node of *graph* keeps as it is now, by its id -- how a round that starts here starts: none, for a graph with no memory. */
+export function memoryState(graph: Graph, registry: Runners): Record<string, Record<string, unknown>> {
+  const state: Record<string, Record<string, unknown>> = {};
+  for (const node of graph.nodes) {
+    const element = registry.node(node.node_type);
+    if (element?.isMemory) state[node.id] = structuredClone(element.state(node));
+  }
+  return state;
+}
+
+/** What each memory node of *graph* holds as it is now, by its name -- whole, and each part of it by the name and the part -- from the design's own values on. */
 export function stateOf(graph: Graph, registry: Runners): Record<string, unknown> {
-  return Object.fromEntries([...offered(graph, registry).state].map(([name, { node }]) => [name, registry.node(node.node_type)?.holds(node) ?? null]));
+  return Object.fromEntries([...offered(graph, registry).state].map(([name, { node, offer }]) => {
+    const held = registry.node(node.node_type)?.holds(node) ?? null;
+    return [name, offer.part === undefined ? held : (held as Record<string, unknown> | null)?.[offer.part] ?? null];
+  }));
 }

@@ -84,13 +84,14 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
 3. **Run.** The core gets a working copy: the design, with what nodes keep and what the
    round was sent put in. `graph/core/localCore.ts` runs `executeGraph`
    (`graph/execution/executor.ts`): it orders nodes in levels, where a loop may only pass
-   through a data node (`memoryFeedbackEdges`); runs what the start point is wired to, what
-   follows and what those need (`triggers.ts`); per node, hands each input its `field` of
+   through a data node (the wire that reads it round the loop: `memoryReads`); runs what the start point is wired to, what
+   follows and what those need (`triggers.ts`; a data node holds its value, so what writes it is not needed); per node, hands each input its `field` of
    the package, skips a node with nothing to do, reads files on `file_path` inputs
    (`fileInputs.ts`) and runs once or per item (`batching.ts`). A wired ◆ gate opens only for
    the round's start point or a `true`; a node that stands still keeps what it made last
    (`latch.ts`); unchanged context upstream is reused (`reuse.ts`).
-4. **Settled.** Data nodes take what arrived, field by field (`settleMemory`). The session
+4. **Settled.** Data nodes keep what arrived, field by field (`settleMemory`), and count the
+   round (`endRound`). The session
    hands each end point's value to the blocks that show it (`settlePage`). A round that ran
    to its end commits and writes `state.json`.
 
@@ -100,8 +101,8 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
 over, by the editor or a served tool, and what using it leaves behind. The rules are held
 one by one in `backend/gui-editor/session.test.ts`.
 
-1. **What state is.** Each node's slots, as its element says (`NodeRunner.state`): a start
-   point's `values`, a data node's `data_value` (all its fields). The page's: what each block holds, by id (a
+1. **What state is.** Each node's kept values, as its element says (`NodeRunner.state`): a start
+   point's `values`, a data node's fields and its `round`. The page's: what each block holds, by id (a
    value set, a conversation, what an end point handed back). Beside them: what every node
    made last (the latch, held by the graph core), what the page shows, how many rounds ran.
    Not state: the reuse cache, a round in flight.
@@ -110,8 +111,8 @@ one by one in `backend/gui-editor/session.test.ts`.
    a bundle does not carry it.
 3. **When.** A round runs on a working copy. One that ran to its end commits; one that was
    stopped or could not start commits nothing.
-4. **The design wins.** A slot is kept with the design value it started from. When its node
-   or block is gone, or its design changed, the slot is dropped and said.
+4. **The design wins.** A kept value is held with the design value it started from. When its
+   node or block is gone, or its design changed, that value is dropped and said.
 5. **Start over.** **↺ Start over** (`POST /api/runtime/reset`) empties the session and
    deletes the file; the App tab lists what it forgets under *What using it keeps*.
 6. **One session per server**, its id in every runtime route
@@ -141,7 +142,8 @@ my_tool/
     output.js          what one call returns, the same way; its keys are the outputs        (code, ai)
     code.js            the body, plus lines that run it alone on input.js's example          (code)
     prompt.md          the instructions sent to the model                                   (ai)
-    data.json          the fields it holds, an object; its ports follow them                (data)
+    data.json          the fields it starts with, an object; its ports follow them           (data)
+    example.json       the same struct filled, an example of what it holds; absent, data.json stands in (data)
     history.md         every exchange with the model about this node
     flow.json, nodes/  the graph a subgraph holds: a project folder of its own              (subgraph)
   tests/<name>.json    kept rounds
@@ -279,7 +281,7 @@ TW_CORE="node backend/app/main.ts core" node backend/app/main.ts --editor fronte
   with every round, a value the wrapper stores and does not read; what a round left is
   committed only when it ran to its end;
 - say in `nodes` each node's state as its kind keeps it: a start point's `values`, a data
-  node's `data_value` (`NodeRunner.state`);
+  node's fields by their names and its `round` (`NodeRunner.state`);
 - run a round with `given` as a kept round: those nodes are handed their outputs instead of
   running, and nothing of it stands for the next round (no latch, no reuse);
 - end when stdin ends, stopping what still goes; say an error as a sentence.

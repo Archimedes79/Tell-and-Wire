@@ -8,11 +8,9 @@ function brief(value: unknown): string {
   return cut(typeof value === 'string' ? value : JSON.stringify(value), 120);
 }
 
-/** What a node keeps, in words: what a start point was sent, what memory holds -- else the slot by its name. */
-function slotWords(slot: string): string {
-  if (slot === 'values') return 'was sent';
-  if (slot === 'data_value') return 'holds';
-  return `keeps as "${slot}"`;
+/** What a node keeps, in words: what a start point was sent -- else the value by its name: a memory's field, or the rounds it has been through. */
+function keptWords(key: string): string {
+  return key === 'values' ? 'was sent' : `· ${key}`;
 }
 
 /**
@@ -31,8 +29,8 @@ export default function KeptFold({ kept, nameOf, busy, onStartOver }: {
   onStartOver: () => void;
 }) {
   const lines = [
-    ...Object.entries(kept?.nodes ?? {}).flatMap(([node, slots]) => Object.entries(slots)
-      .map(([slot, value]) => `${nameOf(node)} ${slotWords(slot)}: ${brief(value)}`)),
+    ...Object.entries(kept?.nodes ?? {}).flatMap(([node, values]) => Object.entries(values)
+      .map(([key, value]) => `${nameOf(node)} ${keptWords(key)}: ${brief(value)}`)),
     ...Object.entries(kept?.page ?? {}).map(([block, value]) => `On the page, ${nameOf(block)} holds: ${brief(value)}`),
   ];
   return (

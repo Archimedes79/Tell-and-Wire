@@ -7,7 +7,7 @@
 //
 // So the order matters, and it is the *execution* order — asked of the executor
 // (`topologicalLevels`) rather than derived again here, so a graph is generated
-// in the order it will run, including the memory-feedback rule that keeps
+// in the order it will run, including the memory-reads rule that keeps
 // a loop through a data node from looking like a cycle.
 //
 // What travels forward is each node's output definition: a node is written
@@ -18,7 +18,7 @@
 // Only nodes are written. A block on a page has no body: it shows or hands on
 // what it holds.
 
-import { memoryFeedbackEdges, topologicalLevels } from '../../../graph/execution/executor.ts';
+import { memoryReads, topologicalLevels } from '../../../graph/execution/executor.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import type { GraphEdge, GraphNode, GuiWidget } from '../../app/graph';
 import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../app/elements/registry';
@@ -70,8 +70,8 @@ interface SweepDeps {
  */
 export function generationOrder(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
-  const feedback = memoryFeedbackEdges(nodes, edges, registry);
-  return topologicalLevels(nodes, edges, feedback).flat()
+  const reads = memoryReads(nodes, edges, registry);
+  return topologicalLevels(nodes, edges, reads).flat()
     .map((id) => byId.get(id))
     .filter((node): node is GraphNode => node !== undefined);
 }

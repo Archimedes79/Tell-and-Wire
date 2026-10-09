@@ -10,7 +10,7 @@ import type { PromptKind } from '../../graph/authoring/prompts.ts';
 import type { Language } from '../../graph/authoring/generation.ts';
 import { textOutput, type Definitions } from '../../graph/authoring/definition.ts';
 import { names } from '../../graph/execution/wiring.ts';
-import { ALL_FIELDS } from '../../graph/nodes/data/DataNodeRunner.ts';
+import { ALL_FIELDS, ROUND } from '../../graph/nodes/data/DataNodeRunner.ts';
 import type { Graph } from '../../graph/graph.ts';
 import { withoutAuthoring } from '../../graph/authoring/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
@@ -25,9 +25,9 @@ export const SYSTEMS: Record<Exclude<PromptKind, 'code'>, string> = {
   // Not "only the block": a change asks for the node's text restated after it (`RESTATE`), and the frame says which.
   prompt: 'You are an expert prompt engineer. You write the instructions one node of a graph tool gives a model every time '
     + 'it runs: concise, effective, and about the task. Output the instructions in one ```md block, and nothing the request does not ask for.',
-  data: 'You write the fields one node of a graph tool holds between runs, as one JSON object: a key for each field and its '
-    + 'starting value -- realistic, shaped as what feeds it and the nodes it feeds want it. Output the object in one ```json block, '
-    + 'and nothing the request does not ask for.',
+  data: 'You write the fields one node of a graph tool holds between rounds, as JSON: first one object with a key for each field and its '
+    + 'starting value -- empty, as before any round -- then the same fields as rounds would have filled them: realistic, shaped as what '
+    + 'feeds it and the nodes it feeds want them. Output each object in a ```json block of its own, and nothing the request does not ask for.',
 };
 
 /**
@@ -175,12 +175,15 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
       break;
     }
     case 'data': {
-      const after = restating ? ' -- then, after the block, the node\'s text restated as asked above, and nothing else' : ', and nothing else';
-      lines.push(`Answer with the fields the node holds, in one \`\`\`json block: one JSON object with a key for each field -- its name -- and its starting value, as ${PLAIN_JSON}${after}.`,
-        'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores, and never "all", which carries every field. '
-        + 'What arrives on a field replaces its value, so give it the shape of what arrives; the nodes it feeds read it as it is.');
+      const after = restating ? ' -- then the node\'s text restated as asked above, and nothing else' : ', and nothing else';
+      lines.push(`Answer with two \`\`\`json blocks, each one JSON object with a key for each field -- its name -- as ${PLAIN_JSON}${after}:`,
+        '- the first, the fields as the node starts: each with its starting value -- empty, as it is before any round: null, 0, "", [] or {}, whichever fits what it holds;',
+        '- the second, the same fields as rounds would have filled them: one realistic value for each, shaped as what arrives on it and what the nodes it feeds want it.',
+        'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores. '
+        + 'There are "all", which carries every field, and "round", which counts the rounds from 1, already: add neither. '
+        + 'What arrives on a field replaces its value, and what reads the node gets the struct as it is then, so give a field the shape of what arrives on it.');
       // A field is a port: one renamed or left out loses its wires.
-      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS);
+      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS && id !== ROUND);
       if (kept.length) lines.push(`Keep ${names(kept)}: ${kept.length > 1 ? 'they are' : 'it is'} wired to other nodes by ${kept.length > 1 ? 'those names' : 'that name'}.`);
       break;
     }

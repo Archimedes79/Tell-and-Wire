@@ -101,6 +101,11 @@ describe('✨ writes a node\'s files', () => {
     // A data node's answer that is not JSON is refused, not saved.
     const held = node('data', {}, { inputs: ['note'], outputs: ['note'] });
     await expect(generate({ node: held }, deps(scripted(['```json\n{count: 0}\n```'])))).rejects.toThrow(/not JSON/);
+    // Its answer is two blocks: how it starts, and how rounds would fill it -- the second left out where it is not an object. The wired fields are said to be kept.
+    const both = await generate({ node: held, input_sources: { note: 'Writer' }, output_targets: { note: 'Reader' } }, deps(scripted(['```json\n{"note": ""}\n```\n```json\n{"note": "hello"}\n```'])));
+    expect([both.result, both.example]).toEqual(['{"note": ""}', '{"note": "hello"}']);
+    expect((await generate({ node: held }, deps(scripted(['```json\n{"note": ""}\n```\n```json\n[1]\n```'])))).example).toBeUndefined();
+    expect(await generate({ node: held, preview: true, output_targets: { note: 'Reader' } }, deps(scripted([]))).then((one) => one.calls[0].prompt)).toContain('Keep "note"');
 
     const ai: AiService = { complete: async () => { throw new Error('no content'); } };
     const failure = await generate({ node: node('code') }, deps(ai)).catch((error: unknown) => error);

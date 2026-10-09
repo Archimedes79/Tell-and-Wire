@@ -21,7 +21,7 @@ describe('what ✨ is told of a node\'s neighbours', () => {
     expect(fed).toContain('"Input records"');
     expect(fed).toContain('a struct of the fields "id", "name": columns: id integer, name text');
     // One field's wire carries that field alone.
-    expect(inputSources('processor', nodes, [edge('source', 'processor', 'input', 'name')], true).input).toContain('the field "name" of a struct: columns: id integer, name text -- it holds: "Ada"');
+    expect(inputSources('processor', nodes, [edge('source', 'processor', 'input', 'name')], true).input).toContain('the field "name" of a struct: columns: id integer, name text -- as rounds fill it, it holds: "Ada"');
     const stored = outputTargets('processor', nodes, wires, true).output;
     expect(stored).toContain('"Result map"');
     expect(stored).toContain('the field "total" it stores');
@@ -34,7 +34,7 @@ describe('what ✨ is told of a node\'s neighbours', () => {
     capitals.config.data_value = { capitals: [{ capital: 'Paris', country: 'France', population: 2102650 }, { capital: 'Rome', country: 'Italy', population: 2749031 }] };
     const sorter = NODE_KINDS.code.create('sorter');
     const said = () => inputSources('sorter', [capitals, sorter], [edge('capitals', 'sorter', 'input', 'all')], true).input;
-    expect(said()).toContain('a struct of the fields "capitals": Ten European capitals with their population; "all" is all of them -- it holds: '
+    expect(said()).toContain('a struct of the fields "capitals": Ten European capitals with their population; "all" is all of them -- as rounds fill it, it holds: '
       + '{"capitals":[{"capital":"Paris","country":"France","population":2102650},{"capital":"Rome","country":"Italy","population":2749031}]}');
     // A long one is cut, saying how much was left out; one that holds nothing says only what it is.
     capitals.config.data_value = { capitals: Array.from({ length: 100 }, (_, n) => ({ capital: `City ${n}`, population: n })) };

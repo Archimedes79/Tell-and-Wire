@@ -146,19 +146,19 @@ export function after(ms: number, then: () => void, keepsAlive = true): () => vo
 /**
  * The nodes one event runs, or null for "all of them".
  *
- * `feedback` is the executor's own set of memory edges. They are left out
- * both ways: downstream, because the value they carry is settled after the
- * round rather than delivered in it, and upstream for the same reason -- a
- * data node that keeps the model's last answer is not something the model
- * waits for.
+ * `skip` is the executor's own set of wires `unneeded`: a memory holds its
+ * value, so what runs on it does not wait for what writes it -- a data node
+ * that keeps the model's last answer is not something the model waits for. A
+ * wire in it is followed downstream all the same: what reads a memory the
+ * event reaches is for the event too.
  */
-export function triggeredNodes(graph: Graph, trigger: Trigger, feedback: Set<string>): Set<string> | null {
-  const downstream = firedNodes(graph, trigger, feedback);
+export function triggeredNodes(graph: Graph, trigger: Trigger, skip: Set<string>): Set<string> | null {
+  const downstream = firedNodes(graph, trigger);
   if (!downstream) return null;
   // The ◆ of a node the event is wired to is opened by the event itself.
-  const opened = new Set(graph.edges.filter((edge) => !feedback.has(edge.id) && edge.source_node_id === trigger.node_id
+  const opened = new Set(graph.edges.filter((edge) => edge.source_node_id === trigger.node_id
     && (!trigger.port_id || edge.source_port_id === trigger.port_id)).map((edge) => edge.target_node_id));
-  const needed = neededFor(graph, downstream, feedback, opened);
+  const needed = neededFor(graph, downstream, skip, opened);
   needed.add(trigger.node_id);
   return needed;
 }
@@ -170,12 +170,11 @@ export function triggeredNodes(graph: Graph, trigger: Trigger, feedback: Set<str
  * The rest of what the event runs is context, which a run may reuse; this part
  * always runs fresh.
  */
-export function firedNodes(graph: Graph, trigger: Trigger, feedback: Set<string>): Set<string> | null {
-  const live = graph.edges.filter((edge) => !feedback.has(edge.id));
-  const fired = live.filter((edge) => edge.source_node_id === trigger.node_id
+export function firedNodes(graph: Graph, trigger: Trigger): Set<string> | null {
+  const fired = graph.edges.filter((edge) => edge.source_node_id === trigger.node_id
     && (!trigger.port_id || edge.source_port_id === trigger.port_id));
   if (!fired.length) return null;
-  return walk(fired.map((edge) => edge.target_node_id), live, true);
+  return walk(fired.map((edge) => edge.target_node_id), graph.edges, true);
 }
 
 /**
@@ -184,8 +183,8 @@ export function firedNodes(graph: Graph, trigger: Trigger, feedback: Set<string>
  * Upstream along edges that carry a value only: a run edge into a needed node
  * says when it may start, not that whoever says so must run as well.
  */
-export function upstreamOf(graph: Graph, nodeIds: Iterable<string>, feedback: Set<string>): Set<string> {
-  const data = graph.edges.filter((edge) => !feedback.has(edge.id) && edge.target_port_id !== RUN_PORT);
+export function upstreamOf(graph: Graph, nodeIds: Iterable<string>, skip: Set<string>): Set<string> {
+  const data = graph.edges.filter((edge) => !skip.has(edge.id) && edge.target_port_id !== RUN_PORT);
   return walk(nodeIds, data, false);
 }
 
@@ -197,11 +196,11 @@ export function upstreamOf(graph: Graph, nodeIds: Iterable<string>, feedback: Se
  * never computed, and never opens -- nor does anything behind it. Not the ◆
  * of a node in *opened*, which the event opens itself.
  */
-export function neededFor(graph: Graph, nodeIds: Iterable<string>, feedback: Set<string>, opened: Set<string> = new Set()): Set<string> {
-  const gates = graph.edges.filter((edge) => !feedback.has(edge.id) && edge.target_port_id === RUN_PORT);
+export function neededFor(graph: Graph, nodeIds: Iterable<string>, skip: Set<string>, opened: Set<string> = new Set()): Set<string> {
+  const gates = graph.edges.filter((edge) => !skip.has(edge.id) && edge.target_port_id === RUN_PORT);
   const needed = new Set<string>();
   for (let more = [...nodeIds]; more.length;) {
-    for (const id of upstreamOf(graph, more, feedback)) needed.add(id);
+    for (const id of upstreamOf(graph, more, skip)) needed.add(id);
     more = gates
       .filter((edge) => needed.has(edge.target_node_id) && !opened.has(edge.target_node_id) && !needed.has(edge.source_node_id))
       .map((edge) => edge.source_node_id);

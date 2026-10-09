@@ -120,7 +120,7 @@ What it feeds:
 Context:
 {Context}
 
-Task: write the fields this node holds, as one JSON object: each field's name and its starting value, shaped as what feeds it and the nodes it feeds want it.`,
+Task: write the fields this node holds, as one JSON object: each field's name and its starting value -- empty, as before any round -- and then the same fields as rounds would have filled them, one realistic value each. Shape both as what feeds it and the nodes it feeds want it. The node counts its rounds by itself: no field for that.`,
 };
 
 const VARIABLE = new RegExp(`\\{(${Object.keys(VARIABLES).join('|')})\\}`, 'g');

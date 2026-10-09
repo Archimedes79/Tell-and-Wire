@@ -27,12 +27,15 @@ import { derivedNodePorts } from '../../app/document/ports';
 /** What one ✨ writes: a node's input definition, its output definition, or its body. */
 export type Write = 'input' | 'output' | 'body';
 
+/** A file a node keeps and its view shows: what a ✨ writes, and the example a data node's Fields ✨ writes along with its body. */
+export type Part = Write | 'example';
+
 export type { Refine };
 
-/** Where a node keeps its body, and what the body is: the runner's own answer (`NodeRunner.generation`). */
-export function bodyOf(node: GraphNode): { field: string; kind: 'code' | 'prompt' | 'data' } | undefined {
+/** Where a node keeps its body -- and a second file written with it, where it has one -- and what the body is: the runner's own answer (`NodeRunner.generation`). */
+export function bodyOf(node: GraphNode): { field: string; example?: string; kind: 'code' | 'prompt' | 'data' } | undefined {
   const generation = runnerRegistry.node(node.node_type)?.generation();
-  return generation && { field: generation.fields.body, kind: generation.kind };
+  return generation && { field: generation.fields.body, ...(generation.fields.example ? { example: generation.fields.example } : {}), kind: generation.kind };
 }
 
 /** Whether a ✨ of *node*'s writes definitions as well as a body: a code or an ai node's. */
@@ -50,20 +53,22 @@ function definitionsOf(node: GraphNode): { input: string; output: string } {
  * in with that file's stub -- asked of the node's runner, which says which of
  * a node's settings are files (`NodeRunner.texts`).
  */
-export function fileOf(node: GraphNode, write: Write): { field: string; file: string; stub: string; json: boolean } {
-  const field = write === 'input' ? 'input_definition' : write === 'output' ? 'output_definition' : bodyOf(node)?.field ?? 'code';
+export function fileOf(node: GraphNode, part: Part): { field: string; file: string; stub: string; json: boolean } {
+  const field = part === 'input' ? 'input_definition' : part === 'output' ? 'output_definition'
+    : part === 'example' ? bodyOf(node)?.example ?? 'data_example' : bodyOf(node)?.field ?? 'code';
   const text = runnerRegistry.node(node.node_type)?.texts(node as never).find((candidate) => candidate.field === field);
   return { field, file: text?.file ?? field, stub: text?.standard ?? '', json: text?.json === true };
 }
 
 /**
- * What *write*'s ✨ writes into, as the node holds it: the definition, or the
- * body as text. A struct with no fields -- what a data node starts as -- holds
- * nothing.
+ * What *part*'s ✨ writes into, as the node holds it: the definition, or the
+ * body as text -- or a data node's example. A struct with no fields -- what a
+ * data node starts as -- holds nothing.
  */
-export function heldBy(node: GraphNode, write: Write): string {
-  if (write !== 'body') return definitionsOf(node)[write];
-  const field = bodyOf(node)?.field;
+export function heldBy(node: GraphNode, part: Part): string {
+  if (part === 'input' || part === 'output') return definitionsOf(node)[part];
+  const body = bodyOf(node);
+  const field = part === 'example' ? body?.example : body?.field;
   const value = field ? (node.config as Record<string, unknown>)[field] : undefined;
   if (typeof value === 'string') return value;
   if (value === undefined || value === null) return '';
@@ -76,21 +81,23 @@ export function heldBy(node: GraphNode, write: Write): string {
  * would otherwise be the stub. A sweep writes what is not, and leaves alone
  * what somebody wrote.
  */
-export function isWritten(node: GraphNode, write: Write): boolean {
-  return !!heldBy(node, write).trim();
+export function isWritten(node: GraphNode, part: Part): boolean {
+  return !!heldBy(node, part).trim();
 }
 
 /** What a press asks for: one of a node's files, or -- Auto generate -- all of them. */
 export type Press = Write | 'all';
 
 /**
- * The files a node's chats write, in the order they are worked on: its input
+ * The files a node's view shows, in the order they are worked on: its input
  * definition where something comes in, its output definition, its body -- or
- * the body alone, for a data node. None for a node nothing is written for.
+ * the body and its example, for a data node. None for a node nothing is
+ * written for.
  */
-export function partsOf(node: GraphNode): Write[] {
-  if (!bodyOf(node)) return [];
-  if (!hasDefinitions(node)) return ['body'];
+export function partsOf(node: GraphNode): Part[] {
+  const body = bodyOf(node);
+  if (!body) return [];
+  if (!hasDefinitions(node)) return body.example ? ['body', 'example'] : ['body'];
   return [...(node.inputs.length ? ['input' as const] : []), 'output', 'body'];
 }
 
@@ -100,12 +107,13 @@ export function partsOf(node: GraphNode): Write[] {
  * something in and has none, its output definition where it has none -- so
  * one press does the whole node. Auto generate does that the first time; once
  * the body is written it writes each again, as the Input, Output and body
- * chats would one after another. A data node has its body only.
+ * chats would one after another. A data node has its body only: its Fields
+ * ✨ writes the example with it.
  */
 export function writesFor(node: GraphNode, write: Press): Write[] {
   if (write === 'all') {
     if (!hasDefinitions(node)) return ['body'];
-    return isWritten(node, 'body') ? partsOf(node) : writesFor(node, 'body');
+    return isWritten(node, 'body') ? partsOf(node).filter((part): part is Write => part !== 'example') : writesFor(node, 'body');
   }
   if (write !== 'body' || !hasDefinitions(node)) return [write];
   return [
@@ -129,9 +137,10 @@ export function unfitDefinition(write: Write, probe: ProbeReport | undefined): s
 const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1);
 
 /** What a file is called on its row, in its chat and in history.md: its part. */
-export function partName(node: GraphNode, write: Write): string {
-  if (write === 'input') return 'Input';
-  if (write === 'output') return 'Output';
+export function partName(node: GraphNode, part: Part): string {
+  if (part === 'input') return 'Input';
+  if (part === 'output') return 'Output';
+  if (part === 'example') return 'Example';
   const kind = bodyOf(node)?.kind;
   return kind === 'prompt' ? 'Prompt' : kind === 'data' ? 'Fields' : 'Code';
 }
@@ -244,7 +253,7 @@ export function outputsAsDefined(node: GraphNode): GraphNode {
  * at the end of its history.
  */
 export function writtenInto(
-  node: GraphNode, write: Write, response: Pick<GenerateResponse, 'result' | 'description' | 'output_definition' | 'calls'>, name: string, at = new Date(),
+  node: GraphNode, write: Write, response: Pick<GenerateResponse, 'result' | 'description' | 'output_definition' | 'example' | 'calls'>, name: string, at = new Date(),
 ): GraphNode {
   const config = { ...node.config } as Record<string, unknown>;
   let outputs = node.outputs;
@@ -256,8 +265,11 @@ export function writtenInto(
   else if (write === 'output') definesOutputs(response.result);
   else {
     const body = bodyOf(node);
-    if (body?.kind === 'data') config[body.field] = fieldsFrom(response.result);
-    else if (body) config[body.field] = response.result;
+    if (body?.kind === 'data') {
+      config[body.field] = fieldsFrom(response.result);
+      // Written with them, or gone: an example of fields that are not these would be written against.
+      if (body.example) config[body.example] = response.example ? fieldsFrom(response.example) : undefined;
+    } else if (body) config[body.field] = response.result;
     if (response.output_definition?.trim()) definesOutputs(response.output_definition);
   }
   config.history = withHistory(node, name, response.calls, at);

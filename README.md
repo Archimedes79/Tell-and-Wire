@@ -8,7 +8,7 @@ folder that runs wherever Node runs -- offline, with a local model, if you like.
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
 
-<img src="docs/images/hero.png" alt="The Tell & Wire editor: a graph of a file picker, a code node and a chart, the code node's panel open with its text and the files AI wrote from it -- and the same graph delivered as a tool that draws a bar chart" width="100%">
+<img src="docs/images/hero.png" alt="The Tell & Wire editor with a node opened in place of the canvas: its text on the left, the files AI wrote from it on the right -- and the same graph delivered as a tool that draws a bar chart" width="100%">
 
 </div>
 
@@ -35,7 +35,7 @@ chat for each file changes it as you say. Every file is plain text in the tool's
 you can read it, change it and diff it.
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
-can be kept as an offline test. **Deploy** writes a zip that anyone with Node can unzip and
+can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
 start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
 The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory

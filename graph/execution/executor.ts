@@ -6,11 +6,13 @@
 // feeds anything else in it. The nodes run one after another, level by level
 // and in the graph's own node order inside one, so a run is reproducible.
 //
-// **Memory edges.** A graph with a loop — a counter: a data node, and a code
-// node adding one to it — is not a mistake, it is how a tool remembers. The minimal
-// set of edges into memory-holding nodes is left out of the ordering, so what
-// remains is acyclic; those edges are settled *after* the round, for the next
-// one. A loop through something that does not remember is still an error.
+// **Memory.** A tool remembers in a data node, which fills from what arrives
+// and then forwards what it holds, in the same round. A graph with a loop — a
+// counter: a data node, and a code node adding one to it — is not a mistake, it
+// is how a tool remembers. The minimal set of wires that read a memory node
+// round the loop is left out of the ordering, so what remains is acyclic; they
+// carry what the node held when the round began, and what arrives is kept when
+// it ends. A loop through something that does not remember is still an error.
 //
 // **Collection.** A node's inputs are whatever its upstream neighbours put on
 // the wires. A port fed by several edges collects a list; a port whose single
@@ -69,14 +71,19 @@ function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { 
   return { levels, stuck };
 }
 
-/** Ids of the fewest edges that must be ignored to make the graph acyclic. */
-export function memoryFeedbackEdges(
+/**
+ * Ids of the fewest wires that must be left out of the ordering to make the
+ * graph acyclic: wires that read a node that remembers and go round in a loop.
+ * They carry what the node held when the round began; the wires into the node
+ * are in the order like any other, so it fills, and then forwards what it holds.
+ */
+export function memoryReads(
   nodes: GraphNode[],
   edges: GraphEdge[],
   registry: Runners,
 ): Set<string> {
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  const feedback = new Set<string>();
+  const reads = new Set<string>();
 
   const remembers = (nodeId: string): boolean => {
     const node = byId.get(nodeId);
@@ -84,35 +91,48 @@ export function memoryFeedbackEdges(
   };
 
   for (;;) {
-    const { stuck } = levelsOf(nodes, edges, feedback);
-    if (!stuck.size) return feedback;
+    const { stuck } = levelsOf(nodes, edges, reads);
+    if (!stuck.size) return reads;
 
-    // Cut one more edge into a node that remembers -- one that closes a loop:
-    // a node below a loop is stuck too, and cutting the wire into it
-    // settles its value a round late for nothing. By the graph's node order
-    // and by id, never by the order the wires happen to be stored in. If
-    // there is none, the cycle is a real one and `topologicalLevels` reports it
-    // as such.
-    const active = edges.filter((e) => !feedback.has(e.id) && byId.has(e.source_node_id) && byId.has(e.target_node_id));
+    // Cut one more wire out of a node that remembers -- one that closes a loop:
+    // a node below a loop is stuck too, and cutting the wire to it would
+    // read a round late for nothing. By the graph's node order and by id,
+    // never by the order the wires happen to be stored in. If there is none,
+    // the cycle is a real one and `topologicalLevels` reports it as such.
+    const active = edges.filter((e) => !reads.has(e.id) && byId.has(e.source_node_id) && byId.has(e.target_node_id));
     const order = new Map(nodes.map((n, index) => [n.id, index]));
     const [candidate] = active
-      .filter((e) => stuck.has(e.target_node_id) && remembers(e.target_node_id) && walk([e.target_node_id], active, true).has(e.source_node_id))
-      .sort((a, b) => order.get(a.target_node_id)! - order.get(b.target_node_id)! || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    if (!candidate) return feedback;
-    feedback.add(candidate.id);
+      .filter((e) => stuck.has(e.source_node_id) && remembers(e.source_node_id) && walk([e.target_node_id], active, true).has(e.source_node_id))
+      .sort((a, b) => order.get(a.source_node_id)! - order.get(b.source_node_id)! || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    if (!candidate) return reads;
+    reads.add(candidate.id);
   }
+}
+
+/**
+ * The wires a round's slice does not follow upstream (`triggers.ts`): those
+ * into a node that remembers, which holds its value and needs nothing of what
+ * writes it, and those that read it round a loop. A round started somewhere
+ * else only shows what the memory holds; it does not run what writes it.
+ */
+export function unneeded(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): Set<string> {
+  const remembering = new Set(nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
+  return new Set([
+    ...memoryReads(nodes, edges, registry),
+    ...edges.filter((e) => remembering.has(e.target_node_id) && e.target_port_id !== RUN_PORT).map((e) => e.id),
+  ]);
 }
 
 /** Execution stages: everything in a stage waits only for earlier stages. */
 export function topologicalLevels(
   nodes: GraphNode[],
   edges: GraphEdge[],
-  feedback: Set<string>,
+  reads: Set<string>,
 ): string[][] {
-  const { levels, stuck } = levelsOf(nodes, edges, feedback);
+  const { levels, stuck } = levelsOf(nodes, edges, reads);
   if (stuck.size) {
     // The nodes the wires go round through, not the ones that merely hang below.
-    const live = edges.filter((e) => !feedback.has(e.id));
+    const live = edges.filter((e) => !reads.has(e.id));
     const round = nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
     throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
       + 'A loop is only allowed through a data node: route the value back through one, or remove a wire.');
@@ -149,13 +169,14 @@ export function collectInputs(
   nodeId: string,
   edges: GraphEdge[],
   outputs: Map<string, Record<string, unknown>>,
-  feedback: Set<string>,
   ports: readonly Port[] = [],
+  /** A wire that delivers nothing, however much its source made: for a node that remembers, a source that failed and caught it. */
+  delivers: (edge: GraphEdge) => boolean = () => true,
 ): Record<string, unknown> {
   const fields = new Map(ports.filter((port) => port.field).map((port) => [port.id, port.field!]));
   const byPort = new Map<string, GraphEdge[]>();
   for (const e of edges) {
-    if (e.target_node_id !== nodeId || feedback.has(e.id)) continue;
+    if (e.target_node_id !== nodeId || !delivers(e)) continue;
     // A run edge says when, not what: it orders the node and delivers nothing.
     if (e.target_port_id === RUN_PORT) continue;
     byPort.set(e.target_port_id, [...(byPort.get(e.target_port_id) ?? []), e]);
@@ -246,16 +267,16 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const { nodes, edges } = graph;
   const byId = new Map(nodes.map((n) => [n.id, n]));
 
-  const feedback = memoryFeedbackEdges(nodes, edges, registry);
-  const levels = topologicalLevels(nodes, edges, feedback);
-  const only = options.only ?? (options.trigger ? triggeredNodes(graph, options.trigger, feedback) : null);
+  const reads = memoryReads(nodes, edges, registry);
+  const levels = topologicalLevels(nodes, edges, reads);
+  const only = options.only ?? (options.trigger ? triggeredNodes(graph, options.trigger, unneeded(nodes, edges, registry)) : null);
   // Context, as opposed to what this run is for: only in a run that is not
   // the whole graph, never the node that fired, never what it fired, and
   // never a node with nothing wired in -- that one reads the outside world.
-  const fired = options.trigger && !options.only ? firedNodes(graph, options.trigger, feedback) : null;
+  const fired = options.trigger && !options.only ? firedNodes(graph, options.trigger) : null;
   const context = (nodeId: string): boolean => !!options.reuse && !!only
     && nodeId !== options.trigger?.node_id && !fired?.has(nodeId)
-    && edges.some((e) => e.target_node_id === nodeId && e.target_port_id !== RUN_PORT && !feedback.has(e.id));
+    && edges.some((e) => e.target_node_id === nodeId && e.target_port_id !== RUN_PORT && !reads.has(e.id));
   // Which model answers is part of what a node depends on (`reuse.ts`): asked once for the round.
   const setting = options.reuse ? await runtime.ai.setting?.() : undefined;
 
@@ -271,6 +292,11 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   };
 
   const outputs = new Map<string, Record<string, unknown>>();
+  // A memory a wire reads round a loop has not run when that wire is read: it hands on what it held when the round began.
+  for (const id of new Set(edges.filter((e) => reads.has(e.id)).map((e) => e.source_node_id))) {
+    const node = byId.get(id)!;
+    outputs.set(id, await registry.node(node.node_type)!.execute(node, {}, runtime));
+  }
   // Nodes whose outputs this round are the ones they were left holding: not
   // run, so not settled into memory again and not a reason for anything to run.
   const held = new Set<string>();
@@ -284,7 +310,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const idle = new Set<string>();
 
   const dependsOn = (nodeId: string, those: Set<string>): boolean =>
-    edges.some((e) => e.target_node_id === nodeId && !feedback.has(e.id) && those.has(e.source_node_id));
+    edges.some((e) => e.target_node_id === nodeId && !reads.has(e.id) && those.has(e.source_node_id));
 
   /** This node's view of the run: which of *its* ports the round began with. */
   const atNode = (base: Runtime, nodeId: string): Runtime => ({ ...base, fired: (portId) => fires(nodeId, portId) });
@@ -306,7 +332,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
    * holding from an earlier one is a moment that has passed.
    */
   const standsStill = (nodeId: string): string => {
-    const into = edges.filter((e) => e.target_node_id === nodeId && !feedback.has(e.id));
+    const into = edges.filter((e) => e.target_node_id === nodeId);
     const gates = into.filter((e) => e.target_port_id === RUN_PORT);
     if (gates.length) {
       // The event itself opens the node it is wired to, whichever port the wire
@@ -368,14 +394,16 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       if (dependsOn(nodeId, failed)) {
         failed.add(nodeId);
         // Which one, by the name on the canvas: the first that failed of what it waits for.
-        const before = edges.find((e) => e.target_node_id === nodeId && !feedback.has(e.id) && failed.has(e.source_node_id));
+        const before = edges.find((e) => e.target_node_id === nodeId && !reads.has(e.id) && failed.has(e.source_node_id));
         const culprit = before && byId.get(before.source_node_id);
         const message = culprit ? `${nodeName(culprit)} failed before it, so it could not run.` : 'Something before it failed, so it could not run.';
         finish({ node_id: nodeId, status: 'skipped', inputs: {}, outputs: {}, error: null, messages: [message] });
         continue;
       }
 
-      const inputs = collectInputs(nodeId, edges, outputs, feedback, node.inputs);
+      // What a node that remembers is not handed: the nulls of a source that failed and caught it -- "nothing arrived", not a value to keep.
+      const inputs = collectInputs(nodeId, edges, outputs, node.inputs,
+        (e) => !(element.isMemory && caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
 
       // The ◆ is a gate. Wired, it must be opened by this round: by the event
       // the round began with, or by a `true` some node computed in it. Shut,
@@ -402,7 +430,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       // node's value, is news whatever an idle neighbour did not send.
       const why = dependsOn(nodeId, idle) && !keepsItsOwn(nodeId)
         ? 'What feeds this node had nothing to do, so neither had this.'
-        : nothingToDo(element, node, inputs, edges, feedback);
+        : nothingToDo(element, node, inputs, edges);
       if (why) {
         idle.add(nodeId);
         finish({ node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: [why] });
@@ -464,7 +492,9 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // What stood still is not news: a reply held from the last round must not be
   // added to the conversation a second time, nor handed back as this round's result.
   for (const nodeId of held) outputs.delete(nodeId);
-  settleMemory(graph, feedback, outputs, results, registry, caught);
+  const took = settleMemory(graph, outputs, results, registry, caught);
+  // One round more, for whatever counts them and took part: stopped halfway, it is none.
+  if (!signal?.aborted) for (const node of nodes) if (took.has(node.id)) registry.node(node.node_type)?.endRound(node);
 
   const status: ExecutionResult['status'] = signal?.aborted
     ? 'cancelled'
@@ -577,10 +607,9 @@ function nothingToDo(
   node: GraphNode,
   inputs: Record<string, unknown>,
   edges: GraphEdge[],
-  feedback: Set<string>,
 ): string {
   const wired = new Set(edges
-    .filter((e) => e.target_node_id === node.id && e.target_port_id !== RUN_PORT && !feedback.has(e.id))
+    .filter((e) => e.target_node_id === node.id && e.target_port_id !== RUN_PORT)
     .map((e) => e.target_port_id));
 
   for (const port of node.inputs) {
@@ -599,28 +628,23 @@ function nothingToDo(
  *
  * For trying a node out before the graph has ever run: the file is picked, the
  * CSV parsed, and what would arrive at this node is handed back, without the
- * model call or the chart the node itself would cost. Feedback edges count
- * here, unlike in a run: a data node fed across one is shown what it would
- * keep. What computes the ◆ of what feeds it runs too (`neededFor`), or that
- * never opens.
+ * model call or the chart the node itself would cost. What computes the ◆ of
+ * what feeds it runs too (`neededFor`), or that never opens.
  */
 export async function inputsFor(
   graph: Graph,
   nodeId: string,
   options: RunOptions,
 ): Promise<{ inputs: Record<string, unknown>; upstream: ExecutionResult }> {
-  const feedback = memoryFeedbackEdges(graph.nodes, graph.edges, options.registry);
+  const skip = unneeded(graph.nodes, graph.edges, options.registry);
   const into = graph.edges.filter((e) => e.target_node_id === nodeId && e.target_port_id !== RUN_PORT);
-  const only = neededFor(graph, into.map((e) => e.source_node_id).filter((id) => id !== nodeId), feedback);
+  const only = neededFor(graph, into.map((e) => e.source_node_id).filter((id) => id !== nodeId), skip);
   only.delete(nodeId);
-  // A data node feeds itself through the graph: what it holds is upstream of
-  // what it keeps. It is cheap to run and has no side effects, so it runs.
-  if (into.some((e) => feedback.has(e.id))) only.add(nodeId);
 
   const upstream = await executeGraph(graph, { ...options, trigger: null, only });
   const produced = new Map(upstream.node_results.map((r) => [r.node_id, r.outputs]));
   const node = graph.nodes.find((one) => one.id === nodeId);
-  return { inputs: collectInputs(nodeId, graph.edges, produced, new Set(), node?.inputs), upstream };
+  return { inputs: collectInputs(nodeId, graph.edges, produced, node?.inputs), upstream };
 }
 
 /**
@@ -649,7 +673,7 @@ export async function executeNode(
   if (!node || !element) {
     return { node_id: nodeId, status: 'error', inputs, outputs: {}, error: `No such node: ${nodeId}` };
   }
-  const why = nothingToDo(element, node, inputs, graph.edges, memoryFeedbackEdges(graph.nodes, graph.edges, options.registry));
+  const why = nothingToDo(element, node, inputs, graph.edges);
   if (why) return { node_id: nodeId, status: 'skipped', inputs, outputs: {}, error: null, messages: [why] };
   const runtime = stoppable(options.runtime, options.signal);
   try {
@@ -904,12 +928,11 @@ async function runNode(
 }
 
 /**
- * What memory nodes keep from this round, settled into the graph the round ran on.
- *
- * A node that remembers (a data node) keeps whatever arrived at it, because
- * "remember this" does not depend on being in a loop -- and what came across
- * a feedback edge is put into this round's own result as well, so whoever
- * reads the round sees the value just kept instead of the one from last time.
+ * What memory nodes keep from this round, settled into the graph the round ran
+ * on: what each was handed -- the same as it filled from, a port that takes
+ * one value of what arrives (`Port.field`) by that value -- and nothing for one
+ * that did not run: a gate that stayed shut, or a writer that failed before it,
+ * leaves it as it was. Says which ones took part.
  *
  * That copy is the whole of it: a session keeps it (`backend/gui-editor/session.ts`), and
  * nobody works the same thing out a second time.
@@ -919,46 +942,23 @@ async function runNode(
  */
 function settleMemory(
   graph: Graph,
-  feedback: Set<string>,
   outputs: Map<string, Record<string, unknown>>,
   results: NodeResult[],
   registry: Runners,
   caught: Set<string>,
-): void {
-  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
-
-  const ports = new Map<string, { target: GraphNode; element: NodeRunner; port: string; wires: GraphEdge[]; loops: boolean }>();
-  for (const edge of graph.edges) {
-    if (edge.target_port_id === RUN_PORT) continue;
-    const target = byId.get(edge.target_node_id);
-    const element = target && registry.node(target.node_type);
-    if (!target || !element?.isMemory) continue;
-    const key = JSON.stringify([target.id, edge.target_port_id]);
-    const entry = ports.get(key) ?? { target, element, port: edge.target_port_id, wires: [], loops: false };
-    entry.wires.push(edge);
-    entry.loops ||= feedback.has(edge.id);
-    ports.set(key, entry);
-  }
-
-  for (const { target, element, port, wires, loops } of ports.values()) {
+): Set<string> {
+  const took = new Set(results.filter((r) => (r.status === 'success' || r.status === 'partial') && !r.held).map((r) => r.node_id));
+  const settled = new Set<string>();
+  for (const target of graph.nodes) {
+    const element = registry.node(target.node_type);
+    if (!element?.isMemory || !took.has(target.id)) continue;
+    settled.add(target.id);
     // What a node that caught its failure put on its ports is "nothing arrived", not a value to keep: a counter would go 6, null, 1.
-    const delivered = wires.filter((edge) => edge.source_port_id in (outputs.get(edge.source_node_id) ?? {})
-      && !(caught.has(edge.source_node_id) && edge.source_port_id !== ERROR_PORT));
-    if (!delivered.length) continue;
-    const values = delivered.map((edge) => outputs.get(edge.source_node_id)![edge.source_port_id]);
-    const value = wires.length > 1 ? values : values[0];
-    element.settleMemory(target, port, value);
-
-    if (!loops) continue;
-    // Said as having arrived, because it did -- only after the round rather
-    // than in it. A node the event did not ask to run gets a result for this.
-    let result = results.find((r) => r.node_id === target.id);
-    if (!result) {
-      result = { node_id: target.id, status: 'success', inputs: {}, outputs: {}, error: null };
-      results.push(result);
-    }
-    result.inputs = { ...result.inputs, [port]: value };
+    const arrived = collectInputs(target.id, graph.edges, outputs, target.inputs,
+      (e) => e.source_port_id in (outputs.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
+    for (const [port, value] of Object.entries(arrived)) if (value !== undefined) element.settleMemory(target, port, value);
   }
+  return settled;
 }
 
 /**

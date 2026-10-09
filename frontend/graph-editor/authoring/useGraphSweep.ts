@@ -4,6 +4,9 @@
 // writing the way the node's view does -- the same request (`generateRequest`),
 // the same answer written in (`writtenInto`), what is missing first
 // (`writesFor`) -- and writes what comes back into the store, file by file.
+// What the graph says is not asked of a model, as in the node's view: an output
+// into a memory is pulled, and an input is, by a run of what feeds it -- where
+// no model is among that, which a sweep would ask once more for every node after it.
 
 import { useCallback, useRef, useState } from 'react';
 import type { GraphEdge, GraphNode } from '../../app/graph';
@@ -12,9 +15,12 @@ import { useGraphStore } from '../../app/store/graphStore';
 import { portRenames } from '../../app/store/portRenames';
 import { graphEdge } from '../../app/document/wires';
 import {
-  bodyOf, exchangeName, generateRequest, generationGuard, isWritten, unfitDefinition, withHistory, writeName, writesFor, writtenInto, type Write,
+  bodyOf, exchangeName, generateRequest, generationGuard, isWritten, outputsAsDefined, unfitDefinition, withHistory, writeName, writesFor, writtenInto,
+  type Write,
 } from './generation';
 import { inputFilesOf } from './exampleFile';
+import { arrivedAt, modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts } from './pull';
+import { inputFile, outputFile } from '../../../graph/authoring/pull.ts';
 import { missingExamples, sweep, type SweepUnit } from './graphSweep';
 
 interface SweepState {
@@ -78,6 +84,21 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
           const now = nodeNow(node.id);
           if (!now || !stillOpen()) throw new Error(ANOTHER_GRAPH);
           const around = { nodes: nodesOf(), edges: live().rfEdges, metadata: live().metadata, page: live().page };
+          if (write === 'output' && pullableOutput(now, around.nodes, around.edges)) {
+            put(now, outputsAsDefined({ ...now, config: { ...now.config, output_definition: outputFile(pulledOutputs(now, around.nodes, around.edges)!) } }));
+            continue;
+          }
+          if (write === 'input' && pullable(now, around.edges) && !modelsBefore(now, around.nodes, around.edges).length) {
+            const arrived = await arrivedAt(now, live().exportGraph());
+            const latest = nodeNow(node.id);
+            if (!latest || !stillOpen()) throw new Error(ANOTHER_GRAPH);
+            const ports = pulledPorts(latest, nodesOf(), live().rfEdges, arrived);
+            put(latest, { ...latest, config: { ...latest.config, input_definition: inputFile(ports) } });
+            // Written, to be seen; what comes after it would be written against what is missing.
+            const gap = pullGap(latest, ports, live().rfEdges, arrived);
+            if (gap) throw new Error(`input.js pulled, but ${gap}`);
+            continue;
+          }
           const request = generateRequest(now, write, around, inputFilesOf(now, around.nodes, around.edges, live().executionResult, around.page));
           try {
             const response = await call('generate', request);

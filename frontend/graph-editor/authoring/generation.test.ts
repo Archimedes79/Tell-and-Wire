@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { GraphNode, Port } from '../../app/graph';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
-import { generateRequest, outputsFrom, writesFor, writtenInto } from './generation';
+import { generateRequest, outputsFrom, partsOf, writesFor, writtenInto } from './generation';
 
 /**
  * What a node's ✨ asks and what it writes in: the request built in one place
@@ -86,10 +86,14 @@ describe('what comes back, written in', () => {
   });
 
   it('is the fields a data node was written as -- JSON that is no object is one field -- and its ports follow them', () => {
-    const written = writtenInto(made('data'), 'body', answer('{ "recent": [], "seen": 0 }'), '✨ Fields', at);
+    const written = writtenInto(made('data'), 'body', { ...answer('{ "recent": [], "seen": 0 }'), example: '{ "recent": ["a"], "seen": 3 }' }, '✨ Fields', at);
     expect(written.config.data_value).toEqual({ recent: [], seen: 0 });
     expect(written.inputs.map((port) => port.id)).toEqual(['recent', 'seen']);
-    expect(written.outputs.map((port) => port.id)).toEqual(['recent', 'seen', 'all']);
+    expect(written.outputs.map((port) => port.id)).toEqual(['recent', 'seen', 'round', 'all']);
+    // Its example is written with them -- and gone with an answer that brought none: one of other fields would be written against.
+    expect(written.config.data_example).toEqual({ recent: ['a'], seen: 3 });
+    expect(partsOf(written)).toEqual(['body', 'example']);
+    expect(writtenInto(written, 'body', answer('{ "seen": 0 }'), '✨ Fields', at).config.data_example).toBeUndefined();
     expect(writtenInto(made('data'), 'body', answer('[1, 2]'), '✨ Fields', at).config.data_value).toEqual({ value: [1, 2] });
   });
 });

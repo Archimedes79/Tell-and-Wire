@@ -17,9 +17,11 @@ interface FileAction {
 }
 
 /** What the File menu offers, in its order. The handlers are the header's; *busyWith* is why a graph cannot be replaced now. */
-export function fileActions({ busyWith, isProject, onNew, onDesign, onOpen, onSave, onSaveAs, onReload, onJson }: {
+export function fileActions({ busyWith, isProject, deploying, onNew, onDesign, onOpen, onSave, onSaveAs, onReload, onJson, onDeploy }: {
   busyWith: string | null;
   isProject: boolean;
+  /** A zip is being made: one at a time. */
+  deploying: boolean;
   onNew: () => void;
   onDesign: () => void;
   onOpen: () => void;
@@ -27,6 +29,7 @@ export function fileActions({ busyWith, isProject, onNew, onDesign, onOpen, onSa
   onSaveAs: () => void;
   onReload: () => void;
   onJson: () => void;
+  onDeploy: () => void;
 }): FileAction[] {
   // Not while a run or a sweep is going: what they bring back is for the
   // graph they started on, and is dropped once another is open.
@@ -43,6 +46,8 @@ export function fileActions({ busyWith, isProject, onNew, onDesign, onOpen, onSa
       label: 'Reload from disk', hint: 'flow.json or a node\'s settings changed outside the editor', blocked: busyWith, onSelect: onReload,
     }] : []),
     { label: 'Copy / paste as JSON…', divided: true, onSelect: onJson },
+    // The tool detached from the editor: the graph, its page and the code that runs them.
+    { label: 'Deploy as zip', hint: 'The tool as one of its own: graph, page and code', blocked: deploying ? 'The zip is being made…' : null, onSelect: onDeploy },
   ];
 }
 
@@ -92,6 +97,10 @@ export default function FileMenu({ actions, where }: { actions: FileAction[]; wh
       button.current?.focus();
       return;
     }
+    if (event.key === 'Tab') {
+      close();
+      return;
+    }
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
     event.preventDefault();
     const items = [...(menu.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])') ?? [])];
@@ -109,7 +118,7 @@ export default function FileMenu({ actions, where }: { actions: FileAction[]; wh
         aria-expanded={!!at}
         className="h-8 shrink-0 flex items-center gap-1 rounded-md px-2.5 text-sm font-medium hover-raise"
         style={{ color: TEXT }}
-        title="New, Open, Save, Save as…, and the tool as JSON"
+        title="New, Open, Save, Save as…, the tool as JSON, and Deploy"
       >
         File
         <ChevronDown size={14} strokeWidth={2} aria-hidden="true" style={{ color: MUTED }} />

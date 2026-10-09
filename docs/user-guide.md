@@ -32,7 +32,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 | **Folder** | Lists the files in a folder, filtered by file types, optionally with subfolders. Reads no file. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
 | **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
-| **Data** | A struct kept between runs: its fields are in `data.json`, and each field is an input and an output of the node, plus `all`, which carries every field. What arrives on a field replaces it for the next run. A loop goes through a data node. A page block can show what it holds, with no run. |
+| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object) and `round` (the number of the round, from 1). It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A page block can show a field or the round, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
@@ -104,14 +104,18 @@ each way of working on it:
 | Row | Buttons | File |
 |---|---|---|
 | **Input** | **Pull input**, **File** | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
-| **Output** | **Chat**, **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
+| **Output** | **Chat** or **Pull output**, **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
-| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct it holds. |
+| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. |
+| **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. ✨ writes it together with the fields; left empty, the start stands in. |
 
 - **Pull input** writes `input.js` from the graph, with no model: its types from the
   `output.js` of the node wired before it, its example from running what comes before it on
   the example data -- a file an input reads is read for you. If a node before it asks a model,
   that is a model call, and the button says so.
+- **Pull output** takes the place of the output's **Chat** where every output goes into a field of a
+  data node: `output.js` is read off the field -- its type, and the filled example of what it
+  holds. No model, no run.
 - **Chat** says what you want, in your words: *the number of words, and how long it takes to
   read*. The first message writes the file; each message after that changes the file as said.
   Under the line, *Sent with it* lists what goes along with your words -- the node's text, its
@@ -134,7 +138,9 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
 - **The bar under the canvas** (*Say what to change in the graph*) changes the whole graph, and
   shows what it adds, removes and changes before you **Apply** it. A change to one node is said
   in that node's Chat.
-- **Generate all** in the toolbar writes every empty node, in the order the graph runs.
+- **Generate all** in the toolbar writes every empty node, in the order the graph runs. It pulls
+  what it can -- `input.js` off the nodes before, `output.js` off the data node an output goes
+  into -- and asks the model for the rest.
   **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
 A start point, a folder, an end point and a subgraph have no files: they open on their
@@ -144,12 +150,17 @@ Two things save the most time. Wire a node to what feeds it before **Pull input*
 example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
 
 **A data node is a struct.** Its **Fields** file, `data.json`, is an object: each key is a field,
-with its starting value. Each field is an input and an output of the node under its name, and
-`all` carries every field as one object. A field takes what arrives on it, and keeps its value
-when nothing does. It holds no code: working out a new value (a count plus one) is a code node,
-wired from the field's output back to the same field's input -- the one kind of loop a graph
-allows. What it holds can be watched without a run: a block of the page can show it, and the
-session reads it by the node's name.
+with its starting value. Each field is an input and an output of the node under its name;
+`all` carries every field as one object, and `round` is the number of the round, from 1. The node fills,
+then forwards: what arrives on a field replaces it, and the struct as it is then goes on to whatever the
+node feeds, in the same round. A field keeps its value when nothing arrives. In a loop -- a node reads
+a field and writes it back -- the wire that reads it carries what it held when the round began: the loop
+reads the last round and writes this one. A page, or a script, reads what the last round left, never a
+round half done. It holds no code: working out a new value (a count plus one) is a code
+node, wired from the field's output back to the same field's input. What the struct holds can
+be read without a run: a block of the page can show a field (`count`, or the node's name and
+a dot and the field) or the round, and the session answers by name. The **Example** file is
+what a node before it is shaped as.
 
 ## 4. Wiring in more detail
 
@@ -273,7 +284,7 @@ node backend/app/main.ts check my_tool             # what is wrong, without runn
 
 ## 10. Deploy
 
-**Deploy** in the toolbar downloads a zip; `node backend/app/main.ts my_tool --bundle ./out`
+**File → Deploy as zip** downloads a zip; `node backend/app/main.ts my_tool --bundle ./out`
 writes the same folder. The person who gets it unzips it and starts `run.cmd` or `./run.sh`.
 They need Node 24 or newer and nothing else. With a page, the tool opens in the browser on
 port 8000 or the next free one. Without a page or a call, it runs once and prints JSON.

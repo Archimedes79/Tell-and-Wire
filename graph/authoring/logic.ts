@@ -10,6 +10,8 @@
 export interface LogicFields {
   /** The config key holding the body. */
   body: string;
+  /** The config key of a second file written with the body, where there is one: what a data node looks like filled. */
+  example?: string;
 }
 
 /**

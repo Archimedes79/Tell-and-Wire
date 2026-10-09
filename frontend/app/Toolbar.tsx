@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Play, Redo2, Rocket, Settings, Square, Undo2, Wand2 } from 'lucide-react';
+import { Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from './ui/ToolbarButton';
 import Button from './ui/Button';
 import { useGoingRound, useGraphStore } from './store/graphStore';
@@ -59,9 +59,9 @@ interface ToolbarProps {
 
 /**
  * The header: the app's name, the tool's -- its views -- and on the
- * right what is done to the tool as a whole: ▶ Run first, then Generate all,
- * Settings and Deploy. What is done now and then is in the File menu (New,
- * ✨ Describe a graph, Open, Save, Save as…, Reload, JSON); Undo and Redo are icons.
+ * right what is done to the tool as a whole: ▶ Run first, then Generate all
+ * and Settings (the gear). What is done now and then is in the File menu (New,
+ * ✨ Describe a graph, Open, Save, Save as…, Reload, JSON, Deploy); Undo and Redo are icons.
  * Changing the graph as said is the bar under the canvas.
  */
 export default function Toolbar({
@@ -267,6 +267,7 @@ export default function Toolbar({
           {problem && (
             <span className="text-xs font-medium truncate" style={{ color: DANGER_TEXT }} title={problem}>{problem}</span>
           )}
+          {deployBusy && <span className="text-xs whitespace-nowrap" style={{ color: MUTED }}>⏳ Making the zip…</span>}
           {deployError && (
             <span className="text-xs font-medium truncate" style={{ color: DANGER_TEXT }} title={deployError}>❌ {deployError}</span>
           )}
@@ -289,8 +290,8 @@ export default function Toolbar({
         <FileMenu
           where={currentFilePath ?? 'Not saved to a file yet'}
           actions={fileActions({
-            busyWith, isProject,
-            onNew: onNewGraph, onDesign: handleOpenDescribe, onOpen: onLoad, onSave, onSaveAs, onReload: onReloadProject, onJson: onInjectJson,
+            busyWith, isProject, deploying: !!deployBusy,
+            onNew: onNewGraph, onDesign: handleOpenDescribe, onOpen: onLoad, onSave, onSaveAs, onReload: onReloadProject, onJson: onInjectJson, onDeploy: handleDownloadBundle,
           })}
         />
         <div className="flex shrink-0 items-center">
@@ -335,26 +336,12 @@ export default function Toolbar({
           framed
         />
 
-        {/* Labelled, and the title names what is inside. An API key lives in
-            here, under "Keys", and a tooltip that spoke only of
-            "code generation AI and this graph's runtime AI default" was a sign
-            pointing away from the thing people come looking for. */}
+        {/* The gear alone: its title names what is inside, and an API key lives
+            here, under "Keys". */}
         <ToolbarButton
           icon={Settings}
-          label="Settings"
-          title="The AI that generates, tests and runs, its API keys and server addresses"
+          title="Settings: the AI that generates, tests and runs, its API keys and server addresses"
           onClick={onOpenSettings}
-          framed
-        />
-
-        {/* One thing to do, so no menu: the look at the tool detached is the
-            running tool's pop-out, beside the page it opens. */}
-        <ToolbarButton
-          icon={Rocket}
-          label={deployBusy ? `${deployBusy}…` : 'Deploy'}
-          title="Download this tool as one of its own: a zip with the graph, its page and the code that runs them"
-          onClick={handleDownloadBundle}
-          disabled={!!deployBusy}
           framed
         />
       </header>

@@ -25,8 +25,10 @@ export type StartedBy = 'page' | 'call' | 'itself';
 export interface Offer {
   /** An event starts a round, an output is what a round hands back, a state is what a node holds -- watched without a round. */
   kind: 'event' | 'output' | 'state';
-  /** What a caller calls it: the node's id. */
+  /** What a caller calls it: the node's id -- and, for one part of a state, the part after a dot. */
   name: string;
+  /** A state's: the part of what the node holds that this offers -- a field of a struct -- or all of it. */
+  part?: string;
   /** What a person reads: the node's label. */
   label: string;
   type: DataType;
@@ -238,12 +240,16 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   // What a run asks. The executor owns the run; these are the questions it puts.
 
   /**
-   * This node keeps what is delivered to it between runs, loop or no loop --
-   * "remember this" does not depend on the edge closing a cycle -- so an edge
-   * into it can close one: the executor leaves such an edge out of the
-   * ordering and settles the fresh value afterwards, for the *next* round.
+   * This node keeps what is delivered to it between rounds: it fills from what
+   * arrives and forwards what it then holds, in the same round. The wire that
+   * reads it round a loop is left out of the ordering (`memoryReads`), so a
+   * loop can close: it carries what the node held when the round began.
+   * What arrived is kept when the round is over.
    */
   readonly isMemory: boolean = false;
+
+  /** A round ran to its end: a node that counts rounds counts this one. Nothing, for most. */
+  endRound(_node: GraphNode): void {}
 
   /**
    * The output ports of this node that can start a round: a start point's.
@@ -386,9 +392,10 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
 
   /**
    * What this node holds as it is now, to be watched without a round: a
-   * memory node's whole content -- offered under its name as a `state`
-   * (`offers`), and told by every session (`SessionView.state`). Nothing, for a
-   * node that holds nothing to watch.
+   * memory node's whole content -- offered under its name as a `state`, and
+   * each part of it under the name and the part (`offers`) -- and told by every
+   * session (`SessionView.state`): what the last round that ran to its end left,
+   * never a round half done. Nothing, for a node that holds nothing to watch.
    */
   holds(_node: GraphNode): unknown {
     return undefined;
@@ -402,19 +409,21 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   settleMemory(_node: GraphNode, _portId: string, _value: unknown): void {}
 
   /**
-   * What this node keeps between rounds, slot by slot: what using the graph
-   * changes about it, as against how it was designed -- a data node's
-   * `data_value`, what a start point was sent. A session reads it
-   * after a round and puts it back before the next (`setState`), on a copy, so
-   * that using a graph never changes its design (`backend/gui-editor/session.ts`). Nothing,
-   * for a node that keeps nothing. A slot that holds nothing is `null`.
+   * What this node keeps between rounds, value by value, each under a name of
+   * its own: what using the graph changes about it, as against how it was
+   * designed -- a data node's fields and its round count, what a start point
+   * was sent. A session reads it after a round and puts it back before the
+   * next (`setState`), on a copy, so that using a graph never changes its
+   * design (`backend/gui-editor/session.ts`); a value whose design changed is
+   * dropped, and only that one. Nothing, for a node that keeps nothing. A value
+   * that holds nothing is `null`.
    */
   state(_node: GraphNode): Record<string, unknown> {
     return {};
   }
 
-  /** Put slots `state` read back where this element keeps them. */
-  setState(_node: GraphNode, _slots: Record<string, unknown>): void {}
+  /** Put the values `state` read back where this element keeps them. */
+  setState(_node: GraphNode, _kept: Record<string, unknown>): void {}
 
   // ── Build time ────────────────────────────────────────────────────────────
   // What only building asks: the editor, `check`, `test`, a bundle being made.

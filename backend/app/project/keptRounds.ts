@@ -7,7 +7,7 @@
 // run again (`test`, the MCP server's `test_graph`, CI), the nodes whose
 // outcome came from outside the graph or from before it are handed what they
 // made then instead of being run: a start point's package, what a model
-// answered, what memory held, what stood still. Everything else -- the code,
+// answered, what stood still; memory starts where it started then. Everything else -- the code,
 // the wiring, which part of a package an input takes, what reaches an end
 // point -- runs again, and what the end points hand back must be what they
 // handed back then.
@@ -36,10 +36,12 @@ export interface KeptRound {
   by?: string;
   /**
    * What these nodes made in it, by node id: handed in again instead of run.
-   * Its start points' packages, what its models answered, what its memory
-   * held, and what stood still with what it made before.
+   * Its start points' packages, what its models answered, and what stood
+   * still with what it made before.
    */
   given: Record<string, Record<string, unknown>>;
+  /** What its memory kept when the round began, by node id: it is run again from there, not handed in -- what it hands on depends on what arrives. */
+  state?: Record<string, Record<string, unknown>>;
   /** What it handed back, by end point name: what running it again must hand back. */
   outputs: Record<string, unknown>;
 }
@@ -55,23 +57,30 @@ export interface ReplayedRound {
 /**
  * *result*, a round that ran to its end, kept: *started* says what began it.
  * A node is handed in when what it made did not come from the graph alone --
- * a start point, a node that asks a model, memory -- or it stood still, with
- * what it made before.
+ * a start point, a node that asks a model -- or it stood still, with what it
+ * made before. *state* is what the memory of *graph* kept when it began.
  */
-export function keptRound(graph: Graph, result: ExecutionResult, started: { event: string; by: string } | null, registry: Runners): KeptRound {
+export function keptRound(
+  graph: Graph,
+  result: ExecutionResult,
+  started: { event: string; by: string } | null,
+  registry: Runners,
+  state: KeptRound['state'] = {},
+): KeptRound {
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
   const given: KeptRound['given'] = {};
   for (const ran of result.node_results) {
     const node = byId.get(ran.node_id);
     const element = node && registry.node(node.node_type);
     if (!node || !element) continue;
-    const outside = element.takesPackage || element.isMemory || element.asksModel(node) || ran.held === true;
+    const outside = element.takesPackage || element.asksModel(node) || ran.held === true;
     if (outside && (ran.status === 'success' || ran.status === 'partial' || ran.held)) given[node.id] = ran.outputs;
   }
   return {
     event: started?.event ?? null,
     ...(started ? { by: started.by } : {}),
     given,
+    ...(Object.keys(state).length ? { state } : {}),
     outputs: outputsOf(graph, result, registry),
   };
 }
@@ -91,7 +100,13 @@ export async function replayRound(graph: Graph, kept: KeptRound, options: { core
   let result: ExecutionResult;
   try {
     const trigger = eventOf(graph, kept.event, options.registry);
-    ({ result } = await options.core.round({ graph, trigger, given: kept.given, offline: true }));
+    // Memory starts where it started in the kept round.
+    const start = structuredClone(graph);
+    for (const [id, kept_] of Object.entries(kept.state ?? {})) {
+      const node = start.nodes.find((one) => one.id === id);
+      if (node) options.registry.node(node.node_type)?.setState(node, kept_);
+    }
+    ({ result } = await options.core.round({ graph: start, trigger, given: kept.given, offline: true }));
   } catch (error) {
     return { status: 'error', details: [error instanceof Error ? error.message : String(error)], outputs: {} };
   }

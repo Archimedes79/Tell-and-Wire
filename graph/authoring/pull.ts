@@ -1,4 +1,4 @@
-// Pull: the input definition a node's wires imply.
+// Pull: the definition a node's wires imply.
 //
 // A node's input.js says what one call of it is handed: a type for each input,
 // and one example. A model can write that from the node's text -- or it can be
@@ -7,8 +7,12 @@
 // example. Put together, they are a file. Nothing is asked of a model for it
 // (unless a node before it asks one to run).
 //
-// This is the file's format and the rules for an example; what feeds each input
-// is read from the graph by the editor (`frontend/graph-editor/authoring/pull.ts`).
+// Its output.js the same way, where every output goes into a memory: a field
+// says what it holds, and what is written to it is shaped as that.
+//
+// This is the files' format and the rules for an example; what feeds each input,
+// and what each output feeds, is read from the graph by the editor
+// (`frontend/graph-editor/authoring/pull.ts`).
 
 /** One input as a pull writes it into input.js. */
 export interface PulledPort {
@@ -48,11 +52,21 @@ export function shortExample(value: unknown): unknown {
   return value;
 }
 
-/** The input.js that says *ports*: a JSDoc typedef, one `@property` each, then one example, as plain JSON. */
-export function inputFile(ports: PulledPort[]): string {
+/** The file that says *ports*: a JSDoc typedef of that name, one `@property` each, then one example, as plain JSON. */
+function definitionFile(typedef: 'Input' | 'Output', ports: PulledPort[]): string {
   // On one line, and never ending its comment.
   const said = (text: string): string => text.replace(/\s+/g, ' ').replace(/\*\//g, '* /').trim();
   const properties = ports.map((port) => ` * @property {${port.type}} ${port.id}${port.description.trim() ? `  ${said(port.description)}` : ''}`);
   const example = Object.fromEntries(ports.map((port) => [port.id, shortExample(port.example) ?? null]));
-  return ['/**', ' * @typedef {Object} Input', ...properties, ' */', `module.exports = ${JSON.stringify(example, null, 2)};`].join('\n');
+  return ['/**', ` * @typedef {Object} ${typedef}`, ...properties, ' */', `module.exports = ${JSON.stringify(example, null, 2)};`].join('\n');
+}
+
+/** The input.js that says *ports*. */
+export function inputFile(ports: PulledPort[]): string {
+  return definitionFile('Input', ports);
+}
+
+/** The output.js that says *ports*, the same way: what each output hands on, and one example. */
+export function outputFile(ports: PulledPort[]): string {
+  return definitionFile('Output', ports);
 }

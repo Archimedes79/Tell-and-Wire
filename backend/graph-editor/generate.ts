@@ -560,10 +560,28 @@ async function writeCode(job: Job): Promise<GenerateResponse> {
   return { result: written.text, probe: written.probe, calls, ...restated(job, written.description), ...withOutput(written.output) };
 }
 
+/** What the node's second file holds now, as text: a data node's example of its fields as rounds fill them. */
+function exampleText(node: GraphNode, spec: Generation): string {
+  const held = spec.fields.example ? node.config[spec.fields.example] : undefined;
+  return typeof held === 'string' ? held : held === undefined || held === null ? '' : JSON.stringify(held, null, 2);
+}
+
+/** The struct as rounds fill it, out of a data answer's second block: one JSON object -- or nothing, and the node then shows its start. */
+function filledIn(block: string | undefined): string | undefined {
+  if (!block) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(block);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? block : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** An ai node's instructions or a data node's data: asked for once, and not tried. */
 async function writeText(job: Job, kind: Exclude<PromptKind, 'code'>): Promise<GenerateResponse> {
   const { request: { refine }, node, spec, shape, prompt, ai, calls, deps } = job;
-  const body = bodyOf(node, spec);
+  const filled = exampleText(node, spec);
+  const body = [bodyOf(node, spec), filled && `As rounds have filled it (example.json):\n${filled}`].filter(Boolean).join('\n\n');
   const { output, mending, asked } = mayBring(job);
   const what = kind === 'prompt' ? 'The instructions (prompt.md)' : 'The fields (data.json)';
   const evidence = !refine ? '' : mending ? mendPrompt('instructions', body, output, mending, refine)
@@ -578,7 +596,8 @@ async function writeText(job: Job, kind: Exclude<PromptKind, 'code'>): Promise<G
       throw new Error(`The data the model wrote is not JSON (${(error as Error).message}). It began: "${clip(text, 160)}".`);
     }
   }
-  return { result: text, probe: notProbed(), calls, ...restated(job, description), ...withOutput(asked ? outputIn(rest, shape) : undefined) };
+  const example = kind === 'data' ? filledIn(codeBlocks(rest)[1]) : undefined;
+  return { result: text, probe: notProbed(), calls, ...(example ? { example } : {}), ...restated(job, description), ...withOutput(asked ? outputIn(rest, shape) : undefined) };
 }
 
 /** What a step's failure comes to: a preview reaching its model is none; a refusal is the caller's; anything else a failure that brings its transcript. */

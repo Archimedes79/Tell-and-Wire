@@ -10,7 +10,7 @@
 import type { Graph, GraphNode } from '../graph.ts';
 import type { ProgressEvent, Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
-import { executeGraph, inputsFor, memoryFeedbackEdges, runNodeAlone } from '../execution/executor.ts';
+import { executeGraph, inputsFor, runNodeAlone, unneeded } from '../execution/executor.ts';
 import { triggeredNodes } from '../execution/triggers.ts';
 import { Latch } from '../execution/latch.ts';
 import { LastOutputs } from '../execution/reuse.ts';
@@ -61,7 +61,7 @@ export function localCore(options: LocalCoreOptions = {}): GraphCore {
       const graph = structuredClone(asked.graph);
       const runtime = asked.offline ? offline(runtimeFor(report)) : runtimeFor(report);
       const trigger = asked.trigger;
-      const only = trigger ? triggeredNodes(graph, trigger, memoryFeedbackEdges(graph.nodes, graph.edges, registry)) : null;
+      const only = trigger ? triggeredNodes(graph, trigger, unneeded(graph.nodes, graph.edges, registry)) : null;
       // The nodes the round is asked for, less the ones it is handed an answer for: those are not run, and report nothing.
       const planned = only ?? new Set(graph.nodes.map((node) => node.id));
       report({ type: 'plan', total: [...planned].filter((id) => !(id in (asked.given ?? {}))).length });

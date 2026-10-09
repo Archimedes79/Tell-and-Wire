@@ -15,8 +15,8 @@ import { ONCE, type NodeGuiBuilder } from '../nodes/NodeGuiBuilder';
 import HeadingField from '../authoring/HeadingField';
 import { GenerationReport } from '../authoring/GenerationTranscript';
 import { useTryExample, whatCameOf } from '../authoring/TryExample';
-import { modelsBefore, pullable } from '../authoring/pull';
-import { fileOf, isWritten, partName, partsOf, writesFor, type Write } from '../authoring/generation';
+import { modelsBefore, pullable, pullableOutput } from '../authoring/pull';
+import { fileOf, isWritten, partName, partsOf, writesFor, type Part, type Write } from '../authoring/generation';
 import NodeHeader from '../views/NodeHeader';
 import NodeViewLayout from '../views/NodeViewLayout';
 import RowList, { at, type RowAction, type RowView } from '../views/RowList';
@@ -30,15 +30,15 @@ import { withPorts } from './nodeDraft';
 import { useNodePanel } from './nodePanel';
 import { usePartGenerate } from './usePartGenerate';
 
-/** What the right of the view shows: a file or its chat, or the node's settings. */
-type Open = { part: Write; how: 'chat' | 'file' } | { part: 'settings' };
+/** What the right of the view shows: a file or its chat -- an example has none, its Fields chat writes it -- or the node's settings. */
+type Open = { part: Write; how: 'chat' | 'file' } | { part: 'example'; how: 'file' } | { part: 'settings' };
 const SETTINGS: Open = { part: 'settings' };
 
-/** What a node opens on: the first file nothing is written in yet, in the way it is written -- else its body, to read. */
-function firstOpen(node: GraphNode, parts: Write[]): Open {
+/** What a node opens on: the first file nothing is written in yet, in the way it is written -- else its body, to read. An input is pulled, and so is an output where it goes into a memory: neither has a chat. */
+function firstOpen(node: GraphNode, parts: Part[], pullsOutput: boolean): Open {
   if (!parts.length) return SETTINGS;
-  const next = parts.find((write) => !isWritten(node, write));
-  if (next === 'input') return { part: 'input', how: 'file' };
+  const next = parts.find((part): part is Write => part !== 'example' && !isWritten(node, part));
+  if (next === 'input' || (next === 'output' && pullsOutput)) return { part: next, how: 'file' };
   return { part: next ?? 'body', how: next ? 'chat' : 'file' };
 }
 
@@ -74,7 +74,7 @@ function viewHearsEscape(
  * itself --, and the one chosen on the right. Auto generate does what the rows
  * do, in order. What is changed here is in the graph a moment later and Undo
  * takes it back (`nodePanel.ts`); there is no Save and no Cancel. Esc or the
- * way back closes it with nothing lost.
+ * way back closes it; what was changed stays, and so do the words typed to a chat.
  *
  * What a node is made of is not decided here: the node's runner says which
  * files it keeps (`partsOf`), its builder what else is set.
@@ -95,15 +95,17 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   const writing = usePartGenerate(node.id, panel);
   const trying = useTryExample(node, writing.graph);
   const parts = partsOf(node);
-  const [open, setOpen] = useState<Open>(() => firstOpen(node, parts));
-  // What was typed to each chat and not sent: a look at the file and back keeps it.
-  const [drafts, setDrafts] = useState<Partial<Record<Write, string>>>({});
   const isProject = useGraphStore((s) => s.isProject);
   const page = useGraphStore((s) => s.page);
   const wires = useGraphStore((s) => s.rfEdges);
   const near = neighbours(node.id, wires);
   const graphNodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
   const labels = Object.fromEntries(graphNodes.map((item) => [item.id, item.label || item.id]));
+  // Where every output goes into a memory, the output is pulled too: the field says what it wants.
+  const pullsOutput = pullableOutput(node, graphNodes, wires);
+  const [open, setOpen] = useState<Open>(() => firstOpen(node, parts, pullsOutput));
+  // What was typed to each chat and not sent: a look at the file and back keeps it.
+  const [drafts, setDrafts] = useState<Partial<Record<Write, string>>>({});
   const view = useRef<HTMLDivElement>(null);
   const describing = useId();
   const text = useRef<HTMLTextAreaElement>(null);
@@ -114,7 +116,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       // One an editor inside took for itself -- closing its search, say -- is not this one's.
-      if (event.key !== 'Escape' || event.defaultPrevented || !viewHearsEscape(view.current, document, event.target)) return;
+      if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || !viewHearsEscape(view.current, document, event.target)) return;
       onClose();
     };
     document.addEventListener('keydown', onKeyDown);
@@ -168,26 +170,34 @@ function Opened({ node, panel, onClose, onOpenPage }: {
       label: 'Pull input',
       title: `Write input.js from the nodes before it: what they hand on, and an example from running them${asking.length ? `. That asks the model of ${listed(asking)}` : ''}`,
       disabled: writing.generate.busy,
+      once: true,
     }
-    : { id: 'pull', label: 'Pull input', title: 'Nothing is wired to its inputs yet: wire a node to it, and input.js is pulled from there', disabled: true };
+    : { id: 'pull', label: 'Pull input', title: 'Nothing is wired to its inputs yet: wire a node to it, and input.js is pulled from there', disabled: true, once: true };
 
-  const rows: RowView[] = parts.map((write) => {
-    const { file } = fileOf(node, write);
-    const side = write === 'input' ? 'inputs' : write === 'output' ? 'outputs' : null;
+  const rows: RowView[] = parts.map((part) => {
+    const { file } = fileOf(node, part);
+    const side = part === 'input' ? 'inputs' : part === 'output' ? 'outputs' : null;
+    const first: RowAction[] = part === 'input' ? [pulls]
+      : part === 'output' && pullsOutput ? [{
+        id: 'pull',
+        label: 'Pull output',
+        title: 'Write output.js from what each output is written into: the field\'s type, and an example of what it holds filled -- no model is asked',
+        disabled: writing.generate.busy,
+        once: true,
+      }]
+        : part === 'example' ? []
+          : [{ id: 'chat', label: 'Chat', title: `Say what ${file} should hold: it is written, and changed as you say` }];
     return {
-      id: write,
-      label: partName(node, write),
-      actions: [
-        write === 'input' ? pulls : { id: 'chat', label: 'Chat', title: `Say what ${file} should hold: it is written, and changed as you say` },
-        { id: 'file', label: 'File', title: `${file}: read it and edit it here`, written: isWritten(node, write) },
-      ],
+      id: part,
+      label: partName(node, part),
+      actions: [...first, { id: 'file', label: 'File', title: `${file}: read it and edit it here`, written: isWritten(node, part) }],
       add: side && ownPorts && builder.portEditing[side] === 'edit'
         ? { title: `Add ${side === 'inputs' ? 'an input' : 'an output'}`, onClick: () => addPort(side) }
         : undefined,
     };
   });
 
-  const shown: Open = open.part === 'settings' || parts.includes(open.part) ? open : firstOpen(node, parts);
+  const shown: Open = open.part === 'settings' || parts.includes(open.part) ? open : firstOpen(node, parts, pullsOutput);
   const active = shown.part === 'settings' ? null : at(shown.part, shown.how);
   const used = blocksAt(page, node.id);
   // A block that fires a start point and sends to it too is one block.
@@ -260,9 +270,9 @@ function Opened({ node, panel, onClose, onOpenPage }: {
               rows={rows}
               active={active}
               onAction={(row, action) => {
-                // Pulled, the input is shown where it was written.
-                if (action.id === 'pull') void writing.pull();
-                setOpen({ part: row.id as Write, how: action.id === 'chat' ? 'chat' : 'file' });
+                // Pulled, a definition is shown where it was written.
+                if (action.id === 'pull') void writing.pull(row.id === 'output' ? 'output' : 'input');
+                setOpen(row.id === 'example' ? { part: 'example', how: 'file' } : { part: row.id as Write, how: action.id === 'chat' ? 'chat' : 'file' });
               }}
             />
           </div>

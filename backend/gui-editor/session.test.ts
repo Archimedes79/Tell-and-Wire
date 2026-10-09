@@ -94,7 +94,7 @@ describe('state', () => {
     const session = await open(design);
     await session.run(null);
     await session.run(null);
-    expect(session.kept()).toEqual({ nodes: { count: { data_value: { total: 2 } } }, page: {} });
+    expect(session.kept()).toEqual({ nodes: { count: { total: 2, round: 2 } }, page: {} });
     expect(design.nodes[0].config.data_value).toEqual({ total: 0 });
     expect(session.graph.nodes[0].config.data_value).toEqual({ total: 0 });
   });
@@ -116,7 +116,7 @@ describe('state', () => {
     session.stop(id);
     for (let i = 0; i < 50 && !session.snapshot(id)?.done; i += 1) await wait(10);
     expect(session.snapshot(id)).toMatchObject({ done: true, cancelled: true });
-    expect(session.kept().nodes).toEqual({ count: { data_value: { total: 1 } } });
+    expect(session.kept().nodes).toEqual({ count: { total: 1, round: 1 } });
 
     const loop = graphOf(
       [node('a', 'code', {}, { in: ['x'], out: ['y'] }), node('b', 'code', {}, { in: ['y'], out: ['x'] })],
@@ -140,7 +140,7 @@ describe('state', () => {
     expect(session.kept().page).toEqual({ shown: 'picked a' });
   });
 
-  it('goes on after a restart, as the same session, from state.json: the nodes\' slots and the page\'s blocks', async () => {
+  it('goes on after a restart, as the same session, from state.json: the nodes\' kept values and the page\'s blocks', async () => {
     const file = await scratch();
     const first = await open(counter(), file);
     await first.run(null);
@@ -149,7 +149,7 @@ describe('state', () => {
     expect(second.id).toBe(first.id);
     expect(second.dropped).toEqual([]);
     await second.run(null);
-    expect(second.kept().nodes).toEqual({ count: { data_value: { total: 3 } } });
+    expect(second.kept().nodes).toEqual({ count: { total: 3, round: 3 } });
 
     const pageFile = await scratch();
     await picked(await open(echo(), pageFile), { pick: 'b' });
@@ -172,7 +172,7 @@ describe('state', () => {
 });
 
 describe('a design that changed', () => {
-  it('wins over what was kept: a slot whose design changed starts from the design again, one it did not touch stays', async () => {
+  it('wins over what was kept: a value whose design changed starts from the design again, one it did not touch -- the round count -- stays', async () => {
     const file = await scratch();
     const session = await open(counter(), file);
     await session.run(null);
@@ -185,17 +185,17 @@ describe('a design that changed', () => {
     relabelled.nodes[1].label = 'Add one';
     expect(session.hold(relabelled)).toEqual([]);
     expect(session.designRevision).toBe(1);
-    expect(session.kept().nodes).toEqual({ count: { data_value: { total: 1 } } });
+    expect(session.kept().nodes).toEqual({ count: { total: 1, round: 1 } });
 
     const restarted = counter();
     restarted.nodes[0].config.data_value = { total: 10 };
-    expect(session.hold(restarted)).toEqual(['What "count" kept in "data_value" was dropped: its design changed.']);
+    expect(session.hold(restarted)).toEqual(['What "count" kept in "total" was dropped: its design changed.']);
     await session.run(null);
-    expect(session.kept().nodes).toEqual({ count: { data_value: { total: 11 } } });
+    expect(session.kept().nodes).toEqual({ count: { total: 11, round: 2 } });
 
     // The same is said when the design changed while the tool was not running.
     const reopened = await open(counter(), file);
-    expect(reopened.dropped).toEqual(['What "count" kept in "data_value" was dropped: its design changed.']);
+    expect(reopened.dropped).toEqual(['What "count" kept in "total" was dropped: its design changed.']);
   });
 
   it('drops, and says, what a node or a block that is gone kept', async () => {
@@ -324,7 +324,7 @@ describe('the document the editor hands over', () => {
     expect(again).not.toBe(first);
     // From its own file: the same session, as a restarted server's would be.
     expect(again.id).toBe(first.id);
-    expect(again.kept().nodes).toEqual({ count: { data_value: { total: 1 } } });
+    expect(again.kept().nodes).toEqual({ count: { total: 1, round: 1 } });
     await again.run(null);
     expect(await roundsIn(mine)).toBe(2);
     expect(existsSync(stateFileOf(theirs))).toBe(false);
@@ -342,7 +342,7 @@ describe('the application a session runs', () => {
       [edge('n', 'count', 'total', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total'), edge('go', 'tick', 'data', 'add', RUN_PORT)],
     );
     const session = await open(graph);
-    const counted = () => ((session.kept().nodes.count?.data_value as { total: number } | undefined)?.total ?? 0);
+    const counted = () => ((session.kept().nodes.count?.total as number | undefined) ?? 0);
     expect(await session.startApplication()).toEqual({ ticks: true });
     expect(counted()).toBeGreaterThanOrEqual(1);
     expect(session.view().clock).toMatchObject({ running: true, ticks: true });

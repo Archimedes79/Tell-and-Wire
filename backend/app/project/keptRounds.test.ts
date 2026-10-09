@@ -72,6 +72,25 @@ describe('a round, kept', () => {
     const replayed = await replayRound(changed, kept, { core: localCore({ runtime: () => noModel }), registry });
     expect(replayed.status).toBe('fail');
     expect(replayed.details).toEqual(['"words" handed back 17; the kept round, 3.']);
+
+    // A tool that counts: its memory starts where it stood, and runs again -- the loop reads it as it did.
+    const counter = (): Graph => graphOf([
+      node('ask', 'start', { started_by: 'call' }),
+      node('count', 'data', { data_value: { total: 0 } }, { in: ['total'], out: ['total'] }),
+      node('step', 'code', { code: 'function run(i) { return { next: i.n + 1 }; }' }, { in: ['n', 'go'], out: ['next'] }),
+      node('shown', 'end', {}, { in: ['value'] }),
+    ], [
+      edge('g', 'ask', 'data', 'step', 'go'), edge('r', 'count', 'total', 'step', 'n'),
+      edge('w', 'step', 'next', 'count', 'total'), edge('s', 'count', 'total', 'shown', 'value'),
+    ]);
+    const session = await Session.open(counter(), { runtime: () => answering });
+    await session.run({ node_id: 'ask', port_id: 'data' });
+    const second = session.start({ node_id: 'ask', port_id: 'data' });
+    const kept2 = keptRound(counter(), await second.outcome, session.snapshot(second.id)!.started, registry, session.stateBefore(second.id));
+    expect(kept2.state).toEqual({ count: { total: 1, round: 1 } });
+    expect(kept2.outputs).toEqual({ shown: 2 });
+    expect(Object.keys(kept2.given)).toEqual(['ask']);
+    expect(await replayRound(counter(), kept2, { core: localCore({ runtime: () => noModel }), registry })).toMatchObject({ status: 'pass', outputs: { shown: 2 } });
   });
 
   it('is kept under a file name of its own folder, whatever its start point is called', async () => {

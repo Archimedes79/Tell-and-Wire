@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { type Graph, type GraphNode } from '../graph.ts';
-import { executeGraph, memoryFeedbackEdges } from './executor.ts';
+import { executeGraph, memoryReads, unneeded } from './executor.ts';
 import type { Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
 import { RUN_PORT, pageStarts, startEvents, triggeredNodes } from './triggers.ts';
@@ -55,8 +55,8 @@ const runtime = quietRuntime({ report: (event) => { if (event.type === 'node_sta
 describe('a round started at a start point', () => {
   it('runs what the start point is wired to and what that needs, and leaves the other tool alone; with no event named, everything; the ◆ opens a node and delivers nothing', async () => {
     const graph = twoTools();
-    const feedback = memoryFeedbackEdges(graph.nodes, graph.edges, registry);
-    expect([...triggeredNodes(graph, { node_id: 'go_a', port_id: 'data' }, feedback)!].sort()).toEqual(['a', 'go_a', 'show_a']);
+    const reads = memoryReads(graph.nodes, graph.edges, registry);
+    expect([...triggeredNodes(graph, { node_id: 'go_a', port_id: 'data' }, reads)!].sort()).toEqual(['a', 'go_a', 'show_a']);
 
     ran.length = 0;
     const result = await executeGraph(twoTools(), { runtime, registry, trigger: { node_id: 'go_a', port_id: 'data' } });
@@ -69,6 +69,24 @@ describe('a round started at a start point', () => {
     ran.length = 0;
     await executeGraph(twoTools(), { runtime, registry });
     expect(ran.sort()).toEqual(['a', 'b', 'go_a', 'go_b', 'show_a', 'show_b']);
+
+    // A tool that counts: the click runs the step, the memory fills and forwards, and what shows it runs in the same round.
+    const counting = graphOf(
+      [start('click'), node('step', 'code', {}, { in: ['n'], out: ['next'] }), node('count', 'data', { data_value: { n: 0 } }, { in: ['n'], out: ['n'] }), node('show', 'end', {}, { in: ['value'] })],
+      [edge('go', 'click', 'data', 'step', RUN_PORT), edge('read', 'count', 'n', 'step', 'n'), edge('write', 'step', 'next', 'count', 'n'), edge('see', 'count', 'n', 'show', 'value')],
+    );
+    expect([...memoryReads(counting.nodes, counting.edges, registry)]).toEqual(['read']);
+    expect([...triggeredNodes(counting, { node_id: 'click', port_id: 'data' }, memoryReads(counting.nodes, counting.edges, registry))!].sort()).toEqual(['click', 'count', 'show', 'step']);
+    // The click may as well open the memory's own ◆: what reads the memory is for the event, and so is what shows what that makes.
+    const gating = graphOf(counting.nodes, [edge('go', 'click', 'data', 'count', RUN_PORT), edge('read', 'count', 'n', 'step', 'n'), edge('write', 'step', 'next', 'count', 'n'), edge('see', 'step', 'next', 'show', 'value')]);
+    expect([...triggeredNodes(gating, { node_id: 'click', port_id: 'data' }, memoryReads(gating.nodes, gating.edges, registry))!].sort()).toEqual(['click', 'count', 'show', 'step']);
+
+    // A round that starts somewhere else only reads the memory: it does not run what writes it.
+    const peeking = graphOf(
+      [...counting.nodes, start('peek'), node('look', 'end', {}, { in: ['a', 'b'] })],
+      [...counting.edges, edge('pk', 'peek', 'data', 'look', 'a'), edge('lk', 'count', 'n', 'look', 'b')],
+    );
+    expect([...triggeredNodes(peeking, { node_id: 'peek', port_id: 'data' }, unneeded(peeking.nodes, peeking.edges, registry))!].sort()).toEqual(['count', 'look', 'peek']);
 
     // The ◆ delivers nothing: it says when, not what.
     const gated = graphOf(

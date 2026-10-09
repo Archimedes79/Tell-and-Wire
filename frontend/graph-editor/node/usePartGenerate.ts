@@ -4,12 +4,12 @@ import { useGraphStore } from '../../app/store/graphStore';
 import { ONCE } from '../nodes/NodeGuiBuilder';
 import { useGenerate } from '../authoring/useGenerate';
 import {
-  exchangeName, generateRequest, generationGuard, previewGeneration, resultMessage, unfitDefinition, withHistory, writeName, writesFor,
+  exchangeName, generateRequest, generationGuard, outputsAsDefined, previewGeneration, resultMessage, unfitDefinition, withHistory, writeName, writesFor,
   writtenInto, type Press, type Refine, type Write,
 } from '../authoring/generation';
 import { inputFilesOf } from '../authoring/exampleFile';
-import { arrivedAt, pullable, pulledPorts, type Arrived } from '../authoring/pull';
-import { inputFile } from '../../../graph/authoring/pull.ts';
+import { arrivedAt, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts, type Arrived } from '../authoring/pull';
+import { inputFile, outputFile } from '../../../graph/authoring/pull.ts';
 import type { useNodePanel } from './nodePanel';
 
 /** What the person said to a chat: the words for a file not written yet (`ask`), or the change to the file there is (`refine`). */
@@ -60,7 +60,7 @@ export function usePartGenerate(nodeId: string, panel: ReturnType<typeof useNode
    * example: what a press writes after it is written against it, and against
    * none is written against nothing.
    */
-  const pull = async (): Promise<boolean> => {
+  const pullInput = async (): Promise<boolean> => {
     const start = panel.node();
     if (!start) return false;
     const portsOf = (node: GraphNode, arrived: Arrived) => {
@@ -76,18 +76,40 @@ export function usePartGenerate(nodeId: string, panel: ReturnType<typeof useNode
       },
       success: (arrived) => {
         const now = panel.node() ?? start;
-        const wired = new Set(around().edges.filter((edge) => edge.target === now.id).map((edge) => edge.targetHandle));
-        const bare = portsOf(now, arrived).filter((port) => port.example === undefined && wired.has(port.id)).map((port) => `"${port.id}"`);
-        complete = !arrived.error && !bare.length;
-        if (arrived.error) return `⚠️ input.js pulled from what the nodes before it say, but there is no example from a run: ${arrived.error}`;
-        const why = arrived.unread.length ? 'the file it reads could not be read' : 'nothing reached it when what feeds it ran';
-        if (bare.length) return `⚠️ input.js pulled, but there is no example for ${bare.join(', ')}: ${why} -- choose a file on the page, or give a start point an example, and pull again.`;
-        return '✅ input.js pulled: its definition from the nodes before it, its example from running them.';
+        const gap = pullGap(now, portsOf(now, arrived), around().edges, arrived);
+        complete = !gap;
+        return gap ? `⚠️ input.js pulled, but ${gap}` : '✅ input.js pulled: its definition from the nodes before it, its example from running them.';
       },
       failure: 'Pulling input.js failed',
     });
     return written && complete;
   };
+
+  /**
+   * Pull output.js off the memory each output is written into
+   * (`authoring/pull.ts`): the field's type, and an example of what it holds
+   * filled. No model is asked, nothing is run. Written in as an undo step of
+   * its own. Resolves to whether it was written.
+   */
+  const pullOutput = (): Promise<boolean> => {
+    const start = panel.node();
+    if (!start) return Promise.resolve(false);
+    return generate.run({
+      pending: 'Reading what the memory holds…',
+      run: async () => {
+        const { nodes, edges } = around();
+        const ports = pulledOutputs(panel.node() ?? start, nodes, edges);
+        if (!ports) throw new Error('Not every output goes into a memory: say in the chat what it hands on.');
+        return ports;
+      },
+      apply: (ports) => panel.change((now) => outputsAsDefined({ ...now, config: { ...now.config, output_definition: outputFile(ports) } }), ONCE),
+      success: () => '✅ output.js pulled: each output typed, and shown an example, as the memory field it is written into.',
+      failure: 'Pulling output.js failed',
+    });
+  };
+
+  /** Pull *which* definition off the graph: what feeds the node, or what its outputs are written into. */
+  const pull = (which: 'input' | 'output' = 'input'): Promise<boolean> => (which === 'output' ? pullOutput() : pullInput());
 
   /**
    * Write *write*, or -- for 'all' -- the whole node: for a body, what is
@@ -105,8 +127,11 @@ export function usePartGenerate(nodeId: string, panel: ReturnType<typeof useNode
     for (const one of say.refine && write !== 'all' ? [write] : writesFor(start, write)) {
       const current = panel.node();
       if (!current) return false;
-      if (one === 'input' && pullable(current, around().edges)) {
-        if (!(await pull())) return false;
+      const { nodes, edges } = around();
+      // Words said to the output's chat are for the model: pulled, they would be lost.
+      const spoken = one === write && !!(say.ask || say.refine);
+      if ((one === 'input' && pullable(current, edges)) || (one === 'output' && !spoken && pullableOutput(current, nodes, edges))) {
+        if (!(await pull(one))) return false;
         continue;
       }
       const mine = one === write ? say : {};

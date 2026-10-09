@@ -24,6 +24,8 @@ const KEEP_MS = 300_000;
 
 /** What the work of a round is handed: where it says how far it is, and the signal Stop pulls. */
 export interface RoundWork {
+  /** The round's own id. */
+  readonly id: string;
   report(event: CoreEvent): void;
   signal: AbortSignal;
 }
@@ -140,6 +142,7 @@ export class Rounds {
       round.currentLabel = '';
       this.changed(id, true);
       return work({
+        id,
         report: (event) => {
           round.report(event, labelOf);
           this.changed(id, false);

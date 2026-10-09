@@ -70,7 +70,7 @@ function namedAfter(label: string, base: string): boolean {
 function followLabel(block: GuiWidget, label: string, step: string): void {
   if (!block.shows || label === block.label) return;
   const nodes = nodesNow();
-  const end = nodes.find((node) => node.id === block.shows);
+  const end = nodes.find((node) => node.id === block.shows && endPoints(nodes).some((point) => point.id === node.id));
   if (!end || !namedAfter(end.label, block.label || 'Result')) return;
   const others = nodes.filter((node) => node.node_type === end.node_type && node.id !== end.id).map((node) => node.label);
   useGraphStore.getState().updateNode(end.id, { label: freeId(label || 'Result', others, ' ') }, undefined, step);

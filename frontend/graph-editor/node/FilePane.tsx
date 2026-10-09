@@ -7,7 +7,7 @@ import CodeField, { type CodeLanguage } from '../authoring/CodeField';
 import { OpenInEditor } from '../authoring/FileChip';
 import TryExample, { type useTryExample } from '../authoring/TryExample';
 import { useTyped } from '../authoring/useTyped';
-import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Write } from '../authoring/generation';
+import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Part } from '../authoring/generation';
 import { PaneHeader } from '../views/NodeViewLayout';
 import FilesLine from './FilesLine';
 
@@ -70,7 +70,7 @@ function JsonEditor({ node, field, setConfig, ...editor }: Omit<EditorProps, 'va
  */
 export default function FilePane({ node, write, setConfig, updateNode, flush, trying, busy, onFix }: {
   node: GraphNode;
-  write: Write;
+  write: Part;
   setConfig: NodePanelProps['setConfig'];
   updateNode: NodePanelProps['updateNode'];
   /** Write what the view still holds into the graph: before a project is saved to open one of its files. */
@@ -104,7 +104,7 @@ export default function FilePane({ node, write, setConfig, updateNode, flush, tr
         <OpenInEditor nodeId={node.id} file={file} before={flush} />
       </PaneHeader>
 
-      {write !== 'body' && <FilesLine node={node} side={write} setConfig={setConfig} />}
+      {(write === 'input' || write === 'output') && <FilesLine node={node} side={write} setConfig={setConfig} />}
 
       {json ? (
         <JsonEditor {...editor} node={node} field={field} setConfig={setConfig} />

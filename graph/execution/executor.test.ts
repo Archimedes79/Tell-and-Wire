@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Graph, GraphNode } from '../graph.ts';
-import { executeGraph, inputsFor, memoryFeedbackEdges, runNodeAlone, topologicalLevels } from './executor.ts';
+import { executeGraph, inputsFor, memoryReads, runNodeAlone, topologicalLevels } from './executor.ts';
 import { NodeRunner } from '../nodes/NodeRunner.ts';
 import { type Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
@@ -17,10 +17,10 @@ function node(id: string, type = 'code', config: Record<string, unknown> = {}): 
 const nowhere = quietRuntime();
 
 describe('a loop', () => {
-  it('runs only through a node that remembers: the wire into it settles for the next round; a loop of forgetful nodes is refused', async () => {
+  it('runs only through a node that remembers: the wire that reads it round the loop carries what it held when the round began, and it fills and forwards after; a loop of forgetful nodes is refused', async () => {
     const forgetful = [node('a'), node('b')];
     const forgetfulLoop = [edge('e1', 'a', 'o', 'b', 'i'), edge('e2', 'b', 'o', 'a', 'i')];
-    expect(memoryFeedbackEdges(forgetful, forgetfulLoop, registry).size).toBe(0);
+    expect(memoryReads(forgetful, forgetfulLoop, registry).size).toBe(0);
     // Said by name, with the way out.
     expect(() => topologicalLevels(forgetful, forgetfulLoop, new Set())).toThrow(/cycle through code node "a", code node "b".*data node/);
 
@@ -29,9 +29,55 @@ describe('a loop', () => {
     const step = node('step', 'code', { code: 'x', language: 'js' });
     step.outputs = [{ id: 'output', name: 'o', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
     const loop = [edge('read', 'store', 'value', 'step', 'input'), edge('write', 'step', 'output', 'store', 'value')];
-    expect([...memoryFeedbackEdges([store, step], loop, registry)]).toEqual(['write']);
-    await executeGraph(graphOf([store, step], loop), { runtime: { ...nowhere, code: { run: async () => ({ output: 'fresh' }) } }, registry });
-    expect(store.config.data_value).toEqual({ value: 'fresh' });
+    // The wire out of it that closes the loop reads what it held; the step writes back, and the node forwards what it then holds.
+    expect([...memoryReads([store, step], loop, registry)]).toEqual(['read']);
+    const graph = graphOf([store, step], loop);
+    const runtime = { ...nowhere, code: { run: async (_body: string, inputs: Record<string, unknown>) => ({ output: `${String(inputs.input)}+` }) } };
+    const first = await executeGraph(graph, { runtime, registry });
+    expect(store.config.data_value).toEqual({ value: 'old+' });
+    expect(store.config.data_round).toBe(1);
+    // The step read 'old'; the node filled from it and forwarded 'old+', as the round number 1.
+    const made = first.node_results.find((result) => result.node_id === 'store')!;
+    expect(made.inputs).toEqual({ value: 'old+' });
+    expect(made.outputs).toMatchObject({ value: 'old+', round: 1 });
+    await executeGraph(graph, { runtime, registry });
+    expect(store.config.data_value).toEqual({ value: 'old++' });
+    expect(store.config.data_round).toBe(2);
+
+    // Whatever reads it after the loop gets what it forwards, in the same round: the node fills, then forwards.
+    const fill = node('fill', 'data', { data_value: { value: 'old' } });
+    const make = node('make', 'code', { code: 'make', language: 'js' });
+    const look = node('look', 'code', { code: 'look', language: 'js' });
+    for (const one of [make, look]) one.outputs = step.outputs;
+    const through = graphOf([make, fill, look], [
+      edge('put', 'make', 'output', 'fill', 'value'), edge('back', 'fill', 'value', 'make', 'input'), edge('get', 'fill', 'value', 'look', 'input'),
+    ]);
+    expect([...memoryReads(through.nodes, through.edges, registry)]).toEqual(['back']);
+    const passes = { ...nowhere, code: { run: async (body: string, inputs: Record<string, unknown>) => ({ output: `${body === 'make' ? 'new from' : 'saw'} ${String(inputs.input)}` }) } };
+    const seen = await executeGraph(through, { runtime: passes, registry });
+    expect(seen.node_results.find((result) => result.node_id === 'look')!.outputs).toEqual({ output: 'saw new from old' });
+    expect(fill.config.data_value).toEqual({ value: 'new from old' });
+
+    // A memory that did not run keeps what it kept and counts no round: its ◆ stayed shut, so what was written to it is not taken.
+    const shy = node('shy', 'data', { data_value: { value: 'old' } });
+    const no = node('no', 'code', { code: 'no', language: 'js' });
+    const writer = node('writer', 'code', { code: 'writer', language: 'js' });
+    for (const one of [no, writer]) one.outputs = step.outputs;
+    const shut = graphOf([no, writer, shy], [edge('when', 'no', 'output', 'shy', '__run'), edge('put2', 'writer', 'output', 'shy', 'value')]);
+    const says = { ...nowhere, code: { run: async (body: string) => ({ output: body === 'no' ? false : 'written' }) } };
+    await executeGraph(shut, { runtime: says, registry });
+    expect(shy.config.data_value).toEqual({ value: 'old' });
+    expect(shy.config.data_round).toBeUndefined();
+
+    // A port that takes one value of what arrives takes that value, as the node fills from it and as it is kept.
+    const picky = node('picky', 'data', { data_value: { value: 'old' } });
+    picky.inputs = [{ ...step.outputs[0], id: 'value', kind: 'input', field: 'a' }];
+    const giver = node('giver', 'code', { code: 'giver', language: 'js' });
+    giver.outputs = step.outputs;
+    await executeGraph(graphOf([giver, picky], [edge('pick', 'giver', 'output', 'picky', 'value')]), {
+      runtime: { ...nowhere, code: { run: async () => ({ output: { a: 'the a', b: 'the b' } }) } }, registry,
+    });
+    expect(picky.config.data_value).toEqual({ value: 'the a' });
   });
 });
 

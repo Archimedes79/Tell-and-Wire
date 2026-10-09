@@ -77,9 +77,11 @@ export interface SessionView {
   /** What each end point handed back last, by its name, laid over from every round. */
   outputs: Record<string, unknown>;
   /**
-   * What each memory node holds now, by its name: its whole content -- every
-   * field -- from the design's values on, kept by the rounds that settled it.
-   * Watched without a round: a block of the page can show it, a script read it.
+   * What each memory node holds, by its name -- its whole content: every field
+   * and the round count -- and each part of it by the name and the part
+   * (`counter.clicks`): what the last round that ran to its end left, from
+   * the design's values on, never a round half done. Watched without a round:
+   * a block of the page can show it, a script read it.
    */
   state: Record<string, unknown>;
   /**
@@ -92,8 +94,9 @@ export interface SessionView {
   shown: Record<string, unknown>;
   /**
    * What using the graph left that differs from its design -- what Start over
-   * forgets: each node's slots by node id and slot (a data node's value, what
-   * a start point was sent), and what each block of the page holds, by id.
+   * forgets: each node's values by node id and name (a data node's fields and
+   * round count, what a start point was sent), and what each block of the page
+   * holds, by id.
    */
   kept: { nodes: Record<string, Record<string, unknown>>; page: Record<string, unknown> };
   /** How many rounds have run to their end, and when the last did. */
@@ -322,6 +325,13 @@ export interface GenerateResponse {
    * it is written with the body, and the node's outputs are its keys.
    */
   output_definition?: string;
+  /**
+   * A data node's second file, written with its fields (`result`): the same
+   * fields as rounds would have filled them -- one realistic value for each --
+   * that what is wired to the node is written against. Left out where the
+   * answer brought none that could be read: the node then shows its start.
+   */
+  example?: string;
   probe: ProbeReport;
   /** Every model call this generation made, in order: what the node's history.md keeps. For a preview, the one request, unsent. */
   calls: AICall[];

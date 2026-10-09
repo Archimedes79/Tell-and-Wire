@@ -1,5 +1,5 @@
 import type { GraphNode } from '../../../app/graph';
-import { DataNodeRunner, ALL_FIELDS, hasField } from '../../../../graph/nodes/data/DataNodeRunner.ts';
+import { DataNodeRunner, ALL_FIELDS, ROUND, hasField } from '../../../../graph/nodes/data/DataNodeRunner.ts';
 import { derivedNodePorts } from '../../../app/document/ports';
 import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
@@ -16,6 +16,12 @@ function briefly(value: unknown): string {
   if (Array.isArray(value)) return `${value.length} ${value.length === 1 ? 'item' : 'items'}`;
   if (value && typeof value === 'object') return '{…}';
   return String(value);
+}
+
+/** What *port* of *node* holds filled: its example, or what it starts as where the example leaves it out. */
+function valueOf(node: GraphNode, port: string): unknown {
+  const { fields, example } = DATA.config(node as never);
+  return hasField(example, port) ? example[port] : fields[port];
 }
 
 export class DataNodeGuiBuilder extends NodeGuiBuilder {
@@ -40,7 +46,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
   override readonly paletteGroup = 'Processing';
 
   // A data node IS the graph's register: a struct that holds its fields between
-  // runs, which is what lets a feedback edge into a field close a cycle. Its ports
+  // runs, which is what lets a loop through a field close. Its ports
   // are its fields (`DataNodeRunner.derivedPorts`), so there are none to edit, and
   // its one file, data.json, is edited in its file's pane and written by its chat.
 
@@ -57,22 +63,23 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
 
   /**
    * What a wire from it carries -- one field, or all of them (*port*) -- what
-   * its text says, and the start of what it holds, as JSON: what the nodes
-   * wired to it are told it hands on. The value itself, since its keys are in
-   * it: told only "ten capitals", ✨ Input wrote "Capital" where the records
-   * say "capital", and the table stayed empty.
+   * its text says, and the start of what it holds filled (`example.json`), as
+   * JSON: what the nodes wired to it are told it hands on. The value itself,
+   * since its keys are in it: told only "ten capitals", ✨ Input wrote
+   * "Capital" where the records say "capital", and the table stayed empty.
    */
   override describeOutput(node: GraphNode, port?: string): string {
-    const { fields } = DATA.config(node as never);
+    const { fields, example } = DATA.config(node as never);
     const names = Object.keys(fields);
     const details = node.description?.trim();
     const start = (value: unknown) => {
       const json = JSON.stringify(value) ?? '';
       return json.length > HELD_SHOWN ? `${json.slice(0, HELD_SHOWN)}… (${json.length - HELD_SHOWN} more characters)` : json;
     };
-    if (port !== undefined && hasField(fields, port)) return `the field "${port}" of a struct${details ? `: ${details}` : ''} -- it holds: ${start(fields[port])}`;
+    if (port === ROUND) return `the number of the round, from 1: how many rounds the struct has been through, the one it is in included${details ? ` -- of a struct: ${details}` : ''}`;
+    if (port !== undefined && hasField(fields, port)) return `the field "${port}" of a struct${details ? `: ${details}` : ''} -- as rounds fill it, it holds: ${start(valueOf(node, port))}`;
     const said = `a struct of ${names.length ? `the fields ${names.map((name) => `"${name}"`).join(', ')}` : 'no fields yet'}${details ? `: ${details}` : ''}; "${ALL_FIELDS}" is all of them`;
-    return names.length ? `${said} -- it holds: ${start(fields)}` : said;
+    return names.length ? `${said} -- as rounds fill it, it holds: ${start(example)}` : said;
   }
 
   /** What it remembers, the start of it, under its ports: each field and a few words of what it holds. */
@@ -83,21 +90,21 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
   }
 
   /**
-   * What a field stores is what it hands on, until something new arrives:
-   * asked of its runner, which a run asks. Nothing, for an empty field -- or
-   * a port that is none of its fields.
+   * What a field holds as rounds fill it: the example is what whoever reads or
+   * writes it is written against, where a run shows only how it starts.
+   * Nothing, for an empty field -- or a port that is none of its fields.
    */
   override restingValue(node: GraphNode, port: string): unknown {
-    const { fields } = DATA.config(node as never);
-    const value = port === ALL_FIELDS ? fields : hasField(fields, port) ? fields[port] : undefined;
+    const { example } = DATA.config(node as never);
+    const value = port === ALL_FIELDS ? { ...example, [ROUND]: 1 } : port === ROUND ? 1 : valueOf(node, port);
     return value === '' || value === null ? undefined : value;
   }
 
-  /** What a field is: it holds what arrives on it, and now this. The gate says nothing of the sort. */
+  /** What a field is: it holds what arrives on it, and looks like this filled. The gate says nothing of the sort. */
   override wantsOn(node: GraphNode, port: string): string | undefined {
     const { fields } = DATA.config(node as never);
     if (!hasField(fields, port)) return super.wantsOn(node, port);
-    const now = JSON.stringify(fields[port]);
-    return `the field "${port}" it stores: what arrives replaces its value${now === undefined ? '' : ` -- it holds ${now.length > 200 ? `${now.slice(0, 200)}…` : now} now`}`;
+    const now = JSON.stringify(valueOf(node, port));
+    return `the field "${port}" it stores: what arrives replaces its value${now === undefined ? '' : ` -- filled, it holds ${now.length > 200 ? `${now.slice(0, 200)}…` : now}`}`;
   }
 }

@@ -102,7 +102,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       if (round.result.status !== 'success') throw new Refusal(422, 'Only a round that ran through is kept as a test: this one did not.');
       const folder = project.projectFolderOf(String(asked.path ?? ''));
       if (!folder) throw new Refusal(422, 'Save the graph as a project folder first: a kept round lives in its tests/ folder.');
-      const name = await writeKeptRound(folder, keptRound(session.graph, round.result, round.started, registry));
+      const name = await writeKeptRound(folder, keptRound(session.graph, round.result, round.started, registry, session.stateBefore(round.round_id)));
       return { name, file: `${TESTS_DIR}/${name}.json` };
     },
 

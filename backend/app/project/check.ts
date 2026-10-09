@@ -8,7 +8,7 @@
 // page can ask it; what only a project folder gets wrong is `folderCheck.ts`.
 
 import type { Graph, GraphEdge, GraphNode } from '../../../graph/graph.ts';
-import { NESTING_LIMIT, fieldOf, memoryFeedbackEdges, topologicalLevels } from '../../../graph/execution/executor.ts';
+import { NESTING_LIMIT, fieldOf, memoryReads, topologicalLevels } from '../../../graph/execution/executor.ts';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { fieldSender, pageProblems, showsMemory, widgetElement } from '../../gui-editor/widgets/page.ts';
 import { ERROR_PORT, names, wiringProblems, type Problem } from '../../../graph/execution/wiring.ts';
@@ -21,11 +21,11 @@ import { unsavableIds } from './flow.ts';
 export { type Problem } from '../../../graph/execution/wiring.ts';
 
 /** The nodes a cycle is made of: whatever is left once everything with a free end is taken away. */
-function knot(graph: Graph, feedback: Set<string>): string[] {
+function knot(graph: Graph, reads: Set<string>): string[] {
   const left = new Set(graph.nodes.map((node) => node.id));
   for (let changed = true; changed;) {
     changed = false;
-    const live = graph.edges.filter((edge) => !feedback.has(edge.id)
+    const live = graph.edges.filter((edge) => !reads.has(edge.id)
       && left.has(edge.source_node_id) && left.has(edge.target_node_id));
     for (const id of [...left]) {
       if (live.some((edge) => edge.target_node_id === id) && live.some((edge) => edge.source_node_id === id)) continue;
@@ -140,12 +140,12 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
   // With two nodes sharing an id the ordering cannot be trusted either way, and
   // the duplicate is the thing to fix first.
   if (new Set(graph.nodes.map((node) => node.id)).size === graph.nodes.length) {
-    const feedback = memoryFeedbackEdges(graph.nodes, graph.edges, registry);
+    const reads = memoryReads(graph.nodes, graph.edges, registry);
     try {
-      topologicalLevels(graph.nodes, graph.edges, feedback);
+      topologicalLevels(graph.nodes, graph.edges, reads);
     } catch {
       problems.push({
-        where: `${inside}nodes ${names(knot(graph, feedback))}`,
+        where: `${inside}nodes ${names(knot(graph, reads))}`,
         problem: 'These nodes feed each other in a circle, so none of them can run first.',
         fix: 'A loop is only allowed through a node that remembers: a data node closes one. '
           + 'Route the value back through a data node, or remove one of the edges.',

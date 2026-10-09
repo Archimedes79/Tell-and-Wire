@@ -9,6 +9,8 @@ export interface RowAction {
   disabled?: boolean;
   /** For a file: whether anything is written in it yet -- a filled mark if so, an empty one if not. */
   written?: boolean;
+  /** Does something once and opens nothing: not a button that is lit while it is the one open. */
+  once?: boolean;
 }
 
 /** A row: what it is called, an optional + that adds one more of it, and its buttons. */
@@ -60,7 +62,7 @@ export default function RowList({ rows, active, onAction }: {
                 disabled={action.disabled}
                 onClick={() => onAction(row, action)}
                 title={action.title}
-                aria-pressed={lit}
+                aria-pressed={action.once ? undefined : lit}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg text-sm hover-raise"
                 style={{
                   height: 34,

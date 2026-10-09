@@ -165,21 +165,21 @@ export function takesPageValue(graph: Graph, id: string): boolean {
  * its design.
  */
 export function pageState(graph: Graph): Record<string, unknown> {
-  const slots: Record<string, unknown> = {};
+  const kept: Record<string, unknown> = {};
   for (const stored of pageBlocks(graph)) {
     const widget = parseWidget(stored);
-    if (widgetElement(widget.kind)?.keepsState(widget)) slots[widget.id] = stored.value ?? null;
+    if (widgetElement(widget.kind)?.keepsState(widget)) kept[widget.id] = stored.value ?? null;
   }
-  return slots;
+  return kept;
 }
 
-/** Put slots `pageState` read back where the blocks keep them. */
-export function setPageState(graph: Graph, slots: Record<string, unknown>): void {
+/** Put what `pageState` read back where the blocks keep it. */
+export function setPageState(graph: Graph, kept: Record<string, unknown>): void {
   for (const stored of pageBlocks(graph)) {
     const id = String(stored.id ?? '');
-    if (!(id in slots)) continue;
-    if (slots[id] === null) delete stored.value;
-    else stored.value = slots[id];
+    if (!(id in kept)) continue;
+    if (kept[id] === null) delete stored.value;
+    else stored.value = kept[id];
   }
 }
 

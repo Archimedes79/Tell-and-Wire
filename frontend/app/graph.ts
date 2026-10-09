@@ -80,8 +80,12 @@ export type NodeConfig = {
   input_files?: string[];
   /** The files the Output chat writes its output definition from, where it is given some. */
   output_files?: string[];
-  /** A data node: its fields -- an object, each key a field -- which it holds between runs, hands on until something arrives on one, and `data.json` keeps. */
+  /** A data node: its fields as they start -- an object, each key a field -- which it holds between rounds, and `data.json` keeps. */
   data_value?: unknown;
+  /** A data node: what its fields look like once rounds have filled them -- what is wired to it is written against it -- and `example.json` keeps. The fields themselves where there is none. */
+  data_example?: unknown;
+  /** A data node: the rounds it has been through. Counted by a session, never part of the design. */
+  data_round?: number;
   extensions: string;
   /** Tool servers an ai node may call, one per line: a URL, or a name this machine configured. */
   mcp_servers?: string;

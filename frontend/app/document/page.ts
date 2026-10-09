@@ -69,16 +69,20 @@ export function endPoints(nodes: GraphNode[]): Point[] {
   });
 }
 
-/** The memory nodes a block can show: what each holds, by name, whether or not a round has run. */
+/** The memory nodes a block can show, and each part of what they hold -- a field, the round count: what each holds, by name, whether or not a round has run. */
 export function memoryPoints(nodes: GraphNode[]): Point[] {
-  return nodes.flatMap((node) => (runnerRegistry.node(node.node_type)?.offers(node as never).some((offer) => offer.kind === 'state')
-    ? [{ id: node.id, label: node.label || node.id, memory: true }] : []));
+  return nodes.flatMap((node) => (runnerRegistry.node(node.node_type)?.offers(node as never) ?? [])
+    .filter((offer) => offer.kind === 'state')
+    .map((offer) => ({ id: offer.name, label: offer.label, memory: true })));
 }
+
+/** Whether what a block shows, *name*, is one of *named* -- or a part of one: a memory's field is its id, a dot and the field's name. */
+const showsOf = (named: Set<string>, name: string | null | undefined): boolean => !!name && (named.has(name) || named.has(name.split('.')[0]));
 
 /** The blocks of *blocks* that name one of the points *ids*: what the page loses with them. */
 export function connectedTo(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
   const named = new Set(ids);
-  return blocks.filter((block) => (block.fires && named.has(block.fires)) || (block.shows && named.has(block.shows))
+  return blocks.filter((block) => (block.fires && named.has(block.fires)) || showsOf(named, block.shows)
     || (block.sends_to ?? []).some((id) => named.has(id)));
 }
 
@@ -93,7 +97,7 @@ export function withoutPoints(blocks: GuiWidget[], ids: readonly string[]): GuiW
       ...rest,
       ...(sends.length ? { sends_to: sends } : {}),
       ...(block.fires && !named.has(block.fires) ? { fires: block.fires } : {}),
-      ...(block.shows && !named.has(block.shows) ? { shows: block.shows } : {}),
+      ...(block.shows && !showsOf(named, block.shows) ? { shows: block.shows } : {}),
     };
   });
 }
@@ -199,11 +203,12 @@ export function defaultField(blocks: GuiWidget[], start: GraphNode, port?: Port)
   return choice ? { choice, name: choice.label } : undefined;
 }
 
-/** The blocks of *blocks* that fire, send to and show the point *id*: what that point's card says of the page. */
+/** The blocks of *blocks* that fire, send to and show the point *id* -- or a part of it: what that point's card says of the page. */
 export function blocksAt(blocks: GuiWidget[], id: string): { fire: GuiWidget[]; send: GuiWidget[]; show: GuiWidget[] } {
+  const named = new Set([id]);
   return {
     fire: blocks.filter((block) => block.fires === id && blockCan(block).fires),
     send: blocks.filter((block) => (block.sends_to ?? []).includes(id) && !!blockCan(block).sends),
-    show: blocks.filter((block) => block.shows === id && blockCan(block).shows),
+    show: blocks.filter((block) => showsOf(named, block.shows) && blockCan(block).shows),
   };
 }

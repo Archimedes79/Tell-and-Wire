@@ -220,6 +220,11 @@ jobs:
             gh release create latest tell-and-wire-latest.zip --verify-tag --prerelease --latest=false \
               --title "Tell & Wire latest (main)" --notes "$notes"
           fi
+          # The release holds this build and nothing else: a file an earlier
+          # build left under another name does not stay behind to be downloaded.
+          for stale in $(gh release view latest --json assets --jq '.assets[].name'); do
+            [ "$stale" = tell-and-wire-latest.zip ] || gh release delete-asset latest "$stale" --yes
+          done
 
   # Publishes the same one-process image README.md and docker-compose.yml
   # describe -- built here, not by hand, so what a `docker pull` gets is what

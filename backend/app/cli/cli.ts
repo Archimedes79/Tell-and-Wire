@@ -30,7 +30,7 @@ import { chosenCore } from '../../../graph/core/stdio.ts';
 import type { GraphCore } from '../../../graph/core/protocol.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { nodeRuntime } from '../../../graph/core/node.ts';
-import { sendFromOutside } from '../../gui-editor/graphInterface.ts';
+import { memoryState, sendFromOutside } from '../../gui-editor/graphInterface.ts';
 import { startFromPage } from '../../gui-editor/widgets/page.ts';
 import { builtPage, WEB_DIR, writeBundle } from './bundle.ts';
 import { isLoopbackHost, portTaken, serve } from '../serve.ts';
@@ -150,6 +150,8 @@ export function parseArgs(argv: string[]): CliOptions {
 async function runOnce(graph: Graph, trigger: Trigger | null, options: CliOptions, core: GraphCore): Promise<number> {
   // A run of everything starts the page's start points on what the page holds.
   if (!trigger) await startFromPage(graph, nodeRuntime(), registry);
+  // Where the memory stood when the round began: a round kept starts it there again.
+  const before = memoryState(graph, registry);
   const { result, nodes } = await core.round({ graph, trigger }, (event) => {
     if (event.type === 'batch') process.stderr.write(`\r  ${event.done}/${event.total}`);
     if (event.type === 'node_done' && event.status === 'error') {
@@ -164,7 +166,7 @@ async function runOnce(graph: Graph, trigger: Trigger | null, options: CliOption
     const folder = projectFolderOf(options.graphPath);
     if (!folder) throw new Error('--keep keeps a round in a project\'s tests/ folder, and this graph is no project folder.');
     if (result.status !== 'success') throw new Error('Only a round that ran through is kept as a test: this one did not.');
-    const kept = keptRound(graph, result, trigger ? { event: trigger.node_id, by: 'call' } : null, registry);
+    const kept = keptRound(graph, result, trigger ? { event: trigger.node_id, by: 'call' } : null, registry, before);
     process.stderr.write(`Kept as ${TESTS_DIR}/${await writeKeptRound(folder, kept)}.json -- the test command runs it again, asking no model.\n`);
   }
   return result.status === 'error' ? 1 : 0;

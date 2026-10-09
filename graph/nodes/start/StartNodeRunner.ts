@@ -151,10 +151,10 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
     return { values: node.config.values ?? {} };
   }
 
-  override setState(node: GraphNode, slots: Record<string, unknown>): void {
-    if (!('values' in slots)) return;
-    if (slots.values === null) delete node.config.values;
-    else node.config.values = slots.values;
+  override setState(node: GraphNode, kept: Record<string, unknown>): void {
+    if (!('values' in kept)) return;
+    if (kept.values === null) delete node.config.values;
+    else node.config.values = kept.values;
   }
 
   async execute(node: GraphNode, _inputs: Record<string, unknown>, runtime: Runtime) {
