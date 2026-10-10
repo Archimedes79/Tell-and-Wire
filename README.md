@@ -117,7 +117,7 @@ asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
 servers. In *the node's settings → Tools the model may use*, **+ Add MCP server** offers the ones
 that come with Tell & Wire -- a web reader and a Word and PDF reader, each with the settings it
-needs -- and takes any other: an `https://…/mcp` address, or a name that the machine's own settings file
+needs -- and takes any other, by a name that the machine's own settings file
 (`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`) defines:
 
 ```json

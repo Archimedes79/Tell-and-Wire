@@ -25,7 +25,7 @@ describe('the security boundary', () => {
   it('opens only the names this machine has configured, never a command line from a graph, and starts nothing when one name is unknown', async () => {
     const tools = mcpToolService({ files: echo('--mute') });
     await expect(tools.open(['shell'])).rejects.toThrow(
-      /graph asks for tool server "shell", which this machine has not configured.*mcp\/shell\/.*settings file/s,
+      /graph asks for tool server "shell", which this machine has not configured.*Add MCP server.*settings file/s,
     );
     // Every one of these is a *name*, looked up and not found. None is run.
     // A URL is a name like any other: only a configured server is ever called.

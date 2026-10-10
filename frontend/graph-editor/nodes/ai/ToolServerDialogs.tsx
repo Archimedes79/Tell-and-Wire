@@ -9,7 +9,7 @@ import ServerPage from './ServerPage';
 /** How a server stands, as the line under its name in the list. */
 function standing(server: McpServerView): string {
   if (server.problem) return server.problem;
-  if (server.by_hand) return 'set up by hand in ai-settings.json';
+  if (server.by_hand) return 'set up by hand in the machine settings';
   if (server.values !== null) return server.installed ? 'set up on this machine' : 'its packages are installed when you add it';
   return server.required.length ? 'asks for its settings first' : 'ready to add';
 }
@@ -119,14 +119,14 @@ export function AddServerDialog({ view, failure, taken, refresh, onAdd, onClose 
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') addTyped(); }}
-              placeholder="https://example.com/mcp, or a name"
+              placeholder="a name"
               spellCheck={false}
             />
             <Button className="shrink-0" disabled={!typed.trim() || taken.includes(typed.trim())} onClick={addTyped}>Add</Button>
           </div>
           <p className="text-xs mt-1" style={{ color: DIMMER }}>
-            A URL is called as it is. A name must be set up under <code>mcp_servers</code> in <code>ai-settings.json</code> on this machine:
-            a graph can name a server, never say what starts it.
+            A name must be set up under <code>mcp_servers</code> in this machine's settings file, a command or a URL:
+            a graph can name a server, never say what starts it or where it is.
           </p>
         </div>
       </div>
@@ -138,7 +138,7 @@ export function AddServerDialog({ view, failure, taken, refresh, onAdd, onClose 
  * One server's settings: to add it, or to change what this machine has set.
  * What shows is the server's own page; a server that brings none gets its
  * variables as `NAME=value` lines. Saving installs its packages if they are
- * not there, writes the settings to `ai-settings.json` and starts the server
+ * not there, writes the settings to the machine's settings file and starts the server
  * once, so that a folder that is not there, or a program that will not start,
  * is said now and not by a run that fails.
  */
@@ -206,7 +206,7 @@ export function ServerDialog({ server, delimiter, mode, first, refresh, onAdded,
           </p>
         )}
         <p className="text-xs" style={{ color: DIMMER }}>
-          Saved on this machine, in <code>ai-settings.json</code>: every graph that uses this server here reads it.
+          Saved on this machine, in its settings file: every graph that uses this server here reads it.
         </p>
 
         {saved && <Outcome saved={saved} />}

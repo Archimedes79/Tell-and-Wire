@@ -5,24 +5,21 @@ import Button from '../../../app/ui/Button';
 import { DIMMER, LINE, SUNKEN, TEXT, WARNING_TEXT } from '../../../app/ui/theme';
 import { AddServerDialog, ServerDialog } from './ToolServerDialogs';
 
-const isUrl = (name: string): boolean => /^https?:\/\//i.test(name);
-
 /** What a name on the node comes to on this machine: how to call it, one line on how it stands, and whether that is a problem. */
 function standing(name: string, view: McpServersView | null): { title: string; note: string; trouble: boolean; server?: McpServerView } {
-  if (isUrl(name)) return { title: name, note: 'a server at this address', trouble: false };
   if (!view) return { title: name, note: '', trouble: false };
   const server = view.servers.find((one) => one.name === name);
   if (server) {
     const title = server.title || name;
     if (server.problem) return { title, note: server.problem, trouble: true, server };
-    if (server.by_hand) return { title, note: 'set up by hand in ai-settings.json', trouble: false };
+    if (server.by_hand) return { title, note: "set up by hand in this machine's settings", trouble: false };
     if (server.values === null) return { title, note: 'not set up on this machine yet', trouble: true, server };
     if (!server.installed) return { title, note: 'its packages are not installed yet', trouble: true, server };
     return { title, note: 'set up on this machine', trouble: false, server };
   }
   return view.configured.includes(name)
-    ? { title: name, note: 'set up by hand in ai-settings.json', trouble: false }
-    : { title: name, note: 'this machine has no such server in ai-settings.json', trouble: true };
+    ? { title: name, note: "set up by hand in this machine's settings", trouble: false }
+    : { title: name, note: "this machine's settings have no such server", trouble: true };
 }
 
 /**
@@ -31,7 +28,7 @@ function standing(name: string, view: McpServersView | null): { title: string; n
  *
  * The node keeps only the names (a graph can name a server, never say what
  * starts it). What a server needs -- a folder, a limit -- is this machine's: set
- * in the dialog, saved in `ai-settings.json`, read by every graph that names
+ * in the dialog, saved in the machine's settings file, read by every graph that names
  * the server here. Taking a server off a node leaves that as it is.
  */
 export default function ToolServers({ names, onChange }: { names: string[]; onChange: (names: string[]) => void }) {

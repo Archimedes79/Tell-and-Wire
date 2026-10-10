@@ -15,7 +15,7 @@ In the node's settings: **Tools the model may use → + Add MCP server**, then p
 - It installs the server's packages if they are not there (npm; the download has them).
 - It asks for what the server needs: the document reader asks for its folders, the web reader
   for nothing. The server brings its own page for that (below).
-- It writes the command that starts the server into `ai-settings.json` on this machine, starts
+- It writes the command that starts the server into the machine's settings file (`~/.tell-and-wire/settings.json`, or `TW_SETTINGS`), starts
   it once to see that it starts, and puts its name on the node.
 
 **Edit config** on the node changes the settings later; **Remove** takes the server off the
@@ -64,7 +64,7 @@ no page gets its variables as `NAME=value` lines, each explained under the box.
 
 ## A server that does not come with Tell & Wire
 
-A URL, or a program such as `npx -y some-server`: write it in `ai-settings.json` as Claude
+A program such as `npx -y some-server`, or a URL: write it in the machine's settings file as Claude
 Desktop's `mcpServers` has it, under `mcp_servers`, and name it in the node (**Add MCP server →
 Another server**; in a project folder `"config": { "mcp_servers": ["<name>"] }` in the node's
 entry in `nodes.json`). The editor does not write or change an entry it did not write.

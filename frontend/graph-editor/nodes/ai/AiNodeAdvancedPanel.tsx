@@ -73,7 +73,7 @@ export default function AiNodeAdvancedPanel({ node, setConfig, updateNode }: Nod
           onChange={(names) => setConfig('mcp_servers', names.join('\n'), ONCE)}
         />
         <p className="text-xs mt-1" style={{ color: DIMMER }}
-          title="While answering, the model calls the tools it needs; what it says afterwards is this node's output. A graph names its servers and never says what starts one: that is written on this machine, in ai-settings.json, by the dialogs here.">
+          title="While answering, the model calls the tools it needs; what it says afterwards is this node's output. A graph names its servers and never says what starts one: that is written in this machine's settings file by the dialogs here.">
           The model calls them while it answers.
         </p>
       </div>

@@ -183,7 +183,7 @@ async function viewOf(one: Found, listed: Record<string, McpServerConfig>): Prom
 // ---------------------------------------------------------------------------
 
 /** The servers that came with this installation, and the names this machine has entries for. */
-export async function list(root = defaultRoot(), cwd = process.cwd(), env: Env = process.env): Promise<McpServersView> {
+export async function list(root = defaultRoot(), env: Env = process.env): Promise<McpServersView> {
   const listed = configuredMcpServers(env);
   return { servers: await Promise.all((await found(root)).map((one) => viewOf(one, listed))), configured: Object.keys(listed), delimiter };
 }
@@ -199,7 +199,7 @@ export async function list(root = defaultRoot(), cwd = process.cwd(), env: Env =
  * server's environment is what the server's own folder says it reads.
  */
 export async function save(
-  name: string, values: Record<string, string>, root = defaultRoot(), cwd = process.cwd(), env: Env = process.env,
+  name: string, values: Record<string, string>, root = defaultRoot(), env: Env = process.env,
 ): Promise<McpSaved> {
   const one = await server(name, root);
   const listed = configuredMcpServers(env);
@@ -220,13 +220,13 @@ export async function save(
 
   if (!(await installed(one.folder))) await install(one);
   const entry = entryFor(one, held);
-  await edit((file) => { file.mcp_servers = { ...file.mcp_servers, [name]: entry }; }, cwd, env, machineSettingsPath(env));
+  await edit((file) => { file.mcp_servers = { ...file.mcp_servers, [name]: entry }; }, process.cwd(), env, machineSettingsPath(env));
   return { server: await viewOf(one, { ...listed, [name]: entry }), ...(await started(name, entry)) };
 }
 
 async function started(name: string, entry: McpServerConfig): Promise<{ tools: string[]; problem: string }> {
   try {
-    const session = await mcpToolService({ [name]: entry }, { handshakeTimeoutMs: 20_000 }).open([name]);
+    const session = await mcpToolService({ [name]: entry }).open([name]);
     try {
       return { tools: session.specs.map((spec) => spec.name), problem: '' };
     } finally {
