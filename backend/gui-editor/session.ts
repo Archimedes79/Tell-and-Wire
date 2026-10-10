@@ -34,7 +34,6 @@ import { randomUUID } from 'node:crypto';
 import { readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { mergeResults, type ExecutionResult, type Graph } from '../../graph/graph.ts';
 import { triggeredNodes, type Trigger } from '../../graph/execution/triggers.ts';
-import { unneeded } from '../../graph/execution/executor.ts';
 import { NotOffered, applySent, checkSent, memoryState, outputsOf, sentOf, stateOf } from './graphInterface.ts';
 import { names } from '../../graph/execution/wiring.ts';
 import type { RuntimeRequirement } from './widgets/WidgetRunner.ts';
@@ -339,7 +338,7 @@ export class Session {
     else checkSent(design, trigger, values, registry);
     checkAnswers(design, trigger, page, answers);
     // How many nodes it runs, said before it is queued -- the slice its start point reaches.
-    const only = trigger ? triggeredNodes(design, trigger, unneeded(design.nodes, design.edges, registry)) : null;
+    const only = trigger ? triggeredNodes(design, trigger, registry) : null;
     const total = only?.size ?? design.nodes.length;
     const labels = new Map(design.nodes.map((node) => [node.id, node.label || node.id]));
     const started = trigger ? { event: trigger.node_id, by } : null;

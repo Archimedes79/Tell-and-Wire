@@ -29,116 +29,12 @@ import { resultKeys, type NodeRunner, type Runners } from '../nodes/NodeRunner.t
 import type { Runtime } from '../nodes/Runtime.ts';
 import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from './batching.ts';
 import { Unread, filePorts, readPorts } from './fileInputs.ts';
-import { RUN_PORT, firedNodes, neededFor, triggeredNodes, walk, type Trigger } from './triggers.ts';
+import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from './triggers.ts';
+import { memoryReads, nodeName, topologicalLevels } from './order.ts';
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from './interface.ts';
 import { ERROR_PORT, fatalProblems, unrunnable } from './wiring.ts';
-
-/**
- * Kahn's algorithm over *edges* but those in *skip*: the nodes in levels, each
- * level waiting only for earlier ones, and the nodes it could not place, which
- * sit in a loop or below one. The graph's own node order holds inside a level,
- * so a run is reproducible.
- */
-function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { levels: string[][]; stuck: Set<string> } {
-  const ids = new Set(nodes.map((n) => n.id));
-  const inDegree = new Map([...ids].map((id) => [id, 0]));
-  const successors = new Map<string, string[]>();
-
-  for (const e of edges) {
-    if (skip.has(e.id) || !ids.has(e.source_node_id) || !ids.has(e.target_node_id)) continue;
-    inDegree.set(e.target_node_id, (inDegree.get(e.target_node_id) ?? 0) + 1);
-    successors.set(e.source_node_id, [...(successors.get(e.source_node_id) ?? []), e.target_node_id]);
-  }
-
-  const levels: string[][] = [];
-  const stuck = new Set(ids);
-  let current = nodes.filter((n) => inDegree.get(n.id) === 0).map((n) => n.id);
-  while (current.length) {
-    levels.push(current);
-    const next = new Set<string>();
-    for (const id of current) {
-      stuck.delete(id);
-      for (const successor of successors.get(id) ?? []) {
-        const left = (inDegree.get(successor) ?? 0) - 1;
-        inDegree.set(successor, left);
-        if (left === 0) next.add(successor);
-      }
-    }
-    current = nodes.filter((n) => next.has(n.id)).map((n) => n.id);
-  }
-  return { levels, stuck };
-}
-
-/**
- * Ids of the fewest wires that must be left out of the ordering to make the
- * graph acyclic: wires that read a node that remembers and go round in a loop.
- * They carry what the node held when the round began; the wires into the node
- * are in the order like any other, so it fills, and then forwards what it holds.
- */
-export function memoryReads(
-  nodes: GraphNode[],
-  edges: GraphEdge[],
-  registry: Runners,
-): Set<string> {
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const reads = new Set<string>();
-
-  const remembers = (nodeId: string): boolean => {
-    const node = byId.get(nodeId);
-    return node ? registry.node(node.node_type)?.isMemory === true : false;
-  };
-
-  for (;;) {
-    const { stuck } = levelsOf(nodes, edges, reads);
-    if (!stuck.size) return reads;
-
-    // Cut one more wire out of a node that remembers -- one that closes a loop:
-    // a node below a loop is stuck too, and cutting the wire to it would
-    // read a round late for nothing. By the graph's node order and by id,
-    // never by the order the wires happen to be stored in. If there is none,
-    // the cycle is a real one and `topologicalLevels` reports it as such.
-    const active = edges.filter((e) => !reads.has(e.id) && byId.has(e.source_node_id) && byId.has(e.target_node_id));
-    const order = new Map(nodes.map((n, index) => [n.id, index]));
-    const [candidate] = active
-      .filter((e) => stuck.has(e.source_node_id) && remembers(e.source_node_id) && walk([e.target_node_id], active, true).has(e.source_node_id))
-      .sort((a, b) => order.get(a.source_node_id)! - order.get(b.source_node_id)! || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    if (!candidate) return reads;
-    reads.add(candidate.id);
-  }
-}
-
-/**
- * The wires a round's slice does not follow upstream (`triggers.ts`): those
- * into a node that remembers, which holds its value and needs nothing of what
- * writes it, and those that read it round a loop. A round started somewhere
- * else only shows what the memory holds; it does not run what writes it.
- */
-export function unneeded(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): Set<string> {
-  const remembering = new Set(nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
-  return new Set([
-    ...memoryReads(nodes, edges, registry),
-    ...edges.filter((e) => remembering.has(e.target_node_id) && e.target_port_id !== RUN_PORT).map((e) => e.id),
-  ]);
-}
-
-/** Execution stages: everything in a stage waits only for earlier stages. */
-export function topologicalLevels(
-  nodes: GraphNode[],
-  edges: GraphEdge[],
-  reads: Set<string>,
-): string[][] {
-  const { levels, stuck } = levelsOf(nodes, edges, reads);
-  if (stuck.size) {
-    // The nodes the wires go round through, not the ones that merely hang below.
-    const live = edges.filter((e) => !reads.has(e.id));
-    const round = nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
-    throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
-      + 'A loop is only allowed through a data node: route the value back through one, or remove a wire.');
-  }
-  return levels;
-}
 
 /**
  * The value under *field* -- a path, `folder` or `file.content` -- of what
@@ -268,8 +164,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const byId = new Map(nodes.map((n) => [n.id, n]));
 
   const reads = memoryReads(nodes, edges, registry);
-  const levels = topologicalLevels(nodes, edges, reads);
-  const only = options.only ?? (options.trigger ? triggeredNodes(graph, options.trigger, unneeded(nodes, edges, registry)) : null);
+  const levels = topologicalLevels(nodes, edges, registry);
+  const only = options.only ?? (options.trigger ? triggeredNodes(graph, options.trigger, registry) : null);
   // Context, as opposed to what this run is for: only in a run that is not
   // the whole graph, never the node that fired, never what it fired, and
   // never a node with nothing wired in -- that one reads the outside world.
@@ -636,9 +532,8 @@ export async function inputsFor(
   nodeId: string,
   options: RunOptions,
 ): Promise<{ inputs: Record<string, unknown>; upstream: ExecutionResult }> {
-  const skip = unneeded(graph.nodes, graph.edges, options.registry);
   const into = graph.edges.filter((e) => e.target_node_id === nodeId && e.target_port_id !== RUN_PORT);
-  const only = neededFor(graph, into.map((e) => e.source_node_id).filter((id) => id !== nodeId), skip);
+  const only = neededFor(graph, into.map((e) => e.source_node_id).filter((id) => id !== nodeId), options.registry);
   only.delete(nodeId);
 
   const upstream = await executeGraph(graph, { ...options, trigger: null, only });
@@ -779,17 +674,6 @@ export async function runNodeAlone(
     : stood ? `What feeds it had nothing to hand on, so it did not run: ${nodeName(stood)}: ${still.messages?.[0] ?? 'it stood still.'}` : '';
   if (why) return { inputs, result: { node_id: nodeId, status: 'error', inputs, outputs: {}, error: why } };
   return { inputs, result: await executeNode(graph, nodeId, inputs, options) };
-}
-
-/**
- * A node the way a person finds it on the canvas.
- *
- * `code node "Chart transform" (transform_1)`, not `transform_1`: the id is
- * what the report needs and the label is what the reader recognises, and a
- * message that carries only one of them sends them looking for the other.
- */
-export function nodeName(node: GraphNode): string {
-  return `${node.node_type} node ${node.label && node.label !== node.id ? `"${node.label}" (${node.id})` : `"${node.id}"`}`;
 }
 
 /**

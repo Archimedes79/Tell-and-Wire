@@ -41,8 +41,9 @@
 // no event started -- ▶ Run, the command line -- counts every event as having
 // happened, which is what "run everything" means.
 
-import type { Graph, GraphEdge } from '../graph.ts';
+import type { Graph } from '../graph.ts';
 import type { Runners } from '../nodes/NodeRunner.ts';
+import { memoryReads, walk } from './order.ts';
 import type { StartedBy } from '../nodes/NodeRunner.ts';
 
 /** The input every node has and nobody declares: the ◆, a gate. What arrives opens it or does not, and is never handed on. */
@@ -146,19 +147,18 @@ export function after(ms: number, then: () => void, keepsAlive = true): () => vo
 /**
  * The nodes one event runs, or null for "all of them".
  *
- * `skip` is the executor's own set of wires `unneeded`: a memory holds its
- * value, so what runs on it does not wait for what writes it -- a data node
- * that keeps the model's last answer is not something the model waits for. A
- * wire in it is followed downstream all the same: what reads a memory the
- * event reaches is for the event too.
+ * A memory holds its value, so what runs on it does not wait for what writes
+ * it -- a data node that keeps the model's last answer is not something the
+ * model waits for (`unneeded`). The wires that read it are followed downstream
+ * all the same: what reads a memory the event reaches is for the event too.
  */
-export function triggeredNodes(graph: Graph, trigger: Trigger, skip: Set<string>): Set<string> | null {
+export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Runners): Set<string> | null {
   const downstream = firedNodes(graph, trigger);
   if (!downstream) return null;
   // The ◆ of a node the event is wired to is opened by the event itself.
   const opened = new Set(graph.edges.filter((edge) => edge.source_node_id === trigger.node_id
     && (!trigger.port_id || edge.source_port_id === trigger.port_id)).map((edge) => edge.target_node_id));
-  const needed = neededFor(graph, downstream, skip, opened);
+  const needed = neededFor(graph, downstream, registry, opened);
   needed.add(trigger.node_id);
   return needed;
 }
@@ -175,6 +175,20 @@ export function firedNodes(graph: Graph, trigger: Trigger): Set<string> | null {
     && (!trigger.port_id || edge.source_port_id === trigger.port_id));
   if (!fired.length) return null;
   return walk(fired.map((edge) => edge.target_node_id), graph.edges, true);
+}
+
+/**
+ * The wires a slice does not follow upstream: those into a node that
+ * remembers, which holds its value and needs nothing of what writes it, and
+ * those that read it round a loop. A round started somewhere else only shows
+ * what the memory holds; it does not run what writes it.
+ */
+function unneeded(graph: Graph, registry: Runners): Set<string> {
+  const remembering = new Set(graph.nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
+  return new Set([
+    ...memoryReads(graph.nodes, graph.edges, registry),
+    ...graph.edges.filter((e) => remembering.has(e.target_node_id) && e.target_port_id !== RUN_PORT).map((e) => e.id),
+  ]);
 }
 
 /**
@@ -196,7 +210,8 @@ export function upstreamOf(graph: Graph, nodeIds: Iterable<string>, skip: Set<st
  * never computed, and never opens -- nor does anything behind it. Not the ◆
  * of a node in *opened*, which the event opens itself.
  */
-export function neededFor(graph: Graph, nodeIds: Iterable<string>, skip: Set<string>, opened: Set<string> = new Set()): Set<string> {
+export function neededFor(graph: Graph, nodeIds: Iterable<string>, registry: Runners, opened: Set<string> = new Set()): Set<string> {
+  const skip = unneeded(graph, registry);
   const gates = graph.edges.filter((edge) => !skip.has(edge.id) && edge.target_port_id === RUN_PORT);
   const needed = new Set<string>();
   for (let more = [...nodeIds]; more.length;) {
@@ -206,22 +221,4 @@ export function neededFor(graph: Graph, nodeIds: Iterable<string>, skip: Set<str
       .map((edge) => edge.source_node_id);
   }
   return needed;
-}
-
-/** *from* and every node reached along *edges* -- downstream when *forward*, else upstream. */
-export function walk(from: Iterable<string>, edges: GraphEdge[], forward: boolean): Set<string> {
-  const seen = new Set(from);
-  const queue = [...seen];
-  while (queue.length) {
-    const id = queue.shift()!;
-    for (const edge of edges) {
-      const [near, far] = forward
-        ? [edge.source_node_id, edge.target_node_id]
-        : [edge.target_node_id, edge.source_node_id];
-      if (near !== id || seen.has(far)) continue;
-      seen.add(far);
-      queue.push(far);
-    }
-  }
-  return seen;
 }

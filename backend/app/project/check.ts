@@ -8,7 +8,8 @@
 // page can ask it; what only a project folder gets wrong is `folderCheck.ts`.
 
 import type { Graph, GraphEdge, GraphNode } from '../../../graph/graph.ts';
-import { NESTING_LIMIT, fieldOf, memoryReads, topologicalLevels } from '../../../graph/execution/executor.ts';
+import { NESTING_LIMIT, fieldOf } from '../../../graph/execution/executor.ts';
+import { memoryReads, topologicalLevels } from '../../../graph/execution/order.ts';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { fieldSender, pageProblems, showsMemory, widgetElement } from '../../gui-editor/widgets/page.ts';
 import { ERROR_PORT, names, wiringProblems, type Problem } from '../../../graph/execution/wiring.ts';
@@ -142,7 +143,7 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
   if (new Set(graph.nodes.map((node) => node.id)).size === graph.nodes.length) {
     const reads = memoryReads(graph.nodes, graph.edges, registry);
     try {
-      topologicalLevels(graph.nodes, graph.edges, reads);
+      topologicalLevels(graph.nodes, graph.edges, registry);
     } catch {
       problems.push({
         where: `${inside}nodes ${names(knot(graph, reads))}`,

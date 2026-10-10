@@ -18,7 +18,7 @@
 // Only nodes are written. A block on a page has no body: it shows or hands on
 // what it holds.
 
-import { memoryReads, topologicalLevels } from '../../../graph/execution/executor.ts';
+import { topologicalLevels } from '../../../graph/execution/order.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import type { GraphEdge, GraphNode, GuiWidget } from '../../app/graph';
 import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../app/elements/registry';
@@ -70,8 +70,7 @@ interface SweepDeps {
  */
 export function generationOrder(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
-  const reads = memoryReads(nodes, edges, registry);
-  return topologicalLevels(nodes, edges, reads).flat()
+  return topologicalLevels(nodes, edges, registry).flat()
     .map((id) => byId.get(id))
     .filter((node): node is GraphNode => node !== undefined);
 }

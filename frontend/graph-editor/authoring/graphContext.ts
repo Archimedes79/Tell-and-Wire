@@ -11,7 +11,7 @@
 // it is cut to a budget, so a large graph leaves a small model room to answer.
 
 import type { Graph, GraphNode, GuiWidget, Wire } from '../../app/graph';
-import { memoryReads, topologicalLevels } from '../../../graph/execution/executor.ts';
+import { topologicalLevels } from '../../../graph/execution/order.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { blockSize } from '../../app/document/layout';
 import { firstLine } from '../../app/document/heading';
@@ -27,7 +27,7 @@ function runOrder(nodes: GraphNode[], edges: Wire[]): GraphNode[] {
   const saved = edges.map((edge, at) => graphEdge(edge, at));
   try {
     const byId = new Map(nodes.map((node) => [node.id, node]));
-    const order = topologicalLevels(nodes, saved, memoryReads(nodes, saved, registry)).flat();
+    const order = topologicalLevels(nodes, saved, registry).flat();
     return order.map((id) => byId.get(id)).filter((node): node is GraphNode => !!node);
   } catch {
     return nodes;

@@ -83,8 +83,8 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
    into the snapshots a page follows on the stream.
 3. **Run.** The core gets a working copy: the design, with what nodes keep and what the
    round was sent put in. `graph/core/localCore.ts` runs `executeGraph`
-   (`graph/execution/executor.ts`): it orders nodes in levels, where a loop may only pass
-   through a data node (the wire that reads it round the loop: `memoryReads`); runs what the start point is wired to, what
+   (`graph/execution/executor.ts`): it orders nodes in levels (`order.ts`), where a loop may only pass
+   through a data node (the wire that reads it round the loop is left out: `memoryReads`); runs what the start point is wired to, what
    follows and what those need (`triggers.ts`; a data node holds its value, so what writes it is not needed); per node, hands each input its `field` of
    the package, skips a node with nothing to do, reads files on `file_path` inputs
    (`fileInputs.ts`) and runs once or per item (`batching.ts`). A wired ◆ gate opens only for

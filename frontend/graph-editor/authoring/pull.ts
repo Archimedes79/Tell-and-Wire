@@ -16,7 +16,7 @@ import { NODE_BUILDERS } from '../../app/elements/registry';
 import { definitionExample, definitionsIn, typedefProperties } from '../../../graph/authoring/definition.ts';
 import { typeOfValue, type PulledPort } from '../../../graph/authoring/pull.ts';
 import { filePorts } from '../../../graph/execution/fileInputs.ts';
-import { memoryReads } from '../../../graph/execution/executor.ts';
+import { memoryReads } from '../../../graph/execution/order.ts';
 import { graphEdge } from '../../app/document/wires';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';

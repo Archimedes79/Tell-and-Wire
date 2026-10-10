@@ -25,7 +25,7 @@ import type { Graph } from '../../../graph/graph.ts';
 import { frontendOf, loadGraph, projectFolderOf } from '../project/folder.ts';
 import { keptRound, replayKeptRounds, writeKeptRound, TESTS_DIR } from '../project/keptRounds.ts';
 import { checkPath } from '../project/folderCheck.ts';
-import { nodeName } from '../../../graph/execution/executor.ts';
+import { nodeName } from '../../../graph/execution/order.ts';
 import { chosenCore } from '../../../graph/core/stdio.ts';
 import type { GraphCore } from '../../../graph/core/protocol.ts';
 import { registry } from '../../../graph/nodes/registry.ts';

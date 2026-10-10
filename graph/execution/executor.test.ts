@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Graph, GraphNode } from '../graph.ts';
-import { executeGraph, inputsFor, memoryReads, runNodeAlone, topologicalLevels } from './executor.ts';
+import { executeGraph, inputsFor, runNodeAlone } from './executor.ts';
+import { memoryReads, topologicalLevels } from './order.ts';
 import { NodeRunner } from '../nodes/NodeRunner.ts';
 import { type Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
@@ -22,7 +23,7 @@ describe('a loop', () => {
     const forgetfulLoop = [edge('e1', 'a', 'o', 'b', 'i'), edge('e2', 'b', 'o', 'a', 'i')];
     expect(memoryReads(forgetful, forgetfulLoop, registry).size).toBe(0);
     // Said by name, with the way out.
-    expect(() => topologicalLevels(forgetful, forgetfulLoop, new Set())).toThrow(/cycle through code node "a", code node "b".*data node/);
+    expect(() => topologicalLevels(forgetful, forgetfulLoop, registry)).toThrow(/cycle through code node "a", code node "b".*data node/);
 
     // data remembers; code does not: the value the data node holds is what breaks the loop.
     const store = node('store', 'data', { data_value: { value: 'old' } });
