@@ -22,7 +22,7 @@ import { clip } from '../brief.ts';
 import { generateGraph } from '../generate.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import {
-  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, nestedGraphs,
+  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, saveGraph as saveToDisk, type Guard,
 } from '../../app/project/folder.ts';
 import { problemsIn, type Problem } from '../../app/project/check.ts';
@@ -422,12 +422,15 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         } catch {
           return;
         }
+        // A project's `nodes/` holds its subgraphs, which are parts of it, not graphs to save over.
+        const project = entries.some((entry) => entry.isFile() && entry.name === FLOW_FILE);
         // Sorted, so the same folder lists the same way twice.
         for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
           if (graphs.length >= LIST_LIMIT || examined >= LIST_EXAMINED) { cut = true; return; }
           const full = join(dir, entry.name);
           if (entry.isDirectory()) {
             if (entry.name.startsWith('.') || SKIPPED_FOLDERS.has(entry.name.toLowerCase())) continue;
+            if (project && entry.name === NODES_DIR) continue;
             if (depth < LIST_DEPTH) await walk(full, depth + 1);
             continue;
           }
