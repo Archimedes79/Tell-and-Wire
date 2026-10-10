@@ -32,6 +32,7 @@ import * as settings from './settings.ts';
 import * as project from '../app/project/folder.ts';
 import { keptRound, writeKeptRound, TESTS_DIR } from '../app/project/keptRounds.ts';
 import * as gen from './generate.ts';
+import { generateGraph } from './generateGraph.ts';
 import { zip } from './zip.ts';
 
 /**
@@ -172,7 +173,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
     generateGraph: (asked) => watched(asked.progress_id, async (calls) => {
       const target = await aiSetting();
       const current = asked.graph ? parseGraph(asked.graph) : undefined;
-      const { graph, explanation } = await gen.generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
+      const { graph, explanation } = await generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
       return { graph: parseGraph(graph), explanation };
     }),
 

@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import type { AiRequest, AiService, CodeService } from '../../graph/nodes/Runtime.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { parseGraph, type GraphNode } from '../../graph/graph.ts';
-import { GenerationFailed, GenerationRefused, firstCodeBlock, generate, generateGraph } from './generate.ts';
+import { GenerationFailed, GenerationRefused, firstCodeBlock, generate } from './generate.ts';
+import { generateGraph } from './generateGraph.ts';
 import { nodeCode } from '../../graph/core/node.ts';
 import type { GenerateRequest } from '../app/api.ts';
 

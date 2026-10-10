@@ -19,7 +19,7 @@ import { NotOffered, interfaceOf, outputsOf, sendFromOutside } from '../../gui-e
 import { startFromPage } from '../../gui-editor/widgets/page.ts';
 import { message } from '../../app/http.ts';
 import { clip } from '../brief.ts';
-import { generateGraph } from '../generate.ts';
+import { generateGraph } from '../generateGraph.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import {
   FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
