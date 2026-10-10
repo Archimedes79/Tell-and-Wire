@@ -34,7 +34,7 @@ const save = async (path: string, saved: Graph, replace?: boolean) => routes.sav
 describe('deploying a graph that cannot be handed on', () => {
   it('is the graph\'s fault (422), not the server\'s', async () => {
     const empty = { ...graph('Empty'), nodes: [] };
-    const refused = await routes.bundle!({ graph: empty }, loopback).catch((error: unknown) => error);
+    const refused = await Promise.resolve(routes.bundle!({ graph: empty }, loopback)).catch((error: unknown) => error);
     expect(refused).toBeInstanceOf(Refusal);
     expect((refused as Refusal).status).toBe(422);
   });

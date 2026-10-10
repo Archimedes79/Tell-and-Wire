@@ -384,7 +384,7 @@ stdout  ␞tell-and-wire:result {…}                               what it made
 It carries the project folder (without `history.md` or the files ✨ was given); `graph/`, `backend/app/` and `backend/gui-editor/` as they are, without tests;
 `web/` with the built `runtime.html`, what it references and `licenses.txt` (when the graph
 has a page and `npm run build` ran); the files the graph starts on, those from outside the
-project in `data/` (one that is missing or over 50 MB stops the bundle); the project's own `frontend/`;
+project in `data/` (one that is missing or over 50 MB stops the bundle; a settings file is never carried, whatever folder holds it); the project's own `frontend/`;
 `LICENSE`, a `README.md`, and `run.cmd` / `run.sh`, which run `node backend/app/main.ts .`,
 with `--serve` when there is a page. It leaves out `backend/graph-editor/`, tests and
 `state.json`. Its model comes from the `TW_AI_*` variables or `ai-settings.json` beside
@@ -401,7 +401,7 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
   folder: those answer 403. What stays open includes opening and saving at any path, running
   code and the settings with their keys.
 - A request must name `127.0.0.1`, `localhost`, `[::1]` or a name in `TW_ALLOWED_HOSTS`, come
-  from the server's own origin and send `application/json` (`foreignRequest`,
+  from the server's own host (the scheme is not compared: a TLS proxy in front shows https) and send `application/json` (`foreignRequest`,
   `backend/app/http.ts`). Every page it serves forbids being framed (`servePage`).
 - A graph can name an MCP tool server; only `ai-settings.json` says which program it starts,
   and it starts without this process's keys and tokens (its own `env` gives what it needs).

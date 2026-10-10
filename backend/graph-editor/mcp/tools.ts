@@ -22,7 +22,7 @@ import { clip } from '../brief.ts';
 import { generateGraph } from '../generate.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import {
-  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, nestedGraphs,
+  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, saveGraph as saveToDisk, type Guard,
 } from '../../app/project/folder.ts';
 import { problemsIn, type Problem } from '../../app/project/check.ts';
@@ -36,12 +36,6 @@ const LIST_DEPTH = 4;
 const LIST_LIMIT = 200;
 /** How many `.json` files a listing opens before it stops looking. */
 const LIST_EXAMINED = 1_000;
-
-/** A `{ nodes: [...] }` object. `parseGraph` forgives a missing `nodes`, and `package.json` is missing one. */
-function graphShaped(raw: unknown): boolean {
-  return !!raw && typeof raw === 'object' && !Array.isArray(raw)
-    && Array.isArray((raw as { nodes?: unknown }).nodes);
-}
 
 export interface GraphToolsOptions {
   /** The one folder the tools may touch. */
@@ -142,7 +136,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
 
   /** A graph argument, bounded and parsed. */
   const graphFrom = (raw: unknown, argument: string): Graph => {
-    if (!graphShaped(raw)) {
+    if (!looksLikeGraph(raw)) {
       throw new BadDocument(`"${argument}" must be a graph document: an object with a "nodes" array and an "edges" array. authoring_guide shows the shape.`);
     }
     if (JSON.stringify(raw).length > MAX_GRAPH_BYTES) {
@@ -187,7 +181,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     } catch (error) {
       throw new BadDocument(`"${given}" is not valid JSON: ${message(error)}`);
     }
-    if (!graphShaped(raw)) throw new BadDocument(`"${given}" is JSON but not a graph: it has no "nodes" array.`);
+    if (!looksLikeGraph(raw)) throw new BadDocument(`"${given}" is JSON but not a graph: it has no "nodes" array.`);
     return graphFrom(raw, given);
   };
 

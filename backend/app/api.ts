@@ -383,7 +383,7 @@ export interface Failure { detail: string; calls?: AICall[]; taken?: boolean }
 // The routes
 // ---------------------------------------------------------------------------
 
-export type Method = 'GET' | 'POST' | 'DELETE';
+export type Method = 'GET' | 'POST';
 
 /**
  * One route. `Req` is everything the handler is handed -- the JSON body, the
