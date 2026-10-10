@@ -8,6 +8,7 @@ import { join } from 'node:path';
 
 import { parseGraph, withoutDefaults, type Graph } from '../../../graph/graph.ts';
 import { problemsIn } from './check.ts';
+import { folderName } from './names.ts';
 import { RUN_ON_ITS_OWN } from '../../../graph/nodes/code/CodeNodeRunner.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import {
@@ -188,6 +189,11 @@ describe('a project folder', () => {
     const clash = parseGraph({ metadata: { name: 'Case' }, nodes: [code('Count', 'UPPER'), code('count', 'lower')], edges: [] });
     await expect(writeProject(dir, clash)).rejects.toThrow(/share a folder/);
     expect(problemsIn(clash).some((p) => /share a folder/.test(p.problem))).toBe(true);
+
+    // Names Windows keeps and a trailing dot it drops are no folders as they stand; what they become may meet another id.
+    expect(['con', 'NUL.x', 'com1', 'x.', 'x '].map(folderName)).toEqual(['_con', '_NUL.x', '_com1', 'x_', 'x_']);
+    const dots = parseGraph({ metadata: { name: 'Dots' }, nodes: [code('x.', 'a'), code('x_', 'b')], edges: [] });
+    expect(problemsIn(dots).some((p) => /share a folder/.test(p.problem))).toBe(true);
 
     for (const [id, portId] of [['a->b', 'out'], [' a', 'out'], ['', 'out'], ['a', 'o->ut'], ['a', '']]) {
       const graph = parseGraph({ metadata: { name: 'Wire' }, nodes: [code(id, 'x'), code('z', 'y')], edges: [wire(id, portId)] });

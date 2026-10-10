@@ -10,7 +10,7 @@
 // `backend/app/project/folder.ts`, generation by `generate.ts`, settings by `settings.ts`.
 
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { homedir, tmpdir } from 'node:os';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseGraph } from '../../graph/graph.ts';
 import { chosenCore } from '../../graph/core/stdio.ts';
@@ -18,7 +18,8 @@ import type { GraphCore } from '../../graph/core/protocol.ts';
 import { withoutAuthoring } from '../../graph/authoring/handedOn.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { startFromPage } from '../gui-editor/widgets/page.ts';
-import { builtPage, filesIn, writeBundle } from '../app/cli/bundle.ts';
+import { CannotBundle, builtPage, filesIn, writeBundle } from '../app/cli/bundle.ts';
+import { expandHome } from '../app/browse.ts';
 import { zipMode } from '../app/cli/launchers.ts';
 import { nodeRuntime } from '../../graph/core/node.ts';
 import { aiSetting, settingsPath } from '../../graph/ai/settings.ts';
@@ -32,6 +33,7 @@ import * as servers from './mcpServers.ts';
 import * as project from '../app/project/folder.ts';
 import { keptRound, writeKeptRound, TESTS_DIR } from '../app/project/keptRounds.ts';
 import * as gen from './generate.ts';
+import { generateGraph } from './generateGraph.ts';
 import { zip } from './zip.ts';
 
 /**
@@ -172,7 +174,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
     generateGraph: (asked) => watched(asked.progress_id, async (calls) => {
       const target = await aiSetting();
       const current = asked.graph ? parseGraph(asked.graph) : undefined;
-      const { graph, explanation } = await gen.generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
+      const { graph, explanation } = await generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
       return { graph: parseGraph(graph), explanation };
     }),
 
@@ -190,7 +192,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
         const name = (graph.metadata.name || 'graph').replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/^_+|_+$/g, '') || 'graph';
         return new Download(zip(entries), `${name}_bundle.zip`, 'application/zip');
       } catch (error) {
-        throw new Refusal(500, `The server could not write the bundle: ${message(error)}`);
+        throw error instanceof CannotBundle ? new Refusal(422, error.message) : new Refusal(500, `The server could not write the bundle: ${message(error)}`);
       } finally {
         await rm(work, { recursive: true, force: true });
       }
@@ -242,11 +244,4 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       }
     },
   };
-}
-
-/** `~/x` as the person meant it: their home, not a folder called `~`. */
-function expandHome(path: string): string {
-  if (path === '~') return homedir();
-  if (path.startsWith('~/') || path.startsWith(`~${String.fromCharCode(92)}`)) return join(homedir(), path.slice(2));
-  return path;
 }

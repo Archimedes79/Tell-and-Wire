@@ -39,7 +39,7 @@ const TOO_OLD = `process.exit(Number(process.versions.node.split('.')[0]) < ${NO
  * nothing needs to be installed first -- "install Node 24" was the step that
  * stopped people who only wanted to try it. Without it, the computer's Node.
  */
-export const BUNDLED_NODE = { unix: 'node/node', windows: 'node\\node.exe' };
+const BUNDLED_NODE = { unix: 'node/node', windows: 'node\\node.exe' };
 
 /** `run.sh`, for macOS and Linux. Needs its executable bit -- see `zipMode`. */
 export function runSh({ command, portFromEnv = false }: LauncherOptions): string {

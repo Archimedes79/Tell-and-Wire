@@ -272,6 +272,16 @@ describe('confinement', () => {
     await refused(tools, 'dist/x.json', /dot-folder/);
   });
 
+  it('lists a project once, not the subgraphs in its nodes folder', async () => {
+    await mkdir(join(root, 'proj', 'nodes', 'inner'), { recursive: true });
+    await writeFile(join(root, 'proj', 'flow.json'), JSON.stringify({ wires: [] }));
+    await writeFile(join(root, 'proj', 'nodes.json'), JSON.stringify({ inner: { kind: 'subgraph' } }));
+    await writeFile(join(root, 'proj', 'nodes', 'inner', 'flow.json'), JSON.stringify({ wires: [] }));
+    await writeFile(join(root, 'proj', 'nodes', 'inner', 'nodes.json'), JSON.stringify({}));
+    const listed = (await answer(toolsWith(), 'list_graphs')).json.graphs as { path: string }[];
+    expect(listed.map((graph) => graph.path)).toEqual(['proj/flow.json']);
+  });
+
   it('never opens the settings file, even when it would pass for a graph', async () => {
     // Shaped like a graph on purpose: the name is what keeps it shut, not the content.
     const settings = JSON.stringify({ api_keys: { openai: 'sk-live-THIS-MUST-NOT-LEAK-0123456789' }, nodes: [], edges: [] });

@@ -18,8 +18,7 @@
 // that was tested rather than a second launcher written for them.
 //
 // One rule about the two streams: **stdout is the result and nothing else.** Progress and errors go to
-// stderr, so `run graph.json | jq` works. A prompt printed to stdout put
-// "Text for 'Greeting': " in front of the JSON and nobody could parse it.
+// stderr, so `run graph.json | jq` works.
 
 import type { Graph } from '../../../graph/graph.ts';
 import { frontendOf, loadGraph, projectFolderOf } from '../project/folder.ts';
@@ -30,6 +29,7 @@ import { chosenCore } from '../../../graph/core/stdio.ts';
 import type { GraphCore } from '../../../graph/core/protocol.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { nodeRuntime } from '../../../graph/core/node.ts';
+import { installFolder } from '../../../graph/ai/settings.ts';
 import { memoryState, sendFromOutside } from '../../gui-editor/graphInterface.ts';
 import { startFromPage } from '../../gui-editor/widgets/page.ts';
 import { builtPage, WEB_DIR, writeBundle } from './bundle.ts';
@@ -91,7 +91,20 @@ function put(values: Record<string, unknown>, name: string, value: string): void
 
 export function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = { graphPath: '', graphNamed: false, values: {} };
-  for (let i = 0; i < argv.length; i += 1) {
+  let i = 0;
+  /** What follows the option, taken -- unless it is the next option, which `--editor --port 9000` has there. */
+  const followed = (): string | undefined => {
+    const next = argv[i + 1];
+    if (next === undefined || next.startsWith('--')) return undefined;
+    i += 1;
+    return next;
+  };
+  const required = (arg: string, what: string): string => {
+    const value = followed();
+    if (value === undefined) throw new Error(`${arg} wants ${what}.`);
+    return value;
+  };
+  for (; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--value') {
       const [name, ...rest] = (argv[++i] ?? '').split('=');
@@ -101,7 +114,7 @@ export function parseArgs(argv: string[]): CliOptions {
     } else if (arg === '--every') {
       options.every = parseInterval(argv[++i] ?? '');
     } else if (arg === '--limit') {
-      // Not a number ran nothing and said nothing: `round < NaN` is never true.
+      // A whole number of runs: `round < NaN` is never true.
       const given = argv[++i] ?? '';
       const limit = Number(given);
       if (!given.trim() || !Number.isInteger(limit) || limit < 1) throw new Error(`--limit wants a whole number of runs, not "${given}".`);
@@ -109,7 +122,7 @@ export function parseArgs(argv: string[]): CliOptions {
     } else if (arg === '--keep') {
       options.keep = true;
     } else if (arg === '--bundle') {
-      options.bundle = argv[++i] ?? 'bundle';
+      options.bundle = followed() ?? 'bundle';
     } else if (arg === '--serve') {
       options.serve = true;
     } else if (arg === '--port') {
@@ -122,18 +135,16 @@ export function parseArgs(argv: string[]): CliOptions {
       }
       options.port = port;
     } else if (arg === '--editor') {
-      options.editor = argv[++i] ?? 'frontend/dist';
+      options.editor = followed() ?? join(installFolder(), 'frontend', 'dist');
     } else if (arg === '--host') {
-      options.host = argv[++i] ?? '';
+      options.host = required(arg, 'an address');
     } else if (arg === '--mcp') {
       options.mcp = true;
     } else if (arg === '--mcp-root') {
-      options.mcpRoot = argv[++i] ?? '';
+      options.mcpRoot = required(arg, 'a folder');
     } else if (arg.startsWith('--')) {
-      // A flag this command does not know is a mistake to say, not a file to
-      // look for: taken as the graph, `--ai-provider openai g.json` went
-      // looking for a graph called "--ai-provider", and after the graph it
-      // was dropped without a word.
+      // A flag this command does not know is a mistake to say, not a graph to
+      // look for.
       throw new Error(
         `Unknown option "${arg}". This command knows --value, --event, --keep, --every, --limit, --bundle, `
           + '--serve, --port, --editor, --host, --mcp and --mcp-root.',

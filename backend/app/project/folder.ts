@@ -364,8 +364,13 @@ async function readJson(path: string, what: string): Promise<unknown> {
   }
 }
 
+/** Whether *raw* is shaped like a graph: an object with a "nodes" list. `parseGraph` forgives a missing one, and a `package.json` has none. */
+export function looksLikeGraph(raw: unknown): boolean {
+  return !!raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray((raw as { nodes?: unknown }).nodes);
+}
+
 function asGraph(raw: unknown, path: string): Graph {
-  if (!raw || typeof raw !== 'object' || !Array.isArray((raw as { nodes?: unknown }).nodes)) {
+  if (!looksLikeGraph(raw)) {
     throw new NotAGraph(`${path} is not a graph: it has no "nodes" list.`);
   }
   try {
@@ -500,7 +505,7 @@ export async function writeProject(folder: string, graph: Graph, guard?: Guard):
   // Every level is worked out before any of it is written, because a project
   // is now a tree: a child written while its parent is still being checked is
   // exactly the half-save this promises not to do.
-  const plans = planProject(folder, JSON.parse(JSON.stringify(graph)) as Graph);
+  const plans = planProject(folder, structuredClone(graph));
   await refuseIfChangedOutside(plans);
   for (const plan of plans) await commit(plan, guard);
 }
@@ -664,10 +669,10 @@ async function writeGraphFile(path: string, graph: Graph, guard?: Guard): Promis
   await writeFile(path, `${JSON.stringify(graph, null, 2)}\n`, 'utf8');
 }
 
-/** Whether the file at *path* is a graph: JSON with a "nodes" list (`asGraph`'s first test). */
+/** Whether the file at *path* is a graph (`looksLikeGraph`). */
 function isGraphFile(path: string): boolean {
   try {
-    return Array.isArray((JSON.parse(readFileSync(path, 'utf8')) as { nodes?: unknown } | null)?.nodes);
+    return looksLikeGraph(JSON.parse(readFileSync(path, 'utf8')));
   } catch {
     return false;
   }

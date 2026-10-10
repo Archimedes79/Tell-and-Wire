@@ -137,6 +137,8 @@ describe('a web page elsewhere in the same browser', () => {
     // text/plain is what a page may post anywhere without the browser asking first.
     expect(await status(url, '/api/runtime/requirements', { Host: host, 'Content-Type': 'text/plain' }, '{}')).toBe(415);
     expect(await status(url, '/api/runtime/requirements', { Host: host }, '{}')).toBe(415);
+    // A body that is no object is not the parameters of a route.
+    expect(await status(url, '/api/runtime/requirements', { ...json, Host: host }, '[1]')).toBe(400);
   });
 
   it('served beyond loopback (a container), answers as this machine on any port and as a name it was given, never as one a page chose', async () => {
@@ -152,6 +154,8 @@ describe('a web page elsewhere in the same browser', () => {
     try {
       const named = await serveGraph({ host: '0.0.0.0' });
       expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'http://tool.lan' }, '{}')).toBe(200);
+      // Behind a TLS reverse proxy the page's origin is https.
+      expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://tool.lan' }, '{}')).toBe(200);
       expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://evil.example' }, '{}')).toBe(403);
       expect(await status(named, '/', { Host: 'evil.example' })).toBe(403);
     } finally {

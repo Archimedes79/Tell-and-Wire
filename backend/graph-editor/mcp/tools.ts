@@ -19,10 +19,10 @@ import { NotOffered, interfaceOf, outputsOf, sendFromOutside } from '../../gui-e
 import { startFromPage } from '../../gui-editor/widgets/page.ts';
 import { message } from '../../app/http.ts';
 import { clip } from '../brief.ts';
-import { generateGraph } from '../generate.ts';
+import { generateGraph } from '../generateGraph.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import {
-  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, nestedGraphs,
+  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, saveGraph as saveToDisk, type Guard,
 } from '../../app/project/folder.ts';
 import { problemsIn, type Problem } from '../../app/project/check.ts';
@@ -36,12 +36,6 @@ const LIST_DEPTH = 4;
 const LIST_LIMIT = 200;
 /** How many `.json` files a listing opens before it stops looking. */
 const LIST_EXAMINED = 1_000;
-
-/** A `{ nodes: [...] }` object. `parseGraph` forgives a missing `nodes`, and `package.json` is missing one. */
-function graphShaped(raw: unknown): boolean {
-  return !!raw && typeof raw === 'object' && !Array.isArray(raw)
-    && Array.isArray((raw as { nodes?: unknown }).nodes);
-}
 
 export interface GraphToolsOptions {
   /** The one folder the tools may touch. */
@@ -82,7 +76,7 @@ const json = (value: unknown): string => JSON.stringify(value, null, 2);
  */
 function withAuthoringOf(graph: Graph, kept: Graph): Graph {
   const before = new Map(kept.nodes.map((node) => [node.id, node]));
-  const copy = JSON.parse(JSON.stringify(graph)) as Graph;
+  const copy = structuredClone(graph);
   for (const node of copy.nodes) {
     const was = before.get(node.id);
     if (!was) continue;
@@ -142,7 +136,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
 
   /** A graph argument, bounded and parsed. */
   const graphFrom = (raw: unknown, argument: string): Graph => {
-    if (!graphShaped(raw)) {
+    if (!looksLikeGraph(raw)) {
       throw new BadDocument(`"${argument}" must be a graph document: an object with a "nodes" array and an "edges" array. authoring_guide shows the shape.`);
     }
     if (JSON.stringify(raw).length > MAX_GRAPH_BYTES) {
@@ -187,7 +181,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     } catch (error) {
       throw new BadDocument(`"${given}" is not valid JSON: ${message(error)}`);
     }
-    if (!graphShaped(raw)) throw new BadDocument(`"${given}" is JSON but not a graph: it has no "nodes" array.`);
+    if (!looksLikeGraph(raw)) throw new BadDocument(`"${given}" is JSON but not a graph: it has no "nodes" array.`);
     return graphFrom(raw, given);
   };
 
@@ -223,7 +217,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       }
     }
 
-    const problems = problemsIn(parseGraph(JSON.parse(JSON.stringify(graph))));
+    const problems = problemsIn(parseGraph(structuredClone(graph)));
     if (problems.length) return { problems };
 
     // As the editor saves: into a project, the wiring to `flow.json` and each
@@ -422,12 +416,15 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         } catch {
           return;
         }
+        // A project's `nodes/` holds its subgraphs, which are parts of it, not graphs to save over.
+        const project = entries.some((entry) => entry.isFile() && entry.name === FLOW_FILE);
         // Sorted, so the same folder lists the same way twice.
         for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
           if (graphs.length >= LIST_LIMIT || examined >= LIST_EXAMINED) { cut = true; return; }
           const full = join(dir, entry.name);
           if (entry.isDirectory()) {
             if (entry.name.startsWith('.') || SKIPPED_FOLDERS.has(entry.name.toLowerCase())) continue;
+            if (project && entry.name === NODES_DIR) continue;
             if (depth < LIST_DEPTH) await walk(full, depth + 1);
             continue;
           }

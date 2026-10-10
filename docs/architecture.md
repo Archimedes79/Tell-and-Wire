@@ -10,7 +10,7 @@ the files relate. Where a test holds a claim, the test is named.
 | Part | Folder | What it holds |
 |---|---|---|
 | Graph editor, frontend | `frontend/graph-editor/` | `canvas/` (the graph on screen: one card for every kind), `node/` (one node opened: `NodeView`, its file panes, chats, settings, Pull), `views/` (the node view's drawing: layout, rows, chat; pure), `nodes/<kind>/` (each node kind's `<Kind>NodeGuiBuilder.ts` and settings panels), `authoring/` (a node's text, its ✨ files, Pull, ▶ Try), `fields/` |
-| Graph editor, backend | `backend/graph-editor/` | `routes.ts` (the `editor` routes: save, open, run one node), `generate.ts`, `generatePrompts.ts` (what ✨ sends), `brief.ts`, `graphPrompt.ts` (✨), `files.ts`, `settings.ts`, `mcpServers.ts` (the servers in `mcp/`: list, set up, install), `zip.ts` (Deploy), `mcpServer.ts` with `mcp/` (spec, confinement, tools, transport). Not in a deployed tool |
+| Graph editor, backend | `backend/graph-editor/` | `routes.ts` (the `editor` routes: save, open, run one node), `generate.ts` (a node's ✨), `generateGraph.ts` (a whole graph's), `generatePrompts.ts` (what ✨ sends), `brief.ts`, `graphPrompt.ts` (✨), `files.ts`, `settings.ts`, `mcpServers.ts` (the servers in `mcp/`: list, set up, install), `zip.ts` (Deploy), `mcpServer.ts` with `mcp/` (spec, confinement, tools, transport). Not in a deployed tool |
 | The graph's code and execution | `graph/` | `graph.ts` (format types), `execution/` (the executor, what starts a round), `core/` (the graph core: `protocol.ts`, `localCore.ts`, `stdio.ts`, `node.ts`), `nodes/<kind>/` (`<Kind>NodeRunner.ts`, `registry.ts`, base classes), `ai/` (model client, settings), `authoring/` (definitions, ✨ prompts, Pull's file, a node's history, examples) |
 | Gui editor, frontend | `frontend/gui-editor/` | `page/` (the Page and App tabs), `widgets/<kind>/` (each block kind's builder, view and panel), `runtime/` (the page a deployed tool serves) |
 | Gui editor, backend | `backend/gui-editor/` | `session.ts` (the graph in use and its state), `rounds.ts` (the queue of rounds), `graphInterface.ts` (the graph's names), `widgets/<kind>/` (`<Kind>WidgetRunner.ts`), `widgets/page.ts` |
@@ -218,7 +218,7 @@ route answers JSON except the stream; a refusal is `{ "detail": "…" }`.
 | `POST /api/runtime/run` | Start a round and wait for what it hands back: a function call |
 | `POST /api/runtime/reset` | Forget what using the graph left behind |
 | `GET /api/runtime/page` | The page: its blocks as designed, and how they connect by name |
-| `GET /api/runtime/ai-settings` | Which model the tool asks, without its key |
+| `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
 
 With `by` (a block id) a round is one the page starts, refused unless that block fires the
@@ -385,7 +385,7 @@ stdout  ␞tell-and-wire:result {…}                               what it made
 It carries the project folder (without `history.md` or the files ✨ was given); `graph/`, `backend/app/` and `backend/gui-editor/` as they are, without tests;
 `web/` with the built `runtime.html`, what it references and `licenses.txt` (when the graph
 has a page and `npm run build` ran); the files the graph starts on, those from outside the
-project in `data/` (one that is missing or over 50 MB stops the bundle); the project's own `frontend/`;
+project in `data/` (one that is missing or over 50 MB stops the bundle; a settings file is never carried, whatever folder holds it); the project's own `frontend/`;
 `LICENSE`, a `README.md`, and `run.cmd` / `run.sh`, which run `node backend/app/main.ts .`,
 with `--serve` when there is a page. It leaves out `backend/graph-editor/`, tests and
 `state.json`. Its model comes from the `TW_AI_*` variables or `ai-settings.json` beside
@@ -402,7 +402,7 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
   folder: those answer 403. What stays open includes opening and saving at any path, running
   code and the settings with their keys.
 - A request must name `127.0.0.1`, `localhost`, `[::1]` or a name in `TW_ALLOWED_HOSTS`, come
-  from the server's own origin and send `application/json` (`foreignRequest`,
+  from the server's own host (the scheme is not compared: a TLS proxy in front shows https) and send `application/json` (`foreignRequest`,
   `backend/app/http.ts`). Every page it serves forbids being framed (`servePage`).
 - A graph can name an MCP tool server; only `ai-settings.json` says which program it starts,
   and it starts without this process's keys and tokens (its own `env` gives what it needs).

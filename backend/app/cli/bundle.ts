@@ -21,7 +21,7 @@ import { pageBlocks, pageReferencedPaths } from '../../gui-editor/widgets/page.t
 import { registry } from '../../../graph/nodes/registry.ts';
 import { withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import { FRONTEND_DIR, writeProject } from '../project/folder.ts';
-import { installFolder } from '../../../graph/ai/settings.ts';
+import { SETTINGS_FILENAME, candidatePaths, installFolder } from '../../../graph/ai/settings.ts';
 import { NODE_MAJOR, runCmd, runSh, zipMode } from './launchers.ts';
 
 /** The checkout's root: a bundle copies `graph/` and `backend/` from it, at the same paths. This file sits in `backend/app/cli/`. */
@@ -87,12 +87,24 @@ async function sizeOf(path: string): Promise<number> {
   return total;
 }
 
+/**
+ * Whether *path* is a settings file -- by its name, or because the settings are read from it. A folder a graph
+ * starts on may hold one with a key in it, and a bundle is handed to someone else.
+ */
+function isSettingsFile(path: string): boolean {
+  const full = resolve(path).toLowerCase();
+  return basename(full) === SETTINGS_FILENAME || candidatePaths().some((candidate) => resolve(candidate).toLowerCase() === full);
+}
+
 /** One file the tool starts on: where it is here, and where it goes in the bundle. */
 interface Carried {
   named: string;
   source: string;
   place: string;
 }
+
+/** A graph that cannot be handed on: what is wrong is the graph's, not the server's. */
+export class CannotBundle extends Error {}
 
 /**
  * The files a graph starts on -- what its pickers and folder inputs name --
@@ -130,6 +142,7 @@ async function dataFiles(graph: Graph, from: string): Promise<Carried[]> {
     const tidy = normalize(named);
     const source = resolve(from, tidy);
     if (!existsSync(source)) { missing.push(`"${named}" is not there`); continue; }
+    if (isSettingsFile(source)) { missing.push(`"${named}" is a settings file, which holds keys and is never handed on`); continue; }
     const size = await sizeOf(source);
     if (size > DATA_LIMIT_BYTES) {
       missing.push(`"${named}" is ${Math.round(size / 1024 / 1024)} MB, more than a bundle carries (${DATA_LIMIT_BYTES / 1024 / 1024} MB)`);
@@ -146,7 +159,7 @@ async function dataFiles(graph: Graph, from: string): Promise<Carried[]> {
     carried.push({ named, source, place });
   }
   if (missing.length) {
-    throw new Error(`This tool cannot be handed on whole: it starts on files it cannot carry -- ${missing.join('; ')}. `
+    throw new CannotBundle(`This tool cannot be handed on whole: it starts on files it cannot carry -- ${missing.join('; ')}. `
       + 'Choose files that are there and smaller, or clear those fields, and deploy again.');
   }
   return carried;
@@ -257,7 +270,7 @@ export async function writeBundle(
   // A bundle is something handed to someone else. One of a graph with no nodes
   // is a zip that starts, does nothing and says nothing -- and the person who
   // opens it has no way to tell that from a tool that failed.
-  if (!graph.nodes.length) throw new Error('This graph has no nodes: there is nothing to hand over.');
+  if (!graph.nodes.length) throw new CannotBundle('This graph has no nodes: there is nothing to hand over.');
   const needs = bundleNeeds(graph);
   // Asked first: what cannot be carried stops the bundle before a file is written.
   const data = await dataFiles(graph, options.dataFrom ?? process.cwd());
@@ -306,13 +319,14 @@ export async function writeBundle(
 
   for (const file of data) {
     await mkdir(dirname(resolve(target, file.place)), { recursive: true });
-    await cp(file.source, resolve(target, file.place), { recursive: true });
+    // A folder may hold the settings file: everything but that.
+    await cp(file.source, resolve(target, file.place), { recursive: true, filter: (path) => !isSettingsFile(path) });
     written.push(file.place);
   }
 
   // A page the project brings of its own: all of it, as it is.
   if (options.frontend) {
-    await cp(options.frontend, resolve(target, FRONTEND_DIR), { recursive: true });
+    await cp(options.frontend, resolve(target, FRONTEND_DIR), { recursive: true, filter: (path) => !isSettingsFile(path) });
     written.push(...(await filesIn(options.frontend)).map((file) => `${FRONTEND_DIR}/${file}`));
     servesPage = true;
   }

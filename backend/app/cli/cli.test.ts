@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { parseGraph } from '../../../graph/graph.ts';
 import { writeProject } from '../project/folder.ts';
 import { main, parseArgs } from './cli.ts';
@@ -13,6 +13,15 @@ describe('parseArgs', () => {
     expect(options.values).toEqual({ a: '1', file: { content: 'a,b', path: 'a.csv' }, q: 'x=y' });
     expect(options.event).toBe('go');
     expect(() => parseArgs(['g.json', '--ai-force'])).toThrow(/Unknown option "--ai-force"/);
+  });
+
+  it('does not take the next option for the value of --editor, --host, --bundle or --mcp-root', () => {
+    const options = parseArgs(['--editor', '--port', '9000']);
+    expect(options.port).toBe(9000);
+    expect(isAbsolute(options.editor!)).toBe(true);
+    expect(parseArgs(['g', '--bundle', '--keep'])).toMatchObject({ bundle: 'bundle', keep: true });
+    expect(() => parseArgs(['--host', '--port', '9000'])).toThrow(/--host wants/);
+    expect(() => parseArgs(['--mcp', '--mcp-root'])).toThrow(/--mcp-root wants/);
   });
 });
 

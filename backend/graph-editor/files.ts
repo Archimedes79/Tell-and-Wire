@@ -97,7 +97,7 @@ const OPENABLE = new Set(NODES.flatMap((element) => element.texts({ config: {} }
  * outside every sandbox. Notepad is on every Windows; a Mac opens its default
  * text editor with `open -t`; elsewhere the desktop's opener decides.
  */
-export function textEditorFor(path: string, system: string = platform()): { command: string; args: string[] } {
+function textEditorFor(path: string, system: string = platform()): { command: string; args: string[] } {
   if (system === 'win32') return { command: 'notepad.exe', args: [path] };
   if (system === 'darwin') return { command: 'open', args: ['-t', path] };
   return { command: 'xdg-open', args: [path] };

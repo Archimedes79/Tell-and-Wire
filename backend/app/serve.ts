@@ -110,7 +110,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
 
   async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     // Only the path and the query are read, so the base is any that parses:
-    // the bound address does not, where it is `::1`, and every request was a 500.
+    // the bound address does not, where it is `::1`.
     const url = new URL(request.url ?? '/', 'http://localhost');
     const path = url.pathname;
     const foreign = foreignRequest(request, self, path.startsWith('/api/'));
@@ -132,10 +132,11 @@ export async function serve(options: ServeOptions): Promise<Served> {
       try {
         // Inside the try: a body that is not JSON, or is too big to accept, is
         // this request being turned down -- 400 or 413, not a server that broke.
+        // The path's own parameters last: a body cannot name another round than the one addressed.
         const asked = {
           ...Object.fromEntries(url.searchParams),
-          ...found.params,
           ...(route.method === 'POST' ? await readJson(request) : {}),
+          ...found.params,
         };
         const answer = await handler(asked, exchange);
         if (answer instanceof Download) return sendDownload(response, answer);
@@ -184,7 +185,9 @@ export async function serve(options: ServeOptions): Promise<Served> {
   });
   self.port = (server.address() as AddressInfo).port;
   // Only now: a server that could not listen (the next port is tried) must not have run what starts with a tool.
-  if (held.session && !options.editor) void held.session.startApplication();
+  if (held.session && !options.editor) {
+    held.session.startApplication().catch((error: unknown) => { process.stderr.write(`The tool's start failed: ${message(error)}\n`); });
+  }
   // An IPv6 address in brackets, as a browser takes it -- and every address,
   // which no browser can open, as this machine's own.
   const named = WILDCARD.get(host) ?? hostnameOf(host) ?? host;
@@ -307,13 +310,8 @@ function toolRoutes(
     async toolAiSettings() {
       // The function a run asks, so the page says what a run calls.
       const { provider, model } = await aiSetting();
-      const file = settingsPath();
-      return {
-        provider,
-        model,
-        settings_file: file,
-        settings_file_exists: existsSync(file),
-      };
+      // Whether the file is there, not where: any caller on the network may ask.
+      return { provider, model, settings_file_exists: existsSync(settingsPath()) };
     },
 
     // The one picker, the editor's too: folders, the parent and the drives, so

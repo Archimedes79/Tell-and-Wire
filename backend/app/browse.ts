@@ -55,6 +55,11 @@ export async function startFolder(started = process.cwd()): Promise<string> {
   return program.includes(true) ? homedir() : started;
 }
 
+/** `~/x` as the person meant it: their home, not a folder called `~`. */
+export function expandHome(path: string): string {
+  return path.replace(/^~(?=$|[\\/])/, homedir());
+}
+
 /**
  * One page of a file browser: the directory, its parent, its children.
  *
@@ -71,7 +76,7 @@ export async function startFolder(started = process.cwd()): Promise<string> {
  *   nothing to do with it.
  */
 export async function browse(path: string, extensions: string[] = [], home = process.cwd()): Promise<BrowsePage> {
-  let root = path ? resolve(path.replace(/^~(?=$|[\\/])/, homedir())) : resolve(home);
+  let root = path ? resolve(expandHome(path)) : resolve(home);
   const info = await stat(root).catch(() => null);
   if (!info) throw new NotFound(`Directory not found: ${root}`);
   if (!info.isDirectory()) root = dirname(root);

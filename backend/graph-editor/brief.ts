@@ -92,7 +92,7 @@ const withoutBytes = (text: string): string => text.replace(/("data:[\w.+/-]+;ba
  * comes from and what arrives there: what an input definition is written
  * from, and what code is written to read.
  */
-export function inputDefinition(request: GenerateRequest, reads: string[]): string {
+function inputDefinition(request: GenerateRequest, reads: string[]): string {
   const { node } = request;
   const written = withoutBytes(definitionsIn(node).input.trim());
   if (!node.inputs.length) return written || 'It has no inputs: nothing is handed to it.';
@@ -113,7 +113,7 @@ export function inputDefinition(request: GenerateRequest, reads: string[]): stri
  * written, and after it each output as wired -- where it goes and what the
  * node there wants of it: a chart's figure, a table's rows.
  */
-export function outputDefinition(request: GenerateRequest): string {
+function outputDefinition(request: GenerateRequest): string {
   const { node } = request;
   const written = definitionsIn(node).output.trim();
   const outputs = node.outputs.filter((port) => port.id !== ERROR_PORT);
@@ -135,7 +135,7 @@ export function outputDefinition(request: GenerateRequest): string {
  * given in full first, and what is left is shared by the larger, so several
  * small files all fit and one big one is cut.
  */
-export function filesPart(files: { path: string; text?: string }[] | undefined): string {
+function filesPart(files: { path: string; text?: string }[] | undefined): string {
   const given = (files ?? []).filter((file) => file.path.trim());
   if (!given.length) return 'None.';
   const room = new Map<number, number>();
