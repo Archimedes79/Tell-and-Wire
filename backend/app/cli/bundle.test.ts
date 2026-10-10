@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { parseGraph } from '../../../graph/graph.ts';
 import { loadGraph } from '../project/folder.ts';
 import { writeBundle } from './bundle.ts';
 
@@ -58,4 +59,25 @@ describe('a bundle', () => {
       await rm(dir, { recursive: true, force: true });
     }
   }, 180_000);
+
+  it('never carries a settings file, not even in a folder the tool starts on', async () => {
+    const source = await mkdtemp(join(tmpdir(), 'tell-and-wire-source-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+    try {
+      await mkdir(join(source, 'data'));
+      await writeFile(join(source, 'data', 'a.csv'), 'x\n1\n');
+      await writeFile(join(source, 'data', 'ai-settings.json'), '{"api_keys":{"openai":"sk-live-NOT-IN-A-BUNDLE"}}');
+      const graph = parseGraph({
+        metadata: { name: 'Key' },
+        nodes: [{ id: 'result', node_type: 'end', label: 'result', position: { x: 0, y: 0 }, inputs: [], outputs: [], config: {} }],
+        edges: [],
+        page: { blocks: [{ id: 'pick', kind: 'input_picker', mode: 'directory', value: 'data' }] },
+      });
+      await writeBundle(graph, dir, { dataFrom: source });
+      expect(await readdir(join(dir, 'data'))).toEqual(['a.csv']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+      await rm(source, { recursive: true, force: true });
+    }
+  });
 });
