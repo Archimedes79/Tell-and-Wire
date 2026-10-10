@@ -283,7 +283,9 @@ export class Session {
     const copy = withState(this.design, this.keptNodes, this.keptBlocks);
     if (!fromPage(copy, trigger, by)) return [];
     applyPageValues(copy, values);
-    return pageRequirements(copy, trigger!.node_id).filter((asked) => !(asked.key in values) && !(asked.key in answers));
+    // An empty value -- a cleared picker -- answers nothing.
+    const given = (from: Record<string, unknown>, key: string): boolean => from[key] !== undefined && from[key] !== '';
+    return pageRequirements(copy, trigger!.node_id).filter((asked) => !given(values, asked.key) && !given(answers, asked.key));
   }
 
   /**
@@ -613,6 +615,8 @@ export function holderOf(session: Session | null = null, options: Omit<SessionOp
   const watchers = new Set<(event: SessionEvent) => void>();
   const tell = (event: SessionEvent): void => { for (const watcher of watchers) watcher(event); };
   let unwatch = session ? session.watch(tell) : null;
+  // One hand-over after the other: two at once would both close the same session and open two.
+  let turn: Promise<unknown> = Promise.resolve();
   return {
     session,
     asked(id) {
@@ -622,20 +626,25 @@ export function holderOf(session: Session | null = null, options: Omit<SessionOp
       }
       return this.session;
     },
-    async hold(graph, { path = null, session = null } = {}) {
-      const file = path ? stateFileOf(path) : null;
-      const before = this.session;
-      if (before && session === before.id) {
-        if (before.stateFile !== file) await before.moveTo(file);
-        before.hold(graph);
-        return before;
-      }
-      if (before) await before.close();
-      this.session = await Session.open(graph, { ...options, file });
-      unwatch?.();
-      unwatch = this.session.watch(tell);
-      tell({ type: 'session', session: this.session.view() });
-      return this.session;
+    hold(graph, { path = null, session = null } = {}) {
+      const handOver = async (): Promise<Session> => {
+        const file = path ? stateFileOf(path) : null;
+        const before = this.session;
+        if (before && session === before.id) {
+          if (before.stateFile !== file) await before.moveTo(file);
+          before.hold(graph);
+          return before;
+        }
+        if (before) await before.close();
+        this.session = await Session.open(graph, { ...options, file });
+        unwatch?.();
+        unwatch = this.session.watch(tell);
+        tell({ type: 'session', session: this.session.view() });
+        return this.session;
+      };
+      const result = turn.then(handOver);
+      turn = result.catch(() => undefined);
+      return result;
     },
     watch(listener) {
       watchers.add(listener);

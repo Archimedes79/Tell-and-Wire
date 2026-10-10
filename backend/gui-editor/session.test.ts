@@ -261,6 +261,8 @@ describe('a round the page starts', () => {
     const session = await open(graph);
     expect(session.requirements(go)).toEqual([]);
     expect(session.requirements(go, { by: 'press' })).toEqual([{ key: 'file', label: 'File', kind: 'file', current: '' }]);
+    // A cleared picker sends '': still a question.
+    expect(session.requirements(go, { by: 'press', values: { file: '' } })).toHaveLength(1);
     const result = await session.run(go, { answers: { file: 'a.txt' }, by: 'press' });
     expect(result.node_results.find((r) => r.node_id === 'read')!.outputs).toEqual({ f: 'a.txt' });
     expect(session.kept().page).toEqual({ file: 'a.txt' });
