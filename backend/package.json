@@ -1,6 +1,6 @@
 {
   "name": "tell-and-wire-backend",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": true,
   "type": "module",
   "description": "The editor's server: the graph editor's and the Gui editor's backends, and the server and command line around them.",
