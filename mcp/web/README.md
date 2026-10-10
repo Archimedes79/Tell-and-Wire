@@ -6,7 +6,7 @@ heading or a paragraph, each saying which section it is in.
 
 It is a separate program with its own dependencies. Nothing of it is in the editor, in the
 download or in a deployed tool. A graph can only *name* it; the command that starts it
-lives in `ai-settings.json` on your machine, as for every tool server.
+lives in this folder's `server.json` on your machine, as for every tool server.
 
 ## Use it
 
@@ -17,27 +17,22 @@ cd mcp/web
 npm ci
 ```
 
-Add it to `ai-settings.json` (the path is where you cloned the repository):
-
-```json
-{
-  "mcp_servers": {
-    "web": { "command": "node", "args": ["C:/path/to/Tell-and-Wire/mcp/web/src/main.ts"] }
-  }
-}
-```
+Copy `server.example.json` to `server.json` in this folder (it is not committed). The server's
+name is the name of its folder, `web`; it is started in this folder, so `src/main.ts` is
+relative to it.
 
 In an AI node, open *the node's settings → Tools the model may use* and write `web` (in the
 project folder that is `"config": { "mcp_servers": ["web"] }` in the node's entry in
 `nodes.json`). The model then reads a page when the node's text asks about one.
 
 This wiring is tested end to end: a graph with such an AI node, run by `node
-backend/app/main.ts`, starts this server from `ai-settings.json`, offers the model
+backend/app/main.ts`, starts this server from its `server.json`, offers the model
 `read_page`, hands it the page text and carries on with its answer -- and when the address
 is refused, the model is handed the reason and the graph carries on.
 
 A deployed tool does not carry this server: where it runs, the server must be installed
-and named in that machine's `ai-settings.json`.
+and given a `server.json` (or an entry under `mcp_servers` in that machine's settings file,
+see [../README.md](../README.md)).
 
 ## The tool
 

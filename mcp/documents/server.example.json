@@ -1,0 +1,4 @@
+{
+  "command": "node",
+  "args": ["src/main.ts", "C:/Users/me/Documents/papers"]
+}

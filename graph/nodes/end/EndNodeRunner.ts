@@ -4,6 +4,7 @@ import { type GraphNode, type NodeResult, type Port } from '../../graph.ts';
 import type { Offer } from '../NodeRunner.ts';
 import type { Runners } from '../NodeRunner.ts';
 import type { Problem } from '../../execution/wiring.ts';
+import { ownPathProblem } from '../ownPath.ts';
 
 /**
  * The input that says *where* to write rather than *what*: a control input,
@@ -82,7 +83,7 @@ export class EndNodeRunner extends NodeRunner<EndConfig> {
     const settings = this.config(node);
     // A wired `path` sets the target at run time and always wins over the
     // configured one; it is a control input, not a value to report back.
-    const target = inputs[WRITE_PATH_PORT] ? runtime.files.resolve(String(inputs[WRITE_PATH_PORT])) : settings.path;
+    const target = inputs[WRITE_PATH_PORT] ? runtime.files.resolve(String(inputs[WRITE_PATH_PORT])) : settings.mode !== 'none' && settings.path ? runtime.files.inProject(settings.path) : '';
     const values: Record<string, unknown> = { ...inputs };
     delete values[WRITE_PATH_PORT];
 
@@ -115,7 +116,10 @@ export class EndNodeRunner extends NodeRunner<EndConfig> {
    */
   override problems(node: GraphNode, _elements: Runners, where: string, wired: ReadonlySet<string> = new Set()): Problem[] {
     const { mode, path } = this.config(node);
-    if (mode === 'none' || path.trim() || wired.has(WRITE_PATH_PORT)) return [];
+    if (mode === 'none') return [];
+    const outside = path.trim() ? ownPathProblem(path.trim()) : null;
+    if (outside) return [{ where, problem: outside, fix: `Write the path relative to the tool's folder, or wire a path into its "path".` }];
+    if (path.trim() || wired.has(WRITE_PATH_PORT)) return [];
     const what = mode === 'file' ? 'a file' : 'a folder';
     return [{
       where,
@@ -160,7 +164,7 @@ async function writeEach(folder: string, values: Record<string, unknown>, runtim
       if (item === null || item === undefined) continue;
       const name = Array.isArray(value) ? `${portId}_${String(index + 1).padStart(width, '0')}` : portId;
       const text = typeof item === 'string';
-      const path = inFolder(folder, `${name}.${text ? 'txt' : 'json'}`);
+      const path = inFolder(folder, `${safe(name)}.${text ? 'txt' : 'json'}`);
       await runtime.files.write(path, text ? item : JSON.stringify(item, null, 2));
       written.push(path);
     }
@@ -173,7 +177,8 @@ async function writeEach(folder: string, values: Record<string, unknown>, runtim
 const baseName = (path: string): string => path.split(/[\\/]/).pop() ?? path;
 
 /** Whether *file* is a name `writeEach` gives a value of *port*: `value.txt`, `value_03.json`. */
-function namedFor(file: string, port: string): boolean {
+function namedFor(file: string, id: string): boolean {
+  const port = safe(id);
   const stem = file.replace(/\.(txt|json)$/, '');
   if (stem === file) return false;
   return stem === port || (stem.startsWith(`${port}_`) && /^\d+$/.test(stem.slice(port.length + 1)));
@@ -197,12 +202,16 @@ async function removeEarlier(folder: string, ports: string[], kept: string[], ru
   }
 }
 
+/** *name* as one safe file name: no separator, no `..`, so a port called `../../x` stays in its folder. */
+const safe = (name: string): string => name.replace(/[^\p{L}\p{N}_.-]/gu, '_').replace(/\.\./g, '_');
+
 /**
  * *name* inside *folder*, in the separator the folder is already written in.
  * Spelled out rather than taken from `node:path`: an element also runs in the
  * editor's browser tab, where there is no such module.
  */
 function inFolder(folder: string, name: string): string {
+  if (/[\\/]/.test(name) || name.includes('..')) throw new Error(`"${name}" is not a file name inside the folder.`);
   const separator = folder.includes('\\') && !folder.includes('/') ? '\\' : '/';
   return `${folder.replace(/[\\/]+$/, '')}${separator}${name}`;
 }

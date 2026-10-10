@@ -10,7 +10,7 @@ function dataNode(value: unknown, more: Record<string, unknown> = {}): GraphNode
   } as unknown as GraphNode;
 }
 
-const nowhere = quietRuntime({ files: { exists: async () => false } });
+const nowhere = quietRuntime();
 const element = new DataNodeRunner();
 
 describe('a data node', () => {

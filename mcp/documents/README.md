@@ -7,13 +7,14 @@ and which pages it covers.
 
 It is a separate program with its own dependencies. Nothing of it is in the editor, in the
 download or in a deployed tool. A graph can only *name* it; the command that starts it, and
-the folders it may read, live in `ai-settings.json` on your machine, as for every tool
-server.
+the folders it may read, live in this folder's `server.json` on your machine, as for every
+tool server.
 
-When a person picks a file on a page, the editor already hands it to a node as text (a Word
-file as Markdown) or as the file itself (a PDF). This server is for when the *model* decides
-which file to read, for PDFs with a local model (Ollama reads pictures, not PDFs), and for
-any other MCP client.
+Word files are read here and nowhere else: when a person picks a `.docx` on a page, a node is
+handed its path, not its text. A PDF or a picture is handed to a node as the file itself,
+which a model that reads PDFs reads. This server is for when the *model* decides which file
+to read, for Word files, for PDFs with a local model (Ollama reads pictures, not PDFs), and
+for any other MCP client.
 
 ## Use it
 
@@ -24,24 +25,15 @@ cd mcp/documents
 npm ci
 ```
 
-Add it to `ai-settings.json`. After `main.ts` come the folders it may read -- one or more:
-
-```json
-{
-  "mcp_servers": {
-    "docs": {
-      "command": "node",
-      "args": ["C:/path/to/Tell-and-Wire/mcp/documents/src/main.ts", "C:/Users/me/Documents/papers"]
-    }
-  }
-}
-```
+Copy `server.example.json` to `server.json` in this folder (it is not committed) and put the
+folders it may read after `src/main.ts` -- one or more. It is started in this folder, and its
+name is the name of the folder, `documents`.
 
 (`TW_DOCS_ROOTS` can name the folders instead, separated by `;` on Windows and `:` elsewhere.
 Without a folder the server does not start.)
 
-In an AI node, open *the node's settings → Tools the model may use* and write `docs` (in the
-project folder that is `"config": { "mcp_servers": ["docs"] }` in the node's entry in
+In an AI node, open *the node's settings → Tools the model may use* and write `documents` (in the
+project folder that is `"config": { "mcp_servers": ["documents"] }` in the node's entry in
 `nodes.json`). This wiring is tested end to end: a graph with such an AI node, run by
 `node backend/app/main.ts`, starts the server, offers the model both tools, hands it the text
 of a Word file and of a PDF, and, when the model asks for a file outside the folder, hands it

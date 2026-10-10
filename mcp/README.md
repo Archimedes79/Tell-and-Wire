@@ -12,9 +12,13 @@ deployed tool: whoever runs one installs it.
 ## How an AI node reaches one
 
 1. Install it: `cd mcp/<server>`, then `npm ci` (Node 24 or newer).
-2. Name it in `ai-settings.json` on your machine, under `mcp_servers`: the command that starts
-   it is written only there. A graph someone hands you can name a server but never start a
-   program of its own choosing. Each README has the entry to copy.
+2. Copy `server.example.json` in its folder to `server.json` there (gitignored): the command
+   that starts it, and its settings, live with the server. Its name, for a graph, is the
+   folder's: `web`, `documents`. It runs in its own folder. A server of your own, or one
+   reached over HTTP (`{ "url": …, "headers": … }`), is an entry under `mcp_servers` in the
+   machine's settings file (`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`), which
+   wins by name. Nowhere else: not a settings file in a project folder, not the graph. A
+   graph someone hands you can name a server, never a command or an address.
 3. In the AI node, open *the node's settings → Tools the model may use* and write the name.
    (In the project folder: `"config": { "mcp_servers": ["<name>"] }` in the node's entry in
    `nodes.json`.)

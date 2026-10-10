@@ -9,19 +9,18 @@ import type { Graph, GraphEdge, GraphNode } from '../graph.ts';
 import type { Runtime } from '../nodes/Runtime.ts';
 
 /**
- * A runtime with no world attached: an empty disk on which every path is
- * there (`exists`) and reads as nothing, a body that hands back what it was
+ * A runtime with no world attached: an empty disk on which every path reads as nothing, a body that hands back what it was
  * given, and a model that says nothing.
  *
  * *over* replaces what a test is about, member by member -- and inside
- * `files` file operation by file operation, so a disk on which nothing exists
- * is `{ files: { exists: async () => false } }`. Each call is a new object.
+ * `files` file operation by file operation, so a disk that fails
+ * is `{ files: { read: async () => { throw new Error('no'); } } }`. Each call is a new object.
  */
 export function quietRuntime(over: Partial<Omit<Runtime, 'files'>> & { files?: Partial<Runtime['files']> } = {}): Runtime {
   const { files, ...rest } = over;
   return {
     files: {
-      read: async () => '', write: async () => {}, list: async () => [], resolve: (path) => path, exists: async () => true,
+      read: async () => '', write: async () => {}, list: async () => [], resolve: (path) => path, inProject: (path) => path,
       size: async () => 0,
       ...files,
     },

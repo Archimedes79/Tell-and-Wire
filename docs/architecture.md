@@ -288,7 +288,7 @@ TW_CORE="node backend/app/main.ts core" node backend/app/main.ts --editor fronte
   15 s, or speaks another `protocol`, and starts it again when asked after it ended;
 - read requests while one goes: a `stop` arrives in the middle of a round;
 - run on the same files as the wrapper: paths in a graph resolve against the same working
-  directory;
+  directory, and a path written in the graph file stays below it (see "Security boundaries");
 - keep what every node made last between rounds: `held` comes in with `open` and goes back
   with every round, a value the wrapper stores and does not read; what a round left is
   committed only when it ran to its end;
@@ -403,10 +403,27 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
 - A request must name `127.0.0.1`, `localhost`, `[::1]` or a name in `TW_ALLOWED_HOSTS`, come
   from the server's own origin and send `application/json` (`foreignRequest`,
   `backend/app/http.ts`). Every page it serves forbids being framed (`servePage`).
-- A graph can name an MCP tool server; only `ai-settings.json` says which program it starts,
-  and it starts without this process's keys and tokens (its own `env` gives what it needs).
-  The MCP server confines paths to `--mcp-root`, never opens `ai-settings.json` and filters
-  keys from its answers (`mcpServer.test.ts`, "confinement").
+- A graph is a file somebody may hand you, so it reaches files in two ways only
+  (`graph/core/confine.ts`, `confine.test.ts`). A path written in the graph file -- a start or
+  end point's `path` -- is relative and stays below the working directory (links followed);
+  `check` says so, and a run refuses. A path that comes at run time from the person -- a
+  file chosen on the page, a call's values, the command line -- is theirs. The files that
+  hold keys or a command (the settings files, a tool server's `server.json`) are never
+  read, written or listed, whoever names them, and a code body does not see them. A tool
+  served beyond loopback (`--host`) touches nothing outside its folder at all, so a remote
+  caller's values cannot name a local path. An end point's file names are made of its ports'
+  ids with anything outside letters, digits, `_`, `.` and `-` replaced.
+- A graph can name an MCP tool server by name only. What a name starts, or calls, is written
+  on this machine: in the server's folder `mcp/<name>/server.json` under the install folder,
+  or under `mcp_servers` in the machine's settings file (`TW_SETTINGS`, else
+  `~/.tell-and-wire/settings.json`). Not in a settings file in the working directory or the
+  project folder, and a URL is never written in a graph (`settings.test.ts`, `mcp.test.ts`). A server starts
+  without this process's keys and tokens (its own `env` gives what it needs).
+  The MCP server confines paths to `--mcp-root`, never opens a file that holds keys and
+  filters keys from its answers (`mcpServer.test.ts`, "confinement").
+- Word and PDF files are the `documents` tool server's (`mcp/documents`): the nodes hand a
+  Word file on as its path, a PDF or a picture as itself for a model, a text file as text,
+  and refuse a file over 8 MB unread (`graph/nodes/fileContent.ts`).
 - A code body runs in a sandbox of its own: see "A language" above (`sandbox.test.ts`).
 
 ## Environment variables

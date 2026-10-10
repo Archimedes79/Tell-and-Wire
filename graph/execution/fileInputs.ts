@@ -18,7 +18,7 @@
 import type { GraphNode } from '../graph.ts';
 import type { FileService } from '../nodes/Runtime.ts';
 import type { Runners } from '../nodes/NodeRunner.ts';
-import { fileContent } from '../nodes/documents.ts';
+import { fileContent } from '../nodes/fileContent.ts';
 import { atMost } from './batching.ts';
 
 /**
@@ -41,9 +41,9 @@ export class Unread extends Error {}
 /**
  * *inputs* with the paths on *ports* replaced by what the files say.
  *
- * A list on a port in *each* -- one a node runs over an item at a time -- is
- * read a file per item, no more at once than *atOnce*, as its items run: a
- * file of it that cannot be read is an `Unread` in its place, and costs its
+ * A list is read a file at a time, no more at once than *atOnce*. On a port in
+ * *each* -- one a node runs over an item at a time -- it is read as its items
+ * run: a file that cannot be read is an `Unread` in its place, and costs its
  * item. Any other file that cannot be read fails the whole, which every call
  * is handed.
  */
@@ -62,20 +62,22 @@ export async function readPorts(
     // No path is no file, and no file has no content: a picker nobody has used
     // yet hands on "", and the node is there to say "choose a file" -- it used
     // to be told `ENOENT: open ''` instead, before it ran at all.
-    // What is in it, as `documents.ts` says: a Word document as its text, a picture or a PDF as itself.
+    // What is in it, as `fileContent.ts` says: text as text, a picture or a PDF as itself.
     const read = (path: unknown): Promise<string> | string => (String(path ?? '').trim() ? fileContent(String(path), files) : '');
-    if (Array.isArray(value) && each.ports.has(key)) {
+    if (Array.isArray(value)) {
+      const items = each.ports.has(key);
       const texts: unknown[] = new Array(value.length);
       await atMost(value.length, each.atOnce, async (index) => {
         try {
           texts[index] = await read(value[index]);
         } catch (error) {
+          if (!items) throw error;
           texts[index] = new Unread(error instanceof Error ? error.message : String(error));
         }
       });
       resolved[key] = texts;
     } else {
-      resolved[key] = Array.isArray(value) ? await Promise.all(value.map(read)) : await read(value);
+      resolved[key] = await read(value);
     }
   }
   return resolved;

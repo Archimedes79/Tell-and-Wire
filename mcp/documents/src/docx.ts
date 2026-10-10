@@ -1,7 +1,6 @@
 // A Word document's text as Markdown: headings, lists, bold and italic, tables.
 //
-// The same reading as the editor's own (graph/nodes/documents.ts), copied and not
-// imported: this package imports nothing from the others, and nothing imports it.
+// This package imports nothing from the others, and nothing imports it.
 // A .docx is zipped XML and unzipping is DecompressionStream, so it needs no package.
 
 import { UserError } from './errors.ts';
@@ -88,6 +87,21 @@ function runsOf(paragraph: string): string {
   return text.replace(/\*\*\*\*/g, '');
 }
 
+/** The outermost `tag` elements of *xml*, each whole: one inside another belongs to the outer one. */
+function elements(xml: string, tag: string): string[] {
+  const found: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (const m of xml.matchAll(new RegExp(`<${tag}(?=[ >])|</${tag}>`, 'g'))) {
+    if (m[0].startsWith('</')) {
+      if (depth > 0 && --depth === 0) found.push(xml.slice(start, m.index + m[0].length));
+    } else if (depth++ === 0) {
+      start = m.index;
+    }
+  }
+  return found;
+}
+
 /**
  * A Word document's body as Markdown: headings (a style named Heading or
  * Überschrift with its level, a title), lists bulleted or numbered as its
@@ -103,8 +117,9 @@ export async function docxMarkdown(zip: Uint8Array): Promise<string> {
 
   // A style's name says what it is, whatever its id in this language.
   const styleNames = new Map<string, string>();
-  for (const [, id, name] of (parts.get('word/styles.xml') ?? '').matchAll(/<w:style [^>]*w:styleId="([^"]+)"[\s\S]*?<w:name w:val="([^"]+)"/g)) {
-    styleNames.set(id, name.toLowerCase());
+  for (const [, id, body] of (parts.get('word/styles.xml') ?? '').matchAll(/<w:style\b[^>]*w:styleId="([^"]+)"[^>]*>([\s\S]*?)<\/w:style>/g)) {
+    const name = /<w:name w:val="([^"]+)"/.exec(body)?.[1];
+    if (name) styleNames.set(id, name.toLowerCase());
   }
   const numbering = parts.get('word/numbering.xml') ?? '';
   const abstractOf = new Map([...numbering.matchAll(/<w:num w:numId="(\d+)"[^>]*>\s*<w:abstractNumId w:val="(\d+)"/g)].map(([, num, abs]) => [num, abs]));
@@ -134,20 +149,27 @@ export async function docxMarkdown(zip: Uint8Array): Promise<string> {
 
   const blocks: string[] = [];
   const body = /<w:body>([\s\S]*)<\/w:body>/.exec(document)?.[1] ?? '';
-  for (const [block] of body.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>|<w:p[ >][\s\S]*?<\/w:p>/g)) {
-    if (!block.startsWith('<w:tbl>')) {
+  const paragraphs = (xml: string): void => {
+    for (const [block] of xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)) {
       const said = paragraph(block);
       if (said) blocks.push(said);
-      continue;
     }
-    const rows = [...block.matchAll(/<w:tr[ >][\s\S]*?<\/w:tr>/g)].map(([row]) =>
-      [...row.matchAll(/<w:tc>[\s\S]*?<\/w:tc>/g)].map(([cell]) =>
+  };
+  let at = 0;
+  for (const block of elements(body, 'w:tbl')) {
+    const start = body.indexOf(block, at);
+    paragraphs(body.slice(at, start));
+    at = start + block.length;
+    // A table inside a cell is part of the cell: its text is read into it.
+    const rows = elements(block, 'w:tr').map((row) =>
+      elements(row, 'w:tc').map((cell) =>
         [...cell.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map(([p]) => runsOf(p).trim()).filter(Boolean).join(' ').replace(/\|/g, '\\|')));
     if (!rows.length) continue;
     const width = Math.max(...rows.map((row) => row.length));
     const line = (cells: string[]): string => `| ${[...cells, ...Array(width - cells.length).fill('')].join(' | ')} |`;
     blocks.push([line(rows[0]), line(Array(width).fill('---')), ...rows.slice(1).map(line)].join('\n'));
   }
+  paragraphs(body.slice(at));
   // Items of one list are one block: no blank line between them.
   return blocks.join('\n\n').replace(/^((?: *)(?:-|1\.) .*)\n\n(?=(?: *)(?:-|1\.) )/gm, '$1\n') + '\n';
 }

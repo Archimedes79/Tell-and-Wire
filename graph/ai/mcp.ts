@@ -9,16 +9,14 @@
 //
 // **The security boundary is in `resolve` below, and it is one rule.** A graph
 // names its tool servers, and a graph is a file somebody hands you. If that file
-// could carry a command line, opening a graph would be running a stranger's
-// program. So a graph may say one of two things only:
+// could carry a command line or an address, opening a graph would be running a
+// stranger's program or posting the node's data to a stranger's server. So a
+// graph says a *name* only, which means nothing until this machine says what it
+// stands for: a server's own folder under `mcp/`, or the machine's settings
+// file (`configuredMcpServers`). A command or a URL is written there, by the
+// person whose machine it is, and nowhere else.
 //
-//   - a URL: a server reached over HTTP. The same class of thing as calling a
-//     model -- bytes go out, bytes come back, nothing starts on this machine.
-//   - a *name*, which means nothing until this machine's own `ai-settings.json`
-//     says what it stands for. The command line lives there, written by the
-//     person whose machine it is, and nowhere else.
-//
-// There is no third form, and no "just this once" parameter to add one.
+// There is no other form, and no "just this once" parameter to add one.
 //
 // Like `core/node.ts`, this file knows an operating system exists: it starts
 // processes. It is reached only from there, so everything above it still runs in a
@@ -39,14 +37,6 @@ import { withoutKeys } from './providers.ts';
 export type McpServerConfig =
   | { command: string; args?: string[]; env?: Record<string, string>; cwd?: string }
   | { url: string; headers?: Record<string, string> };
-
-/** The clocks. Arguments so a test can make them short, and a machine can set its own. */
-export interface McpOptions {
-  /** `initialize` and `tools/list`: a server that takes longer than this to say hello is not coming. */
-  handshakeTimeoutMs?: number;
-  /** One tool call. Longer, because a tool is allowed to do real work. 0 waits forever. */
-  callTimeoutMs?: number;
-}
 
 const PROTOCOL_VERSION = '2025-06-18';
 const CLIENT_INFO = { name: 'tell-and-wire', version: '1.0.0' };
@@ -561,8 +551,6 @@ const safeName = (name: string): string => name.replace(/[^A-Za-z0-9_-]/g, '_').
 // The service
 // ---------------------------------------------------------------------------
 
-const isUrl = (server: string): boolean => /^https?:\/\//i.test(server);
-
 /**
  * `TW_MCP_TIMEOUT_MS`, or undefined when the machine said nothing.
  *
@@ -580,43 +568,33 @@ function envCallTimeout(env: Record<string, string | undefined> = process.env): 
 /**
  * Tool servers for this machine.
  *
- * *configured* is what the machine's settings file says -- see
+ * *configured* is what this machine says its servers are -- see
  * `configuredMcpServers` in `settings.ts`. It is the only place a command line
- * can come from.
+ * or an address can come from.
  */
-export function mcpToolService(
-  configured: Record<string, McpServerConfig> = {},
-  options: McpOptions = {},
-): ToolService {
-  const handshakeTimeout = options.handshakeTimeoutMs ?? HANDSHAKE_TIMEOUT_MS;
-  const callTimeout = options.callTimeoutMs ?? envCallTimeout() ?? CALL_TIMEOUT_MS;
+export function mcpToolService(configured: Record<string, McpServerConfig> = {}): ToolService {
+  const callTimeout = envCallTimeout() ?? CALL_TIMEOUT_MS;
 
   /**
-   * THE SECURITY BOUNDARY. A graph must never be able to supply a command line.
+   * THE SECURITY BOUNDARY. A graph must never be able to supply a command line
+   * or an address.
    *
-   * *server* came out of a graph file. It is used in exactly two ways: as a URL
-   * to POST to, or as a key into *configured*. It is never split, parsed for
-   * arguments, or passed to `spawn` -- what gets spawned is whatever the machine's
-   * owner wrote down under that key, and a key they did not write is an error,
-   * not a fallback. Anyone changing this function should be able to say why a
-   * graph downloaded from a stranger still cannot start a program.
+   * *server* came out of a graph file. It is used as a key into *configured*
+   * and nothing else: never split, parsed for arguments, passed to `spawn` or
+   * to `fetch` -- what gets started or called is whatever the machine's owner
+   * wrote down under that key, and a key they did not write is an error, not a
+   * fallback. Anyone changing this function should be able to say why a graph
+   * downloaded from a stranger still cannot start a program or send its data
+   * anywhere.
    */
   const resolve = (server: string): { label: string; connect(): Transport } => {
-    if (isUrl(server)) {
-      let label = server;
-      try { label = new URL(server).hostname || server; } catch { /* the fetch will say what is wrong with it */ }
-      // No headers: credentials belong to a *configured* entry, and are sent
-      // only to the URL written beside them.
-      return { label, connect: () => httpTransport(server, server, {}) };
-    }
-
     const entry = Object.prototype.hasOwnProperty.call(configured, server) ? configured[server] : undefined;
     if (!entry) {
       const known = Object.keys(configured);
       throw new Error(
         `The graph asks for tool server "${server}", which this machine has not configured. `
-        + 'A graph can name a tool server but never the command that starts one: '
-        + `add "${server}" under "mcp_servers" in ai-settings.json`
+        + 'A graph can name a tool server but never the command or address of one: '
+        + `put a server.json in mcp/${/^[\w-]+$/.test(server) ? server : '<name>'}/, or add "${server}" under "mcp_servers" in the machine's settings file`
         + (known.length ? ` (configured here: ${known.join(', ')}).` : '.'),
       );
     }
@@ -627,14 +605,14 @@ export function mcpToolService(
     if ('command' in entry && typeof entry.command === 'string' && entry.command) {
       return { label: server, connect: () => stdioTransport(server, entry) };
     }
-    throw new Error(`Tool server "${server}" in ai-settings.json needs either a "command" or a "url".`);
+    throw new Error(`Tool server "${server}" in the settings needs either a "command" or a "url".`);
   };
 
   const connect = async (target: { label: string; connect(): Transport }, stop?: AbortSignal): Promise<OpenServer> => {
     let transport: Transport | undefined;
     try {
       transport = target.connect();
-      return { label: target.label, transport, tools: await handshake(transport, handshakeTimeout, stop) };
+      return { label: target.label, transport, tools: await handshake(transport, HANDSHAKE_TIMEOUT_MS, stop) };
     } catch (error) {
       await transport?.close();
       throw new Error(`Tool server "${target.label}" could not be opened: ${(error as Error).message}`);

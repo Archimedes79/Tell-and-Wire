@@ -115,8 +115,10 @@ asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
 [docs/architecture.md](docs/architecture.md)).
 
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
-servers: list them under *the node's settings → Tools the model may use*, one per line -- an
-`https://…/mcp` address, or a name this machine's `ai-settings.json` defines:
+servers: list them under *the node's settings → Tools the model may use*, one name per line.
+A name is a server's folder in [mcp/](mcp/README.md) (`web`, `documents`; its `server.json`
+says how it starts) or an entry under `mcp_servers` in the machine's settings file
+(`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`):
 
 ```json
 { "mcp_servers": {
@@ -124,8 +126,9 @@ servers: list them under *the node's settings → Tools the model may use*, one 
     "internal":   { "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer …" } } } }
 ```
 
-A graph can name a server but never the command that starts one, so a graph someone hands
-you cannot start a program of its choosing. A server started by `command` does not
+A graph can name a server but never the command or the address of one, so a graph someone
+hands you cannot start a program of its choosing or post its data to a stranger's server. A
+Word file is read by the `documents` server, not by the nodes. A server started by `command` does not
 inherit variables named like keys, tokens, secrets or passwords from the environment: give
 it what it needs in its own `env`. A tool call gets two minutes
 (`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight turns of calls per answer.

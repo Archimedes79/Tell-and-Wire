@@ -20,6 +20,7 @@ import { registry } from '../../graph/nodes/registry.ts';
 import { startEvents } from '../../graph/execution/triggers.ts';
 import { pageBlocks, pathBlocks } from '../gui-editor/widgets/page.ts';
 import { names } from '../../graph/execution/wiring.ts';
+import { confineEverything } from '../../graph/core/confine.ts';
 import { aiSetting, settingsPath } from '../../graph/ai/settings.ts';
 import { API, matchRoute, type RequestOf, type RouteName } from './api.ts';
 import {
@@ -71,6 +72,11 @@ export async function serve(options: ServeOptions): Promise<Served> {
   const lifecycle = new Lifecycle();
   const host = options.host ?? '127.0.0.1';
   const loopback = isLoopbackHost(host);
+  // A tool open to the network reads and writes below its own folder only, whoever names a path (a remote caller's values too).
+  if (!loopback && !options.editor) {
+    confineEverything();
+    lifecycle.own('the file confinement', () => confineEverything(false));
+  }
   const exchange: Exchange = { loopback };
   /** Who this server is, for telling its own page from another's: its port is known once it listens. */
   const self = { loopback, port: 0, names: namesFor(host) };

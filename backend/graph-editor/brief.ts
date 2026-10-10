@@ -80,7 +80,7 @@ function withWiring(node: GraphNode, written: string, wiring: string[]): string 
 const saidOf = (port: Port): string => port.description?.replace(/\s+/g, ' ').trim() ?? '';
 
 /**
- * An example with each file handed as itself (`documents.ts`) said by its
+ * An example with each file handed as itself (`fileContent.ts`) said by its
  * kind, not its bytes: a model writing from it reads no base64, and a PDF of
  * megabytes would be the whole prompt.
  */

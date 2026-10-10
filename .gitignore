@@ -31,6 +31,10 @@ Thumbs.db
 # is the working directory, which for a dev run is this repo -- never commit it.
 ai-settings.json
 
+# How a tool server on this machine is started (it can hold a token): copied from the
+# server.example.json beside it.
+mcp/*/server.json
+
 # Local editor/agent scratch, not part of the project.
 .claude/
 

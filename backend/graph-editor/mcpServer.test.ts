@@ -68,7 +68,8 @@ let ranBody = '';
 const fakeRuntime = (): Runtime => ({
   files: {
     resolve: (path) => path,
-    exists: async () => false,
+    inProject: (path) => path,
+    size: async () => 0,
     read: async () => { throw new Error('no files in this test'); },
     write: async () => { throw new Error('no files in this test'); },
     list: async () => [],
