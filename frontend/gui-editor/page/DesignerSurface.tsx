@@ -4,7 +4,7 @@ import type { GuiWidget } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { blockValue, GuiBlock, PageGrid } from './GuiPage';
 import { heldValue, roundGoing, useSession } from '../../app/api/session';
-import { moveBlock, patchBlock, removeBlock } from './pageWrite';
+import { moveBlock, patchBlock } from './pageWrite';
 import { cellsFromDrag, resolveWidgetLayout, GUI_GRID_COLUMNS, GUI_MAX_CELL } from '../../app/document/layout';
 import QuickInsert from './QuickInsert';
 import type { PaletteEntry } from './DesignerPalette';
@@ -37,7 +37,7 @@ import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../app/ui
  * same page.
  */
 export default function DesignerSurface({
-  widgets, onWidgetValue, onWidgetTrigger, selectedId, onSelect, overrides, dropIndex,
+  widgets, onWidgetValue, onWidgetTrigger, selectedId, onSelect, onRemove, overrides, dropIndex,
   insertAt, onInsertAt, onInsert,
 }: {
   widgets: GuiWidget[];
@@ -46,6 +46,7 @@ export default function DesignerSurface({
   onWidgetTrigger: (widget: GuiWidget, value?: unknown) => void;
   selectedId: string | null;
   onSelect: (widgetId: string | null) => void;
+  onRemove: (widgetId: string) => void;
   overrides?: Record<string, string>;
   /** Where a palette drag in flight would land. */
   dropIndex?: number | null;
@@ -56,18 +57,16 @@ export default function DesignerSurface({
 }) {
   // What the blocks show is what the rounds of the session handed the end
   // points they show -- whoever started them: this tab, the App tab, the clock.
-  const session = useSession();
-  const busy = roundGoing(session);
+  // Only what the blocks show: a tick of a round draws no block again.
+  const view = useSession((s) => s.view);
+  const edits = useSession((s) => s.edits);
+  const busy = useSession(roundGoing);
   // Reported by the grid below, because only the grid element knows it.
   const [cell, setCell] = React.useState(GUI_MAX_CELL);
   const placements = resolveWidgetLayout(widgets);
 
   // Every change goes through `pageWrite`, which reads the page from the store
   // when the change lands: what this render drew may be a keystroke old.
-  const remove = (widgetId: string) => {
-    removeBlock(widgetId);
-    onSelect(null);
-  };
 
   // ---- reorder by dragging ---------------------------------------------------
   //
@@ -88,17 +87,33 @@ export default function DesignerSurface({
   const resize = React.useRef<{ id: string; x: number; y: number; w: number; h: number } | null>(null);
 
   React.useEffect(() => {
+    const onUp = () => {
+      dragging.current = null;
+      resize.current = null;
+      setDraggingId(null);
+    };
     const onMove = (event: MouseEvent) => {
+      // The button was let go outside the window, where no mouseup is heard.
+      if (event.buttons === 0 && (dragging.current || resize.current)) {
+        onUp();
+        return;
+      }
       const held = dragging.current;
       if (held) {
+        const from = blockRefs.current.get(held)?.getBoundingClientRect();
         for (const [id, element] of blockRefs.current) {
-          if (id === held) continue;
+          if (id === held || !from) continue;
           const box = element.getBoundingClientRect();
-          if (event.clientX >= box.left && event.clientX <= box.right
-              && event.clientY >= box.top && event.clientY <= box.bottom) {
-            moveBlock(held, id);
-            return;
-          }
+          if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) continue;
+          // Moved past a block only once the pointer is beyond its middle, in the way it moves: a taller block
+          // under the pointer would otherwise swap back and forth with every pixel.
+          const below = box.top >= from.bottom - 1;
+          const above = box.bottom <= from.top + 1;
+          const forward = below || (!above && box.left > from.left);
+          const middle = below || above ? (box.top + box.bottom) / 2 : (box.left + box.right) / 2;
+          const pointer = below || above ? event.clientY : event.clientX;
+          if (forward ? pointer > middle : pointer < middle) moveBlock(held, id);
+          return;
         }
         return;
       }
@@ -108,11 +123,6 @@ export default function DesignerSurface({
         w: Math.max(1, Math.min(GUI_GRID_COLUMNS, state.w + cellsFromDrag(event.clientX - state.x, cell))),
         h: Math.max(1, state.h + cellsFromDrag(event.clientY - state.y, cell)),
       });
-    };
-    const onUp = () => {
-      dragging.current = null;
-      resize.current = null;
-      setDraggingId(null);
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
@@ -129,10 +139,10 @@ export default function DesignerSurface({
       <PageGrid minRows={4} onCell={setCell}>
         {placements.map((placement, index) => {
           const { widget } = placement;
-          const incoming = session.view?.shown[widget.id];
+          const incoming = view?.shown[widget.id];
           const fires = !!widget.fires && blockCan(widget).fires;
           // A block's design is what it holds here; a conversation is the session's.
-          const own = widgetValueIsDesign(widget) ? widget.value : heldValue(session, widget.id, widget.value);
+          const own = widgetValueIsDesign(widget) ? widget.value : heldValue({ view, edits }, widget.id, widget.value);
           const selected = widget.id === selectedId;
           const gripShown = selected || hoveredId === widget.id || draggingId === widget.id;
           // A block that is its own words is typed where it stands: the kind says how.
@@ -195,7 +205,7 @@ export default function DesignerSurface({
                   <BlockToolbar
                     width={placement.w}
                     onWidth={(w) => patchBlock(widget.id, { w })}
-                    onRemove={() => remove(widget.id)}
+                    onRemove={() => onRemove(widget.id)}
                   />
                 )}
 

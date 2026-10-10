@@ -64,7 +64,7 @@ export function toneStyle(tone: Tone | undefined, look: Look = {}): CSSPropertie
   return base;
 }
 
-/** Does the block draw a box at all? A bare block also drops its caption. */
+/** Does the block draw a box at all? */
 export function toneIsBare(tone: Tone | undefined, look: Look = {}): boolean {
   if (look.border !== undefined) return !look.border && !look.background;
   return tone === 'plain' && !look.background;

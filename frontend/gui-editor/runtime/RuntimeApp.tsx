@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuiWidget } from '../../app/graph';
-import { GuiSurfacePage } from '../page/GuiPage';
+import LivePage from '../page/LivePage';
 import { useRound } from '../page/useRound';
 import CallForms from '../page/CallForms';
 import type { InterfaceEntry } from '../../../backend/gui-editor/graphInterface.ts';
-import { connectionsOf, pageInUse, type PageDesign } from '../page/pageInUse';
+import { connectionsOf, type PageDesign } from '../page/pageInUse';
 import RequirementsDialog from '../../app/dialogs/RequirementsDialog';
 import DeliveredHeader from '../page/DeliveredHeader';
 import RuntimeAISettings from './RuntimeAISettings';
 import { call } from '../../app/api/client';
-import { roundGoing, setEdit, startOver, useSession, watchSession } from '../../app/api/session';
+import { roundGoing, startOver, useSession, watchSession } from '../../app/api/session';
 import { errorText } from '../../app/api/errorText';
 import Button from '../../app/ui/Button';
 import { schemeVars } from '../../app/ui/scheme';
@@ -41,8 +41,9 @@ export default function RuntimeApp() {
   const [design, setDesign] = useState<(PageDesign & { scheme: string; startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
   const [loadError, setLoadError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const session = useSession();
-  const busy = roundGoing(session);
+  const view = useSession((s) => s.view);
+  const current = useSession((s) => s.round);
+  const busy = useSession(roundGoing);
 
   const load = useCallback(() => {
     Promise.all([call('page'), call('interface')])
@@ -64,7 +65,7 @@ export default function RuntimeApp() {
     return watchSession();
   }, [load]);
   // Another design than the one drawn: another session, or this one's edited.
-  const held = session.view ? designOf(session.view.session, session.view.design_revision) : null;
+  const held = view ? designOf(view.session, view.design_revision) : null;
   useEffect(() => {
     if (design && held && held !== design.drawn) load();
   }, [design, held, load]);
@@ -87,8 +88,9 @@ export default function RuntimeApp() {
     void start.current(null);
   }, [design]);
 
-  const clock = session.view?.clock;
-  const finishedAt = session.view?.finished_at;
+  const clock = view?.clock;
+  const finishedAt = view?.finished_at;
+  const fire = useCallback((block: GuiWidget) => { if (design) void start.current(design.fires[block.id], block.id); }, [design]);
 
   return (
     // A deployed tool looks like the thing that was designed, scheme included.
@@ -96,7 +98,7 @@ export default function RuntimeApp() {
       <DeliveredHeader
         name={design?.name ?? ''}
         description={design?.description ?? ''}
-        round={session.round}
+        round={current}
         tools={(
           <>
             <Button
@@ -120,7 +122,7 @@ export default function RuntimeApp() {
         )}
         note={clock?.runs_by_itself && (
           <span className="text-xs whitespace-nowrap" style={{ color: DIM }} title="This tool runs by itself; the clock is in the server, so it keeps running with this page closed.">
-            {session.round && !session.round.done ? '⏱ running…' : clock.next_at
+            {current && !current.done ? '⏱ running…' : clock.next_at
               ? `⏱ next ${new Date(clock.next_at).toLocaleTimeString()}`
               : finishedAt ? `⏱ ran ${new Date(finishedAt).toLocaleTimeString()}` : '⏱'}
           </span>
@@ -141,14 +143,10 @@ export default function RuntimeApp() {
             then the page, or, when it has no blocks, what the tool does and
             what its run hands back: the editor's running application draws the same. */}
         {design && (
-          <CallForms events={design.events} sent={session.view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />
+          <CallForms events={design.events} sent={view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />
         )}
         {design && (
-          <GuiSurfacePage
-            page={pageInUse(design, session)}
-            onValue={(block, value) => setEdit(block.id, value)}
-            onEvent={(block) => { void round.run(design.fires[block.id], block.id); }}
-          />
+          <LivePage design={design} onEvent={fire} />
         )}
         <RequirementsDialog
           requirements={round.requirements}

@@ -62,6 +62,9 @@ export function cellsFromDrag(pixels: number, cell: number): number {
  */
 export const GUI_NARROW = 640;
 
+/** The least a row is high on a narrow page, where a cell is a few pixels and a block of four rows would be a sliver. */
+const NARROW_ROW = 28;
+
 /** Cells a widget occupies when it has none of its own yet. */
 export const DEFAULT_WIDGET_SPAN = { w: 8, h: 4 };
 
@@ -131,23 +134,24 @@ export function cellSize(containerWidth: number): number {
 }
 
 /** The grid style shared by the designer and the runtime window. */
-export function gridStyle(cell: number): React.CSSProperties {
+export function gridStyle(cell: number, narrow = false): React.CSSProperties {
   return {
     display: 'grid',
     gridTemplateColumns: `repeat(${GUI_GRID_COLUMNS}, 1fr)`,
-    gridAutoRows: `minmax(${cell}px, auto)`,
+    gridAutoRows: `minmax(${narrow ? NARROW_ROW : cell}px, auto)`,
     gap: GUI_GAP,
     maxWidth: GUI_MAX_WIDTH,
     margin: '0 auto',
   };
 }
 
-/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be; on a *narrow* page every block is as wide as it. */
+/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be; on a *narrow* page every block is as wide as it, and one a cell wide -- a vertical rule, a gap -- is gone. */
 export function blockStyle(placement: WidgetPlacement, waiting = false, narrow = false): React.CSSProperties {
   return {
     gridColumn: `span ${narrow ? GUI_GRID_COLUMNS : placement.w}`,
     gridRow: `span ${waiting ? 1 : placement.h}`,
     minWidth: 0,
     minHeight: 0,
+    ...(narrow && placement.w <= 1 ? { display: 'none' } : {}),
   };
 }

@@ -105,7 +105,7 @@ export function PageGrid({
       ref={ref}
       data-gui-surface
       style={{
-        ...gridStyle(cell),
+        ...gridStyle(cell, narrow),
         minHeight: minRows ? cell * minRows : undefined,
       }}
     >
@@ -159,14 +159,15 @@ export function GuiBlock({
   return (
     <div
       ref={blockRef}
+      data-block
       className="relative rounded-xl flex flex-col gap-1 min-w-0 overflow-hidden"
       style={{
         ...blockStyle(placement, waiting, narrow),
         ...toneStyle(widget.tone as Tone, look),
-        // The same horizontal padding either way: a heading that started 10px
-        // left of the box beneath it broke the one thing a document must get
+        // The same horizontal padding either way: a heading that started left
+        // of the box beneath it broke the one thing a document must get
         // right, which is a single left margin.
-        padding: bare ? '2px 10px' : '8px 12px',
+        padding: bare ? '2px 12px' : '8px 12px',
         ...style,
       }}
       {...frame}

@@ -119,8 +119,8 @@ export default function DesignerTab() {
     const box = zone.getBoundingClientRect();
     if (event.clientX < box.left || event.clientX > box.right
         || event.clientY < box.top || event.clientY > box.bottom) return null;
-    const grid = zone.querySelector('[data-gui-surface]');
-    const children = grid ? [...grid.children] : [];
+    // Only the blocks: the grid also holds the insertion line, the `/` menu and the add button.
+    const children = [...zone.querySelectorAll('[data-gui-surface] > [data-block]')];
     for (let i = 0; i < children.length; i += 1) {
       const rect = children[i].getBoundingClientRect();
       // Before the first block whose middle is past the pointer: on a page that
@@ -158,9 +158,8 @@ export default function DesignerTab() {
     if (selected) moveBlock(selected.id, selectedIndex + delta);
   };
 
-  const removeSelected = () => {
-    if (!selected) return;
-    removeBlock(selected.id);
+  const remove = (id: string) => {
+    removeBlock(id);
     setSelectedId(null);
   };
 
@@ -182,7 +181,7 @@ export default function DesignerTab() {
       if (!selectedId) return;
       if (event.key === 'Delete') {
         event.preventDefault();
-        removeSelected();
+        remove(selectedId);
       } else if (event.ctrlKey && event.key === 'ArrowUp') {
         event.preventDefault();
         moveSelected(-1);
@@ -248,6 +247,7 @@ export default function DesignerTab() {
             onWidgetTrigger={fire}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onRemove={remove}
             overrides={overrides}
             insertAt={insertAt}
             onInsertAt={setInsertAt}

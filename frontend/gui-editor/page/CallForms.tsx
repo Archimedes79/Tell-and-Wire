@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { InterfaceEntry } from '../../../backend/gui-editor/graphInterface.ts';
 import Button from '../../app/ui/Button';
 import { DIMMER, FIELD, LINE, MUTED } from '../../app/ui/theme';
@@ -68,10 +68,14 @@ function CallForm({ event, sent, busy, onCall }: { event: InterfaceEntry; sent: 
   // What is typed, by part. A part nobody typed into shows what it was sent last.
   const [typed, setTyped] = useState<Record<string, string>>({});
   const shown = (name: string): string => typed[name] ?? typedOf(at(sent, name));
+  // What the session keeps of the call is shown in its place: only then is what was typed let go of,
+  // so a call that failed leaves it where it was.
+  useEffect(() => {
+    setTyped((before) => Object.fromEntries(Object.entries(before).filter(([name, text]) => text !== typedOf(at(sent, name)))));
+  }, [sent]);
   const call = () => {
     const values = structuredClone(sent && typeof sent === 'object' && !Array.isArray(sent) ? sent : {}) as Record<string, unknown>;
     for (const read of reads) put(values, read.name, readAs(read.type, shown(read.name)));
-    setTyped({});
     onCall(event.name, values);
   };
   return (

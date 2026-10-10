@@ -1,7 +1,7 @@
 import type { GuiWidget } from '../../app/graph';
 import type { RoundSnapshot } from '../../app/api/client';
 import type { InterfaceEntry } from '../../../backend/gui-editor/graphInterface.ts';
-import { heldValue, roundGoing, type PageSession } from '../../app/api/session';
+import { heldValue, type PageSession } from '../../app/api/session';
 import type { PageModel } from './GuiPage';
 
 /**
@@ -38,7 +38,7 @@ export function connectionsOf(events: InterfaceEntry[]): Pick<PageDesign, 'fires
 }
 
 /** Why *round* failed, in its own words -- or nothing, for one that went, is going, or was stopped. */
-function roundError(round: RoundSnapshot | null): string {
+export function roundError(round: RoundSnapshot | null): string {
   if (!round?.done || round.cancelled) return '';
   if (round.result) return round.result.status === 'error' ? round.result.error ?? '' : '';
   return round.error ?? '';
@@ -46,9 +46,10 @@ function roundError(round: RoundSnapshot | null): string {
 
 /**
  * The page in use: *design*, with what the session says of each block by its
- * id -- what it holds, what it shows -- and whether a round is going.
+ * id -- what it holds, what it shows -- and whether a round is going, and how
+ * the last one failed.
  */
-export function pageInUse(design: PageDesign, session: PageSession): PageModel {
+export function pageInUse(design: PageDesign, session: Pick<PageSession, 'view' | 'edits'> & { busy: boolean; error: string }): PageModel {
   const outputs = session.view?.outputs ?? {};
   const shown = session.view?.shown ?? {};
   const sends = new Set(design.sends);
@@ -60,8 +61,8 @@ export function pageInUse(design: PageDesign, session: PageSession): PageModel {
     shownOn: (block) => shown[block.id],
     fires: (block) => block.id in design.fires,
     takes: (block) => sends.has(block.id),
-    busy: roundGoing(session),
-    error: roundError(session.round),
+    busy: session.busy,
+    error: session.error,
     outputs: design.outputs.map((output) => ({ ...output, value: outputs[output.name] })),
     empty: design.empty,
   };

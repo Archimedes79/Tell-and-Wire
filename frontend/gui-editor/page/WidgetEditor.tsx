@@ -3,7 +3,7 @@ import type { GuiWidget } from '../../app/graph';
 import { WIDGET_BUILDERS } from '../../app/elements/registry';
 import { entryOf } from './DesignerPalette';
 import OnTheGraph from './OnTheGraph';
-import { GUI_GRID_COLUMNS } from '../../app/document/layout';
+import { blockSize, GUI_GRID_COLUMNS } from '../../app/document/layout';
 import { TONES, TONE_LABELS, type Tone } from '../../app/ui/tone';
 import Button from '../../app/ui/Button';
 import { DIMMER, FIELD_ON_SURFACE, LINE, MUTED } from '../../app/ui/theme';
@@ -121,7 +121,7 @@ export default function WidgetEditor({ widget, onChange }: WidgetEditorProps) {
                   max={max}
                   className="w-14 rounded px-1 py-0.5 text-xs"
                   style={FIELD_ON_SURFACE}
-                  value={(widget[field] as number) ?? 1}
+                  value={blockSize(widget)[field]}
                   onChange={(e) => onChange({ [field]: Math.max(1, Math.min(max, Number(e.target.value) || 1)) })}
                 />
               </label>

@@ -109,7 +109,7 @@ export function setEdit(id: string, value: unknown): void {
 }
 
 /** What block *id* holds as this page shows it: what was set here, else what the session holds, else *design*. */
-export function heldValue(state: PageSession, id: string, design: unknown): unknown {
+export function heldValue(state: Pick<PageSession, 'view' | 'edits'>, id: string, design: unknown): unknown {
   if (id in state.edits) return state.edits[id];
   if (state.view && id in state.view.page) return state.view.page[id];
   return design;
