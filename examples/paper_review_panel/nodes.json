@@ -2,23 +2,12 @@
   "review": {
     "kind": "start",
     "label": "Review",
-    "description": "The Review button starts it; its package carries the manuscript.",
-    "outputs": [
-      {
-        "port": "data",
-        "name": "Data",
-        "type": "json",
-        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
-      }
-    ]
+    "description": "The Review button starts it; its package carries the manuscript."
   },
   "read": {
     "kind": "code",
     "label": "Read manuscript",
     "description": "Reads the chosen manuscript once and passes its text on, unchanged, to every reviewer.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "file",
@@ -41,9 +30,6 @@
     "kind": "ai",
     "label": "Scientific",
     "description": "Scientific reviewer: scientific soundness.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "paper",
@@ -65,9 +51,6 @@
     "kind": "ai",
     "label": "Adversarial",
     "description": "Adversarial reviewer: to argue against the paper as a hostile but fair referee would.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "paper",
@@ -89,9 +72,6 @@
     "kind": "ai",
     "label": "Evidence & claims",
     "description": "Evidence & claims reviewer: whether each claim is backed by the evidence in the paper.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "paper",
@@ -113,9 +93,6 @@
     "kind": "ai",
     "label": "References",
     "description": "References reviewer: the references.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "paper",
@@ -137,9 +114,6 @@
     "kind": "ai",
     "label": "Figures & tables",
     "description": "Figures & tables reviewer: the figures and tables.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "paper",
@@ -161,9 +135,6 @@
     "kind": "ai",
     "label": "Judge",
     "description": "Merges the five reviews into one ranked list and a recommendation",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "scientific",

@@ -16,8 +16,17 @@
 // neighbours -- that is `flow.json` --, nor where it sits -- `layout.json` --,
 // nor its writing -- code and prompts, files in its own folder. Every node has
 // an entry, at least `{ "kind": … }`; the rest may be left out.
+//
+// **Only what a person said.** A setting that holds its default is not
+// written (`withoutDefaults`), and neither are ports that follow from the
+// node's settings -- a start point's, a data node's from its fields, a
+// subgraph's from the graph it holds: they are worked out again when it is
+// read, so the file never holds a copy that can disagree. What a person chose
+// for those inputs stays, as a stub: which part of a package one takes
+// (`field`), and that it takes a list (`list`).
 
 import type { DataType, GraphNode, Port, PortKind } from '../../../graph/graph.ts';
+import { withoutDefaults } from '../../../graph/graph.ts';
 import { NotAGraph } from '../../../graph/errors.ts';
 
 export const NODES_FILE = 'nodes.json';
@@ -66,16 +75,31 @@ function fromDisk(raw: unknown, kind: PortKind, where: string): Port {
   };
 }
 
-/** What `nodes.json` says for *nodes*: the writing already taken out of their settings. */
-export function describeNodes(nodes: GraphNode[]): Record<string, unknown> {
-  return Object.fromEntries(nodes.map((node) => [node.id, {
-    kind: node.node_type,
-    label: node.label,
-    ...(node.description ? { description: node.description } : {}),
-    ...(Object.keys(node.config).length ? { config: sorted(node.config) } : {}),
-    ...(node.inputs.length ? { inputs: node.inputs.map(onDisk) } : {}),
-    ...(node.outputs.length ? { outputs: node.outputs.map(onDisk) } : {}),
-  }]));
+/** What a person chose for an input whose port follows from the node's settings: all there is to keep of it. */
+function stubOnDisk(port: Port): { port: string; list?: true; field?: string } {
+  return { port: port.id, ...(port.multi ? { list: true as const } : {}), ...(port.field ? { field: port.field } : {}) };
+}
+
+/**
+ * What `nodes.json` says for *nodes*: the writing already taken out of their
+ * settings. *derived* is the ids of the nodes whose ports follow from their
+ * settings: of those, only the choices a person made are kept.
+ */
+export function describeNodes(nodes: GraphNode[], derived: ReadonlySet<string>): Record<string, unknown> {
+  return Object.fromEntries(nodes.map((node) => {
+    const config = withoutDefaults(node.config);
+    const follows = derived.has(node.id);
+    const inputs = follows ? node.inputs.filter((port) => port.multi || port.field).map(stubOnDisk) : node.inputs.map(onDisk);
+    const outputs = follows ? [] : node.outputs.map(onDisk);
+    return [node.id, {
+      kind: node.node_type,
+      label: node.label,
+      ...(node.description ? { description: node.description } : {}),
+      ...(Object.keys(config).length ? { config: sorted(config) } : {}),
+      ...(inputs.length ? { inputs } : {}),
+      ...(outputs.length ? { outputs } : {}),
+    }];
+  }));
 }
 
 const isObject = (value: unknown): boolean => !!value && typeof value === 'object' && !Array.isArray(value);

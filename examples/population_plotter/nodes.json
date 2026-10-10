@@ -2,23 +2,12 @@
   "draw": {
     "kind": "start",
     "label": "Draw",
-    "description": "Choosing a file starts it; its package carries the chosen CSV file.",
-    "outputs": [
-      {
-        "port": "data",
-        "name": "Data",
-        "type": "json",
-        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
-      }
-    ]
+    "description": "Choosing a file starts it; its package carries the chosen CSV file."
   },
   "chart": {
     "kind": "code",
     "label": "What to plot",
     "description": "Reads the CSV and says what the chart should show: bars of its first numeric column by the names in the first column, largest first.\nIt draws nothing itself -- the chart block on the page draws the figure.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "csv",

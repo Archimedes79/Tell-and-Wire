@@ -417,6 +417,23 @@ export async function readStructure(folder: string, guard?: Guard): Promise<{ gr
   return { graph: graphFrom(flow.json, list.json, flow.path, list.path), files };
 }
 
+/**
+ * Give every node whose ports follow from its settings -- a start point, a
+ * data node from its fields, a subgraph from the graph it holds -- the ports
+ * that follow, keeping what a person chose for its inputs (`keepingFields`).
+ * The ids of those nodes.
+ */
+function derivePorts(graph: Graph): Set<string> {
+  const derived = new Set<string>();
+  for (const node of graph.nodes) {
+    const ports = registry.node(node.node_type)?.derivedPorts(node, registry);
+    if (!ports) continue;
+    Object.assign(node, keepingFields(ports, node.inputs));
+    derived.add(node.id);
+  }
+  return derived;
+}
+
 /** A project folder, with every piece of writing read in from its file. */
 export async function readProject(folder: string, guard?: Guard): Promise<Graph> {
   const { graph, files } = await readStructure(folder, guard);
@@ -445,6 +462,8 @@ export async function readProject(folder: string, guard?: Guard): Promise<Graph>
     if (!isProjectFolder(inside)) continue;
     registry.node(nested.node.node_type)?.setNestedGraph(nested.node, await readProject(inside, guard));
   }
+  // Last: a data node's ports follow from the fields read above, a subgraph's from the graph just put into it.
+  derivePorts(graph);
   return withoutEmptyPage(graph);
 }
 
@@ -502,13 +521,10 @@ interface Plan {
 /** What writing *graph* into *folder* comes to, this level and every level below it. */
 function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   // A node whose ports follow from its settings -- a start point's, a
-  // subgraph's from its graph -- has them written as they follow, so its
-  // ports in nodes.json are never a copy that disagrees. Before the graphs a
-  // node holds are taken out below: its ports are read from them.
-  for (const node of copy.nodes) {
-    const derived = registry.node(node.node_type)?.derivedPorts(node, registry);
-    if (derived) Object.assign(node, keepingFields(derived, node.inputs));
-  }
+  // subgraph's from its graph -- has them as they follow, and nodes.json keeps
+  // only what a person chose of them. Before the graphs a node holds are
+  // taken out below: its ports are read from them.
+  const derived = derivePorts(copy);
   const deeper: Plan[] = [];
   const untouched = new Set<string>();
   for (const held of nestedGraphs(copy)) {
@@ -556,7 +572,7 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   // and its folder -- refuses the save instead of being written over, and the
   // new node's files tidied away. The list last: the writing is out of the settings by now.
   files.set(join(folder, FLOW_FILE), toFile(flow, true));
-  files.set(join(folder, NODES_FILE), toFile(describeNodes(copy.nodes), true));
+  files.set(join(folder, NODES_FILE), toFile(describeNodes(copy.nodes, derived), true));
   files.set(join(folder, LAYOUT_FILE), toFile(layout, true));
 
   // Deepest first, so a level is only written once everything it holds is.

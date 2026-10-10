@@ -2,15 +2,7 @@
   "review": {
     "kind": "start",
     "label": "Review",
-    "description": "Choosing an export starts it; its package carries the chosen CSV.",
-    "outputs": [
-      {
-        "port": "data",
-        "name": "Data",
-        "type": "json",
-        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
-      }
-    ]
+    "description": "Choosing an export starts it; its package carries the chosen CSV."
   },
   "ai": {
     "kind": "ai",

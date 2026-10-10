@@ -2,23 +2,12 @@
   "summarize": {
     "kind": "start",
     "label": "Summarize",
-    "description": "Choosing a file, changing the length or pressing the button starts it; its package carries the file and the length.",
-    "outputs": [
-      {
-        "port": "data",
-        "name": "Data",
-        "type": "json",
-        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
-      }
-    ]
+    "description": "Choosing a file, changing the length or pressing the button starts it; its package carries the file and the length."
   },
   "reader": {
     "kind": "code",
     "label": "Read file",
     "description": "Reads the chosen file and says what it is: passes its text on, and one line with its name, word count, character count and reading time.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "file",
@@ -54,9 +43,6 @@
     "kind": "ai",
     "label": "Summarize",
     "description": "Summarize the text faithfully, at the length asked for.",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "text",

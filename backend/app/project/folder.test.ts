@@ -6,7 +6,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile, utimes } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { parseGraph, type Graph } from '../../../graph/graph.ts';
+import { parseGraph, withoutDefaults, type Graph } from '../../../graph/graph.ts';
 import { problemsIn } from './check.ts';
 import { RUN_ON_ITS_OWN } from '../../../graph/nodes/code/CodeNodeRunner.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
@@ -34,7 +34,7 @@ function sample(): Graph {
           input_definition: 'module.exports = { "files": ["a.csv"] };',
           output_definition: 'module.exports = { "total": 1 };',
           history: '## 2026-09-28 09:05 · ✨ Code\n\nNothing was sent.',
-          batch_mode: 'whole_list',
+          batch_mode: 'per_item', catch_errors: false,
         },
       },
       {
@@ -99,30 +99,39 @@ describe('a project folder', () => {
     });
     const listed = JSON.parse(await text('nodes.json'));
     expect(Object.keys(listed)).toEqual(['pick', 'count', 'say', 'told']);
-    expect(listed.pick).toMatchObject({ kind: 'start', config: { reads: 'folder', path: 'data', extensions: '.csv' } });
+    // What follows from a start point's settings is not written; what a person set is, and only that: catch_errors, at its default, is not.
+    expect(listed.pick).toEqual({ kind: 'start', label: 'Pick', config: { extensions: '.csv', path: 'data', reads: 'folder', started_by: 'itself' } });
     expect(listed.count).toEqual({
-      kind: 'code', label: 'Count', config: { batch_mode: 'whole_list' },
+      kind: 'code', label: 'Count', config: { batch_mode: 'per_item' },
       inputs: [{ port: 'files', type: 'any' }], outputs: [{ port: 'total', type: 'any' }],
     });
     expect(JSON.stringify(listed.count)).not.toContain('pick');
     expect(existsSync(join(dir, 'nodes/count/node.json'))).toBe(false);
     expect(JSON.parse(await text('layout.json')).count).toEqual({ x: 300, y: 20, width: 360, height: 180 });
 
-    const data = (id: string, fields: Record<string, unknown>) => ({ id, node_type: 'data', label: id, inputs: [], outputs: [], config: { data_value: fields } });
+    const data = (id: string, fields: Record<string, unknown>, inputs: unknown[] = []) => ({ id, node_type: 'data', label: id, inputs, outputs: [], config: { data_value: fields } });
     const held = join(dir, 'held');
     await writeProject(held, parseGraph({
       metadata: { name: 'Held' },
-      nodes: [data('count', { count: 2, names: ['Ada'] }), data('note', { text: 'Line one.\nLine two.' })],
+      nodes: [data('count', { count: 2, names: ['Ada'] }, [{ ...port('count', 'input'), field: 'chat.message' }]), data('note', { text: 'Line one.\nLine two.' })],
       edges: [],
     }));
     // A data node's fields are one file, data.json, whatever they hold; its ports follow them.
     expect(JSON.parse(await readFile(join(held, 'nodes/count/data.json'), 'utf8'))).toEqual({ count: 2, names: ['Ada'] });
     expect(JSON.parse(await readFile(join(held, 'nodes/note/data.json'), 'utf8'))).toEqual({ text: 'Line one.\nLine two.' });
-    expect(JSON.parse(await readFile(join(held, 'nodes.json'), 'utf8')).note.outputs.map((one: { port: string }) => one.port)).toEqual(['text', 'round', 'all']);
+    // Its ports are not in nodes.json, but for what a person chose of an input: which part of a package it takes ...
+    const heldList = JSON.parse(await readFile(join(held, 'nodes.json'), 'utf8'));
+    expect(heldList.note).toEqual({ kind: 'data', label: 'note' });
+    expect(heldList.count.inputs).toEqual([{ port: 'count', field: 'chat.message' }]);
+    expect(heldList.count.outputs).toBeUndefined();
     // How it looks filled is a file of its own, a stub until something is written there; one that is comes back.
     expect(JSON.parse(await readFile(join(held, 'nodes/note/example.json'), 'utf8'))).toEqual({});
     forgetSeen();
-    expect((await readProject(held)).nodes.map((node) => node.config.data_value)).toEqual([{ count: 2, names: ['Ada'] }, { text: 'Line one.\nLine two.' }]);
+    const again = await readProject(held);
+    expect(again.nodes.map((node) => node.config.data_value)).toEqual([{ count: 2, names: ['Ada'] }, { text: 'Line one.\nLine two.' }]);
+    // ... they follow the fields again when it is read, with that choice kept.
+    expect(again.nodes[1].outputs.map((one) => one.id)).toEqual(['text', 'round', 'all']);
+    expect(again.nodes[0].inputs.map((one) => [one.id, one.data_type, one.field])).toEqual([['count', 'any', 'chat.message'], ['names', 'any', undefined]]);
   });
 
   it('reads back exactly what was written', async () => {
@@ -130,8 +139,11 @@ describe('a project folder', () => {
     await writeProject(dir, original);
     const read = await readProject(dir);
     original.nodes[1].position.x = 300; // stored rounded
-    // A node whose ports follow from its settings is written with them as they follow.
-    for (const node of original.nodes) Object.assign(node, registry.node(node.node_type)?.derivedPorts(node, registry) ?? {});
+    // A node whose ports follow from its settings has them as they follow; a setting at its default is not written, and reads back as missing.
+    for (const node of original.nodes) {
+      Object.assign(node, registry.node(node.node_type)?.derivedPorts(node, registry) ?? {});
+      node.config = withoutDefaults(node.config);
+    }
     const sortedKeys = (value: unknown): unknown => (Array.isArray(value) ? value.map(sortedKeys)
       : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, sortedKeys((value as Record<string, unknown>)[key])])) : value);
     expect(sortedKeys(read.nodes)).toEqual(sortedKeys(original.nodes.map((node) => ({ ...node, width: node.width ?? null, height: node.height ?? null }))));

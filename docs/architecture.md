@@ -133,7 +133,7 @@ place, keys are sorted, and an unchanged save changes no byte
 ```
 my_tool/
   flow.json            name, description, every wire as one line: "draw.data -> chart.csv"
-  nodes.json           id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is
+  nodes.json           id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is, as a person said it
   layout.json          id -> { x, y, width?, height? }: positions and sizes on the canvas
   page.json            the page: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
@@ -156,6 +156,11 @@ my_tool/
   has an entry in `nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a
   `check` problem. The page is no part of the graph: `page.json` names start and end points
   by id, and a tool without a page has no such file.
+- **Only what a person said.** A setting at its default is not written, by the editor or by
+  the folder's writer alike (`defaultNodeConfig`, `withoutDefaults` in `graph/graph.ts`), and
+  neither are the ports that follow from a node's settings (a start point's, a data node's
+  from its fields, a subgraph's from its graph): they are worked out when the folder is read.
+  Of those inputs the file keeps what a person chose: `field` and `list`.
 - The page is a flow, not coordinates: its blocks sit in the order of the list, each `w`
   cells wide (of 16 across) and `h` high, wrapping like text (`frontend/app/document/layout.ts`).
 - Which setting is which file is the element's to say (`NodeRunner.texts`). Every file is

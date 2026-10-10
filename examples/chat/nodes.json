@@ -2,23 +2,12 @@
   "send": {
     "kind": "start",
     "label": "Send",
-    "description": "The chat block starts it whenever the person sends a message; its package carries the message and the conversation so far.",
-    "outputs": [
-      {
-        "port": "data",
-        "name": "Data",
-        "type": "json",
-        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
-      }
-    ]
+    "description": "The chat block starts it whenever the person sends a message; its package carries the message and the conversation so far."
   },
   "assistant": {
     "kind": "ai",
     "label": "Assistant",
     "description": "Answers the last message, knowing the conversation so far",
-    "config": {
-      "batch_mode": "whole_list"
-    },
     "inputs": [
       {
         "port": "history",

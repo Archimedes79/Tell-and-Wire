@@ -15,6 +15,7 @@
 
 import type { GraphNode, NodeType } from '../graph';
 import { derivedNodePorts } from './ports';
+import { withoutDefaults } from '../../../graph/graph.ts';
 import { SubgraphNodeRunner } from '../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
 import { StartNodeRunner } from '../../../graph/nodes/start/StartNodeRunner.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
@@ -192,14 +193,11 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
 /**
  * The node as a graph file keeps it: every setting that is not its default
- * (`baseNodeConfig`), and none that is -- a run reads a key left out as
+ * (`defaultNodeConfig`), and none that is -- a run reads a key left out as
  * that default, and loading fills it back in, so nothing is lost either way.
  */
 export function savedNode(node: GraphNode): GraphNode {
   // A type this editor does not know was never filled in: it is saved as it came.
   if (!NODE_KINDS[node.node_type]) return node;
-  const defaults: Record<string, unknown> = baseNodeConfig();
-  const config = Object.fromEntries(Object.entries(node.config)
-    .filter(([key, value]) => value !== undefined && JSON.stringify(value) !== JSON.stringify(defaults[key])));
-  return { ...node, config: config as GraphNode['config'] };
+  return { ...node, config: withoutDefaults(node.config) as GraphNode['config'] };
 }
