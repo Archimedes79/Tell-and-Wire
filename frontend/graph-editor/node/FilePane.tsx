@@ -100,7 +100,7 @@ export default function FilePane({ node, write, setConfig, updateNode, flush, tr
       <PaneHeader title={`${partName(node, write)}, file`}>
         <code className="text-xs px-2 py-0.5 rounded" style={{ ...FIELD, color: MUTED }}>{file}</code>
         <span className="flex-1" />
-        <Button size="sm" onClick={() => setLarge(true)} title={`Edit ${file} in a large window (Esc to come back)`}>Larger ⤢</Button>
+        <Button size="sm" onClick={() => setLarge(true)} title={`Edit ${file} across the whole window (Esc to come back)`}>Full screen ⤢</Button>
         <OpenInEditor nodeId={node.id} file={file} before={flush} />
       </PaneHeader>
 

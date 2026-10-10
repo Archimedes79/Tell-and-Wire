@@ -136,6 +136,18 @@ export function unfitDefinition(write: Write, probe: ProbeReport | undefined): s
 
 const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1);
 
+/** The ids of *node*'s ports on one side, as the files name them: the executor's error port is no part of what a node says. */
+export function portIdsOf(node: GraphNode, side: 'input' | 'output'): string[] {
+  return (side === 'input' ? node.inputs : node.outputs).map((port) => port.id).filter((id) => id !== ERROR_PORT);
+}
+
+/** Whether the definition of *side* names ports other than the node has: it is written, and says one thing where the node is another. */
+export function strayDefinition(node: GraphNode, side: 'input' | 'output'): boolean {
+  const named = definitionKeys(heldBy(node, side));
+  const ports = portIdsOf(node, side);
+  return named.length > 0 && (named.length !== ports.length || named.some((id) => !ports.includes(id)));
+}
+
 /** What a file is called on its row, in its chat and in history.md: its part. */
 export function partName(node: GraphNode, part: Part): string {
   if (part === 'input') return 'Input';

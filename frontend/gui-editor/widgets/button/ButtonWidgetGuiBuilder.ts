@@ -19,6 +19,6 @@ export class ButtonWidgetGuiBuilder extends WidgetGuiBuilder {
   }
 
   protected override defaultSpan() {
-    return { w: 5, h: 2 };
+    return { w: 5, h: 1 };
   }
 }

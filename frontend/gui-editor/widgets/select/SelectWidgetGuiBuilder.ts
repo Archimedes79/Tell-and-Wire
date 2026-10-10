@@ -16,7 +16,7 @@ export class SelectWidgetGuiBuilder extends WidgetGuiBuilder {
   override readonly Panel = lazy(() => import('./SelectWidgetPanel'));
 
   protected override defaultSpan() {
-    return { w: 6, h: 2 };
+    return { w: 6, h: 1 };
   }
 
   /** A control you operate looks like a field, or nobody touches it. */

@@ -11,7 +11,7 @@
   },
   {
     "extensions": ".md,.txt",
-    "h": 3,
+    "h": 1,
     "id": "paper",
     "kind": "input_picker",
     "label": "Manuscript",
@@ -25,7 +25,7 @@
   },
   {
     "fires": "review",
-    "h": 2,
+    "h": 1,
     "id": "go",
     "kind": "button",
     "label": "Review",

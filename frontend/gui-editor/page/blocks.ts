@@ -25,6 +25,7 @@ import type { ComponentType } from 'react';
 import type { GuiWidget, WidgetKind } from '../../app/graph';
 import type { WidgetViewProps } from '../widgets/WidgetView';
 import { textIoRole } from '../../../backend/gui-editor/widgets/text_io/role.ts';
+import { asText } from '../../../backend/gui-editor/widgets/text_io/text.ts';
 
 import ButtonWidgetView from '../widgets/button/ButtonWidgetView';
 import ChatWidgetView from '../widgets/chat/ChatWidgetView';
@@ -53,6 +54,8 @@ export interface BlockKind {
   drawsLabel?: true;
   /** The label above it names the one control in it, which takes the view's `controlId`. */
   labelsControl?: true;
+  /** It shows what a run hands back and nothing has yet: it stands as one line until something does. */
+  waits?: (widget: GuiWidget, value: unknown) => boolean;
 }
 
 export const BLOCKS: Record<WidgetKind, BlockKind> = {
@@ -64,7 +67,12 @@ export const BLOCKS: Record<WidgetKind, BlockKind> = {
   // sends; the reply is shown above it from what arrived. Handed the reply as
   // its value, the box showed one text and ▶ Run sent another. A box that
   // only shows is what arrived.
-  text_io: { View: TextIoWidgetView, labelsControl: true, ownsValue: (widget) => textIoRole(widget.mode) !== 'output' },
+  text_io: {
+    View: TextIoWidgetView,
+    labelsControl: true,
+    ownsValue: (widget) => textIoRole(widget.mode) !== 'output',
+    waits: (widget, value) => textIoRole(widget.mode) === 'output' && asText(value) === '',
+  },
   plot_window: { View: PlotWindowWidgetView },
   image_view: { View: ImageViewWidgetView },
   table: { View: TableWidgetView },

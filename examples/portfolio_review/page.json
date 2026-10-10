@@ -2,7 +2,7 @@
   {
     "extensions": "",
     "fires": "review",
-    "h": 3,
+    "h": 1,
     "id": "input_picker",
     "kind": "input_picker",
     "label": "Portfolio export (CSV, any broker)",

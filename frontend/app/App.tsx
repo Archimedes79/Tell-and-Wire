@@ -91,6 +91,12 @@ export default function App() {
   const say = useCallback((text: string, problem = false) => setSaid({ text, problem, document: useGraphStore.getState().document }), []);
   const documentOpen = useGraphStore((s) => s.document);
   const heard = said.document === documentOpen ? said : { text: '', problem: false };
+  // What went well is said for a few seconds, not for good: "Saving…" stays until the save says how it went.
+  useEffect(() => {
+    if (!said.text || said.problem || said.text.endsWith('…')) return;
+    const timer = setTimeout(() => setSaid((now) => (now === said ? { ...now, text: '' } : now)), 4000);
+    return () => clearTimeout(timer);
+  }, [said]);
 
   // Editing the page means the Page tab -- at the size it will really be, next
   // to the blocks it will really sit beside -- which a start or end point the

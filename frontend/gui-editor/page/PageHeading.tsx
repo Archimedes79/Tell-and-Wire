@@ -32,10 +32,13 @@ export default function PageHeading({ name, description, onChange }: {
         title="What this tool is called: in the header of the page, here and for whoever gets it"
         onChange={(e) => onChange({ name: e.target.value })}
       />
-      <input
-        className="flex-1 min-w-0 rounded px-2 py-1 text-xs"
+      {/* Two lines, wrapped: a sentence that is longer scrolls in its box, and does not run out of it. */}
+      <textarea
+        rows={2}
+        className="flex-1 min-w-0 rounded px-2 py-1 text-xs resize-none leading-snug"
         style={{ ...FIELD_ON_SURFACE, minWidth: '16rem', color: MUTED }}
         value={description}
+        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
         aria-label="What the tool does"
         placeholder="What this tool does, in a sentence — shown under its name (optional)"
         title="The graph's description: shown under the tool's name, here and for whoever gets it"

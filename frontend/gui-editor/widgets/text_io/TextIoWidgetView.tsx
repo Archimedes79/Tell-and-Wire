@@ -86,6 +86,14 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
     />
   );
 
+  if (mode === 'output' && text === '') {
+    return (
+      <div className="h-full rounded-lg px-2 text-sm flex items-center" style={{ minHeight: 34, color: DIMMER, border: `1px dashed ${LINE}` }}>
+        Waiting for output…
+      </div>
+    );
+  }
+
   if (mode === 'output') {
     return (
       <div className="relative group h-full">
@@ -97,7 +105,6 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
           style={{ ...FIELD, ...BOX_TEXT, minHeight: 80 }}
           value={text}
           readOnly
-          placeholder="Waiting for output…"
         />
         {saveButton(text)}
       </div>

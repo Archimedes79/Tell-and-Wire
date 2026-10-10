@@ -8,7 +8,9 @@
 //
 // The grid underneath is still a grid: 16 square cells across a capped content
 // width, with fixed gaps. It is a substrate, not a control panel. Nobody
-// configures it, which is what makes it impossible to configure badly.
+// configures it, which is what makes it impossible to configure badly. A row is
+// as tall as a cell and taller where what is in it needs the room: a block's
+// height is the least it has, never a cut.
 //
 // Presentational only: never touches ports, wiring, or execution.
 import type { GuiWidget } from '../graph';
@@ -126,18 +128,18 @@ export function gridStyle(cell: number): React.CSSProperties {
   return {
     display: 'grid',
     gridTemplateColumns: `repeat(${GUI_GRID_COLUMNS}, 1fr)`,
-    gridAutoRows: `${cell}px`,
+    gridAutoRows: `minmax(${cell}px, auto)`,
     gap: GUI_GAP,
     maxWidth: GUI_MAX_WIDTH,
     margin: '0 auto',
   };
 }
 
-/** Where one block sits in that grid. Span only — the browser decides the rest. */
-export function blockStyle(placement: WidgetPlacement): React.CSSProperties {
+/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be. */
+export function blockStyle(placement: WidgetPlacement, waiting = false): React.CSSProperties {
   return {
     gridColumn: `span ${placement.w}`,
-    gridRow: `span ${placement.h}`,
+    gridRow: `span ${waiting ? 1 : placement.h}`,
     minWidth: 0,
     minHeight: 0,
   };

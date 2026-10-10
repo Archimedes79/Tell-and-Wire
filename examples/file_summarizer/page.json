@@ -12,7 +12,7 @@
   {
     "extensions": ".txt,.md",
     "fires": "summarize",
-    "h": 3,
+    "h": 1,
     "id": "file",
     "kind": "input_picker",
     "label": "File",
@@ -26,7 +26,7 @@
   },
   {
     "fires": "summarize",
-    "h": 2,
+    "h": 1,
     "id": "length",
     "kind": "select",
     "label": "Length",
@@ -40,7 +40,7 @@
   },
   {
     "fires": "summarize",
-    "h": 2,
+    "h": 1,
     "id": "go",
     "kind": "button",
     "label": "Summarize again",

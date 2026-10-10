@@ -16,11 +16,12 @@ import HeadingField from '../authoring/HeadingField';
 import { GenerationReport } from '../authoring/GenerationTranscript';
 import { useTryExample, whatCameOf } from '../authoring/TryExample';
 import { modelsBefore, pullable, pullableOutput } from '../authoring/pull';
-import { fileOf, isWritten, partName, partsOf, writesFor, type Part, type Write } from '../authoring/generation';
+import { fileOf, isWritten, partName, partsOf, portIdsOf, writesFor, type Part, type Write } from '../authoring/generation';
 import NodeHeader from '../views/NodeHeader';
 import NodeViewLayout from '../views/NodeViewLayout';
 import RowList, { at, type RowAction, type RowView } from '../views/RowList';
 import FilePane from './FilePane';
+import Interface from './Interface';
 import LastRun from './LastRun';
 import PartChat from './PartChat';
 import SettingsPane from './SettingsPane';
@@ -190,6 +191,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
     return {
       id: part,
       label: partName(node, part),
+      chips: side ? { names: portIdsOf(node, part === 'input' ? 'input' : 'output'), kind: part === 'input' ? 'input' : 'output' } : undefined,
       actions: [...first, { id: 'file', label: 'File', title: `${file}: read it and edit it here`, written: isWritten(node, part) }],
       add: side && ownPorts && builder.portEditing[side] === 'edit'
         ? { title: `Add ${side === 'inputs' ? 'an input' : 'an output'}`, onClick: () => addPort(side) }
@@ -198,6 +200,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   });
 
   const shown: Open = open.part === 'settings' || parts.includes(open.part) ? open : firstOpen(node, parts, pullsOutput);
+  const sides = (['input', 'output'] as const).filter((side) => parts.includes(side));
   const active = shown.part === 'settings' ? null : at(shown.part, shown.how);
   const used = blocksAt(page, node.id);
   // A block that fires a start point and sends to it too is one block.
@@ -288,6 +291,9 @@ function Opened({ node, panel, onClose, onOpenPage }: {
         left={left}
       >
         <GenerationReport calls={writing.generate.transcript} live={writing.generate.live}>
+          {shown.part !== 'settings' && (parts.includes('input') || parts.includes('output')) && (
+            <Interface node={node} files={sides} onOpen={(side) => setOpen({ part: side, how: 'file' })} />
+          )}
           {/* Keyed by the pane: each file gets an editor and a chat of its own -- one kept
               showed the last file's placeholder, words and undo history -- and a pane that
               broke (a chunk gone stale) is tried again once another is chosen. */}

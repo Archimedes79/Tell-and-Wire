@@ -2,7 +2,7 @@
   {
     "extensions": ".txt",
     "fires": "chosen",
-    "h": 3,
+    "h": 1,
     "id": "folder",
     "kind": "input_picker",
     "label": "Folder",

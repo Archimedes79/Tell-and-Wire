@@ -80,6 +80,8 @@ export default function DesignerSurface({
   const blockRefs = React.useRef(new Map<string, HTMLElement>());
   const dragging = React.useRef<string | null>(null);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  // The block the pointer is over: its grip shows, beside it, and only then.
+  const [hoveredId, setHoveredId] = React.useState<string | null>(null);
 
 
   // ---- resize: the one thing the grid is still dragged for --------------------
@@ -132,6 +134,7 @@ export default function DesignerSurface({
           // A block's design is what it holds here; a conversation is the session's.
           const own = widgetValueIsDesign(widget) ? widget.value : heldValue(session, widget.id, widget.value);
           const selected = widget.id === selectedId;
+          const gripShown = selected || hoveredId === widget.id || draggingId === widget.id;
           // A block that is its own words is typed where it stands: the kind says how.
           const InPlace = selected ? WIDGET_BUILDERS[widget.kind]?.InlineEditor : undefined;
 
@@ -153,17 +156,20 @@ export default function DesignerSurface({
                   if (element) blockRefs.current.set(widget.id, element);
                   else blockRefs.current.delete(widget.id);
                 }}
-                labelInset={16}
-                // The toolbar hangs above the block, outside its box.
+                // Selected, a block waiting for what it shows has its whole height: it is the one being sized.
+                keepRoom={selected}
+                // The toolbar hangs above the block and the grip beside it, outside its box.
                 style={{
                   // Not selected: the page's focus ring shows where the keyboard is.
                   outline: selected ? `2px solid ${ACCENT}` : undefined,
                   outlineOffset: 1,
                   opacity: draggingId === widget.id ? 0.55 : 1,
-                  overflow: selected ? 'visible' : undefined,
-                  zIndex: selected ? 5 : undefined,
+                  overflow: gripShown ? 'visible' : undefined,
+                  zIndex: selected ? 5 : gripShown ? 4 : undefined,
                 }}
                 frame={{
+                  onMouseEnter: () => setHoveredId(widget.id),
+                  onMouseLeave: () => setHoveredId((now) => (now === widget.id ? null : now)),
                   onMouseDown: (e) => { e.stopPropagation(); onSelect(widget.id); },
                   // Enter or Space on the block itself, not on a field in it, selects it.
                   onKeyDown: (e) => {
@@ -196,7 +202,8 @@ export default function DesignerSurface({
                 {/* The grip, not the block, starts a drag — so the widget stays
                     live and you can type in it while designing. A full-height
                     strip rather than a 14px dot: a grip you have to aim for is
-                    not a grip. */}
+                    not a grip. It stands in the gap beside the block, where it
+                    covers nothing, and only while the pointer is on the block. */}
                 <div
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -208,9 +215,10 @@ export default function DesignerSurface({
                   title="Drag to move"
                   className="absolute select-none flex items-center justify-center"
                   style={{
-                    left: 0, top: 0, bottom: 0, width: 14, color: MUTED, fontSize: 12,
+                    left: -15, top: 0, bottom: 0, width: 14, color: MUTED, fontSize: 12,
                     cursor: draggingId === widget.id ? 'grabbing' : 'grab',
-                    opacity: selected || draggingId === widget.id ? 0.9 : 0.3,
+                    opacity: gripShown ? 0.9 : 0,
+                    pointerEvents: gripShown ? undefined : 'none',
                   }}
                 >
                   ⠿

@@ -118,7 +118,7 @@ export function PageGrid({
  * none, and none of that code is in its bundle.
  */
 export function GuiBlock({
-  placement, value, incoming, onChange, onTrigger, fires, busy, style, frame, blockRef, labelInset, children, content,
+  placement, value, incoming, onChange, onTrigger, fires, busy, style, frame, blockRef, keepRoom, children, content,
 }: {
   placement: WidgetPlacement;
   value: unknown;
@@ -133,8 +133,8 @@ export function GuiBlock({
   /** What the designer adds to the block's own box: selecting it by mouse and keyboard. */
   frame?: React.HTMLAttributes<HTMLDivElement>;
   blockRef?: (element: HTMLElement | null) => void;
-  /** Room for a drag grip beside the caption. Designer only. */
-  labelInset?: number;
+  /** Stands at the height it is designed to even while it waits for something to show: the block being sized. Designer only. */
+  keepRoom?: boolean;
   children?: React.ReactNode;
   /**
    * Drawn in place of the block's own widget. Designer only: it is how a
@@ -148,16 +148,17 @@ export function GuiBlock({
   const View = kind?.View;
   // What the label above a block names, when the block is one control.
   const controlId = kind?.labelsControl ? `block-${widget.id}` : undefined;
-  const caption = { className: 'text-xs font-medium flex-shrink-0', style: { color: MUTED, paddingLeft: labelInset ?? 0 } };
+  const caption = { className: 'text-xs font-medium flex-shrink-0', style: { color: MUTED } };
   const look = { border: widget.border, background: widget.background };
   const bare = toneIsBare(widget.tone as Tone, look);
+  const waiting = !keepRoom && kind?.waits?.(widget, value) === true;
 
   return (
     <div
       ref={blockRef}
       className="relative rounded-lg flex flex-col gap-1 min-w-0 overflow-hidden"
       style={{
-        ...blockStyle(placement),
+        ...blockStyle(placement, waiting),
         ...toneStyle(widget.tone as Tone, look),
         // The same horizontal padding either way: a heading that started 10px
         // left of the box beneath it broke the one thing a document must get

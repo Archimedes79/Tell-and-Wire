@@ -19,7 +19,7 @@ export class SliderWidgetGuiBuilder extends WidgetGuiBuilder {
     'Letting go of the handle (or an arrow key) starts a run at that start point — not every value it passes on the way.';
 
   protected override defaultSpan() {
-    return { w: 8, h: 2 };
+    return { w: 8, h: 1 };
   }
 
   /** A control you operate looks like a field, or nobody touches it. */
