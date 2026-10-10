@@ -39,7 +39,7 @@ can be kept as an offline test. **File → Deploy as zip** writes a zip that any
 start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
 The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
-(not `ai-settings.json`), writes only the temp folder, starts no program and holds no key.
+(not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.
 
 ## Download and start

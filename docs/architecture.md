@@ -361,7 +361,7 @@ node's `Language` (`JAVASCRIPT` in `graph/nodes/code/javascript.ts`; the interfa
 
 A JavaScript body runs in a Node process of its own under `--permission` (child processes,
 addons, workers no; the network stays open), with no key in its environment. It reads the
-working directory except the settings file, and the temp folder; it writes the temp folder
+working directory except the settings file, and its own folder; it writes its own folder
 only. Node's permission flags only allow, so the entries it may read are listed for every
 body; a link in the working directory that points at the settings file is followed anyway.
 A file elsewhere reaches it as an input typed `file_path`, which the executor reads for it.

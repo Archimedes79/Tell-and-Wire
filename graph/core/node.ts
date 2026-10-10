@@ -88,8 +88,8 @@ function opened(root: string, keys: string[]): string[] {
  * here is the whole list, and it only ever allows -- there is no flag for "all
  * but". So the list is made: a body reads the working directory, where a
  * graph's files are, less the settings file that holds the keys (`aiSetting`'s
- * file, every one `candidatePaths` names), and the temp folder; it writes the
- * temp folder only. A file elsewhere reaches it as an input typed `file_path`,
+ * file, every one `candidatePaths` names), and its own folder, the one `run`
+ * makes for it; it writes its own folder only. A file elsewhere reaches it as an input typed `file_path`,
  * which the executor reads for it (`readsFileInputs`), and what it makes
  * leaves as an output, which an end point writes.
  *
@@ -102,11 +102,11 @@ function opened(root: string, keys: string[]): string[] {
  * does). A body can still reach out. Nor a link in the working directory that
  * points at the settings file: Node follows links past its own list.
  */
-function sandbox(): string[] {
+function sandbox(own: string): string[] {
   const keys = candidatePaths().filter((path) => existsSync(path)).flatMap((path) => [path, realpathSync(path)]);
-  const temp = [...new Set([tmpdir(), realpathSync(tmpdir())])].flatMap((path) => opened(path, keys));
-  const flags = ['--permission', ...[...opened(process.cwd(), keys), ...temp].map((path) => `--allow-fs-read=${path}`),
-    ...temp.map((path) => `--allow-fs-write=${path}`)];
+  const mine = [...new Set([own, realpathSync(own)])];
+  const flags = ['--permission', ...[...opened(process.cwd(), keys), ...mine].map((path) => `--allow-fs-read=${path}`),
+    ...mine.map((path) => `--allow-fs-write=${path}`)];
   // Windows ends a command line at 32 KB: a folder with that many
   // entries beside the settings file is a failure to say, not `ENAMETOOLONG`.
   if (flags.join(' ').length > 30_000) throw new Error('the folders a body may read hold too many entries beside the settings file: keep it in a folder of its own.');
@@ -187,7 +187,7 @@ export const nodeCode: CodeService = {
     try {
       await writeFile(file, wrapper, 'utf8');
       const given = { inputs, calls: Object.keys(context?.calls ?? {}) };
-      const result = await converse(process.execPath, [...sandbox(), file], JSON.stringify(given), context?.calls ?? {}, signal);
+      const result = await converse(process.execPath, [...sandbox(dir), file], JSON.stringify(given), context?.calls ?? {}, signal);
       if (result === undefined) throw new Error('the body returned nothing; does it return an object?');
       if (result === null || typeof result !== 'object') throw new Error('the body must return an object keyed by output port.');
       return result as Record<string, unknown>;
@@ -309,7 +309,7 @@ function converse(
       const message = named >= 0 ? lines.slice(named, named + 2).join('\n') : lines.slice(-3).join('\n');
       // Node's "Use --allow-fs-write" is advice for whoever starts the interpreter, not for the person reading this.
       const denied = /Use --allow-fs-\w+ to manage permissions\./;
-      fail(new Error(message.replace(denied, 'A body may read the working directory (not the settings file) and write the temp folder only.').trim() || `exited with ${code}`));
+      fail(new Error(message.replace(denied, 'A body may read the working directory (not the settings file) and write its own folder only.').trim() || `exited with ${code}`));
     });
   });
 }
