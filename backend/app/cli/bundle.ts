@@ -94,6 +94,9 @@ interface Carried {
   place: string;
 }
 
+/** A graph that cannot be handed on: what is wrong is the graph's, not the server's. */
+export class CannotBundle extends Error {}
+
 /**
  * The files a graph starts on -- what its pickers and folder inputs name --
  * every one of them: a tool is handed on whole, or not at all. A bundle that
@@ -146,7 +149,7 @@ async function dataFiles(graph: Graph, from: string): Promise<Carried[]> {
     carried.push({ named, source, place });
   }
   if (missing.length) {
-    throw new Error(`This tool cannot be handed on whole: it starts on files it cannot carry -- ${missing.join('; ')}. `
+    throw new CannotBundle(`This tool cannot be handed on whole: it starts on files it cannot carry -- ${missing.join('; ')}. `
       + 'Choose files that are there and smaller, or clear those fields, and deploy again.');
   }
   return carried;
@@ -257,7 +260,7 @@ export async function writeBundle(
   // A bundle is something handed to someone else. One of a graph with no nodes
   // is a zip that starts, does nothing and says nothing -- and the person who
   // opens it has no way to tell that from a tool that failed.
-  if (!graph.nodes.length) throw new Error('This graph has no nodes: there is nothing to hand over.');
+  if (!graph.nodes.length) throw new CannotBundle('This graph has no nodes: there is nothing to hand over.');
   const needs = bundleNeeds(graph);
   // Asked first: what cannot be carried stops the bundle before a file is written.
   const data = await dataFiles(graph, options.dataFrom ?? process.cwd());

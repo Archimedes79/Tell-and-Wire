@@ -31,6 +31,15 @@ const graph = (name: string): Graph => ({
 
 const save = async (path: string, saved: Graph, replace?: boolean) => routes.saveGraph!({ path, graph: saved, ...(replace === undefined ? {} : { replace }) }, loopback);
 
+describe('deploying a graph that cannot be handed on', () => {
+  it('is the graph\'s fault (422), not the server\'s', async () => {
+    const empty = { ...graph('Empty'), nodes: [] };
+    const refused = await routes.bundle!({ graph: empty }, loopback).catch((error: unknown) => error);
+    expect(refused).toBeInstanceOf(Refusal);
+    expect((refused as Refusal).status).toBe(422);
+  });
+});
+
 describe('saving onto a graph that is there', () => {
   it('refuses unless the page says it replaces it: Save as onto a project\'s name replaced it, and said "Saved"', async () => {
     const tool = join(dir, 'word_stats');
