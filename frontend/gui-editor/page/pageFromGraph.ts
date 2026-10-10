@@ -16,6 +16,7 @@
 import type { DataType, GraphNode, GuiWidget, Wire } from '../../app/graph';
 import { blockCan, blocksAt } from '../../app/document/page';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
+import { GUI_GRID_COLUMNS } from '../../app/document/layout';
 import { ALL_ENTRIES, newBlock } from './DesignerPalette';
 
 /** The blocks a start point or an end point would get. */
@@ -68,6 +69,37 @@ function sending(read: Read, taken: GuiWidget[]): GuiWidget | undefined {
 }
 
 /**
+ * How wide and how tall inputs and their button stand, so a first page needs no
+ * resizing: inputs share a row, two to a row, a lone one has it to itself, and
+ * the button sits beside the last input if there is room, else on its own row.
+ */
+function arranged(blocks: GuiWidget[], button?: GuiWidget): GuiWidget[] {
+  const inputs = blocks.filter((block) => block !== button);
+  const items = [...inputs, ...(button ? [button] : [])];
+  const width = new Map<GuiWidget, number>(items.map((block) => [block, block === button ? 4 : 8]));
+  // Rows of at most sixteen cells, filled in order.
+  const rows: GuiWidget[][] = [];
+  for (const block of items) {
+    const row = rows[rows.length - 1];
+    if (row && row.reduce((sum, one) => sum + width.get(one)!, 0) + width.get(block)! <= GUI_GRID_COLUMNS) row.push(block);
+    else rows.push([block]);
+  }
+  // What is left of a row goes to its first input; a button alone stays a button's size.
+  for (const row of rows) {
+    if (row.length === 1 && row[0] === button) { width.set(button, 6); continue; }
+    const spare = GUI_GRID_COLUMNS - row.reduce((sum, one) => sum + width.get(one)!, 0);
+    const first = row.find((one) => one !== button) ?? row[0];
+    width.set(first, width.get(first)! + spare);
+  }
+  // A block that is tall by default -- a text box -- has room for a few lines, a lone one for more.
+  return items.map((block) => ({
+    ...block,
+    w: width.get(block),
+    ...((block.h ?? 1) > 1 ? { h: inputs.length === 1 ? 3 : 2 } : {}),
+  }));
+}
+
+/**
  * The blocks start point *start* gets: an input for each thing it reads, all
  * sending to it. With one input that can start it, using it does; with several,
  * or none, a button does, once they are filled in. Each is named for what it
@@ -88,9 +120,12 @@ function blocksForStart(start: GraphNode, nodes: GraphNode[], edges: Wire[], tak
     made.push({ ...block, id, label: words.charAt(0).toUpperCase() + words.slice(1), sends_to: [start.id] });
   }
   // Starting it is something the person does: with one input, using it; else a button.
-  if (made.length === 1 && blockCan(made[0]).fires) made[0] = { ...made[0], fires: start.id };
-  else made.push({ ...newBlock('button', undefined, next()), label: start.label || start.id, fires: start.id });
-  return made;
+  if (made.length === 1 && blockCan(made[0]).fires) {
+    made[0] = { ...made[0], fires: start.id };
+    return arranged(made);
+  }
+  const button = { ...newBlock('button', undefined, next()), label: start.label || start.id, fires: start.id };
+  return arranged([...made, button], button);
 }
 
 /**
@@ -100,6 +135,24 @@ function blocksForStart(start: GraphNode, nodes: GraphNode[], edges: Wire[], tak
  * page cannot start it. Pure: the person is asked about the ones a call
  * starts before any of it is applied.
  */
+/**
+ * What each end point shows gets a raised box -- two to a row, an odd one last
+ * across the whole row -- under a rule that sets it off from the inputs, where
+ * there are some.
+ */
+function outputsLaidOut(planned: Planned, page: GuiWidget[]): void {
+  const shown = planned.now.filter((made) => made.blocks.some((block) => block.shows));
+  const taken = [...page, ...planned.now.flatMap((made) => made.blocks)];
+  const inputs = page.length > 0 || planned.now.some((made) => !made.blocks.some((block) => block.shows));
+  shown.forEach((made, index) => {
+    const alone = shown.length % 2 === 1 && index === shown.length - 1;
+    const laid = made.blocks.map((block) => ({ ...block, w: alone ? GUI_GRID_COLUMNS : GUI_GRID_COLUMNS / 2, h: 6, tone: 'raised' as const }));
+    const rule = index === 0 && inputs ? [newBlock('divider', undefined, taken)] : [];
+    taken.push(...rule);
+    made.blocks = [...rule, ...laid];
+  });
+}
+
 export function pageFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget[]): Planned {
   const planned: Planned = { now: [], ifSwitched: [] };
   const taken = [...page];
@@ -119,5 +172,8 @@ export function pageFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget
       planned.now.push({ point: node, blocks });
     }
   }
+  // What the person fills in comes first, what comes back after it.
+  planned.now.sort((a, b) => Number(a.blocks.some((block) => block.shows)) - Number(b.blocks.some((block) => block.shows)));
+  outputsLaidOut(planned, page);
   return planned;
 }

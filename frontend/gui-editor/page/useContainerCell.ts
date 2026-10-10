@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { cellSize, GUI_MAX_CELL } from '../../app/document/layout';
+import { cellSize, GUI_MAX_CELL, GUI_NARROW } from '../../app/document/layout';
 
 /**
  * The current square-cell size for whatever element this ref is on.
@@ -14,11 +14,15 @@ import { cellSize, GUI_MAX_CELL } from '../../app/document/layout';
 export function useContainerCell() {
   const ref = useRef<HTMLDivElement | null>(null);
   const [cell, setCell] = useState(GUI_MAX_CELL);
+  const [narrow, setNarrow] = useState(false);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const update = () => setCell(cellSize(node.clientWidth));
+    const update = () => {
+      setCell(cellSize(node.clientWidth));
+      setNarrow(node.clientWidth > 0 && node.clientWidth < GUI_NARROW);
+    };
     update();
     // ResizeObserver rather than a window listener: the panel resizes when the
     // node is resized or a sidebar opens, without the window changing at all.
@@ -28,5 +32,5 @@ export function useContainerCell() {
     return () => observer.disconnect();
   }, []);
 
-  return { ref, cell };
+  return { ref, cell, narrow };
 }

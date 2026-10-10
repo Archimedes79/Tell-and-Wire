@@ -55,6 +55,13 @@ export function cellsFromDrag(pixels: number, cell: number): number {
   return Math.round(pixels / (cell + GUI_GAP));
 }
 
+/**
+ * Below this width the page is one column: every block takes the whole width, in
+ * the page's order. Three columns on a phone left each of them a sliver, and a
+ * person who built the page on a desktop is not asked to build another.
+ */
+export const GUI_NARROW = 640;
+
 /** Cells a widget occupies when it has none of its own yet. */
 export const DEFAULT_WIDGET_SPAN = { w: 8, h: 4 };
 
@@ -135,10 +142,10 @@ export function gridStyle(cell: number): React.CSSProperties {
   };
 }
 
-/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be. */
-export function blockStyle(placement: WidgetPlacement, waiting = false): React.CSSProperties {
+/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be; on a *narrow* page every block is as wide as it. */
+export function blockStyle(placement: WidgetPlacement, waiting = false, narrow = false): React.CSSProperties {
   return {
-    gridColumn: `span ${placement.w}`,
+    gridColumn: `span ${narrow ? GUI_GRID_COLUMNS : placement.w}`,
     gridRow: `span ${waiting ? 1 : placement.h}`,
     minWidth: 0,
     minHeight: 0,

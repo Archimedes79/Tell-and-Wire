@@ -74,6 +74,9 @@ export function blockValue(
   return incoming !== undefined && overrides?.[widget.id] === undefined ? incoming : held;
 }
 
+/** Whether the page is narrow (`GUI_NARROW`): set by the grid, read by each block. */
+const NarrowPage = React.createContext(false);
+
 /** The grid the page flows on: 16 square columns, capped at a readable width. */
 export function PageGrid({
   children, minRows, onCell,
@@ -93,7 +96,7 @@ export function PageGrid({
    */
   onCell?: (cell: number) => void;
 }) {
-  const { ref, cell } = useContainerCell();
+  const { ref, cell, narrow } = useContainerCell();
 
   React.useEffect(() => { onCell?.(cell); }, [cell, onCell]);
 
@@ -106,7 +109,7 @@ export function PageGrid({
         minHeight: minRows ? cell * minRows : undefined,
       }}
     >
-      {children}
+      <NarrowPage.Provider value={narrow}>{children}</NarrowPage.Provider>
     </div>
   );
 }
@@ -152,18 +155,19 @@ export function GuiBlock({
   const look = { border: widget.border, background: widget.background };
   const bare = toneIsBare(widget.tone as Tone, look);
   const waiting = !keepRoom && kind?.waits?.(widget, value) === true;
+  const narrow = React.useContext(NarrowPage);
 
   return (
     <div
       ref={blockRef}
-      className="relative rounded-lg flex flex-col gap-1 min-w-0 overflow-hidden"
+      className="relative rounded-xl flex flex-col gap-1 min-w-0 overflow-hidden"
       style={{
-        ...blockStyle(placement, waiting),
+        ...blockStyle(placement, waiting, narrow),
         ...toneStyle(widget.tone as Tone, look),
         // The same horizontal padding either way: a heading that started 10px
         // left of the box beneath it broke the one thing a document must get
         // right, which is a single left margin.
-        padding: bare ? '2px 10px' : '6px 10px',
+        padding: bare ? '2px 10px' : '8px 12px',
         ...style,
       }}
       {...frame}

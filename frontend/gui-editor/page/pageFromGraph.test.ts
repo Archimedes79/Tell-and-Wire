@@ -43,12 +43,21 @@ describe('a page drawn from the graph', () => {
         ['source', 'input_picker', 'Source', 'path', ['read'], undefined, undefined],
         ['button', 'button', 'read', undefined, undefined, 'read', undefined],
       ]],
-      ['result', [['text_io', 'text_io', 'Summary', undefined, undefined, undefined, 'result']]],
+      // A rule sets what comes back off from what is filled in.
+      ['result', [
+        ['divider', 'divider', '', undefined, undefined, undefined, undefined],
+        ['text_io', 'text_io', 'Summary', undefined, undefined, undefined, 'result'],
+      ]],
     ]);
     // A call starts the other: its blocks wait for the person's say. The clock's has none: the page cannot start it.
     expect(planned.ifSwitched.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.sends_to, block.fires])])).toEqual([
       ['api', [['topic', 'text_io', ['api'], 'api']]],
     ]);
+
+    // Sized so that a first page needs no resizing: inputs two to a row with the button beside the last, the one output across the row, in a raised box.
+    const [inputs, outputs] = planned.now.map((made) => made.blocks);
+    expect(inputs.map((block) => [block.id, block.w, block.h])).toEqual([['file', 8, 1], ['length', 8, 2], ['source', 12, 1], ['button', 4, 1]]);
+    expect(outputs.map((block) => [block.kind, block.w, block.tone])).toEqual([['divider', 16, 'plain'], ['text_io', 16, 'raised']]);
 
     // What the page already meets is left as it is.
     const drawn = planned.now.flatMap((made) => made.blocks);

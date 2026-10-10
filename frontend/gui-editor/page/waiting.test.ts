@@ -22,6 +22,9 @@ describe('a block waiting for output', () => {
     const placement = { widget: output, w: 8, h: 5 };
     expect(blockStyle(placement, true).gridRow).toBe('span 1');
     expect(blockStyle(placement).gridRow).toBe('span 5');
+    // On a narrow page every block is as wide as it.
+    expect(blockStyle(placement, false, true).gridColumn).toBe('span 16');
+    expect(blockStyle(placement).gridColumn).toBe('span 8');
     // A row is at least a cell and grows with what is in it: text is not cut.
     expect(gridStyle(56).gridAutoRows).toBe('minmax(56px, auto)');
   });
