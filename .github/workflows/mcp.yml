@@ -1,7 +1,7 @@
-name: MCP web server
+name: MCP tool servers
 
-# mcp/ is a package of its own, with its own lockfile: this runs only when it
-# changes, and the main CI (ci.yml) neither installs nor tests it.
+# Each server under mcp/ is a package of its own, with its own lockfile: this runs
+# only when one changes, and the main CI (ci.yml) neither installs nor tests them.
 on:
   push:
     paths: ['mcp/**', '.github/workflows/mcp.yml']
@@ -16,12 +16,14 @@ concurrency:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
+        server: [web, documents]
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: mcp
+        working-directory: mcp/${{ matrix.server }}
     steps:
       - uses: actions/checkout@v7
 
@@ -30,7 +32,7 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: mcp/package-lock.json
+          cache-dependency-path: mcp/${{ matrix.server }}/package-lock.json
 
       - name: Install
         run: npm ci

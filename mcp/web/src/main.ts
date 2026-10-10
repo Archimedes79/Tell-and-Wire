@@ -8,6 +8,9 @@ import { RobotsGuard } from './robots.ts';
 import { policyFromEnv } from './safeFetch.ts';
 import { createServer } from './server.ts';
 
+// A library that logs with console.log would write into the protocol: send it to stderr instead.
+console.log = console.error;
+
 const policy = policyFromEnv();
 const robots = process.env.TW_WEB_IGNORE_ROBOTS === '1' ? null : new RobotsGuard();
 console.error(`${NAME} ${VERSION}: public web only${policy.allowPrivate ? ' (private addresses allowed)' : ''}, robots.txt ${robots ? 'respected' : 'ignored'}`);

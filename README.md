@@ -148,8 +148,8 @@ portfolio_review are teams of AI reviewers.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
   between them, the tool's folder format, the wrapper's APIs and the core protocol, and how to
   extend Tell & Wire.
-- [mcp/](mcp/README.md): an optional tool server that lets an AI node read web pages. It has
-  its own dependencies; none of it is in the download.
+- [mcp/](mcp/README.md): optional tool servers that let an AI node read web pages and Word and
+  PDF files. Each has its own dependencies; none of it is in the download.
 
 ## Licence
 

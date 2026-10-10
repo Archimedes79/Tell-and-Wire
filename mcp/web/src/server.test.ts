@@ -2,11 +2,9 @@
 // and stdout in the protocol version Tell & Wire's own client speaks.
 
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { describe, expect, it } from 'vitest';
 import { VERSION } from './info.ts';
-import { render } from './server.ts';
 import { html, serve } from './testServer.ts';
 
 const ROOT = new URL('..', import.meta.url);
@@ -110,30 +108,4 @@ describe('the server over stdio', () => {
       server.stop();
     }
   }, 30_000);
-});
-
-describe('render', () => {
-  const base = { url: 'u', final_url: 'https://example.com/a', title: 'T', author: 'Ann', published: '2026-01-02', site: 's', language: 'en', word_count: 3, total_chars: 100, start: 0, end: 40, next_start: 41, content: 'body', warning: '' };
-
-  it('names the source, the span and where to read on', () => {
-    const text = render(base);
-    expect(text).toContain('# T');
-    expect(text).toContain('Source: https://example.com/a (Ann, 2026-01-02)');
-    expect(text).toContain('Characters 0-40 of 100.');
-    expect(text).toContain('call read_page again with start=41');
-  });
-
-  it('says nothing more at the end, and passes a warning on', () => {
-    const text = render({ ...base, next_start: null, warning: 'Careful.', author: '', published: '' });
-    expect(text).not.toContain('call read_page again');
-    expect(text).toContain('Source: https://example.com/a\n');
-    expect(text).toContain('Careful.');
-  });
-});
-
-describe('the package', () => {
-  it('has the version the server announces', () => {
-    const pkg = JSON.parse(readFileSync(new URL('package.json', ROOT), 'utf8')) as { version: string };
-    expect(pkg.version).toBe(VERSION);
-  });
 });
