@@ -423,6 +423,8 @@ Besides the provider keys and addresses in the README:
 | `TW_NO_BROWSER` | Do not open a browser on start |
 | `TW_TIMEOUT_MS`, `TW_MCP_TIMEOUT_MS` | How long a model call (10 min) or an MCP tool call (2 min) may take; `0`: no limit |
 | `TW_MAX_TOKENS`, `TW_MAX_LLM_CALLS` | A model answer's token budget (4096; an answer cut off by it is an error); `node.llm` calls per body run (25) |
+| `TW_AI_ATTEMPTS`, `TW_AI_RETRY_DELAY` | How often a model call is tried when the line drops, the provider is busy or the answer is empty (3, at most 10), and the wait before the second try in seconds, doubled each time (1, at most 60) |
+| `TW_AI_REPAIRS` | How often an ai node asks again when its answer cannot be used -- no JSON, a key left out, a list that is not one, cut off -- unless the node says (`config.repairs`): 2; `0` asks once |
 | `TW_BODY_TIMEOUT_MS` | How long a code body may run (10 min); `0`: no limit |
 | `TW_NO_PAUSE` | A failing `run.cmd` does not wait for a key |
 

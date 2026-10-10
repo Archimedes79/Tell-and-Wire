@@ -18,6 +18,7 @@ export default function AiNodeAdvancedPanel({ node, setConfig, updateNode }: Nod
   const model = useId();
   const temperature = useId();
   const tools = useId();
+  const repairs = useId();
   return (
     <>
       <RunOncePerItem node={node} updateNode={updateNode} subject="the model" />
@@ -78,6 +79,26 @@ export default function AiNodeAdvancedPanel({ node, setConfig, updateNode }: Nod
         <p className="text-xs mt-1" style={{ color: DIMMER }}
           title="A URL is called directly. A name is looked up under mcp_servers in this machine's ai-settings.json, the only place a command line can come from: a graph someone hands you can ask for a tool by name, but it cannot start a program. While answering, the model calls the tools it needs; what it says afterwards is this node's output.">
           A URL, or a name from <code>mcp_servers</code> in <code>ai-settings.json</code>.
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={repairs}>
+          Ask again when the answer is unusable <span style={{ color: DIMMER }}>— up to this many more times</span>
+        </label>
+        <input
+          id={repairs}
+          type="number"
+          min={0} max={5} step={1}
+          className="w-24 rounded-lg px-3 py-1 text-sm"
+          style={FIELD}
+          value={node.config.repairs ?? ''}
+          placeholder="2"
+          onChange={(e) => setConfig('repairs', e.target.value === '' ? undefined : Math.min(5, Math.max(0, Math.floor(Number(e.target.value)))))}
+        />
+        <p className="text-xs mt-1" style={{ color: DIMMER }}
+          title="Where this node answers in JSON, an answer that is no JSON, lacks a key, or has a list that is not a list is not handed on: the model is shown what it said and what was wrong, and asked again. So is an answer that ran past the length limit. Empty: the standard, 2, or what TW_AI_REPAIRS says on the machine; 0: ask once. Empty answers and a line that dropped are tried again whatever this says (TW_AI_ATTEMPTS).">
+          A small model slips now and then; it gets another go before the node fails.
         </p>
       </div>
 

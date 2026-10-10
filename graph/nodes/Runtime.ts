@@ -175,6 +175,8 @@ export interface Runtime {
   subgraph?: SubgraphService;
   /** How often one run of a body may ask for the model (`node.llm`). Absent: the standard limit. */
   llmCallsPerBody?: number;
+  /** How often an ai node asks again when its answer cannot be used, where the node does not say. Absent: the standard (2); 0: never. */
+  aiRepairs?: number;
   /**
    * Whether this node's port is the event this round began with.
    *
