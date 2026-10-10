@@ -7,7 +7,7 @@ import { fieldChoices, takenAs } from '../../app/document/page';
 import ErrorBoundary from '../../app/ui/ErrorBoundary';
 import { MUTED, SUNKEN, LINE, TEXT } from '../../app/ui/theme';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
-import { ONCE, type NodeGuiBuilder, type NodePanelProps, type UndoStep } from '../nodes/NodeGuiBuilder';
+import { ONCE, type NodeGuiBuilder, type UndoStep } from '../nodes/NodeGuiBuilder';
 import { inputSources, outputTargets } from '../authoring/generationContext';
 import { bodyOf } from '../authoring/generation';
 import { runsPerItem } from '../authoring/perItem';
@@ -38,8 +38,7 @@ export default function SettingsPane({ node, builder, panel }: {
   // The page's blocks: what a start point wired here is sent, what shows an end point it feeds.
   const page = useGraphStore((s) => s.page);
 
-  const setConfig: NodePanelProps['setConfig'] = (key, value, step) => panel.setConfig(key, value, step);
-  const updateNode: NodePanelProps['updateNode'] = (change, step) => panel.change(change, step);
+  const { setConfig, change: updateNode } = panel;
   const Panel = builder.Panel;
   const Advanced = builder.AdvancedPanel;
 

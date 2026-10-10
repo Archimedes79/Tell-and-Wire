@@ -1,5 +1,5 @@
 import { Plus, RefreshCw } from 'lucide-react';
-import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, ON_ACCENT, RAISE, SUCCESS, TEXT } from '../../app/ui/theme';
+import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, ON_ACCENT, RAISE, SUCCESS, TEXT, WARNING_FILL, WARNING_TEXT } from '../../app/ui/theme';
 
 /** One button of a row. */
 export interface RowAction {
@@ -13,10 +13,12 @@ export interface RowAction {
   once?: boolean;
 }
 
-/** A row: what it is called, an optional + that adds one more, and its buttons. */
+/** A row: what it is called, the ports it stands for, an optional + that adds one more, and its buttons. */
 export interface RowView {
   id: string;
   label: string;
+  /** The ports the row's file is about, and -- when the file names others -- the file, as a warning. */
+  ports?: { kind: 'input' | 'output'; names: string[]; stray?: { file: string } };
   actions: RowAction[];
   add?: { title: string; onClick: () => void };
 }
@@ -29,6 +31,7 @@ export function Written({ written, on }: { written: boolean; on?: boolean }) {
   return (
     <span
       aria-hidden="true"
+      title={written ? 'Written' : 'Empty'}
       style={{
         width: 7, height: 7, borderRadius: '50%', flex: 'none',
         background: written ? (on ? ON_ACCENT : SUCCESS) : 'transparent',
@@ -81,6 +84,16 @@ export default function RowList({ rows, active, onAction }: {
           >
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-sm font-semibold" style={{ color: TEXT }}>{row.label}</span>
+              {row.ports?.names.map((name) => <Chip key={name} name={name} kind={row.ports!.kind} />)}
+              {row.ports?.stray && (
+                <span
+                  className="text-xs rounded-md px-1.5 font-mono"
+                  style={{ background: WARNING_FILL, color: WARNING_TEXT }}
+                  title={`${row.ports.stray.file} names other ${row.ports.kind}s than the node has: the node's are the ones shown`}
+                >
+                  ≠ {row.ports.stray.file}
+                </span>
+              )}
               {row.add && (
                 <button
                   type="button"
@@ -100,11 +113,11 @@ export default function RowList({ rows, active, onAction }: {
                   disabled={action.disabled}
                   onClick={() => onAction(row, action)}
                   title={action.title}
-                  aria-label={action.label}
-                  className="ml-auto inline-flex items-center justify-center rounded-md hover-raise"
-                  style={{ width: 26, height: 26, border: `1px solid ${LINE}`, color: MUTED, opacity: action.disabled ? 0.5 : 1 }}
+                  className="ml-auto inline-flex items-center justify-center gap-1 rounded-md px-2 text-xs hover-raise"
+                  style={{ height: 26, border: `1px solid ${LINE}`, color: MUTED, opacity: action.disabled ? 0.5 : 1 }}
                 >
-                  <RefreshCw size={13} strokeWidth={2} aria-hidden="true" />
+                  <RefreshCw size={12} strokeWidth={2} aria-hidden="true" />
+                  Pull
                 </button>
               ))}
             </div>
@@ -138,12 +151,6 @@ export default function RowList({ rows, active, onAction }: {
           </div>
         );
       })}
-      {rows.some((row) => row.actions.some((action) => action.written !== undefined)) && (
-        <p className="text-xs flex items-center gap-3" style={{ color: DIMMER }}>
-          <span className="inline-flex items-center gap-1.5"><Written written /> written</span>
-          <span className="inline-flex items-center gap-1.5"><Written written={false} /> empty</span>
-        </p>
-      )}
     </div>
   );
 }

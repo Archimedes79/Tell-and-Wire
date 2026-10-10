@@ -23,12 +23,11 @@ export function graphEdge(wire: Wire & { id?: string }, at = 0): GraphEdge {
 }
 
 /**
- * The node a wire brings into *id* and the one it leads to -- the first of each,
- * in the order the wires were drawn: where the node view's ‹ and › step to.
+ * The nodes wires bring into *id* and the ones they lead to, each once, in the
+ * order the wires were drawn: where the node view's ‹ and › step to.
  */
-export function neighbours(id: string, wires: Pick<Wire, 'source' | 'target'>[]): { before?: string; after?: string } {
-  return {
-    before: wires.find((wire) => wire.target === id && wire.source !== id)?.source,
-    after: wires.find((wire) => wire.source === id && wire.target !== id)?.target,
-  };
+export function neighbours(id: string, wires: Pick<Wire, 'source' | 'target'>[]): { before: string[]; after: string[] } {
+  const ends = (from: 'source' | 'target', to: 'source' | 'target') =>
+    [...new Set(wires.filter((wire) => wire[to] === id && wire[from] !== id).map((wire) => wire[from]))];
+  return { before: ends('source', 'target'), after: ends('target', 'source') };
 }
