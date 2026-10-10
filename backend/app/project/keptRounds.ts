@@ -180,8 +180,14 @@ export async function writeKeptRound(folder: string, round: KeptRound): Promise<
   const dir = join(folder, TESTS_DIR);
   await mkdir(dir, { recursive: true });
   const stem = folderName(round.event ?? 'whole');
-  let name = '';
-  for (let n = 1; !name || existsSync(join(dir, `${name}.json`)); n += 1) name = `${stem}-${n}`;
-  await writeFile(join(dir, `${name}.json`), `${JSON.stringify(round, null, 2)}\n`);
-  return name;
+  // `wx` makes taking a name and writing it one step: a second writer meets EEXIST and takes the next.
+  for (let n = 1; ; n += 1) {
+    const name = `${stem}-${n}`;
+    try {
+      await writeFile(join(dir, `${name}.json`), `${JSON.stringify(round, null, 2)}\n`, { flag: 'wx' });
+      return name;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    }
+  }
 }

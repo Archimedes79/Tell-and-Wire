@@ -98,5 +98,8 @@ describe('a round, kept', () => {
     const name = await writeKeptRound(folder, { event: '../..\\up: a/b', given: {}, outputs: {} });
     expect(name).not.toMatch(/[\\/:]/);
     expect(existsSync(join(folder, 'tests', `${name}.json`))).toBe(true);
+    // Kept at the same time, two rounds get two names.
+    const [a, b] = await Promise.all([1, 2].map(() => writeKeptRound(folder, { event: 'go', given: {}, outputs: {} })));
+    expect(a).not.toBe(b);
   });
 });
