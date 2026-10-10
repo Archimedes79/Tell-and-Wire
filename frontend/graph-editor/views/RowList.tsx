@@ -13,13 +13,11 @@ export interface RowAction {
   once?: boolean;
 }
 
-/** A row: what it is called, the names it holds, an optional + that adds one more, and its buttons. */
+/** A row: what it is called, an optional + that adds one more, and its buttons. */
 export interface RowView {
   id: string;
   label: string;
   actions: RowAction[];
-  /** What is in it, as chips beside its name: a node's ports. */
-  chips?: { names: string[]; kind: 'input' | 'output' };
   add?: { title: string; onClick: () => void };
 }
 
@@ -53,8 +51,8 @@ export function Chip({ name, kind }: { name: string; kind: 'input' | 'output' })
 }
 
 /**
- * The rows to choose from: a card for each, its name in bold -- with what is in
- * it, and a small action where it has one -- and a button for each way of
+ * The rows to choose from: a card for each, its name in bold -- with a small
+ * action where it has one -- and a button for each way of
  * working on it. The one open is lit, and its card with it. Drawing only -- the
  * rows are declared by whoever knows what the node is made of.
  */
@@ -83,7 +81,6 @@ export default function RowList({ rows, active, onAction }: {
           >
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-sm font-semibold" style={{ color: TEXT }}>{row.label}</span>
-              {row.chips?.names.map((name) => <Chip key={name} name={name} kind={row.chips!.kind} />)}
               {row.add && (
                 <button
                   type="button"

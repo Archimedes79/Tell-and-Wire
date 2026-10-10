@@ -16,7 +16,7 @@ import HeadingField from '../authoring/HeadingField';
 import { GenerationReport } from '../authoring/GenerationTranscript';
 import { useTryExample, whatCameOf } from '../authoring/TryExample';
 import { modelsBefore, pullable, pullableOutput } from '../authoring/pull';
-import { fileOf, isWritten, partName, partsOf, portIdsOf, writesFor, type Part, type Write } from '../authoring/generation';
+import { fileOf, isWritten, partName, partsOf, writesFor, type Part, type Write } from '../authoring/generation';
 import NodeHeader from '../views/NodeHeader';
 import NodeViewLayout from '../views/NodeViewLayout';
 import RowList, { at, type RowAction, type RowView } from '../views/RowList';
@@ -191,7 +191,6 @@ function Opened({ node, panel, onClose, onOpenPage }: {
     return {
       id: part,
       label: partName(node, part),
-      chips: side ? { names: portIdsOf(node, part === 'input' ? 'input' : 'output'), kind: part === 'input' ? 'input' : 'output' } : undefined,
       actions: [...first, { id: 'file', label: 'File', title: `${file}: read it and edit it here`, written: isWritten(node, part) }],
       add: side && ownPorts && builder.portEditing[side] === 'edit'
         ? { title: `Add ${side === 'inputs' ? 'an input' : 'an output'}`, onClick: () => addPort(side) }

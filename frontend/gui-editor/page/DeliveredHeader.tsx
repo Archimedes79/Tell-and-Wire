@@ -40,17 +40,18 @@ export default function DeliveredHeader({ name, description, round, tools, note 
   const status = roundStatus(round);
   return (
     <header
-      className="flex items-center gap-3 px-4 py-2 shrink-0"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 shrink-0"
       style={{ background: SURFACE, borderBottom: `1px solid ${LINE}` }}
     >
-      <span className="text-sm font-semibold" style={{ color: TEXT }}>
-        {name || 'Tell & Wire'}
-      </span>
-      {description && (
-        <span className="text-xs truncate" style={{ color: DIM }}>{description}</span>
-      )}
-
-      <div className="flex-1" />
+      {/* Side by side, the description cut to one line; on a narrow screen the name has a line and the description the lines under it. */}
+      <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 basis-full sm:basis-0">
+        <span className="text-sm font-semibold" style={{ color: TEXT }}>
+          {name || 'Tell & Wire'}
+        </span>
+        {description && (
+          <span className="text-xs min-w-0 line-clamp-3 sm:line-clamp-1" style={{ color: DIM }}>{description}</span>
+        )}
+      </div>
 
       {tools}
       {note}

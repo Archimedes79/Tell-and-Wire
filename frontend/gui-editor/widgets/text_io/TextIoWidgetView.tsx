@@ -88,7 +88,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
 
   if (mode === 'output' && text === '') {
     return (
-      <div className="h-full rounded-lg px-2 text-sm flex items-center" style={{ minHeight: 34, color: DIMMER, border: `1px dashed ${LINE}` }}>
+      <div className="h-full rounded-lg px-2 flex items-center" style={{ minHeight: 34, fontSize: 13, color: DIMMER, border: `1px dashed ${LINE}` }}>
         Waiting for output…
       </div>
     );

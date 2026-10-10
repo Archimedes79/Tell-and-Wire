@@ -10,7 +10,7 @@ export default function HeadingField({ heading, onChange }: { heading: string; o
   const [typed, setTyped] = useState<string | null>(null);
   return (
     <input
-      className="text-lg font-bold bg-transparent border-none outline-none w-full"
+      className="text-lg font-bold bg-transparent border-none outline-none w-full text-ellipsis"
       style={{ color: TEXT }}
       value={typed ?? heading}
       aria-label="Heading"
