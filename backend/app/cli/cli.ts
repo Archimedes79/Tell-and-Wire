@@ -30,6 +30,7 @@ import { chosenCore } from '../../../graph/core/stdio.ts';
 import type { GraphCore } from '../../../graph/core/protocol.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { nodeRuntime } from '../../../graph/core/node.ts';
+import { installFolder } from '../../../graph/ai/settings.ts';
 import { memoryState, sendFromOutside } from '../../gui-editor/graphInterface.ts';
 import { startFromPage } from '../../gui-editor/widgets/page.ts';
 import { builtPage, WEB_DIR, writeBundle } from './bundle.ts';
@@ -91,7 +92,20 @@ function put(values: Record<string, unknown>, name: string, value: string): void
 
 export function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = { graphPath: '', graphNamed: false, values: {} };
-  for (let i = 0; i < argv.length; i += 1) {
+  let i = 0;
+  /** What follows the option, taken -- unless it is the next option, which `--editor --port 9000` has there. */
+  const followed = (): string | undefined => {
+    const next = argv[i + 1];
+    if (next === undefined || next.startsWith('--')) return undefined;
+    i += 1;
+    return next;
+  };
+  const required = (arg: string, what: string): string => {
+    const value = followed();
+    if (value === undefined) throw new Error(`${arg} wants ${what}.`);
+    return value;
+  };
+  for (; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--value') {
       const [name, ...rest] = (argv[++i] ?? '').split('=');
@@ -109,7 +123,7 @@ export function parseArgs(argv: string[]): CliOptions {
     } else if (arg === '--keep') {
       options.keep = true;
     } else if (arg === '--bundle') {
-      options.bundle = argv[++i] ?? 'bundle';
+      options.bundle = followed() ?? 'bundle';
     } else if (arg === '--serve') {
       options.serve = true;
     } else if (arg === '--port') {
@@ -122,13 +136,13 @@ export function parseArgs(argv: string[]): CliOptions {
       }
       options.port = port;
     } else if (arg === '--editor') {
-      options.editor = argv[++i] ?? 'frontend/dist';
+      options.editor = followed() ?? join(installFolder(), 'frontend', 'dist');
     } else if (arg === '--host') {
-      options.host = argv[++i] ?? '';
+      options.host = required(arg, 'an address');
     } else if (arg === '--mcp') {
       options.mcp = true;
     } else if (arg === '--mcp-root') {
-      options.mcpRoot = argv[++i] ?? '';
+      options.mcpRoot = required(arg, 'a folder');
     } else if (arg.startsWith('--')) {
       // A flag this command does not know is a mistake to say, not a file to
       // look for: taken as the graph, `--ai-provider openai g.json` went
