@@ -79,7 +79,7 @@ async function load(name: string): Promise<Graph> {
   const graph = await loadGraph(resolve(REPO, 'examples', name));
   const rooted = (path: unknown) => (typeof path === 'string' && path && !isAbsolute(path) ? resolve(REPO, path) : path);
   for (const node of graph.nodes) {
-    if (node.node_type === 'folder') node.config.path = rooted(node.config.path);
+    if (node.node_type === 'start' && node.config.reads) node.config.path = rooted(node.config.path);
   }
   for (const block of graph.page?.blocks ?? []) {
     if (block.kind === 'input_picker') block.value = rooted(block.value);

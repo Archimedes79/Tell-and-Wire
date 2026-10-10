@@ -3,7 +3,7 @@
 // **A node's config is opaque here.** Its element owns the type (`nodes/ElementRunner.ts`):
 // this file knows a config is an object, and only the element knows what is in it.
 
-export type NodeType = 'start' | 'folder' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
+export type NodeType = 'start' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
 
 export type WidgetKind =
   | 'input_picker' | 'text_io' | 'plot_window' | 'image_view'

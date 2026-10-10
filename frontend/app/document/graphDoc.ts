@@ -64,8 +64,8 @@ function normalizeGraphNode(rawNode: Partial<GraphNode>): GraphNode {
     config: { ...baseNodeConfig(), ...(rawNode.config ?? {}) },
   };
 
-  // Where the element derives its ports -- a start point, a folder node from
-  // its settings, a subgraph node from the graph it holds -- they
+  // Where the element derives its ports -- a start point, a data node from
+  // its fields, a subgraph node from the graph it holds -- they
   // come from the element, never from what a file, an import or a model said.
   // A run works them out the same way (`portsOf` in `wiring.ts`), and a
   // second answer here is a second answer that can disagree.

@@ -92,7 +92,6 @@ export const DANGER_SOFT = 'var(--ui-danger, #f87171)';
  * always Night, so these are the literals; keep them equal to Night's `nodes`.
  */
 export const NODE = {
-  folder: 'var(--ui-node-folder, #1e3a5f)',
   ai: 'var(--ui-node-ai, #2d1b4e)',
   code: 'var(--ui-node-code, #1a3a2a)',
   data: 'var(--ui-node-data, #183b3b)',
@@ -109,7 +108,6 @@ export const NODE = {
  * event: where a run begins and ends is one colour, on the canvas and the page.
  */
 export const INK = {
-  folder: '#86c5fa',
   ai: '#cdaef2',
   code: '#69d3c6',
   data: '#f2a3c1',

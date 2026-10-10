@@ -79,24 +79,6 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
     placedAmong: (node, others) => ({ ...node, label: freeId('Start', others.filter((other) => other.node_type === node.node_type).map((other) => other.label), ' ') }),
   },
 
-  folder: {
-    create(id) {
-      // Its ports follow from its settings -- asked of its runner rather than
-      // listed again here.
-      const node: GraphNode = {
-        id,
-        node_type: 'folder',
-        label: 'Folder',
-        description: '',
-        position: { x: 0, y: 0 },
-        inputs: [],
-        outputs: [],
-        config: baseNodeConfig(),
-      };
-      return { ...node, ...(derivedNodePorts(node) ?? {}) };
-    },
-  },
-
   // A new ai or code node runs once, on what arrives -- a list whole -- and
   // hands on one value: single ports and the default `batch_mode`, which is
   // `withPerItem(node, false)` (`perItem.test.ts` holds them to it). Made to
@@ -144,8 +126,8 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
   data: {
     create(id) {
-      // Its ports follow the fields it holds -- asked of its runner, as a
-      // folder's are: with none yet, it has `all` and nothing else.
+      // Its ports follow the fields it holds -- asked of its runner rather than
+      // listed again here: with none yet, it has `all` and nothing else.
       const node: GraphNode = {
         id,
         node_type: 'data',

@@ -80,7 +80,7 @@ interface Scheme {
   purpleText: string;
 
   /** One tint per node type, so the canvas reads at a glance. */
-  nodes: { folder: string; ai: string; code: string; data: string; end: string; subgraph: string; start: string };
+  nodes: { ai: string; code: string; data: string; end: string; subgraph: string; start: string };
 }
 
 export const SCHEMES: Scheme[] = [
@@ -94,7 +94,7 @@ export const SCHEMES: Scheme[] = [
     accent: '#6164ec', accentText: '#a5b4fc', accentFill: 'rgba(99,102,241,0.10)', onAccent: '#ffffff',
     success: '#22c55e', successText: '#86efac', danger: '#ef4444', dangerText: '#fca5a5',
     warning: '#eab308', warningText: '#fcd34d', infoText: '#93c5fd', purpleText: '#c4b5fd',
-    nodes: { folder: '#1e3a5f', ai: '#2d1b4e', code: '#1a3a2a', data: '#183b3b', end: '#3a2000', subgraph: '#2a2a4a', start: '#4a3a12' },
+    nodes: { ai: '#2d1b4e', code: '#1a3a2a', data: '#183b3b', end: '#3a2000', subgraph: '#2a2a4a', start: '#4a3a12' },
   },
   {
     id: 'paper',
@@ -110,7 +110,7 @@ export const SCHEMES: Scheme[] = [
     accent: '#b85b36', accentText: '#8f4526', accentFill: 'rgba(192,95,56,0.10)', onAccent: '#ffffff',
     success: '#2f7d32', successText: '#25652a', danger: '#b3261e', dangerText: '#8c1d18',
     warning: '#b45309', warningText: '#8a4108', infoText: '#1e40af', purpleText: '#5b21b6',
-    nodes: { folder: '#dde7f2', ai: '#e6dcf0', code: '#dcecdf', data: '#d8eaea', end: '#f3e3cb', subgraph: '#e2e1ef', start: '#f1e7c9' },
+    nodes: { ai: '#e6dcf0', code: '#dcecdf', data: '#d8eaea', end: '#f3e3cb', subgraph: '#e2e1ef', start: '#f1e7c9' },
   },
   {
     id: 'office',
@@ -126,7 +126,7 @@ export const SCHEMES: Scheme[] = [
     accent: '#2563eb', accentText: '#1d4ed8', accentFill: 'rgba(37,99,235,0.08)', onAccent: '#ffffff',
     success: '#15803d', successText: '#166534', danger: '#b42318', dangerText: '#912018',
     warning: '#b45309', warningText: '#8a4108', infoText: '#1e40af', purpleText: '#5b21b6',
-    nodes: { folder: '#e4edfa', ai: '#ece4f7', code: '#e2f0e6', data: '#dfeeee', end: '#f7ead2', subgraph: '#e7e6f6', start: '#f8efd3' },
+    nodes: { ai: '#ece4f7', code: '#e2f0e6', data: '#dfeeee', end: '#f7ead2', subgraph: '#e7e6f6', start: '#f8efd3' },
   },
   {
     id: 'anthracite',
@@ -140,7 +140,7 @@ export const SCHEMES: Scheme[] = [
     accent: '#8b93ff', accentText: '#b4b9ff', accentFill: 'rgba(139,147,255,0.12)', onAccent: '#111119',
     success: '#4ade80', successText: '#86efac', danger: '#fb7185', dangerText: '#fda4af',
     warning: '#eab308', warningText: '#fcd34d', infoText: '#93c5fd', purpleText: '#c4b5fd',
-    nodes: { folder: '#1a2230', ai: '#241f30', code: '#1a2a20', data: '#182a2b', end: '#2c2416', subgraph: '#20203a', start: '#2c2614' },
+    nodes: { ai: '#241f30', code: '#1a2a20', data: '#182a2b', end: '#2c2416', subgraph: '#20203a', start: '#2c2614' },
   },
   {
     id: 'graphite',
@@ -152,7 +152,7 @@ export const SCHEMES: Scheme[] = [
     accent: '#2dd4bf', accentText: '#5eead4', accentFill: 'rgba(45,212,191,0.12)', onAccent: '#06231f',
     success: '#34d399', successText: '#86efac', danger: '#f87171', dangerText: '#fca5a5',
     warning: '#eab308', warningText: '#fcd34d', infoText: '#93c5fd', purpleText: '#c4b5fd',
-    nodes: { folder: '#1d2f36', ai: '#2a2435', code: '#1e3228', data: '#1c3234', end: '#342819', subgraph: '#26263a', start: '#35301b' },
+    nodes: { ai: '#2a2435', code: '#1e3228', data: '#1c3234', end: '#342819', subgraph: '#26263a', start: '#35301b' },
   },
 ];
 
@@ -212,7 +212,6 @@ export function schemeVars(id: string | undefined): React.CSSProperties {
     '--ui-warning-text': s.warningText,
     '--ui-info-text': s.infoText,
     '--ui-purple-text': s.purpleText,
-    '--ui-node-folder': s.nodes.folder,
     '--ui-node-ai': s.nodes.ai,
     '--ui-node-code': s.nodes.code,
     '--ui-node-data': s.nodes.data,

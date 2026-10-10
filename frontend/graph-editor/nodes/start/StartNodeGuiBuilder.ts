@@ -34,17 +34,24 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
 
   override readonly Panel = lazy(() => import('./StartNodePanel'));
 
-  override describeOutput(): string {
-    return 'one package, {event, values}: the event when this run began here (null in any other), and the values it was sent, under the sender\'s names';
+  /** Set to read a file or a folder with none named: a source whose data nothing describes yet, so a sweep would be written against a guess. */
+  override missingExample(node: GraphNode): boolean {
+    const { reads, path } = ELEMENT.config(node as never);
+    return !!reads && !path;
   }
 
-  /** Who starts it, under its port: the one thing worth reading without opening it. */
+  override describeOutput(): string {
+    return 'one package, {event, values}: the event when this run began here (null in any other), and the values it was sent, under the sender\'s names -- or, set to read, the file or the files of the folder, under its own id';
+  }
+
+  /** Who starts it, and what it reads, under its port: the things worth reading without opening it. */
   override canvasSummary(node: GraphNode): string | undefined {
-    const { startedBy, onStart, every } = ELEMENT.config(node as never);
+    const { startedBy, onStart, every, reads, path } = ELEMENT.config(node as never);
     if (startedBy === 'page') return 'started by the page';
     if (startedBy === 'call') return 'started by a call';
     const parts = [onStart ? 'at start' : '', every ? `every ${every}` : ''].filter(Boolean);
-    return parts.length ? `by itself: ${parts.join(' · ')}` : 'never';
+    const when = parts.length ? `by itself: ${parts.join(' · ')}` : 'never';
+    return reads && path ? `${when} · reads ${path}` : when;
   }
 
 }

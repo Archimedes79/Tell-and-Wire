@@ -5,6 +5,7 @@ import { port } from '../port.ts';
 import { names, type Problem } from '../../execution/wiring.ts';
 import type { Offer, StartedBy } from '../NodeRunner.ts';
 import { RUN_PORT, START_PORT, parseInterval } from '../../execution/triggers.ts';
+import { readChosen } from '../folderListing.ts';
 
 export interface StartConfig {
   /**
@@ -17,6 +18,17 @@ export interface StartConfig {
   onStart: boolean;
   /** Started by itself: again this often, `45`, `30s`, `5m`, `2h`, `1d`. Empty means never. */
   every: string;
+  /**
+   * Started by itself: what it sends, as a picker block on a page sends what
+   * was chosen -- one file (its path and content), the files of a folder, or
+   * nothing. The graph is then its own sender.
+   */
+  reads: 'file' | 'folder' | '';
+  /** What it reads: the file or the folder. */
+  path: string;
+  /** A folder: its subfolders too, and only the file types named, `.csv, .txt`. */
+  recursive: boolean;
+  extensions: string;
   /** What it was last sent: the values of the round it last began. */
   values: unknown;
 }
@@ -61,10 +73,15 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
   config(node: GraphNode): StartConfig {
     const c = node.config;
     const startedBy = STARTED_BY.includes(c.started_by as StartedBy) ? c.started_by as StartedBy : 'page';
+    const itself = startedBy === 'itself';
     return {
       startedBy,
-      onStart: startedBy === 'itself' && c.on_start !== false,
-      every: startedBy === 'itself' ? String(c.every ?? '').trim() : '',
+      onStart: itself && c.on_start !== false,
+      every: itself ? String(c.every ?? '').trim() : '',
+      reads: itself && (c.reads === 'file' || c.reads === 'folder') ? c.reads : '',
+      path: String(c.path ?? '').trim(),
+      recursive: c.recursive === true,
+      extensions: String(c.extensions ?? ''),
       values: c.values ?? {},
     };
   }
@@ -158,11 +175,16 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
   }
 
   async execute(node: GraphNode, _inputs: Record<string, unknown>, runtime: Runtime) {
-    const { startedBy, values } = this.config(node);
+    const { startedBy, values, reads, path, recursive, extensions } = this.config(node);
     const began = runtime.fired?.(START_PORT) ?? true;
     // Who, when nobody said: the graph's own clock, or a run of everything.
     const by = String(node.config.fired_by ?? (startedBy === 'itself' ? 'itself' : 'run'));
-    const sent: Package = { event: began ? { name: node.id, by } : null, values };
+    // What is there to read is read now, each time: a folder is what is in it
+    // this round, and one listed from before missed the file added since.
+    const sends = reads
+      ? { [node.id]: await readChosen({ path, directory: reads === 'folder', recursive, extensions, content: true }, runtime) }
+      : values;
+    const sent: Package = { event: began ? { name: node.id, by } : null, values: sends };
     return { [START_PORT]: sent };
   }
 
@@ -171,7 +193,9 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
   override graphAuthorNote(): string {
     return `a named start point: where a round begins. Its id is its name; whoever uses the graph starts it by that name. `
       + `config.started_by is "page" (a block on the page fires it: then the graph needs a page), "call" (a script, a model over MCP, or the graph above starts it) `
-      + `or "itself" (config.on_start, true or false: when the tool starts; config.every, "" or "30s", "5m", "2h", "1d": again on that clock). `
+      + `or "itself" (config.on_start, true or false: when the tool starts; config.every, "" or "30s", "5m", "2h", "1d": again on that clock; `
+      + `config.reads, "file" or "folder", with config.path: it then sends that file -- {path, content} -- or the paths of the files in that folder -- config.extensions, e.g. ".csv, .txt", `
+      + `keeps only those types, config.recursive = true looks into subfolders too -- as "values" under its own id, read afresh each time it starts). `
       + `Its one output, "${START_PORT}", is DERIVED, not taken from this document: one package {"event": {"name", "by"} or null, "values": {...}}. `
       + `"values" is whatever the sender sent, under the sender's names. Wire "${START_PORT}" into the input of each node that works on it -- an input that takes one value of it says which with `
       + `"field": "<name>" (or a path inside it, "file.content") and is handed that value alone; one without a field is handed the whole package -- or into a node's "${RUN_PORT}" to start that node. `
@@ -184,22 +208,33 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
   }
 
   override whatRuns(): WhatRuns {
-    return this.graphRuns('Hands on one package: the event, when this round began here, and the values it was sent -- the last ones, in a round it did not begin.');
+    return this.graphRuns('Hands on one package: the event, when this round began here, and the values it was sent -- the last ones, in a round it did not begin -- or, set to read a file or a folder, what is there now.');
+  }
+
+  /** What it reads, named by its path: a bundle carries it, so the tool opens on it elsewhere. */
+  override referencedPaths(node: GraphNode): string[] {
+    const { reads, path } = this.config(node);
+    return reads && path ? [path] : [];
   }
 
   override problems(node: GraphNode, _elements: Runners, where: string): Problem[] {
-    const { startedBy, onStart, every } = this.config(node);
+    const { startedBy, onStart, every, reads, path } = this.config(node);
     if (startedBy !== 'itself') return [];
+    const found: Problem[] = [];
+    if (reads && !path) {
+      found.push({ where, problem: `This start point is set to read ${reads === 'folder' ? 'a folder' : 'a file'}, and no path says which.`, fix: 'Choose it in the start point, or set it to send nothing.' });
+    }
     if (every) {
       try {
         parseInterval(every);
       } catch (error) {
-        return [{ where, problem: error instanceof Error ? error.message : String(error), fix: 'Write the interval as 45, 30s, 5m, 2h or 1d.' }];
+        found.push({ where, problem: error instanceof Error ? error.message : String(error), fix: 'Write the interval as 45, 30s, 5m, 2h or 1d.' });
+        return found;
       }
     }
     if (!onStart && !every) {
-      return [{ where, problem: 'This start point never starts: it starts itself, but neither when the tool starts nor on a clock.', fix: 'Tick "when the tool starts", give it an interval, or let the page or a call start it.' }];
+      found.push({ where, problem: 'This start point never starts: it starts itself, but neither when the tool starts nor on a clock.', fix: 'Tick "when the tool starts", give it an interval, or let the page or a call start it.' });
     }
-    return [];
+    return found;
   }
 }

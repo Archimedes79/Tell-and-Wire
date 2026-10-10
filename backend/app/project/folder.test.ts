@@ -16,15 +16,15 @@ import {
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 
-/** A code node and an ai node, which keep writing, beside a directory input and an end point, which keep none -- and a page with a chart. */
+/** A code node and an ai node, which keep writing, beside a start point that reads a folder and an end point, which keep none -- and a page with a chart. */
 function sample(): Graph {
   return parseGraph({
     metadata: { name: 'Sample', description: 'All the writing there is.' },
     nodes: [
       {
-        id: 'folder', node_type: 'folder', label: 'Folder', position: { x: 10, y: 20 },
-        inputs: [], outputs: [port('files', 'output')],
-        config: { path: 'data', extensions: '.csv' },
+        id: 'pick', node_type: 'start', label: 'Pick', position: { x: 10, y: 20 },
+        inputs: [], outputs: [port('data', 'output')],
+        config: { started_by: 'itself', reads: 'folder', path: 'data', extensions: '.csv' },
       },
       {
         id: 'count', node_type: 'code', label: 'Count', position: { x: 300.4, y: 20 }, width: 360, height: 180,
@@ -48,7 +48,7 @@ function sample(): Graph {
       },
     ],
     edges: [
-      { id: 'e1', source_node_id: 'folder', source_port_id: 'files', target_node_id: 'count', target_port_id: 'files' },
+      { id: 'e1', source_node_id: 'pick', source_port_id: 'data', target_node_id: 'count', target_port_id: 'files' },
       { id: 'e2', source_node_id: 'count', source_port_id: 'total', target_node_id: 'say', target_port_id: 'total' },
       { id: 'e3', source_node_id: 'say', source_port_id: 'output', target_node_id: 'told', target_port_id: 'value' },
     ],
@@ -85,8 +85,8 @@ describe('a project folder', () => {
     // code.js runs on its own, on the example in input.js.
     const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes/count/code.js')], { cwd: dir });
     expect(JSON.parse(stdout)).toEqual({ total: 1 });
-    // A folder listing has no writing of its own, and a chart is one block of the page's: no node, no folder.
-    expect(existsSync(join(dir, 'nodes/folder'))).toBe(false);
+    // A start point has no writing of its own, and a chart is one block of the page's: no node, no folder.
+    expect(existsSync(join(dir, 'nodes/pick'))).toBe(false);
     expect(existsSync(join(dir, 'nodes/told'))).toBe(false);
     expect(JSON.parse(await text('page.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
     expect(existsSync(join(dir, 'nodes/page'))).toBe(false);
@@ -95,15 +95,16 @@ describe('a project folder', () => {
     expect(JSON.parse(await text('flow.json'))).toEqual({
       name: 'Sample',
       description: 'All the writing there is.',
-      wires: ['folder.files -> count.files', 'count.total -> say.total', 'say.output -> told.value'],
+      wires: ['pick.data -> count.files', 'count.total -> say.total', 'say.output -> told.value'],
     });
     const listed = JSON.parse(await text('nodes.json'));
-    expect(Object.keys(listed)).toEqual(['folder', 'count', 'say', 'told']);
+    expect(Object.keys(listed)).toEqual(['pick', 'count', 'say', 'told']);
+    expect(listed.pick).toMatchObject({ kind: 'start', config: { reads: 'folder', path: 'data', extensions: '.csv' } });
     expect(listed.count).toEqual({
       kind: 'code', label: 'Count', config: { batch_mode: 'whole_list' },
       inputs: [{ port: 'files', type: 'any' }], outputs: [{ port: 'total', type: 'any' }],
     });
-    expect(JSON.stringify(listed.count)).not.toContain('folder');
+    expect(JSON.stringify(listed.count)).not.toContain('pick');
     expect(existsSync(join(dir, 'nodes/count/node.json'))).toBe(false);
     expect(JSON.parse(await text('layout.json')).count).toEqual({ x: 300, y: 20, width: 360, height: 180 });
 

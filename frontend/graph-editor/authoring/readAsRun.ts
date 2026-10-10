@@ -1,7 +1,7 @@
 // Files, read the way a run reads them.
 //
 // A data node can hold what a file says, and a folder listing shows the files
-// it lists. Each of those is a read, and each is done by the node's own
+// a start point or a picker lists. Each of those is a read, and each is done by the node's own
 // runner, run on its own by the route a run of one node uses (`runNode`): the same
 // path resolved against the same folder, the same text read, the same
 // extensions and recursion applied to a listing. A second way of reading a
@@ -9,6 +9,7 @@
 
 import type { GraphNode, GuiWidget, NodeResult } from '../../app/graph';
 import { call } from '../../app/api/client';
+import { START_PORT } from '../../../graph/execution/triggers.ts';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
 import { derivedNodePorts } from '../../app/document/ports';
 import { useGraphStore } from '../../app/store/graphStore';
@@ -39,22 +40,26 @@ function reading(node: GraphNode, config: Partial<GraphNode['config']>): GraphNo
   return { ...next, ...(derivedNodePorts(next) ?? {}) };
 }
 
-/** The files a folder node lists, as a run lists them. */
+/** The files a start point set to read a folder lists, as a run lists them: what it sends under its own id. */
 export async function listAsRun(node: GraphNode): Promise<string[]> {
-  const listed = (await readAlone(reading(node, {}))).files;
+  const sent = (await readAlone(reading(node, {})))[START_PORT] as { values?: Record<string, unknown> } | undefined;
+  const listed = sent?.values?.[node.id];
   return Array.isArray(listed) ? listed.map(String) : [];
 }
 
 /**
- * The files a folder picker on a page lists, as a run lists them: by a
- * folder node set as the picker is, since both list through the one function
- * (`folderListing.ts`).
+ * The files a folder picker on a page lists, as a run lists them: by a start
+ * point set to read as the picker is, since both list through the one function
+ * (`readChosen`, `folderListing.ts`).
  */
 export async function listBlockAsRun(widget: GuiWidget): Promise<string[]> {
-  const folder = NODE_KINDS.folder.create('folder');
+  const start = NODE_KINDS.start.create('listing');
   return listAsRun({
-    ...folder,
-    config: { ...folder.config, path: String(widget.value ?? ''), extensions: widget.extensions ?? '', recursive: widget.recursive === true },
+    ...start,
+    config: {
+      ...start.config, started_by: 'itself', reads: 'folder',
+      path: String(widget.value ?? ''), extensions: widget.extensions ?? '', recursive: widget.recursive === true,
+    },
   });
 }
 

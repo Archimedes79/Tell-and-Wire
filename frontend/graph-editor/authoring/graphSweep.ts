@@ -137,7 +137,7 @@ export async function* sweep(
 export function missingExamples(nodes: GraphNode[], edges: GraphEdge[], page: GuiWidget[] = []): { id: string; label: string }[] {
   const fed = new Set(edges.map((edge) => edge.target_node_id));
   // Which nodes are sources, and what describes them, is each element's answer
-  // (`NodeGuiBuilder.missingExample`): a folder node with no folder -- and a
+  // (`NodeGuiBuilder.missingExample`): a start point set to read with no path -- and a
   // block's (`WidgetGuiBuilder.missingExample`): a file picker that sends.
   return [
     ...nodes.filter((node) => NODE_BUILDERS[node.node_type]?.missingExample(node, fed.has(node.id)) ?? false),

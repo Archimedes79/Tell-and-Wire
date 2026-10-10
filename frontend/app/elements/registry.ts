@@ -5,7 +5,6 @@
 import type { NodeType } from '../graph';
 import type { NodeGuiBuilder } from '../../graph-editor/nodes/NodeGuiBuilder';
 import { StartNodeGuiBuilder } from '../../graph-editor/nodes/start/StartNodeGuiBuilder';
-import { FolderNodeGuiBuilder } from '../../graph-editor/nodes/folder/FolderNodeGuiBuilder';
 import { AiNodeGuiBuilder } from '../../graph-editor/nodes/ai/AiNodeGuiBuilder';
 import { CodeNodeGuiBuilder } from '../../graph-editor/nodes/code/CodeNodeGuiBuilder';
 import { DataNodeGuiBuilder } from '../../graph-editor/nodes/data/DataNodeGuiBuilder';
@@ -15,7 +14,6 @@ import { SubgraphNodeGuiBuilder } from '../../graph-editor/nodes/subgraph/Subgra
 /** Every node type's GuiBuilder, by type, in the order of `graph/nodes/registry.ts`. */
 export const NODE_BUILDERS: Record<NodeType, NodeGuiBuilder> = {
   start: new StartNodeGuiBuilder(),
-  folder: new FolderNodeGuiBuilder(),
   ai: new AiNodeGuiBuilder(),
   code: new CodeNodeGuiBuilder(),
   data: new DataNodeGuiBuilder(),

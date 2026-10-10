@@ -38,5 +38,6 @@ export function baseNodeConfig(): NodeConfig {
     started_by: 'page',
     on_start: true,
     every: '',
+    reads: '',
   };
 }

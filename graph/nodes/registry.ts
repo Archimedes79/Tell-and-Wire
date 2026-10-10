@@ -11,7 +11,6 @@ import type { NodeType } from '../graph.ts';
 import { AiNodeRunner } from './ai/AiNodeRunner.ts';
 import { CodeNodeRunner } from './code/CodeNodeRunner.ts';
 import { DataNodeRunner } from './data/DataNodeRunner.ts';
-import { FolderNodeRunner } from './folder/FolderNodeRunner.ts';
 import { EndNodeRunner } from './end/EndNodeRunner.ts';
 import { StartNodeRunner } from './start/StartNodeRunner.ts';
 import { SubgraphNodeRunner } from './subgraph/SubgraphNodeRunner.ts';
@@ -19,7 +18,6 @@ import { SubgraphNodeRunner } from './subgraph/SubgraphNodeRunner.ts';
 /** In the order a person or a model is shown them: where a graph starts, what works, where it ends. */
 export const NODES: NodeRunner<unknown>[] = [
   new StartNodeRunner(),
-  new FolderNodeRunner(),
   new AiNodeRunner(),
   new CodeNodeRunner(),
   new DataNodeRunner(),

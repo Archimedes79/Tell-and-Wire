@@ -23,7 +23,7 @@ export function withSetting(draft: GraphNode, key: string, value: unknown): Grap
   const next = { ...draft, config: { ...draft.config, [key]: settled } };
   // A setting an element derives its ports from has just changed, so the
   // ports follow it here and now. They used to follow only on the next
-  // load, which is why ticking "catch failures" on a folder node grew its
+  // load, which is why ticking "catch failures" on a node grew its
   // error port sometime later, to a person who had gone looking for it.
   // A derived port is the port of its name, or new: the write keeps the
   // wires of the one and lets those of a port that is gone go (`portRenames`).

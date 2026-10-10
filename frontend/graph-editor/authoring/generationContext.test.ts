@@ -60,7 +60,7 @@ describe('what ✨ is told of a node\'s neighbours', () => {
   });
 
   it('says what each wire carries and what the node at the other end wants', () => {
-    const input = NODE_KINDS.folder.create('src');
+    const input = NODE_KINDS.data.create('src');
     input.label = 'Notes';
     const code = NODE_KINDS.code.create('worker');
     const end = { ...NODE_KINDS.end.create('findings'), label: 'Findings' };

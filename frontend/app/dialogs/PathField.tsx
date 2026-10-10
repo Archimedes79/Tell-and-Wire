@@ -102,7 +102,7 @@ export default function PathField({
 
 /**
  * Which kinds of file a path field takes: what 📂 Browse… offers for a file,
- * and what a folder's listing keeps. The same setting on a folder node and on
+ * and what a folder's listing keeps. The same setting on a start point and on
  * a picker on a page, so it is asked in the same words.
  */
 export function FileTypesField({ value, onChange, onSurface }: {

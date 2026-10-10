@@ -1,7 +1,6 @@
 import { WidgetRunner, partsSaid, type Sent, type Widget } from '../WidgetRunner.ts';
 import { type Runtime } from '../../../../graph/nodes/Runtime.ts';
-import { listFolder } from '../../../../graph/nodes/folderListing.ts';
-import { fileContent } from '../../../../graph/nodes/documents.ts';
+import { readChosen } from '../../../../graph/nodes/folderListing.ts';
 
 /** What a chosen file is sent as: where it is, and what is in it. */
 const FILE_PARTS: NonNullable<Sent['keys']> = {
@@ -26,9 +25,9 @@ export interface PickerConfig {
  * What it sends is its own to say, as everything a block sends is: a chosen
  * file as its path and its content -- what a node working on it wants --, or
  * only its path, for a node that copies or writes beside it; a folder as its
- * listing -- its file types, its subfolders when asked: the same listing the
- * folder node makes, through the same function, because it is the same
- * behaviour.
+ * listing -- its file types, its subfolders when asked: the same reading a
+ * start point that starts itself makes, through the same function
+ * (`readChosen`), because it is the same behaviour.
  */
 export class InputPickerWidgetRunner extends WidgetRunner<PickerConfig> {
   readonly widgetKind = 'input_picker' as const;
@@ -55,12 +54,8 @@ export class InputPickerWidgetRunner extends WidgetRunner<PickerConfig> {
     return 'change';
   }
 
-  override async data(widget: Widget, runtime: Runtime): Promise<unknown> {
-    const settings = this.config(widget);
-    if (!settings.path) return settings.directory ? [] : null;
-    if (settings.directory) return listFolder(settings.path, settings, runtime);
-    const path = runtime.files.resolve(settings.path);
-    return settings.content ? { path, content: await fileContent(path, runtime.files) } : path;
+  override data(widget: Widget, runtime: Runtime): Promise<unknown> {
+    return readChosen(this.config(widget), runtime);
   }
 
   override readsPath(): boolean {

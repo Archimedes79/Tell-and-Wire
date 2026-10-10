@@ -185,9 +185,9 @@ describe('what runs', () => {
   });
 
   it('names a file only when the node keeps one of that name', () => {
-    const element = registry.node('folder')!;
-    // A folder is listed by its runner's own code: no body chooses its files.
-    const subject = node('folder', { path: 'docs' });
+    const element = registry.node('start')!;
+    // A start point reads by its runner's own code: no body chooses what it sends.
+    const subject = node('start', { started_by: 'itself', reads: 'folder', path: 'docs' });
     const kept = element.texts(subject).map((text) => text.file);
     for (const named of element.whatRuns(subject).does.match(/\b[\w.-]+\.(?:js|md|json)\b/g) ?? []) expect(kept).toContain(named);
     expect(element.whatRuns(subject).by).toBe('graph');

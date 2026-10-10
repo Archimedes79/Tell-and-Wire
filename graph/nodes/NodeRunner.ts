@@ -138,11 +138,10 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * The ports this node has, *when they follow from its settings*.
    *
    * Two kinds of node, and the difference is worth naming. A start point's
-   * ports follow from what it is -- one package on `data` --, a folder node's
-   * from its settings -- `files`, `count`, and `error` when it catches --,
-   * a data node's from the fields it holds, and a subgraph's from the graph
-   * it holds. Nobody names those, and a copy of them in the editor is a copy
-   * that can disagree with what the element emits.
+   * ports follow from what it is -- one package on `data` --, a data node's
+   * from the fields it holds, and a subgraph's from the graph it holds.
+   * Nobody names those, and a copy of them in the editor is a copy that can
+   * disagree with what the element emits.
    *
    * A code or AI node, or an end point, is the other kind: a person names its ports
    * to match the code they wrote or the prompt they gave. `count_per_file` has
@@ -318,14 +317,6 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   readonly readsFileInputs: boolean = false;
 
   /**
-   * What it hands on comes from outside the graph each time it runs -- a
-   * folder's files -- and not from what arrives alone: what it made in an
-   * earlier round is never handed back in its place (`reuse.ts`). A folder
-   * listed again is cheap; one listed from before missed the file added since.
-   */
-  readonly readsOutside: boolean = false;
-
-  /**
    * What this node offers whoever uses the graph from outside -- a page, a
    * script, the graph above: an event that starts a round, or an output it
    * hands back. Each under a name a caller uses, never a port:
@@ -432,8 +423,8 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
 
   /**
    * How an AI writes this node's body, or undefined if none does: a code
-   * node's code, an ai node's instructions, a data node's data. A start point,
-   * a folder node or an end point holds settings.
+   * node's code, an ai node's instructions, a data node's data. A start point
+   * or an end point holds settings.
    */
   generation(): Generation | undefined {
     return undefined;
@@ -519,7 +510,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
 
   /**
    * Files and folders this node names as its own defaults: the CSV a picker
-   * starts on, the folder a folder node lists.
+   * starts on, the folder a start point reads.
    *
    * A bundle carries them. A tool handed to someone with its default file left
    * behind opens on an error, and the person it was handed to has no way to

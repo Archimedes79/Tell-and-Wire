@@ -95,9 +95,11 @@ export type NodeConfig = {
   values?: Record<string, unknown>;
   on_start: boolean;
   every: string;
+  /** A start point that starts itself: what it sends -- one file, the files of a folder (`path`, `extensions`, `recursive`) -- or nothing. */
+  reads: 'file' | 'folder' | '';
   /** The graph a subgraph node holds: its own project folder on disk. */
   subgraph?: unknown;
-  /** A folder node: the folder it lists; an end point: the file or folder it writes to. A path wired into "path" wins. */
+  /** A start point: the file or folder it reads; an end point: the file or folder it writes to. A path wired into "path" wins. */
   path: string;
   recursive: boolean;
   send_images: boolean;
