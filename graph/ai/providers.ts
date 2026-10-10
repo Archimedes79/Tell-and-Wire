@@ -804,10 +804,16 @@ export function settingsFromEnv(env: Record<string, string | undefined>): Partia
   // a clock back on as well as take one off.
   const timeout = Number(env.TW_TIMEOUT_MS);
   const budget = Number(env.TW_MAX_TOKENS);
+  // How often a failed call is tried and how long the first wait is: a local model that is still
+  // loading, or under load, needs more patience than a hosted one.
+  const attempts = Number(env.TW_AI_ATTEMPTS);
+  const delay = Number(env.TW_AI_RETRY_DELAY);
 
   return {
     ...(Number.isFinite(timeout) && timeout >= 0 && env.TW_TIMEOUT_MS ? { timeoutMs: timeout } : {}),
     ...(Number.isFinite(budget) && budget > 0 ? { maxTokens: budget } : {}),
+    ...(env.TW_AI_ATTEMPTS?.trim() && Number.isInteger(attempts) && attempts >= 1 ? { attempts: Math.min(attempts, 10) } : {}),
+    ...(env.TW_AI_RETRY_DELAY?.trim() && Number.isFinite(delay) && delay >= 0 ? { retryDelay: Math.min(delay, 60) } : {}),
     endpoints,
     apiKeys,
   };

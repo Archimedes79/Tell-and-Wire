@@ -110,6 +110,10 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
 With nothing set, Tell & Wire uses a local model server that is running (Ollama or
 LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
 
+A small local model slips now and then: an empty answer, broken JSON, a key left out. Tell & Wire
+asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
+[docs/architecture.md](docs/architecture.md)).
+
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
 servers: list them under *the node's settings → Tools the model may use*, one per line -- an
 `https://…/mcp` address, or a name this machine's `ai-settings.json` defines:
@@ -148,6 +152,8 @@ portfolio_review are teams of AI reviewers.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
   between them, the tool's folder format, the wrapper's APIs and the core protocol, and how to
   extend Tell & Wire.
+- [mcp/](mcp/README.md): optional tool servers that let an AI node read web pages and Word and
+  PDF files. Each has its own dependencies; none of it is in the download.
 
 ## Licence
 

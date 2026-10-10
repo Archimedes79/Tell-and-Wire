@@ -25,6 +25,35 @@ export interface AskSettings {
   toolServers: string[];
 }
 
+/**
+ * What a second ask says about the first: the answer it got, why that could not be
+ * used, and how to answer instead. Said after what arrived, in the same message, so
+ * that it works with every provider and does not depend on one keeping a conversation.
+ */
+export interface Repair {
+  /** What the model said. Empty where it said nothing that could be kept: it ran out of length. */
+  answer: string;
+  problem: string;
+  /** How to answer this time, in one sentence. */
+  reminder: string;
+}
+
+/** How much of its own answer a model is shown again: enough to see what it got wrong, not the whole of a runaway. */
+const SHOWN_AGAIN = 1500;
+
+function repairNote({ answer, problem, reminder }: Repair): string {
+  const shown = answer.length > SHOWN_AGAIN ? `${answer.slice(0, SHOWN_AGAIN)}...` : answer;
+  return `
+
+---
+Your previous answer could not be used: ${problem}
+${shown ? `
+Your previous answer was:
+${shown}
+` : ''}
+Answer again, from the start. ${reminder}`;
+}
+
 /** Nothing said: the one AI setting's model, plain text, no tools. What a code node's `node.llm` starts from. */
 export const PLAIN_ASK: AskSettings = {
   instructions: '', provider: 'default', model: '', sendImages: false, toolServers: [],
@@ -33,13 +62,15 @@ export const PLAIN_ASK: AskSettings = {
 /**
  * Ask once. *order* is the node's own port order: the message a person
  * previews must be the message that is sent, whatever order the edges are
- * stored in.
+ * stored in. *repair* is a second try: the same question, and what was wrong
+ * with the first answer.
  */
 export async function askModel(
   settings: AskSettings,
   inputs: Record<string, unknown>,
   runtime: Runtime,
   order: string[] = [],
+  repair?: Repair,
 ): Promise<string> {
   const text: Record<string, unknown> = {};
   const files: string[] = [];
@@ -71,7 +102,7 @@ export async function askModel(
     throw new Error('Nothing to ask: this node has no instructions, and nothing wired into it brought anything.');
   }
   const request = {
-    prompt: user,
+    prompt: repair ? `${user}${repairNote(repair)}` : user,
     system,
     provider: settings.provider,
     model: settings.model,

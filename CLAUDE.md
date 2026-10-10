@@ -16,9 +16,16 @@
 | Gui editor, frontend | `frontend/gui-editor/` |
 | Gui editor, backend | `backend/gui-editor/` |
 | The shell around them | `frontend/app/`, `backend/app/` |
+| Optional tool servers (MCP) | `mcp/web/`, `mcp/documents/` |
 
 `graph/` imports nothing from the others; a deployed tool carries `graph/`, `backend/app/`
 and `backend/gui-editor/`. Imports are relative. More in `docs/architecture.md`.
+
+Each server under `mcp/` is a package of its own, outside the workspace: its own `package.json`
+and lockfile, nothing imported from the others (not from `graph/`, not from each other) and
+nothing importing it, none of it in the download or a bundle. Their dependencies are installed
+by whoever runs them, not shipped by us. Their checks (`npm test`, `typecheck`, `licenses`) run
+inside each folder, in `.github/workflows/mcp.yml`.
 
 ## How a change is made
 

@@ -339,6 +339,7 @@ export function nodeRuntime(overrides: Partial<Runtime> = {}): Runtime {
     ai: { complete: async (request) => ai.complete({ ...request, ...lent(request, await aiSetting()) }), setting: () => aiSetting() },
     tools: mcpToolService(configuredMcpServers()),
     ...(Number(process.env.TW_MAX_LLM_CALLS) > 0 ? { llmCallsPerBody: Number(process.env.TW_MAX_LLM_CALLS) } : {}),
+    ...(process.env.TW_AI_REPAIRS?.trim() && Number.isInteger(Number(process.env.TW_AI_REPAIRS)) && Number(process.env.TW_AI_REPAIRS) >= 0 ? { aiRepairs: Number(process.env.TW_AI_REPAIRS) } : {}),
     ...overrides,
   };
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { lent, type AiService, type ModelChoice } from '../nodes/Runtime.ts';
-import { aiService, EmptyCompletionError, TimedOutError, type ProviderSettings } from './providers.ts';
+import { aiService, EmptyCompletionError, settingsFromEnv, TimedOutError, type ProviderSettings } from './providers.ts';
 
 /**
  * The service as a run asks it: the one AI setting -- here *provider* and
@@ -176,6 +176,15 @@ describe('retrying', () => {
     calls = stubFetch([{ status: 400, body: { error: { message: 'model not found' } } }]);
     await expect(ai.complete({ prompt: 'x' })).rejects.toThrow(/model not found/);
     expect(calls).toHaveLength(1);
+  });
+
+  it('takes the number of tries and the first wait from the environment, within bounds', () => {
+    expect(settingsFromEnv({ TW_AI_ATTEMPTS: '5', TW_AI_RETRY_DELAY: '0.5' })).toMatchObject({ attempts: 5, retryDelay: 0.5 });
+    expect(settingsFromEnv({ TW_AI_ATTEMPTS: '99', TW_AI_RETRY_DELAY: '999' })).toMatchObject({ attempts: 10, retryDelay: 60 });
+    for (const env of [{ TW_AI_ATTEMPTS: '0', TW_AI_RETRY_DELAY: '-1' }, { TW_AI_ATTEMPTS: 'many', TW_AI_RETRY_DELAY: 'soon' }, {}]) {
+      expect(settingsFromEnv(env)).not.toHaveProperty('attempts');
+      expect(settingsFromEnv(env)).not.toHaveProperty('retryDelay');
+    }
   });
 
   it('an answer cut off by the token budget is an error that names TW_MAX_TOKENS, asked once', async () => {

@@ -1,0 +1,58 @@
+name: MCP tool servers
+
+# Each server under mcp/ is a package of its own, with its own lockfile: this runs
+# only when one changes, and the main CI (ci.yml) neither installs nor tests them.
+on:
+  push:
+    paths: ['mcp/**', '.github/workflows/mcp.yml']
+  pull_request:
+    paths: ['mcp/**', '.github/workflows/mcp.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: mcp-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The two servers share nothing, so a file both need is in both: this says when the copies drift apart.
+  same-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: chunk.ts and paging.ts are the same in both servers
+        run: |
+          diff <(grep -v '^// The same file is in' mcp/web/src/chunk.ts) <(grep -v '^// The same file is in' mcp/documents/src/chunk.ts)
+          diff mcp/web/src/paging.ts mcp/documents/src/paging.ts
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        server: [web, documents]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: mcp/${{ matrix.server }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # TypeScript that Node runs unbuilt, like the rest of the repository.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mcp/${{ matrix.server }}/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # Every installed package against the licences it may come under.
+      - name: Licences
+        run: npm run licenses

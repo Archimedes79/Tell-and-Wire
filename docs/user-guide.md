@@ -191,6 +191,15 @@ what a node before it is shaped as.
   filter and the router. A node whose gate stays shut keeps what it made last.
 - **Failures.** A failed node skips what depends on it. **Catch failures** (in the node's
   settings) puts the reason on an `error` output instead; a data node it feeds keeps what it held.
+- **A model that slips.** A small or cheap model now and then answers with a sentence where the
+  JSON should be, leaves a key out, calls a list text, or runs into the length limit. An AI node
+  does not hand such an answer on to fail further down: it asks again, showing the model what it
+  said and what was wrong -- twice more by default (**Ask again when the answer is unusable**, in
+  the node's settings; `TW_AI_REPAIRS` for the machine). A JSON object that still lacks something
+  after that goes on as it is; an answer that is no JSON fails the node, saying how often it asked.
+  Each repair shows in the node's activity. A line that dropped, a busy server and an empty answer
+  are tried again before any of that (`TW_AI_ATTEMPTS`, `TW_AI_RETRY_DELAY`). Each ask is a call: put
+  0 on a node whose model is costly.
 
 ## 5. Start points and end points
 

@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AiNodeRunner } from './AiNodeRunner.ts';
 import { nodeFiles } from '../../core/node.ts';
-import type { AiRequest, Runtime } from '../Runtime.ts';
-import type { GraphNode } from '../../graph.ts';
+import type { AiRequest, ProgressEvent, Runtime } from '../Runtime.ts';
+import type { GraphNode, Port } from '../../graph.ts';
 
 /**
  * What an AI node sends, and what it makes of the answer.
@@ -128,5 +128,89 @@ describe('an answer mapped onto an output definition', () => {
     const summary = aiNode({ output_definition: 'module.exports = { "summary": "Two sentences." };' });
     // Nothing is parsed: an answer that looks like JSON is the text it is.
     expect(await element.execute(summary, {}, answering('{"summary": "x"}'))).toEqual({ summary: '{"summary": "x"}' });
+  });
+});
+
+/**
+ * A cheap or small model gets the format wrong now and then. An answer that cannot be used is not
+ * handed on, to fail somewhere else: the model is asked again, shown what it said and what was wrong.
+ */
+describe('an answer that cannot be used', () => {
+  const port = (id: string, data_type: Port['data_type'] = 'text', multi = false): Port =>
+    ({ id, name: id, kind: 'output', data_type, multi, required: false, description: '' });
+  const keyed = (config: Record<string, unknown> = {}): GraphNode => ({
+    ...aiNode({ output_definition: 'module.exports = { "rows": [1], "count": 1 };', ...config }),
+    outputs: [port('rows', 'list'), port('count', 'number')],
+  });
+
+  /** A model that says these things, one after the other, the last for ever; an Error is thrown. */
+  function saying(replies: Array<string | Error>, extra: Partial<Runtime> = {}) {
+    const asked: AiRequest[] = [];
+    const reports: ProgressEvent[] = [];
+    const runtime: Runtime = {
+      files: nodeFiles,
+      code: { run: async (_body, inputs) => inputs },
+      ai: {
+        complete: async (request) => {
+          asked.push(request);
+          const reply = replies[Math.min(asked.length - 1, replies.length - 1)];
+          if (reply instanceof Error) throw reply;
+          return reply;
+        },
+      },
+      report: (event) => reports.push(event),
+      ...extra,
+    };
+    return { runtime, asked, reports };
+  }
+
+  it('asks again with what it said and what was wrong, takes the repaired answer, and makes a number of text a number', async () => {
+    const { runtime, asked, reports } = saying(['Sorry, I cannot do that.', '{"rows": "a, b", "count": 2}', '{"rows": ["a", "b"], "count": "2"}']);
+    expect(await element.execute(keyed(), { text: 'x' }, runtime)).toEqual({ rows: ['a', 'b'], count: 2 });
+    expect(asked).toHaveLength(3);
+    expect(asked[1].prompt).toContain('Your previous answer could not be used: it was not a JSON object');
+    expect(asked[1].prompt).toContain('Sorry, I cannot do that.');
+    expect(asked[1].prompt).toContain('with these keys: rows, count');
+    expect(asked[1].prompt.startsWith('x')).toBe(true);
+    expect(asked[2].prompt).toContain('rows must be a list');
+    expect(reports.map((event) => (event as { message: string }).message)).toEqual([
+      'asked again (1 of 3): it was not a JSON object',
+      'asked again (2 of 3): rows must be a list',
+    ]);
+  });
+
+  it('keeps an answer that is an object but still lacks a key; gives up on one that is none, saying how often it asked', async () => {
+    const partial = saying(['{"rows": [1]}']);
+    expect(await element.execute(keyed(), {}, partial.runtime)).toEqual({ rows: [1] });
+    expect(partial.asked).toHaveLength(3);
+    expect(partial.reports.at(-1)).toMatchObject({ message: 'kept the last answer after 3 tries: the key count is missing' });
+
+    await expect(element.execute(keyed({ repairs: 1 }), {}, saying(['no json here']).runtime)).rejects.toThrow(/not the JSON object.*It was asked 2 times\./);
+  });
+
+  it('asks again as often as the node says, else as the machine says, and not at all for 0', async () => {
+    const node = saying(['nope']);
+    await expect(element.execute(keyed({ repairs: 0 }), {}, node.runtime)).rejects.toThrow(/not the JSON object/);
+    expect(node.asked).toHaveLength(1);
+    expect((await element.execute(keyed({ repairs: 0 }), {}, saying(['nope']).runtime).catch((e: Error) => e.message))).not.toMatch(/asked/);
+
+    const machine = saying(['nope'], { aiRepairs: 4 });
+    await expect(element.execute(keyed(), {}, machine.runtime)).rejects.toThrow(/asked 5 times/);
+    expect(machine.asked).toHaveLength(5);
+    // The node's own number wins over the machine's.
+    const own = saying(['nope'], { aiRepairs: 4 });
+    await expect(element.execute(keyed({ repairs: 1 }), {}, own.runtime)).rejects.toThrow(/asked 2 times/);
+  });
+
+  it('asks a node that answered too long for a shorter answer, and lets any other failure through at once', async () => {
+    const cutOff = Object.assign(new Error('cut off'), { name: 'OutOfBudgetError' });
+    const text = saying([cutOff, 'Short enough.']);
+    expect(await element.execute(aiNode(), { text: 'x' }, text.runtime)).toEqual({ output: 'Short enough.' });
+    expect(text.asked[1].prompt).toContain('it ran past the length limit and was cut off');
+    expect(text.asked[1].prompt).toContain('much shorter');
+
+    const broken = saying([new Error('boom')]);
+    await expect(element.execute(aiNode(), {}, broken.runtime)).rejects.toThrow('boom');
+    expect(broken.asked).toHaveLength(1);
   });
 });

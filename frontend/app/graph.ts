@@ -89,6 +89,8 @@ export type NodeConfig = {
   extensions: string;
   /** Tool servers an ai node may call, one per line: a URL, or a name this machine configured. */
   mcp_servers?: string;
+  /** An ai node: how often to ask again when the answer cannot be used (no JSON, a key left out, cut off). Unset: the machine's setting, else 2. */
+  repairs?: number;
   /** A start point: who starts it -- the page, a call, itself -- and, by itself, when the tool starts and how often (`5m`). */
   started_by: 'page' | 'call' | 'itself';
   /** A start point: what it is sent when nobody sends it anything -- a run of it on its own, ▶ Try -- as a caller would name it. */
