@@ -60,8 +60,8 @@ export async function readPorts(
       continue;
     }
     // No path is no file, and no file has no content: a picker nobody has used
-    // yet hands on "", and the node is there to say "choose a file" -- it used
-    // to be told `ENOENT: open ''` instead, before it ran at all.
+    // yet hands on "", and the node is there to say "choose a file", not to be told
+    // `ENOENT: open ""`.
     // What is in it, as `fileContent.ts` says: text as text, a picture or a PDF as itself.
     const read = (path: unknown): Promise<string> | string => (String(path ?? '').trim() ? fileContent(String(path), files) : '');
     if (Array.isArray(value)) {

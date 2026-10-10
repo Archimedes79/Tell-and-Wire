@@ -23,7 +23,7 @@ function identifier(port: string): string {
  * from code.js to input.js and output.js -- and nothing else. Rendered from the
  * ports, never parsed back: a text allowed to rename a port would detach wires.
  */
-export function renderSkeleton(inputs: string[], outputs: string[]): string {
+function renderSkeleton(inputs: string[], outputs: string[]): string {
   const lines: string[] = [];
   if (inputs.length || outputs.length) {
     lines.push('/**');

@@ -756,7 +756,7 @@ export function aiService(settings: Partial<ProviderSettings> = {}): AiService {
 
       const open = (): Conversation => {
         const asked = { ...request, model };
-        if (provider in OPENAI_STYLE) return openAiStyle(provider, asked, config);
+        if (Object.prototype.hasOwnProperty.call(OPENAI_STYLE, provider)) return openAiStyle(provider, asked, config);
         if (provider === 'anthropic') return anthropic(asked, config);
         if (provider === 'ollama') return ollama(asked, config);
         throw new Error(`Unknown AI provider: ${provider}`);

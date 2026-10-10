@@ -62,7 +62,7 @@ export function fieldOf(value: unknown, field: string): unknown {
  * a null. A port of *ports* that takes one value of what arrives (`Port.field`)
  * is handed that value.
  */
-export function collectInputs(
+function collectInputs(
   nodeId: string,
   edges: GraphEdge[],
   outputs: Map<string, Record<string, unknown>>,

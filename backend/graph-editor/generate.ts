@@ -154,7 +154,7 @@ const notProbed = (): ProbeReport => ({ status: 'skipped', error: '', problems: 
 
 /** A probe with no way to read files: what it asks a model cannot name one. */
 const refuse = async (): Promise<never> => { throw new Error('No files here: this body is being tried on its example.'); };
-const NO_FILES: FileService = { resolve: (path) => path, inProject: refuse, size: refuse, read: refuse, write: refuse, list: refuse };
+const NO_FILES: FileService = { resolve: (path) => path, inProject: (path) => path, size: refuse, read: refuse, write: refuse, list: refuse };
 
 async function probe(
   runtime: Runtime, target: Target, language: Language, body: string, sample: Record<string, unknown>,

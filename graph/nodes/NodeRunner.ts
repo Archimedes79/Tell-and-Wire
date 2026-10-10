@@ -332,6 +332,15 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   }
 
   /**
+   * Whether this node starts itself -- when the tool starts (`on_start`), and again every so often
+   * (`every`: `45`, `30s`, `5m`, `2h`, `1d`, empty for never) -- or null: somebody else starts it
+   * or it starts nothing. The first of its `eventPorts` is the event it is (`triggers.ts`).
+   */
+  trigger(_node: GraphNode): { on_start: boolean; every: string } | null {
+    return null;
+  }
+
+  /**
    * Who starts this node's events: the page, a call from outside, or the
    * graph itself -- none, for a node that starts nothing. A graph the page or
    * a call starts waits for them when it starts; one that starts itself does

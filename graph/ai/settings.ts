@@ -241,9 +241,7 @@ export async function probeLocal(
  * `TW_AI_PROVIDER` / `TW_AI_MODEL` are the same setting for a
  * machine with no dialog, and win over the file. With nothing set it is
  * whichever local provider is running, else Ollama. A provider named without a
- * model takes *its own* default: choosing Google and leaving the model blank
- * once sent Google whatever LM Studio had loaded, and Google answered with a
- * 404 that read like a broken endpoint.
+ * model takes *its own* default, not whatever another provider has loaded.
  */
 export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Promise<ModelChoice> {
   // Each of the two on its own: a variable naming the model leaves the file's provider standing.

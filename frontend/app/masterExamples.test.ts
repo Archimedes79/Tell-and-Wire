@@ -187,7 +187,7 @@ const FILES: Record<string, string> = {
 function runtime(asked: string[]): Runtime {
   return {
     files: {
-      resolve: (path) => path, exists: async (path) => path in FILES,
+      resolve: (path) => path, inProject: (path) => path, size: async (path) => FILES[path]?.length ?? 0,
       read: async (path) => { if (!(path in FILES)) throw new Error(`no such file: ${path}`); return FILES[path]; },
       write: async () => {}, list: async (path) => Object.keys(FILES).filter((file) => file.startsWith(`${path}/`)).sort(),
     },

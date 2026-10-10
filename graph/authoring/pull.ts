@@ -42,7 +42,7 @@ export function typeOfValue(value: unknown): string {
  * list shortened, a file handed as itself (a `data:` URL) said by its start --
  * the example is what a model reads and what ▶ Try runs on, not the data.
  */
-export function shortExample(value: unknown): unknown {
+function shortExample(value: unknown): unknown {
   if (typeof value === 'string') {
     if (/^data:[\w.+/-]+;base64,/.test(value)) return `${value.slice(0, value.indexOf(',') + 1)}...`;
     return value.length > TEXT_KEPT ? `${value.slice(0, TEXT_KEPT)}…` : value;

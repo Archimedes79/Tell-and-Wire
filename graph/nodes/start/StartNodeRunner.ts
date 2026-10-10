@@ -135,6 +135,11 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
     return [START_PORT];
   }
 
+  override trigger(node: GraphNode) {
+    const { startedBy, onStart, every } = this.config(node);
+    return startedBy === 'itself' ? { on_start: onStart, every } : null;
+  }
+
   override startedBy(node: GraphNode): StartedBy {
     return this.config(node).startedBy;
   }

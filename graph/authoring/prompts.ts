@@ -22,7 +22,7 @@
 import { textOutput } from './definition.ts';
 
 /** What a prompt may name, and what each is filled with: what the node and the graph hold. */
-export const VARIABLES = {
+const VARIABLES = {
   'Node Description': 'Its heading, id and kind as "# <heading> (ID <id>, <kind> node)", then its text',
   'Input Definition': 'input.js as it is, where it is written -- then each input as wired: its type, where it comes from, what arrives there',
   'Output Definition': 'output.js as it is, where it is written -- then each output as wired: where it goes, what the node there wants',

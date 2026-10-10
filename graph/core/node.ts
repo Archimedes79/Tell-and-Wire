@@ -16,8 +16,6 @@ import { mcpToolService } from '../ai/mcp.ts';
 import { inProject, inside, reachable } from './confine.ts';
 import { aiSetting, configuredMcpServers, configuredSettings, secretPaths } from '../ai/settings.ts';
 
-export { SECRET_NAME } from '../ai/providers.ts';
-
 export const nodeFiles: FileService = {
   resolve: (path: string) => resolve(path),
   inProject,

@@ -22,32 +22,19 @@
 import { createHash } from 'node:crypto';
 import type { GraphNode } from '../graph.ts';
 import type { ModelChoice } from '../nodes/Runtime.ts';
+import { Lru } from './lru.ts';
 
 /** How many results are kept. A long session must not accumulate every one it ever saw. */
 const LIMIT = 256;
 
-export class LastOutputs {
-  private readonly kept = new Map<string, Record<string, unknown>>();
+export class LastOutputs extends Lru<Record<string, unknown>> {
+  constructor() {
+    super(LIMIT);
+  }
 
   /** One key for this node, as written, receiving these inputs, with *setting* the one AI setting. */
   key(node: GraphNode, inputs: Record<string, unknown>, setting?: ModelChoice): string {
     const written = { type: node.node_type, config: node.config, inputs: node.inputs, outputs: node.outputs };
     return createHash('sha256').update(JSON.stringify([written, inputs, setting ?? null])).digest('hex');
-  }
-
-  get(key: string): Record<string, unknown> | undefined {
-    const found = this.kept.get(key);
-    if (found) {
-      // Most recently used goes last, so the oldest is the one dropped.
-      this.kept.delete(key);
-      this.kept.set(key, found);
-    }
-    return found;
-  }
-
-  set(key: string, outputs: Record<string, unknown>): void {
-    this.kept.delete(key);
-    this.kept.set(key, outputs);
-    if (this.kept.size > LIMIT) this.kept.delete(this.kept.keys().next().value!);
   }
 }
