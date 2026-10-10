@@ -10,18 +10,13 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { GraphEdge, GraphNode } from '../../app/graph';
-import { ApiError, call } from '../../app/api/client';
 import { useGraphStore } from '../../app/store/graphStore';
-import { portRenames } from '../../app/store/portRenames';
 import { graphEdge } from '../../app/document/wires';
-import {
-  bodyOf, exchangeName, generateRequest, generationGuard, isWritten, outputsAsDefined, unfitDefinition, withHistory, writeName, writesFor, writtenInto,
-  type Write,
-} from './generation';
-import { inputFilesOf } from './exampleFile';
-import { arrivedAt, modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts } from './pull';
-import { inputFile, outputFile } from '../../../graph/authoring/pull.ts';
-import { missingExamples, sweep, type SweepUnit } from './graphSweep';
+import { generationGuard, isWritten, bodyOf, writesFor, type Write } from '../authoring/generation';
+import { isWriting, writingSaid } from '../authoring/useGenerate';
+import { missingExamples, sweep, type SweepUnit } from '../authoring/graphSweep';
+import { nodePanel } from './nodePanel';
+import { ANOTHER_GRAPH, writeFile } from './writeFile';
 
 interface SweepState {
   run: () => Promise<void>;
@@ -31,9 +26,6 @@ interface SweepState {
   /** What it said has been read: it goes. */
   dismiss: () => void;
 }
-
-/** Said when what came back belongs to a graph that is no longer open. */
-export const ANOTHER_GRAPH = 'another graph was opened, and what came back is not written into it';
 
 /**
  * What a sweep writes of *node*: what one press of its body's ✨ writes
@@ -61,7 +53,6 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
   const stillOpen = () => live().document === started;
   const nodesOf = () => live().rfNodes.map((item) => item.data.graphNode);
   const dslEdges = (): GraphEdge[] => live().rfEdges.map(graphEdge);
-  const nodeNow = (id: string) => nodesOf().find((node) => node.id === id);
 
   const missing = missingExamples(nodesOf(), dslEdges(), live().page);
   if (missing.length) {
@@ -70,52 +61,21 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
     return;
   }
 
-  /** *node* with *next* written in, its wires following its outputs. */
-  const put = (before: GraphNode, next: GraphNode) => live().updateNode(before.id, next, portRenames(before, next));
-
   const unitFor = (node: GraphNode): SweepUnit | undefined => {
-    const current = nodeNow(node.id) ?? node;
+    const current = nodesOf().find((item) => item.id === node.id) ?? node;
     const writes = missingOf(current);
     if (!writes.length) return undefined;
+    const panel = nodePanel(node.id);
     return {
       guard: () => generationGuard(current),
       write: async () => {
         for (const write of writes) {
-          const now = nodeNow(node.id);
-          if (!now || !stillOpen()) throw new Error(ANOTHER_GRAPH);
-          const around = { nodes: nodesOf(), edges: live().rfEdges, metadata: live().metadata, page: live().page };
-          if (write === 'output' && pullableOutput(now, around.nodes, around.edges)) {
-            put(now, outputsAsDefined({ ...now, config: { ...now.config, output_definition: outputFile(pulledOutputs(now, around.nodes, around.edges)!) } }));
-            continue;
-          }
-          if (write === 'input' && pullable(now, around.edges) && !modelsBefore(now, around.nodes, around.edges).length) {
-            const arrived = await arrivedAt(now, live().exportGraph());
-            const latest = nodeNow(node.id);
-            if (!latest || !stillOpen()) throw new Error(ANOTHER_GRAPH);
-            const ports = pulledPorts(latest, nodesOf(), live().rfEdges, arrived);
-            put(latest, { ...latest, config: { ...latest.config, input_definition: inputFile(ports) } });
-            // Written, to be seen; what comes after it would be written against what is missing.
-            const gap = pullGap(latest, ports, live().rfEdges, arrived);
-            if (gap) throw new Error(`input.js pulled, but ${gap}`);
-            continue;
-          }
-          const request = generateRequest(now, write, around, inputFilesOf(now, around.nodes, around.edges, live().executionResult, around.page));
-          try {
-            const response = await call('generate', request);
-            const latest = nodeNow(node.id);
-            if (!latest || !stillOpen()) throw new Error(ANOTHER_GRAPH);
-            put(latest, writtenInto(latest, write, response, exchangeName(latest, write)));
-            // Written, to be seen; the rest of the node would be written against it.
-            const unfit = unfitDefinition(write, response.probe);
-            if (unfit) throw new Error(`${writeName(latest, write)}: ${unfit}`);
-          } catch (error) {
-            // A failed exchange is history too, where it is still this graph's.
-            const calls = error instanceof ApiError ? error.body.calls : undefined;
-            const latest = nodeNow(node.id);
-            if (calls?.length && latest && stillOpen()) {
-              live().updateNode(node.id, { config: { ...latest.config, history: withHistory(latest, exchangeName(latest, write, { failed: true }), calls) } });
-            }
-            throw error;
+          if (!stillOpen()) throw new Error(ANOTHER_GRAPH);
+          if (isWriting(node.id)) throw new Error('it is being written in its own view: wait for that, or stop it');
+          if (!(await writeFile(node.id, panel, write, {}, true))) {
+            if (!panel.node()) throw new Error(ANOTHER_GRAPH);
+            // Written or not, said where it was: the node's own words.
+            throw new Error(writingSaid(node.id).replace(/^(❌|⚠️)\s*/u, ''));
           }
         }
       },
@@ -137,7 +97,7 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
       if (step.status === 'blocked') held.push(`${step.label} (${step.message})`);
     }
     if (!stillOpen()) {
-      say(`⚠️ Stopped: ${ANOTHER_GRAPH}.`);
+      say(`⚠️ Stopped: ${ANOTHER_GRAPH}`);
       return;
     }
     const rest = held.length ? ` ${held.length} left alone: ${held.join(', ')}` : '';

@@ -13,6 +13,7 @@ import {
   buildReactFlowGraph, defaultMetadata, exported, lostWire, normalizeGraph, pageOf, takeIn, withDiskChanges, withNested,
 } from '../document/graphDoc';
 import { HISTORY_LIMIT, endCoalescing, historyActions } from './history';
+import { flushPanels } from './flushPanels';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
 import { mergeResults } from '../../../graph/graph.ts';
@@ -641,6 +642,7 @@ export const useGraphStore = create<GraphStore>()(
       // would arrive at a canvas showing a different graph, where node ids
       // that happen to match would be given another level's values.
       if (goingRound()) return;
+      flushPanels();
       const node = get().rfNodes.find((n: RFNode) => n.id === nodeId)?.data.graphNode;
       // Whether there is a graph to go into is the same question as whether
       // this node holds one, so it is asked once. A `NodeGuiBuilder.opensNestedGraph`
@@ -667,6 +669,7 @@ export const useGraphStore = create<GraphStore>()(
       const { subgraphStack } = get();
       const frame = subgraphStack[subgraphStack.length - 1];
       if (!frame) return;
+      flushPanels();
       const inner = get().exportGraph();
       const merged = withNested(frame.graph, frame.nodeId, inner);
       const before = JSON.stringify(frame.graph);
@@ -775,6 +778,7 @@ export const useGraphStore = create<GraphStore>()(
 
     save: async (path = get().currentFilePath ?? undefined, { replace = false, name } = {}) => {
       if (!path) throw new Error('This graph has no file yet: use Save As.');
+      flushPanels();
       const root = get().rootGraph();
       const graph = name ? { ...root, metadata: { ...root.metadata, name } } : root;
       const result = await call('saveGraph', { path, graph, replace: replace || path === get().currentFilePath });
@@ -791,6 +795,7 @@ export const useGraphStore = create<GraphStore>()(
     },
 
     holdDocument: async () => {
+      flushPanels();
       const { opened, currentFilePath, rootGraph } = get();
       // Another document: none of the sessions held for the one before is its.
       if (heldOpened !== opened) heldSession = null;

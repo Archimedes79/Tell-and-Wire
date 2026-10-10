@@ -5,6 +5,7 @@
 import type { Graph } from '../graph';
 import { buildReactFlowGraph, normalizeGraph } from '../document/graphDoc';
 import type { GraphStore } from './graphStore';
+import { flushPanels } from './flushPanels';
 
 /** How many undo steps are kept. Each entry is a whole serialised graph. */
 export const HISTORY_LIMIT = 50;
@@ -50,6 +51,7 @@ export function historyActions(
     },
 
     undo: () => {
+      flushPanels();
       const { past } = get();
       if (past.length === 0) return;
       const current = JSON.stringify(get().exportGraph());
@@ -62,6 +64,7 @@ export function historyActions(
     },
 
     redo: () => {
+      flushPanels();
       const { future } = get();
       if (future.length === 0) return;
       const current = JSON.stringify(get().exportGraph());

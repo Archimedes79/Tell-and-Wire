@@ -21,6 +21,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import type { GraphNode } from '../../app/graph';
 import { useGraphStore } from '../../app/store/graphStore';
+import { whenFlushed } from '../../app/store/flushPanels';
 import { trackPorts } from '../../app/store/portRenames';
 import { ONCE, type UndoStep } from '../nodes/NodeGuiBuilder';
 import { saveDraft, withSetting } from './nodeDraft';
@@ -61,15 +62,16 @@ export function overlay(base: GraphNode, edited: GraphNode, fields: Iterable<str
   return node;
 }
 
-interface NodePanel {
+export interface NodePanel {
   /** The node as the panel shows it: the graph's, with what was changed and not yet written on top. Undefined once it is gone. */
   node(): GraphNode | undefined;
   /**
    * Change it, as the undo step *step* says: typed into a field -- the fields
    * it changes, unless *step* names the one -- written a moment later, or with
-   * the next `write`; or `ONCE`, written now as a step of its own.
+   * the next `write`; or `ONCE`, written now as a step of its own. False when
+   * the node is gone, and nothing was changed.
    */
-  change(edit: (node: GraphNode) => GraphNode, step?: UndoStep): void;
+  change(edit: (node: GraphNode) => GraphNode, step?: UndoStep): boolean;
   /** Change one setting (`withSetting`): *value* may be a function of the setting as it is when the change lands. */
   setConfig(key: string, value: unknown, step?: UndoStep): void;
   /**
@@ -133,7 +135,7 @@ export function nodePanel(nodeId: string): NodePanel {
       // Not typing: what was typed before it is a step of its own, and so is this.
       if (step === ONCE) write();
       const now = node();
-      if (!now) return;
+      if (!now) return false;
       const next = edit(now);
       const fields = changedFields(now, next);
       for (const field of fields) waiting.add(field);
@@ -145,12 +147,14 @@ export function nodePanel(nodeId: string): NodePanel {
         timer = setTimeout(() => write(), WRITE_AFTER_MS);
       }
       changed();
+      return true;
     },
     setConfig(key, value, step) {
       panel.change((now) => withSetting(now, key, value), step);
     },
     watch(onChange) {
       changed = onChange;
+      const unflush = whenFlushed(write);
       const off = useGraphStore.subscribe((state, before) => {
         // Closed while the graph stays: what waits is written into it now. A
         // graph replaced in the same moment -- another document, a level in
@@ -159,6 +163,7 @@ export function nodePanel(nodeId: string): NodePanel {
       });
       return () => {
         off();
+        unflush();
         changed = () => {};
         write();
       };
@@ -167,30 +172,11 @@ export function nodePanel(nodeId: string): NodePanel {
   return panel;
 }
 
-/**
- * What a key pressed while the panel is open does first, before whatever the
- * key is for hears it: Ctrl+Z and Ctrl+Y write what is waiting, so Undo takes
- * back what was just typed rather than the step before it -- and Ctrl+S, so
- * the file holds what the panel shows. It saved without the last moment of
- * typing.
- */
-export function writeBeforeKey(panel: Pick<NodePanel, 'write'>): (event: Pick<KeyboardEvent, 'ctrlKey' | 'metaKey' | 'key'>) => void {
-  return (event) => {
-    if ((event.ctrlKey || event.metaKey) && /^[zys]$/i.test(event.key)) panel.write();
-  };
-}
-
 /** The panel of node *nodeId*, drawn anew whenever its node changes -- here or in the graph. */
 export function useNodePanel(nodeId: string): NodePanel {
   const [panel] = useState(() => nodePanel(nodeId));
   const [, render] = useReducer((count: number) => count + 1, 0);
   useGraphStore((s) => s.rfNodes.find((item) => item.id === nodeId)?.data.graphNode);
   useEffect(() => panel.watch(render), [panel]);
-  useEffect(() => {
-    // Heard first, in the capture phase: the shortcuts themselves are the page's.
-    const onKey = writeBeforeKey(panel);
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [panel]);
   return panel;
 }
