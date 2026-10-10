@@ -18,8 +18,7 @@
 // that was tested rather than a second launcher written for them.
 //
 // One rule about the two streams: **stdout is the result and nothing else.** Progress and errors go to
-// stderr, so `run graph.json | jq` works. A prompt printed to stdout put
-// "Text for 'Greeting': " in front of the JSON and nobody could parse it.
+// stderr, so `run graph.json | jq` works.
 
 import type { Graph } from '../../../graph/graph.ts';
 import { frontendOf, loadGraph, projectFolderOf } from '../project/folder.ts';
@@ -115,7 +114,7 @@ export function parseArgs(argv: string[]): CliOptions {
     } else if (arg === '--every') {
       options.every = parseInterval(argv[++i] ?? '');
     } else if (arg === '--limit') {
-      // Not a number ran nothing and said nothing: `round < NaN` is never true.
+      // A whole number of runs: `round < NaN` is never true.
       const given = argv[++i] ?? '';
       const limit = Number(given);
       if (!given.trim() || !Number.isInteger(limit) || limit < 1) throw new Error(`--limit wants a whole number of runs, not "${given}".`);
@@ -144,10 +143,8 @@ export function parseArgs(argv: string[]): CliOptions {
     } else if (arg === '--mcp-root') {
       options.mcpRoot = required(arg, 'a folder');
     } else if (arg.startsWith('--')) {
-      // A flag this command does not know is a mistake to say, not a file to
-      // look for: taken as the graph, `--ai-provider openai g.json` went
-      // looking for a graph called "--ai-provider", and after the graph it
-      // was dropped without a word.
+      // A flag this command does not know is a mistake to say, not a graph to
+      // look for.
       throw new Error(
         `Unknown option "${arg}". This command knows --value, --event, --keep, --every, --limit, --bundle, `
           + '--serve, --port, --editor, --host, --mcp and --mcp-root.',

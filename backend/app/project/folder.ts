@@ -505,7 +505,7 @@ export async function writeProject(folder: string, graph: Graph, guard?: Guard):
   // Every level is worked out before any of it is written, because a project
   // is now a tree: a child written while its parent is still being checked is
   // exactly the half-save this promises not to do.
-  const plans = planProject(folder, JSON.parse(JSON.stringify(graph)) as Graph);
+  const plans = planProject(folder, structuredClone(graph));
   await refuseIfChangedOutside(plans);
   for (const plan of plans) await commit(plan, guard);
 }

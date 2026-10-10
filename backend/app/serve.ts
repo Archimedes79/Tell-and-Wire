@@ -110,7 +110,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
 
   async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     // Only the path and the query are read, so the base is any that parses:
-    // the bound address does not, where it is `::1`, and every request was a 500.
+    // the bound address does not, where it is `::1`.
     const url = new URL(request.url ?? '/', 'http://localhost');
     const path = url.pathname;
     const foreign = foreignRequest(request, self, path.startsWith('/api/'));

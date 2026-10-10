@@ -76,7 +76,7 @@ const json = (value: unknown): string => JSON.stringify(value, null, 2);
  */
 function withAuthoringOf(graph: Graph, kept: Graph): Graph {
   const before = new Map(kept.nodes.map((node) => [node.id, node]));
-  const copy = JSON.parse(JSON.stringify(graph)) as Graph;
+  const copy = structuredClone(graph);
   for (const node of copy.nodes) {
     const was = before.get(node.id);
     if (!was) continue;
@@ -217,7 +217,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       }
     }
 
-    const problems = problemsIn(parseGraph(JSON.parse(JSON.stringify(graph))));
+    const problems = problemsIn(parseGraph(structuredClone(graph)));
     if (problems.length) return { problems };
 
     // As the editor saves: into a project, the wiring to `flow.json` and each
