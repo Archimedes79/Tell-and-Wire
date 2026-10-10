@@ -159,11 +159,11 @@ export async function readJson(request: IncomingMessage): Promise<Record<string,
 
 const LOOPBACK_NAMES = new Set(['127.0.0.1', 'localhost', '[::1]']);
 
-/** `http://<host>` as an origin, or null when it is not one. */
-function originOf(address: string): string | null {
+/** The host and port of an `http:` or `https:` address (a TLS proxy in front shows https), or null when it is neither. */
+function hostOf(address: string): string | null {
   try {
     const url = new URL(address);
-    return url.protocol === 'http:' ? url.origin : null;
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.host : null;
   } catch {
     return null;
   }
@@ -209,8 +209,8 @@ export function foreignRequest(
   api: boolean,
 ): string | null {
   const host = request.headers.host ?? '';
-  const asked = originOf(`http://${host}`);
-  const url = asked ? new URL(asked) : null;
+  const asked = hostOf(`http://${host}`);
+  const url = asked ? new URL(`http://${host}`) : null;
   if (server.loopback) {
     if (!url || !LOOPBACK_NAMES.has(url.hostname) || Number(url.port || 80) !== server.port) {
       return `This server answers only as localhost:${server.port}, not as "${host}".`;
@@ -220,7 +220,7 @@ export function foreignRequest(
   }
   if (!api) return null;
   const origin = request.headers.origin;
-  if (origin !== undefined && (!asked || originOf(origin) !== asked)) {
+  if (origin !== undefined && (!asked || hostOf(origin) !== asked)) {
     return `A page from ${origin} may not call this server.`;
   }
   if (request.headers['sec-fetch-site'] === 'cross-site') return 'A page from another site may not call this server.';

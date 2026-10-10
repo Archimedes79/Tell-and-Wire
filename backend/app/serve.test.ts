@@ -152,6 +152,8 @@ describe('a web page elsewhere in the same browser', () => {
     try {
       const named = await serveGraph({ host: '0.0.0.0' });
       expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'http://tool.lan' }, '{}')).toBe(200);
+      // Behind a TLS reverse proxy the page's origin is https.
+      expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://tool.lan' }, '{}')).toBe(200);
       expect(await status(named, '/api/runtime/requirements', { ...json, Host: 'tool.lan', Origin: 'https://evil.example' }, '{}')).toBe(403);
       expect(await status(named, '/', { Host: 'evil.example' })).toBe(403);
     } finally {
