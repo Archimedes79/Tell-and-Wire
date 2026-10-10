@@ -18,7 +18,7 @@ export default function InputPickerWidgetView({ widget, value, onChange, onTrigg
   const hasValue = listed ? value.length > 0 : !!value;
   // Filled in already, it starts the graph only when chosen -- which a person
   // looking at a path that is there does not think of doing again: said.
-  const startsWith = hasValue && !listed && !!onTrigger && fires === true
+  const startsWith = hasValue && !listed && fires === true
     ? `Press Enter to use this ${isDir ? 'folder' : 'file'}`
     : '';
 
@@ -38,9 +38,9 @@ export default function InputPickerWidgetView({ widget, value, onChange, onTrigg
         // button does: a file picked meanwhile was kept, and started nothing.
         disabled={busy === true && fires === true}
         // Typing a path is not choosing one until it is finished: Enter says so.
-        onKeyDown={(e) => { if (e.key === 'Enter') onTrigger?.(e.currentTarget.value); }}
+        onKeyDown={(e) => { if (e.key === 'Enter') onTrigger(e.currentTarget.value); }}
         // Picking one is.
-        onPicked={(picked) => onTrigger?.(picked)}
+        onPicked={(picked) => onTrigger(picked)}
       >
         {hasValue && (
           <Button

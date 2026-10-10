@@ -31,7 +31,7 @@ export default function DesignerTab() {
   // the round is sent what this page shows -- its design, set here.
   const round = useRound(
     () => useGraphStore.getState().holdDocument(),
-    () => Object.fromEntries(widgets
+    () => Object.fromEntries(useGraphStore.getState().page
       .filter((widget) => widgetTakesValue(widget) && widgetValueIsDesign(widget) && widget.value !== undefined)
       .map((widget) => [widget.id, widget.value])),
   );

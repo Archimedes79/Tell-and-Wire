@@ -30,9 +30,8 @@ export default function SliderWidgetView({ widget, value, onChange, onTrigger, f
         onChange={(e) => onChange(e.target.value)}
         // Dragging passes through every value on the way; the event is letting
         // go, or a run would start for each of them.
-        onMouseUp={(e) => onTrigger?.((e.target as HTMLInputElement).value)}
-        onTouchEnd={(e) => onTrigger?.((e.target as HTMLInputElement).value)}
-        onKeyUp={(e) => { if (MOVES.has(e.key)) onTrigger?.((e.target as HTMLInputElement).value); }}
+        onPointerUp={() => onTrigger()}
+        onKeyUp={(e) => { if (MOVES.has(e.key)) onTrigger(); }}
       />
       <span className="text-sm font-mono w-12 text-right" style={{ color: MUTED }}>{current}</span>
     </div>

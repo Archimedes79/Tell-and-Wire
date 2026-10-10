@@ -127,8 +127,7 @@ export function GuiBlock({
   value: unknown;
   incoming: unknown;
   onChange: (next: unknown) => void;
-  /** Absent in the designer: a page being laid out must not start runs. */
-  onTrigger?: (value?: unknown) => void;
+  onTrigger: (value?: unknown) => void;
   /** Using it starts a round: see `WidgetViewProps.fires`. */
   fires?: boolean;
   busy?: boolean;

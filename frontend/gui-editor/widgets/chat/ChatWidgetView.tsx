@@ -25,13 +25,17 @@ export default function ChatWidgetView({ value, onChange, onTrigger, busy, contr
   // While its answer is on the way the message is shown as said, not as being typed.
   const sending = busy === true && pending.trim() !== '';
 
-  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [messages.length, sending]);
+  // Follow the conversation as it grows -- not on first draw, which would scroll the whole page to the chat.
+  const drawn = useRef(false);
+  useEffect(() => {
+    if (drawn.current) end.current?.scrollIntoView({ block: 'nearest' });
+    drawn.current = true;
+  }, [messages.length, sending]);
 
   const send = () => {
     if (busy || !pending.trim()) return;
     const next: ChatValue = { messages, pending: pending.trim() };
-    if (onTrigger) onTrigger(next);
-    else onChange(next);
+    onTrigger(next);
   };
 
   const bubble = (message: ChatMessage, key: React.Key) => (
@@ -73,7 +77,8 @@ export default function ChatWidgetView({ value, onChange, onTrigger, busy, contr
           className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm resize-none"
           style={{ ...FIELD, height: 40 }}
           value={sending ? '' : pending}
-          disabled={sending}
+          readOnly={sending}
+          aria-busy={sending}
           onChange={(e) => onChange({ messages, pending: e.target.value })}
           onKeyDown={(e) => {
             // Enter that ends an input method's composition is not Enter.

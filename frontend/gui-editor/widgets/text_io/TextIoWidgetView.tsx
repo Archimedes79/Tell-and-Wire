@@ -77,7 +77,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
     if (!sends || event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
     event.preventDefault();
     const typed = event.currentTarget.value;
-    if (typed.trim()) onTrigger?.(typed);
+    if (typed.trim()) onTrigger(typed);
   };
   const saveButton = (shown: string) => shown.trim() !== '' && (
     <SaveButton
