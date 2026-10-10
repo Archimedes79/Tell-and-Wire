@@ -1,6 +1,6 @@
 {
   "name": "tell-and-wire-graph",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "type": "module",
   "description": "The graph's own code, in JavaScript: its format, how it runs, its nodes and the model client. Runs under Node with no build and no dependencies.",
