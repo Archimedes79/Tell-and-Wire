@@ -97,13 +97,16 @@ The box on top, **What it does**, is the node in your words:
 
 Below it, **Auto generate** writes everything in order, each file from the ones before it. It
 stops after **Pull input** where a wired input has no example to pull -- the message says why --
-rather than write against nothing. Under that are the node's files, a row each, with a button for
-each way of working on it:
+rather than write against nothing. Under that are the node's files, a card each -- its name in
+bold, the ports it holds as chips, and a button for each way of working on it. The one open is lit.
+Above the open file, one line says what the node takes in and what it hands on, from its ports:
+`file · path → text · info`. A click on a side opens its file, and `≠ input.js` says the file
+names other ports than the node has.
 
-| Row | Buttons | File |
+| Card | Buttons | File |
 |---|---|---|
-| **Input** | **Pull input**, **File** | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
-| **Output** | **Chat** or **Pull output**, **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
+| **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
+| **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
 | **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. |
 | **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. ✨ writes it together with the fields; left empty, the start stands in. |
@@ -120,12 +123,13 @@ each way of working on it:
   Under the line, *Sent with it* lists what goes along with your words -- the node's text, its
   input, its output and the graph around it, the same for every file of every kind of node --
   and **Show what is sent** shows the prompt word for word.
-- **File** is the file itself, editable in place; **Larger** opens it in a large window, and
-  **Open in my editor** opens it in your own. A dot says whether anything is written in it.
+- **File** is the file itself, editable in place; **Full screen** opens it across the window, and
+  **Open in my editor** opens it in your own. A dot says whether anything is written in it
+  (the legend under the cards says which is which).
   Files an input or an output is written from -- examples, a spec -- are folded under the
   file; drop one on the node on the canvas to add it.
 - The gear holds the settings: the ports where they are yours to name, *Run once per item*,
-  *Catch failures*, the model and tools, **What runs, technically**, and `history.md` -- every
+  *Catch failures*, the model and tools, **What runs, technically** (a start or end point has none), and `history.md` -- every
   exchange with the model about this node. Each chat also lists its own exchanges.
 - **Last run** at the foot of the pane, once the tool has run, says how the node went and what
   arrived and what it made.
@@ -205,7 +209,9 @@ file in a folder.
 The page is built like a document. Type headings and text in place. Press `/` to insert a
 block, or drag one from the left column onto the page. A selected block has a small toolbar:
 ¼ ½ ¾ Full for its width, and a 🗑 that deletes it (so does the Delete key); drag a block
-by its grip to move it, and its corner to size it. *Look & size* holds the tone, frame and
+by its grip, beside it while the pointer is on it, to move it, and its corner to size it. A block is as tall as what is in it
+needs and at least its height in cells, so text is not cut. One that shows what a run hands back is a
+single line, "Waiting for output…", until a run does; selected, it has its whole height. *Look & size* holds the tone, frame and
 background. With no block selected, the right column shows the page: *Colour scheme*
 recolours the page; the editor keeps its own colours. Blocks are live while you build: a
 button pressed here runs the graph.

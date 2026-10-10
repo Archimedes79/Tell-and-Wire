@@ -11,7 +11,10 @@ import { DIMMER, LINE, MUTED } from '../../app/ui/theme';
  * say the same thing in the same words.
  */
 export default function WhatRuns({ node }: { node: GraphNode }) {
-  const runs = runnerRegistry.node(node.node_type)?.whatRuns(node as never);
+  const runner = runnerRegistry.node(node.node_type);
+  // A start or an end point does no work of its own: where a run begins or leaves, not what it does.
+  if (runner?.isResult || runner?.startedBy(node as never)) return null;
+  const runs = runner?.whatRuns(node as never);
   if (!runs?.does) return null;
   return (
     <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}>

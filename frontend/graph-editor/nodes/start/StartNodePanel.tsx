@@ -202,10 +202,6 @@ export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
         </div>
       )}
       {startedBy === 'itself' && <SendsFiles node={node} setConfig={setConfig} />}
-      <p className="text-xs" style={{ color: DIM }}
-        title="The values are under the names the sender gave them; the first node it reaches reads what it needs out of them. In a run it did not begin, event is empty and the values are the ones it was sent last.">
-        Hands on one package, <code>{'{event, values}'}</code>, to what its <code>data</code> is wired to.
-      </p>
     </div>
   );
 }

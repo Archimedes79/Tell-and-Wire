@@ -1,8 +1,7 @@
 import { useId } from 'react';
 import PathField from '../../../app/dialogs/PathField';
 import { useGraphStore } from '../../../app/store/graphStore';
-import { blocksAt } from '../../../app/document/page';
-import { DIMMER, FIELD, MUTED } from '../../../app/ui/theme';
+import { DANGER_TEXT, DIMMER, FIELD, MUTED } from '../../../app/ui/theme';
 import { EndNodeRunner } from '../../../../graph/nodes/end/EndNodeRunner.ts';
 import { resultKeys } from '../../../../graph/nodes/NodeRunner.ts';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
@@ -29,19 +28,17 @@ export default function EndNodePanel({ node, setConfig }: NodePanelProps) {
   // The key its value really gets in the run's result: its name, unless an
   // end point before it has that already (`resultKeys`, as a run asks).
   const nodes = useGraphStore((s) => s.rfNodes);
-  const page = useGraphStore((s) => s.page);
   const label = END.resultLabel(node as never);
   const key = resultKeys(nodes.map((n) => (n.id === node.id ? node : n.data.graphNode)) as never, runnerRegistry).get(node.id) ?? label;
-  const shownBy = blocksAt(page, node.id).show.map((block) => `“${block.label || block.id}”`);
 
   return (
     <div className="space-y-4">
-      <p className="text-xs" style={{ color: DIMMER }}>
-        {key === label
-          ? `Handed back as “${key}”: a page block, a script or the command line reads it by that name.`
-          : `Handed back as “${key}”: “${label}” is another end point's already. Give it a name of its own.`}
-        {shownBy.length ? ` On the page, ${shownBy.join(', ')} show${shownBy.length === 1 ? 's' : ''} it.` : ''}
-      </p>
+      {/* Said only where it goes wrong: two end points of one name hand back one value. */}
+      {key !== label && (
+        <p className="text-xs" style={{ color: DANGER_TEXT }}>
+          Handed back as “{key}”: “{label}” is another end point's already. Give it a name of its own.
+        </p>
+      )}
 
       <div>
         <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={alsoWrite}>Also write it to</label>

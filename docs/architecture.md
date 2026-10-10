@@ -162,7 +162,7 @@ my_tool/
   from its fields, a subgraph's from its graph): they are worked out when the folder is read.
   Of those inputs the file keeps what a person chose: `field` and `list`.
 - The page is a flow, not coordinates: its blocks sit in the order of the list, each `w`
-  cells wide (of 16 across) and `h` high, wrapping like text (`frontend/app/document/layout.ts`).
+  cells wide (of 16 across) and at least `h` high -- a row grows with what is in it --, wrapping like text (`frontend/app/document/layout.ts`).
 - Which setting is which file is the element's to say (`NodeRunner.texts`). Every file is
   there from the start as a stub that reads back as nothing.
 - `backend/app/project/folder.ts` reads and writes folders for the editor, the CLI, a served
