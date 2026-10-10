@@ -9,7 +9,7 @@ import { nodeCode } from './node.ts';
  * A body is often generated, and the sweep runs it to check it before anyone
  * has read it. So the policy is worth asserting rather than assuming: the
  * working directory readable, but not the settings file that holds the keys;
- * writing the temp folder only; starting other programs closed, because no
+ * writing its own folder only; starting other programs closed, because no
  * body has a reason to.
  *
  * The network is deliberately absent from these tests: Node has no flag for
@@ -18,7 +18,7 @@ import { nodeCode } from './node.ts';
  */
 
 describe('a code body', () => {
-  it('may read the working directory but not the settings file, and write nowhere but the temp folder', async () => {
+  it('may read the working directory but not the settings file, and write nowhere but its own folder', async () => {
     const settings = join(process.cwd(), 'sandbox-probe-settings.json');
     const beside = join(process.cwd(), 'sandbox-probe-beside.txt');
     writeFileSync(settings, '{"api_keys":{"openai":"sk-planted"}}');
@@ -27,17 +27,18 @@ describe('a code body', () => {
       const body = `
         import { readFileSync, writeFileSync } from 'node:fs';
         import { tmpdir } from 'node:os';
-        import { join } from 'node:path';
+        import { dirname, join } from 'node:path';
         const tried = (what) => { try { what(); return 'allowed'; } catch (error) { return error.code; } };
         export function run() {
           return {
             package: tried(() => readFileSync('package.json')),
             settings: tried(() => readFileSync(${JSON.stringify(settings)})),
             beside: tried(() => writeFileSync(${JSON.stringify(beside)}, 'x')),
+            own: tried(() => writeFileSync(join(dirname(process.argv[1]), 'probe.txt'), 'x')),
             temp: tried(() => writeFileSync(join(tmpdir(), 'tell-and-wire-sandbox-probe.txt'), 'x')),
           };
         }`;
-      expect(await nodeCode.run(body, {})).toEqual({ package: 'allowed', settings: 'ERR_ACCESS_DENIED', beside: 'ERR_ACCESS_DENIED', temp: 'allowed' });
+      expect(await nodeCode.run(body, {})).toEqual({ package: 'allowed', settings: 'ERR_ACCESS_DENIED', beside: 'ERR_ACCESS_DENIED', own: 'allowed', temp: 'ERR_ACCESS_DENIED' });
     } finally {
       delete process.env.TW_SETTINGS;
       rmSync(settings, { force: true });

@@ -1,15 +1,16 @@
-// Turning a picture on disk into something that can be looked at or sent.
+// Turning a picture on disk into something that can be looked at or sent, and
+// the one place where the size of a file read is limited.
 //
-// One authored copy: the image block shows a picture with it (`imageDataUrl`),
-// and `documents.ts` hands a node that reads a file a picture or a PDF with it,
-// which an AI node sends as it is. Both need it for the same reason: the
-// filesystem a run reads is not the browser's, and it is not the model provider's
-// either — a path means nothing to either of them.
+// The image block shows a picture with `imageDataUrl`, and `fileContent.ts`
+// hands a node that reads a file a picture or a PDF, which an AI node sends as
+// it is. Both need it for the same reason: the filesystem a run reads is not
+// the browser's, and it is not the model provider's either -- a path means
+// nothing to either of them.
 
 import type { FileService } from './Runtime.ts';
 
-/** Bigger than this and inlining it is a mistake rather than a slow request. */
-export const MAX_INLINE_IMAGE_BYTES = 8 * 1024 * 1024;
+/** Bigger than this and reading a file is a mistake rather than a slow request. */
+const MAX_BYTES = 8 * 1024 * 1024;
 
 const MEDIA_TYPES: Record<string, string> = {
   '.png': 'image/png',
@@ -32,19 +33,18 @@ export function isInlineUrl(value: string): boolean {
 }
 
 /**
- * The file at *path* as a `data:` URL of *mediaType*, or refused by name when
- * it is too large to inline: it would otherwise travel -- to a browser as a
- * broken picture, to a provider as a bill -- and the message a person can act
- * on is the one that says which file and how big. The size is asked before
- * anything is read: reading a file of gigabytes whole, only to refuse it, is
- * the harm itself.
+ * The file at *path*, or refused by name when it is too large: it would
+ * otherwise travel -- to a browser as a broken picture, to a provider as a
+ * bill -- and the message a person can act on is the one that says which file
+ * and how big. The size is asked before anything is read: reading a file of
+ * gigabytes whole, only to refuse it, is the harm itself.
  */
-export async function inlineDataUrl(path: string, mediaType: string, files: FileService): Promise<string> {
-  const bytes = await files.size?.(path) ?? 0;
-  if (bytes > MAX_INLINE_IMAGE_BYTES) {
-    throw new Error(`${path} is ${(bytes / 1024 / 1024).toFixed(1)} MB; the limit is ${MAX_INLINE_IMAGE_BYTES / 1024 / 1024} MB.`);
+export async function readWithinLimit(path: string, files: FileService, mode: 'text' | 'binary'): Promise<string> {
+  const bytes = await files.size(path);
+  if (bytes > MAX_BYTES) {
+    throw new Error(`${path} is ${(bytes / 1024 / 1024).toFixed(1)} MB; the limit is ${MAX_BYTES / 1024 / 1024} MB.`);
   }
-  return `data:${mediaType};base64,${await files.read(path, 'binary')}`;
+  return files.read(path, mode);
 }
 
 /** Read an image file and return it as a `data:` URL; a file that is not an image is refused by name. */
@@ -52,5 +52,5 @@ export async function imageDataUrl(path: string, files: FileService): Promise<st
   const resolved = files.resolve(path);
   const mediaType = imageMediaType(resolved);
   if (!mediaType) throw new Error(`Not a recognised image file: ${resolved}`);
-  return inlineDataUrl(resolved, mediaType, files);
+  return `data:${mediaType};base64,${await readWithinLimit(resolved, files, 'binary')}`;
 }

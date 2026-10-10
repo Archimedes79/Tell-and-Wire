@@ -41,9 +41,27 @@ describe('ai-settings.json', () => {
         expect(await aiSetting(dir, env)).toEqual({ provider: 'google', model: 'gemini-2.5-pro' });
         expect(configuredSettings(env, dir).apiKeys).toEqual({ google: 'k' });
 
-        // A command line cannot come from a variable: the file is the one place a program to start is named.
-        const servers = configuredMcpServers({ TW_MCP_SERVERS: '{"evil":{"command":"calc"}}' }, dir);
-        expect(Object.keys(servers)).toEqual(['files', 'remote']);
+        // A settings file in the folder a tool runs in -- a stranger's project may ship one -- supplies no tool server.
+        expect(Object.keys(configuredMcpServers({ TW_SETTINGS: join(dir, 'nowhere.json'), TW_MCP_SERVERS: '{"evil":{"command":"calc"}}' }))).not.toContain('files');
+      },
+    );
+  });
+
+  it('names tool servers from the machine\'s settings file and from the servers\' own folders, and from nothing else', async () => {
+    await withSettings(
+      JSON.stringify({
+        mcp_servers: {
+          files: { command: 'npx', args: ['-y', 'server-filesystem'], env: { DEBUG: '1' } },
+          remote: { url: 'https://example.com/mcp', headers: { Authorization: 'Bearer t' } },
+          // Neither a program nor an address: nothing the client could open.
+          half: { args: ['--oops'] },
+        },
+      }),
+      async (dir) => {
+        const servers = configuredMcpServers({ TW_SETTINGS: join(dir, 'ai-settings.json') });
+        expect(servers.files).toMatchObject({ command: 'npx' });
+        expect(servers.remote).toMatchObject({ url: 'https://example.com/mcp' });
+        expect(servers).not.toHaveProperty('half');
       },
     );
   });

@@ -12,8 +12,8 @@
 // It is **not** in the repository and must not be: `.gitignore` names it, and
 // `ai-settings.example.json` beside it shows the shape with no key in it.
 //
-// The same file says which tool servers this machine has (`mcp_servers`), and
-// for those it is the *only* source -- see `configuredMcpServers` for why.
+// Which tool servers this machine has is not said by this file but by the
+// machine's own settings file -- see `configuredMcpServers`.
 //
 // And it holds the one AI setting, which `aiSetting` alone resolves.
 
@@ -47,6 +47,11 @@ export function candidatePaths(
     join(installFolder(), FILENAME),
     join(homedir(), '.tell-and-wire', 'settings.json'),
   ])];
+}
+
+/** The file the machine's tool servers are written in: the one place a program to run comes from. */
+export function machineSettingsPath(env: Record<string, string | undefined> = process.env): string {
+  return env.TW_SETTINGS || join(homedir(), '.tell-and-wire', 'settings.json');
 }
 
 /**
@@ -227,9 +232,7 @@ export async function probeLocal(
  * `TW_AI_PROVIDER` / `TW_AI_MODEL` are the same setting for a
  * machine with no dialog, and win over the file. With nothing set it is
  * whichever local provider is running, else Ollama. A provider named without a
- * model takes *its own* default: choosing Google and leaving the model blank
- * once sent Google whatever LM Studio had loaded, and Google answered with a
- * 404 that read like a broken endpoint.
+ * model takes *its own* default, not whatever another provider has loaded.
  */
 export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Promise<ModelChoice> {
   // Each of the two on its own: a variable naming the model leaves the file's provider standing.
@@ -248,34 +251,31 @@ export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Pr
 }
 
 /**
- * The tool servers this machine has configured, from the settings file in
- * use -- the same file the key comes from, found the same way.
+ * The tool servers this machine has, by the name a graph uses for them.
  *
- * This is the only source there is, and that is the point of it. A graph names
- * a tool server; what the name *starts* is written here, by whoever owns the
- * machine, in a file that is not in the repository and does not travel with a
- * graph. There is deliberately no environment variable on top, unlike
- * everything else in this file: a command line assembled from `TW_…`
- * variables is one more place a program to run could come from, and one is the
- * right number.
+ * One place: `mcp_servers` in the machine's settings file (`TW_SETTINGS`, else
+ * `~/.tell-and-wire/settings.json`), where the editor writes a server it set up from
+ * `mcp/<name>/config.json`. Not the working directory and not the project folder: a
+ * stranger's project may ship an `ai-settings.json` with keys and endpoints in it,
+ * and a command in it would be a program started by opening a graph. No
+ * environment variable either, for the same reason.
  *
  * An entry that is neither a command nor a URL is dropped rather than passed
  * on, so what reaches the client is only ever one of the two shapes it knows.
  * A graph naming a dropped entry is told it is not configured, which is true.
  */
-export function configuredMcpServers(
-  env: Record<string, string | undefined> = process.env,
-  cwd = process.cwd(),
-): Record<string, McpServerConfig> {
-  const listed = readSettingsFile(settingsPath(cwd, env)).mcp_servers;
-  if (!listed || typeof listed !== 'object' || Array.isArray(listed)) return {};
-
+export function configuredMcpServers(env: Record<string, string | undefined> = process.env): Record<string, McpServerConfig> {
   const servers: Record<string, McpServerConfig> = {};
-  for (const [name, entry] of Object.entries(listed)) {
-    const { command, url } = (entry ?? {}) as { command?: unknown; url?: unknown };
-    if ((typeof command === 'string' && command) || (typeof url === 'string' && url)) servers[name] = entry;
+  const listed = readSettingsFile(machineSettingsPath(env)).mcp_servers;
+  for (const [name, entry] of Object.entries(listed && typeof listed === 'object' && !Array.isArray(listed) ? listed : {})) {
+    if (usable(entry)) servers[name] = entry;
   }
   return servers;
 }
+
+const usable = (entry: unknown): entry is McpServerConfig => {
+  const { command, url } = (entry ?? {}) as { command?: unknown; url?: unknown };
+  return (typeof command === 'string' && !!command) || (typeof url === 'string' && !!url);
+};
 
 export { FILENAME as SETTINGS_FILENAME };

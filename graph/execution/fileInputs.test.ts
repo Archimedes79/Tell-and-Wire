@@ -21,7 +21,7 @@ const node = (inputs: Port[]): GraphNode => ({
 });
 
 const files: FileService = {
-  resolve: (path) => path, exists: async () => true, write: async () => {}, list: async () => [],
+  resolve: (path) => path, inProject: (path) => path, size: async () => 0, write: async () => {}, list: async () => [],
   read: async (path) => { if (!path) throw new Error("ENOENT: no such file or directory, open ''"); return `content of ${path}`; },
 };
 

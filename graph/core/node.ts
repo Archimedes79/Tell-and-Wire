@@ -9,31 +9,30 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/
 import { existsSync, readdirSync, realpathSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 import { lent, type CodeService, type FileService, type Runtime } from '../nodes/Runtime.ts';
 import { aiService, withoutKeys } from '../ai/providers.ts';
 import { mcpToolService } from '../ai/mcp.ts';
-import { aiSetting, candidatePaths, configuredMcpServers, configuredSettings } from '../ai/settings.ts';
-
-export { SECRET_NAME } from '../ai/providers.ts';
+import { inProject, inside, reachable } from './confine.ts';
+import { aiSetting, configuredMcpServers, configuredSettings, candidatePaths } from '../ai/settings.ts';
 
 export const nodeFiles: FileService = {
   resolve: (path: string) => resolve(path),
-  exists: async (path: string) => existsSync(path),
-  size: async (path: string) => (await stat(path)).size,
+  inProject,
+  size: async (path: string) => (await stat(reachable(path))).size,
   async read(path: string, mode: 'text' | 'binary' = 'text') {
-    if (mode === 'binary') return (await readFile(path)).toString('base64');
-    return readFile(path, 'utf8');
+    if (mode === 'binary') return (await readFile(reachable(path))).toString('base64');
+    return readFile(reachable(path), 'utf8');
   },
   async write(path: string, content: string, mode: 'text' | 'binary' = 'text') {
     // An end point told to write into "results/" means a folder it may have
     // to make: one file per value into a folder that is not there yet failed
     // on the first value.
-    await mkdir(dirname(path), { recursive: true });
+    await mkdir(dirname(reachable(path)), { recursive: true });
     await writeFile(path, mode === 'binary' ? Buffer.from(content, 'base64') : content);
   },
   async remove(path: string) {
-    await rm(path, { force: true });
+    await rm(reachable(path), { force: true });
   },
   async list(path: string, options = {}) {
     const { recursive = false, extensions } = options;
@@ -48,21 +47,16 @@ export const nodeFiles: FileService = {
         }
       }
     };
-    if ((await stat(path)).isDirectory()) await walk(path);
+    if ((await stat(reachable(path))).isDirectory()) await walk(path);
     // Sorted, because a directory listing is an input: two runs over the same
     // folder must hand the graph the same order or nothing downstream is
     // reproducible. With `/`, which Windows reads as well: a path that came
     // from a listing ends up in a graph -- an example file, a value kept --
-    // and a graph is opened elsewhere.
-    return found.sort().map((full) => full.replace(/\\/g, '/'));
+    // and a graph is opened elsewhere. The settings file is not listed.
+    const reachables = found.filter((full) => { try { reachable(full); return true; } catch { return false; } });
+    return reachables.sort().map((full) => full.replace(/\\/g, '/'));
   },
 };
-
-/** Whether *path* is *folder* or lies in it (compared the way the platform compares names). */
-function inside(folder: string, path: string): boolean {
-  const way = relative(folder, path);
-  return way === '' || (!way.startsWith('..') && !isAbsolute(way));
-}
 
 /**
  * *root* and all it holds except the *keys*. A folder that holds one is not
@@ -88,8 +82,8 @@ function opened(root: string, keys: string[]): string[] {
  * here is the whole list, and it only ever allows -- there is no flag for "all
  * but". So the list is made: a body reads the working directory, where a
  * graph's files are, less the settings file that holds the keys (`aiSetting`'s
- * file, every one `candidatePaths` names), and the temp folder; it writes the
- * temp folder only. A file elsewhere reaches it as an input typed `file_path`,
+ * file, every one `candidatePaths` names), and its own folder, the one `run`
+ * makes for it; it writes its own folder only. A file elsewhere reaches it as an input typed `file_path`,
  * which the executor reads for it (`readsFileInputs`), and what it makes
  * leaves as an output, which an end point writes.
  *
@@ -102,11 +96,11 @@ function opened(root: string, keys: string[]): string[] {
  * does). A body can still reach out. Nor a link in the working directory that
  * points at the settings file: Node follows links past its own list.
  */
-function sandbox(): string[] {
+function sandbox(own: string): string[] {
   const keys = candidatePaths().filter((path) => existsSync(path)).flatMap((path) => [path, realpathSync(path)]);
-  const temp = [...new Set([tmpdir(), realpathSync(tmpdir())])].flatMap((path) => opened(path, keys));
-  const flags = ['--permission', ...[...opened(process.cwd(), keys), ...temp].map((path) => `--allow-fs-read=${path}`),
-    ...temp.map((path) => `--allow-fs-write=${path}`)];
+  const mine = [...new Set([own, realpathSync(own)])];
+  const flags = ['--permission', ...[...opened(process.cwd(), keys), ...mine].map((path) => `--allow-fs-read=${path}`),
+    ...mine.map((path) => `--allow-fs-write=${path}`)];
   // Windows ends a command line at 32 KB: a folder with that many
   // entries beside the settings file is a failure to say, not `ENAMETOOLONG`.
   if (flags.join(' ').length > 30_000) throw new Error('the folders a body may read hold too many entries beside the settings file: keep it in a folder of its own.');
@@ -187,7 +181,7 @@ export const nodeCode: CodeService = {
     try {
       await writeFile(file, wrapper, 'utf8');
       const given = { inputs, calls: Object.keys(context?.calls ?? {}) };
-      const result = await converse(process.execPath, [...sandbox(), file], JSON.stringify(given), context?.calls ?? {}, signal);
+      const result = await converse(process.execPath, [...sandbox(dir), file], JSON.stringify(given), context?.calls ?? {}, signal);
       if (result === undefined) throw new Error('the body returned nothing; does it return an object?');
       if (result === null || typeof result !== 'object') throw new Error('the body must return an object keyed by output port.');
       return result as Record<string, unknown>;
@@ -309,7 +303,7 @@ function converse(
       const message = named >= 0 ? lines.slice(named, named + 2).join('\n') : lines.slice(-3).join('\n');
       // Node's "Use --allow-fs-write" is advice for whoever starts the interpreter, not for the person reading this.
       const denied = /Use --allow-fs-\w+ to manage permissions\./;
-      fail(new Error(message.replace(denied, 'A body may read the working directory (not the settings file) and write the temp folder only.').trim() || `exited with ${code}`));
+      fail(new Error(message.replace(denied, 'A body may read the working directory (not the settings file) and write its own folder only.').trim() || `exited with ${code}`));
     });
   });
 }

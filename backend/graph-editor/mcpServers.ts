@@ -19,7 +19,7 @@
 import { exec } from 'node:child_process';
 import { readdir, readFile, rm, stat } from 'node:fs/promises';
 import { delimiter, join, resolve } from 'node:path';
-import { configuredMcpServers, installFolder } from '../../graph/ai/settings.ts';
+import { configuredMcpServers, installFolder, machineSettingsPath } from '../../graph/ai/settings.ts';
 import { mcpToolService, type McpServerConfig } from '../../graph/ai/mcp.ts';
 import { Refusal, message } from '../app/http.ts';
 import type { McpSaved, McpServerView, McpServersView } from '../app/api.ts';
@@ -184,7 +184,7 @@ async function viewOf(one: Found, listed: Record<string, McpServerConfig>): Prom
 
 /** The servers that came with this installation, and the names this machine has entries for. */
 export async function list(root = defaultRoot(), cwd = process.cwd(), env: Env = process.env): Promise<McpServersView> {
-  const listed = configuredMcpServers(env, cwd);
+  const listed = configuredMcpServers(env);
   return { servers: await Promise.all((await found(root)).map((one) => viewOf(one, listed))), configured: Object.keys(listed), delimiter };
 }
 
@@ -202,7 +202,7 @@ export async function save(
   name: string, values: Record<string, string>, root = defaultRoot(), cwd = process.cwd(), env: Env = process.env,
 ): Promise<McpSaved> {
   const one = await server(name, root);
-  const listed = configuredMcpServers(env, cwd);
+  const listed = configuredMcpServers(env);
   if (Object.prototype.hasOwnProperty.call(listed, name) && !isOurs(listed[name], one.folder)) {
     throw new Refusal(409, `ai-settings.json already has a tool server called "${name}" that is not this one. Edit it there, or take its entry out first.`);
   }
@@ -220,7 +220,7 @@ export async function save(
 
   if (!(await installed(one.folder))) await install(one);
   const entry = entryFor(one, held);
-  await edit((file) => { file.mcp_servers = { ...file.mcp_servers, [name]: entry }; }, cwd, env);
+  await edit((file) => { file.mcp_servers = { ...file.mcp_servers, [name]: entry }; }, cwd, env, machineSettingsPath(env));
   return { server: await viewOf(one, { ...listed, [name]: entry }), ...(await started(name, entry)) };
 }
 

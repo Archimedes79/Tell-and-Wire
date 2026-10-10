@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { listFolder } from './folderListing.ts';
 import { nodeRuntime } from '../core/node.ts';
 import { registry } from './registry.ts';
@@ -15,12 +14,12 @@ import type { GraphNode } from '../graph.ts';
  */
 let dir = '';
 beforeAll(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-listing-'));
+  dir = await mkdtemp(join(process.cwd(), 'tell-and-wire-listing-'));
   await mkdir(join(dir, 'more'));
   for (const name of ['a.CSV', 'b.csv', 'c.txt', join('more', 'd.csv')]) await writeFile(join(dir, name), 'x');
 });
 afterAll(async () => {
-  await rm(dir, { recursive: true, force: true });
+  await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 });
 
 const runtime = nodeRuntime();
@@ -35,13 +34,13 @@ describe('a folder listing', () => {
     const start = (config: Record<string, unknown>) => ({ id: 'inbox', node_type: 'start', config: { started_by: 'itself', ...config } }) as unknown as GraphNode;
     const sends = async (node: GraphNode) => ((await registry.node('start')!.execute(node, {}, runtime)).data as { values: Record<string, unknown> }).values.inbox;
     const block = parseWidget({ id: 'pick', kind: 'input_picker', mode: 'directory', value: dir, extensions: 'csv' });
-    const fromStart = await sends(start({ reads: 'folder', path: dir, extensions: 'csv' }));
+    const fromStart = await sends(start({ reads: 'folder', path: relative(process.cwd(), dir), extensions: 'csv' }));
     const fromBlock = await widgetElement('input_picker')!.data(block, runtime);
     expect(names(fromStart as string[])).toEqual(['a.CSV', 'b.csv']);
     expect(fromBlock).toEqual(fromStart);
 
     // A file is its path and what is in it; set to read nothing, it sends what it was sent.
-    expect(await sends(start({ reads: 'file', path: join(dir, 'c.txt') }))).toEqual({ path: join(dir, 'c.txt'), content: 'x' });
-    expect(await sends(start({ path: dir }))).toBeUndefined();
+    expect(await sends(start({ reads: 'file', path: join(relative(process.cwd(), dir), 'c.txt') }))).toEqual({ path: join(dir, 'c.txt'), content: 'x' });
+    expect(await sends(start({ path: relative(process.cwd(), dir) }))).toBeUndefined();
   });
 });

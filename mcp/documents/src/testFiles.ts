@@ -65,7 +65,7 @@ export const cell = (text: string): string => `<w:tc>${p(r(text))}</w:tc>`;
 export function docxOf(body: string, deflate = true): Uint8Array {
   return zipOf({
     'word/document.xml': `<w:document ${W}><w:body>${body}</w:body></w:document>`,
-    'word/styles.xml': `<w:styles ${W}><w:style w:type="paragraph" w:styleId="berschrift1"><w:name w:val="heading 1"/></w:style><w:style w:type="paragraph" w:styleId="Titel"><w:name w:val="Title"/></w:style></w:styles>`,
+    'word/styles.xml': `<w:styles ${W}><w:style w:type="paragraph" w:styleId="Bare"><w:basedOn w:val="x"/></w:style><w:style w:type="paragraph" w:styleId="berschrift1"><w:name w:val="heading 1"/></w:style><w:style w:type="paragraph" w:styleId="Titel"><w:name w:val="Title"/></w:style></w:styles>`,
     'word/numbering.xml': `<w:numbering ${W}><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/></w:lvl></w:abstractNum><w:abstractNum w:abstractNumId="1"><w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num><w:num w:numId="2"><w:abstractNumId w:val="1"/></w:num></w:numbering>`,
   }, deflate);
 }

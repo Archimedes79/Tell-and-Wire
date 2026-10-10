@@ -68,17 +68,13 @@ export interface GraphTrigger {
   every: string;
 }
 
-/**
- * The graph's start points that start by themselves. Read from the document
- * rather than asked of the elements: the command line knows its clock from the
- * file alone (`--every`), before anything runs.
- */
-export function graphTriggers(graph: Graph): GraphTrigger[] {
-  return graph.nodes.filter((node) => node.node_type === 'start' && node.config.started_by === 'itself').map((node) => ({
-    event: { node_id: node.id, port_id: START_PORT },
-    on_start: node.config.on_start !== false,
-    every: String(node.config.every ?? '').trim(),
-  }));
+/** The graph's start points that start by themselves, as their elements say (`NodeRunner.trigger`). */
+export function graphTriggers(graph: Graph, elements: Runners): GraphTrigger[] {
+  return graph.nodes.flatMap((node) => {
+    const element = elements.node(node.node_type);
+    const trigger = element?.trigger(node);
+    return trigger ? [{ event: { node_id: node.id, port_id: element!.eventPorts(node)[0] }, ...trigger }] : [];
+  });
 }
 
 /** Whether one of the graph's start points is started by one of *who*. */
@@ -102,7 +98,7 @@ export function pageStarts(graph: Graph, elements: Runners): boolean {
  * once, as a program runs when it is started (`null` is "everything").
  */
 export function startEvents(graph: Graph, elements: Runners): (Trigger | null)[] {
-  const triggers = graphTriggers(graph);
+  const triggers = graphTriggers(graph, elements);
   if (triggers.length) return triggers.filter((trigger) => trigger.on_start).map((trigger) => trigger.event);
   return startedBy(graph, elements, ['page', 'call']) ? [] : [null];
 }

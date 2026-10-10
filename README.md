@@ -39,7 +39,7 @@ can be kept as an offline test. **File → Deploy as zip** writes a zip that any
 start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
 The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
-(not `ai-settings.json`), writes only the temp folder, starts no program and holds no key.
+(not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.
 
 ## Download and start
@@ -117,8 +117,8 @@ asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
 servers. In *the node's settings → Tools the model may use*, **+ Add MCP server** offers the ones
 that come with Tell & Wire -- a web reader and a Word and PDF reader, each with the settings it
-needs -- and takes any other: an `https://…/mcp` address, or a name this machine's
-`ai-settings.json` defines:
+needs -- and takes any other: an `https://…/mcp` address, or a name that the machine's own settings file
+(`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`) defines:
 
 ```json
 { "mcp_servers": {
@@ -126,8 +126,9 @@ needs -- and takes any other: an `https://…/mcp` address, or a name this machi
     "internal":   { "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer …" } } } }
 ```
 
-A graph can name a server but never the command that starts one, so a graph someone hands
-you cannot start a program of its choosing. A server started by `command` does not
+A graph can name a server but never the command or the address of one, so a graph someone
+hands you cannot start a program of its choosing or post its data to a stranger's server. A
+Word file is read by the `documents` server, not by the nodes. A server started by `command` does not
 inherit variables named like keys, tokens, secrets or passwords from the environment: give
 it what it needs in its own `env`. A tool call gets two minutes
 (`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight turns of calls per answer.

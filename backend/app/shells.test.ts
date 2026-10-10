@@ -16,7 +16,6 @@ import { describe, expect, it } from 'vitest';
 
 /** The repository: the shells are graph/ and backend/, the elements graph/nodes/ and backend/gui-editor/widgets/. */
 const ROOT = new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-const ALLOWED = new Set(['graph/execution/triggers.ts']);
 const ELEMENTS = ['graph/nodes/', 'backend/gui-editor/widgets/'];
 const TYPE_SWITCH = /\b(node_type|nodeType)\s*[!=]==?\s*['"]/;
 
@@ -30,7 +29,7 @@ function sources(dir: string): string[] {
 
 const SHELLS = [...sources(join(ROOT, 'graph')), ...sources(join(ROOT, 'backend'))]
   .map((path) => ({ path, name: relative(ROOT, path).split(sep).join('/') }))
-  .filter(({ name }) => /\.ts$/.test(name) && !/\.test\.ts$/.test(name) && !ELEMENTS.some((element) => name.startsWith(element)) && !ALLOWED.has(name));
+  .filter(({ name }) => /\.ts$/.test(name) && !/\.test\.ts$/.test(name) && !ELEMENTS.some((element) => name.startsWith(element)));
 
 describe('the shells around the elements', () => {
   it('are found, so the rule below is checked against something', () => {

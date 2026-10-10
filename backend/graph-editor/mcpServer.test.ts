@@ -68,7 +68,8 @@ let ranBody = '';
 const fakeRuntime = (): Runtime => ({
   files: {
     resolve: (path) => path,
-    exists: async () => false,
+    inProject: (path) => path,
+    size: async () => 0,
     read: async () => { throw new Error('no files in this test'); },
     write: async () => { throw new Error('no files in this test'); },
     list: async () => [],
@@ -393,7 +394,6 @@ describe('node main.ts --mcp', () => {
     const env = { TW_SETTINGS: join(tmpdir(), 'tell-and-wire-mcp-no-such-settings.json') };
     const service = mcpToolService(
       { 'tell-and-wire': { command: process.execPath, args: [MAIN, '--mcp', '--mcp-root', root], env } },
-      { handshakeTimeoutMs: 30_000, callTimeoutMs: 30_000 },
     );
     const session = await service.open(['tell-and-wire']);
     try {

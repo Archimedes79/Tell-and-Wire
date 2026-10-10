@@ -482,7 +482,7 @@ export async function main(argv: string[]): Promise<number> {
   if (!options.every) {
     // Its shortest interval: on the command line a round is the whole graph,
     // every start point counted as started, so one clock is all there is to keep.
-    const intervals = graphTriggers(graph).filter((trigger) => trigger.every).map((trigger) => parseInterval(trigger.every));
+    const intervals = graphTriggers(graph, registry).filter((trigger) => trigger.every).map((trigger) => parseInterval(trigger.every));
     if (intervals.length) options.every = Math.min(...intervals);
   }
   // An event by name, sent the values once, however many rounds follow: its

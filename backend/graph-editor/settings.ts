@@ -61,8 +61,7 @@ export function status(cwd = process.cwd(), env: Env = process.env): SettingsSta
  * servers, a key nobody reads any more. A file that cannot be read is not
  * written over: it holds keys and tool servers a save would lose.
  */
-export async function edit(change: (file: SettingsFile) => void, cwd = process.cwd(), env: Env = process.env): Promise<void> {
-  const path = settingsPath(cwd, env);
+export async function edit(change: (file: SettingsFile) => void, cwd = process.cwd(), env: Env = process.env, path = settingsPath(cwd, env)): Promise<void> {
   let file: SettingsFile;
   try {
     file = parseSettingsFile(path);

@@ -6,6 +6,7 @@ import { names, type Problem } from '../../execution/wiring.ts';
 import type { Offer, StartedBy } from '../NodeRunner.ts';
 import { RUN_PORT, START_PORT, parseInterval } from '../../execution/triggers.ts';
 import { readChosen } from '../folderListing.ts';
+import { ownPathProblem } from '../ownPath.ts';
 
 export interface StartConfig {
   /**
@@ -134,6 +135,11 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
     return [START_PORT];
   }
 
+  override trigger(node: GraphNode) {
+    const { startedBy, onStart, every } = this.config(node);
+    return startedBy === 'itself' ? { on_start: onStart, every } : null;
+  }
+
   override startedBy(node: GraphNode): StartedBy {
     return this.config(node).startedBy;
   }
@@ -182,7 +188,8 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
     // What is there to read is read now, each time: a folder is what is in it
     // this round, and one listed from before missed the file added since.
     const sends = reads
-      ? { [node.id]: await readChosen({ path, directory: reads === 'folder', recursive, extensions, content: true }, runtime) }
+      // The path is written in the graph, which may be a stranger's: below the tool's folder only.
+      ? { [node.id]: await readChosen({ path: path && runtime.files.inProject(path), directory: reads === 'folder', recursive, extensions, content: true }, runtime) }
       : values;
     const sent: Package = { event: began ? { name: node.id, by } : null, values: sends };
     return { [START_PORT]: sent };
@@ -224,6 +231,8 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
     if (reads && !path) {
       found.push({ where, problem: `This start point is set to read ${reads === 'folder' ? 'a folder' : 'a file'}, and no path says which.`, fix: 'Choose it in the start point, or set it to send nothing.' });
     }
+    const outside = reads && path ? ownPathProblem(path) : null;
+    if (outside) found.push({ where, problem: outside, fix: "Put what it reads in the tool's folder and write the path relative to it." });
     if (every) {
       try {
         parseInterval(every);

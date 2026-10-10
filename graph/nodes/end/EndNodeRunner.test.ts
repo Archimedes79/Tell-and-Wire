@@ -23,7 +23,7 @@ function withFiles(initial: [string, string][] = []) {
   const runtime: Runtime = quietRuntime({
     files: {
       resolve: (path) => path,
-      exists: async (path) => files.has(path),
+      inProject: (path) => path,
       read: async (path) => files.get(path) ?? '',
       write: async (path, content) => { files.set(path, content); },
       list: async (folder) => [...files.keys()].filter((path) => path.startsWith(`${folder}/`)).sort(),
@@ -74,5 +74,13 @@ describe('an end point', () => {
     await element.execute(node, { value: ['new 1', null, 'new 3'] }, runtime);
     expect([...files.keys()].filter((path) => path.startsWith('/tmp/out/')).sort())
       .toEqual(['/tmp/out/notes.md', '/tmp/out/value_1.txt', '/tmp/out/value_3.txt', '/tmp/out/value_x.txt']);
+
+    // A port called "../../x" stays in the folder; and a path written in the graph that is absolute or climbs out is a problem for check.
+    const strange = withFiles();
+    const stays = await element.execute(outputNode({ write_mode: 'directory', path: 'out' }), { '../../x': 'a' }, strange.runtime);
+    expect(stays.written_paths).toEqual(['out/____x.txt']);
+    for (const path of ['/etc/cron.d/x', '..\\x']) {
+      expect(element.problems(outputNode({ write_mode: 'file', path }), {} as never, 'end')).toHaveLength(1);
+    }
   });
 });

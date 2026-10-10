@@ -37,7 +37,7 @@ import type { Generation, Language } from '../../graph/authoring/generation.ts';
 import { STANDARD_PROMPTS, fillPrompt, type PromptKind } from '../../graph/authoring/prompts.ts';
 import { definitionExample, definitionKeys, misfits, typedefKeys, unreadableOutput, type Definitions } from '../../graph/authoring/definition.ts';
 import { filePorts } from '../../graph/execution/fileInputs.ts';
-import { fileContent, isInlineFile } from '../../graph/nodes/documents.ts';
+import { fileContent, isInlineFile } from '../../graph/nodes/fileContent.ts';
 import { runsPerItem } from '../../graph/execution/batching.ts';
 import { ERROR_PORT, names } from '../../graph/execution/wiring.ts';
 import type { GraphNode } from '../../graph/graph.ts';
@@ -150,7 +150,7 @@ const notProbed = (): ProbeReport => ({ status: 'skipped', error: '', problems: 
 
 /** A probe with no way to read files: what it asks a model cannot name one. */
 const refuse = async (): Promise<never> => { throw new Error('No files here: this body is being tried on its example.'); };
-const NO_FILES: FileService = { resolve: (path) => path, exists: async () => false, read: refuse, write: refuse, list: refuse };
+const NO_FILES: FileService = { resolve: (path) => path, inProject: (path) => path, size: refuse, read: refuse, write: refuse, list: refuse };
 
 async function probe(
   runtime: Runtime, target: Target, language: Language, body: string, sample: Record<string, unknown>,
@@ -347,7 +347,7 @@ const WRITES = ['input', 'output', 'body'] as const;
 
 /**
  * Each file's text, the start of it, read here where the request did not bring
- * it, as a run reads it (`documents.ts`); one that cannot be read, said so. A
+ * it, as a run reads it (`fileContent.ts`); one that cannot be read, said so. A
  * picture or a PDF is handed on as itself, so what is written from it is told
  * the shape a run hands over -- a `data:` URL -- and not its bytes.
  */

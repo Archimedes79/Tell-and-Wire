@@ -249,7 +249,7 @@ export function processCore(
  * the quotes taken off -- `"C:/Program Files/core.exe" --name="a b"` is the
  * program and `--name=a b`.
  */
-export function commandParts(command: string): string[] {
+function commandParts(command: string): string[] {
   const parts: string[] = [];
   let part = '';
   let quote = '';

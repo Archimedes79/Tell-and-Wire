@@ -26,7 +26,7 @@ export interface AssembledPrompt {
  * model read around syntax to find the text. Three summaries wired into a node
  * arrive as three paragraphs.
  */
-export function promptText(value: unknown): string {
+function promptText(value: unknown): string {
   if (value === null || value === undefined) return '';
   const items = Array.isArray(value) ? value : [value];
   return items

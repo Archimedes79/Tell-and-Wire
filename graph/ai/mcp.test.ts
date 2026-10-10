@@ -23,12 +23,13 @@ afterEach(async () => {
 
 describe('the security boundary', () => {
   it('opens only the names this machine has configured, never a command line from a graph, and starts nothing when one name is unknown', async () => {
-    const tools = mcpToolService({ files: echo('--mute') }, { handshakeTimeoutMs: 60_000 });
+    const tools = mcpToolService({ files: echo('--mute') });
     await expect(tools.open(['shell'])).rejects.toThrow(
-      /graph asks for tool server "shell", which this machine has not configured.*mcp_servers.*ai-settings\.json/s,
+      /graph asks for tool server "shell", which this machine has not configured.*mcp\/shell\/.*settings file/s,
     );
     // Every one of these is a *name*, looked up and not found. None is run.
-    for (const attempt of [`${process.execPath} ${FIXTURE}`, 'npx -y some-server', 'cmd /c calc', '__proto__', 'constructor']) {
+    // A URL is a name like any other: only a configured server is ever called.
+    for (const attempt of [`${process.execPath} ${FIXTURE}`, 'npx -y some-server', 'cmd /c calc', '__proto__', 'constructor', 'http://127.0.0.1:1/mcp']) {
       await expect(tools.open([attempt])).rejects.toThrow(/has not configured/);
     }
     // Resolved before anything is spawned: this server would hang the wait.
@@ -64,19 +65,22 @@ describe('a stdio server', () => {
   });
 
   it('gives up on a tool that never answers, and lets Stop do it sooner', async () => {
-    const wedged = track(await mcpToolService({ echo: echo() }, { callTimeoutMs: 300 }).open(['echo']));
+    process.env.TW_MCP_TIMEOUT_MS = '300';
+    const wedged = track(await mcpToolService({ echo: echo() }).open(['echo']));
     await expect(wedged.call('hang', {})).rejects.toThrow(/did not answer tools\/call within 0\.3 s/);
 
     // With no clock at all -- TW_MCP_TIMEOUT_MS=0 -- the run's own Stop
     // is what ends the call, or a stopped run would sit here forever.
-    const patient = track(await mcpToolService({ echo: echo() }, { callTimeoutMs: 0 }).open(['echo']));
+    process.env.TW_MCP_TIMEOUT_MS = '0';
+    const patient = track(await mcpToolService({ echo: echo() }).open(['echo']));
     const stop = new AbortController();
     setTimeout(() => stop.abort(), 100);
     await expect(patient.call('hang', {}, stop.signal)).rejects.toThrow(/Stopped\./);
+    delete process.env.TW_MCP_TIMEOUT_MS;
   });
 
   it("is stopped by the run's Stop while an AI node waits for it to say hello", async () => {
-    const tools = mcpToolService({ mute: echo('--mute') }, { handshakeTimeoutMs: 20_000 });
+    const tools = mcpToolService({ mute: echo('--mute') });
     const ask = {
       id: 'ask', node_type: 'ai' as const, label: 'ask', description: '', position: { x: 0, y: 0 }, inputs: [],
       outputs: [{ id: 'output', name: 'output', kind: 'output' as const, data_type: 'text' as const, multi: false, required: false, description: '' }],
@@ -160,11 +164,12 @@ describe('an HTTP server', () => {
     server = undefined;
   });
 
-  it('is opened by URL, read as JSON or as a stream, told its session id back, and given configured headers only by name', async () => {
+  it('is a configured URL, read as JSON or as a stream, told its session id back, and given its configured headers', async () => {
     const http = await httpServer();
     server = http.server;
+    const tools = mcpToolService({ remote: { url: http.url, headers: { Authorization: 'Bearer secret' } } });
 
-    const session = await mcpToolService({}).open([http.url]);
+    const session = await tools.open(['remote']);
     expect(session.specs.map((spec) => spec.name)).toEqual(['add']);
     expect(await session.call('add', { a: 20, b: 22 })).toBe('42');
     await session.close();
@@ -179,11 +184,6 @@ describe('an HTTP server', () => {
       expect(request.session).toBe('session-1');
       expect(request.version).toBe('2025-03-26');
     }
-    // A URL a graph names carries no header; a configured one carries its own.
-    expect(http.seen.every((request) => request.auth === undefined)).toBe(true);
-    http.seen.length = 0;
-    const tools = mcpToolService({ remote: { url: http.url, headers: { Authorization: 'Bearer secret' } } });
-    await (await tools.open(['remote'])).close();
     expect(http.seen.every((request) => request.auth === 'Bearer secret')).toBe(true);
   });
 });

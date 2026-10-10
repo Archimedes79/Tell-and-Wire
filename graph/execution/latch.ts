@@ -31,6 +31,7 @@
 import { createHash } from 'node:crypto';
 import type { Graph, GraphNode } from '../graph.ts';
 import { upstreamOf } from './triggers.ts';
+import { Lru } from './lru.ts';
 
 /** How many nodes' outputs are held. A long editor session opens many graphs. */
 const LIMIT = 512;
@@ -52,7 +53,7 @@ export interface Held {
 }
 
 export class Latch {
-  private readonly kept = new Map<string, { node: string; outputs: Record<string, unknown> }>();
+  private readonly kept = new Lru<{ node: string; outputs: Record<string, unknown> }>(LIMIT);
   /** Which node each key was last asked for, so what is kept can be told by node (`heldBy`). */
   private readonly owners = new Map<string, string>();
 
@@ -71,16 +72,12 @@ export class Latch {
   }
 
   get(key: string): Record<string, unknown> | undefined {
-    const found = this.kept.get(key);
     // Read is used: a node that only ever stands still must not be the first to go.
-    if (found) { this.kept.delete(key); this.kept.set(key, found); }
-    return found?.outputs;
+    return this.kept.get(key)?.outputs;
   }
 
   set(key: string, outputs: Record<string, unknown>): void {
-    this.kept.delete(key);
     this.kept.set(key, { node: this.owners.get(key) ?? '', outputs });
-    if (this.kept.size > LIMIT) this.kept.delete(this.kept.keys().next().value!);
   }
 
   /**

@@ -7,7 +7,7 @@
 // made from a body is not a second, thinner way to ask.
 
 import type { Runtime } from '../Runtime.ts';
-import { fileContent, inlineMediaType, isInlineFile } from '../documents.ts';
+import { fileContent, inlineMediaType, isInlineFile } from '../fileContent.ts';
 import { assemblePrompt } from './prompt.ts';
 
 /** How often one run of a body may ask for the model. A loop that forgot to end must not spend a budget. */
@@ -80,7 +80,7 @@ export async function askModel(
     const value = inputs[name];
     if (value === null || value === undefined) continue;
     // A picture or a PDF goes as the file it is: one a file port read
-    // (`documents.ts`) always, and one named by its path when the node sends
+    // (`fileContent.ts`) always, and one named by its path when the node sends
     // files (`send_images`), read here -- the provider's machine is not this
     // one, so a filename would arrive as a filename and the model would
     // dutifully talk about the filename. A list is expanded, so a folder
