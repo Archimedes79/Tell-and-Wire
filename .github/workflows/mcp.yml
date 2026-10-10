@@ -1,7 +1,8 @@
 name: MCP tool servers
 
 # Each server under mcp/ is a package of its own, with its own lockfile: this runs
-# only when one changes, and the main CI (ci.yml) neither installs nor tests them.
+# only when one changes. The main CI (ci.yml) does not test them; it checks that the
+# download carries them with their packages and that one starts from the unzipped folder.
 on:
   push:
     paths: ['mcp/**', '.github/workflows/mcp.yml']

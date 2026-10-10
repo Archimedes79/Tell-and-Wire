@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "An MCP server that lets an AI node read Word and PDF files in folders you choose, as Markdown. Its own dependencies: not part of the editor, the download or a bundle.",
+  "description": "An MCP server that lets an AI node read Word and PDF files in folders you choose, as Markdown. Its own folder and packages: the download carries it, a deployed tool does not.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24"
