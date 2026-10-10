@@ -1,6 +1,6 @@
 // Asking ✨ to design a graph, or to change the one open: the one request the
-// File menu's "Describe a graph" and the bar under the canvas both make, with
-// the same steps -- asked, back, or failed -- and one place that holds them.
+// bar under the canvas makes, with its steps -- asked, back, or failed -- and
+// one place that holds them.
 
 import { useCallback, useRef, useState } from 'react';
 import type { Graph } from './graph';
@@ -24,8 +24,8 @@ export function useGraphAsk() {
   const [ask, setAsk] = useState<GraphAsk>({ phase: 'idle' });
   const asked = useRef(lastAsked());
 
-  /** Ask; how it came out -- 'ready' or 'failed' -- or null when it was no longer wanted by then. */
-  const send = async (said: string, description: string, graph?: Graph): Promise<'ready' | 'failed' | null> => {
+  /** Ask; how it came out -- the graph that came back, or 'failed' -- or null when it was no longer wanted by then. */
+  const send = async (said: string, description: string, graph?: Graph): Promise<Graph | 'failed' | null> => {
     const wanted = asked.current.ask();
     setAsk({ phase: 'asking', said, calls: [] });
     try {
@@ -35,7 +35,7 @@ export function useGraphAsk() {
       );
       if (!wanted()) return null;
       setAsk({ phase: 'ready', said, graph: result.graph, explanation: result.explanation, sent: JSON.stringify(graph ?? null) });
-      return 'ready';
+      return result.graph;
     } catch (error) {
       if (!wanted()) return null;
       // The whole failing exchange, replies included, as a node's ✨ keeps it: the failing case is the one where what was asked matters.

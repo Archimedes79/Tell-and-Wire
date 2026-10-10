@@ -174,10 +174,9 @@ export interface GraphStore {
   setExecutionResult: (result: ExecutionResult | null) => void;
   /**
    * Open *graph* as the document, stopping the run of the one it replaces.
-   * *unsaved*: it is at no file and counts as unsaved (a graph ✨ designed).
    * Says the wires it had to leave out, to nodes that are not there.
    */
-  loadGraph: (graph: Graph, options?: { unsaved?: boolean }) => { dropped: string[] };
+  loadGraph: (graph: Graph) => { dropped: string[] };
   /**
    * An empty graph with the format's default settings, as a document of its
    * own: nothing of the one before it -- its pinned AI, its colour scheme,
@@ -592,7 +591,7 @@ export const useGraphStore = create<GraphStore>()(
         state.executionResult = shown;
       }),
 
-    loadGraph: (graph, { unsaved = false } = {}) => {
+    loadGraph: (graph) => {
       const normalizedGraph = normalizeGraph(graph);
       const { rfNodes, rfEdges } = buildReactFlowGraph(normalizedGraph);
       // What it was given and cannot hold, said by whoever loads it: a wire to a node that is not there.
@@ -609,7 +608,7 @@ export const useGraphStore = create<GraphStore>()(
         state.page = (normalizedGraph.page?.blocks ?? []) as never;
         state.executionResult = null;
         // Whoever loaded a graph without going through the file-path flow
-        // (Paste JSON, ✨ Describe a graph, etc.) doesn't know its file path; the caller
+        // (Paste JSON, etc.) doesn't know its file path; the caller
         // sets `currentFilePath` explicitly right after loadGraph when it does.
         state.currentFilePath = null;
         state.isProject = false;
@@ -627,10 +626,8 @@ export const useGraphStore = create<GraphStore>()(
       forgetSession();
       // Snapshot through exportGraph() rather than from normalizedGraph: it is
       // the same serialisation isDirty() compares against, so a freshly loaded
-      // graph is guaranteed to read as clean. One that is at no file -- ✨ made
-      // it -- is not: it is unsaved until it is written somewhere.
-      if (unsaved) set((state) => { state.savedSnapshot = null; });
-      else get().markSaved();
+      // graph is guaranteed to read as clean.
+      get().markSaved();
       return { dropped };
     },
 

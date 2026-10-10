@@ -138,15 +138,16 @@ New code is tried on the example in `input.js` and repaired once if it fails. Un
 **▶ Try** runs the node once on that example and holds the result to `output.js`; **✨ Fix**
 repairs the body where it failed. An AI node's **▶ Try** asks the model on the example.
 
-- **The bar under the canvas** (*Say what to change in the graph*) changes the whole graph, and
-  shows what it adds, removes and changes before you **Apply** it. A change to one node is said
-  in that node's Chat.
+- **The bar under the canvas** is the one place to say it in words. On an empty tool it reads
+  *Say what the tool should do* and **Build** makes the whole tool -- graph and page, the page's
+  file or choice already starting the run -- at once; **Undo** takes it back. After that it reads
+  *Say what to change in the graph*, and shows what a change adds, removes and changes before you
+  **Apply** it. A change to one node is said in that node's Chat.
 - **Generate all** in the toolbar writes every empty node, in the order the graph runs. It pulls
   what it can -- `input.js` off the nodes before, `output.js` off the data node an output goes
   into -- and asks the model for the rest.
-  **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
-A start point, a folder, an end point and a subgraph have no files: they open on their
+A start point, an end point and a subgraph have no files: they open on their
 settings. **Edit the page** on a node a block uses goes to the Page tab.
 
 Two things save the most time. Wire a node to what feeds it before **Pull input**, so the

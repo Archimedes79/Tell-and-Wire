@@ -132,6 +132,15 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   canvasSummary?(node: GraphNode): string | undefined;
 
   /**
+   * An input the card leaves undrawn while nothing is wired to it: a socket
+   * that only means something under a setting -- an end point's "path", where
+   * it writes nothing -- is noise on every card that does not use it.
+   */
+  quietInput(_node: GraphNode, _port: string): boolean {
+    return false;
+  }
+
+  /**
    * The node is a source whose data nothing describes yet -- no file or
    * folder to read -- so a generation sweep would be written against a guess.
    * `fed`: something upstream feeds it.

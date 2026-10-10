@@ -61,6 +61,11 @@ export class EndNodeGuiBuilder extends NodeGuiBuilder {
     return [super.wantsOn(node, port), node.description?.trim(), destination(node)].filter(Boolean).join('; ');
   }
 
+  /** Its "path" is a socket for where it writes: undrawn while it writes nowhere and none is wired. */
+  override quietInput(node: GraphNode, port: string): boolean {
+    return port === 'path' && node.config.write_mode !== 'file' && node.config.write_mode !== 'directory';
+  }
+
   /** The file or folder it writes the result to besides, under its ports -- only while it writes one. */
   override canvasSummary(node: GraphNode): string | undefined {
     const path = String(node.config.path ?? '').trim();

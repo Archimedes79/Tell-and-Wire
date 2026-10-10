@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
+import type { Graph } from './graph';
 import { useGraphStore } from './store/graphStore';
 import Button from './ui/Button';
 import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
@@ -11,8 +12,7 @@ import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } fro
 
 /**
  * The bar under the canvas, always there: say what to change in the graph.
- * ✨ Describe a graph is sent the graph and the words, and what comes back is
- * shown, with what it adds, removes and changes and what `check` finds in it,
+ * ✨ The graph and the words are sent, and what comes back is shown, with what it adds, removes and changes and what `check` finds in it,
  * before it is applied as one undo step. A change to one node's files is said
  * in that node's chats, with the node open.
  */
@@ -39,14 +39,28 @@ export default function ChangeBar() {
   }, [opened, reset]);
 
   const asking = change.phase === 'asking';
+  // Nothing built yet: the bar says what the tool should do, rather than what to change.
+  const empty = useGraphStore((s) => s.rfNodes.length === 0);
+
+  /** Make *graph* the document as one undo step, and keep the step: while it is the last, Undo is the change. */
+  const applyGraph = (graph: Graph) => {
+    useGraphStore.getState().changeGraph(graph);
+    const { past } = useGraphStore.getState();
+    setApplied(past[past.length - 1]);
+    reset();
+  };
 
   const submit = async () => {
     const words = text.trim();
     if (!words || asking) return;
     setText('');
     setApplied(null);
+    const asked = useGraphStore.getState().exportGraph();
+    const answer = await send(words, words, asked);
     // The words go back where they were, to be sent again or said otherwise.
-    if (await send(words, words, useGraphStore.getState().exportGraph()) === 'failed') setText(words);
+    if (answer === 'failed') setText(words);
+    // A tool still to be built is built as said, at once: there is nothing to lose, and Undo is a click away.
+    else if (answer && asked.nodes.length === 0) applyGraph(answer);
   };
 
   const stop = () => {
@@ -56,11 +70,7 @@ export default function ChangeBar() {
   };
 
   const apply = () => {
-    if (change.phase !== 'ready') return;
-    useGraphStore.getState().changeGraph(change.graph);
-    const { past } = useGraphStore.getState();
-    setApplied(past[past.length - 1]);
-    reset();
+    if (change.phase === 'ready') applyGraph(change.graph);
   };
 
   const discard = () => {
@@ -73,7 +83,7 @@ export default function ChangeBar() {
       {change.phase === 'asking' && (
         <Note>
           <div className="flex items-center gap-3">
-            <span className="flex-1 min-w-0 truncate" style={{ color: TEXT }} title={change.said}>✨ Changing the graph as said: {change.said}</span>
+            <span className="flex-1 min-w-0 truncate" style={{ color: TEXT }} title={change.said}>✨ {empty ? 'Building the tool' : 'Changing the graph'} as said: {change.said}</span>
             <Button size="sm" className="shrink-0" onClick={stop} title="The server may go on with it; what comes back is dropped">Stop waiting</Button>
           </div>
           <details className="mt-2">
@@ -122,8 +132,9 @@ export default function ChangeBar() {
               void submit();
             }}
             disabled={asking}
-            placeholder="Say what to change in the graph…"
-            aria-label="Say what to change"
+            autoFocus={empty}
+            placeholder={empty ? 'Say what the tool should do…' : 'Say what to change in the graph…'}
+            aria-label={empty ? 'Say what the tool should do' : 'Say what to change'}
             className="flex-1 min-w-0 bg-transparent text-sm outline-none"
             style={{ color: TEXT }}
           />
@@ -133,9 +144,9 @@ export default function ChangeBar() {
           onClick={() => { void submit(); }}
           disabled={asking || !text.trim()}
           className="h-10 shrink-0"
-          title="Change the graph as said, with ✨: you see what it changes before it is applied"
+          title={empty ? 'Build the tool as said, with ✨' : 'Change the graph as said, with ✨: you see what it changes before it is applied'}
         >
-          Change
+          {empty ? 'Build' : 'Change'}
         </Button>
         <ProblemsChip />
       </div>

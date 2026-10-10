@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useRef, DragEvent } from 'react';
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   applyNodeChanges,
   applyEdgeChanges,
   Connection,
@@ -26,8 +25,7 @@ import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
 import type { NodeType } from '../../app/graph';
-import { LINE, MUTED, PANEL, SUNKEN, SURFACE } from '../../app/ui/theme';
-import { scheme } from '../../app/ui/scheme';
+import { LINE, MUTED, PANEL, SUNKEN } from '../../app/ui/theme';
 
 const nodeTypes = { graphNode: GraphNodeView };
 
@@ -130,9 +128,6 @@ export default function GraphCanvas({ active }: { active: boolean }) {
     const { dx, dy } = panToShow(onScreen(node), view);
     if (dx || dy) rfInstance.setViewport({ x: x + dx, y: y + dy, zoom }, { duration: 250 });
   }, [rfNodes, rfInstance, active, documentOpen, minZoom]);
-  // The map of the whole graph, only where the canvas has room for it beside
-  // what it maps: in a narrow window it covered a third of it.
-  const roomy = useStore((s) => s.width >= 640);
 
   // The wire itself is the store's to make (`connect`): a canvas is one way
   // to ask for one, and a test is another.
@@ -282,17 +277,10 @@ export default function GraphCanvas({ active }: { active: boolean }) {
           size={1.2}
           color={LINE}
         />
-        <Controls
-          style={PANEL}
-        />
-        {roomy && (
-          <MiniMap
-            style={PANEL}
-            // The minimap paints SVG `fill` attributes, where a CSS variable does
-            // not resolve, so it takes the editor's own (Night) tints as values.
-            nodeColor={(node) => scheme(undefined).nodes[node.data?.graphNode?.node_type as NodeType] ?? SURFACE}
-          />
-        )}
+        {/* Zoom and fit, and nothing else: a tool is a handful of nodes, not a map
+            to find one's way in, and a lock that freezes the canvas is a way to
+            think it broke. */}
+        <Controls style={PANEL} showInteractive={false} />
       </ReactFlow>
       {next && (
         <QuickPick

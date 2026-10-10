@@ -17,13 +17,12 @@ interface FileAction {
 }
 
 /** What the File menu offers, in its order. The handlers are the header's; *busyWith* is why a graph cannot be replaced now. */
-export function fileActions({ busyWith, isProject, deploying, onNew, onDesign, onOpen, onSave, onSaveAs, onReload, onJson, onDeploy }: {
+export function fileActions({ busyWith, isProject, deploying, onNew, onOpen, onSave, onSaveAs, onReload, onJson, onDeploy }: {
   busyWith: string | null;
   isProject: boolean;
   /** A zip is being made: one at a time. */
   deploying: boolean;
   onNew: () => void;
-  onDesign: () => void;
   onOpen: () => void;
   onSave: () => void;
   onSaveAs: () => void;
@@ -35,8 +34,6 @@ export function fileActions({ busyWith, isProject, deploying, onNew, onDesign, o
   // graph they started on, and is dropped once another is open.
   return [
     { label: 'New', hint: 'An empty tool', blocked: busyWith, onSelect: onNew },
-    // Designing a new graph lives beside New: changing this one is the bar under the canvas.
-    { label: '✨ Describe a graph…', hint: 'Say what it should do; the AI builds it', onSelect: onDesign },
     { label: 'Open…', hint: 'A tool folder or a graph file', blocked: busyWith, onSelect: onOpen },
     { label: 'Save', shortcut: 'Ctrl+S', divided: true, onSelect: onSave },
     { label: 'Save as…', onSelect: onSaveAs },

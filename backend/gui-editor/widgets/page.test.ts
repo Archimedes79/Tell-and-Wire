@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseGraph, type Graph } from '../../../graph/graph.ts';
-import { pageBlock, pageSends } from './page.ts';
+import { completePage, pageBlock, pageSends } from './page.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
 import { quietRuntime } from '../../../graph/test/fakes.ts';
 
 /**
@@ -43,5 +44,26 @@ describe('the page, connected by name', () => {
     expect(await pageSends(graph, 'api', runtime)).toEqual({});
     const broken = quietRuntime({ files: { read: async () => { throw new Error('no such file'); } } });
     await expect(pageSends(graph, 'summarize', broken)).rejects.toThrow('"File" could not say what it holds: no such file');
+  });
+
+  it('completes a page a model wrote: what sends to a start point nothing fires fires it, and what is fired already is left as it is', () => {
+    const written = (blocks: object[]) => parseGraph({
+      metadata: { name: 'written' },
+      nodes: [{ id: 'go', node_type: 'start', config: { started_by: 'page' } }, { id: 'api', node_type: 'start', config: { started_by: 'call' } }],
+      page: { blocks },
+    });
+    const fires = (graph: Graph) => graph.page!.blocks.map((block) => block.fires ?? null);
+    // A picker and a title: the picker fires, the title sends nothing and cannot.
+    const model = written([{ id: 'title', kind: 'text', value: 'Chart' }, { id: 'file', kind: 'input_picker', sends_to: ['go'] }]);
+    completePage(model, registry);
+    expect(fires(model)).toEqual([null, 'go']);
+    // Somebody fires it already -- a button, by the model's own choice -- and nothing more does.
+    const chosen = written([{ id: 'file', kind: 'input_picker', sends_to: ['go'] }, { id: 'run', kind: 'button', fires: 'go' }]);
+    completePage(chosen, registry);
+    expect(fires(chosen)).toEqual([null, 'go']);
+    // A call starts that start point, not the page: nothing to fire.
+    const called = written([{ id: 'file', kind: 'input_picker', sends_to: ['api'] }]);
+    completePage(called, registry);
+    expect(fires(called)).toEqual([null]);
   });
 });

@@ -17,7 +17,7 @@ import { chosenCore } from '../../graph/core/stdio.ts';
 import type { GraphCore } from '../../graph/core/protocol.ts';
 import { withoutAuthoring } from '../../graph/authoring/handedOn.ts';
 import { registry } from '../../graph/nodes/registry.ts';
-import { startFromPage } from '../gui-editor/widgets/page.ts';
+import { completePage, startFromPage } from '../gui-editor/widgets/page.ts';
 import { builtPage, filesIn, writeBundle } from '../app/cli/bundle.ts';
 import { zipMode } from '../app/cli/launchers.ts';
 import { nodeRuntime } from '../../graph/core/node.ts';
@@ -172,7 +172,9 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       const target = await aiSetting();
       const current = asked.graph ? parseGraph(asked.graph) : undefined;
       const { graph, explanation } = await gen.generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
-      return { graph: parseGraph(graph), explanation };
+      const designed = parseGraph(graph);
+      completePage(designed, registry);
+      return { graph: designed, explanation };
     }),
 
     async bundle(asked) {

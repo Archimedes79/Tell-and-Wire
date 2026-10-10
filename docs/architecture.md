@@ -242,7 +242,7 @@ For the editor only; a bundle leaves `backend/graph-editor/` behind.
 | `POST /api/execute/example` | ▶ Try: a node on the example its input.js holds |
 | `POST /api/graphs/rounds/keep` | Keep a round that ran through as a test of the project |
 | `POST /api/ai/generate`, `GET /api/ai/generate/progress` | ✨: write one of a node's files from the standard prompt and what was said to its chat (`ask`), or change the file there is as said (`refine.change`), and watch it being written |
-| `POST /api/ai/generate-graph` | ✨ Describe a graph: design a whole graph from a description, or change one |
+| `POST /api/ai/generate-graph` | ✨ the bar under the canvas: design a whole graph from a description, or change one; the page it comes with is completed (`completePage`) |
 | `GET /api/ai/settings`, `POST /api/ai/settings`, `GET /api/ai/providers` | The one AI setting and the providers to choose from |
 | `POST /api/deploy/bundle` | Write the tool as a bundle zip |
 | `POST /api/files/open-external` | Open a node's file in the person's own editor (loopback only) |
@@ -327,7 +327,7 @@ each registered in one list. The tests named below fail until both halves exist 
 2. `frontend/graph-editor/nodes/csv/CsvNodeGuiBuilder.ts` and its panel: add it to
    `NODE_BUILDERS` (`frontend/app/elements/registry.ts`); the compiler then asks for its
    entry in `NODE_KINDS` (`frontend/app/document/nodeKinds.ts`).
-3. If ✨ Describe a graph should offer it: a `graphAuthorNote` (`backend/graph-editor/graphPrompt.test.ts`).
+3. If ✨ the bar under the canvas should offer it: a `graphAuthorNote` (`backend/graph-editor/graphPrompt.test.ts`).
 
 Checked by `symmetry.test.ts`, both `times.test.ts` and both `shells.test.ts`.
 

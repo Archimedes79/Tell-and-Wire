@@ -254,6 +254,25 @@ function points(graph: Graph, registry: Runners): { starts: Map<string, string>;
   return { starts, ends, states };
 }
 
+/**
+ * A page a model wrote, completed as the designer completes one block by
+ * block (`pageWrite.ts`): a start point the page starts that nothing fires is
+ * fired by the blocks that send to it and can -- a picker's file chosen, a
+ * dropdown changed, Enter in a box. A model leaves that out more often than
+ * anything, and a tool that does nothing when its file is chosen is not the one
+ * that was asked for, whose person cannot tell why. Changes *graph* itself.
+ */
+export function completePage(graph: Graph, registry: Runners): void {
+  const { starts } = points(graph, registry);
+  for (const [name, startedBy] of starts) {
+    if (startedBy !== 'page' || pageWidgets(graph).some((block) => block.fires === name)) continue;
+    for (const stored of pageBlocks(graph)) {
+      const widget = parseWidget(stored);
+      if (widget.sends_to.includes(name) && widgetElement(widget.kind)?.event(widget)) stored.fires = name;
+    }
+  }
+}
+
 /** Whether a block of the page shows a memory node: what a person sees of the graph where it has no end point. */
 export function showsMemory(graph: Graph, registry: Runners): boolean {
   const { states } = points(graph, registry);

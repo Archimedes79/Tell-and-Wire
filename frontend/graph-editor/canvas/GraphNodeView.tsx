@@ -128,7 +128,10 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   // know, and the wire, still in the graph, was not drawn. Measured again when
   // the ports change.
   const updateNodeInternals = useUpdateNodeInternals();
-  const handles = `${graphNode.inputs.map((port) => port.id).join(',')}|${graphNode.outputs.map((port) => port.id).join(',')}`;
+  // The inputs drawn: one a setting makes useful only (`quietInput`) is left out while nothing is wired to it.
+  const wiredIn = useGraphStore((s) => s.rfEdges.filter((edge) => edge.target === id).map((edge) => edge.targetHandle).join(','));
+  const inputs = graphNode.inputs.filter((port) => !builder?.quietInput(graphNode, port.id) || wiredIn.split(',').includes(port.id));
+  const handles = `${inputs.map((port) => port.id).join(',')}|${graphNode.outputs.map((port) => port.id).join(',')}`;
   const measuredHandles = useRef(handles);
   useEffect(() => {
     if (measuredHandles.current === handles) return;
@@ -198,7 +201,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const takesWire = wireComing && takesNewInputs(graphNode);
 
   const failedDrop = statusTone('error');
-  const rows = Math.max(graphNode.inputs.length, graphNode.outputs.length);
+  const rows = Math.max(inputs.length, graphNode.outputs.length);
   const hasFoot = !!connected || summary !== undefined || shown.length > 0 || !!failure || takesWire || !!dropFailed;
 
   return (
@@ -271,7 +274,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         <div style={{ paddingBottom: 6 }}>
           {Array.from({ length: rows }, (_, index) => (
             <div key={index} className="flex items-center justify-between gap-3 px-3.5 text-xs" style={{ height: ROW, color: MUTED }}>
-              <span className="min-w-0 truncate">{graphNode.inputs[index] && portName(graphNode.inputs[index])}</span>
+              <span className="min-w-0 truncate">{inputs[index] && portName(inputs[index])}</span>
               <span className="min-w-0 truncate text-right">{graphNode.outputs[index] && portName(graphNode.outputs[index])}</span>
             </div>
           ))}
@@ -321,7 +324,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         </div>
       )}
 
-      {graphNode.inputs.map((port, index) => (
+      {inputs.map((port, index) => (
         <PortDot key={`in:${port.id}`} port={port} type="target" side="left" top={dotTop(index)} lit={lit} />
       ))}
       {graphNode.outputs.map((port, index) => (

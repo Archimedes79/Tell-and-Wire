@@ -16,7 +16,7 @@ import { replayKeptRounds, TESTS_DIR } from '../../app/project/keptRounds.ts';
 import type { Trigger } from '../../../graph/execution/triggers.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { NotOffered, interfaceOf, outputsOf, sendFromOutside } from '../../gui-editor/graphInterface.ts';
-import { startFromPage } from '../../gui-editor/widgets/page.ts';
+import { completePage, startFromPage } from '../../gui-editor/widgets/page.ts';
 import { message } from '../../app/http.ts';
 import { clip } from '../brief.ts';
 import { generateGraph } from '../generate.ts';
@@ -278,6 +278,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       }
 
       const graph = graphFrom(generated.graph, 'the generated document');
+      completePage(graph, registry);
       const report: Record<string, unknown> = { model: `${target.provider} / ${target.model}` };
       if (args.save_as !== undefined) {
         const { saved, problems } = await saveGraph(args.save_as, 'save_as', graph);

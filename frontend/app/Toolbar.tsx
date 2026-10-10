@@ -1,23 +1,18 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from './ui/ToolbarButton';
 import Button from './ui/Button';
 import { useGoingRound, useGraphStore } from './store/graphStore';
 import { downloadBundle } from './api/client';
 import { errorText } from './api/errorText';
-import type { Graph } from './graph';
 import { useRound } from '../gui-editor/page/useRound';
 import RequirementsDialog from './dialogs/RequirementsDialog';
 import { useGraphSweep } from '../graph-editor/authoring/useGraphSweep';
-import Modal from './ui/Modal';
-import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
-import { useGraphAsk } from './graphAsk';
 import SubgraphTrail from './SubgraphTrail';
-import GraphProblems from './GraphProblems';
 import ViewTabs, { type EditorView } from './ViewTabs';
 import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from './application';
 import FileMenu, { fileActions } from './FileMenu';
-import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT } from './ui/theme';
+import { ACCENT_TEXT, DANGER, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, SUCCESS, SURFACE } from './ui/theme';
 
 /**
  * How long a node may go without producing anything before the toolbar says so.
@@ -48,8 +43,6 @@ interface ToolbarProps {
   onLoad: () => void;
   onInjectJson: () => void;
   onOpenSettings: () => void;
-  /** Make the document the graph ✨ designed, after asking about unsaved work; whether it was. */
-  onLoadDesigned: (graph: Graph) => Promise<boolean>;
   /** What the header says of saving and opening -- while the document is clean -- and what went wrong, always. */
   saveStatus: string;
   problem: string;
@@ -61,12 +54,11 @@ interface ToolbarProps {
  * The header: the app's name, the tool's -- its views -- and on the
  * right what is done to the tool as a whole: ▶ Run first, then Generate all
  * and Settings (the gear). What is done now and then is in the File menu (New,
- * ✨ Describe a graph, Open, Save, Save as…, Reload, JSON, Deploy); Undo and Redo are icons.
- * Changing the graph as said is the bar under the canvas.
+ * Open, Save, Save as…, Reload, JSON, Deploy); Undo and Redo are icons.
+ * Building and changing the graph as said is the bar under the canvas.
  */
 export default function Toolbar({
-  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, onLoadDesigned,
-  saveStatus, problem, view, onViewChange,
+  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, saveStatus, problem, view, onViewChange,
 }: ToolbarProps) {
   const metadata = useGraphStore((s) => s.metadata);
   const currentFilePath = useGraphStore((s) => s.currentFilePath);
@@ -96,12 +88,6 @@ export default function Toolbar({
   // Asking what the graph needs, then running: the delivered page's own steps.
   // The document is handed over by ▶ Run just before (`startApplication`).
   const delivered = useRound();
-
-  const [showDescribe, setShowDescribe] = useState(false);
-  const [description, setDescription] = useState('');
-  const { ask, send, reset } = useGraphAsk();
-  const asking = ask.phase === 'asking';
-  const describeId = useId();
 
   /** Why another graph cannot be opened now, or null when it can. */
   const busyWith = graphBusy(sweep.busy);
@@ -163,24 +149,6 @@ export default function Toolbar({
       const { rootGraph, currentFilePath } = useGraphStore.getState();
       await downloadBundle({ graph: rootGraph(), path: currentFilePath });
     });
-
-  const handleOpenDescribe = () => {
-    setDescription('');
-    reset();
-    setShowDescribe(true);
-  };
-
-  const handleCloseDescribe = () => {
-    // What is still on its way is no longer wanted: nothing it brings is shown.
-    reset();
-    setShowDescribe(false);
-  };
-
-  const handleLoadDescribed = async () => {
-    // The user came here to explore an idea; loading the result must not
-    // silently destroy the graph they already had open.
-    if (ask.phase === 'ready' && await onLoadDesigned(ask.graph)) handleCloseDescribe();
-  };
 
   const statusColor = executionResult
     ? executionResult.status === 'success' ? SUCCESS : DANGER
@@ -291,7 +259,7 @@ export default function Toolbar({
           where={currentFilePath ?? 'Not saved to a file yet'}
           actions={fileActions({
             busyWith, isProject, deploying: !!deployBusy,
-            onNew: onNewGraph, onDesign: handleOpenDescribe, onOpen: onLoad, onSave, onSaveAs, onReload: onReloadProject, onJson: onInjectJson, onDeploy: handleDownloadBundle,
+            onNew: onNewGraph, onOpen: onLoad, onSave, onSaveAs, onReload: onReloadProject, onJson: onInjectJson, onDeploy: handleDownloadBundle,
           })}
         />
         <div className="flex shrink-0 items-center">
@@ -368,66 +336,6 @@ export default function Toolbar({
         onCancel={delivered.cancel}
       />
 
-      {/* Describe-a-graph dialog */}
-      {showDescribe && (
-        <Modal
-          title="✨ Describe a graph"
-          onClose={handleCloseDescribe}
-          maxWidth="max-w-2xl"
-          dismissOnBackdrop={!asking}
-          dismissOnEscape={!asking}
-          footer={
-            <>
-              <Button onClick={handleCloseDescribe}>Cancel</Button>
-              {ask.phase === 'ready' ? (
-                <Button variant="primary" onClick={() => { void handleLoadDescribed(); }}>Load graph</Button>
-              ) : (
-                <Button variant="primary" onClick={() => { void send(description, description); }} disabled={asking || !description.trim()}>
-                  {asking ? '⏳ Generating…' : 'Generate'}
-                </Button>
-              )}
-            </>
-          }
-        >
-          <div className="p-5 flex flex-col gap-3">
-            <label htmlFor={describeId} className="text-xs font-medium" style={{ color: MUTED }}>
-              Describe the graph you want
-            </label>
-            <textarea
-              id={describeId}
-              autoFocus
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg p-3 text-sm resize-y outline-none"
-              style={{ minHeight: 100, background: SUNKEN, border: `1px solid ${LINE}`, color: TEXT }}
-              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a page."
-              disabled={asking}
-            />
-            <p className="text-xs" style={{ color: DIM }}>
-              To change the graph that is open instead, say it in the bar under the canvas.
-            </p>
-
-            {(ask.phase === 'asking' || (ask.phase === 'failed' && ask.calls.length > 0)) && (
-              <div className="mt-3">
-                <LiveGeneration calls={ask.calls} minHeight={140} />
-              </div>
-            )}
-            {ask.phase === 'failed' && (
-              <div className="text-xs px-3 py-2 rounded" style={{ background: DANGER_FILL, color: DANGER_TEXT }}>
-                ❌ {ask.error}
-              </div>
-            )}
-
-            {ask.phase === 'ready' && (
-              <div className="text-xs px-3 py-2 rounded" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
-                {ask.explanation || 'Graph generated.'} ({ask.graph.nodes.length} node{ask.graph.nodes.length === 1 ? '' : 's'},{' '}
-                {ask.graph.edges.length} wire{ask.graph.edges.length === 1 ? '' : 's'})
-              </div>
-            )}
-            {ask.phase === 'ready' && <GraphProblems graph={ask.graph} />}
-          </div>
-        </Modal>
-      )}
     </>
   );
 }
