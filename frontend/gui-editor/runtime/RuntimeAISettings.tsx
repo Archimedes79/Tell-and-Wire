@@ -41,7 +41,7 @@ export default function RuntimeAISettings({ onClose }: { onClose: () => void }) 
         </p>
         {settings && (
           <p style={{ color: MUTED }} className="font-mono break-all">
-            {settings.settings_file} {settings.settings_file_exists ? '' : '(not there yet)'}
+            ai-settings.json {settings.settings_file_exists ? '' : '(not there yet)'}
           </p>
         )}
         {error && <p style={{ color: MUTED }}>{error}</p>}

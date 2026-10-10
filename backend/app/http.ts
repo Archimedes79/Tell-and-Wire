@@ -150,11 +150,14 @@ export async function readJson(request: IncomingMessage): Promise<Record<string,
   const type = (request.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
   if (type !== 'application/json') throw new Refusal(415, 'The body must be sent as application/json.');
   const raw = (await readBytes(request)).toString('utf8');
+  let body: unknown;
   try {
-    return raw ? JSON.parse(raw) : {};
+    body = raw ? JSON.parse(raw) : {};
   } catch {
     throw new Refusal(400, 'The body is not JSON.');
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Refusal(400, 'The body must be a JSON object.');
+  return body as Record<string, unknown>;
 }
 
 const LOOPBACK_NAMES = new Set(['127.0.0.1', 'localhost', '[::1]']);

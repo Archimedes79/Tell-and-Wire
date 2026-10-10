@@ -209,11 +209,10 @@ export interface BrowseEntry { name: string; path: string; is_dir: boolean; proj
  */
 export interface BrowsePage { path: string; parent: string | null; entries: BrowseEntry[]; roots: string[]; project?: boolean }
 
-/** Which model a deployed tool calls, and where that is configured. Read-only: see the route. */
+/** Which model a deployed tool calls, and whether `ai-settings.json` is there; where it is stays on the machine. Read-only: see the route. */
 export interface ToolAiSettings {
   provider: string;
   model: string;
-  settings_file: string;
   settings_file_exists: boolean;
 }
 

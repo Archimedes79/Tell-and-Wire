@@ -218,7 +218,7 @@ route answers JSON except the stream; a refusal is `{ "detail": "…" }`.
 | `POST /api/runtime/run` | Start a round and wait for what it hands back: a function call |
 | `POST /api/runtime/reset` | Forget what using the graph left behind |
 | `GET /api/runtime/page` | The page: its blocks as designed, and how they connect by name |
-| `GET /api/runtime/ai-settings` | Which model the tool asks, without its key |
+| `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
 
 With `by` (a block id) a round is one the page starts, refused unless that block fires the

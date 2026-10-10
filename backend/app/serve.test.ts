@@ -137,6 +137,8 @@ describe('a web page elsewhere in the same browser', () => {
     // text/plain is what a page may post anywhere without the browser asking first.
     expect(await status(url, '/api/runtime/requirements', { Host: host, 'Content-Type': 'text/plain' }, '{}')).toBe(415);
     expect(await status(url, '/api/runtime/requirements', { Host: host }, '{}')).toBe(415);
+    // A body that is no object is not the parameters of a route.
+    expect(await status(url, '/api/runtime/requirements', { ...json, Host: host }, '[1]')).toBe(400);
   });
 
   it('served beyond loopback (a container), answers as this machine on any port and as a name it was given, never as one a page chose', async () => {
