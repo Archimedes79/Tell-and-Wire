@@ -72,11 +72,13 @@ function sending(read: Read, taken: GuiWidget[]): GuiWidget | undefined {
  * How wide and how tall inputs and their button stand, so a first page needs no
  * resizing: inputs share a row, two to a row, a lone one has it to itself, and
  * the button sits beside the last input if there is room, else on its own row.
+ * A block that is the whole width by default -- a conversation -- stays so.
  */
 function arranged(blocks: GuiWidget[], button?: GuiWidget): GuiWidget[] {
   const inputs = blocks.filter((block) => block !== button);
   const items = [...inputs, ...(button ? [button] : [])];
-  const width = new Map<GuiWidget, number>(items.map((block) => [block, block === button ? 4 : 8]));
+  const whole = (block: GuiWidget) => (block.w ?? 0) >= GUI_GRID_COLUMNS;
+  const width = new Map<GuiWidget, number>(items.map((block) => [block, block === button ? 4 : whole(block) ? GUI_GRID_COLUMNS : 8]));
   // Rows of at most sixteen cells, filled in order.
   const rows: GuiWidget[][] = [];
   for (const block of items) {
@@ -95,7 +97,7 @@ function arranged(blocks: GuiWidget[], button?: GuiWidget): GuiWidget[] {
   return items.map((block) => ({
     ...block,
     w: width.get(block),
-    ...((block.h ?? 1) > 1 ? { h: inputs.length === 1 ? 3 : 2 } : {}),
+    ...((block.h ?? 1) > 1 && !whole(block) ? { h: inputs.length === 1 ? 3 : 2 } : {}),
   }));
 }
 

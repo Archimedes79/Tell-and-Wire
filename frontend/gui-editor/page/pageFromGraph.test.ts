@@ -63,4 +63,10 @@ describe('a page drawn from the graph', () => {
     const drawn = planned.now.flatMap((made) => made.blocks);
     expect(pageFromGraph(nodes, edges, drawn).now).toEqual([]);
   });
+
+  it('leaves a conversation the whole width and as tall as it is, not an input among the others', () => {
+    const talk = [start('talk', 'page'), code('answer', [port('message', { field: 'chat.message', data_type: 'text' })])];
+    const [{ blocks }] = pageFromGraph(talk, [wire('talk', 'answer', 'message')], []).now;
+    expect(blocks.map((block) => [block.kind, block.w, block.h])).toEqual([['chat', 16, 9]]);
+  });
 });

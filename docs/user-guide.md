@@ -59,7 +59,9 @@ starts nothing, and the next run picks up its value.
 
 A graph built first can draw its own page: **From the graph**, at the foot of the left
 column, adds a block for each start point and end point that has none -- an input for what
-a start point reads, a button that starts it, a text for what an end point hands back. A start
+a start point reads, a button that starts it, a text for what an end point hands back. They come
+laid out: inputs two to a row with the button beside the last, a rule, then the outputs in raised boxes,
+two to a row. A start
 point a call starts is put on the page only if you say so, one at a time: the page can only
 start one the page starts, and switched, it no longer serves the command line or a script.
 
@@ -211,7 +213,7 @@ block, or drag one from the left column onto the page. A selected block has a sm
 ¼ ½ ¾ Full for its width, and a 🗑 that deletes it (so does the Delete key); drag a block
 by its grip, beside it while the pointer is on it, to move it, and its corner to size it. A block is as tall as what is in it
 needs and at least its height in cells, so text is not cut. One that shows what a run hands back is a
-single line, "Waiting for output…", until a run does; selected, it has its whole height. *Look & size* holds the tone, frame and
+single line, "Waiting for output…", until a run does; selected, it has its whole height. Below 640 px -- a phone -- the page is one column: every block takes the whole width, in the page's order. *Look & size* holds the tone, frame and
 background. With no block selected, the right column shows the page: *Colour scheme*
 recolours the page; the editor keeps its own colours. Blocks are live while you build: a
 button pressed here runs the graph.
