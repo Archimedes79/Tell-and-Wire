@@ -5,7 +5,7 @@
 # attached to nodes in it. Neither belongs in an image built once and shared.
 
 .git/
-node_modules/
+**/node_modules/
 frontend/dist/
 frontend/.vite/
 data/

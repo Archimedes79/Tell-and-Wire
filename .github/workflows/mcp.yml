@@ -1,0 +1,46 @@
+name: MCP web server
+
+# mcp/ is a package of its own, with its own lockfile: this runs only when it
+# changes, and the main CI (ci.yml) neither installs nor tests it.
+on:
+  push:
+    paths: ['mcp/**', '.github/workflows/mcp.yml']
+  pull_request:
+    paths: ['mcp/**', '.github/workflows/mcp.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: mcp-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v7
+
+      # TypeScript that Node runs unbuilt, like the rest of the repository.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # Every installed package against the licences it may come under.
+      - name: Licences
+        run: npm run licenses
