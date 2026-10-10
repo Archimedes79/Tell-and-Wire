@@ -56,6 +56,8 @@ async function toolServers() {
   } catch {
     return entries;
   }
+  // The servers' READMEs point to it: how a server brings its config and its settings page.
+  entries.push({ path: 'mcp/README.md', content: await readFile(join(ROOT, 'mcp', 'README.md')) });
   for (const folder of folders) {
     const base = `mcp/${folder.name}`;
     if (!folder.isDirectory() || !existsSync(join(ROOT, base, 'config.json'))) continue;

@@ -98,7 +98,7 @@ test('the zip holds what a person runs, and its launcher starts from its own fol
 
   // The tool servers come with their packages, because this zip has Node and no npm: they are there,
   // installed, and one set up from the unzipped folder starts and offers its tool.
-  for (const file of ['mcp/web/config.json', 'mcp/web/settings.html', 'mcp/documents/node_modules/unpdf/package.json']) {
+  for (const file of ['mcp/README.md', 'mcp/web/config.json', 'mcp/web/settings.html', 'mcp/documents/node_modules/unpdf/package.json']) {
     assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
   }
   const listed = await (await fetch(new URL('/api/mcp/servers', served))).json();
