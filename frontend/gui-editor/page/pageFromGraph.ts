@@ -27,7 +27,7 @@ interface Made {
 }
 
 /** What a page lacks: blocks to add now, and blocks for start points a call starts, which only a switch to the page serves. */
-export interface Planned {
+interface Planned {
   now: Made[];
   ifSwitched: Made[];
 }

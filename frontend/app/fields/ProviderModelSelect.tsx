@@ -4,8 +4,7 @@ import { call, type ProviderStatus } from '../api/client';
 import { LINE, MUTED, SUNKEN, TEXT } from '../ui/theme';
 import { lent } from '../../../graph/nodes/Runtime.ts';
 
-// Single source of truth for the provider dropdown -- previously duplicated
-// verbatim in AiNodePanel.tsx, CodeNodePanel.tsx, and WidgetEditor.tsx.
+// The provider dropdown's labels, once.
 export const AI_PROVIDER_LABELS: Record<AIProvider, string> = {
   // Shown only where the caller names it (`defaultLabel`): on a node it is the
   // one AI setting, in ⚙ Settings it is that setting left unset.
@@ -86,7 +85,7 @@ export const nowText = (status: ProviderStatus | null): string =>
  * be named rather than showing one a run would never send. The setting itself
  * left empty takes the provider's own default.
  */
-export function modelHints(
+function modelHints(
   provider: AIProvider, status: ProviderStatus | null, { lendsFromSetting }: { lendsFromSetting?: boolean } = {},
 ): { servedModels: string[]; placeholder: string } {
   const now = status?.target;

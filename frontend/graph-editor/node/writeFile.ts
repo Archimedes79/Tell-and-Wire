@@ -24,7 +24,7 @@ import type { NodePanel } from './nodePanel';
 export interface Say { refine?: Refine; ask?: string }
 
 /** The node a file is written into, and how: a panel's two members. */
-export type Target = Pick<NodePanel, 'node' | 'change'>;
+type Target = Pick<NodePanel, 'node' | 'change'>;
 
 /** Said when the node is gone, or another graph was opened: nothing is written into a stranger. */
 export const ANOTHER_GRAPH = 'This node is not in the graph any more, or another graph was opened: what came back is not written.';

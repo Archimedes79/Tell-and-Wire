@@ -5,14 +5,9 @@ import { DIMMER, FIELD, LINE, MUTED, PURPLE_TEXT } from '../../app/ui/theme';
 /**
  * What is happening while a ✨ button is busy.
  *
- * Generation used to be a minute of a spinning button and nothing else: what
- * was asked, what context went with it, whether the model had answered once
- * already and was being asked to repair its own code — all invisible until it
- * finished, and then only through a collapsed transcript nobody opens unless
- * something has already gone wrong.
- *
- * So this is shown while a file is being written, and gone the moment the
- * result arrives. It is deliberately the *sent* text: a bad answer is usually
+ * What was asked, what context went with it, whether the model has answered
+ * once already and is being asked to repair its own code: shown while a file
+ * is being written, and gone the moment the result arrives. It is deliberately the *sent* text: a bad answer is usually
  * a bad question, and the question is the thing you cannot otherwise see.
  */
 export default function LiveGeneration({ calls, minHeight }: { calls: AICall[]; minHeight: number }) {

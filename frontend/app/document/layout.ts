@@ -40,16 +40,13 @@ export const GUI_MAX_CELL = 56;
 export const GUI_GAP = 14;
 
 /** The widest the content column ever gets: 16 cells plus their gaps. */
-export const GUI_MAX_WIDTH = GUI_GRID_COLUMNS * GUI_MAX_CELL + (GUI_GRID_COLUMNS - 1) * GUI_GAP;
+const GUI_MAX_WIDTH = GUI_GRID_COLUMNS * GUI_MAX_CELL + (GUI_GRID_COLUMNS - 1) * GUI_GAP;
 
 /**
  * How many cells a drag of *pixels* is worth.
  *
  * One cell of pointer travel is the cell **plus the gap after it** -- the whole
- * pitch of the grid, not the width of one square. Dividing by the bare cell
- * made a resize lag: a five-cell drag moved a block four cells, and the error
- * grew with the distance. It is a function so that the arithmetic has somewhere
- * to be tested; it was three characters buried in a mousemove handler before.
+ * pitch of the grid, not the width of one square.
  */
 export function cellsFromDrag(pixels: number, cell: number): number {
   return Math.round(pixels / (cell + GUI_GAP));

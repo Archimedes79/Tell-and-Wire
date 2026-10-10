@@ -81,7 +81,7 @@ export async function textAsRun(path: string): Promise<string> {
 }
 
 /** What a node is handed when the files are read: JSON when it is JSON, the text otherwise. */
-export function contentValue(text: string): unknown {
+function contentValue(text: string): unknown {
   const trimmed = text.trim();
   if (!/^[[{"]/.test(trimmed)) return text;
   try {

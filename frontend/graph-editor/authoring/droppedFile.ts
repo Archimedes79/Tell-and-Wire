@@ -17,7 +17,7 @@ import { NODE_BUILDERS } from '../../app/elements/registry';
 import { fileValue } from './readAsRun';
 
 /** A dropped file, as far as a browser says what it is. */
-export interface Dropped {
+interface Dropped {
   name: string;
   size: number;
   text: () => Promise<string>;
@@ -46,7 +46,7 @@ export const carriesFiles = (transfer: DataTransfer | null): boolean => !!transf
  * `file://server/share/a.csv`, is `//server/share/a.csv`, which Windows opens
  * as `\\server\share\a.csv`. Without its server it named a folder on this one.
  */
-export function uriPath(uri: string): string {
+function uriPath(uri: string): string {
   const url = new URL(uri);
   const path = decodeURIComponent(url.pathname);
   if (url.host) return `//${url.host}${path}`;

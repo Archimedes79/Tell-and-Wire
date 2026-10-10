@@ -6,10 +6,9 @@ import { DANGER_FILL, DANGER_TEXT, SUCCESS_FILL, SUCCESS_TEXT, WARNING_FILL, WAR
  *
  * `partial` means a per-item batch had some items fail and the rest succeed: the
  * outputs are real, with `null` at the failed positions so the batch stays
- * index-aligned with its input. Everywhere that used to ask `status ===
- * 'success'` before reading `outputs` has to accept it too, or one bad item in a
- * thousand hides the other 999 from the panel, the canvas and memory
- * persistence alike.
+ * index-aligned with its input. Whatever reads `outputs` has to accept it,
+ * or one bad item in a thousand hides the other 999 from the panel, the canvas
+ * and memory persistence alike.
  */
 const delivered = (status: ExecutionStatus | string | undefined): boolean =>
   status === 'success' || status === 'partial';

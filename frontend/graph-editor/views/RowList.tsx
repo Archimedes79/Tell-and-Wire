@@ -27,7 +27,7 @@ export interface RowView {
 export const at = (row: string, action: string): string => `${row}:${action}`;
 
 /** The mark on a file's button: filled where something is written in it. */
-export function Written({ written, on }: { written: boolean; on?: boolean }) {
+function Written({ written, on }: { written: boolean; on?: boolean }) {
   return (
     <span
       aria-hidden="true"
@@ -42,7 +42,7 @@ export function Written({ written, on }: { written: boolean; on?: boolean }) {
 }
 
 /** One chip: a port's name, as it is written in the files. */
-export function Chip({ name, kind }: { name: string; kind: 'input' | 'output' }) {
+function Chip({ name, kind }: { name: string; kind: 'input' | 'output' }) {
   return (
     <span
       className="inline-flex items-center rounded-md px-1.5 text-xs font-mono"

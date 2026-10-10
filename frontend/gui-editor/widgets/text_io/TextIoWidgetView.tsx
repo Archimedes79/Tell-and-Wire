@@ -126,8 +126,8 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
   }
 
   // "both": the last run's reply above, the user's next message below. The two
-  // panes read different props on purpose -- feeding both from one value is
-  // what used to make the reply disappear as soon as the user started typing.
+  // panes read different props on purpose -- feeding both from one value would
+  // make the reply disappear as soon as the user started typing.
   return (
     <div className="flex flex-col gap-2 h-full">
       {/* The reply scrolls inside a frame that does not, so Save stays in its corner. */}

@@ -120,10 +120,8 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
    * position -- the order of the list is the position, so a new widget simply
    * goes last.
    *
-   * What every block has, and then what this kind keeps (`initialSettings`).
-   * Every kind's settings used to be spread onto every block, so a divider was
-   * saved with a folder selector's code, an options list and an example file,
-   * and graph.json carried settings no runner of that kind reads.
+   * What every block has, and then what this kind keeps (`initialSettings`). A block
+   * carries no setting no runner of its kind reads.
    */
   create(id: string, label = '', mode = this.defaultMode): GuiWidget {
     return {

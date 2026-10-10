@@ -15,15 +15,11 @@ import RunResult, { type ShownOutput } from './RunResult';
  * corner. The designer's chrome lives in `DesignerSurface.tsx`, which imports
  * from here and which the runtime entry point cannot reach.
  *
- * That is a deliberate answer to a question with two tempting wrong answers.
- * Editing affordances behind an `editing` flag — what this was — still ship: a
- * flag that is false at runtime leaves dead code in the bundle, not absent
- * code, and the deployed tool was loading the palette, the grip and the
- * properties panel inside a 305 KB chunk it never used. A base class that the
- * runtime extends ships them for the same reason, because the subclass
- * references the base. Only the import graph decides what ends up in a bundle,
- * so the boundary has to be a module boundary — and `runtime/boundary.test.ts`
- * asserts that it stays one.
+ * Editing affordances behind an `editing` flag would still ship: a flag that
+ * is false at runtime leaves dead code in the bundle, not absent code, and a
+ * base class the runtime extends ships them because the subclass references the
+ * base. Only the import graph decides what ends up in a bundle, so the boundary
+ * is a module boundary — `runtime/boundary.test.ts` asserts that it stays one.
  *
  * It knows no graph and no store: whoever draws it hands it the page as
  * designed and what is in use -- the delivered tool from the runtime API, the
@@ -87,12 +83,9 @@ export function PageGrid({
   /**
    * The measured cell size, whenever it changes.
    *
-   * Only the grid element knows it -- it comes from that element's own width.
-   * A caller that needs it (the resize drag, which converts pixels to cells)
-   * used to call `useContainerCell` a second time and never attach its ref, so
-   * it silently got the uncapped default instead of the truth: a five-cell drag
-   * moved a block four cells, and the further you dragged the further the block
-   * fell behind the pointer.
+   * Only the grid element knows it -- it comes from that element's own width --
+   * so a caller that needs it (the resize drag, which converts pixels to cells)
+   * is told by it.
    */
   onCell?: (cell: number) => void;
 }) {

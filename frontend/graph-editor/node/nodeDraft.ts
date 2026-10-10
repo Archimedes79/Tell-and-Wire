@@ -22,10 +22,7 @@ export function withSetting(draft: GraphNode, key: string, value: unknown): Grap
     : value;
   const next = { ...draft, config: { ...draft.config, [key]: settled } };
   // A setting an element derives its ports from has just changed, so the
-  // ports follow it here and now. They used to follow only on the next
-  // load, which is why ticking "catch failures" on a node grew its
-  // error port sometime later, to a person who had gone looking for it.
-  // A derived port is the port of its name, or new: the write keeps the
+  // ports follow it here and now. A derived port is the port of its name, or new: the write keeps the
   // wires of the one and lets those of a port that is gone go (`portRenames`).
   const derived = derivedNodePorts(next);
   if (derived) return { ...next, ...derived };
@@ -70,9 +67,7 @@ export function withPorts(draft: GraphNode, ports: { inputs: Port[]; outputs: Po
  * A port's id is the name a body reads it by, so it is edited in the panel --
  * and an edge points at the old one. Each port of the draft remembers the id it
  * had in *before* (`trackPorts`), so a renamed port takes its wires along and a
- * removed one takes them away. It used to be worked out by position, which read
- * removing a port as renaming it to the one that slid into its row, and handed
- * that port the removed one's wire.
+ * removed one takes them away.
  *
  * A function rather than a few lines inside the panel, so a test writes a
  * panel's change the way the panel does (`nodePanel.write`).

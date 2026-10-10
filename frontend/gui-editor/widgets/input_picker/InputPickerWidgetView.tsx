@@ -7,10 +7,9 @@ import { DIMMER, MUTED } from '../../../app/ui/theme';
 /**
  * Runtime input_picker widget: unified file or directory picker.
  *
- * 📂 Browse… browses the machine the graph runs on. A native
- * `<input type="file">` used to be wired up here, but a browser only ever
- * exposes a chosen file's name, never its location -- so it could not produce
- * a path the server resolves.
+ * 📂 Browse… browses the machine the graph runs on. Not a native
+ * `<input type="file">`: a browser exposes a chosen file's name, never its
+ * location, so it cannot produce a path the server resolves.
  */
 export default function InputPickerWidgetView({ widget, value, onChange, onTrigger, fires, busy, controlId }: WidgetViewProps) {
   const isDir = widget.mode === 'directory';

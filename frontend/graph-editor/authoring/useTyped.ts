@@ -6,9 +6,8 @@ import { useEffect, useRef, useState } from 'react';
  * Every keystroke is stored at once, and what is stored is read back as the
  * box's value: an example's JSON block is kept trimmed, an empty expectation
  * as `{}`, a data node's fields re-indented. Shown as it came back, a
- * newline typed at the end was taken away again with the caret, `{}` typed
- * into an empty expectation emptied the box, and half-typed JSON was
- * re-indented under the caret. So the box shows what was typed, and takes the
+ * newline typed at the end would go with the caret and half-typed JSON would be
+ * re-indented under it. So the box shows what was typed, and takes the
  * stored text only when it changed for another reason -- ⟳ from the graph, a
  * file, ✨, a run, an edit in the project's files.
  *

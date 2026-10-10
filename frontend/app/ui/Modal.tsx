@@ -26,7 +26,7 @@ interface ModalProps {
  * dialog whose path box it fills). Every dialog hears Escape on the document,
  * and one Escape closed both, in the order the two happened to listen.
  */
-export function hearsEscape(panel: Element | null, page: Pick<Document, 'querySelectorAll'>): boolean {
+function hearsEscape(panel: Element | null, page: Pick<Document, 'querySelectorAll'>): boolean {
   if (!panel) return false;
   const open = page.querySelectorAll('[role="dialog"]');
   return open[open.length - 1] === panel;
@@ -62,8 +62,7 @@ export default function Modal({
   useEffect(() => {
     const panel = panelRef.current;
     const focused = document.activeElement as HTMLElement | null;
-    // A field in it that took the focus keeps it: the panel used to take it
-    // back, and a path typed into the Save box went nowhere. Otherwise the
+    // A field in it that took the focus keeps it. Otherwise the
     // panel itself takes it, rather than a guessed first field: that puts the
     // screen reader inside the dialog and makes Escape work at once. Closed,
     // the focus goes back where it came from -- to the Save box, when this

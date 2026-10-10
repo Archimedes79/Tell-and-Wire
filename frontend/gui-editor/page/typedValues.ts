@@ -3,10 +3,8 @@
 // The blocks stay live while a page is designed, and a text block that both
 // takes a message and shows a reply would put the reply over the words being
 // typed. So what was typed is remembered and shown in its place -- but only
-// while the block still holds it. It used to be remembered for good: a run
-// that sent the message emptied the box, a new default path in the panel
-// replaced the picker's path, and the block went on showing the old text,
-// which the next ▶ Run then did not send.
+// while the block still holds it: a run that sent the message empties the box,
+// and a new default path in the panel replaces the picker's path.
 //
 // A plain function beside the designer, as `pageWrite.ts` is, so a test can
 // say what it does.

@@ -19,7 +19,7 @@ export type Preview =
   | { kind: 'image'; src: string; count: number };
 
 /** A node's previews by the port each stands beside: what it made comes out of a port, or arrived on one. */
-export interface PortPreviews {
+interface PortPreviews {
   inputs: Record<string, Preview>;
   outputs: Record<string, Preview>;
 }
@@ -80,7 +80,7 @@ function listPreview(items: unknown[]): Preview {
 }
 
 /** What *value* shows as, small; nothing for a value that holds nothing. */
-export function previewOf(value: unknown): Preview | undefined {
+function previewOf(value: unknown): Preview | undefined {
   if (value === null || value === undefined) return undefined;
   if (typeof value === 'string') {
     if (!value.trim()) return undefined;

@@ -35,9 +35,7 @@ interface Look {
  * The block's own chrome.
  *
  * `plain` is the important one: it is what turns a heading into a heading
- * instead of a labelled box, and it is why the runtime window stopped looking
- * like an inspector. Every widget used to get the same border and background
- * unconditionally, plus a truncated dump of its own output underneath.
+ * instead of a labelled box.
  *
  * The tone is the default; a `Look` overrides one thing at a time. A frame on
  * a plain block, or no frame on a raised one, is a choice about that block and

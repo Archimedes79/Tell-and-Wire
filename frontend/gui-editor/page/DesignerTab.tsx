@@ -103,10 +103,8 @@ export default function DesignerTab() {
    * reorder uses them: this way it works inside live inputs, it can be tested,
    * and the element lands **where you let go** instead of always at the end.
    *
-   * The drop target is the whole page column, not the grid. The grid is only as
-   * tall as its contents, which on an empty page is zero pixels -- so the first
-   * element anyone ever tried to drag had to be released on an invisible line,
-   * and the gesture looked broken exactly when it mattered most.
+   * The drop target is the whole page column, not the grid: the grid is only as
+   * tall as its contents, which on an empty page is zero pixels.
    */
   const [dragEntry, setDragEntry] = useState<PaletteEntry | null>(null);
   const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null);

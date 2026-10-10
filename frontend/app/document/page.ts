@@ -80,7 +80,7 @@ export function memoryPoints(nodes: GraphNode[]): Point[] {
 const showsOf = (named: Set<string>, name: string | null | undefined): boolean => !!name && (named.has(name) || named.has(name.split('.')[0]));
 
 /** The blocks of *blocks* that name one of the points *ids*: what the page loses with them. */
-export function connectedTo(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
+function connectedTo(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
   const named = new Set(ids);
   return blocks.filter((block) => (block.fires && named.has(block.fires)) || showsOf(named, block.shows)
     || (block.sends_to ?? []).some((id) => named.has(id)));

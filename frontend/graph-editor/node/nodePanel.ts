@@ -30,7 +30,7 @@ import { saveDraft, withSetting } from './nodeDraft';
 export const WRITE_AFTER_MS = 400;
 
 /** The fields in which two versions of a node differ: `label`, `description`, `ports`, and `config.<key>` for each setting. */
-export function changedFields(before: GraphNode, after: GraphNode): string[] {
+function changedFields(before: GraphNode, after: GraphNode): string[] {
   const fields: string[] = [];
   if (before.label !== after.label) fields.push('label');
   if (before.description !== after.description) fields.push('description');
@@ -49,7 +49,7 @@ export function changedFields(before: GraphNode, after: GraphNode): string[] {
  * whatever changed in the graph meanwhile (a run's kept shape, a file changed
  * on disk), which it does not undo.
  */
-export function overlay(base: GraphNode, edited: GraphNode, fields: Iterable<string>): GraphNode {
+function overlay(base: GraphNode, edited: GraphNode, fields: Iterable<string>): GraphNode {
   let node = base;
   for (const field of fields) {
     if (field === 'label' || field === 'description') node = { ...node, [field]: edited[field] };

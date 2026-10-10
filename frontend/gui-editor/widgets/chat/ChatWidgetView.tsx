@@ -9,11 +9,9 @@ import { chatValue, type ChatMessage, type ChatValue } from '../../../../backend
  * Runtime chat widget: the conversation, and the box that continues it.
  *
  * **What is typed is the block's value**, as it is for every other box on a
- * page -- `pending`, the message nobody has answered yet. It used to live in
- * this component until Send was pressed, which made Send the only way to say
- * anything: ▶ Run, the graph's clock and a button wired elsewhere all ran the
- * graph with an empty message while the sentence sat in a text box the graph
- * could not see. Now every way of running sends what is there.
+ * page -- `pending`, the message nobody has answered yet. So every way of
+ * running -- Send, ▶ Run, the graph's clock, a button wired elsewhere -- sends
+ * what is there.
  *
  * The turn is written into the transcript when the answer arrives (the
  * backend's `ChatWidgetRunner.settle`), which also empties `pending`. A run that
