@@ -36,8 +36,8 @@ export default function SubgraphNodePanel({ node }: NodePanelProps) {
   if (!inner) {
     return (
       <p className="text-sm" style={{ color: DANGER_TEXT }}>
-        The graph this node holds cannot be read. Open its <code>flow.json</code> under the tool&apos;s{' '}
-        <code>nodes/</code> folder and fix it, or delete the node and build it again.
+        The graph this node holds cannot be read. Open its <code>flow.json</code> and <code>nodes.json</code>{' '}
+        under the tool&apos;s <code>nodes/</code> folder and fix them, or delete the node and build it again.
       </p>
     );
   }

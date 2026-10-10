@@ -1,11 +1,6 @@
 {
   "name": "Statistics",
   "description": "Counts what is in a text. A graph like any other: it runs on its own, and it runs as one node of the graph above it, which starts its start point \"text\".",
-  "nodes": {
-    "text": "start",
-    "counts": "code",
-    "numbers": "end"
-  },
   "wires": [
     "text.data -> counts.text",
     "counts.output -> numbers.value"

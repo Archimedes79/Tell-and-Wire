@@ -1,7 +1,0 @@
-{
-  "label": "Assistant",
-  "description": "Answers the last message, knowing the conversation so far",
-  "config": {
-    "batch_mode": "whole_list"
-  }
-}

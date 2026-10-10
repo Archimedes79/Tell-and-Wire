@@ -43,7 +43,7 @@ export function fileActions({ busyWith, isProject, deploying, onNew, onDesign, o
     // Code and prompts that change on disk come in by themselves; this is
     // for the flow and the nodes' settings -- after a git pull, say.
     ...(isProject ? [{
-      label: 'Reload from disk', hint: 'flow.json or a node\'s settings changed outside the editor', blocked: busyWith, onSelect: onReload,
+      label: 'Reload from disk', hint: 'flow.json or nodes.json changed outside the editor', blocked: busyWith, onSelect: onReload,
     }] : []),
     { label: 'Copy / paste as JSON…', divided: true, onSelect: onJson },
     // The tool detached from the editor: the graph, its page and the code that runs them.

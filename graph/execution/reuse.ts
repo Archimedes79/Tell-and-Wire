@@ -14,8 +14,7 @@
 // that names no model of its own: after another model is chosen, a node that
 // asks one asks it. A node with no inputs at all reads the outside world
 // instead (a file, a page, the clock) and is never reused; it is also what is
-// cheap. Nor is a node that reads the outside world whatever arrives -- a
-// folder listed at the path a start point was sent (`NodeRunner.readsOutside`).
+// cheap.
 //
 // What an event is for always runs fresh: pressing "Summarize" twice means
 // "again", and a whole-graph Run means everything.

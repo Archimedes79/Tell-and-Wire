@@ -1,0 +1,36 @@
+{
+  "measure": {
+    "kind": "start",
+    "label": "Measure",
+    "description": "Started by a call -- the page in frontend/, a script -- with the paragraph to measure, as \"paragraph\".",
+    "config": {
+      "started_by": "call",
+      "values": {
+        "paragraph": "A graph grows in two directions. It grows wider as nodes are added beside each other, and it grows deeper when a part of the work becomes a graph of its own."
+      }
+    }
+  },
+  "statistics": {
+    "kind": "subgraph",
+    "label": "Statistics",
+    "description": "Measures a piece of text: how many words, how many sentences, and the longest word in it.\nA graph of its own: open it to see how the counting is done.",
+    "inputs": [
+      {
+        "port": "text",
+        "field": "paragraph"
+      }
+    ]
+  },
+  "report": {
+    "kind": "end",
+    "label": "Report",
+    "description": "What came back out of the subgraph, as the run's result",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

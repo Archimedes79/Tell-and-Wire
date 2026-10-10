@@ -1,0 +1,44 @@
+{
+  "text": {
+    "kind": "start",
+    "label": "Text",
+    "description": "Handed down by the graph above; run on its own, its design's",
+    "config": {
+      "started_by": "call",
+      "values": {
+        "text": "One sentence, and it has exactly eight words."
+      }
+    }
+  },
+  "counts": {
+    "kind": "code",
+    "label": "Counts",
+    "description": "Counts the words and the sentences in the text, and finds its longest word without punctuation.",
+    "inputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "text",
+        "field": "text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Output",
+        "type": "json"
+      }
+    ]
+  },
+  "numbers": {
+    "kind": "end",
+    "label": "Numbers",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

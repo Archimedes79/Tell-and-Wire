@@ -3,7 +3,7 @@
 // **A node's config is opaque here.** Its element owns the type (`nodes/ElementRunner.ts`):
 // this file knows a config is an object, and only the element knows what is in it.
 
-export type NodeType = 'start' | 'folder' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
+export type NodeType = 'start' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
 
 export type WidgetKind =
   | 'input_picker' | 'text_io' | 'plot_window' | 'image_view'
@@ -153,6 +153,57 @@ export function defaultMetadata(): GraphMetadata {
     description: '',
     gui_scheme: 'night',
   };
+}
+
+/**
+ * Every node setting's one default: what a run reads a key as when a graph
+ * leaves it out. A fresh object each call.
+ *
+ * So it is three things at once. What a node read from a file is filled with
+ * where the file says nothing (the editor's `normalizeGraphNode`); what a save
+ * leaves out, key by key, because it says nothing a run would not assume
+ * (`withoutDefaults`, for the editor and the project folder alike); and what
+ * every new node starts from, so a panel can read any field with a type. A
+ * new node that starts differently -- a code node per item, an ai node with a
+ * system prompt -- says so where it is made, and that is what its file then
+ * carries.
+ *
+ * One default per key: a second one, for what a *loaded* node lacks, is what
+ * turned a graph written by hand into a different graph after one Save. Each
+ * element reads a missing key as this says (`frontend/app/elements/savedConfig.test.ts`
+ * asks every kind's runner).
+ */
+export function defaultNodeConfig(): RawConfig {
+  return {
+    path: '',
+    recursive: false,
+    extensions: '',
+    // 'default' -> the one AI setting in ⚙ Settings (graph/ai/settings.ts
+    // `aiSetting`), until someone pins this node to a provider of its own.
+    ai_provider: 'default',
+    ai_model: '',
+    code: '',
+    prompt: '',
+    // A data node's fields (`DataNodeRunner`): none to start with.
+    data_value: {},
+    write_mode: 'none',
+    // Once on the whole list (`NodeRunner.batchMode`), as many at once as the run allows.
+    batch_mode: 'whole_list',
+    batch_concurrency: 0,
+    send_images: false,
+    catch_errors: false,
+    started_by: 'page',
+    on_start: true,
+    every: '',
+    reads: '',
+  };
+}
+
+/** *config* without the settings that still hold their default: what a file keeps of it. */
+export function withoutDefaults(config: RawConfig): RawConfig {
+  const defaults = defaultNodeConfig();
+  return Object.fromEntries(Object.entries(config)
+    .filter(([key, value]) => value !== undefined && JSON.stringify(value) !== JSON.stringify(defaults[key])));
 }
 
 /**

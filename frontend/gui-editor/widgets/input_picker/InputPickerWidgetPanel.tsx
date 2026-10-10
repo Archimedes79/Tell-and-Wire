@@ -7,7 +7,7 @@ import type { WidgetPanelProps } from '../WidgetGuiBuilder';
 
 /**
  * A file or a folder, picked on the page. A folder is its file types and its
- * subfolders, then the list -- the listing a folder node's is, drawn by
+ * subfolders, then the list -- the listing a start point that reads a folder makes, drawn by
  * the same component: it is one behaviour at two levels.
  */
 export default function InputPickerWidgetPanel({ widget, onUpdate }: WidgetPanelProps) {

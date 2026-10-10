@@ -287,9 +287,8 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
             </div>
           )}
 
-          {/* What the node holds, when its element says: a data node's value, the
-              folder a folder node lists, where an end point writes, who starts a
-              start point. */}
+          {/* What the node holds, when its element says: a data node's value,
+              where an end point writes, who starts a start point and what it reads. */}
           {summary !== undefined && (
             <div
               className="truncate rounded px-1 py-0.5 font-mono text-xs"

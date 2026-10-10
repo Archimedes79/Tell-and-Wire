@@ -4,7 +4,7 @@
 // be corrected.
 //
 // The shape of the document alone gets a graph that parses and does nothing:
-// code in a key no element reads, edges wired to port names a folder node
+// code in a key no element reads, edges wired to port names a data node
 // never emits, because some ports are derived from a node's settings rather than taken
 // from the document. So the facts below are the ones a graph is *wrong* without.
 

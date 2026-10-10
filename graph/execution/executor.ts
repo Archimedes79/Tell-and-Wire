@@ -343,7 +343,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         const arrived = await readInputs(element, node, inputs, runtime, registry);
         // An event is a moment: a package handed back from an earlier round
         // would say an event happened that is over.
-        const key = element.eventPorts(node).length || element.readsOutside ? undefined : options.reuse?.key(node, arrived, setting);
+        const key = element.eventPorts(node).length ? undefined : options.reuse?.key(node, arrived, setting);
         const kept = key && context(nodeId) ? options.reuse!.get(key) : undefined;
         if (kept) {
           outputs.set(nodeId, kept);

@@ -68,12 +68,11 @@ const holder = (config: Record<string, unknown> = {}) =>
 
 describe('a node that holds a graph', () => {
   it('has its start points and end points for ports, sends what arrived on a port to the start point of that name, and leaves the graph as it found it', async () => {
-    // A node that is no way in -- data, a folder listing -- is no port, and
-    // neither is a start point that starts itself: nobody above can start it.
+    // A node that is no way in -- data -- is no port, and neither is a start
+    // point that starts itself, whatever it reads: nobody above can start it.
     const held = inner() as { nodes: GraphNode[] };
     held.nodes.push(node('kept', 'data', { data_value: { x: 1 } }));
-    held.nodes.push(node('listed', 'folder', { path: 'docs' }));
-    held.nodes.push(node('ticks', 'start', { started_by: 'itself', every: '5m' }));
+    held.nodes.push(node('ticks', 'start', { started_by: 'itself', every: '5m', reads: 'folder', path: 'docs' }));
     const ports = registry.node('subgraph')!.derivedPorts(node('part', 'subgraph', { subgraph: held }), registry)!;
     expect(ports.inputs.map((p) => p.id)).toEqual(['subject']);
     expect(ports.outputs.map((p) => p.id)).toEqual(['loud']);

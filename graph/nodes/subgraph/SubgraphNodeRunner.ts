@@ -132,7 +132,7 @@ export class SubgraphNodeRunner extends NodeRunner {
       return [{
         where,
         problem: 'The graph this node holds cannot be read.',
-        fix: 'Open its folder and fix its flow.json, or delete the node and build it again.',
+        fix: 'Open its folder and fix its flow.json and nodes.json, or delete the node and build it again.',
       }];
     }
 

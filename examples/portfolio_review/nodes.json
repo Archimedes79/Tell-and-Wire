@@ -1,0 +1,544 @@
+{
+  "review": {
+    "kind": "start",
+    "label": "Review",
+    "description": "Choosing an export starts it; its package carries the chosen CSV."
+  },
+  "ai": {
+    "kind": "ai",
+    "label": "Data Reader",
+    "description": "Reads a portfolio export in any format -- CSV with any delimiter, German or English column names and number formats, one or several accounts -- and returns the portfolio as clean data, without any advice. For every position: account, name, identifier (ISIN or ticker where given), asset type (ETF, ETC, ETN, ETP, stock, bond, fund, money market, crypto), theme (exactly one of: Broad World Equity, Dividend / Income, Precious Metals, Emerging Markets, Fixed Income, Real Estate, Technology / Innovation, Leveraged / Short / Hedge, Single Stocks, Crypto, Defensive / Cash, Frontier / Niche), region (inferred from the name where missing), quantity, cost basis in EUR, current value in EUR, unrealised P&L in EUR and in %. The same security in several accounts stays one row per account. Its outputs: 'positions', the list of positions, and 'notes', a list of data-quality notes (missing prices, non-EUR currencies, odd numbers).",
+    "config": {
+      "input_files": [
+        "examples/data/portfolio_review/broker_export.csv"
+      ]
+    },
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "text",
+        "description": "The chosen export's content, as the page sends it",
+        "field": "input_picker.content"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Output",
+        "type": "text",
+        "description": "The answer."
+      }
+    ]
+  },
+  "code": {
+    "kind": "code",
+    "label": "Metrics",
+    "description": "Computes the hard numbers of a portfolio, so that no analyst has to do arithmetic. 'input' arrives as the data reader's object: 'positions', a list of rows with account, name, identifier, asset_type, theme, region, quantity, cost_eur, value_eur, pnl_eur, pnl_pct, and 'notes'. Returns 'metrics', one object: total value, total cost, total P&L in EUR and %, number of positions and of accounts; every position with its weight in %; allocation by theme, by asset type, by region and by account (EUR and %, largest first); concentration (HHI over the position weights, share of the top 10, the largest position); duplicates (one identifier held in several accounts); small positions under EUR 500; risk flags (leveraged, short, crypto, single stocks, P&L below -10 %, P&L above +50 %); and the notes. And 'chart', a donut of the value by theme for the chart block: {kind: 'donut', title, points: [{label, value}]}.",
+    "inputs": [
+      {
+        "port": "input",
+        "name": "Input",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "metrics",
+        "type": "json"
+      },
+      {
+        "port": "chart",
+        "type": "json"
+      }
+    ]
+  },
+  "ai_2": {
+    "kind": "ai",
+    "label": "Macro & Sentiment",
+    "description": "The news and macro analyst. It has no live data: it says up to which date it knows the markets and marks every market fact 'as of my knowledge -- verify'. From the portfolio's metrics (themes, regions, largest positions): a macro scan (rates, inflation, growth, currencies, oil, gold), a regional valuation snapshot (expensive, fair or cheap, and why), market sentiment, beginning trends, a macro impact matrix (theme against driver: tailwind, neutral, headwind), the top 3 opportunities and the top 3 risks for this portfolio, and one anticyclic call. Its one output, 'macro', is all this as Markdown text, a section headed '## 2. Macro & Sentiment'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "macro",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_3": {
+    "kind": "ai",
+    "label": "Risk Analyst",
+    "description": "The risk analyst. From the portfolio's metrics: concentration (HHI, largest positions, themes, accounts) with a verdict; leverage and derivatives (leveraged, short, crypto) with a verdict Low, Medium, High or Critical; currency risk (EUR and USD each +10 %, impact in EUR); liquidity; correlation clusters (global equity, emerging markets, precious metals, rate-sensitive, high beta or speculative, defensive or cash) and which share of the portfolio is genuinely uncorrelated in a 2008-style crash, with the estimated drawdown; stress tests (equities -40 %, rates +2 points, inflation spike, USD -15 %, gold -25 %) with estimated losses in EUR; a risk dashboard; and the top 5 mitigations. Its one output, 'risk', is all this as Markdown text, a section headed '## 4. Risk Report'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "risk",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_4": {
+    "kind": "ai",
+    "label": "Quant Analyst",
+    "description": "The quantitative analyst. It has no return series: from the asset-class weights in the metrics and long-run assumptions it states openly, it estimates expected return and volatility as ranges; where the portfolio sits against an efficient frontier and which direction improves it; the risk contribution of each sleeve (risk parity view); factor exposure (market, size, value, quality, momentum, rates, commodities); a 10-year Monte Carlo view (10th, 50th and 90th percentile, as ranges); normal and crisis correlations of the main sleeves; the diversification ratio; and a comparison with a simple 70/30 world equity and euro bond portfolio -- is the complexity justified? Ranges, never false precision. Its one output, 'quant', is all this as Markdown text, a section headed '## 5b. Quantitative Analysis'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "quant",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_5": {
+    "kind": "ai",
+    "label": "Price & Valuation",
+    "description": "The price and valuation analyst. Without live prices, it reasons from long-run valuation (CAPE-style, earnings yield against bond yield, gold against real rates) and from the macro section: for each asset class and region held, a trend and overbought or oversold note, a fair-value range, and a combined verdict BUY, HOLD, WAIT or TRIM; then the 3 best anticyclic setups and the 3 most stretched holdings. Every statement that depends on today's price is marked 'verify with current prices'. Its one output, 'valuation', is all this as Markdown text, a section headed '## 3. Price & Valuation'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "macro",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "valuation",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_6": {
+    "kind": "ai",
+    "label": "Optimizer & Income",
+    "description": "The optimisation and income strategist; long-term income growth is the goal. From the metrics and the macro, valuation, risk and quant sections: a simplification target (how many positions are enough), a consolidation map of overlapping funds (which survive, which go), the small positions (sell, grow or hold), a cost audit, missing exposures, 1 to 3 valuation-aware rotation trades, the current income estimate and yield, a 10-year income projection (base case, as a range), and a 12-month roadmap as a Markdown table (month, action, amount in EUR, why). It names a concrete product only with an identifier it is sure of; otherwise the product category and how to choose one. Its one output, 'optimisation', is all this as Markdown text, a section headed '## 5. Optimisation & Income'. The output's id is optimisation, not output.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "macro",
+        "type": "any"
+      },
+      {
+        "port": "risk",
+        "type": "any"
+      },
+      {
+        "port": "quant",
+        "type": "any"
+      },
+      {
+        "port": "valuation",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "optimisation",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_7": {
+    "kind": "ai",
+    "label": "Tax Analyst (Germany)",
+    "description": "The German tax analyst, for a private investor resident in Germany -- an estimate, not tax advice. Rules: Abgeltungsteuer 25 % plus Solidaritaetszuschlag, Sparerpauschbetrag EUR 1,000 single or 2,000 joint, Teilfreistellung (equity funds 30 %, mixed funds 15 %), Vorabpauschale on accumulating funds, physical gold ETCs tax-free after one year where they are delivery-backed, crypto ETNs, and the separate loss pot for single stocks. From the metrics and the optimisation section: the tax classification of the holdings, the embedded gains and losses, loss-harvesting candidates, a tax-optimal order for the 12-month roadmap, distributing against accumulating, and the priority tax actions with their estimated effect in EUR. Its one output, 'tax', is all this as Markdown text, a section headed '## 6. Tax Intelligence'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "optimisation",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "tax",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_8": {
+    "kind": "ai",
+    "label": "Diversification Scout",
+    "description": "The diversification and anticorrelation scout. From the metrics and the quant section: the correlation landscape of the current sleeves, the gaps, and candidates for an 8 to 12 % security layer from these categories: managed futures or trend following, minimum volatility, quality factor, listed infrastructure, diversified commodities, market neutral, catastrophe bonds, listed private equity, diversified holding companies. The top 3 candidates, why each fits, how much of the portfolio, and an overlap check with what is already held. It names a concrete product only with an identifier it is sure of; otherwise the category and how to choose one. Its one output, 'diversification', is all this as Markdown text, a section headed '## 7. Diversification & Security Layer'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "quant",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "diversification",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_9": {
+    "kind": "ai",
+    "label": "Psychology Analyst",
+    "description": "The behavioural finance analyst. From the metrics and the optimisation section: a bias audit read from the portfolio itself (fragmentation, momentum chasing, loss aversion in the deepest losers, lottery-ticket positions, home bias, overconfidence), crowd sentiment for each asset class held, a decision-quality rating of each proposed action (sound, check or bias-driven, and why), anticyclic triggers, and one 'cold water' sentence. Its one output, 'psychology', is all this as Markdown text, a section headed '## 8. Behavioural Finance'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "optimisation",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "psychology",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_10": {
+    "kind": "ai",
+    "label": "Counter-Thesis",
+    "description": "The red team. It challenges what every other analyst said: the assumptions they share, what would invalidate their main theses, kill criteria (measurable exit triggers) for the largest positions and for every proposed buy, a stress test of each high-urgency action with a verdict -- Proceed, Reduce size, Wait or Skip -- and its reason, the simple alternative (a portfolio of 2 or 3 funds) and whether it would do as well, and 3 to 5 uncomfortable questions for the investor. It does not soften the tension: the disagreement is the information. Its one output, 'counter', is all this as Markdown text, a section headed '## 8b. Counter-Thesis'.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "macro",
+        "type": "any"
+      },
+      {
+        "port": "risk",
+        "type": "any"
+      },
+      {
+        "port": "quant",
+        "type": "any"
+      },
+      {
+        "port": "valuation",
+        "type": "any"
+      },
+      {
+        "port": "optimisation",
+        "type": "any"
+      },
+      {
+        "port": "tax",
+        "type": "any"
+      },
+      {
+        "port": "diversification",
+        "type": "any"
+      },
+      {
+        "port": "psychology",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "counter",
+        "type": "text"
+      }
+    ]
+  },
+  "ai_11": {
+    "kind": "ai",
+    "label": "Lead Advisor",
+    "description": "The lead advisor. It does no analysis of its own: it reads the metrics and the sections of the specialists (macro, valuation, risk, optimisation, quant, tax, diversification, psychology, counter-thesis) and decides. Four outputs. 'summary': an executive summary in Markdown, 10 to 12 sentences -- portfolio health, the key macro finding, the biggest risk, the best optimisation, the key tax point, the best diversification idea, and the one action for this month -- pointing out any contradiction between analysts. 'actions': the master action list, one row per action, ranked: priority, action, category, positions, product, financial impact, tax impact, urgency (High, Medium or Low), counter-thesis verdict, source. It applies the counter-thesis: Skip moves an action to the watch list, Reduce size makes it a first tranche, Wait lowers its urgency; an action rated bias-driven gets a warning; a judgement conflict is shown from both sides, not resolved. 'watch_list': what to watch rather than act on, with the kill criteria, as Markdown. 'bottom_line': one honest paragraph.",
+    "inputs": [
+      {
+        "port": "prompt",
+        "name": "Prompt",
+        "type": "any",
+        "description": "What to ask."
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "macro",
+        "type": "any"
+      },
+      {
+        "port": "risk",
+        "type": "any"
+      },
+      {
+        "port": "quant",
+        "type": "any"
+      },
+      {
+        "port": "valuation",
+        "type": "any"
+      },
+      {
+        "port": "optimisation",
+        "type": "any"
+      },
+      {
+        "port": "tax",
+        "type": "any"
+      },
+      {
+        "port": "diversification",
+        "type": "any"
+      },
+      {
+        "port": "psychology",
+        "type": "any"
+      },
+      {
+        "port": "counter",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "summary",
+        "type": "text"
+      },
+      {
+        "port": "actions",
+        "type": "list"
+      },
+      {
+        "port": "watch_list",
+        "type": "text"
+      },
+      {
+        "port": "bottom_line",
+        "type": "text"
+      }
+    ]
+  },
+  "code_2": {
+    "kind": "code",
+    "label": "Report Builder",
+    "description": "Puts the report together in Markdown from its parts, without changing a word of them. It is handed 'metrics' (the metrics object), the sections 'macro', 'valuation', 'risk', 'optimisation', 'quant', 'tax', 'diversification', 'psychology' and 'counter' (Markdown text each), and from the lead advisor 'summary', 'actions' (a list of rows), 'watch_list' and 'bottom_line'. Its one output, 'report': '# Portfolio Review' with today's date; '## Executive Summary' and the summary; '## 1. Portfolio Snapshot' written from the metrics -- a totals table, allocation by theme, by asset type, by region and by account as tables, concentration, duplicates, small positions, risk flags and notes; then the sections in this order: macro, valuation, risk, optimisation, quant, tax, diversification, psychology, counter; then '## 9. Master Action List' as a Markdown table of the actions, '## 10. Watch List' with the watch list, and '## The Honest Bottom Line' with the bottom line. A part that did not arrive is left out with one line that says which.",
+    "inputs": [
+      {
+        "port": "input",
+        "name": "Input",
+        "type": "any"
+      },
+      {
+        "port": "metrics",
+        "type": "any"
+      },
+      {
+        "port": "macro",
+        "type": "any"
+      },
+      {
+        "port": "risk",
+        "type": "any"
+      },
+      {
+        "port": "quant",
+        "type": "any"
+      },
+      {
+        "port": "valuation",
+        "type": "any"
+      },
+      {
+        "port": "optimisation",
+        "type": "any"
+      },
+      {
+        "port": "tax",
+        "type": "any"
+      },
+      {
+        "port": "diversification",
+        "type": "any"
+      },
+      {
+        "port": "psychology",
+        "type": "any"
+      },
+      {
+        "port": "counter",
+        "type": "any"
+      },
+      {
+        "port": "summary",
+        "type": "any"
+      },
+      {
+        "port": "actions",
+        "type": "any"
+      },
+      {
+        "port": "watch_list",
+        "type": "any"
+      },
+      {
+        "port": "bottom_line",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "report",
+        "type": "text"
+      }
+    ]
+  },
+  "output": {
+    "kind": "end",
+    "label": "Save Report",
+    "config": {
+      "path": "output/portfolio_review.md",
+      "write_mode": "file"
+    },
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "allocation": {
+    "kind": "end",
+    "label": "Allocation by theme",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "actions": {
+    "kind": "end",
+    "label": "Master action list",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "report": {
+    "kind": "end",
+    "label": "Report",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

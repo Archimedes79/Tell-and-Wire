@@ -181,6 +181,6 @@ export function authoringGuide(): string {
     '',
     `Node types this server runs: ${registry.nodeTypes().join(', ')}.`,
     `The port every node accepts without declaring it: "${RUN_PORT}". A node with config.catch_errors = true also has an output "${ERROR_PORT}".`,
-    'Paths inside a graph (the folder a folder node lists, an end point\'s target, a picker\'s file) are relative to the server\'s folder.',
+    'Paths inside a graph (what a start point reads, an end point\'s target, a picker\'s file) are relative to the server\'s folder.',
   ].join('\n');
 }

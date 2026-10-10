@@ -1,8 +1,0 @@
-{
-  "label": "Each file",
-  "description": "Summarizes one story: its title and two sentences. It runs once per file in the folder.",
-  "config": {
-    "batch_concurrency": 3,
-    "batch_mode": "per_item"
-  }
-}

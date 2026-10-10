@@ -1,7 +1,0 @@
-{
-  "label": "Evidence & claims",
-  "description": "Evidence & claims reviewer: whether each claim is backed by the evidence in the paper.",
-  "config": {
-    "batch_mode": "whole_list"
-  }
-}

@@ -15,6 +15,7 @@
 
 import type { GraphNode, NodeType } from '../graph';
 import { derivedNodePorts } from './ports';
+import { withoutDefaults } from '../../../graph/graph.ts';
 import { SubgraphNodeRunner } from '../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
 import { StartNodeRunner } from '../../../graph/nodes/start/StartNodeRunner.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
@@ -79,24 +80,6 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
     placedAmong: (node, others) => ({ ...node, label: freeId('Start', others.filter((other) => other.node_type === node.node_type).map((other) => other.label), ' ') }),
   },
 
-  folder: {
-    create(id) {
-      // Its ports follow from its settings -- asked of its runner rather than
-      // listed again here.
-      const node: GraphNode = {
-        id,
-        node_type: 'folder',
-        label: 'Folder',
-        description: '',
-        position: { x: 0, y: 0 },
-        inputs: [],
-        outputs: [],
-        config: baseNodeConfig(),
-      };
-      return { ...node, ...(derivedNodePorts(node) ?? {}) };
-    },
-  },
-
   // A new ai or code node runs once, on what arrives -- a list whole -- and
   // hands on one value: single ports and the default `batch_mode`, which is
   // `withPerItem(node, false)` (`perItem.test.ts` holds them to it). Made to
@@ -144,8 +127,8 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
   data: {
     create(id) {
-      // Its ports follow the fields it holds -- asked of its runner, as a
-      // folder's are: with none yet, it has `all` and nothing else.
+      // Its ports follow the fields it holds -- asked of its runner rather than
+      // listed again here: with none yet, it has `all` and nothing else.
       const node: GraphNode = {
         id,
         node_type: 'data',
@@ -210,14 +193,11 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
 /**
  * The node as a graph file keeps it: every setting that is not its default
- * (`baseNodeConfig`), and none that is -- a run reads a key left out as
+ * (`defaultNodeConfig`), and none that is -- a run reads a key left out as
  * that default, and loading fills it back in, so nothing is lost either way.
  */
 export function savedNode(node: GraphNode): GraphNode {
   // A type this editor does not know was never filled in: it is saved as it came.
   if (!NODE_KINDS[node.node_type]) return node;
-  const defaults: Record<string, unknown> = baseNodeConfig();
-  const config = Object.fromEntries(Object.entries(node.config)
-    .filter(([key, value]) => value !== undefined && JSON.stringify(value) !== JSON.stringify(defaults[key])));
-  return { ...node, config: config as GraphNode['config'] };
+  return { ...node, config: withoutDefaults(node.config) as GraphNode['config'] };
 }

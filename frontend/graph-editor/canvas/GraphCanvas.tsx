@@ -304,7 +304,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
           }}
           onClose={() => setNext(null)}
           label="Search nodes"
-          placeholder="Add a node… code, ai, folder"
+          placeholder="Add a node… code, ai, data"
           footer={next.hint}
           style={{
             position: 'absolute', zIndex: 10,

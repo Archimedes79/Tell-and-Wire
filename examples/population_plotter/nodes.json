@@ -1,0 +1,46 @@
+{
+  "draw": {
+    "kind": "start",
+    "label": "Draw",
+    "description": "Choosing a file starts it; its package carries the chosen CSV file."
+  },
+  "chart": {
+    "kind": "code",
+    "label": "What to plot",
+    "description": "Reads the CSV and says what the chart should show: bars of its first numeric column by the names in the first column, largest first.\nIt draws nothing itself -- the chart block on the page draws the figure.",
+    "inputs": [
+      {
+        "port": "csv",
+        "name": "CSV",
+        "type": "text",
+        "description": "The CSV the page sends: the chosen file's content",
+        "field": "file.content"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "figure",
+        "name": "Figure",
+        "type": "json"
+      }
+    ]
+  },
+  "plot": {
+    "kind": "end",
+    "label": "Chart",
+    "description": "What to plot, which the chart block draws.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

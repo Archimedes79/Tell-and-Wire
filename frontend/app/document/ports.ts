@@ -12,7 +12,7 @@ import { keepingFields } from '../../../graph/nodes/port.ts';
  * Null for a code, AI or end node: a person names those to match the code
  * they wrote or the prompt they gave, so the graph is the authority and an
  * element declaring `input` and `value` for them would invent a contract
- * nobody agreed to. A start point, a folder node, a node that holds a graph
+ * nobody agreed to. A start point, a node that holds a graph
  * and a data node -- its fields -- are the other kind: each input keeping the
  * part of a start point's package a person chose for it (`keepingFields`).
  */

@@ -1,11 +1,21 @@
-import { useEffect, useState } from 'react';
-import { DANGER_TEXT, DIM, FIELD, TEXT } from '../../../app/ui/theme';
+import { useEffect, useId, useState } from 'react';
+import { DANGER_TEXT, DIM, FIELD, MUTED, TEXT } from '../../../app/ui/theme';
 import { parseInterval } from '../../../../graph/execution/triggers.ts';
 import { StartNodeRunner } from '../../../../graph/nodes/start/StartNodeRunner.ts';
 import { useGraphStore } from '../../../app/store/graphStore';
+import PathField, { FileTypesField } from '../../../app/dialogs/PathField';
+import FolderListing from '../../../app/fields/FolderListing';
+import { listAsRun } from '../../authoring/readAsRun';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
 const START = new StartNodeRunner();
+
+/** What a start point that starts itself can send, in the words the panel offers it. */
+const SENDS = [
+  ['', 'Nothing', 'it only starts the round'],
+  ['folder', 'The files of a folder', 'their paths, as a folder block on a page sends them'],
+  ['file', 'One file', 'its path and what is in it, as a file block on a page sends it'],
+] as const;
 
 /** Who starts a start point, in the words the panel offers it. */
 const STARTERS = [
@@ -71,6 +81,66 @@ function ExampleSent({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConf
   );
 }
 
+/**
+ * What a start point that starts itself sends: a file or a folder it reads
+ * each time it starts, as a picker block on a page sends what was chosen -- the
+ * same reading (`readChosen`), so the list shown here is the list a run makes.
+ */
+function SendsFiles({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConfig'>) {
+  const reads = String(node.config.reads ?? '');
+  const path = String(node.config.path ?? '');
+  const field = useId();
+  return (
+    <fieldset className="mb-3">
+      <legend className="text-xs mb-2" style={{ color: DIM }}>It sends</legend>
+      {SENDS.map(([value, label, what]) => (
+        <label key={value} className="flex items-start gap-2 text-sm mb-1.5" style={{ color: TEXT }}>
+          <input
+            type="radio"
+            name={`sends-${node.id}`}
+            checked={reads === value}
+            onChange={() => setConfig('reads', value)}
+            style={{ marginTop: 3 }}
+          />
+          <span>
+            {label}
+            <span className="block text-xs" style={{ color: DIM }}>{what}</span>
+          </span>
+        </label>
+      ))}
+      {reads && (
+        <div className="mt-2 space-y-3">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={field}>
+              {reads === 'folder' ? 'Folder' : 'File'}
+            </label>
+            <PathField
+              id={field}
+              value={path}
+              onChange={(picked) => setConfig('path', picked)}
+              mode={reads === 'folder' ? 'directory' : 'file'}
+              extensions={node.config.extensions ?? ''}
+              placeholder={reads === 'folder' ? '/path/to/folder' : '/path/to/file'}
+            />
+          </div>
+          {reads === 'folder' && (
+            <>
+              <FileTypesField value={node.config.extensions ?? ''} onChange={(extensions) => setConfig('extensions', extensions)} />
+              <FolderListing
+                recursive={!!node.config.recursive}
+                onRecursive={(recursive) => setConfig('recursive', recursive)}
+                noFolder={!path.trim()}
+                list={() => listAsRun(node)}
+                of={JSON.stringify([path, node.config.extensions ?? '', !!node.config.recursive])}
+              />
+            </>
+          )}
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
 export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
   const startedBy = String(node.config.started_by ?? 'page');
   const every = String(node.config.every ?? '');
@@ -131,6 +201,7 @@ export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
           </label>
         </div>
       )}
+      {startedBy === 'itself' && <SendsFiles node={node} setConfig={setConfig} />}
       <p className="text-xs" style={{ color: DIM }}
         title="The values are under the names the sender gave them; the first node it reaches reads what it needs out of them. In a run it did not begin, event is empty and the values are the ones it was sent last.">
         Hands on one package, <code>{'{event, values}'}</code>, to what its <code>data</code> is wired to.

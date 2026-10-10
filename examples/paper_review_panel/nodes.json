@@ -1,0 +1,281 @@
+{
+  "review": {
+    "kind": "start",
+    "label": "Review",
+    "description": "The Review button starts it; its package carries the manuscript."
+  },
+  "read": {
+    "kind": "code",
+    "label": "Read manuscript",
+    "description": "Reads the chosen manuscript once and passes its text on, unchanged, to every reviewer.",
+    "inputs": [
+      {
+        "port": "file",
+        "name": "File",
+        "type": "text",
+        "description": "The chosen manuscript's content, as the page sends it",
+        "field": "paper.content"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "text",
+        "description": "The manuscript as text"
+      }
+    ]
+  },
+  "scientific": {
+    "kind": "ai",
+    "label": "Scientific",
+    "description": "Scientific reviewer: scientific soundness.",
+    "inputs": [
+      {
+        "port": "paper",
+        "name": "Paper",
+        "type": "text",
+        "description": "The manuscript as text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Findings",
+        "type": "text",
+        "description": "One finding per line"
+      }
+    ]
+  },
+  "adversarial": {
+    "kind": "ai",
+    "label": "Adversarial",
+    "description": "Adversarial reviewer: to argue against the paper as a hostile but fair referee would.",
+    "inputs": [
+      {
+        "port": "paper",
+        "name": "Paper",
+        "type": "text",
+        "description": "The manuscript as text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Findings",
+        "type": "text",
+        "description": "One finding per line"
+      }
+    ]
+  },
+  "claims": {
+    "kind": "ai",
+    "label": "Evidence & claims",
+    "description": "Evidence & claims reviewer: whether each claim is backed by the evidence in the paper.",
+    "inputs": [
+      {
+        "port": "paper",
+        "name": "Paper",
+        "type": "text",
+        "description": "The manuscript as text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Findings",
+        "type": "text",
+        "description": "One finding per line"
+      }
+    ]
+  },
+  "references": {
+    "kind": "ai",
+    "label": "References",
+    "description": "References reviewer: the references.",
+    "inputs": [
+      {
+        "port": "paper",
+        "name": "Paper",
+        "type": "text",
+        "description": "The manuscript as text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Findings",
+        "type": "text",
+        "description": "One finding per line"
+      }
+    ]
+  },
+  "figures": {
+    "kind": "ai",
+    "label": "Figures & tables",
+    "description": "Figures & tables reviewer: the figures and tables.",
+    "inputs": [
+      {
+        "port": "paper",
+        "name": "Paper",
+        "type": "text",
+        "description": "The manuscript as text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Findings",
+        "type": "text",
+        "description": "One finding per line"
+      }
+    ]
+  },
+  "judge": {
+    "kind": "ai",
+    "label": "Judge",
+    "description": "Merges the five reviews into one ranked list and a recommendation",
+    "inputs": [
+      {
+        "port": "scientific",
+        "name": "Scientific",
+        "type": "text",
+        "description": "The scientific reviewer's findings"
+      },
+      {
+        "port": "adversarial",
+        "name": "Adversarial",
+        "type": "text",
+        "description": "The adversarial reviewer's findings"
+      },
+      {
+        "port": "claims",
+        "name": "Evidence & claims",
+        "type": "text",
+        "description": "The evidence & claims reviewer's findings"
+      },
+      {
+        "port": "references",
+        "name": "References",
+        "type": "text",
+        "description": "The references reviewer's findings"
+      },
+      {
+        "port": "figures",
+        "name": "Figures & tables",
+        "type": "text",
+        "description": "The figures & tables reviewer's findings"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Advice",
+        "type": "text",
+        "description": "The consolidated review"
+      }
+    ]
+  },
+  "verdict": {
+    "kind": "end",
+    "label": "Judge — consolidated advice",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "scientific_review": {
+    "kind": "end",
+    "label": "Scientific reviewer",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "adversarial_review": {
+    "kind": "end",
+    "label": "Adversarial reviewer",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "claims_review": {
+    "kind": "end",
+    "label": "Evidence & claims reviewer",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "references_review": {
+    "kind": "end",
+    "label": "References reviewer",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "figures_review": {
+    "kind": "end",
+    "label": "Figures & tables reviewer",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

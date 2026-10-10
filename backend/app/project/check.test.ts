@@ -143,7 +143,7 @@ describe('what check finds', () => {
     await writeFile(join(dir, 'nodes', 'say', 'instructions.md'), 'Written, never sent.');
     const { problems } = await checkPath(dir);
     expect(problems.map((p) => [p.where, p.problem])).toEqual([
-      ['nodes/old_step', 'This folder belongs to no node in flow.json.'],
+      ['nodes/old_step', 'This folder belongs to no node in nodes.json.'],
       ['nodes/say/instructions.md', 'Nothing reads this file.'],
     ]);
     expect(problems[1].fix).toMatch(/"prompt.md"/);

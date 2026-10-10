@@ -10,7 +10,7 @@ import { answers as runAnswers } from '../../test/runAnswers';
 function graphNode(overrides: Partial<GraphNode>): GraphNode {
   return {
     id: 'n',
-    node_type: 'folder',
+    node_type: 'code',
     label: 'Node',
     description: '',
     position: { x: 0, y: 0 },

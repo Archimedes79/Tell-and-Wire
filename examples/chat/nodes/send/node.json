@@ -1,5 +1,0 @@
-{
-  "label": "Send",
-  "description": "The chat block starts it whenever the person sends a message; its package carries the message and the conversation so far.",
-  "config": {}
-}

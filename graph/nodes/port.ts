@@ -22,8 +22,8 @@ export function port(
 }
 
 /**
- * Ports that follow from a node's settings -- a folder node's, a subgraph's
- * from the graph it holds -- with the one thing a person chooses for each of
+ * Ports that follow from a node's settings -- a data node's from its fields,
+ * a subgraph's from the graph it holds -- with the one thing a person chooses for each of
  * its inputs kept from the ports it has now (*inputs*): which part of a start
  * point's package it takes (`Port.field`). That is a choice about the wire
  * into it, not about the node, so deriving the ports again must not undo it.

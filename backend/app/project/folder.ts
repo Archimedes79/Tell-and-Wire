@@ -1,28 +1,27 @@
 // A graph as a folder: the project.
 //
 //     my_tool/
-//       flow.json           the flow: which nodes there are, and every wire
+//       flow.json           the flow: the graph's name, and every wire
+//       nodes.json          the nodes: each one's kind, heading, text, settings and ports
 //       layout.json         where each node sits on the canvas, and its size
-//       page/               the page: what whoever uses the tool sees
-//         page.json         its blocks, in order, each with what it connects to
+//       page.json           the page: what whoever uses the tool sees -- its blocks,
+//                           in order, each with what it connects to
 //       nodes/
-//         count/            one folder per node, by id
-//           node.json       its name and its settings
-//           interface.json  what goes in and what comes out
+//         count/            one folder per node that keeps writing, by id
 //           input.js …      what the element keeps in files: `NodeRunner.texts`
 //
 // **Each fact in one place.** The flow says which node feeds which, and nothing
-// about any node. A node's folder says everything about that node, and nothing
-// about its neighbours: a node that needs to know what arrives follows the wire
-// and reads the other node's `interface.json`. Positions are split off so that
-// moving a node is not a change to what the graph does; writing -- code,
-// prompts, the page's blocks -- is a file of its own so it is edited, reviewed
-// and grepped as what it is.
+// about any node. The list says what each node is, and nothing about its
+// neighbours: a node that needs to know what arrives follows the wire and reads
+// the other node's ports there. Together they are the graph; the engine needs
+// no more, but for the writing. Positions are split off so that moving a node
+// is not a change to what the graph does; writing -- code, prompts -- is a file
+// of its own so it is edited, reviewed and grepped as what it is.
 //
-// **The page sits beside the nodes, not among them.** It is no node: a graph
-// has one page, what a person using the tool sees, and its blocks connect
-// themselves to the graph's start and end points by name -- so its folder is
-// the one anybody opening the project looks for, and flow.json does not name it.
+// **The page sits beside the graph, not in it.** It is no node: a graph has one
+// page, what a person using the tool sees, and its blocks connect themselves to
+// the graph's start and end points by name -- so it is a file of its own, and
+// the flow does not name it.
 //
 // **One other shape opens.** A single `.json` graph with everything inline --
 // what a download and an import carry -- opens as it is. A deploy bundle is a
@@ -42,16 +41,15 @@ import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts'
 import { NESTED_GRAPH_FIELD, type TextChange } from './changes.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { keepingFields } from '../../../graph/nodes/port.ts';
-import { describeInterface, INTERFACE_FILE } from './interfaceFile.ts';
-import { FLOW_FILE, flowOf, graphFrom, sorted } from './flow.ts';
+import { describeNodes, NODES_FILE, sorted } from './nodesFile.ts';
+import { FLOW_FILE, flowOf, graphFrom } from './flow.ts';
 import { folderName } from './names.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 
-export { FLOW_FILE };
+export { FLOW_FILE, NODES_FILE };
 export const LAYOUT_FILE = 'layout.json';
+export const PAGE_FILE = 'page.json';
 export const NODES_DIR = 'nodes';
-export const PAGE_DIR = 'page';
-export const NODE_FILE = 'node.json';
 
 export class FileChanged extends Error {
   readonly fileName: string;
@@ -98,8 +96,8 @@ export function projectFolderOf(path: string): string | null {
 /**
  * A page of a project's own, written by hand: served at `/` in place of the
  * built page when it holds an `index.html`, and carried by a bundle. It uses
- * the graph only through the runtime API, by name (`backend/app/api.ts`). Not `page/`:
- * that is the built-in page's, its blocks in `page.json`.
+ * the graph only through the runtime API, by name (`backend/app/api.ts`). Not
+ * `page.json`: that is the built-in page's, its blocks.
  */
 export const FRONTEND_DIR = 'frontend';
 
@@ -127,9 +125,6 @@ export function stateFileOf(path: string): string {
 export function nodeFolder(nodeId: string): string {
   return `${NODES_DIR}/${folderName(nodeId)}`;
 }
-
-/** Where the page's blocks are kept, relative to the project folder. */
-const PAGE_FILE = `${PAGE_DIR}/page.json`;
 
 /** The field the page's text is reported under (`TextChange`): its blocks. */
 const PAGE_FIELD = 'blocks';
@@ -411,24 +406,32 @@ async function readIfThere(path: string, what: string, guard?: Guard): Promise<u
  */
 export async function readStructure(folder: string, guard?: Guard): Promise<{ graph: Graph; files: Map<string, string> }> {
   const files = new Map<string, string>();
-  const flowPath = join(folder, FLOW_FILE);
-  files.set(flowPath, await signature(flowPath));
-  await guard?.(flowPath);
-  const flow = await readJson(flowPath, 'flow');
-  const read = new Map<string, { about?: unknown; ports?: unknown }>();
-  const readSigned = async (path: string, what: string): Promise<unknown> => {
+  const read = async (name: string, what: string): Promise<{ path: string; json: unknown }> => {
+    const path = join(folder, name);
     files.set(path, await signature(path));
-    return readIfThere(path, what, guard);
+    await guard?.(path);
+    return { path, json: await readJson(path, what) };
   };
-  const listed = Object.entries(((flow as { nodes?: unknown })?.nodes ?? {}) as Record<string, unknown>);
-  for (const [id] of listed) {
-    const dir = join(folder, nodeFolder(id));
-    read.set(id, {
-      about: await readSigned(join(dir, NODE_FILE), 'node'),
-      ports: await readSigned(join(dir, INTERFACE_FILE), 'interface'),
-    });
+  const flow = await read(FLOW_FILE, 'flow');
+  const list = await read(NODES_FILE, 'list of nodes');
+  return { graph: graphFrom(flow.json, list.json, flow.path, list.path), files };
+}
+
+/**
+ * Give every node whose ports follow from its settings -- a start point, a
+ * data node from its fields, a subgraph from the graph it holds -- the ports
+ * that follow, keeping what a person chose for its inputs (`keepingFields`).
+ * The ids of those nodes.
+ */
+function derivePorts(graph: Graph): Set<string> {
+  const derived = new Set<string>();
+  for (const node of graph.nodes) {
+    const ports = registry.node(node.node_type)?.derivedPorts(node, registry);
+    if (!ports) continue;
+    Object.assign(node, keepingFields(ports, node.inputs));
+    derived.add(node.id);
   }
-  return { graph: graphFrom(flow, (id) => read.get(id) ?? {}, flowPath), files };
+  return derived;
 }
 
 /** A project folder, with every piece of writing read in from its file. */
@@ -459,6 +462,8 @@ export async function readProject(folder: string, guard?: Guard): Promise<Graph>
     if (!isProjectFolder(inside)) continue;
     registry.node(nested.node.node_type)?.setNestedGraph(nested.node, await readProject(inside, guard));
   }
+  // Last: a data node's ports follow from the fields read above, a subgraph's from the graph just put into it.
+  derivePorts(graph);
   return withoutEmptyPage(graph);
 }
 
@@ -483,7 +488,7 @@ export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
 /**
  * Write *graph* as the project folder *folder*.
  *
- * Every text goes to its file and out of its node's `node.json`; a text that is empty
+ * Every text goes to its file and out of its node's settings in `nodes.json`; a text that is empty
  * has no file, and one that was emptied loses it. Files a node no longer has
  * -- it was deleted, or became another kind -- are removed, but only files with the
  * names elements write: whatever else a person put in the folder stays.
@@ -516,13 +521,10 @@ interface Plan {
 /** What writing *graph* into *folder* comes to, this level and every level below it. */
 function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   // A node whose ports follow from its settings -- a start point's, a
-  // subgraph's from its graph -- has them written as they follow, so its
-  // interface.json is never a copy that disagrees. Before the graphs a node
-  // holds are taken out below: its ports are read from them.
-  for (const node of copy.nodes) {
-    const derived = registry.node(node.node_type)?.derivedPorts(node, registry);
-    if (derived) Object.assign(node, keepingFields(derived, node.inputs));
-  }
+  // subgraph's from its graph -- has them as they follow, and nodes.json keeps
+  // only what a person chose of them. Before the graphs a node holds are
+  // taken out below: its ports are read from them.
+  const derived = derivePorts(copy);
   const deeper: Plan[] = [];
   const untouched = new Set<string>();
   for (const held of nestedGraphs(copy)) {
@@ -535,20 +537,18 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   }
 
   const files = new Map<string, string | null>();
-  // A node's ports: its interface, in its own folder.
   const flow = flowOf(copy);
   for (const node of copy.nodes) {
     const element = registry.node(node.node_type);
-    // A typo in flow.json must not cost the node its code on the next save.
+    // A typo in a kind in nodes.json must not cost the node its code on the next save.
     if (!element) untouched.add(join(folder, nodeFolder(node.id)));
     else {
       // A node that became another kind -- by ✨ Describe a graph, the bar, a model
-      // over MCP -- keeps none of the old kind's writing: in node.json it
+      // over MCP -- keeps none of the old kind's writing: in nodes.json it
       // would be a setting nothing reads. Its file goes as one no node keeps.
       const own = new Set(element.texts(node).map((text) => text.field));
       for (const field of textFields(node)) if (!own.has(field)) delete node.config[field];
     }
-    files.set(join(folder, nodeFolder(node.id), INTERFACE_FILE), toFile(describeInterface(node), true));
   }
   // Each block's keys in one order, so an unchanged page saves unchanged; and
   // a page of no blocks is no page, with no file.
@@ -567,17 +567,12 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
       ...(node.width ? { width: Math.round(node.width) } : {}),
       ...(node.height ? { height: Math.round(node.height) } : {}),
     };
-    const about = {
-      label: node.label,
-      ...(node.description ? { description: node.description } : {}),
-      config: sorted(node.config as Record<string, unknown>),
-    };
-    files.set(join(folder, nodeFolder(node.id), NODE_FILE), toFile(about, true));
   }
   // Files like the rest, so one changed outside -- another writer added a node
   // and its folder -- refuses the save instead of being written over, and the
-  // new node's files tidied away.
+  // new node's files tidied away. The list last: the writing is out of the settings by now.
   files.set(join(folder, FLOW_FILE), toFile(flow, true));
+  files.set(join(folder, NODES_FILE), toFile(describeNodes(copy.nodes, derived), true));
   files.set(join(folder, LAYOUT_FILE), toFile(layout, true));
 
   // Deepest first, so a level is only written once everything it holds is.
@@ -623,9 +618,6 @@ async function commit(plan: Plan, guard?: Guard): Promise<void> {
   }
   const claimed = new Set(plan.files.keys());
   await tidy(join(plan.folder, NODES_DIR), claimed, plan.untouched);
-  // The page's folder goes with the page, unless somebody keeps a file in it.
-  const page = join(plan.folder, PAGE_DIR);
-  if (await tidy(page, claimed, plan.untouched)) await rmdir(page);
 }
 
 /**
