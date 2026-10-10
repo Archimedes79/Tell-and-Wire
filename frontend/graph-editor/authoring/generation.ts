@@ -172,9 +172,10 @@ export function exchangeName(node: GraphNode, write: Write, how: { refine?: Refi
   return exchangeLabel(partName(node, write), refine ? refine.change : ask, { fix: !!refine && !refine.change?.trim(), failed });
 }
 
-/** Why ✨ cannot write for *node* yet, or undefined: everything is written from its text. */
-export function generationGuard(node: GraphNode): string | undefined {
-  return node.description.trim() ? undefined : 'Say what this node should do first: its text is what ✨ writes from.';
+/** Why ✨ cannot write for *node* yet, or undefined: it is written from the node's text, or from what the chat was told. */
+export function generationGuard(node: GraphNode, say: { refine?: Refine; ask?: string } = {}): string | undefined {
+  if (node.description.trim() || say.ask?.trim() || say.refine?.change?.trim()) return undefined;
+  return 'Say what this node should do first: its text is what ✨ writes from.';
 }
 
 /** The graph a node sits in, as ✨ is told it. */

@@ -15,11 +15,9 @@
 // A widget is the one element with all three; a node has only the first two.
 //
 // Only this one is delivered, so only this one may be reachable from
-// `runtime/main.tsx`. It used to live on `WidgetGuiBuilder` beside the panel and the
-// generation contract, and the page reached all of it through one registry --
-// which is how the instructions for having an AI write a chart ended up inside
-// the tool handed to someone who will never write one. `runtime/boundary.test.ts`
-// now asserts that the roster next door is out of reach.
+// `runtime/main.tsx`. The builders' roster next door carries the panel and the
+// generation contract, which a tool handed to someone must not hold:
+// `runtime/boundary.test.ts` asserts it is out of reach.
 
 import type { ComponentType } from 'react';
 import type { GuiWidget, WidgetKind } from '../../app/graph';
@@ -41,7 +39,7 @@ import TextWidgetView from '../widgets/text/TextWidgetView';
 import TextIoWidgetView from '../widgets/text_io/TextIoWidgetView';
 
 /** One kind of block, as the page draws it. */
-export interface BlockKind {
+interface BlockKind {
   /** The one component. The designer and the delivered tool draw this same one. */
   View: ComponentType<WidgetViewProps>;
   /**

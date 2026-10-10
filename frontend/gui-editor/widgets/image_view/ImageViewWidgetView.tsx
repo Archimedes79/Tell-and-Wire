@@ -4,8 +4,7 @@ import { cut } from '../../../app/ui/cut';
 
 /**
  * What to say about a value that arrived and is not a path: a record with the
- * path somewhere inside it, most often. It used to be dropped, and the block
- * said nothing had arrived when one had been wired, and a value had come.
+ * path somewhere inside it, most often.
  */
 function notAPath(block: string, value: unknown): string {
   const seen = JSON.stringify(value) ?? String(value);

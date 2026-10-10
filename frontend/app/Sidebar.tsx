@@ -10,7 +10,7 @@ import { DIMMER, LINE, SURFACE } from './ui/theme';
  * not a kind that says none. A table of kinds here was one
  * more place a new kind had to be written into.
  */
-export function paletteGroups(builders: NodeGuiBuilder[]): { label: string; types: NodeType[] }[] {
+function paletteGroups(builders: NodeGuiBuilder[]): { label: string; types: NodeType[] }[] {
   const groups: { label: string; types: NodeType[] }[] = [];
   for (const builder of builders) {
     const label = builder.paletteGroup;

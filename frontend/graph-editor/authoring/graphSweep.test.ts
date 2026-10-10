@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
 import { sweep, type SweepStep, type SweepUnit } from './graphSweep';
-import { missingOf } from './useGraphSweep';
+import { missingOf } from '../node/useGraphSweep';
 import type { GraphEdge, GraphNode } from '../../app/graph';
 
 /**

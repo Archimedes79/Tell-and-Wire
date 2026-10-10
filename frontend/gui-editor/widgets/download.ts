@@ -65,7 +65,7 @@ const VARIABLE = /var\(\s*(--[\w-]+)\s*(?:,\s*((?:[^()]|\((?:[^()]|\([^()]*\))*\
  * colour it stood on, without which a dark scheme's light labels are light
  * labels on a viewer's white.
  */
-export function standaloneSvg(
+function standaloneSvg(
   markup: string,
   drawn: { width: number; height: number; background?: string },
   resolve: (name: string) => string,

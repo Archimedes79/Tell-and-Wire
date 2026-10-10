@@ -14,7 +14,8 @@ vi.mock('../../app/api/client', async (actual) => ({
 }));
 
 const { useGraphStore } = await import('../../app/store/graphStore');
-const { sweepGraph, ANOTHER_GRAPH } = await import('./useGraphSweep');
+const { sweepGraph } = await import('./useGraphSweep');
+const { ANOTHER_GRAPH } = await import('./writeFile');
 const store = () => useGraphStore.getState();
 const nodeOf = (id: string) => store().rfNodes.find((n) => n.id === id)!.data.graphNode as GraphNode;
 

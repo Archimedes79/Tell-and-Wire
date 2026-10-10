@@ -37,7 +37,7 @@ const numbered = (kind: string) => (node: GraphNode, others: GraphNode[]): Graph
   { ...node, label: numberedHeading(kind, others.map((other) => other.label)) }
 );
 
-export interface NodeKind {
+interface NodeKind {
   /**
    * What a new node of this type is called, where that is not its type: the
    * id `freeId` starts from, numbered only when it is taken.
@@ -82,9 +82,8 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
   // A new ai or code node runs once, on what arrives -- a list whole -- and
   // hands on one value: single ports and the default `batch_mode`, which is
-  // `withPerItem(node, false)` (`perItem.test.ts` holds them to it). Made to
-  // run once per item, a node split what it was handed: a chart block got a
-  // one-item list, and a sort sorted one item per call. "Run once per item"
+  // `withPerItem(node, false)` (`perItem.test.ts` holds them to it). Run once
+  // per item, a node would split what it was handed (a sort sorts one item per call). "Run once per item"
   // is one tick away, asked when a list arrives (`RunOncePerItem`).
   ai: {
     create: (id) => ({

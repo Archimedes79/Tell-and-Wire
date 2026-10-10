@@ -27,7 +27,7 @@ interface Made {
 }
 
 /** What a page lacks: blocks to add now, and blocks for start points a call starts, which only a switch to the page serves. */
-export interface Planned {
+interface Planned {
   now: Made[];
   ifSwitched: Made[];
 }
@@ -131,13 +131,6 @@ function blocksForStart(start: GraphNode, nodes: GraphNode[], edges: Wire[], tak
 }
 
 /**
- * What the page lacks of what *nodes* offer: for each start point nothing on
- * the page sends to or fires, its blocks; for each end point nothing shows, a
- * text output. A start point set to start itself, on a clock, has none: the
- * page cannot start it. Pure: the person is asked about the ones a call
- * starts before any of it is applied.
- */
-/**
  * What each end point shows gets a raised box -- two to a row, an odd one last
  * across the whole row -- under a rule that sets it off from the inputs, where
  * there are some.
@@ -155,6 +148,13 @@ function outputsLaidOut(planned: Planned, page: GuiWidget[]): void {
   });
 }
 
+/**
+ * What the page lacks of what *nodes* offer: for each start point nothing on
+ * the page sends to or fires, its blocks; for each end point nothing shows, a
+ * text output. A start point set to start itself, on a clock, has none: the
+ * page cannot start it. Pure: the person is asked about the ones a call
+ * starts before any of it is applied.
+ */
 export function pageFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget[]): Planned {
   const planned: Planned = { now: [], ifSwitched: [] };
   const taken = [...page];

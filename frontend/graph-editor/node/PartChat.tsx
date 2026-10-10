@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useGraphStore } from '../../app/store/graphStore';
 import type { AICall } from '../../app/api/client';
 import { errorText } from '../../app/api/errorText';
 import type { GraphNode } from '../../app/graph';
@@ -12,6 +13,9 @@ import { bodyOf, fileOf, isWritten, partName, type Write } from '../authoring/ge
 import ChatPane, { type ChatLine } from '../views/ChatPane';
 import { PaneHeader } from '../views/NodeViewLayout';
 import type { usePartGenerate } from './usePartGenerate';
+
+/** Words typed to a chat and not sent, by document, node and file: they outlast a look at the file, another node, closing the view. */
+const drafts = new Map<string, string>();
 
 /** What a chat invites to be said, by the file it writes. */
 function inviting(node: GraphNode, write: Write): string {
@@ -27,14 +31,11 @@ function inviting(node: GraphNode, write: Write): string {
  * the file as said -- a body with what its last try showed. What goes with the
  * words is the same for every file of every kind of node (`SENT_WITH`).
  */
-export default function PartChat({ node, write, writing, trying, draft, onDraft }: {
+export default function PartChat({ node, write, writing, trying }: {
   node: GraphNode;
   write: Write;
   writing: ReturnType<typeof usePartGenerate>;
   trying: ReturnType<typeof useTryExample>;
-  /** The words typed to this chat and not sent: kept by the view, so a look at the file does not lose them. */
-  draft: string;
-  onDraft: (text: string) => void;
 }) {
   const { file } = fileOf(node, write);
   const lines: ChatLine[] = partExchanges(String(node.config.history ?? ''), partName(node, write)).map((one, index) => ({
@@ -43,6 +44,13 @@ export default function PartChat({ node, write, writing, trying, draft, onDraft 
     failed: one.failed,
     note: one.failed ? `${file} was not written` : one.fix ? `${file} repaired` : `${file} written`,
   }));
+  const draftKey = `${useGraphStore.getState().document}:${node.id}:${write}`;
+  const [text, setText] = useState(() => drafts.get(draftKey) ?? '');
+  const onText = (words: string) => {
+    if (words) drafts.set(draftKey, words);
+    else drafts.delete(draftKey);
+    setText(words);
+  };
   const [sent, setSent] = useState<AICall[] | null>(null);
   const [problem, setProblem] = useState('');
 
@@ -71,8 +79,8 @@ export default function PartChat({ node, write, writing, trying, draft, onDraft 
           ? `${file} is written. What you say changes it as said.`
           : `Say what you want and ${file} is written. What you say after that changes it as said.`}
         busy={writing.generate.busy}
-        text={draft}
-        onText={onDraft}
+        text={text}
+        onText={onText}
         onSend={send}
       >
         <div className="text-xs flex flex-col gap-2" style={{ color: MUTED }}>

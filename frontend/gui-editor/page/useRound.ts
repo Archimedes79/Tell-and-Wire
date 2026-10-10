@@ -19,6 +19,8 @@ import { roundRefused, startRound, useSession, type RoundAsk } from '../../app/a
 export function useRound(before?: () => Promise<void>, values?: () => Record<string, unknown>) {
   const [requirements, setRequirements] = useState<Requirement[] | null>(null);
   const pending = useRef<{ event: string | null; ask: RoundAsk } | null>(null);
+  // Set from the call until the round is started or asked about: a second Enter or click meanwhile starts nothing.
+  const starting = useRef(false);
 
   /**
    * Start a round at start point *event* -- the whole graph for none -- once
@@ -28,6 +30,16 @@ export function useRound(before?: () => Promise<void>, values?: () => Record<str
    * session keeps.
    */
   const run = async (event: string | null = null, by?: string, sent?: Record<string, unknown>) => {
+    if (starting.current) return;
+    starting.current = true;
+    try {
+      await start(event, by, sent);
+    } finally {
+      starting.current = false;
+    }
+  };
+
+  const start = async (event: string | null, by?: string, sent?: Record<string, unknown>) => {
     try {
       await before?.();
     } catch (error) {

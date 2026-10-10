@@ -68,7 +68,7 @@ interface SweepDeps {
  * generate in, and inventing one would write every node against a guess while
  * looking like it worked.
  */
-export function generationOrder(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
+function generationOrder(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   return topologicalLevels(nodes, edges, registry).flat()
     .map((id) => byId.get(id))

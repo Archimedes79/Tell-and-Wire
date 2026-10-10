@@ -5,6 +5,7 @@
 import type { Graph } from '../graph';
 import { buildReactFlowGraph, normalizeGraph } from '../document/graphDoc';
 import type { GraphStore } from './graphStore';
+import { flushPanels } from './flushPanels';
 
 /** How many undo steps are kept. Each entry is a whole serialised graph. */
 export const HISTORY_LIMIT = 50;
@@ -29,6 +30,19 @@ export function historyActions(
   set: (recipe: (state: GraphStore) => void) => void,
   get: () => GraphStore,
 ): Pick<GraphStore, 'commit' | 'undo' | 'redo' | 'applyGraphSnapshot'> {
+  /** Step along the history: the last of *from* is restored, and the graph as it is goes onto *to*. */
+  const step = (from: 'past' | 'future', to: 'past' | 'future') => () => {
+    flushPanels();
+    const stack = get()[from];
+    if (stack.length === 0) return;
+    const current = JSON.stringify(get().exportGraph());
+    const target = stack[stack.length - 1];
+    set((state) => {
+      state[from].pop();
+      state[to].push(current);
+    });
+    get().applyGraphSnapshot(target, true);
+  };
   return {
     commit: (coalesce) => {
       const now = Date.now();
@@ -49,29 +63,8 @@ export function historyActions(
       });
     },
 
-    undo: () => {
-      const { past } = get();
-      if (past.length === 0) return;
-      const current = JSON.stringify(get().exportGraph());
-      const previous = past[past.length - 1];
-      set((state) => {
-        state.past.pop();
-        state.future.push(current);
-      });
-      get().applyGraphSnapshot(previous, true);
-    },
-
-    redo: () => {
-      const { future } = get();
-      if (future.length === 0) return;
-      const current = JSON.stringify(get().exportGraph());
-      const next = future[future.length - 1];
-      set((state) => {
-        state.future.pop();
-        state.past.push(current);
-      });
-      get().applyGraphSnapshot(next, true);
-    },
+    undo: step('past', 'future'),
+    redo: step('future', 'past'),
 
     /**
      * Restore a serialised graph without touching the history stacks or the

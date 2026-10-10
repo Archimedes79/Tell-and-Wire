@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GraphNode } from '../../app/graph';
 import { NODE_KINDS } from '../../app/document/nodeKinds';
 import { useGraphStore } from '../../app/store/graphStore';
-import { WRITE_AFTER_MS, nodePanel, writeBeforeKey } from './nodePanel';
+import { WRITE_AFTER_MS, nodePanel } from './nodePanel';
 
 /**
  * A node's panel with no Save and no Cancel: what is changed is written into
@@ -46,11 +46,14 @@ describe('a change in a node\'s panel', () => {
     expect(panel.node()?.description).toBe('');
   });
 
-  it('is written first when the graph is saved with Ctrl+S, so the file holds what the panel shows', () => {
+  it('is written first by what undoes, runs or saves, so Undo takes back what was just typed and not the step before it', () => {
+    store().setMetadata({ description: 'An earlier step.' });
     const panel = nodePanel('code');
-    say(panel, 'Saved with it.');
-    // The panel hears the key first (capture); the save is the page's, after it.
-    writeBeforeKey(panel)({ ctrlKey: true, metaKey: false, key: 's' });
-    expect(store().rootGraph().nodes.find((node) => node.id === 'code')?.description).toBe('Saved with it.');
+    const off = panel.watch(() => {});
+    say(panel, 'Typed just now.');
+    store().undo();
+    expect(stored('code').description).toBe('');
+    expect(store().metadata.description).toBe('An earlier step.');
+    off();
   });
 });

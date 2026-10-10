@@ -16,12 +16,11 @@ import HeadingField from '../authoring/HeadingField';
 import { GenerationReport } from '../authoring/GenerationTranscript';
 import { useTryExample, whatCameOf } from '../authoring/TryExample';
 import { modelsBefore, pullable, pullableOutput } from '../authoring/pull';
-import { fileOf, isWritten, partName, partsOf, writesFor, type Part, type Write } from '../authoring/generation';
-import NodeHeader from '../views/NodeHeader';
+import { fileOf, isWritten, portIdsOf, strayDefinition, partName, partsOf, writesFor, type Part, type Write } from '../authoring/generation';
+import NodeHeader, { BackButton } from '../views/NodeHeader';
 import NodeViewLayout from '../views/NodeViewLayout';
 import RowList, { at, type RowAction, type RowView } from '../views/RowList';
 import FilePane from './FilePane';
-import Interface from './Interface';
 import LastRun from './LastRun';
 import PartChat from './PartChat';
 import SettingsPane from './SettingsPane';
@@ -75,7 +74,7 @@ function viewHearsEscape(
  * itself --, and the one chosen on the right. Auto generate does what the rows
  * do, in order. What is changed here is in the graph a moment later and Undo
  * takes it back (`nodePanel.ts`); there is no Save and no Cancel. Esc or the
- * way back closes it; what was changed stays, and so do the words typed to a chat.
+ * way back closes it; what was changed stays, and so do the words typed to a chat (`PartChat`).
  *
  * What a node is made of is not decided here: the node's runner says which
  * files it keeps (`partsOf`), its builder what else is set.
@@ -105,8 +104,6 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   // Where every output goes into a memory, the output is pulled too: the field says what it wants.
   const pullsOutput = pullableOutput(node, graphNodes, wires);
   const [open, setOpen] = useState<Open>(() => firstOpen(node, parts, pullsOutput));
-  // What was typed to each chat and not sent: a look at the file and back keeps it.
-  const [drafts, setDrafts] = useState<Partial<Record<Write, string>>>({});
   const view = useRef<HTMLDivElement>(null);
   const describing = useId();
   const text = useRef<HTMLTextAreaElement>(null);
@@ -136,7 +133,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   if (!builder) {
     return (
       <div ref={view} className={FRAME}>
-        <NodeViewLayout header={<Button variant="quiet" size="sm" onClick={onClose}>← Graph</Button>} left={<p className="text-sm" style={{ color: TEXT }}>{node.label}</p>}>
+        <NodeViewLayout header={<BackButton onBack={onClose} />} left={<p className="text-sm" style={{ color: TEXT }}>{node.label}</p>}>
           <p className="text-sm" style={{ color: MUTED }}>
             This editor does not know nodes of type "{node.node_type}". The node is kept, and saved, as it came.
           </p>
@@ -191,6 +188,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
     return {
       id: part,
       label: partName(node, part),
+      ports: side ? { kind: part as 'input' | 'output', names: portIdsOf(node, part as 'input' | 'output'), ...(strayDefinition(node, part as 'input' | 'output') ? { stray: { file } } : {}) } : undefined,
       actions: [...first, { id: 'file', label: 'File', title: `${file}: read it and edit it here`, written: isWritten(node, part) }],
       add: side && ownPorts && builder.portEditing[side] === 'edit'
         ? { title: `Add ${side === 'inputs' ? 'an input' : 'an output'}`, onClick: () => addPort(side) }
@@ -199,13 +197,14 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   });
 
   const shown: Open = open.part === 'settings' || parts.includes(open.part) ? open : firstOpen(node, parts, pullsOutput);
-  const sides = (['input', 'output'] as const).filter((side) => parts.includes(side));
   const active = shown.part === 'settings' ? null : at(shown.part, shown.how);
   const used = blocksAt(page, node.id);
   // A block that fires a start point and sends to it too is one block.
   const usedBy = [...new Set([...used.fire, ...used.send, ...used.show])].map((block) => block.label || block.id);
   const writes = writesFor(node, 'all').map((write) => fileOf(node, write).file);
-  const step = (id: string | undefined) => (id ? { label: labels[id] ?? id, onClick: () => useGraphStore.getState().setEditingNode(id) } : undefined);
+  const steps = (ids: string[]) => ids.map((id) => ({ label: labels[id] ?? id, onClick: () => useGraphStore.getState().setEditingNode(id) }));
+  // Auto generate writes what is missing; once a file it would write holds something, it writes over it.
+  const rewrites = writesFor(node, 'all').some((write) => isWritten(node, write));
 
   const left = (
     <>
@@ -217,7 +216,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
             size="sm"
             aria-pressed={shown.part === 'settings'}
             onClick={() => setOpen(SETTINGS)}
-            title="Settings of this node: ports, once per item, failures, the model"
+            title="Settings of this node"
             aria-label="Node settings"
           >
             <SlidersHorizontal size={15} strokeWidth={2} aria-hidden="true" />
@@ -256,11 +255,12 @@ function Opened({ node, panel, onClose, onOpenPage }: {
               className="w-full"
               onClick={() => void writing.press('all')}
               disabled={writing.generate.busy}
-              title={writing.generate.busy ? 'The model is still writing: wait for it, or stop waiting below' : `Write ${listed(writes)} from the text`}
+              title={writing.generate.busy ? 'The model is still writing: wait for it, or stop waiting below'
+                : rewrites ? `Write ${listed(writes)} from the text again: replaces the files` : `Write ${listed(writes)} from the text`}
             >
-              <span className="inline-flex items-center justify-center gap-2"><Sparkles size={14} strokeWidth={2} aria-hidden="true" /> Auto generate</span>
+              <span className="inline-flex items-center justify-center gap-2"><Sparkles size={14} strokeWidth={2} aria-hidden="true" /> {rewrites ? 'Rewrite all' : 'Auto generate'}</span>
             </Button>
-            <p className="text-xs mt-1.5" style={{ color: DIMMER }}>Writes {listed(writes)} from the text above, in order.</p>
+            <p className="text-xs mt-1.5" style={{ color: DIMMER }}>Writes {listed(writes)} from the text above, in order{rewrites ? ', over what is in them' : ''}.</p>
             {!isProject && (
               <p className="text-xs mt-1" style={{ color: DIMMER }}>
                 Its files are kept in the tool until it is saved to a folder (File ▸ Save as, a name without .json): then each is a file of its own.
@@ -286,13 +286,10 @@ function Opened({ node, panel, onClose, onOpenPage }: {
   return (
     <div ref={view} className={FRAME}>
       <NodeViewLayout
-        header={<NodeHeader kind={builder.label} icon={builder.icon} ink={builder.ink} id={node.id} onBack={onClose} previous={step(near.before)} next={step(near.after)} />}
+        header={<NodeHeader kind={builder.label} icon={builder.icon} ink={builder.ink} id={node.id} onBack={onClose} before={steps(near.before)} after={steps(near.after)} />}
         left={left}
       >
         <GenerationReport calls={writing.generate.transcript} live={writing.generate.live}>
-          {shown.part !== 'settings' && (parts.includes('input') || parts.includes('output')) && (
-            <Interface node={node} files={sides} onOpen={(side) => setOpen({ part: side, how: 'file' })} />
-          )}
           {/* Keyed by the pane: each file gets an editor and a chat of its own -- one kept
               showed the last file's placeholder, words and undo history -- and a pane that
               broke (a chunk gone stale) is tried again once another is chosen. */}
@@ -305,15 +302,13 @@ function Opened({ node, panel, onClose, onOpenPage }: {
                 write={shown.part}
                 writing={writing}
                 trying={trying}
-                draft={drafts[shown.part] ?? ''}
-                onDraft={(words) => setDrafts((all) => ({ ...all, [shown.part]: words }))}
               />
             ) : (
               <FilePane
                 node={node}
                 write={shown.part}
-                setConfig={(key, value, how) => panel.setConfig(key, value, how)}
-                updateNode={(change, how) => panel.change(change, how)}
+                setConfig={panel.setConfig}
+                updateNode={panel.change}
                 flush={() => panel.write()}
                 trying={trying}
                 busy={writing.generate.busy}

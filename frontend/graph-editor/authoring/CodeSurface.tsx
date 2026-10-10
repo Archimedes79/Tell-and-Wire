@@ -31,8 +31,7 @@ const FONT = {
  * editor's own text is what stops the second from fighting the first.
  *
  * *tabIndents*: Tab indents, for the editor across the window. In a box in
- * the panel Tab moves on, as from any field there: it used to type spaces
- * into input.js, and there was no key out of the box.
+ * the panel Tab moves on, as from any field there.
  */
 export default function CodeSurface({ value, onChange, language, placeholder, height, autoFocus, tabIndents }: {
   value: string;

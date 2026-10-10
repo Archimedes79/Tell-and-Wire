@@ -35,9 +35,7 @@ interface CodeFieldProps {
  * Where a node's files are written in its panel: a real editor in place of a
  * textarea.
  *
- * The boxes that hold a node's code and its prompts were `<textarea>`s --
- * no highlighting, no bracket matching, and a sixty-line function was read
- * through a slot six lines high. This is CodeMirror: syntax colours, line
+ * CodeMirror: syntax colours, line
  * numbers, bracket matching, search (Ctrl+F), multiple cursors, undo that
  * belongs to the box rather than to the browser -- and the large window opens
  * the same document across the whole screen, because the honest fix for a

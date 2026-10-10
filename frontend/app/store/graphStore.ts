@@ -4,28 +4,19 @@ import type { Node, Edge } from 'reactflow';
 import type { Graph, GraphNode, GraphMetadata, ExecutionResult, GuiWidget, NodeType } from '../graph';
 import type { RFNodeData } from './nodeData';
 import type { PortRenames } from './portRenames';
-import { derivedNodePorts } from '../document/ports';
-import { defaultField, takenAs, withoutPoints } from '../document/page';
 import { call, type RoundSnapshot } from '../api/client';
-import { forgetSession, stopRound, useSession, watchSession } from '../api/session';
-import { NODE_KINDS } from '../document/nodeKinds';
+import { forgetSession, stopRound, useSession } from '../api/session';
 import {
-  buildReactFlowGraph, defaultMetadata, exported, lostWire, normalizeGraph, pageOf, takeIn, withDiskChanges, withNested,
+  buildReactFlowGraph, defaultMetadata, exported, normalizeGraph,
 } from '../document/graphDoc';
-import { HISTORY_LIMIT, endCoalescing, historyActions } from './history';
-import { RUN_PORT } from '../../../graph/execution/triggers.ts';
-import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
-import { mergeResults } from '../../../graph/graph.ts';
-import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
+import { endCoalescing, historyActions } from './history';
+import { flushPanels } from './flushPanels';
+import { subgraphActions } from './subgraphs';
+import { diskActions } from './diskChanges';
+import { editActions } from './nodeEdits';
+import { goingIn, handoffActions, isHanding, serverHoldsAnother } from './handoff';
 import type { TextChange } from '../../../backend/app/api.ts';
-import { NESTED_GRAPH_FIELD } from '../../../backend/app/project/changes.ts';
-import { withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
-import { freeId, slugOf } from '../document/ids';
-import { makeRoom } from '../document/placement';
-import { graphEdge } from '../document/wires';
 import { wireOf } from '../../../backend/app/project/flow.ts';
-
-type RFNode = Node<RFNodeData>;
 
 export interface GraphStore {
   // ReactFlow state
@@ -282,45 +273,6 @@ export interface GraphStore {
   followRound: (round: RoundSnapshot) => void;
 }
 
-/** Whether a wire dropped on *node* becomes a new input of it: a code or AI node, whose inputs are its own to name. */
-export function takesNewInputs(node: GraphNode): boolean {
-  return derivedNodePorts(node) === null && runnerRegistry.node(node.node_type)?.readsFileInputs === true;
-}
-
-/**
- * The id of *node*'s one input where it is still the input its kind made it
- * with and nothing uses it: no wire into it (*wired*), and nothing written
- * that reads it -- an input definition, a body. A wire dropped on the node
- * takes its place: kept, it stood empty -- "prompt" beside the input the
- * wire made, "needed" by nothing and fed by nothing.
- */
-export function untouchedInput(node: GraphNode, wired: boolean): string | undefined {
-  const [only, ...more] = node.inputs;
-  const [made, ...madeMore] = NODE_KINDS[node.node_type]?.create(node.id).inputs ?? [];
-  if (!only || more.length || wired || !made || madeMore.length) return undefined;
-  if (only.id !== made.id || only.name !== made.name || only.data_type !== made.data_type || only.multi !== made.multi || only.field) return undefined;
-  const element = runnerRegistry.node(node.node_type);
-  const body = element?.generation()?.fields.body;
-  const written = !!element?.definitions(node as never)?.input.trim() || (!!body && !!String(node.config[body as keyof typeof node.config] ?? '').trim());
-  return written ? undefined : only.id;
-}
-
-/**
- * Which document the server's session holds -- the `opened` count when it was
- * handed over -- and which session that is: a round is shown only on the
- * document it ran, and another session is listened to anew.
- */
-let heldOpened: number | null = null;
-let heldSession: string | null = null;
-/** While a document is being handed over: the session the server tells meanwhile is the one this asks for. */
-let handing = false;
-
-/** Whether the session the server says it holds is another than the one this editor's document was handed to. */
-const serverHoldsAnother = (): boolean => {
-  const told = useSession.getState().view?.session;
-  return !!told && !!heldSession && told !== heldSession;
-};
-
 /**
  * What `isDirty` last answered, and the parts of the store it was worked out
  * from. The header asks on every change of the store -- a tick of a run, a
@@ -368,188 +320,6 @@ export const useGraphStore = create<GraphStore>()(
         state.currentFilePath = path;
         state.isProject = path !== null && isProject;
       }),
-
-    addNode: (nodeType, position, fill, step) => {
-      get().commit(step);
-      const kind = NODE_KINDS[nodeType];
-      const id = freeId(kind.idBase ?? nodeType, get().rfNodes.map((existing) => existing.id));
-      // Inside a graph a node holds, a node may start otherwise (`placedInside`).
-      const made = get().subgraphStack.length ? kind.placedInside?.(kind.create(id)) ?? kind.create(id) : kind.create(id);
-      const defaults = kind.placedAmong?.(made, get().rfNodes.map((existing: RFNode) => existing.data.graphNode)) ?? made;
-      const rfNode: Node<RFNodeData> = {
-        id,
-        type: 'graphNode',
-        position,
-        data: { graphNode: fill ? fill(defaults) : defaults },
-      };
-      const aside = new Map(makeRoom(get().rfNodes, position).map((move) => [move.id, move.x]));
-      set((state) => {
-        // The one marked, as its panel is the one open: the node selected before stayed lit beside it.
-        for (const node of state.rfNodes) {
-          if (node.selected) node.selected = false;
-          const x = aside.get(node.id);
-          if (x !== undefined) node.position = { ...node.position, x };
-        }
-        state.rfNodes.push({ ...rfNode, selected: true } as never);
-      });
-      return id;
-    },
-
-    connect: (wire, coalesce) => {
-      // Named the way flow.json writes a wire, and known by its two ends: a
-      // graph pasted in or designed by ✨ may call its wires anything.
-      const id = wireOf(graphEdge(wire));
-      const joins = (edge: Edge): boolean => edge.source === wire.source && edge.target === wire.target
-        && (edge.sourceHandle ?? '') === (wire.sourceHandle ?? '') && (edge.targetHandle ?? '') === (wire.targetHandle ?? '');
-      if (get().rfEdges.some(joins)) return;
-      get().commit(coalesce);
-      const target = (state: GraphStore) => state.rfNodes.find((node: RFNode) => node.id === wire.target)?.data.graphNode as GraphNode | undefined;
-      set((state) => {
-        state.rfEdges.push({ ...wire, id } as never);
-
-        // A wire from a port that carries file paths -- a picker, a folder --
-        // ticks "Read the file at this path" on the input it ends on: the port
-        // is typed `file_path`, and a code or AI node is handed the file's
-        // text there. Its ports can untick it; this is so that nobody has to say
-        // it, because the wire already did and a graph wired without it
-        // summarised the file's *name*. The run itself asks only the port.
-        const portOf = (nodeId: string, side: 'inputs' | 'outputs', portId: string) => state.rfNodes
-          .find((node: RFNode) => node.id === nodeId)?.data.graphNode[side].find((port) => port.id === portId);
-        const from = portOf(wire.source, 'outputs', wire.sourceHandle);
-        const to = portOf(wire.target, 'inputs', wire.targetHandle);
-        const source = state.rfNodes.find((node: RFNode) => node.id === wire.source)?.data.graphNode as GraphNode | undefined;
-        const own = !!target(state) && derivedNodePorts(target(state)!) === null;
-        // From a start point the page sends one block to: the input takes
-        // what that block sends, typed as it says -- a text, a folder's files
-        // -- rather than the whole package; from one a call starts, the part of
-        // its example the input is named after, or its one part. A port that
-        // follows from its node's settings takes the part and keeps its type.
-        // Its ports can say otherwise.
-        const sent = source && to && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(state.page as GuiWidget[], source, to) : undefined;
-        if (sent && to && !to.field) Object.assign(to, takenAs(to, sent.choice, own));
-        // Only on a node that reads its files (`readsFileInputs`): a data node
-        // or an end point takes a path as a path, and was retyped all the
-        // same. And not on one whose ports follow from its settings: those are
-        // recomputed.
-        const into = target(state);
-        const reads = !!into && runnerRegistry.node(into.node_type)?.readsFileInputs === true && derivedNodePorts(into) === null;
-        // Only a port with nobody's word on it. A port typed `text` said what it
-        // wants -- a file reader takes the same picker twice, one to read and one
-        // to keep the name -- and a run reads it the same way
-        // (`execution/fileInputs.ts`: the target's own type wins).
-        if (reads && from?.data_type === 'file_path' && to && to.data_type === 'any') {
-          to.data_type = 'file_path';
-          if (from.multi) to.multi = true;
-        }
-        // A list wired into what an end point hands back is a list it hands
-        // back: so the graph's interface says, and a block that shows it.
-        const result = !!into && runnerRegistry.node(into.node_type)?.isResult === true
-          && runnerRegistry.node(into.node_type)!.valuePorts(into as never).some((port) => port.id === to?.id);
-        if (result && from?.multi && to) to.multi = true;
-      });
-    },
-
-    addNodeFrom: (nodeType, position, from) => {
-      // The node and its wire are one change: undone, both go.
-      const step = `add ${nodeType} from ${from.source}.${from.sourceHandle}`;
-      const id = get().addNode(nodeType, position, undefined, step);
-      if (get().connectToNewInput({ ...from, target: id }, step)) return id;
-      const first = (get().rfNodes.find((node: RFNode) => node.id === id)?.data.graphNode as GraphNode | undefined)?.inputs[0];
-      if (first) get().connect({ ...from, target: id, targetHandle: first.id }, step);
-      return id;
-    },
-
-    connectToNewInput: (wire, coalesce) => {
-      const nodeOf = (id: string) => get().rfNodes.find((node: RFNode) => node.id === id)?.data.graphNode as GraphNode | undefined;
-      const target = nodeOf(wire.target);
-      if (!target || wire.target === wire.source || !takesNewInputs(target)) return false;
-      const source = nodeOf(wire.source);
-      const from = source?.outputs.find((port) => port.id === wire.sourceHandle);
-      // From a start point the page sends one block to: named after that block.
-      const sent = source && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(get().page, source) : undefined;
-      // From a node with one output, named after that node: a judge's inputs
-      // were "output" and "output2", beside its own output "output".
-      const one = source && source.outputs.filter((port) => port.id !== ERROR_PORT).length === 1 ? source.label : undefined;
-      const name = sent?.name || one || from?.name || wire.sourceHandle;
-      // In place of the input the node was made with, while nothing uses it.
-      const replaced = untouchedInput(target, get().rfEdges.some((edge: Edge) => edge.target === target.id && edge.targetHandle === target.inputs[0]?.id));
-      const kept = target.inputs.filter((port) => port.id !== replaced);
-      // An id a body can use as a key.
-      const id = freeId(slugOf(name).replace(/-/g, '_') || 'input', kept.map((port) => port.id), '');
-      // The port and its wire are one step: undone, the port goes with the wire.
-      const step = coalesce ?? `new input ${target.id}.${id}`;
-      get().updateNode(target.id, {
-        inputs: [...kept, { id, name, kind: 'input', data_type: 'any', multi: false, required: false, description: '' }],
-      }, undefined, step);
-      get().connect({ ...wire, targetHandle: id }, step);
-      return true;
-    },
-
-    updateNode: (nodeId, updates, renamed, coalesce) => {
-      get().commit(coalesce);
-      set((state) => {
-        const idx = state.rfNodes.findIndex((n: RFNode) => n.id === nodeId);
-        if (idx !== -1) {
-          const existing = state.rfNodes[idx].data.graphNode;
-          const updated = { ...existing, ...updates } as GraphNode;
-          state.rfNodes[idx].data.graphNode = updated;
-
-          // A port that was renamed keeps its wires. Without this the rename
-          // would look like "the old port is gone" to the pruning below, and
-          // renaming `input` to `csv` would quietly cut the graph in half. A
-          // port that was removed loses them here, by name, because the
-          // pruning below cannot tell it from a new port given the same name.
-          if (renamed) {
-            const fate = (map: Record<string, string | null>, handle: string | null | undefined) =>
-              (handle && Object.prototype.hasOwnProperty.call(map, handle) ? map[handle] : undefined);
-            const cut = new Set<Edge>();
-            for (const edge of state.rfEdges as Edge[]) {
-              const into = edge.target === nodeId ? fate(renamed.inputs, edge.targetHandle) : undefined;
-              const from = edge.source === nodeId ? fate(renamed.outputs, edge.sourceHandle) : undefined;
-              if (into === null || from === null) { cut.add(edge); continue; }
-              if (into) edge.targetHandle = into;
-              if (from) edge.sourceHandle = from;
-              // Named after its ends, as `connect` names a wire: left at the old name, it was a
-              // second wire's name too once a new port took the old one.
-              if (into || from) edge.id = wireOf(graphEdge(edge));
-            }
-            if (cut.size) state.rfEdges = state.rfEdges.filter((edge: Edge) => !cut.has(edge));
-          }
-
-          // Ports may have shrunk (an output.js that names fewer) -- prune any
-          // edges that now dangle off a port id that no longer exists,
-          // mirroring the edge cleanup deleteNodes already does.
-          if (updates.inputs || updates.outputs) {
-            const inputIds = new Set(updated.inputs.map((p) => p.id));
-            const outputIds = new Set(updated.outputs.map((p) => p.id));
-            state.rfEdges = state.rfEdges.filter((e: Edge) => {
-              // The run port is every node's and nobody's: it is never in the list.
-              if (e.target === nodeId && e.targetHandle && e.targetHandle !== RUN_PORT && !inputIds.has(e.targetHandle)) return false;
-              if (e.source === nodeId && e.sourceHandle && !outputIds.has(e.sourceHandle)) return false;
-              return true;
-            });
-          }
-        }
-      });
-    },
-
-    deleteNodes: (nodeIds, wireIds = []) => {
-      const going = new Set(nodeIds);
-      const cut = new Set(wireIds);
-      get().commit();
-      set((state) => {
-        state.rfNodes = state.rfNodes.filter((n: RFNode) => !going.has(n.id));
-        state.rfEdges = state.rfEdges.filter(
-          (e: Edge) => !cut.has(e.id) && !going.has(e.source) && !going.has(e.target)
-        );
-        // A block connected to a point that went loses that connection with
-        // it: left naming it, the block fires and shows nothing.
-        state.page = withoutPoints(state.page as GuiWidget[], nodeIds) as never;
-        // A panel open on a node that went closes with it: left pointing at
-        // the id, it opened again on the next node of that id.
-        if (state.editingNodeId && going.has(state.editingNodeId)) state.editingNodeId = null;
-      });
-    },
 
     setRFNodes: (nodes) =>
       set((state) => {
@@ -636,78 +406,16 @@ export const useGraphStore = create<GraphStore>()(
 
     newGraph: () => get().loadGraph({ metadata: defaultMetadata(), nodes: [], edges: [] }),
 
-    openSubgraph: (nodeId) => {
-      // Not while a run is in flight: its result is about to arrive, and it
-      // would arrive at a canvas showing a different graph, where node ids
-      // that happen to match would be given another level's values.
-      if (goingRound()) return;
-      const node = get().rfNodes.find((n: RFNode) => n.id === nodeId)?.data.graphNode;
-      // Whether there is a graph to go into is the same question as whether
-      // this node holds one, so it is asked once. A `NodeGuiBuilder.opensNestedGraph`
-      // beside it said the same thing a line earlier.
-      const held = node && runnerRegistry.node(node.node_type)?.nestedGraph(node as never) as Graph | null;
-      if (!held) return;
-
-      const frame = { nodeId, graph: get().exportGraph(), past: get().past, future: get().future };
-      // Not `loadGraph`: that is for opening a different *document*, and would
-      // throw away the frames this one is inside. What changes here is which
-      // level the canvas shows.
-      get().applyGraphSnapshot(JSON.stringify(held));
-      set((state) => {
-        state.subgraphStack.push(frame);
-        // Its own level, its own history: an undo in here cannot reach out.
-        state.past = [];
-        state.future = [];
-        state.document += 1;
-      });
-    },
-
-    closeSubgraph: () => {
-      if (goingRound()) return;
-      const { subgraphStack } = get();
-      const frame = subgraphStack[subgraphStack.length - 1];
-      if (!frame) return;
-      const inner = get().exportGraph();
-      const merged = withNested(frame.graph, frame.nodeId, inner);
-      const before = JSON.stringify(frame.graph);
-      const changed = JSON.stringify(merged) !== before;
-
-      get().applyGraphSnapshot(JSON.stringify(merged));
-      set((state) => {
-        state.subgraphStack.pop();
-        // Everything done in there is one step out here, like any other change
-        // to this node. Without it the first Ctrl+Z after coming out would
-        // restore the graph as it was before going in -- an hour of work, one
-        // keystroke, and nothing to say it was about to happen.
-        state.past = changed ? [...frame.past, before].slice(-HISTORY_LIMIT) : frame.past;
-        state.future = changed ? [] : frame.future;
-        state.document += 1;
-      });
-    },
-
-    closeSubgraphsTo: (depth) => {
-      while (get().subgraphStack.length > depth) {
-        const before = get().subgraphStack.length;
-        get().closeSubgraph();
-        if (get().subgraphStack.length === before) return;
-      }
-    },
-
-    rootGraph: () => {
-      const { subgraphStack } = get();
-      let graph = get().exportGraph();
-      for (let level = subgraphStack.length - 1; level >= 0; level -= 1) {
-        graph = withNested(subgraphStack[level].graph, subgraphStack[level].nodeId, graph);
-      }
-      return graph;
-    },
-
     exportGraph: () => {
       const { rfNodes, rfEdges, metadata, page } = get();
       return exported(rfNodes as never, rfEdges, metadata, page as never);
     },
 
     ...historyActions(set, get),
+    ...editActions(set, get),
+    ...subgraphActions(set, get),
+    ...diskActions(set, get),
+    ...handoffActions(set, get),
 
     isDirty: () => {
       const { rfNodes, rfEdges, metadata, page, subgraphStack, savedSnapshot } = get();
@@ -722,50 +430,6 @@ export const useGraphStore = create<GraphStore>()(
       return dirty;
     },
 
-    takeDiskChanges: (changes) => {
-      const wasClean = !get().isDirty();
-      const nodeOf = (id: string | null) => (id === null ? undefined : get().rfNodes.find((n: RFNode) => n.id === id)?.data.graphNode);
-      // A whole graph a node holds, changed in its own folder, is taken only
-      // into a document with nothing unsaved in it: unlike a text, which
-      // patches one field, it replaces every node, edge and position in that
-      // graph. Over unsaved work it would be silent and total, so it is left
-      // on disk and said out loud instead.
-      const refused = changes.filter((change) => change.field === NESTED_GRAPH_FIELD && !wasClean && nodeOf(change.node_id))
-        .map((change) => change.node_id!);
-      // What is taken: a change to a node that is here, or to the page, which
-      // changes it. The step was taken first, and was an empty one -- Redo
-      // thrown away -- when every change was refused, for a node gone, or what
-      // the node held.
-      const taken = changes.filter((change) => {
-        // The page's own text, page.json: its blocks. Only at the top: a graph inside a node has none.
-        if (change.node_id === null) return !get().subgraphStack.length && JSON.stringify(get().page) !== JSON.stringify(change.value ?? []);
-        const node = nodeOf(change.node_id);
-        if (!node) return false;
-        if (change.field === NESTED_GRAPH_FIELD) return wasClean;
-        return JSON.stringify((node.config as unknown as Record<string, unknown>)[change.field]) !== JSON.stringify(change.value);
-      });
-      if (!taken.length) return { taken: [], refused };
-      // Not an undo step: it is in every state Undo and Redo go to, so that no
-      // Undo brings the old text back to be saved over what the other editor wrote.
-      endCoalescing();
-      set((state) => {
-        for (const change of taken) {
-          if (change.node_id === null) state.page = pageOf(change) as never;
-          else takeIn(state.rfNodes.find((n: RFNode) => n.id === change.node_id)!.data.graphNode, change);
-        }
-        const touched = new Set(taken.flatMap((change) => change.node_id ?? []));
-        const nodes = state.rfNodes.map((n: RFNode) => n.data.graphNode);
-        state.rfEdges = state.rfEdges.filter((edge: Edge) => !lostWire(nodes, graphEdge(edge), touched));
-        state.past = state.past.map((snapshot) => withDiskChanges(snapshot, taken));
-        state.future = state.future.map((snapshot) => withDiskChanges(snapshot, taken));
-        // What is on disk is saved: with unsaved work here, the saved state has it too, so only that work is unsaved.
-        if (!wasClean && state.savedSnapshot !== null) state.savedSnapshot = withDiskChanges(state.savedSnapshot, taken);
-      });
-      if (wasClean) get().markSaved();
-      // Said by what changed: a node by its id, the page as "page".
-      return { taken: [...new Set(taken.map((change) => change.node_id ?? 'page'))], refused };
-    },
-
     markSaved: () => {
       const snapshot = JSON.stringify(get().rootGraph());
       set((state) => {
@@ -775,6 +439,7 @@ export const useGraphStore = create<GraphStore>()(
 
     save: async (path = get().currentFilePath ?? undefined, { replace = false, name } = {}) => {
       if (!path) throw new Error('This graph has no file yet: use Save As.');
+      flushPanels();
       const root = get().rootGraph();
       const graph = name ? { ...root, metadata: { ...root.metadata, name } } : root;
       const result = await call('saveGraph', { path, graph, replace: replace || path === get().currentFilePath });
@@ -790,46 +455,6 @@ export const useGraphStore = create<GraphStore>()(
       return { path: result.path };
     },
 
-    holdDocument: async () => {
-      const { opened, currentFilePath, rootGraph } = get();
-      // Another document: none of the sessions held for the one before is its.
-      if (heldOpened !== opened) heldSession = null;
-      handing = true;
-      let session: string;
-      try {
-        ({ session } = await call('holdGraph', { graph: withoutAuthoring(rootGraph()), path: currentFilePath, session: heldSession }));
-      } finally {
-        handing = false;
-      }
-      heldOpened = opened;
-      if (get().heldElsewhere) set((state) => { state.heldElsewhere = false; });
-      if (session !== heldSession) {
-        heldSession = session;
-        watchSession();
-      }
-    },
-
-    followRound: (round) => {
-      // Another document is open now. Its nodes may share that one's ids, and
-      // what that round made is not theirs.
-      if (heldOpened !== get().opened) return;
-      // Another tab's document: the server holds one session, and that round is of its graph.
-      if (serverHoldsAnother()) return;
-      if (!round.done) return;
-      set((state) => {
-        const made: ExecutionResult = round.result ?? {
-          status: round.cancelled ? 'cancelled' : 'error',
-          node_results: [],
-          outputs: {},
-          error: round.error ?? 'The run ended without a result.',
-        };
-        // A round an event started ran part of the graph, so what the rest of
-        // the page shows is still true and stays: pressing "Plot" must not
-        // blank the summary beside it. A whole round starts from a clean slate.
-        const shown = state.executionResult as ExecutionResult | null;
-        state.executionResult = (shown && round.started ? mergeResults(shown, made) : made) as never;
-      });
-    },
   }))
 );
 
@@ -840,21 +465,20 @@ export const useGraphStore = create<GraphStore>()(
  * whose round is not this one's.
  */
 export function goingRound(): RoundSnapshot | null {
-  const { round } = useSession.getState();
-  return round && !round.done && !useGraphStore.getState().heldElsewhere ? round : null;
+  return goingIn(useGraphStore.getState().heldElsewhere);
 }
 
 /** `goingRound`, drawn anew as it starts, goes on and ends. */
 export function useGoingRound(): RoundSnapshot | null {
   const round = useSession((s) => s.round);
   const elsewhere = useGraphStore((s) => s.heldElsewhere);
-  return round && !round.done && !elsewhere ? round : null;
+  return goingIn(elsewhere) && round;
 }
 
 // Every round of the session the editor's document is held in, from whichever
 // page or clock started it: the canvas and the toolbar follow it.
 useSession.subscribe((state, before) => {
-  if (state.view?.session !== before.view?.session && !handing && serverHoldsAnother()) {
+  if (state.view?.session !== before.view?.session && !isHanding() && serverHoldsAnother()) {
     useGraphStore.setState({ heldElsewhere: true });
   }
   if (state.round && state.round !== before.round) useGraphStore.getState().followRound(state.round);

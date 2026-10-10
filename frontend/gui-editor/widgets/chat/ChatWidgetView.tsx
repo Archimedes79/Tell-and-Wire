@@ -9,11 +9,9 @@ import { chatValue, type ChatMessage, type ChatValue } from '../../../../backend
  * Runtime chat widget: the conversation, and the box that continues it.
  *
  * **What is typed is the block's value**, as it is for every other box on a
- * page -- `pending`, the message nobody has answered yet. It used to live in
- * this component until Send was pressed, which made Send the only way to say
- * anything: ▶ Run, the graph's clock and a button wired elsewhere all ran the
- * graph with an empty message while the sentence sat in a text box the graph
- * could not see. Now every way of running sends what is there.
+ * page -- `pending`, the message nobody has answered yet. So every way of
+ * running -- Send, ▶ Run, the graph's clock, a button wired elsewhere -- sends
+ * what is there.
  *
  * The turn is written into the transcript when the answer arrives (the
  * backend's `ChatWidgetRunner.settle`), which also empties `pending`. A run that
@@ -25,13 +23,17 @@ export default function ChatWidgetView({ value, onChange, onTrigger, busy, contr
   // While its answer is on the way the message is shown as said, not as being typed.
   const sending = busy === true && pending.trim() !== '';
 
-  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }); }, [messages.length, sending]);
+  // Follow the conversation as it grows -- not on first draw, which would scroll the whole page to the chat.
+  const drawn = useRef(false);
+  useEffect(() => {
+    if (drawn.current) end.current?.scrollIntoView({ block: 'nearest' });
+    drawn.current = true;
+  }, [messages.length, sending]);
 
   const send = () => {
     if (busy || !pending.trim()) return;
     const next: ChatValue = { messages, pending: pending.trim() };
-    if (onTrigger) onTrigger(next);
-    else onChange(next);
+    onTrigger(next);
   };
 
   const bubble = (message: ChatMessage, key: React.Key) => (
@@ -73,7 +75,8 @@ export default function ChatWidgetView({ value, onChange, onTrigger, busy, contr
           className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm resize-none"
           style={{ ...FIELD, height: 40 }}
           value={sending ? '' : pending}
-          disabled={sending}
+          readOnly={sending}
+          aria-busy={sending}
           onChange={(e) => onChange({ messages, pending: e.target.value })}
           onKeyDown={(e) => {
             // Enter that ends an input method's composition is not Enter.

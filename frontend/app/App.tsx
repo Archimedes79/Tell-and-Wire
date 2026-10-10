@@ -272,6 +272,9 @@ export default function App() {
     }
   };
 
+  // The handlers below are drawn anew with every render: the window's listeners are set once and ask the latest.
+  const drops = useRef({ dropToolFolder, dropGraphFile });
+  drops.current = { dropToolFolder, dropGraphFile };
   useEffect(() => {
     const onDragOver = (event: DragEvent) => {
       if (!event.dataTransfer?.types.includes('Files')) return;
@@ -287,8 +290,8 @@ export default function App() {
       // One dropped into a code box arrives, and its editor has typed it in.
       if (landedInCodeField(event.target)) return;
       // Only answerable while the event lasts: afterwards the item is gone.
-      if (event.dataTransfer?.items?.[0]?.webkitGetAsEntry()?.isDirectory) void dropToolFolder(file.name);
-      else void dropGraphFile(file);
+      if (event.dataTransfer?.items?.[0]?.webkitGetAsEntry()?.isDirectory) void drops.current.dropToolFolder(file.name);
+      else void drops.current.dropGraphFile(file);
     };
     window.addEventListener('dragover', onDragOver);
     window.addEventListener('drop', onDrop);
@@ -296,7 +299,7 @@ export default function App() {
       window.removeEventListener('dragover', onDragOver);
       window.removeEventListener('drop', onDrop);
     };
-  });
+  }, []);
 
   // Add a node from a palette click: beside what is already there, and chosen
   // -- a double-click opens it. The canvas brings it into sight (`viewDue`).
@@ -369,6 +372,8 @@ export default function App() {
 
   // Ctrl/Cmd+S, because the only other way to save is a trip to the toolbar,
   // and Ctrl/Cmd+Z / Shift+Z / Y for undo and redo.
+  const saveNow = useRef(saveTool);
+  saveNow.current = saveTool;
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey)) return;
@@ -376,7 +381,7 @@ export default function App() {
 
       if (key === 's') {
         event.preventDefault();
-        void saveTool();
+        void saveNow.current();
         return;
       }
 
@@ -399,7 +404,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  });
+  }, []);
 
   return (
     <ReactFlowProvider>

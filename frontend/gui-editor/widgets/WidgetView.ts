@@ -30,7 +30,7 @@ export interface WidgetViewProps {
    * a run that started from the stored value would send the message minus its
    * final letter.
    */
-  onTrigger?: (value?: unknown) => void;
+  onTrigger: (value?: unknown) => void;
   /**
    * Using this block starts a round, so it waits while one is going. Said by
    * whoever draws the page: a delivered tool by the graph's events, which it

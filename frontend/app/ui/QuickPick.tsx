@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import { ACCENT, ACCENT_FILL, DIMMER, FIELD, LINE, MUTED, SURFACE, TEXT } from './theme';
 
 /** One thing the pick offers: what it is called, its icon, and the other words it is found by. */
-export interface PickEntry {
+interface PickEntry {
   label: string;
   icon: LucideIcon;
   /** Other words someone might type for it. */

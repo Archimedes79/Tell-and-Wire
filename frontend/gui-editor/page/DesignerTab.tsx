@@ -31,7 +31,7 @@ export default function DesignerTab() {
   // the round is sent what this page shows -- its design, set here.
   const round = useRound(
     () => useGraphStore.getState().holdDocument(),
-    () => Object.fromEntries(widgets
+    () => Object.fromEntries(useGraphStore.getState().page
       .filter((widget) => widgetTakesValue(widget) && widgetValueIsDesign(widget) && widget.value !== undefined)
       .map((widget) => [widget.id, widget.value])),
   );
@@ -103,10 +103,8 @@ export default function DesignerTab() {
    * reorder uses them: this way it works inside live inputs, it can be tested,
    * and the element lands **where you let go** instead of always at the end.
    *
-   * The drop target is the whole page column, not the grid. The grid is only as
-   * tall as its contents, which on an empty page is zero pixels -- so the first
-   * element anyone ever tried to drag had to be released on an invisible line,
-   * and the gesture looked broken exactly when it mattered most.
+   * The drop target is the whole page column, not the grid: the grid is only as
+   * tall as its contents, which on an empty page is zero pixels.
    */
   const [dragEntry, setDragEntry] = useState<PaletteEntry | null>(null);
   const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null);
@@ -119,8 +117,8 @@ export default function DesignerTab() {
     const box = zone.getBoundingClientRect();
     if (event.clientX < box.left || event.clientX > box.right
         || event.clientY < box.top || event.clientY > box.bottom) return null;
-    const grid = zone.querySelector('[data-gui-surface]');
-    const children = grid ? [...grid.children] : [];
+    // Only the blocks: the grid also holds the insertion line, the `/` menu and the add button.
+    const children = [...zone.querySelectorAll('[data-gui-surface] > [data-block]')];
     for (let i = 0; i < children.length; i += 1) {
       const rect = children[i].getBoundingClientRect();
       // Before the first block whose middle is past the pointer: on a page that
@@ -158,9 +156,8 @@ export default function DesignerTab() {
     if (selected) moveBlock(selected.id, selectedIndex + delta);
   };
 
-  const removeSelected = () => {
-    if (!selected) return;
-    removeBlock(selected.id);
+  const remove = (id: string) => {
+    removeBlock(id);
     setSelectedId(null);
   };
 
@@ -182,7 +179,7 @@ export default function DesignerTab() {
       if (!selectedId) return;
       if (event.key === 'Delete') {
         event.preventDefault();
-        removeSelected();
+        remove(selectedId);
       } else if (event.ctrlKey && event.key === 'ArrowUp') {
         event.preventDefault();
         moveSelected(-1);
@@ -248,6 +245,7 @@ export default function DesignerTab() {
             onWidgetTrigger={fire}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onRemove={remove}
             overrides={overrides}
             insertAt={insertAt}
             onInsertAt={setInsertAt}

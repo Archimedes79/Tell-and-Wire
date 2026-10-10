@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
-import type { GraphNode } from '../../app/graph';
-import { GuiSurfacePage } from './GuiPage';
-import { connectionsOf, pageInUse } from './pageInUse';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import type { GraphNode, GuiWidget } from '../../app/graph';
+import LivePage from './LivePage';
+import { connectionsOf } from './pageInUse';
 import { useRound } from './useRound';
 import DeliveredHeader from './DeliveredHeader';
 import CallForms from './CallForms';
@@ -10,7 +10,7 @@ import KeptFold from './KeptFold';
 import RequirementsDialog from '../../app/dialogs/RequirementsDialog';
 import { useGraphStore } from '../../app/store/graphStore';
 import { graphEdge } from '../../app/document/wires';
-import { roundGoing, setEdit, startOver, useSession } from '../../app/api/session';
+import { roundGoing, startOver, useSession } from '../../app/api/session';
 import { errorText } from '../../app/api/errorText';
 import { call } from '../../app/api/client';
 import { interfaceOf } from '../../../backend/gui-editor/graphInterface.ts';
@@ -60,20 +60,24 @@ export default function ApplicationView() {
   // page without blocks shows -- the outputs, under their labels.
   const offered = useMemo(() => interfaceOf(graph, runnerRegistry), [graph]);
   const called = offered.events.some((event) => event.started_by === 'call');
-  const session = useSession();
+  const current = useSession((s) => s.round);
+  const view = useSession((s) => s.view);
+  const busy = useSession(roundGoing);
   const round = useRound(holdDocument);
+  const latest = useRef(round);
+  latest.current = round;
   // What the last round did, and why each node that did not run did not -- by the names on the canvas.
   const nameOf = (id: string): string => {
     const node = nodes.find((one) => one.id === id)?.data.graphNode as GraphNode | undefined;
     return node?.label || widgets.find((block) => block.id === id)?.label || id;
   };
-  const explained = roundExplained(session.round, nameOf);
+  const explained = roundExplained(current, nameOf);
   // A round that went as it should, kept as a test of the tool: run again by `test`, asking no model.
   const project = useGraphStore((s) => (s.isProject ? s.currentFilePath : null));
   const [keeping, setKeeping] = useState<{ round: string; said: string } | null>(null);
-  const keepable = !!project && session.round?.done && session.round.result?.status === 'success';
+  const keepable = !!project && current?.done && current.result?.status === 'success';
   const keep = async () => {
-    const id = session.round!.round_id;
+    const id = current!.round_id;
     setKeeping({ round: id, said: 'Keeping…' });
     try {
       const { file } = await call('keepRound', { id, path: project! });
@@ -103,22 +107,24 @@ export default function ApplicationView() {
     }
   };
 
-  const design = {
+  const empty = nodes.length === 0;
+  const design = useMemo(() => ({
     name: metadata.name,
     description: metadata.description,
     scheme: metadata.gui_scheme,
     blocks: widgets,
     ...connectionsOf(offered.events),
     outputs: offered.outputs.map(({ name, label }) => ({ name, label })),
-    empty: nodes.length === 0,
-  };
+    empty,
+  }), [metadata, widgets, offered, empty]);
+  const fire = useCallback((block: GuiWidget) => { void latest.current.run(design.fires[block.id], block.id); }, [design]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden" style={{ ...schemeVars(metadata.gui_scheme), background: SUNKEN }}>
       <DeliveredHeader
         name={metadata.name}
         description={metadata.description}
-        round={session.round}
+        round={current}
         tools={(
           <>
             {opening && opening !== 'Opening…' && (
@@ -153,31 +159,27 @@ export default function ApplicationView() {
             {explained.line}
           </span>
         )}
-        {keepable && keeping?.round !== session.round!.round_id && (
+        {keepable && keeping?.round !== current!.round_id && (
           <Button size="sm" className="shrink-0" onClick={() => { void keep(); }}
             title="Keep this run as a test of the tool: what it was sent, what its models answered and what came back, in tests/ -- run again by test, asking no model">
             Keep as a test
           </Button>
         )}
-        {keeping && keeping.round === session.round?.round_id && (
+        {keeping && keeping.round === current?.round_id && (
           <span className="text-xs shrink-0" style={{ color: DIMMER }}>{keeping.said}</span>
         )}
       </div>
 
-      <KeptFold kept={session.view?.kept} nameOf={nameOf} busy={roundGoing(session)} onStartOver={() => { void startOver(); }} />
+      <KeptFold kept={view?.kept} nameOf={nameOf} busy={busy} onStartOver={() => { void startOver(); }} />
 
       <CallForms
         events={offered.events}
-        sent={session.view?.sent ?? {}}
-        busy={roundGoing(session)}
+        sent={view?.sent ?? {}}
+        busy={busy}
         onCall={(event, values) => { void round.run(event, undefined, values); }}
       />
 
-      <GuiSurfacePage
-        page={pageInUse(design, session)}
-        onValue={(block, value) => setEdit(block.id, value)}
-        onEvent={(block) => { void round.run(design.fires[block.id], block.id); }}
-      />
+      <LivePage design={design} onEvent={fire} />
 
       <RequirementsDialog
         requirements={round.requirements}

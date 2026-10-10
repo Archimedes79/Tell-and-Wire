@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useGraphStore } from './store/graphStore';
+import { flushPanels } from './store/flushPanels';
 import Button from './ui/Button';
 import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
 import GraphProblems from './GraphProblems';
@@ -45,6 +46,7 @@ export default function ChangeBar() {
     if (!words || asking) return;
     setText('');
     setApplied(null);
+    flushPanels();
     // The words go back where they were, to be sent again or said otherwise.
     if (await send(words, words, useGraphStore.getState().exportGraph()) === 'failed') setText(words);
   };

@@ -13,10 +13,10 @@
 
 import type {
   DataType, ExecutionResult, Graph as FormatGraph, GraphEdge, GraphMetadata as FormatMetadata,
-  GraphNode as FormatNode, NodeResult, NodeType, Port, PortKind, WidgetKind,
+  GraphNode as FormatNode, NodeResult, NodeType, Port, WidgetKind,
 } from '../../graph/graph.ts';
 
-export type { DataType, FormatGraph, ExecutionResult, GraphEdge, NodeResult, NodeType, Port, PortKind, WidgetKind };
+export type { DataType, FormatGraph, ExecutionResult, GraphEdge, NodeResult, NodeType, Port, WidgetKind };
 
 /**
  * An edge as the canvas holds it, which port of which node feeds which: the
@@ -40,7 +40,7 @@ export interface Graph {
 }
 
 /** A page: its blocks, in order. One with none is no page. */
-export interface Page {
+interface Page {
   blocks: GuiWidget[];
 }
 

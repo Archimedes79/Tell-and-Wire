@@ -24,16 +24,16 @@ export default function PlotWindowWidgetView({ widget, value, incoming }: Widget
    * for axes and drew none. `getBoundingClientRect` in a layout effect reads
    * the size that is actually on screen.
    */
+  const measure = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1) return;
+    setSize((was) => (Math.round(box.width) === was.width && Math.round(box.height) === was.height
+      ? was
+      : { width: Math.round(box.width), height: Math.round(box.height) }));
+  };
   useLayoutEffect(() => {
-    const measure = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const box = el.getBoundingClientRect();
-      if (box.width < 1 || box.height < 1) return;
-      setSize((was) => (Math.round(box.width) === was.width && Math.round(box.height) === was.height
-        ? was
-        : { width: Math.round(box.width), height: Math.round(box.height) }));
-    };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
@@ -44,16 +44,7 @@ export default function PlotWindowWidgetView({ widget, value, incoming }: Widget
   // A block that was hidden when it first rendered -- a page tab not yet
   // shown -- has no size until it appears, and new data is the moment it
   // usually has.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const box = el.getBoundingClientRect();
-    if (box.width >= 1 && box.height >= 1) {
-      setSize((was) => (Math.round(box.width) === was.width && Math.round(box.height) === was.height
-        ? was
-        : { width: Math.round(box.width), height: Math.round(box.height) }));
-    }
-  }, [data]);
+  useEffect(measure, [data]);
 
   const save = () => {
     // A finished drawing is saved as it arrived; a figure as it is drawn.

@@ -149,7 +149,7 @@ export function computeAxisRange(values: number[]): { min: number; max: number; 
  * An axis whose labels do not fit is an axis that hides the chart, and the
  * numbers plotted are often large.
  */
-export function axisLabel(value: number): string {
+function axisLabel(value: number): string {
   const abs = Math.abs(value);
   // Billions and trillions as English says them: "1.4G" read as gigabytes beside a population.
   const units: [number, string][] = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'k']];
@@ -172,7 +172,7 @@ export function axisLabel(value: number): string {
  * `1.4B` and `128,500` do not need the same room, and an axis that guesses one
  * width for both either crops the long one or wastes the short one's space.
  */
-export function chartMargins(width: number, height: number, longestLabel = 3) {
+function chartMargins(width: number, height: number, longestLabel = 3) {
   const labelled = width >= 160 && height >= 80;
   if (!labelled) return { left: 6, right: 6, top: 6, bottom: 6, labelled };
   const forNumbers = Math.min(Math.round(width * 0.3), 12 + longestLabel * 7);
@@ -186,10 +186,9 @@ export function chartMargins(width: number, height: number, longestLabel = 3) {
 /**
  * Which categories are named when there are more than names have room for:
  * every *n*-th, so that each name has *room* pixels -- its own slot and the
- * unnamed ones beside it. All of them used to go the moment one slot was too
- * small: twenty bars, and not one said what it was.
+ * unnamed ones beside it. Twenty bars say what some of them are.
  */
-export function labelEvery(slot: number, room: number): number {
+function labelEvery(slot: number, room: number): number {
   return Math.max(1, Math.ceil(room / Math.max(slot, 0.01)));
 }
 
@@ -246,8 +245,8 @@ export function drawsSomething(data: unknown): boolean {
  * having happened.
  *
  * Every coordinate below is a screen pixel. There is no inner coordinate space
- * being scaled into the block any more, which is what used to make a label's
- * size depend on how big someone had dragged the window.
+ * scaled into the block, so a label's size does not depend on how big the
+ * window is dragged.
  */
 export default function PlotChart({ data, width = 220, height = 90 }: PlotWidgetProps) {
   // Finished SVG wins: a node upstream drew something this could not have.

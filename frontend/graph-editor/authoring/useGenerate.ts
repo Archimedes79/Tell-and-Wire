@@ -18,7 +18,7 @@ interface GenerateOptions<T> {
    * what lets the transcript be read while it is still being written.
    */
   run: (progressId?: string) => Promise<T>;
-  /** Write the result into the node. */
+  /** Write the result into the node; throws when it cannot. */
   apply: (result: T) => void;
   pending?: string;
   /**
@@ -66,63 +66,68 @@ export function useIsWriting(nodeId: string): boolean {
   return useWriting((s) => s[key]?.busy ?? false);
 }
 
+/** Whether node *nodeId* is being written now, in its view or by a sweep: one writer at a time. */
+export const isWriting = (nodeId: string): boolean =>
+  useWriting.getState()[keyOf(useGraphStore.getState().document, nodeId)]?.busy === true;
+
+/** What the writing of node *nodeId* last said. */
+export const writingSaid = (nodeId: string): string =>
+  useWriting.getState()[keyOf(useGraphStore.getState().document, nodeId)]?.message ?? '';
+
 /**
- * The ✨ buttons' state machine, once -- of node *nodeId*.
- *
- * Seven handlers across three files repeated the identical seven steps --
- * guard, set busy, set "Generating…", await, apply, set "✅", catch and format
- * the error, clear busy -- differing only in the four things `GenerateOptions`
- * names. They also each spelled the axios error extraction slightly
- * differently, so the same backend failure read differently depending on which
- * button you pressed.
+ * Generate for node *nodeId* and write what comes back: the one state machine
+ * of every ✨, the node view's and the sweep's. Resolves to whether it was
+ * written; to false at once when the node is being written already.
  *
  * What comes back is written in at once, as one undo step: Undo is how it is
- * taken back, as for anything else changed in a node's panel. It used to wait
- * for Accept or Discard -- a click after every ✨, with the result on screen
- * but not in the node, so nothing could try it. The exchange that produced it
- * stays on screen either way (`GenerationTranscript`).
+ * taken back. The exchange that produced it stays on screen either way
+ * (`GenerationTranscript`).
  */
+export async function runGenerate<T>(nodeId: string, options: GenerateOptions<T>): Promise<boolean> {
+  const key = keyOf(useGraphStore.getState().document, nodeId);
+  if (useWriting.getState()[key]?.busy) return false;
+  const blocked = options.guard?.();
+  if (blocked) {
+    say(key, { message: `❌ ${blocked}` });
+    return false;
+  }
+  const stopping = new AbortController();
+  inFlight.set(key, stopping);
+  // What has gone out so far, while it runs: a wrong answer can then be
+  // understood rather than only re-rolled. The last run's exchange is not
+  // this one's: a pull, which asks nothing, would show it as its own.
+  say(key, { busy: true, message: options.pending ?? 'Generating…', live: [], transcript: [] });
+  try {
+    const result = await watchGeneration(options.run, (live) => say(key, { live }), stopping.signal);
+    // Kept whether or not it worked out: a transcript is opened when
+    // something went wrong, so the failing case is the one that needs it.
+    const calls = (result as { calls?: AICall[] })?.calls;
+    if (calls) say(key, { transcript: calls });
+    options.apply(result);
+    say(key, { message: typeof options.success === 'function' ? options.success(result) : options.success });
+    return true;
+  } catch (error) {
+    if (stopping.signal.aborted) {
+      say(key, { message: STOPPED });
+      return false;
+    }
+    const calls = error instanceof ApiError ? error.body.calls : undefined;
+    if (calls) say(key, { transcript: calls });
+    if (calls?.length) options.failed?.(calls);
+    say(key, { message: `❌ ${errorText(error, options.failure ?? 'Generation failed')}` });
+    return false;
+  } finally {
+    inFlight.delete(key);
+    say(key, { busy: false, live: [] });
+  }
+}
+
+/** What node *nodeId*'s ✨ is doing, for a view that draws it; `run` writes, `stop` stops waiting. */
 export function useGenerate(nodeId: string) {
   const key = useGraphStore((s) => keyOf(s.document, nodeId));
   const now = useWriting((s) => s[key]) ?? IDLE;
 
-  /** Generate, and write what comes back. Resolves to whether it was written. */
-  const run = useCallback(async <T,>(options: GenerateOptions<T>): Promise<boolean> => {
-    const blocked = options.guard?.();
-    if (blocked) {
-      say(key, { message: `❌ ${blocked}` });
-      return false;
-    }
-    const stopping = new AbortController();
-    inFlight.set(key, stopping);
-    // What has gone out so far, while it runs: a wrong answer can then be
-    // understood rather than only re-rolled. The last run's exchange is not
-    // this one's: a pull, which asks nothing, would show it as its own.
-    say(key, { busy: true, message: options.pending ?? 'Generating…', live: [], transcript: [] });
-    try {
-      const result = await watchGeneration(options.run, (live) => say(key, { live }), stopping.signal);
-      // Kept whether or not it worked out: a transcript is opened when
-      // something went wrong, so the failing case is the one that needs it.
-      const calls = (result as { calls?: AICall[] })?.calls;
-      if (calls) say(key, { transcript: calls });
-      options.apply(result);
-      say(key, { message: typeof options.success === 'function' ? options.success(result) : options.success });
-      return true;
-    } catch (error) {
-      if (stopping.signal.aborted) {
-        say(key, { message: STOPPED });
-        return false;
-      }
-      const calls = error instanceof ApiError ? error.body.calls : undefined;
-      if (calls) say(key, { transcript: calls });
-      if (calls?.length) options.failed?.(calls);
-      say(key, { message: `❌ ${errorText(error, options.failure ?? 'Generation failed')}` });
-      return false;
-    } finally {
-      inFlight.delete(key);
-      say(key, { busy: false, live: [] });
-    }
-  }, [key]);
+  const run = useCallback(<T,>(options: GenerateOptions<T>) => runGenerate(nodeId, options), [nodeId]);
 
   /**
    * Stop waiting for the generation in flight, as the bar's Stop does a change

@@ -5,14 +5,9 @@
 // at. When the node panel writes a change, `updateNode` has to be told which
 // id each port had before, or a renamed port loses its wires to the pruning.
 //
-// That used to be worked out by position: row 2 before is row 2 now. It is
-// true of a rename and false of a removal. Remove the first of `prompt` and
-// `context` and `context` slides into row 1, so it read as "prompt was renamed
-// to context" and the removed port's wire moved onto `context`, which then had
-// two -- the ✕ that promises "remove this port, and any wire on it" handed the
-// wire to its neighbour instead.
-//
-// So each port carries the id it has in the graph (`trackPorts`, which the
+// Worked out by position (row 2 before is row 2 now), a removal reads as a
+// rename: remove the first of `prompt` and `context` and `context` slides into
+// row 1, and the removed port's wire would move onto it. So each port carries the id it has in the graph (`trackPorts`, which the
 // panel puts on the node as stored), and a port is followed by that, not by
 // where it stands. It is kept under a symbol: an edit
 // that spreads a port (`{ ...port, id }`, which is how the ports editor renames

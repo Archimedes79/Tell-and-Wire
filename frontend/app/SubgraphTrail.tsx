@@ -9,9 +9,7 @@ import { DIMMER, TEXT } from './ui/theme';
  *
  * No level closes while a run is in flight -- its result would land on the
  * canvas of another graph (`openSubgraph`) -- so the crumbs wait for it, and
- * say so. A crumb used to close levels one by one until the depth was
- * reached, and during a run none closed: the click spun forever and froze
- * the tab. The store's `closeSubgraphsTo` stops where a level will not close.
+ * say so. The store's `closeSubgraphsTo` stops where a level will not close.
  */
 export default function SubgraphTrail() {
   const subgraphStack = useGraphStore((s) => s.subgraphStack);

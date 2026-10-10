@@ -22,7 +22,7 @@ const NOT_RUN = new Set<string>(AUTHORING_KEYS);
  * in one order -- so a try stays on screen while the text is edited, and goes
  * once the body, a definition or a port changes: ✓ must describe what is there.
  */
-export function tryKey(node: GraphNode): string {
+function tryKey(node: GraphNode): string {
   const config = Object.entries(node.config as Record<string, unknown>)
     .filter(([key]) => !NOT_RUN.has(key)).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return JSON.stringify([node.inputs, node.outputs, config]);
@@ -64,7 +64,7 @@ export function useTryExample(node: GraphNode, graph: () => Graph): { tried: Tri
  * its details say why -- and ✨ Fix (asked for it with the body) or ✨ Output
  * writes it again.
  */
-export function triedLine(run: ExampleRun): string {
+function triedLine(run: ExampleRun): string {
   if (run.status === 'pass') return run.held ? '✓ fits output.js' : 'It runs. There is no output.js yet to hold it to.';
   if (run.status === 'fail') {
     return run.held ? `✗ Does not fit output.js: ${run.details.join('; ')}` : `✗ ${run.details.join('; ')}. ✨ Fix or ✨ Output writes it again.`;

@@ -27,7 +27,7 @@ import { ACCENT, DANGER_TEXT, LINE, MUTED, ON_ACCENT, TEXT } from './theme';
  * A toggle is `variant={on ? 'primary' : 'quiet'}` with `aria-pressed={on}`.
  */
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'quiet';
-export type ButtonSize = 'sm' | 'md';
+type ButtonSize = 'sm' | 'md';
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'style'> {
   variant?: ButtonVariant;

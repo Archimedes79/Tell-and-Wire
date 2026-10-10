@@ -8,7 +8,8 @@ import { errorText } from './api/errorText';
 import type { Graph } from './graph';
 import { useRound } from '../gui-editor/page/useRound';
 import RequirementsDialog from './dialogs/RequirementsDialog';
-import { useGraphSweep } from '../graph-editor/authoring/useGraphSweep';
+import { flushPanels } from './store/flushPanels';
+import { useGraphSweep } from '../graph-editor/node/useGraphSweep';
 import Modal from './ui/Modal';
 import LiveGeneration from '../graph-editor/authoring/LiveGeneration';
 import { useGraphAsk } from './graphAsk';
@@ -35,7 +36,7 @@ const STALLED_AFTER_SECONDS = 45;
  * going, and what it brings back belongs to the graph it started on. (A run
  * is stopped with the graph it belongs to: `loadGraph`.)
  */
-export function graphBusy(sweeping: boolean): string | null {
+function graphBusy(sweeping: boolean): string | null {
   return sweeping ? '✨ Generate all is writing this graph: stop it, or wait for it, before opening another.' : null;
 }
 
@@ -74,8 +75,7 @@ export default function Toolbar({
   const sweep = useGraphSweep();
   // One answer, which the header is drawn anew by when it turns: the unsaved
   // dot, and the "✅ Saved" line below, which must not claim what is no longer
-  // true. It was asked twice a render, and the header drawn on every change of
-  // the graph -- each a whole serialised document, every frame of a drag.
+  // true. Asked once: each answer is a whole serialised document.
   const dirty = useGraphStore((s) => s.isDirty());
   const setMetadata = useGraphStore((s) => s.setMetadata);
   // Whether a run goes, and how far, is the session's alone (`goingRound`).
@@ -122,6 +122,7 @@ export default function Toolbar({
   // Where the App tab goes back to: the view ▶ Run was pressed on.
   const ranFrom = useRef<EditorView>('graph');
   const handleRun = () => {
+    flushPanels();
     const store = useGraphStore.getState();
     if (store.subgraphStack.length) store.closeSubgraphsTo(0);
     const graph = useGraphStore.getState().rootGraph();
@@ -160,6 +161,7 @@ export default function Toolbar({
   const handleDownloadBundle = () =>
     runDeployAction('Bundle download', async () => {
       // The tool someone is handed is the whole thing, not the level that is open.
+      flushPanels();
       const { rootGraph, currentFilePath } = useGraphStore.getState();
       await downloadBundle({ graph: rootGraph(), path: currentFilePath });
     });

@@ -66,18 +66,16 @@ export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 30%, transparent)`;
 export const EVENT = 'var(--ui-event, #f59e0b)';
 
 export const SUCCESS = 'var(--ui-success, #22c55e)';
-/** Success as text (was `#86efac`). */
+/** Success as text. */
 export const SUCCESS_TEXT = 'var(--ui-success-text, #86efac)';
 export const DANGER = 'var(--ui-danger, #ef4444)';
 /** Error text, readable on this scheme's own background. */
 export const DANGER_TEXT = 'var(--ui-danger-text, #fca5a5)';
 /** Something to look at, not an error: warning fills and borders. */
 export const WARNING = 'var(--ui-warning, #eab308)';
-/** Warning text (was `#fcd34d`). */
+/** Warning text. */
 export const WARNING_TEXT = 'var(--ui-warning-text, #fcd34d)';
-/** A note that is neither good nor bad. */
-export const INFO_TEXT = 'var(--ui-info-text, #93c5fd)';
-/** The one emphasis that is not the accent: a name picked out in a sentence (was `#a78bfa`). */
+/** The one emphasis that is not the accent: a name picked out in a sentence. */
 export const PURPLE_TEXT = 'var(--ui-purple-text, #c4b5fd)';
 /** The tint behind a message of that meaning: the colour at a tenth, in every scheme. */
 export const SUCCESS_FILL = `color-mix(in srgb, ${SUCCESS} 10%, transparent)`;
@@ -125,5 +123,3 @@ export const FIELD_ON_SURFACE = { background: SURFACE, color: TEXT, border: `1px
 /** A raised container: modal panel, floating window, widget card. */
 export const PANEL = { background: SURFACE, border: `1px solid ${LINE}` } as const;
 
-/** A recessed container: dialog header bars, inner wells. */
-export const WELL = { background: SUNKEN, border: `1px solid ${LINE}` } as const;
