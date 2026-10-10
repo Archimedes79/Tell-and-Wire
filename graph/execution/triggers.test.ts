@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { type Graph, type GraphNode } from '../graph.ts';
 import { executeGraph } from './executor.ts';
-import { memoryReads } from './order.ts';
+import { passiveWires } from './order.ts';
 import type { Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
 import { RUN_PORT, pageStarts, startEvents, triggeredNodes } from './triggers.ts';
@@ -72,14 +72,14 @@ describe('a round started at a start point', () => {
 
     // A tool that counts: the click runs the step, the memory fills and forwards, and what shows it runs in the same round.
     const counting = graphOf(
-      [start('click'), node('step', 'code', {}, { in: ['n'], out: ['next'] }), node('count', 'data', { data_value: { n: 0 } }, { in: ['n'], out: ['n'] }), node('show', 'end', {}, { in: ['value'] })],
-      [edge('go', 'click', 'data', 'step', RUN_PORT), edge('read', 'count', 'n', 'step', 'n'), edge('write', 'step', 'next', 'count', 'n'), edge('see', 'count', 'n', 'show', 'value')],
+      [start('click'), node('step', 'code', {}, { in: ['n:n'], out: ['next'] }), node('count', 'data', { data_value: { n: 0 } }, { in: ['n'], out: ['n'] }), node('show', 'end', {}, { in: ['value'] })],
+      [edge('go', 'click', 'data', 'step', RUN_PORT), edge('read', 'count', 'before', 'step', 'n'), edge('write', 'step', 'next', 'count', 'n'), edge('see', 'count', 'n', 'show', 'value')],
     );
-    expect([...memoryReads(counting.nodes, counting.edges, registry)]).toEqual(['read']);
+    expect([...passiveWires(counting.nodes, counting.edges, registry)]).toEqual(['read']);
     expect([...triggeredNodes(counting, { node_id: 'click', port_id: 'data' }, registry)!].sort()).toEqual(['click', 'count', 'show', 'step']);
-    // The click may as well open the memory's own ◆: what reads the memory is for the event, and so is what shows what that makes.
-    const gating = graphOf(counting.nodes, [edge('go', 'click', 'data', 'count', RUN_PORT), edge('read', 'count', 'n', 'step', 'n'), edge('write', 'step', 'next', 'count', 'n'), edge('see', 'step', 'next', 'show', 'value')]);
-    expect([...triggeredNodes(gating, { node_id: 'click', port_id: 'data' }, registry)!].sort()).toEqual(['click', 'count', 'show', 'step']);
+    // A click that opens the memory's own ◆ runs the memory and nothing more: what only reads it is not for the event, and what writes it is not waited for.
+    const gating = graphOf(counting.nodes, [edge('go', 'click', 'data', 'count', RUN_PORT), edge('read', 'count', 'before', 'step', 'n'), edge('write', 'step', 'next', 'count', 'n'), edge('see', 'step', 'next', 'show', 'value')]);
+    expect([...triggeredNodes(gating, { node_id: 'click', port_id: 'data' }, registry)!].sort()).toEqual(['click', 'count']);
 
     // A round that starts somewhere else only reads the memory: it does not run what writes it.
     const peeking = graphOf(

@@ -115,7 +115,7 @@ describe('a project folder', () => {
     // A data node's fields are one file, data.json, whatever they hold; its ports follow them.
     expect(JSON.parse(await readFile(join(held, 'nodes/count/data.json'), 'utf8'))).toEqual({ count: 2, names: ['Ada'] });
     expect(JSON.parse(await readFile(join(held, 'nodes/note/data.json'), 'utf8'))).toEqual({ text: 'Line one.\nLine two.' });
-    expect(JSON.parse(await readFile(join(held, 'nodes/note/interface.json'), 'utf8')).outputs.map((one: { port: string }) => one.port)).toEqual(['text', 'round', 'all']);
+    expect(JSON.parse(await readFile(join(held, 'nodes/note/interface.json'), 'utf8')).outputs.map((one: { port: string }) => one.port)).toEqual(['text', 'round', 'all', 'before']);
     // How it looks filled is a file of its own, a stub until something is written there; one that is comes back.
     expect(JSON.parse(await readFile(join(held, 'nodes/note/example.json'), 'utf8'))).toEqual({});
     forgetSeen();

@@ -54,9 +54,9 @@ function counter(add = 'function run(i) { return { next: i.n + 1 }; }'): Graph {
   return graphOf(
     [
       node('count', 'data', { data_value: { total: 0 } }),
-      node('add', 'code', { code: add }, { in: ['n'], out: ['next'] }),
+      node('add', 'code', { code: add }, { in: ['n:total'], out: ['next'] }),
     ],
-    [edge('n', 'count', 'total', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total')],
+    [edge('n', 'count', 'before', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total')],
   );
 }
 
@@ -337,9 +337,9 @@ describe('the application a session runs', () => {
       [
         node('tick', 'start', { started_by: 'itself', on_start: true, every: '0.05' }, { out: ['data'] }),
         node('count', 'data', { data_value: { total: 0 } }),
-        node('add', 'code', { code: 'function run(i) { return { next: i.n + 1 }; }' }, { in: ['n'], out: ['next'] }),
+        node('add', 'code', { code: 'function run(i) { return { next: i.n + 1 }; }' }, { in: ['n:total'], out: ['next'] }),
       ],
-      [edge('n', 'count', 'total', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total'), edge('go', 'tick', 'data', 'add', RUN_PORT)],
+      [edge('n', 'count', 'before', 'add', 'n'), edge('next', 'add', 'next', 'count', 'total'), edge('go', 'tick', 'data', 'add', RUN_PORT)],
     );
     const session = await open(graph);
     const counted = () => ((session.kept().nodes.count?.total as number | undefined) ?? 0);

@@ -64,10 +64,13 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   // The nodes whose wires are drawn in the accent, as one string: it changes
   // when the selection does, not on every frame of a drag.
   const lit = useGraphStore((s) => s.rfNodes.filter((n) => n.selected).map((n) => n.id).join('\n'));
+  // The passive outputs of the nodes, as one string too: a wire from one is drawn dotted.
+  const passive = useGraphStore((s) => s.rfNodes.flatMap((n) => n.data.graphNode.outputs.filter((port) => port.passive).map((port) => `${n.id}\n${port.id}`)).join('\u0000'));
   const edges = useMemo(() => {
     const selected = new Set(lit.split('\n'));
-    return rfEdges.map((edge) => drawnWire(edge, selected));
-  }, [rfEdges, lit]);
+    const reads = new Set(passive ? passive.split('\u0000') : []);
+    return rfEdges.map((edge) => drawnWire(edge, selected, reads));
+  }, [rfEdges, lit, passive]);
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfInstance, setRfInstance] = React.useState<ReactFlowInstance | null>(null);

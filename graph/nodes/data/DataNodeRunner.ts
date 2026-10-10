@@ -21,8 +21,11 @@ export const ALL_FIELDS = 'all';
 /** The output that counts the rounds the struct has been through, the one it is in included: the struct's own, no field's. */
 export const ROUND = 'round';
 
+/** The passive output: every field and the round number as they were when the round began -- what a loop reads. */
+export const BEFORE = 'before';
+
 /** What no field may be called: each is a port of the node's own. */
-const RESERVED: readonly string[] = [ALL_FIELDS, ROUND, RUN_PORT];
+const RESERVED: readonly string[] = [ALL_FIELDS, ROUND, BEFORE, RUN_PORT];
 
 /** Whether *fields* has a field called *name* of its own: an object also has `constructor`, `toString` and the like, and a port named so is no field. */
 export const hasField = (fields: object, name: string): boolean => Object.prototype.hasOwnProperty.call(fields, name);
@@ -57,8 +60,8 @@ function roundOf(node: Pick<GraphNode, 'config'>): number {
  * It holds fields -- their names and their starting values in one file of its
  * own, data.json, an object -- and each field is an input and an output of the
  * node, under its name. Besides one output for each field there is `round`,
- * which counts the rounds, the one it is in included, and `all`,
- * which carries the whole struct with it. The ports follow the file: what it
+ * which counts the rounds, the one it is in included, `all`, which carries
+ * the whole struct with it, and `before`, the one passive output. The ports follow the file: what it
  * holds is the node's interface, and the Fields chat writes it from the node's
  * text -- with a second file, example.json, what the struct looks like once
  * rounds have filled it, so what is wired to it is written against more than
@@ -66,15 +69,16 @@ function roundOf(node: Pick<GraphNode, 'config'>): number {
  *
  * It fills, then forwards: what arrives on a field replaces its value, and the
  * struct as it is then goes on to whatever reads it in the same round -- a
- * field nothing arrived on hands on what it kept. In a loop, the wire that
- * reads it round the loop carries what it held when the round began: the loop
- * reads the last round and writes this one. Whoever reads it from outside -- a
- * page, a script -- reads what the last round left (`holds`), never a round
- * half done.
+ * field nothing arrived on hands on what it kept. Its `before` is passive:
+ * a wire from it orders nothing and carries what it held when the round
+ * began, so a node that reads the memory and writes it back takes its
+ * `before`: the loop reads the last round and writes this one. Whoever reads
+ * it from outside -- a page, a script -- reads what the last round left
+ * (`holds`), never a round half done.
  *
  * There is no code in it. Working out a new value -- a count plus one, the
  * last three -- is a code node: it reads a field's output and writes its input.
- * The loop closes through the memory (`memoryReads`).
+ * The loop closes through `before` (`passiveWires`).
  */
 export class DataNodeRunner extends NodeRunner<DataConfig> {
   readonly nodeType = 'data' as const;
@@ -101,6 +105,7 @@ export class DataNodeRunner extends NodeRunner<DataConfig> {
         ...names.map((name) => port(name, name, 'output', 'any', false, `"${name}", as it holds when it is read: what arrived this round, or else what it kept`)),
         port(ROUND, 'Round', 'output', 'number', false, 'The number of the round, from 1'),
         port(ALL_FIELDS, 'All', 'output', 'json', false, 'Every field and the round count, as one object'),
+        { ...port(BEFORE, 'Before', 'output', 'json', false, 'Every field and the round number as they were when the round began. Passive: a wire from it orders nothing and carries no event'), passive: true },
       ],
     };
   }
@@ -109,10 +114,11 @@ export class DataNodeRunner extends NodeRunner<DataConfig> {
 
   /** Fill, then forward: what arrived on a field replaces it, and the struct as it is then goes on, with the round count. It is kept when the round is over (`settleMemory`). */
   async execute(node: GraphNode, inputs: Record<string, unknown>, _runtime: Runtime) {
-    const now = { ...fieldsOf(node) };
+    const held = fieldsOf(node);
+    const now = { ...held };
     for (const name of namesOf(node)) if (hasField(inputs, name) && inputs[name] !== undefined) now[name] = inputs[name];
     const round = roundOf(node) + 1;
-    return { ...now, [ROUND]: round, [ALL_FIELDS]: { ...now, [ROUND]: round } };
+    return { ...now, [ROUND]: round, [ALL_FIELDS]: { ...now, [ROUND]: round }, [BEFORE]: { ...held, [ROUND]: round } };
   }
 
   /** What arrived on a field is what it holds from now on. What arrives on a port that is no field is nobody's. */
@@ -165,11 +171,13 @@ export class DataNodeRunner extends NodeRunner<DataConfig> {
     return 'a struct kept between rounds: config.data_value is an object, and each of its keys is a field with a JSON value -- a count, a list, a text -- as it starts; '
       + 'config.data_example is the same struct as it looks filled, after some rounds, which what is wired to it is written against. '
       + 'A field keeps its value until something arrives on its input, which replaces it: the node fills, then forwards the struct as it is then, in the same round. '
-      + 'In a loop -- a node reads a field and writes it back -- the wire that reads it carries what it held when the round began. '
+      + 'In a loop -- a node reads a field and writes it back -- the node takes the field from the passive output "before" (every field as it was when the round began, one object: the input\'s "field" names the one it wants), and writes the new value into the field\'s input; a wire from "before" orders nothing. A wire from a field\'s output waits for the node to be filled, so it cannot be part of a loop. '
       + 'Its ports are DERIVED from the fields, not taken from this document: each field is an input and an output under its name, '
-      + `one more output "${ROUND}" counts the rounds from 1, and "${ALL_FIELDS}" carries every field and the count as one object -- for a field "count": input "count"; outputs "count", "${ROUND}" and "${ALL_FIELDS}". `
+      + `one more output "${ROUND}" counts the rounds from 1, "${ALL_FIELDS}" carries every field and the count as one object, and "${BEFORE}" is the passive one -- for a field "count": input "count"; outputs "count", "${ROUND}", "${ALL_FIELDS}" and "${BEFORE}". `
       + 'Its description says in words what it holds: the nodes wired to it are generated against that and its fields. '
-      + 'It has no code: working out a new value is a code node, wired from a field\'s output to the same field\'s input.';
+      + 'It has no code: working out a new value (a count plus one) is a code node that reads the field through "before" and writes the field\'s input: '
+      + 'an edge from "before" to an input of the code node, whose "field" names a key of it -- a field of the memory, such as "count", never a node\'s id -- and an edge from the code node\'s output to the field\'s input. '
+      + 'The start point or button that makes it happen is wired to that code node\'s ◆, not to the memory; what shows the new value is wired from the field\'s output.';
   }
 
   /** The fields as they start and as they look filled, written from its text and from what feeds it and what it feeds. */
@@ -194,6 +202,7 @@ export class DataNodeRunner extends NodeRunner<DataConfig> {
     return Object.keys(fieldsOf(node)).flatMap((name): Problem[] => {
       if (name === ALL_FIELDS) return [{ where, problem: 'A field is called "all", which is the output that carries every field.', fix: 'Rename it in data.json.' }];
       if (name === ROUND) return [{ where, problem: 'A field is called "round", which is the output that counts the rounds.', fix: 'Rename it in data.json.' }];
+      if (name === BEFORE) return [{ where, problem: 'A field is called "before", which is the passive output that carries every field as it was.', fix: 'Rename it in data.json.' }];
       if (name === RUN_PORT) return [{ where, problem: `A field is called "${RUN_PORT}", which is the name of the gate every node has.`, fix: 'Rename it in data.json.' }];
       if (/^\w+$/.test(name)) return [];
       return [{ where, problem: `A field is called "${name}": a field is a port, named with letters, digits and underscores.`, fix: 'Rename it in data.json.' }];

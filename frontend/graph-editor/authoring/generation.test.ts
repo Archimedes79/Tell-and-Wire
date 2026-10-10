@@ -89,7 +89,7 @@ describe('what comes back, written in', () => {
     const written = writtenInto(made('data'), 'body', { ...answer('{ "recent": [], "seen": 0 }'), example: '{ "recent": ["a"], "seen": 3 }' }, '✨ Fields', at);
     expect(written.config.data_value).toEqual({ recent: [], seen: 0 });
     expect(written.inputs.map((port) => port.id)).toEqual(['recent', 'seen']);
-    expect(written.outputs.map((port) => port.id)).toEqual(['recent', 'seen', 'round', 'all']);
+    expect(written.outputs.map((port) => port.id)).toEqual(['recent', 'seen', 'round', 'all', 'before']);
     // Its example is written with them -- and gone with an answer that brought none: one of other fields would be written against.
     expect(written.config.data_example).toEqual({ recent: ['a'], seen: 3 });
     expect(partsOf(written)).toEqual(['body', 'example']);

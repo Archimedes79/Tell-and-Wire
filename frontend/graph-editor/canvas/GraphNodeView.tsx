@@ -63,9 +63,12 @@ function PortDot({ port, type, side, top, lit, fires }: {
 }) {
   const colour = lit ? ACCENT : MUTED;
   // A list is a ring: it takes, or hands on, several values.
+  // A passive output is a dashed ring: what a wire from it reads, it reads as the round began, and it orders nothing.
   const dot: React.CSSProperties = fires
     ? { background: EVENT, border: `2px solid ${SURFACE}`, borderRadius: 2, transform: 'rotate(45deg)' }
-    : { background: port.multi ? SURFACE : colour, border: `2px solid ${port.multi ? colour : SURFACE}`, borderRadius: '50%' };
+    : port.passive
+      ? { background: 'transparent', border: `2px dashed ${colour}`, borderRadius: '50%' }
+      : { background: port.multi ? SURFACE : colour, border: `2px solid ${port.multi ? colour : SURFACE}`, borderRadius: '50%' };
   const title = fires
     ? `${port.description || port.name} — a run begins here, at whatever this is wired to.`
     : `${port.description || port.name}${port.multi ? ' (a list)' : ''}`;

@@ -11,10 +11,14 @@ import { ACCENT, DIMMER, EVENT } from '../../app/ui/theme';
  * A wire into a ◆ only opens a gate -- whether the node runs -- and
  * delivers nothing, so it stays dashed and amber whatever is selected: drawn
  * like data, it would ask what the node does with the `true` it carries.
+ *
+ * A wire from a passive output (*passive*, as `node\nport`) is dotted: it
+ * hands on what the node held when the round began, and orders nothing.
  */
-export function drawnWire(edge: Edge, selected: ReadonlySet<string>): Edge {
+export function drawnWire(edge: Edge, selected: ReadonlySet<string>, passive: ReadonlySet<string> = new Set()): Edge {
   const lit = !!edge.selected || selected.has(edge.source) || selected.has(edge.target);
   const signal = edge.targetHandle === RUN_PORT;
+  const reads = passive.has(`${edge.source}\n${edge.sourceHandle}`);
   return {
     ...edge,
     // Over the grey ones where they cross, and under every card: a card is
@@ -25,7 +29,7 @@ export function drawnWire(edge: Edge, selected: ReadonlySet<string>): Edge {
     style: {
       stroke: signal ? EVENT : lit ? ACCENT : DIMMER,
       strokeWidth: lit ? 2.5 : 2,
-      ...(signal ? { strokeDasharray: '6 4' } : {}),
+      ...(signal ? { strokeDasharray: '6 4' } : reads ? { strokeDasharray: '2 5', strokeLinecap: 'round' as const } : {}),
     },
   };
 }

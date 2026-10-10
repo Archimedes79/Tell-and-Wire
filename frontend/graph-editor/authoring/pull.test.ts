@@ -34,7 +34,7 @@ describe('pulling an input', () => {
     // What a loop brings back is not before it: the model that writes the memory after the node is asked after it.
     const keep: GraphNode = { ...NODE_KINDS.data.create('keep'), config: { ...NODE_KINDS.data.create('keep').config, data_value: { n: 0 } }, inputs: [port('n')], outputs: [port('n', { kind: 'output' })] };
     const step: GraphNode = { ...NODE_KINDS.code.create('step'), inputs: [port('in')] };
-    const loop = [wire('keep', 'n', 'step', 'in'), wire('step', 'output', 'writer', 'input'), wire('writer', 'output', 'keep', 'n')];
+    const loop = [wire('keep', 'before', 'step', 'in'), wire('step', 'output', 'writer', 'input'), wire('writer', 'output', 'keep', 'n')];
     expect(modelsBefore(step, [keep, step, writer], loop)).toEqual([]);
 
     const ran = pulledPorts(counter, nodes, edges, { inputs: { text: 'Real text of the run.' }, texts: {} });

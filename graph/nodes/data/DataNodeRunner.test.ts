@@ -18,15 +18,15 @@ describe('a data node', () => {
     // Its ports follow its fields; what is no object has none.
     expect(element.derivedPorts(dataNode({ recent: [], seen: 0 }))).toMatchObject({
       inputs: [{ id: 'recent' }, { id: 'seen' }],
-      outputs: [{ id: 'recent' }, { id: 'seen' }, { id: 'round', data_type: 'number' }, { id: 'all', data_type: 'json' }],
+      outputs: [{ id: 'recent' }, { id: 'seen' }, { id: 'round', data_type: 'number' }, { id: 'all', data_type: 'json' }, { id: 'before', data_type: 'json', passive: true }],
     });
     expect(element.derivedPorts(dataNode('hello')).inputs).toEqual([]);
-    expect(element.derivedPorts(dataNode(null)).outputs.map((port) => port.id)).toEqual(['round', 'all']);
+    expect(element.derivedPorts(dataNode(null)).outputs.map((port) => port.id)).toEqual(['round', 'all', 'before']);
 
-    // What arrives on a field replaces it, every other hands on what it kept, and all carries them all and the number of the round.
+    // What arrives on a field replaces it, every other hands on what it kept, and all carries them all and the number of the round; before is how it was.
     const held = { recent: ['a'], seen: 1 };
-    expect(await element.execute(dataNode(held), { seen: 2 }, nowhere)).toEqual({ recent: ['a'], seen: 2, round: 1, all: { recent: ['a'], seen: 2, round: 1 } });
-    expect(await element.execute(dataNode(held), {}, nowhere)).toEqual({ recent: ['a'], seen: 1, round: 1, all: { recent: ['a'], seen: 1, round: 1 } });
+    expect(await element.execute(dataNode(held), { seen: 2 }, nowhere)).toEqual({ recent: ['a'], seen: 2, round: 1, all: { recent: ['a'], seen: 2, round: 1 }, before: { recent: ['a'], seen: 1, round: 1 } });
+    expect(await element.execute(dataNode(held), {}, nowhere)).toEqual({ recent: ['a'], seen: 1, round: 1, all: { recent: ['a'], seen: 1, round: 1 }, before: { recent: ['a'], seen: 1, round: 1 } });
     // A field is its own, whatever an object inherits.
     expect(await element.execute(dataNode({ toString: 'kept' }), {}, nowhere)).toMatchObject({ toString: 'kept' });
 
@@ -53,7 +53,7 @@ describe('a data node', () => {
     expect(element.config(dataNode({ list: [] })).example).toEqual({ list: [] });
     expect(element.config(dataNode({ list: [] }, { data_example: { list: [1, 2] } })).example).toEqual({ list: [1, 2] });
     // A name a port cannot have is said, so is a file that is no object.
-    expect(element.problems(dataNode({ all: 1, 'two words': 2, __run: 3, round: 4, fine: 5 }), null, 'Store')).toHaveLength(4);
+    expect(element.problems(dataNode({ all: 1, 'two words': 2, __run: 3, round: 4, before: 5, fine: 6 }), null, 'Store')).toHaveLength(5);
     expect(element.problems(dataNode('hello'), null, 'Store')).toHaveLength(1);
     expect(element.problems(dataNode({}, { data_example: [1] }), null, 'Store')).toHaveLength(1);
     expect(element.problems(dataNode(null), null, 'Store')).toEqual([]);

@@ -16,7 +16,8 @@ import { NODE_BUILDERS } from '../../app/elements/registry';
 import { definitionExample, definitionsIn, typedefProperties } from '../../../graph/authoring/definition.ts';
 import { typeOfValue, type PulledPort } from '../../../graph/authoring/pull.ts';
 import { filePorts } from '../../../graph/execution/fileInputs.ts';
-import { memoryReads } from '../../../graph/execution/order.ts';
+import { fieldOf } from '../../../graph/execution/executor.ts';
+import { passiveWires } from '../../../graph/execution/order.ts';
 import { graphEdge } from '../../app/document/wires';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { ERROR_PORT } from '../../../graph/execution/wiring.ts';
@@ -31,9 +32,9 @@ export const pullable = (node: GraphNode, edges: Wire[]): boolean =>
 
 /** The nodes before *node* that ask a model when they run: a pull runs them, and it is said so. */
 export function modelsBefore(node: GraphNode, nodes: GraphNode[], edges: Wire[]): GraphNode[] {
-  // A wire that reads a memory round a loop brings what it held, not what runs before.
+  // A passive wire brings what a memory held, not what runs before.
   const saved = edges.map((edge, at) => graphEdge(edge, at));
-  const reads = memoryReads(nodes, saved, runnerRegistry);
+  const reads = passiveWires(nodes, saved, runnerRegistry);
   const cut = new Set(edges.filter((_, at) => reads.has(saved[at].id)));
   const seen = new Set([node.id]);
   const asking: GraphNode[] = [];
@@ -96,7 +97,9 @@ export function pulledPorts(node: GraphNode, nodes: GraphNode[], edges: Wire[], 
     const property = typedefProperties(said, 'Output').find((one) => one.id === out);
     const stated = definitionExample(said);
     // What a memory holds, filled (`example.json`): a run only shows how it starts.
-    const own = source ? NODE_BUILDERS[source.node_type]?.restingValue(source, out) : undefined;
+    const held = source ? NODE_BUILDERS[source.node_type]?.restingValue(source, out) : undefined;
+    // An input that takes one field of it is shown that field: how a loop reads a memory's `before`.
+    const own = held !== undefined && port.field ? fieldOf(held, port.field) : held;
     const stands = ('example' in stated ? stated.example[out] : undefined) ?? own;
     const reading = reads.has(port.id);
     // A path the node before it states is no example of the text of the file it names.

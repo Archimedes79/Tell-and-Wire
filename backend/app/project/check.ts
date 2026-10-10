@@ -9,7 +9,7 @@
 
 import type { Graph, GraphEdge, GraphNode } from '../../../graph/graph.ts';
 import { NESTING_LIMIT, fieldOf } from '../../../graph/execution/executor.ts';
-import { memoryReads, topologicalLevels } from '../../../graph/execution/order.ts';
+import { passiveWires, topologicalLevels } from '../../../graph/execution/order.ts';
 import { RUN_PORT } from '../../../graph/execution/triggers.ts';
 import { fieldSender, pageProblems, showsMemory, widgetElement } from '../../gui-editor/widgets/page.ts';
 import { ERROR_PORT, names, wiringProblems, type Problem } from '../../../graph/execution/wiring.ts';
@@ -141,15 +141,15 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
   // With two nodes sharing an id the ordering cannot be trusted either way, and
   // the duplicate is the thing to fix first.
   if (new Set(graph.nodes.map((node) => node.id)).size === graph.nodes.length) {
-    const reads = memoryReads(graph.nodes, graph.edges, registry);
+    const reads = passiveWires(graph.nodes, graph.edges, registry);
     try {
       topologicalLevels(graph.nodes, graph.edges, registry);
     } catch {
       problems.push({
         where: `${inside}nodes ${names(knot(graph, reads))}`,
         problem: 'These nodes feed each other in a circle, so none of them can run first.',
-        fix: 'A loop is only allowed through a node that remembers: a data node closes one. '
-          + 'Route the value back through a data node, or remove one of the edges.',
+        fix: 'A loop is only allowed through a data node: write the value into one, and let the node that reads it take its "before" output. '
+          + 'Or remove one of the edges.',
       });
     }
   }
@@ -222,7 +222,13 @@ function nestedProblems(graph: Graph, node: GraphNode, where: string, depth: num
   const element = registry.node(node.node_type);
   if (!element) return [];
   const wired = new Set(graph.edges.filter((edge) => edge.target_node_id === node.id).map((edge) => edge.target_port_id));
-  const own = element.problems(node, registry, where, wired);
+  // An input that takes one value of what arrives, with nothing wired to it: a "field" is a key of what a wire brings, not a way to name a node.
+  const unwired = node.inputs.filter((port) => port.field && !wired.has(port.id)).map((port): Problem => ({
+    where,
+    problem: `Its input "${port.id}" takes "${port.field}" of what arrives, and nothing is wired to it.`,
+    fix: `Wire a node to it -- a memory's "before", a start point's "data" -- and name in "field" a key of what arrives there, never a node.`,
+  }));
+  const own = [...element.problems(node, registry, where, wired), ...unwired];
   const held = element.nestedGraph(node);
   if (!held) return own;
 

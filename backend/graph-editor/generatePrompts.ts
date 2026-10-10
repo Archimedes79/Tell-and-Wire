@@ -10,7 +10,7 @@ import type { PromptKind } from '../../graph/authoring/prompts.ts';
 import type { Language } from '../../graph/authoring/generation.ts';
 import { textOutput, type Definitions } from '../../graph/authoring/definition.ts';
 import { names } from '../../graph/execution/wiring.ts';
-import { ALL_FIELDS, ROUND } from '../../graph/nodes/data/DataNodeRunner.ts';
+import { ALL_FIELDS, BEFORE, ROUND } from '../../graph/nodes/data/DataNodeRunner.ts';
 import type { Graph } from '../../graph/graph.ts';
 import { withoutAuthoring } from '../../graph/authoring/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
@@ -180,10 +180,10 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
         '- the first, the fields as the node starts: each with its starting value -- empty, as it is before any round: null, 0, "", [] or {}, whichever fits what it holds;',
         '- the second, the same fields as rounds would have filled them: one realistic value for each, shaped as what arrives on it and what the nodes it feeds want it.',
         'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores. '
-        + 'There are "all", which carries every field, and "round", which counts the rounds from 1, already: add neither. '
+        + 'There are "all", which carries every field, "round", which counts the rounds from 1, and "before", which carries every field as it was when the round began, already: add none of them. '
         + 'What arrives on a field replaces its value, and what reads the node gets the struct as it is then, so give a field the shape of what arrives on it.');
       // A field is a port: one renamed or left out loses its wires.
-      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS && id !== ROUND);
+      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS && id !== ROUND && id !== BEFORE);
       if (kept.length) lines.push(`Keep ${names(kept)}: ${kept.length > 1 ? 'they are' : 'it is'} wired to other nodes by ${kept.length > 1 ? 'those names' : 'that name'}.`);
       break;
     }

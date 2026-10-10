@@ -37,6 +37,12 @@ export interface Port {
    * node that receives a package reads it, said instead of written as code.
    */
   field?: string;
+  /**
+   * An output that is only read: a wire from it orders nothing and carries no
+   * event, and hands on what it held when the round began, whenever the node
+   * that takes it runs. How a loop through a memory is closed, said in the graph.
+   */
+  passive?: boolean;
 }
 
 /** An element's stored settings. Its own element narrows this; nothing else may. */

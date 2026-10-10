@@ -241,10 +241,10 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
 
   /**
    * This node keeps what is delivered to it between rounds: it fills from what
-   * arrives and forwards what it then holds, in the same round. The wire that
-   * reads it round a loop is left out of the ordering (`memoryReads`), so a
-   * loop can close: it carries what the node held when the round began.
-   * What arrived is kept when the round is over.
+   * arrives and forwards what it then holds, in the same round. Its passive
+   * output (`Port.passive`) carries what it held when the round began, and a
+   * wire from it is left out of the ordering (`passiveWires`), so a loop can
+   * close. What arrived is kept when the round is over.
    */
   readonly isMemory: boolean = false;
 

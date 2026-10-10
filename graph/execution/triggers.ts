@@ -43,7 +43,7 @@
 
 import type { Graph } from '../graph.ts';
 import type { Runners } from '../nodes/NodeRunner.ts';
-import { memoryReads, walk } from './order.ts';
+import { passiveWires, walk } from './order.ts';
 import type { StartedBy } from '../nodes/NodeRunner.ts';
 
 /** The input every node has and nobody declares: the ◆, a gate. What arrives opens it or does not, and is never handed on. */
@@ -149,11 +149,11 @@ export function after(ms: number, then: () => void, keepsAlive = true): () => vo
  *
  * A memory holds its value, so what runs on it does not wait for what writes
  * it -- a data node that keeps the model's last answer is not something the
- * model waits for (`unneeded`). The wires that read it are followed downstream
- * all the same: what reads a memory the event reaches is for the event too.
+ * model waits for (`unneeded`). A passive wire carries no event: what only
+ * reads a node is not for the event that reaches it.
  */
 export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Runners): Set<string> | null {
-  const downstream = firedNodes(graph, trigger);
+  const downstream = firedNodes(graph, trigger, registry);
   if (!downstream) return null;
   // The ◆ of a node the event is wired to is opened by the event itself.
   const opened = new Set(graph.edges.filter((edge) => edge.source_node_id === trigger.node_id
@@ -170,23 +170,25 @@ export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Runners
  * The rest of what the event runs is context, which a run may reuse; this part
  * always runs fresh.
  */
-export function firedNodes(graph: Graph, trigger: Trigger): Set<string> | null {
-  const fired = graph.edges.filter((edge) => edge.source_node_id === trigger.node_id
+export function firedNodes(graph: Graph, trigger: Trigger, registry: Runners): Set<string> | null {
+  const reads = passiveWires(graph.nodes, graph.edges, registry);
+  const live = graph.edges.filter((edge) => !reads.has(edge.id));
+  const fired = live.filter((edge) => edge.source_node_id === trigger.node_id
     && (!trigger.port_id || edge.source_port_id === trigger.port_id));
   if (!fired.length) return null;
-  return walk(fired.map((edge) => edge.target_node_id), graph.edges, true);
+  return walk(fired.map((edge) => edge.target_node_id), live, true);
 }
 
 /**
  * The wires a slice does not follow upstream: those into a node that
  * remembers, which holds its value and needs nothing of what writes it, and
- * those that read it round a loop. A round started somewhere else only shows
+ * the passive ones. A round started somewhere else only shows
  * what the memory holds; it does not run what writes it.
  */
 function unneeded(graph: Graph, registry: Runners): Set<string> {
   const remembering = new Set(graph.nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
   return new Set([
-    ...memoryReads(graph.nodes, graph.edges, registry),
+    ...passiveWires(graph.nodes, graph.edges, registry),
     ...graph.edges.filter((e) => remembering.has(e.target_node_id) && e.target_port_id !== RUN_PORT).map((e) => e.id),
   ]);
 }

@@ -95,6 +95,27 @@ describe('what check finds', () => {
     expect(said(gated('number'))).toMatch(/only the value true opens/);
     expect(said(gated('boolean'))).toBe('');
 
+    // A "field" is a key of what a wire brings: with no wire it names nothing.
+    const lone = graph();
+    lone.nodes[1].inputs.push({ ...port('before', 'input'), field: 'state.before' } as never);
+    expect(said(lone)).toMatch(/Its input "before" takes "state.before" of what arrives, and nothing is wired to it/);
+    // A loop through a memory that waits for it is a cycle, said with the way out; through its passive output it is none.
+    const memory = (from: string): Graph => parseGraph({
+      metadata: { name: 'Loop' },
+      nodes: [
+        { id: 'count', node_type: 'data', label: 'Count', description: 'Counts.', inputs: [], outputs: [], config: { data_value: { total: 0 } } },
+        { id: 'add', node_type: 'code', label: 'Add', description: 'Adds one.', inputs: [{ ...port('n', 'input'), field: 'total' }], outputs: [port('next', 'output')], config: { code: 'function run(i) { return { next: i.n + 1 }; }' } },
+        { id: 'show', node_type: 'end', label: 'Show', inputs: [port('value', 'input')], outputs: [], config: {} },
+      ],
+      edges: [
+        { id: 'r', source_node_id: 'count', source_port_id: from, target_node_id: 'add', target_port_id: 'n' },
+        { id: 'w', source_node_id: 'add', source_port_id: 'next', target_node_id: 'count', target_port_id: 'total' },
+        { id: 's', source_node_id: 'count', source_port_id: 'total', target_node_id: 'show', target_port_id: 'value' },
+      ],
+    });
+    expect(problemsIn(memory('total'))).toEqual([expect.objectContaining({ problem: expect.stringMatching(/feed each other in a circle/), fix: expect.stringMatching(/"before" output/) })]);
+    expect(said(memory('before'))).toBe('');
+
     const twins = graph();
     twins.nodes[2].label = 'Answer';
     twins.nodes.push({ ...twins.nodes[2], id: 'also', label: 'Answer' });

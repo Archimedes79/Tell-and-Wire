@@ -3,9 +3,9 @@
 // Kahn's algorithm over the wires gives levels: nothing in a level feeds
 // anything else in it. A graph with a loop -- a counter: a data node, and a
 // code node adding one to it -- is not a mistake, it is how a tool remembers:
-// the fewest wires that read a node that remembers round the loop are left out
-// of the order, so what remains is acyclic (`memoryReads`). A loop through
-// something that does not remember is an error, said by name.
+// the node that reads the memory takes its passive output, the wire from which
+// is left out of the order (`passiveWires`), so what remains is acyclic. A
+// loop without one is an error, said by name, and how to close it.
 
 import type { GraphEdge, GraphNode } from '../graph.ts';
 import type { Runners } from '../nodes/NodeRunner.ts';
@@ -76,49 +76,35 @@ function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { 
 }
 
 /**
- * Ids of the fewest wires that must be left out of the ordering to make the
- * graph acyclic: wires that read a node that remembers and go round in a loop.
- * They carry what the node held when the round began; the wires into the node
- * are in the order like any other, so it fills, and then forwards what it holds.
+ * Ids of the wires that come from a passive output (`Port.passive`): they
+ * take no part in the order, and carry what the node held when the round
+ * began. That is how a loop through a memory is closed -- the node that reads
+ * it takes its `before` -- while the wires into the memory are in the order
+ * like any other, so it fills, and then forwards what it holds.
  */
-export function memoryReads(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): Set<string> {
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const reads = new Set<string>();
-
-  const remembers = (nodeId: string): boolean => {
-    const node = byId.get(nodeId);
-    return node ? registry.node(node.node_type)?.isMemory === true : false;
-  };
-
-  for (;;) {
-    const { stuck } = levelsOf(nodes, edges, reads);
-    if (!stuck.size) return reads;
-
-    // Cut one more wire out of a node that remembers -- one that closes a loop:
-    // a node below a loop is stuck too, and cutting the wire to it would
-    // read a round late for nothing. By the graph's node order and by id,
-    // never by the order the wires happen to be stored in. If there is none,
-    // the cycle is a real one and `topologicalLevels` reports it as such.
-    const active = edges.filter((e) => !reads.has(e.id) && byId.has(e.source_node_id) && byId.has(e.target_node_id));
-    const order = new Map(nodes.map((n, index) => [n.id, index]));
-    const [candidate] = active
-      .filter((e) => stuck.has(e.source_node_id) && remembers(e.source_node_id) && walk([e.target_node_id], active, true).has(e.source_node_id))
-      .sort((a, b) => order.get(a.source_node_id)! - order.get(b.source_node_id)! || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    if (!candidate) return reads;
-    reads.add(candidate.id);
+export function passiveWires(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): Set<string> {
+  const passive = new Map<string, Set<string>>();
+  for (const node of nodes) {
+    const outputs = registry.node(node.node_type)?.derivedPorts(node, registry)?.outputs ?? node.outputs;
+    const ids = outputs.filter((port) => port.passive).map((port) => port.id);
+    if (ids.length) passive.set(node.id, new Set(ids));
   }
+  return new Set(edges.filter((e) => passive.get(e.source_node_id)?.has(e.source_port_id)).map((e) => e.id));
 }
 
 /** Execution stages: everything in a stage waits only for earlier stages. A loop that no memory closes is an error. */
 export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): string[][] {
-  const reads = memoryReads(nodes, edges, registry);
+  const reads = passiveWires(nodes, edges, registry);
   const { levels, stuck } = levelsOf(nodes, edges, reads);
   if (stuck.size) {
     // The nodes the wires go round through, not the ones that merely hang below.
     const live = edges.filter((e) => !reads.has(e.id));
     const round = nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
+    const memory = round.find((n) => registry.node(n.node_type)?.isMemory);
     throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
-      + 'A loop is only allowed through a data node: route the value back through one, or remove a wire.');
+      + (memory
+        ? `The node that reads ${nodeName(memory)} in the loop must take its "before" output, which waits for nothing.`
+        : 'A loop is only allowed through a data node: write the value into one, and read it back from its "before" output.'));
   }
   return levels;
 }

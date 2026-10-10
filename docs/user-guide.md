@@ -32,7 +32,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 | **Folder** | Lists the files in a folder, filtered by file types, optionally with subfolders. Reads no file. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
 | **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
-| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object) and `round` (the number of the round, from 1). It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A page block can show a field or the round, with no run. |
+| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object), `round` (the number of the round, from 1) and `before` (every field as it was when the round began: its one passive output, which a loop reads). It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A page block can show a field or the round, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
@@ -153,11 +153,16 @@ example is real data. And name inputs for what they hold (`story`, not `prompt`)
 with its starting value. Each field is an input and an output of the node under its name;
 `all` carries every field as one object, and `round` is the number of the round, from 1. The node fills,
 then forwards: what arrives on a field replaces it, and the struct as it is then goes on to whatever the
-node feeds, in the same round. A field keeps its value when nothing arrives. In a loop -- a node reads
-a field and writes it back -- the wire that reads it carries what it held when the round began: the loop
-reads the last round and writes this one. A page, or a script, reads what the last round left, never a
-round half done. It holds no code: working out a new value (a count plus one) is a code
-node, wired from the field's output back to the same field's input. What the struct holds can
+node feeds, in the same round. A field keeps its value when nothing arrives.
+
+A field's output is **active**: a node wired from it runs after the node is filled, and sees the new value.
+`before` is the one **passive** output (a ring on the card, a dotted wire): every field as it was when the
+round began, as one object. A wire from it orders nothing and carries no event, so it can read the memory
+in a loop: a node that adds one to a count takes `count` from `before` (the input's *field*) and writes the
+new value into the field. Wired from the field's output instead, it would wait for the node it fills --
+that is a cycle, and `check` says so. A page, or a script, reads what the last round left, never a round
+half done. The node holds no code: working out a new value is a code node, and the button that makes it
+happen is wired to that code node, not to the memory. What the struct holds can
 be read without a run: a block of the page can show a field (`count`, or the node's name and
 a dot and the field) or the round, and the session answers by name. The **Example** file is
 what a node before it is shaped as.

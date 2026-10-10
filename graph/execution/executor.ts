@@ -9,10 +9,11 @@
 // **Memory.** A tool remembers in a data node, which fills from what arrives
 // and then forwards what it holds, in the same round. A graph with a loop — a
 // counter: a data node, and a code node adding one to it — is not a mistake, it
-// is how a tool remembers. The minimal set of wires that read a memory node
-// round the loop is left out of the ordering, so what remains is acyclic; they
-// carry what the node held when the round began, and what arrives is kept when
-// it ends. A loop through something that does not remember is still an error.
+// is how a tool remembers. The node that reads the memory takes its passive
+// output (`Port.passive`): the wire from it is left out of the ordering, so
+// what remains is acyclic, and carries what the node held when the round
+// began; what arrives is kept when the round ends. A loop without one is an
+// error (`order.ts`).
 //
 // **Collection.** A node's inputs are whatever its upstream neighbours put on
 // the wires. A port fed by several edges collects a list; a port whose single
@@ -30,7 +31,7 @@ import type { Runtime } from '../nodes/Runtime.ts';
 import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from './batching.ts';
 import { Unread, filePorts, readPorts } from './fileInputs.ts';
 import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from './triggers.ts';
-import { memoryReads, nodeName, topologicalLevels } from './order.ts';
+import { passiveWires, nodeName, topologicalLevels } from './order.ts';
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from './interface.ts';
@@ -163,13 +164,13 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const { nodes, edges } = graph;
   const byId = new Map(nodes.map((n) => [n.id, n]));
 
-  const reads = memoryReads(nodes, edges, registry);
+  const reads = passiveWires(nodes, edges, registry);
   const levels = topologicalLevels(nodes, edges, registry);
   const only = options.only ?? (options.trigger ? triggeredNodes(graph, options.trigger, registry) : null);
   // Context, as opposed to what this run is for: only in a run that is not
   // the whole graph, never the node that fired, never what it fired, and
   // never a node with nothing wired in -- that one reads the outside world.
-  const fired = options.trigger && !options.only ? firedNodes(graph, options.trigger) : null;
+  const fired = options.trigger && !options.only ? firedNodes(graph, options.trigger, registry) : null;
   const context = (nodeId: string): boolean => !!options.reuse && !!only
     && nodeId !== options.trigger?.node_id && !fired?.has(nodeId)
     && edges.some((e) => e.target_node_id === nodeId && e.target_port_id !== RUN_PORT && !reads.has(e.id));

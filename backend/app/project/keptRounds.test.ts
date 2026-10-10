@@ -77,10 +77,10 @@ describe('a round, kept', () => {
     const counter = (): Graph => graphOf([
       node('ask', 'start', { started_by: 'call' }),
       node('count', 'data', { data_value: { total: 0 } }, { in: ['total'], out: ['total'] }),
-      node('step', 'code', { code: 'function run(i) { return { next: i.n + 1 }; }' }, { in: ['n', 'go'], out: ['next'] }),
+      node('step', 'code', { code: 'function run(i) { return { next: i.n + 1 }; }' }, { in: ['n:total', 'go'], out: ['next'] }),
       node('shown', 'end', {}, { in: ['value'] }),
     ], [
-      edge('g', 'ask', 'data', 'step', 'go'), edge('r', 'count', 'total', 'step', 'n'),
+      edge('g', 'ask', 'data', 'step', 'go'), edge('r', 'count', 'before', 'step', 'n'),
       edge('w', 'step', 'next', 'count', 'total'), edge('s', 'count', 'total', 'shown', 'value'),
     ]);
     const session = await Session.open(counter(), { runtime: () => answering });

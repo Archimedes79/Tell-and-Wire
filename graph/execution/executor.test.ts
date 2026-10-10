@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Graph, GraphNode } from '../graph.ts';
 import { executeGraph, inputsFor, runNodeAlone } from './executor.ts';
-import { memoryReads, topologicalLevels } from './order.ts';
+import { passiveWires, topologicalLevels } from './order.ts';
 import { NodeRunner } from '../nodes/NodeRunner.ts';
 import { type Runtime } from '../nodes/Runtime.ts';
 import { registry } from '../nodes/registry.ts';
@@ -18,10 +18,10 @@ function node(id: string, type = 'code', config: Record<string, unknown> = {}): 
 const nowhere = quietRuntime();
 
 describe('a loop', () => {
-  it('runs only through a node that remembers: the wire that reads it round the loop carries what it held when the round began, and it fills and forwards after; a loop of forgetful nodes is refused', async () => {
+  it('runs a loop only through a memory: the node that reads it takes its passive before, and it fills and forwards after; a loop that waits for it, or of forgetful nodes, is refused', async () => {
     const forgetful = [node('a'), node('b')];
     const forgetfulLoop = [edge('e1', 'a', 'o', 'b', 'i'), edge('e2', 'b', 'o', 'a', 'i')];
-    expect(memoryReads(forgetful, forgetfulLoop, registry).size).toBe(0);
+    expect(passiveWires(forgetful, forgetfulLoop, registry).size).toBe(0);
     // Said by name, with the way out.
     expect(() => topologicalLevels(forgetful, forgetfulLoop, registry)).toThrow(/cycle through code node "a", code node "b".*data node/);
 
@@ -29,9 +29,14 @@ describe('a loop', () => {
     const store = node('store', 'data', { data_value: { value: 'old' } });
     const step = node('step', 'code', { code: 'x', language: 'js' });
     step.outputs = [{ id: 'output', name: 'o', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
-    const loop = [edge('read', 'store', 'value', 'step', 'input'), edge('write', 'step', 'output', 'store', 'value')];
-    // The wire out of it that closes the loop reads what it held; the step writes back, and the node forwards what it then holds.
-    expect([...memoryReads([store, step], loop, registry)]).toEqual(['read']);
+    // The step takes the one field it wants of how the memory was.
+    step.inputs = [{ id: 'input', name: 'input', kind: 'input', data_type: 'any', multi: false, required: false, description: '', field: 'value' }];
+    const loop = [edge('read', 'store', 'before', 'step', 'input'), edge('write', 'step', 'output', 'store', 'value')];
+    // The passive wire reads what it held; the step writes back, and the node forwards what it then holds.
+    expect([...passiveWires([store, step], loop, registry)]).toEqual(['read']);
+    // Waiting for the node to be filled while it waits for the step is a cycle, said with the way out.
+    expect(() => topologicalLevels([store, step], [edge('wait', 'store', 'value', 'step', 'input'), edge('write', 'step', 'output', 'store', 'value')], registry))
+      .toThrow(/data node "store".*"before" output/);
     const graph = graphOf([store, step], loop);
     const runtime = { ...nowhere, code: { run: async (_body: string, inputs: Record<string, unknown>) => ({ output: `${String(inputs.input)}+` }) } };
     const first = await executeGraph(graph, { runtime, registry });
@@ -50,10 +55,11 @@ describe('a loop', () => {
     const make = node('make', 'code', { code: 'make', language: 'js' });
     const look = node('look', 'code', { code: 'look', language: 'js' });
     for (const one of [make, look]) one.outputs = step.outputs;
+    make.inputs = step.inputs;
     const through = graphOf([make, fill, look], [
-      edge('put', 'make', 'output', 'fill', 'value'), edge('back', 'fill', 'value', 'make', 'input'), edge('get', 'fill', 'value', 'look', 'input'),
+      edge('put', 'make', 'output', 'fill', 'value'), edge('back', 'fill', 'before', 'make', 'input'), edge('get', 'fill', 'value', 'look', 'input'),
     ]);
-    expect([...memoryReads(through.nodes, through.edges, registry)]).toEqual(['back']);
+    expect([...passiveWires(through.nodes, through.edges, registry)]).toEqual(['back']);
     const passes = { ...nowhere, code: { run: async (body: string, inputs: Record<string, unknown>) => ({ output: `${body === 'make' ? 'new from' : 'saw'} ${String(inputs.input)}` }) } };
     const seen = await executeGraph(through, { runtime: passes, registry });
     expect(seen.node_results.find((result) => result.node_id === 'look')!.outputs).toEqual({ output: 'saw new from old' });

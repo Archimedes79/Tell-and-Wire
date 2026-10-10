@@ -1,5 +1,5 @@
 import type { GraphNode } from '../../../app/graph';
-import { DataNodeRunner, ALL_FIELDS, ROUND, hasField } from '../../../../graph/nodes/data/DataNodeRunner.ts';
+import { DataNodeRunner, ALL_FIELDS, BEFORE, ROUND, hasField } from '../../../../graph/nodes/data/DataNodeRunner.ts';
 import { derivedNodePorts } from '../../../app/document/ports';
 import { INK, NODE } from '../../../app/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
@@ -77,6 +77,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
       return json.length > HELD_SHOWN ? `${json.slice(0, HELD_SHOWN)}… (${json.length - HELD_SHOWN} more characters)` : json;
     };
     if (port === ROUND) return `the number of the round, from 1: how many rounds the struct has been through, the one it is in included${details ? ` -- of a struct: ${details}` : ''}`;
+    if (port === BEFORE) return `every field of a struct as it was when the round began, with the round number, as one object: how a loop reads it -- the input's "field" names the one it wants${details ? ` -- ${details}` : ''} -- as rounds fill it, it holds: ${start({ ...example, [ROUND]: 1 })}`;
     if (port !== undefined && hasField(fields, port)) return `the field "${port}" of a struct${details ? `: ${details}` : ''} -- as rounds fill it, it holds: ${start(valueOf(node, port))}`;
     const said = `a struct of ${names.length ? `the fields ${names.map((name) => `"${name}"`).join(', ')}` : 'no fields yet'}${details ? `: ${details}` : ''}; "${ALL_FIELDS}" is all of them`;
     return names.length ? `${said} -- as rounds fill it, it holds: ${start(example)}` : said;
@@ -96,7 +97,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
    */
   override restingValue(node: GraphNode, port: string): unknown {
     const { example } = DATA.config(node as never);
-    const value = port === ALL_FIELDS ? { ...example, [ROUND]: 1 } : port === ROUND ? 1 : valueOf(node, port);
+    const value = port === ALL_FIELDS || port === BEFORE ? { ...example, [ROUND]: 1 } : port === ROUND ? 1 : valueOf(node, port);
     return value === '' || value === null ? undefined : value;
   }
 
