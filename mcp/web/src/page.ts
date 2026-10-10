@@ -1,8 +1,8 @@
 // Reading a page: fetch it (politely, and only the public web), take out what
 // is worth reading, hand it over in pieces.
 
+import { chunkText, outline as outlineOf, pick, type Chunk, type OutlineEntry } from './chunk.ts';
 import { extract, type Extracted } from './extract.ts';
-import { piece } from './paging.ts';
 import { RobotsGuard } from './robots.ts';
 import { FetchError, decode, get, type Policy } from './safeFetch.ts';
 
@@ -20,11 +20,18 @@ export interface PageResult {
   end: number;
   /** Where to start the next call to read on; null: this was the end. */
   next_start: number | null;
+  /** Which part this is (counting from 0), of how many, and the headings it is under. */
+  chunk_index: number;
+  chunk_count: number;
+  section: string;
   content: string;
   warning: string;
+  /** Every part, without its text: only when asked for. */
+  outline?: OutlineEntry[];
 }
 
-interface Read extends Extracted { finalUrl: string; warning: string }
+/** *chunks* holds the page cut for each size asked for: the cut is the same for every call of one reading. */
+interface Read extends Extracted { finalUrl: string; warning: string; chunks: Map<number, Chunk[]> }
 
 const READABLE = new Set(['text/html', 'application/xhtml+xml', 'text/plain', 'text/markdown']);
 const KEEP_MS = 5 * 60 * 1000;
@@ -64,7 +71,7 @@ export class PageReader {
     this.now = now;
   }
 
-  async read(url: string, maxChars: number, start: number): Promise<PageResult> {
+  async read(url: string, maxChars: number, start: number, withOutline = false): Promise<PageResult> {
     const kept = this.pages.get(url);
     let read = kept && this.now() - kept.at < KEEP_MS ? kept.read : undefined;
     if (!read) {
@@ -73,7 +80,12 @@ export class PageReader {
       this.pages.set(url, { at: this.now(), read });
       while (this.pages.size > KEEP_PAGES) this.pages.delete(this.pages.keys().next().value as string);
     }
-    const part = piece(read.markdown, start, maxChars);
+    let chunks = read.chunks.get(maxChars);
+    if (!chunks) {
+      chunks = chunkText(read.markdown, maxChars);
+      read.chunks.set(maxChars, chunks);
+    }
+    const part = pick(read.markdown, chunks, start);
     return {
       url,
       final_url: read.finalUrl,
@@ -87,8 +99,12 @@ export class PageReader {
       start: part.start,
       end: part.end,
       next_start: part.next,
-      content: part.text,
+      chunk_index: part.index,
+      chunk_count: chunks.length,
+      section: chunks[part.index]?.section ?? '',
+      content: part.content,
       warning: read.warning,
+      ...(withOutline ? { outline: outlineOf(chunks) } : {}),
     };
   }
 
@@ -116,6 +132,7 @@ export class PageReader {
       ...page,
       title: page.title || fetched.url.hostname,
       finalUrl,
+      chunks: new Map(),
       warning: little ? 'Very little text was found; the page may build its content with JavaScript, which this tool does not run.' : '',
     };
   }

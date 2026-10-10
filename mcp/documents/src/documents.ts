@@ -3,9 +3,9 @@
 
 import { readFile, stat } from 'node:fs/promises';
 import { basename, extname } from 'node:path';
+import { chunkText, outline as outlineOf, pick, type Chunk, type OutlineEntry } from './chunk.ts';
 import { docxMarkdown } from './docx.ts';
 import { UserError } from './errors.ts';
-import { piece } from './paging.ts';
 import { readPdf } from './pdf.ts';
 import { AccessError, listInside, resolveInside, shown, type Entry } from './roots.ts';
 
@@ -26,8 +26,15 @@ export interface DocumentResult {
   end: number;
   /** Where to start the next call to read on; null: this was the end. */
   next_start: number | null;
+  /** Which part this is (counting from 0), of how many, the headings it is under, and the PDF pages it covers ("3", "3-4"). */
+  chunk_index: number;
+  chunk_count: number;
+  section: string;
+  page_range: string;
   content: string;
   warning: string;
+  /** Every part, without its text: only when asked for. */
+  outline?: OutlineEntry[];
 }
 
 interface Loaded {
@@ -38,6 +45,8 @@ interface Loaded {
   words: number;
   markdown: string;
   warning: string;
+  /** The text cut for each size asked for: the cut is the same for every call of one reading. */
+  chunks: Map<number, Chunk[]>;
 }
 
 const wordsIn = (text: string): number => text.split(/\s+/).filter(Boolean).length;
@@ -61,7 +70,7 @@ export class DocumentReader {
     this.now = now;
   }
 
-  async read(path: string, maxChars: number, start: number): Promise<DocumentResult> {
+  async read(path: string, maxChars: number, start: number, withOutline = false): Promise<DocumentResult> {
     const real = await resolveInside(this.roots, path, 'file');
     const kind = KINDS[extname(real).toLowerCase()];
     if (!kind) throw new AccessError(`only .pdf and .docx files are read, not ${extname(real) || 'a file without an extension'}`);
@@ -79,7 +88,12 @@ export class DocumentReader {
       this.files.set(key, { at: this.now(), loaded });
       while (this.files.size > KEEP_FILES) this.files.delete(this.files.keys().next().value as string);
     }
-    const part = piece(loaded.markdown, start, maxChars);
+    let chunks = loaded.chunks.get(maxChars);
+    if (!chunks) {
+      chunks = chunkText(loaded.markdown, maxChars);
+      loaded.chunks.set(maxChars, chunks);
+    }
+    const part = pick(loaded.markdown, chunks, start);
     return {
       path: shown(this.roots, real),
       kind: loaded.kind,
@@ -90,8 +104,13 @@ export class DocumentReader {
       start: part.start,
       end: part.end,
       next_start: part.next,
-      content: part.text,
+      chunk_index: part.index,
+      chunk_count: chunks.length,
+      section: chunks[part.index]?.section ?? '',
+      page_range: chunks[part.index]?.pageRange ?? '',
+      content: part.content,
       warning: loaded.warning,
+      ...(withOutline ? { outline: outlineOf(chunks) } : {}),
     };
   }
 
@@ -105,7 +124,7 @@ export class DocumentReader {
     if (kind === 'docx') {
       const markdown = (await docxMarkdown(bytes)).trim();
       if (!markdown) throw new UserError('the document has no text');
-      return { kind, title: /^# (.+)$/m.exec(markdown)?.[1] ?? name, pages: null, words: wordsIn(markdown), markdown, warning: '' };
+      return { kind, title: /^# (.+)$/m.exec(markdown)?.[1] ?? name, pages: null, words: wordsIn(markdown), markdown, warning: '', chunks: new Map() };
     }
     const pdf = await readPdf(bytes, this.limits.maxPages);
     const withText = pdf.pages.filter(Boolean).length;
@@ -116,6 +135,7 @@ export class DocumentReader {
       pages: pdf.pages.length,
       words: wordsIn(pdf.pages.join(' ')),
       markdown: pdf.pages.map((text, index) => (text ? `[Page ${index + 1}]\n${text}` : '')).filter(Boolean).join('\n\n'),
+      chunks: new Map(),
       warning: withText < pdf.pages.length ? `${pdf.pages.length - withText} of ${pdf.pages.length} pages have no text (scans?).` : '',
     };
   }

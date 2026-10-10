@@ -31,8 +31,8 @@ describe('PageReader', () => {
       expect(result.content).not.toContain('Subscribe to our newsletter');
       expect(result.content).not.toContain('Shop');
       expect(result.final_url).toBe(`${site.base}/story`);
-      expect(result.next_start).toBeNull();
-      expect(result.warning).toBe('');
+      expect(result).toMatchObject({ chunk_index: 0, chunk_count: 1, next_start: null, warning: '' });
+      expect(result.outline).toBeUndefined();
     } finally {
       await site.close();
     }
@@ -43,15 +43,19 @@ describe('PageReader', () => {
     const site = await serve(page(html(`<article><h1>Long</h1>${paragraphs}</article>`)));
     try {
       const reader = new PageReader(open, null);
+      const first = await reader.read(`${site.base}/long`, 1000, 0, true);
+      expect(first.outline).toHaveLength(first.chunk_count);
       const seen: string[] = [];
       let start: number | null = 0;
       while (start !== null) {
         const part = await reader.read(`${site.base}/long`, 1000, start);
         expect(part.content.length).toBeLessThanOrEqual(1000);
+        expect(part.chunk_index).toBe(seen.length);
         seen.push(part.content);
         start = part.next_start;
       }
       expect(seen.length).toBeGreaterThan(3);
+      expect(seen.length).toBe(first.chunk_count);
       const all = seen.join(' ');
       for (let n = 0; n < 60; n += 1) expect(all).toContain(`Paragraph ${n} of a long page`);
       expect(site.hits).toEqual(['/long']);

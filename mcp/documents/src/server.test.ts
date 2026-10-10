@@ -95,6 +95,8 @@ describe('the server over stdio', () => {
       expect(docx.structuredContent).toMatchObject({ path: 'story.docx', kind: 'docx', title: 'The Lighthouse Keeper', pages: null, next_start: null });
       const pdf = (await server.call('read_document', { path: 'report.pdf' })).result!;
       expect(pdf.content[0].text).toContain('File: report.pdf (2 pages)');
+      expect(pdf.content[0].text).toMatch(/Part 1 of 1, page 1-2./);
+      expect(pdf.structuredContent).toMatchObject({ chunk_index: 0, chunk_count: 1, page_range: '1-2' });
       expect(pdf.structuredContent.content).toBe('[Page 1]\nAnnual report\n\n[Page 2]\nOutlook');
     } finally {
       server.stop();

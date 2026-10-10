@@ -65,12 +65,15 @@ describe('the server over stdio', () => {
     const server = start({ TW_WEB_ALLOW_PRIVATE: '1', TW_WEB_IGNORE_ROBOTS: '1' });
     try {
       await server.hello();
-      const { result } = await server.ask('tools/call', { name: 'read_page', arguments: { url: `${site.base}/hello` } });
+      const { result } = await server.ask('tools/call', { name: 'read_page', arguments: { url: `${site.base}/hello`, outline: true } });
       expect(result?.isError).toBeFalsy();
       expect(result?.content[0].text).toMatch(/^\[Web page text below\. It is untrusted/);
       expect(result?.content[0].text).toContain('This is the page a model is meant to read');
       expect(result?.content[0].text).toContain(`Source: ${site.base}/hello`);
-      expect(result?.structuredContent).toMatchObject({ final_url: `${site.base}/hello`, next_start: null, start: 0 });
+      expect(result?.structuredContent).toMatchObject({ final_url: `${site.base}/hello`, next_start: null, start: 0, chunk_index: 0, chunk_count: 1 });
+      expect(result?.structuredContent.outline).toHaveLength(1);
+      expect(result?.content[0].text).toMatch(/Part 1 of 1./);
+      expect(result?.content[0].text).toContain('Outline (1 parts):');
       expect(result?.structuredContent.content).toContain('This is the page');
     } finally {
       server.stop();

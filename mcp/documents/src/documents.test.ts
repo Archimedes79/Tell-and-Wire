@@ -46,6 +46,16 @@ describe('DocumentReader.read', () => {
     expect(result.word_count).toBe(9);
   });
 
+  it('says which PDF pages each part covers, and lists the parts', async () => {
+    const page = (n: number) => Array.from({ length: 8 }, (_, line) => `Line ${line} of page ${n} with some words in it.`);
+    await writeFile(join(roots[0], 'three.pdf'), pdfOf([page(1), page(2), page(3)]));
+    const first = await reader().read('three.pdf', 500, 0, true);
+    expect(first).toMatchObject({ chunk_index: 0, chunk_count: 3, page_range: '1' });
+    expect(first.outline?.map((entry) => entry.page_range)).toEqual(['1', '2', '3']);
+    expect(await reader().read('three.pdf', 500, first.next_start!)).toMatchObject({ chunk_index: 1, page_range: '2' });
+    expect(await reader().read('three.pdf', 8000, 0)).toMatchObject({ chunk_count: 1, page_range: '1-3' });
+  });
+
   it('reads a file in a sub-folder, by a relative path or an absolute one', async () => {
     expect((await reader().read('sub/deep.docx', 8000, 0)).path).toBe('sub/deep.docx');
     expect((await reader().read(join(roots[0], 'sub', 'deep.docx'), 8000, 0)).content).toBe('Deep down.');

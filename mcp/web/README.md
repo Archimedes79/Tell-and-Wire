@@ -1,8 +1,8 @@
 # Web reader: an MCP server for AI nodes
 
 An optional tool: **`read_page`** fetches a public web page and hands a model its main
-text as Markdown, without menus, ads and comments. A long page comes in pieces that end
-at a paragraph.
+text as Markdown, without menus, ads and comments. A long page comes in parts that end at a
+heading or a paragraph, each saying which section it is in.
 
 It is a separate program with its own dependencies. Nothing of it is in the editor, in the
 download or in a deployed tool. A graph can only *name* it; the command that starts it
@@ -41,15 +41,40 @@ and named in that machine's `ai-settings.json`.
 
 ## The tool
 
-`read_page(url, max_chars = 8000, start = 0)`
+`read_page(url, max_chars = 8000, start = 0, outline = false)`
 
 | Returned | |
 |---|---|
 | text | the page as Markdown under a line saying where it is from and which characters these are |
-| `structuredContent` | `title`, `author`, `published`, `site`, `language`, `word_count`, `final_url` (after redirects), `total_chars`, `start`, `end`, `next_start`, `content`, `warning` |
+| `structuredContent` | `title`, `author`, `published`, `site`, `language`, `word_count`, `final_url` (after redirects), `total_chars`, `start`, `end`, `next_start`, `chunk_index`, `chunk_count`, `section`, `content`, `warning`, and with `outline` the list of parts |
 
 When `next_start` is a number, call again with `start` set to it to read on; `null` is the
-end. The page is fetched once for the five minutes in which its pieces are read.
+end.
+
+## Long pages, in parts
+
+A page that is longer than `max_chars` comes in **parts**, and each part ends where a person
+would stop reading, not where a count ran out:
+
+- a heading starts a new part once the one before is a fair size (40 % of `max_chars`), and is
+  never left at the end of one, away from the text it heads;
+- a table and a code block are not cut in the middle; one that is too big for a part is cut
+  between rows or lines, each piece with its table header or its fence;
+- the rest is cut at paragraphs, and only then at a sentence or a space.
+
+Each part says which **section** it is in (the headings above it, `Methods > Data`).
+`chunk_index` and `chunk_count` say which part of how many it is; `next_start` leads to the next.
+`outline: true` adds a list of every part -- section, size, `start` -- without their text, to choose
+one: read it by passing its `start`.
+
+**Size for a small model.** `max_chars` is characters, not tokens: about 4 to a token in English,
+fewer in German and in most other languages. A part of about a quarter of the model's context
+leaves room for its instructions, its answer and the parts it has already read: for a model with
+4 000 tokens of context, about 3 000 characters; for 8 000 tokens, 8 000; for 32 000, 30 000.
+A part is never longer than `max_chars`.
+
+The whole page is read once for the five minutes in which its parts are read; every call after
+the first costs nothing but the cut.
 
 ## What it will not do
 
@@ -98,7 +123,8 @@ It is TypeScript that Node runs unbuilt, like the rest of the repository.
 | `src/safeFetch.ts`, `src/ip.ts` | the one GET: public addresses only, limits, unpacking, charsets |
 | `src/robots.ts` | robots.txt |
 | `src/extract.ts` | the readable part of a page |
-| `src/paging.ts` | pieces that end where a person would stop |
+| `src/chunk.ts` | the text cut into parts: headings, tables and code blocks kept whole (the same file as `../documents`'s) |
+| `src/paging.ts` | the cut inside a paragraph, where it ends at a line, a sentence or a space (the same file as `../documents`'s) |
 
 ## Third-party
 
