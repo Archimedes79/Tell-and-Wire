@@ -5,7 +5,8 @@ import RunOncePerItem from '../../fields/RunOncePerItem';
 import ProviderModelSelect from '../../../app/fields/ProviderModelSelect';
 import Button from '../../../app/ui/Button';
 import { DIMMER, FIELD, MUTED } from '../../../app/ui/theme';
-import type { NodePanelProps } from '../NodeGuiBuilder';
+import { ONCE, type NodePanelProps } from '../NodeGuiBuilder';
+import ToolServers from './ToolServers';
 
 /**
  * The knobs after its ports: once per item, which model, how freely, which
@@ -63,22 +64,17 @@ export default function AiNodeAdvancedPanel({ node, setConfig, updateNode }: Nod
         )}
       </div>
 
-      <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: MUTED }} htmlFor={tools}>
-          Tools the model may use <span style={{ color: DIMMER }}>— MCP servers, one per line</span>
-        </label>
-        <textarea
-          id={tools}
-          className="w-full rounded-lg px-3 py-2 text-sm font-mono resize-y"
-          style={{ ...FIELD, minHeight: 44 }}
-          value={String(node.config.mcp_servers ?? '')}
-          onChange={(e) => setConfig('mcp_servers', e.target.value)}
-          placeholder={'https://example.com/mcp\nfilesystem'}
-          spellCheck={false}
+      <div role="group" aria-labelledby={tools}>
+        <div id={tools} className="text-xs font-medium mb-1" style={{ color: MUTED }}>
+          Tools the model may use <span style={{ color: DIMMER }}>— MCP servers</span>
+        </div>
+        <ToolServers
+          names={String(node.config.mcp_servers ?? '').split(/\r?\n/).map((name) => name.trim()).filter(Boolean)}
+          onChange={(names) => setConfig('mcp_servers', names.join('\n'), ONCE)}
         />
         <p className="text-xs mt-1" style={{ color: DIMMER }}
-          title="A URL is called directly. A name is looked up under mcp_servers in this machine's ai-settings.json, the only place a command line can come from: a graph someone hands you can ask for a tool by name, but it cannot start a program. While answering, the model calls the tools it needs; what it says afterwards is this node's output.">
-          A URL, or a name from <code>mcp_servers</code> in <code>ai-settings.json</code>.
+          title="While answering, the model calls the tools it needs; what it says afterwards is this node's output. A graph names its servers and never says what starts one: that is written on this machine, in ai-settings.json, by the dialogs here.">
+          The model calls them while it answers.
         </p>
       </div>
 

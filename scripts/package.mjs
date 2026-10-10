@@ -3,16 +3,22 @@
 // Tell & Wire has no runtime dependencies -- only devDependencies -- and Node
 // runs its TypeScript unbuilt. So everything a recipient needs is source plus
 // the already-built page: unzip, run the script, no `npm install`, no build,
-// no Docker.
+// no Docker. The tool servers under mcp/ are the exception that proves it: they
+// have dependencies of their own, so they come with them, installed here, as
+// `npm ci --omit=dev` leaves them and with their licences -- the download
+// carries Node and no npm, so a server that were left to install itself
+// could not.
 //
 // Tests are left out; nothing else is. The editor's own server routes stay in,
 // because this package *is* the editor, unlike a deploy bundle, which is one
 // graph and drops them.
 
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { zip } from '../backend/graph-editor/zip.ts';
 import { NODE_MAJOR, runCmd, runSh, zipMode } from '../backend/app/cli/launchers.ts';
 
@@ -33,6 +39,52 @@ async function walk(dir, keep = () => true) {
     else if (keep(path)) found.push(path);
   }
   return found;
+}
+
+/**
+ * The tool servers in mcp/ -- a folder with a config.json is one -- as zip
+ * entries: what a person runs (source, config, settings page, package files),
+ * and their packages, installed anew in a folder of their own so that what
+ * ships is what `npm ci --omit=dev` gives and nothing a developer's
+ * node_modules happens to hold. Each package keeps its own licence file.
+ */
+async function toolServers() {
+  const entries = [];
+  let folders;
+  try {
+    folders = await readdir(join(ROOT, 'mcp'), { withFileTypes: true });
+  } catch {
+    return entries;
+  }
+  for (const folder of folders) {
+    const base = `mcp/${folder.name}`;
+    if (!folder.isDirectory() || !existsSync(join(ROOT, base, 'config.json'))) continue;
+    for (const path of await walk(base, (file) => !file.endsWith('.test.ts') && !file.startsWith(`${base}/scripts/`) && file !== `${base}/tsconfig.json`)) {
+      entries.push({ path, content: await readFile(join(ROOT, path)) });
+    }
+
+    const { dependencies = {} } = JSON.parse(await readFile(join(ROOT, base, 'package.json'), 'utf8'));
+    if (Object.keys(dependencies).length === 0) continue;
+    const work = await mkdtemp(join(tmpdir(), 'tell-and-wire-mcp-'));
+    try {
+      for (const file of ['package.json', 'package-lock.json']) await copyFile(join(ROOT, base, file), join(work, file));
+      // A fixed command text, not arguments: Windows starts npm through its .cmd shim, which only a shell runs.
+      execSync('npm ci --omit=dev --ignore-scripts --no-audit --no-fund', { cwd: work, stdio: ['ignore', 'ignore', 'inherit'] });
+      const installed = join(work, 'node_modules');
+      const inside = async (dir) => {
+        for (const entry of await readdir(dir, { withFileTypes: true })) {
+          const path = join(dir, entry.name);
+          // .bin holds links to commands nobody runs from here.
+          if (entry.isDirectory()) { if (entry.name !== '.bin') await inside(path); }
+          else entries.push({ path: `${base}/node_modules/${relative(installed, path).split(sep).join('/')}`, content: await readFile(path) });
+        }
+      };
+      await inside(installed);
+    } finally {
+      await rm(work, { recursive: true, force: true });
+    }
+  }
+  return entries;
 }
 
 // The same launchers every deploy bundle gets (backend/app/cli/launchers.ts):
@@ -122,6 +174,8 @@ ${NEEDS}
     frontend/dist the editor's page, built; its licenses.txt names the
                 packages it is built from, each with its licence
     examples/   project folders to open from the editor's Open dialog
+    mcp/        tool servers an AI node can use (add one in the node's settings),
+                each with the packages it needs and their licences
     LICENSE     the terms Tell & Wire comes under
 
 A graph you build here can be handed on with the Deploy button, which writes a
@@ -148,6 +202,7 @@ const entries = [];
 for (const path of files) {
   entries.push({ path: `${top}/${path}`, content: await readFile(join(ROOT, path)) });
 }
+for (const entry of await toolServers()) entries.push({ ...entry, path: `${top}/${entry.path}` });
 const extra = {
   'run.sh': runSh(LAUNCHER),
   'run.cmd': runCmd(LAUNCHER),

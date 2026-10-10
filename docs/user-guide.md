@@ -200,6 +200,12 @@ what a node before it is shaped as.
   Each repair shows in the node's activity. A line that dropped, a busy server and an empty answer
   are tried again before any of that (`TW_AI_ATTEMPTS`, `TW_AI_RETRY_DELAY`). Each ask is a call: put
   0 on a node whose model is costly.
+- **Tools for the model.** An AI node can let its model call tools while it answers: a web page
+  to read, a Word or PDF file in a folder you name. In the node's settings, **Tools the model may
+  use → + Add MCP server** lists the servers that come with Tell & Wire (one click for the web
+  reader; the document reader asks for its folders first) and takes any other MCP server by its
+  address. **Edit config** changes a server's settings on this machine, **Remove** takes it off the
+  node. See [mcp/](../mcp/README.md).
 
 ## 5. Start points and end points
 

@@ -5,10 +5,9 @@ name and hands a model its text as Markdown; **`list_documents`** shows what is 
 files come in parts that end at a heading, a page or a paragraph, each saying which section
 and which pages it covers.
 
-It is a separate program with its own dependencies. Nothing of it is in the editor, in the
-download or in a deployed tool. A graph can only *name* it; the command that starts it, and
-the folders it may read, live in `ai-settings.json` on your machine, as for every tool
-server.
+It is a separate program with its own folder and packages (see [../README.md](../README.md)).
+It comes with the download; a deployed tool does not carry it. A graph can only *name* it: what
+starts it, and the folders it may read, are written in `ai-settings.json` on your machine.
 
 When a person picks a file on a page, the editor already hands it to a node as text (a Word
 file as Markdown) or as the file itself (a PDF). This server is for when the *model* decides
@@ -17,35 +16,32 @@ any other MCP client.
 
 ## Use it
 
-Node 24 or newer.
+In an AI node: *the node's settings → Tools the model may use → + Add MCP server → Document
+reader*. Its settings page asks for the folders it may read (**Browse…** for each) and, if you
+want, a size and a page limit. Adding installs its packages the first time (Node 24 or newer,
+and npm unless the download already has them) and starts it once to see that it starts.
+**Edit config** changes the folders later.
 
-```bash
-cd mcp/documents
-npm ci
-```
-
-Add it to `ai-settings.json`. After `main.ts` come the folders it may read -- one or more:
+By hand, in a copy of the repository: `cd mcp/documents && npm ci`, then in `ai-settings.json`
+(`TW_DOCS_ROOTS` names the folders, separated by `;` on Windows and `:` elsewhere; without a
+folder the server does not start):
 
 ```json
 {
   "mcp_servers": {
-    "docs": {
+    "documents": {
       "command": "node",
-      "args": ["C:/path/to/Tell-and-Wire/mcp/documents/src/main.ts", "C:/Users/me/Documents/papers"]
+      "args": ["src/main.ts"],
+      "cwd": "C:/path/to/Tell-and-Wire/mcp/documents",
+      "env": { "TW_DOCS_ROOTS": "C:/Users/me/Documents/papers" }
     }
   }
 }
 ```
 
-(`TW_DOCS_ROOTS` can name the folders instead, separated by `;` on Windows and `:` elsewhere.
-Without a folder the server does not start.)
-
-In an AI node, open *the node's settings → Tools the model may use* and write `docs` (in the
-project folder that is `"config": { "mcp_servers": ["docs"] }` in the node's entry in
-`nodes.json`). This wiring is tested end to end: a graph with such an AI node, run by
-`node backend/app/main.ts`, starts the server, offers the model both tools, hands it the text
-of a Word file and of a PDF, and, when the model asks for a file outside the folder, hands it
-the refusal and carries on.
+and `"config": { "mcp_servers": ["documents"] }` in the node's entry in `nodes.json`.
+The download's own test checks that this server and its packages are in it
+(`scripts/package.test.mjs`).
 
 ## The tools
 

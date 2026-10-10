@@ -115,8 +115,10 @@ asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
 [docs/architecture.md](docs/architecture.md)).
 
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
-servers: list them under *the node's settings → Tools the model may use*, one per line -- an
-`https://…/mcp` address, or a name this machine's `ai-settings.json` defines:
+servers. In *the node's settings → Tools the model may use*, **+ Add MCP server** offers the ones
+that come with Tell & Wire -- a web reader and a Word and PDF reader, each with the settings it
+needs -- and takes any other: an `https://…/mcp` address, or a name this machine's
+`ai-settings.json` defines:
 
 ```json
 { "mcp_servers": {
@@ -152,8 +154,8 @@ portfolio_review are teams of AI reviewers.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
   between them, the tool's folder format, the wrapper's APIs and the core protocol, and how to
   extend Tell & Wire.
-- [mcp/](mcp/README.md): optional tool servers that let an AI node read web pages and Word and
-  PDF files. Each has its own dependencies; none of it is in the download.
+- [mcp/](mcp/README.md): the tool servers that come with Tell & Wire -- they let an AI node read web
+  pages and Word and PDF files -- and how a server brings its own settings.
 
 ## Licence
 

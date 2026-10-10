@@ -358,6 +358,45 @@ export interface SettingsPatch {
   clear_keys?: string[];
 }
 
+/** A tool server that came with this installation (`mcp/<name>/config.json`), and what this machine has done with it. */
+export interface McpServerView {
+  /** Its folder's name, and the name a graph and `ai-settings.json` call it by. */
+  name: string;
+  title: string;
+  about: string;
+  /** The environment variables it reads, each with what it means: all it may be given. */
+  env: Record<string, string>;
+  /** Those it does not start without. */
+  required: string[];
+  /** Its `settings.html`, where the server brings its own interface; empty where it does not. */
+  page: string;
+  /** What is saved for it on this machine, by variable; null where it is not set up. */
+  values: Record<string, string> | null;
+  /** Its packages are in its folder, or it needs none. */
+  installed: boolean;
+  /** `ai-settings.json` has an entry of this name that is not this server's: it is used as it is, and not edited here. */
+  by_hand: boolean;
+  /** Why its `config.json` cannot be used, in a sentence. */
+  problem: string;
+}
+
+/** The servers that came with this installation, and every name `ai-settings.json` has an entry for. */
+export interface McpServersView {
+  servers: McpServerView[];
+  configured: string[];
+  /** What separates the folders of a list in an environment variable on this machine: ; or : */
+  delimiter: string;
+}
+
+/** A server saved, and started once to see that it does. */
+export interface McpSaved {
+  server: McpServerView;
+  /** The tools it offered when it started. */
+  tools: string[];
+  /** Why it did not start; empty when it did. It is saved either way. */
+  problem: string;
+}
+
 /** Which providers answer right now, and what the one AI setting resolves to. */
 export interface ProviderStatus {
   local: Record<string, { reachable: boolean; models: string[] }>;
@@ -525,6 +564,15 @@ export const API = {
   aiSettings: route<void, SettingsStatus>('GET', '/api/ai/settings', 'editor'),
   saveAiSettings: route<SettingsPatch, SettingsStatus>('POST', '/api/ai/settings', 'editor'),
   providers: route<void, ProviderStatus>('GET', '/api/ai/providers', 'editor'),
+
+  /**
+   * The tool servers in `mcp/`, and what this machine has set up. Setting one
+   * up writes the command that starts it into `ai-settings.json` and may run
+   * npm: the person's, at the keyboard.
+   */
+  mcpServers: local(route<void, McpServersView>('GET', '/api/mcp/servers', 'editor')),
+  /** Set a server up on this machine with these values -- installing its packages if they are not there -- and start it once to see that it starts. */
+  saveMcpServer: local(route<{ name: string; values: Record<string, string> }, McpSaved>('POST', '/api/mcp/servers/:name', 'editor')),
 
   /**
    * One of a node's files in a project, in the person's own editor: `file`,

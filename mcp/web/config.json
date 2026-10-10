@@ -1,0 +1,13 @@
+{
+  "title": "Web reader",
+  "about": "Reads a public web page and hands the model its main text, in pieces when it is long.",
+  "command": "node",
+  "args": ["src/main.ts"],
+  "env": {
+    "TW_WEB_TIMEOUT_MS": "How long it waits for a page, in milliseconds (1000 to 120000). Without it: 20000.",
+    "TW_WEB_MAX_BYTES": "The largest page it reads, in bytes (65536 to 52428800). Without it: 5242880 (5 MB).",
+    "TW_WEB_IGNORE_ROBOTS": "1: do not honour a site's robots.txt. Your responsibility.",
+    "TW_WEB_ALLOW_PRIVATE": "1: allow addresses on this machine and its network (localhost, 192.168.x.x). Then a page address can reach anything this machine can."
+  },
+  "required": []
+}

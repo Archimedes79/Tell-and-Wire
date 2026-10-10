@@ -23,9 +23,13 @@ and `backend/gui-editor/`. Imports are relative. More in `docs/architecture.md`.
 
 Each server under `mcp/` is a package of its own, outside the workspace: its own `package.json`
 and lockfile, nothing imported from the others (not from `graph/`, not from each other) and
-nothing importing it, none of it in the download or a bundle. Their dependencies are installed
-by whoever runs them, not shipped by us. Their checks (`npm test`, `typecheck`, `licenses`) run
-inside each folder, in `.github/workflows/mcp.yml`.
+nothing importing it. A folder with a `config.json` is a server the editor offers (**Add MCP
+server** in an AI node): the editor knows only what that file says -- how it starts, and the
+environment variables it reads -- and shows the server's own `settings.html` for its settings,
+if it has one. Nothing of a server's settings is in the editor's code. The download carries the
+servers with their packages, installed by `scripts/package.mjs` (it has Node and no npm), each
+package with its own licence; a deployed tool carries none. Their checks (`npm test`,
+`typecheck`, `licenses`) run inside each folder, in `.github/workflows/mcp.yml`.
 
 ## How a change is made
 

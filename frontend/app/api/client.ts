@@ -16,7 +16,7 @@ import {
 import type { FormatGraph, Graph } from '../graph';
 
 export type {
-  AICall, BrowseEntry, BrowsePage, GenerateRequest, GenerateResponse, ProbeReport,
+  AICall, BrowseEntry, BrowsePage, GenerateRequest, GenerateResponse, McpSaved, McpServerView, McpServersView, ProbeReport,
   ProviderStatus, Requirement, RoundSnapshot, SessionView, SettingsPatch, SettingsStatus, ToolAiSettings,
 } from '../../../backend/app/api.ts';
 

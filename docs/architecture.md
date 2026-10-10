@@ -10,7 +10,7 @@ the files relate. Where a test holds a claim, the test is named.
 | Part | Folder | What it holds |
 |---|---|---|
 | Graph editor, frontend | `frontend/graph-editor/` | `canvas/` (the graph on screen: one card for every kind), `node/` (one node opened: `NodeView`, its file panes, chats, settings, Pull), `views/` (the node view's drawing: layout, rows, chat; pure), `nodes/<kind>/` (each node kind's `<Kind>NodeGuiBuilder.ts` and settings panels), `authoring/` (a node's text, its ✨ files, Pull, ▶ Try), `fields/` |
-| Graph editor, backend | `backend/graph-editor/` | `routes.ts` (the `editor` routes: save, open, run one node), `generate.ts`, `generatePrompts.ts` (what ✨ sends), `brief.ts`, `graphPrompt.ts` (✨), `files.ts`, `settings.ts`, `zip.ts` (Deploy), `mcpServer.ts` with `mcp/` (spec, confinement, tools, transport). Not in a deployed tool |
+| Graph editor, backend | `backend/graph-editor/` | `routes.ts` (the `editor` routes: save, open, run one node), `generate.ts`, `generatePrompts.ts` (what ✨ sends), `brief.ts`, `graphPrompt.ts` (✨), `files.ts`, `settings.ts`, `mcpServers.ts` (the servers in `mcp/`: list, set up, install), `zip.ts` (Deploy), `mcpServer.ts` with `mcp/` (spec, confinement, tools, transport). Not in a deployed tool |
 | The graph's code and execution | `graph/` | `graph.ts` (format types), `execution/` (the executor, what starts a round), `core/` (the graph core: `protocol.ts`, `localCore.ts`, `stdio.ts`, `node.ts`), `nodes/<kind>/` (`<Kind>NodeRunner.ts`, `registry.ts`, base classes), `ai/` (model client, settings), `authoring/` (definitions, ✨ prompts, Pull's file, a node's history, examples) |
 | Gui editor, frontend | `frontend/gui-editor/` | `page/` (the Page and App tabs), `widgets/<kind>/` (each block kind's builder, view and panel), `runtime/` (the page a deployed tool serves) |
 | Gui editor, backend | `backend/gui-editor/` | `session.ts` (the graph in use and its state), `rounds.ts` (the queue of rounds), `graphInterface.ts` (the graph's names), `widgets/<kind>/` (`<Kind>WidgetRunner.ts`), `widgets/page.ts` |
@@ -244,6 +244,7 @@ For the editor only; a bundle leaves `backend/graph-editor/` behind.
 | `POST /api/ai/generate`, `GET /api/ai/generate/progress` | ✨: write one of a node's files from the standard prompt and what was said to its chat (`ask`), or change the file there is as said (`refine.change`), and watch it being written |
 | `POST /api/ai/generate-graph` | ✨ Describe a graph: design a whole graph from a description, or change one |
 | `GET /api/ai/settings`, `POST /api/ai/settings`, `GET /api/ai/providers` | The one AI setting and the providers to choose from |
+| `GET /api/mcp/servers`, `POST /api/mcp/servers/:name` | The tool servers in `mcp/` and what this machine has set up; set one up (install its packages, write its entry, start it once) (loopback only) |
 | `POST /api/deploy/bundle` | Write the tool as a bundle zip |
 | `POST /api/files/open-external` | Open a node's file in the person's own editor (loopback only) |
 
@@ -407,6 +408,12 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
   and it starts without this process's keys and tokens (its own `env` gives what it needs).
   The MCP server confines paths to `--mcp-root`, never opens `ai-settings.json` and filters
   keys from its answers (`mcpServer.test.ts`, "confinement").
+- The editor sets up the tool servers in `mcp/` (`mcpServers.ts`, `local` routes): the command
+  it writes into `ai-settings.json` comes from the server's own `config.json` and the Node that
+  runs it, never from a request, and a request can fill in only the environment variables that
+  config lists. npm runs with a fixed command and no install scripts. A server's
+  `settings.html` runs in a sandboxed frame with no network and talks to the editor through
+  three messages (`pageDocument.ts`, `ServerPage.tsx`).
 - A code body runs in a sandbox of its own: see "A language" above (`sandbox.test.ts`).
 
 ## Environment variables

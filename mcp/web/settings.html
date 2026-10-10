@@ -1,0 +1,37 @@
+<!-- The web reader's settings, shown by Tell & Wire's editor when you add or edit it.
+     Plain HTML in a sandbox: it can only talk to the editor through `tw` (see mcp/README.md). -->
+<label for="seconds">How long to wait for a page (seconds)</label>
+<input id="seconds" type="number" min="1" max="120" step="any" placeholder="20">
+
+<label for="mb">Largest page it reads (MB)</label>
+<input id="mb" type="number" min="0.0625" max="50" step="any" placeholder="5">
+
+<label><input id="robots" type="checkbox"> Ignore robots.txt</label>
+<p class="help">By default a page that its site's robots.txt forbids is not read. Turning this on is your responsibility.</p>
+
+<label><input id="private" type="checkbox"> Allow addresses on this machine and its network</label>
+<p class="help">Off, it refuses localhost, 192.168.x.x and the like. On, a page address, which a page's own text can suggest to the model, can reach anything this machine can.</p>
+
+<script>
+  const field = (id) => document.getElementById(id);
+  const scaled = (id, unit) => (field(id).value ? String(Math.round(Number(field(id).value) * unit)) : '');
+
+  function report() {
+    tw.changed({
+      TW_WEB_TIMEOUT_MS: scaled('seconds', 1000),
+      TW_WEB_MAX_BYTES: scaled('mb', 1048576),
+      TW_WEB_IGNORE_ROBOTS: field('robots').checked ? '1' : '',
+      TW_WEB_ALLOW_PRIVATE: field('private').checked ? '1' : '',
+    });
+  }
+
+  for (const id of ['seconds', 'mb', 'robots', 'private']) field(id).oninput = field(id).onchange = report;
+
+  tw.init((values) => {
+    field('seconds').value = values.TW_WEB_TIMEOUT_MS ? String(Number(values.TW_WEB_TIMEOUT_MS) / 1000) : '';
+    field('mb').value = values.TW_WEB_MAX_BYTES ? String(Number(values.TW_WEB_MAX_BYTES) / 1048576) : '';
+    field('robots').checked = values.TW_WEB_IGNORE_ROBOTS === '1';
+    field('private').checked = values.TW_WEB_ALLOW_PRIVATE === '1';
+    report();
+  });
+</script>

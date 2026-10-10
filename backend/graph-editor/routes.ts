@@ -28,6 +28,7 @@ import { holderOf, type SessionHolder } from '../gui-editor/session.ts';
 import * as files from './files.ts';
 import { NotAGraph, NotFound } from '../../graph/errors.ts';
 import * as settings from './settings.ts';
+import * as servers from './mcpServers.ts';
 import * as project from '../app/project/folder.ts';
 import { keptRound, writeKeptRound, TESTS_DIR } from '../app/project/keptRounds.ts';
 import * as gen from './generate.ts';
@@ -224,6 +225,9 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
     },
 
     providers: () => settings.providerStatus(),
+
+    mcpServers: () => servers.list(),
+    saveMcpServer: (asked) => servers.save(String(asked.name ?? ''), asked.values ?? {}),
 
     async openExternal(asked) {
       if (!asked.graph_path || !asked.node_id) throw new Refusal(400, "Missing 'graph_path' or 'node_id'.");

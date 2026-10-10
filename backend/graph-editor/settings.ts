@@ -55,13 +55,13 @@ export function status(cwd = process.cwd(), env: Env = process.env): SettingsSta
 }
 
 /**
- * Merge a change into the file and write it back.
+ * Read the file, let *change* edit what it says, and write it back whole.
  *
- * Merging rather than replacing, and treating an empty key as "leave alone",
- * means saving one provider's key never clears another's — and that a dialog
- * which cannot read keys back can still save without wiping them.
+ * Everything *change* does not touch is kept as it was -- the keys, the tool
+ * servers, a key nobody reads any more. A file that cannot be read is not
+ * written over: it holds keys and tool servers a save would lose.
  */
-export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env = process.env): Promise<SettingsStatus> {
+export async function edit(change: (file: SettingsFile) => void, cwd = process.cwd(), env: Env = process.env): Promise<void> {
   const path = settingsPath(cwd, env);
   let file: SettingsFile;
   try {
@@ -69,52 +69,60 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
   } catch (error) {
     throw new Refusal(409, `${path} cannot be read (${message(error)}). Fix it by hand first: saving over it now would lose the keys and tool servers in it.`);
   }
-  const endpoints = { ...file.endpoints };
-  const apiKeys = { ...file.api_keys };
-
-  for (const [provider, value] of Object.entries(patch.endpoints ?? {})) {
-    if (!ENDPOINT_PROVIDERS.includes(provider)) continue;
-    // Left blank, the provider's own address stands: a blank one is not written.
-    const url = String(value ?? '').trim();
-    if (url) endpoints[provider] = url;
-    else delete endpoints[provider];
-  }
-  for (const [provider, value] of Object.entries(patch.api_keys ?? {})) {
-    const key = CREDENTIALS[provider]?.key;
-    const text = String(value ?? '').trim();
-    if (key && text) apiKeys[key] = text;
-  }
-  for (const provider of patch.clear_keys ?? []) {
-    const key = CREDENTIALS[provider]?.key;
-    if (key) delete apiKeys[key];
-  }
-
-  // Everything else the file says -- the tool servers, a key nobody reads any
-  // more -- is kept as it was.
-  const next: SettingsFile = {
-    ...file,
-    api_keys: apiKeys,
-    endpoints,
-  };
-  if (patch.ai) {
-    // 'default' or nothing is "not set": the entry goes, and `aiSetting` falls
-    // back as it does on a machine nobody configured.
-    const provider = patch.ai.provider && patch.ai.provider !== 'default' ? patch.ai.provider.trim() : '';
-    const model = String(patch.ai.model ?? '').trim();
-    next.ai = { ...(provider ? { provider } : {}), ...(model ? { model } : {}) };
-    if (!provider && !model) delete next.ai;
-  }
+  change(file);
   await mkdir(dirname(path), { recursive: true });
   // Beside, then over: a crash mid-write leaves the old file whole. It holds keys, so
   // it is the owner's alone (0600, where the OS honours a mode).
   const beside = `${path}.${process.pid}.tmp`;
   try {
-    await writeFile(beside, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+    await writeFile(beside, `${JSON.stringify(file, null, 2)}\n`, { mode: 0o600 });
     await rename(beside, path);
   } catch (error) {
     await rm(beside, { force: true });
     throw error;
   }
+}
+
+/**
+ * Merge a change into the file and write it back.
+ *
+ * Merging rather than replacing, and treating an empty key as "leave alone",
+ * means saving one provider's key never clears another's — and that a dialog
+ * which cannot read keys back can still save without wiping them.
+ */
+export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env = process.env): Promise<SettingsStatus> {
+  await edit((file) => {
+    const endpoints = { ...file.endpoints };
+    const apiKeys = { ...file.api_keys };
+
+    for (const [provider, value] of Object.entries(patch.endpoints ?? {})) {
+      if (!ENDPOINT_PROVIDERS.includes(provider)) continue;
+      // Left blank, the provider's own address stands: a blank one is not written.
+      const url = String(value ?? '').trim();
+      if (url) endpoints[provider] = url;
+      else delete endpoints[provider];
+    }
+    for (const [provider, value] of Object.entries(patch.api_keys ?? {})) {
+      const key = CREDENTIALS[provider]?.key;
+      const text = String(value ?? '').trim();
+      if (key && text) apiKeys[key] = text;
+    }
+    for (const provider of patch.clear_keys ?? []) {
+      const key = CREDENTIALS[provider]?.key;
+      if (key) delete apiKeys[key];
+    }
+    file.api_keys = apiKeys;
+    file.endpoints = endpoints;
+
+    if (patch.ai) {
+      // 'default' or nothing is "not set": the entry goes, and `aiSetting` falls
+      // back as it does on a machine nobody configured.
+      const provider = patch.ai.provider && patch.ai.provider !== 'default' ? patch.ai.provider.trim() : '';
+      const model = String(patch.ai.model ?? '').trim();
+      file.ai = { ...(provider ? { provider } : {}), ...(model ? { model } : {}) };
+      if (!provider && !model) delete file.ai;
+    }
+  }, cwd, env);
   return status(cwd, env);
 }
 

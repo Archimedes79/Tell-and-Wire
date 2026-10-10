@@ -4,40 +4,33 @@ An optional tool: **`read_page`** fetches a public web page and hands a model it
 text as Markdown, without menus, ads and comments. A long page comes in parts that end at a
 heading or a paragraph, each saying which section it is in.
 
-It is a separate program with its own dependencies. Nothing of it is in the editor, in the
-download or in a deployed tool. A graph can only *name* it; the command that starts it
-lives in `ai-settings.json` on your machine, as for every tool server.
+It is a separate program with its own folder and packages (see [../README.md](../README.md)).
+It comes with the download; a deployed tool does not carry it. A graph can only *name* it: what
+starts it is written in `ai-settings.json` on your machine.
 
 ## Use it
 
-Node 24 or newer.
+In an AI node: *the node's settings → Tools the model may use → + Add MCP server → Web reader*.
+The first time that installs its packages (Node 24 or newer, and npm unless the download
+already has them), starts the server once to see that it starts, and puts `web` on the node.
+**Edit config** shows its settings page: how long it waits, the largest page, and the two
+switches below.
 
-```bash
-cd mcp/web
-npm ci
-```
-
-Add it to `ai-settings.json` (the path is where you cloned the repository):
+By hand, in a copy of the repository: `cd mcp/web && npm ci`, then in `ai-settings.json`
 
 ```json
 {
   "mcp_servers": {
-    "web": { "command": "node", "args": ["C:/path/to/Tell-and-Wire/mcp/web/src/main.ts"] }
+    "web": { "command": "node", "args": ["src/main.ts"], "cwd": "C:/path/to/Tell-and-Wire/mcp/web" }
   }
 }
 ```
 
-In an AI node, open *the node's settings → Tools the model may use* and write `web` (in the
-project folder that is `"config": { "mcp_servers": ["web"] }` in the node's entry in
-`nodes.json`). The model then reads a page when the node's text asks about one.
+and `"config": { "mcp_servers": ["web"] }` in the node's entry in `nodes.json`. The model then
+reads a page when the node's text asks about one.
 
-This wiring is tested end to end: a graph with such an AI node, run by `node
-backend/app/main.ts`, starts this server from `ai-settings.json`, offers the model
-`read_page`, hands it the page text and carries on with its answer -- and when the address
-is refused, the model is handed the reason and the graph carries on.
-
-A deployed tool does not carry this server: where it runs, the server must be installed
-and named in that machine's `ai-settings.json`.
+The download's own test unzips it, sets this server up the way **Add MCP server** does and starts it
+(`scripts/package.test.mjs`).
 
 ## The tool
 

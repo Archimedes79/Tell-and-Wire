@@ -49,7 +49,8 @@ function stopTree(child) {
 
 /** Start the launcher as a double-click would: its path, from some other folder; resolves to the URL it serves on. */
 function launch() {
-  const env = { ...process.env, TW_NO_BROWSER: '1', TW_NO_PAUSE: '1' };
+  // Its own settings file: setting a tool server up below must not land in a real one.
+  const env = { ...process.env, TW_NO_BROWSER: '1', TW_NO_PAUSE: '1', TW_SETTINGS: join(work, 'ai-settings.json') };
   // PORT is removed, not emptied; keys are matched without regard to case (`Path` on Windows).
   for (const key of Object.keys(env)) if (key.toUpperCase() === 'PORT') delete env[key];
   const child = spawn(windows ? process.env.ComSpec || 'cmd.exe' : launcher, windows ? ['/d', '/c', launcher] : [], {
@@ -90,9 +91,22 @@ test('the zip holds what a person runs, and its launcher starts from its own fol
   if (!windows) assert.ok(statSync(join(folder, 'run.sh')).mode & 0o111, 'run.sh is executable once unzipped');
 
   const run = launch();
-  const page = await fetch(await run.served);
+  const served = await run.served;
+  const page = await fetch(served);
   assert.equal(page.status, 200);
   assert.match(await page.text(), /<title>/);
+
+  // The tool servers come with their packages, because this zip has Node and no npm: they are there,
+  // installed, and one set up from the unzipped folder starts and offers its tool.
+  for (const file of ['mcp/web/config.json', 'mcp/web/settings.html', 'mcp/documents/node_modules/unpdf/package.json']) {
+    assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
+  }
+  const listed = await (await fetch(new URL('/api/mcp/servers', served))).json();
+  assert.deepEqual(listed.servers.map((server) => [server.name, server.installed]), [['documents', true], ['web', true]]);
+  const saved = await (await fetch(new URL('/api/mcp/servers/web', served), {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ values: {} }),
+  })).json();
+  assert.deepEqual([saved.tools, saved.problem], [['read_page'], '']);
   stopTree(run.child);
   await run.ended;
 }, { timeout: 120_000 });
