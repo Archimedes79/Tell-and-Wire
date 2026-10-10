@@ -1,11 +1,6 @@
 {
   "name": "Population plotter",
   "description": "Choose a CSV of names and numbers and see it as a chart. Choosing a file fires the start point \"draw\"; the code node reads the CSV out of its package and says what to plot, and the chart block shows the end point \"plot\".",
-  "nodes": {
-    "draw": "start",
-    "chart": "code",
-    "plot": "end"
-  },
   "wires": [
     "draw.data -> chart.csv",
     "chart.figure -> plot.value"

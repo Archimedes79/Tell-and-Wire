@@ -1,0 +1,54 @@
+{
+  "measure": {
+    "kind": "start",
+    "label": "Measure",
+    "description": "Started by a call -- the page in frontend/, a script -- with the paragraph to measure, as \"paragraph\".",
+    "config": {
+      "started_by": "call",
+      "values": {
+        "paragraph": "A graph grows in two directions. It grows wider as nodes are added beside each other, and it grows deeper when a part of the work becomes a graph of its own."
+      }
+    },
+    "outputs": [
+      {
+        "port": "data",
+        "name": "Data",
+        "type": "json",
+        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
+      }
+    ]
+  },
+  "statistics": {
+    "kind": "subgraph",
+    "label": "Statistics",
+    "description": "Measures a piece of text: how many words, how many sentences, and the longest word in it.\nA graph of its own: open it to see how the counting is done.",
+    "inputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "any",
+        "description": "Handed down by the graph above; run on its own, its design's",
+        "field": "paragraph"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "numbers",
+        "name": "Numbers",
+        "type": "any"
+      }
+    ]
+  },
+  "report": {
+    "kind": "end",
+    "label": "Report",
+    "description": "What came back out of the subgraph, as the run's result",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

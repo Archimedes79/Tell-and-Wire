@@ -1,7 +1,7 @@
 // The id something new is given: what it is, and a number only when that is taken.
 //
 // An id never changes -- wires, folders and ports are named after it -- so it
-// is what a person reads in `flow.json` for as long as the thing exists. The
+// is what a person reads in `flow.json` and `nodes.json` for as long as the thing exists. The
 // type of a node or the kind of a block says more there than a counter and a
 // timestamp did (`code-2-1790190787690`), and a label, which is changed at
 // will, would say something that stops being true.

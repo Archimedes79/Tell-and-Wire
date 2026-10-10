@@ -1,10 +1,10 @@
 {
-  "summarize": {
-    "x": 560,
-    "y": 160
-  },
   "chosen": {
     "x": 160,
+    "y": 160
+  },
+  "summarize": {
+    "x": 560,
     "y": 160
   },
   "summaries": {

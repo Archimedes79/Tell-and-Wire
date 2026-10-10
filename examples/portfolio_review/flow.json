@@ -1,26 +1,6 @@
 {
   "name": "Portfolio Review",
   "description": "A team of AI analysts reviews a portfolio export in any format -- macro, risk, quant, valuation, optimisation, tax, diversification, psychology and a counter-thesis -- merged into one prioritised report.",
-  "nodes": {
-    "review": "start",
-    "ai": "ai",
-    "code": "code",
-    "ai_2": "ai",
-    "ai_3": "ai",
-    "ai_4": "ai",
-    "ai_5": "ai",
-    "ai_6": "ai",
-    "ai_7": "ai",
-    "ai_8": "ai",
-    "ai_9": "ai",
-    "ai_10": "ai",
-    "ai_11": "ai",
-    "code_2": "code",
-    "output": "end",
-    "allocation": "end",
-    "actions": "end",
-    "report": "end"
-  },
   "wires": [
     "review.data -> ai.prompt",
     "ai.output -> code.input",

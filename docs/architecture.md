@@ -132,12 +132,11 @@ place, keys are sorted, and an unchanged save changes no byte
 
 ```
 my_tool/
-  flow.json            name, description, nodes (id -> kind), every wire as one line: "draw.data -> chart.csv"
-  layout.json          positions and sizes on the canvas
-  page/page.json       the page: a list of its blocks, each with sends_to / fires / shows
-  nodes/<id>/
-    node.json          heading, text and settings (only what differs from the default)
-    interface.json     ports: { port, name, type, list?, required?, field? }
+  flow.json            name, description, every wire as one line: "draw.data -> chart.csv"
+  nodes.json           id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is
+  layout.json          id -> { x, y, width?, height? }: positions and sizes on the canvas
+  page.json            the page: a list of its blocks, each with sends_to / fires / shows
+  nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
     input.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
     output.js          what one call returns, the same way; its keys are the outputs        (code, ai)
     code.js            the body, plus lines that run it alone on input.js's example          (code)
@@ -145,12 +144,20 @@ my_tool/
     data.json          the fields it starts with, an object; its ports follow them           (data)
     example.json       the same struct filled, an example of what it holds; absent, data.json stands in (data)
     history.md         every exchange with the model about this node
-    flow.json, nodes/  the graph a subgraph holds: a project folder of its own              (subgraph)
+    flow.json, nodes.json, layout.json, nodes/   the graph a subgraph holds: a project folder of its own   (subgraph)
   tests/<name>.json    kept rounds
   frontend/            optional: a page of the project's own, served at / instead of the built one
   state.json           not the project's: what using it left behind
 ```
 
+- **The graph is three files**: `flow.json` (the wires), `nodes.json` (the nodes) and
+  `layout.json` (where they sit). A run needs the first two and the node folders; the
+  editor alone reads `layout.json`, and a node missing from it is put in a row. Every node
+  has an entry in `nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a
+  `check` problem. The page is no part of the graph: `page.json` names start and end points
+  by id, and a tool without a page has no such file.
+- The page is a flow, not coordinates: its blocks sit in the order of the list, each `w`
+  cells wide (of 16 across) and `h` high, wrapping like text (`frontend/app/document/layout.ts`).
 - Which setting is which file is the element's to say (`NodeRunner.texts`). Every file is
   there from the start as a stub that reads back as nothing.
 - `backend/app/project/folder.ts` reads and writes folders for the editor, the CLI, a served

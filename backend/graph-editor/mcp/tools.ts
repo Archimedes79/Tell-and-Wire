@@ -22,10 +22,9 @@ import { clip } from '../brief.ts';
 import { generateGraph } from '../generate.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../graph/authoring/handedOn.ts';
 import {
-  FLOW_FILE, FileChanged, LAYOUT_FILE, NODE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, nestedGraphs, projectFolderOf, projectTexts,
-  readStructure, saveGraph as saveToDisk, type Guard,
+  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, nestedGraphs,
+  projectFolderOf, projectTexts, readStructure, saveGraph as saveToDisk, type Guard,
 } from '../../app/project/folder.ts';
-import { INTERFACE_FILE } from '../../app/project/interfaceFile.ts';
 import { problemsIn, type Problem } from '../../app/project/check.ts';
 import { folderProblems } from '../../app/project/folderCheck.ts';
 import { BadDocument, Refused, SKIPPED_FOLDERS, confinement, scrubber } from './confine.ts';
@@ -435,7 +434,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
           if (!entry.isFile() || extname(entry.name).toLowerCase() !== '.json') continue;
           // A project's own parts: its flow.json stands for all of them. What a
           // session of a graph keeps beside it is no graph either.
-          if ([NODE_FILE, INTERFACE_FILE, LAYOUT_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
+          if ([NODES_FILE, LAYOUT_FILE, PAGE_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
           try {
             // The same door as every other read, so the same files stay shut.
             await confine(full, 'path');

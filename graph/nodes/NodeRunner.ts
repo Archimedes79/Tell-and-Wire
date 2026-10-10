@@ -57,7 +57,7 @@ export interface DeployNeeds {
 
 /**
  * One piece of a node's writing, as a project folder keeps it: a file of its
- * own in the node's folder instead of a string inside its `node.json`.
+ * own in the node's folder instead of a string inside its entry in `nodes.json`.
  */
 export interface TextFile {
   /** The config key it is stored under. */
@@ -114,7 +114,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
 
   /**
    * What this node keeps in files of its own when its graph is a project
-   * folder. Everything else it stores stays in its `node.json`.
+   * folder. Everything else it stores stays in its entry in `nodes.json`.
    *
    * Fixed names rather than ones made from a label: a folder holding
    * `input.js`, `output.js` and `code.js` says what each file is

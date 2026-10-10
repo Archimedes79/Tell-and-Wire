@@ -1,0 +1,60 @@
+{
+  "chosen": {
+    "kind": "start",
+    "label": "Folder chosen",
+    "description": "Choosing a folder starts it; its package carries the folder's text files.",
+    "outputs": [
+      {
+        "port": "data",
+        "name": "Data",
+        "type": "json",
+        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
+      }
+    ]
+  },
+  "summarize": {
+    "kind": "ai",
+    "label": "Each file",
+    "description": "Summarizes one story: its title and two sentences. It runs once per file in the folder.",
+    "config": {
+      "batch_concurrency": 3,
+      "batch_mode": "per_item"
+    },
+    "inputs": [
+      {
+        "port": "story",
+        "name": "Story",
+        "type": "file_path",
+        "list": true,
+        "field": "folder"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Summary",
+        "type": "text",
+        "list": true
+      }
+    ]
+  },
+  "summaries": {
+    "kind": "end",
+    "label": "Summaries",
+    "description": "A summary of every file, in the folder's order.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any",
+        "list": true
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

@@ -251,11 +251,11 @@ it; the delivered page has a Stop of its own while a run goes.
 
 **File → Open…** and **Save as…** open a file browser: pick a folder or file, or type a
 path in its address box and press Enter. **Save as…** with a name without `.json` writes
-the tool as a folder: `flow.json` (the nodes and a line per wire), `layout.json`
-(positions), `page/page.json` (the blocks), and `nodes/<id>/` per node with `node.json`,
-`interface.json` and its files. A name ending in `.json` writes one file with everything
-inline. **Save as…** onto a tool or graph file that is already there asks first
-(**Replace**). Anything that would drop unsaved changes (New, Open, Reload, a drop) asks
+the tool as a folder: `flow.json` (a line per wire), `nodes.json` (each node's kind,
+heading, text, settings and ports), `layout.json` (positions), `page.json` (the blocks),
+and a folder `nodes/<id>/` for each node that keeps code or text of its own. A name ending
+in `.json` writes one file with everything inline. **Save as…** onto a tool or graph file
+that is already there asks first (**Replace**). Anything that would drop unsaved changes (New, Open, Reload, a drop) asks
 first too: **Save**, **Discard** or **Cancel**.
 
 The editor watches the folder. Change a file in your own editor or with git, and the change

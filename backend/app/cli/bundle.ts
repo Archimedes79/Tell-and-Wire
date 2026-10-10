@@ -1,7 +1,7 @@
 // Handing the graph to someone else.
 //
-// A bundle is the tool as its project folder -- flow.json, its page in page/,
-// a folder per node, as it was built -- the code that runs it, and one
+// A bundle is the tool as its project folder -- flow.json, nodes.json, its page
+// in page.json, a folder per node with writing, as it was built -- the code that runs it, and one
 // command. One format: what a recipient opens is what the editor opens. Nothing is
 // generated: the files of graph/ and backend/ are copied verbatim, so what a recipient runs is
 // what was tested here, byte for byte. Code generation would produce a second
@@ -205,8 +205,8 @@ async function sourceFiles(dir = ROOT, top = true): Promise<string[]> {
 }
 
 /**
- * Where a bundle keeps the built page, beside the project. Not `page/`: in a
- * project folder that is the page itself, its blocks in `page.json`.
+ * Where a bundle keeps the built page, beside the project. Not `page.json`:
+ * in a project folder that is the page itself, its blocks.
  */
 export const WEB_DIR = 'web';
 
@@ -335,8 +335,8 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
   const lines = [
     `# ${name}`,
     '',
-    'A tool, as the folder it was built as -- flow.json, its page in',
-    'page/, a folder per node with its code -- and the code that runs it.',
+    'A tool, as the folder it was built as -- flow.json and nodes.json, its page in',
+    'page.json, a folder per node with its code -- and the code that runs it.',
     'Nothing here was generated: that code is a verbatim copy of the one the',
     'graph was built and tested on, so this runs what was tested rather than a',
     'second implementation of it.',
@@ -421,7 +421,7 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
         'with its own licence.',
       ]
       : ['The code in graph/ and backend/ comes under the terms in LICENSE.']),
-    'The tool itself -- flow.json, page/ and nodes/ -- belongs to whoever built it.',
+    'The tool itself -- flow.json, nodes.json, page.json and nodes/ -- belongs to whoever built it.',
   );
 
   lines.push('');

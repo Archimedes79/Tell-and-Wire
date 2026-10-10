@@ -185,14 +185,15 @@ describe('save_graph', () => {
     // What the person's own editor keeps beside it, as a server that never read the project meets it: the node's history, and a file its chat was given.
     forgetSeen();
     await writeFile(path('nodes', 'work', 'history.md'), '## 2026-10-04 12:00 · Code\n\nNothing was sent.\n');
-    const settings = JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8'));
-    await writeFile(path('nodes', 'work', 'node.json'), `${JSON.stringify({ ...settings, config: { ...settings.config, input_files: ['data/a.csv'] } }, null, 2)}\n`);
+    const listed = JSON.parse(await readFile(path('nodes.json'), 'utf8'));
+    listed.work.config = { ...listed.work.config, input_files: ['data/a.csv'] };
+    await writeFile(path('nodes.json'), `${JSON.stringify(listed, null, 2)}\n`);
 
     const again = await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 2 }; }') });
     expect(again.isError).toBeUndefined();
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 2');
     expect(await readFile(path('nodes', 'work', 'history.md'), 'utf8')).toContain('Nothing was sent.');
-    expect(JSON.parse(await readFile(path('nodes', 'work', 'node.json'), 'utf8')).config.input_files).toEqual(['data/a.csv']);
+    expect(JSON.parse(await readFile(path('nodes.json'), 'utf8')).work.config.input_files).toEqual(['data/a.csv']);
 
     // The code was edited elsewhere since this process wrote it: that is said, not overwritten.
     await writeFile(path('nodes', 'work', 'code.js'), 'function run() { return { out: "by hand, in an editor" }; }\n');
@@ -253,7 +254,8 @@ describe('confinement', () => {
 
     await writeFile(join(outside, 'code.js'), 'function run() { return { out: "from outside" }; }');
     await mkdir(join(root, 'proj', 'nodes'), { recursive: true });
-    await writeFile(join(root, 'proj', 'flow.json'), JSON.stringify({ nodes: { work: 'code', result: 'end' }, wires: ['work.out -> result.value'] }));
+    await writeFile(join(root, 'proj', 'flow.json'), JSON.stringify({ wires: ['work.out -> result.value'] }));
+    await writeFile(join(root, 'proj', 'nodes.json'), JSON.stringify({ work: { kind: 'code' }, result: { kind: 'end' } }));
     await symlink(outside, join(root, 'proj', 'nodes', 'work'), kind);
     const ran = await tools.call('run_graph', { path: 'proj/flow.json' });
     expect(ran.isError).toBe(true);

@@ -1,0 +1,138 @@
+{
+  "summarize": {
+    "kind": "start",
+    "label": "Summarize",
+    "description": "Choosing a file, changing the length or pressing the button starts it; its package carries the file and the length.",
+    "outputs": [
+      {
+        "port": "data",
+        "name": "Data",
+        "type": "json",
+        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
+      }
+    ]
+  },
+  "reader": {
+    "kind": "code",
+    "label": "Read file",
+    "description": "Reads the chosen file and says what it is: passes its text on, and one line with its name, word count, character count and reading time.",
+    "config": {
+      "batch_mode": "whole_list"
+    },
+    "inputs": [
+      {
+        "port": "file",
+        "name": "File",
+        "type": "text",
+        "description": "The chosen file's content, as the page sends it",
+        "field": "file.content"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "text",
+        "description": "The same file's path, for its name",
+        "field": "file.path"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "text",
+        "description": "The file's content"
+      },
+      {
+        "port": "info",
+        "name": "Info",
+        "type": "text",
+        "description": "One line about the file"
+      }
+    ]
+  },
+  "summarizer": {
+    "kind": "ai",
+    "label": "Summarize",
+    "description": "Summarize the text faithfully, at the length asked for.",
+    "config": {
+      "batch_mode": "whole_list"
+    },
+    "inputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "text",
+        "description": "What to summarize"
+      },
+      {
+        "port": "length",
+        "name": "Length",
+        "type": "text",
+        "description": "How long the summary should be",
+        "field": "length"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Output",
+        "type": "text",
+        "description": "What the model answered"
+      }
+    ]
+  },
+  "summary": {
+    "kind": "end",
+    "label": "Summary",
+    "description": "The summary, in the length asked for.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "about": {
+    "kind": "end",
+    "label": "About the file",
+    "description": "One line saying what the file is.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  },
+  "content": {
+    "kind": "end",
+    "label": "What was read",
+    "description": "The file's text, as it was read.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

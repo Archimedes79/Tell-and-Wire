@@ -1,0 +1,63 @@
+{
+  "send": {
+    "kind": "start",
+    "label": "Send",
+    "description": "The chat block starts it whenever the person sends a message; its package carries the message and the conversation so far.",
+    "outputs": [
+      {
+        "port": "data",
+        "name": "Data",
+        "type": "json",
+        "description": "What the round was started with: {event, values} -- event is null in a round this start point did not begin."
+      }
+    ]
+  },
+  "assistant": {
+    "kind": "ai",
+    "label": "Assistant",
+    "description": "Answers the last message, knowing the conversation so far",
+    "config": {
+      "batch_mode": "whole_list"
+    },
+    "inputs": [
+      {
+        "port": "history",
+        "name": "History",
+        "type": "text",
+        "field": "chat.history"
+      },
+      {
+        "port": "message",
+        "name": "Message",
+        "type": "text",
+        "required": true,
+        "field": "chat.message"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Reply",
+        "type": "text"
+      }
+    ]
+  },
+  "reply": {
+    "kind": "end",
+    "label": "Reply",
+    "description": "The assistant's answer: the chat shows it and adds it to the conversation.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

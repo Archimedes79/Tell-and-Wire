@@ -75,7 +75,7 @@ const touch = async (path: string, content: string) => {
 };
 
 describe('a project folder', () => {
-  it('keeps each piece of writing in a file named for what it is, the flow once in flow.json, and a data node\'s fields as JSON in data.json', async () => {
+  it('keeps each piece of writing in a file named for what it is, the wires once in flow.json, each node once in nodes.json, and a data node\'s fields as JSON in data.json', async () => {
     await writeProject(dir, sample());
     expect(await text('nodes/count/code.js')).toBe(`function run(inputs) {\n  return { total: inputs.files.length };\n}\n\n${RUN_ON_ITS_OWN}\n`);
     expect(await text('nodes/count/input.js')).toBe('module.exports = { "files": ["a.csv"] };\n');
@@ -86,23 +86,25 @@ describe('a project folder', () => {
     const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes/count/code.js')], { cwd: dir });
     expect(JSON.parse(stdout)).toEqual({ total: 1 });
     // A folder listing has no writing of its own, and a chart is one block of the page's: no node, no folder.
-    expect(existsSync(join(dir, 'nodes/folder/select.js'))).toBe(false);
-    expect(JSON.parse(await text('page/page.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
-    expect(existsSync(join(dir, 'page/chart'))).toBe(false);
+    expect(existsSync(join(dir, 'nodes/folder'))).toBe(false);
+    expect(existsSync(join(dir, 'nodes/told'))).toBe(false);
+    expect(JSON.parse(await text('page.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
     expect(existsSync(join(dir, 'nodes/page'))).toBe(false);
 
-    // The flow says no more than who is wired to whom; a node's settings and ports are its own.
+    // The flow says no more than who is wired to whom; what a node is, is the list's.
     expect(JSON.parse(await text('flow.json'))).toEqual({
       name: 'Sample',
       description: 'All the writing there is.',
-      nodes: { folder: 'folder', count: 'code', say: 'ai', told: 'end' },
       wires: ['folder.files -> count.files', 'count.total -> say.total', 'say.output -> told.value'],
     });
-    expect(JSON.parse(await text('nodes/count/node.json'))).toEqual({ label: 'Count', config: { batch_mode: 'whole_list' } });
-    const ports = JSON.parse(await text('nodes/count/interface.json'));
-    expect(ports.inputs).toEqual([{ port: 'files', type: 'any' }]);
-    expect(ports.outputs).toEqual([{ port: 'total', type: 'any' }]);
-    expect(JSON.stringify(ports)).not.toContain('folder');
+    const listed = JSON.parse(await text('nodes.json'));
+    expect(Object.keys(listed)).toEqual(['folder', 'count', 'say', 'told']);
+    expect(listed.count).toEqual({
+      kind: 'code', label: 'Count', config: { batch_mode: 'whole_list' },
+      inputs: [{ port: 'files', type: 'any' }], outputs: [{ port: 'total', type: 'any' }],
+    });
+    expect(JSON.stringify(listed.count)).not.toContain('folder');
+    expect(existsSync(join(dir, 'nodes/count/node.json'))).toBe(false);
     expect(JSON.parse(await text('layout.json')).count).toEqual({ x: 300, y: 20, width: 360, height: 180 });
 
     const data = (id: string, fields: Record<string, unknown>) => ({ id, node_type: 'data', label: id, inputs: [], outputs: [], config: { data_value: fields } });
@@ -115,7 +117,7 @@ describe('a project folder', () => {
     // A data node's fields are one file, data.json, whatever they hold; its ports follow them.
     expect(JSON.parse(await readFile(join(held, 'nodes/count/data.json'), 'utf8'))).toEqual({ count: 2, names: ['Ada'] });
     expect(JSON.parse(await readFile(join(held, 'nodes/note/data.json'), 'utf8'))).toEqual({ text: 'Line one.\nLine two.' });
-    expect(JSON.parse(await readFile(join(held, 'nodes/note/interface.json'), 'utf8')).outputs.map((one: { port: string }) => one.port)).toEqual(['text', 'round', 'all']);
+    expect(JSON.parse(await readFile(join(held, 'nodes.json'), 'utf8')).note.outputs.map((one: { port: string }) => one.port)).toEqual(['text', 'round', 'all']);
     // How it looks filled is a file of its own, a stub until something is written there; one that is comes back.
     expect(JSON.parse(await readFile(join(held, 'nodes/note/example.json'), 'utf8'))).toEqual({});
     forgetSeen();
@@ -142,7 +144,7 @@ describe('a project folder', () => {
 
   it('writes the same bytes for the same graph, so an unchanged save is no change', async () => {
     await writeProject(dir, sample());
-    const files = ['flow.json', 'layout.json', 'nodes/count/node.json', 'nodes/count/interface.json', 'page/page.json'];
+    const files = ['flow.json', 'nodes.json', 'layout.json', 'page.json'];
     const first = await Promise.all(files.map(text));
     await writeProject(dir, await readProject(dir));
     expect(await Promise.all(files.map(text))).toEqual(first);
@@ -186,10 +188,26 @@ describe('a project folder', () => {
     expect(existsSync(join(dir, 'flow.json'))).toBe(false);
   });
 
+  it('reads a node list that says only the kinds, and refuses a project with no list, or a node with no kind, or a wire to a node the list lacks', async () => {
+    await writeFile(join(dir, 'flow.json'), JSON.stringify({ wires: ['work.out -> result.value'] }));
+    await expect(readProject(dir)).rejects.toThrow(/No list of nodes at .*nodes\.json/);
+
+    await writeFile(join(dir, 'nodes.json'), JSON.stringify({ work: {}, result: { kind: 'end' } }));
+    await expect(readProject(dir)).rejects.toThrow(/node "work" needs a "kind"/);
+
+    await writeFile(join(dir, 'nodes.json'), JSON.stringify({ work: { kind: 'code' }, result: { kind: 'end' } }));
+    const graph = await readProject(dir);
+    expect(graph.nodes.map((node) => [node.id, node.node_type, node.label])).toEqual([['work', 'code', 'work'], ['result', 'end', 'result']]);
+
+    // Said by `check`, not made up for: the wire stays as written.
+    await writeFile(join(dir, 'flow.json'), JSON.stringify({ wires: ['work.out -> missing.value'] }));
+    expect(problemsIn(await readProject(dir)).some((problem) => /there is no such node/.test(problem.problem))).toBe(true);
+  });
+
   it('refuses to read a page file that is no list of blocks as "no page", which a save would delete, and to save over a .json file that holds no graph', async () => {
     await writeProject(dir, sample());
     for (const wrong of ['{"blocks": []}', '{}', 'null', '[1]']) {
-      await writeFile(join(dir, 'page/page.json'), wrong);
+      await writeFile(join(dir, 'page.json'), wrong);
       await expect(readProject(dir), wrong).rejects.toThrow(/must be a list of blocks/);
     }
 
@@ -213,13 +231,13 @@ describe('two editors on one folder', () => {
     // The MCP server, or a second editor, adds node "extra" to the open project.
     forgetSeen();
     const open = await readProject(dir);
-    const flow = JSON.parse(await text('flow.json'));
-    flow.nodes.extra = 'code';
-    await touch(join(dir, 'flow.json'), JSON.stringify(flow, null, 2));
+    const listed = JSON.parse(await text('nodes.json'));
+    listed.extra = { kind: 'code' };
+    await touch(join(dir, 'nodes.json'), JSON.stringify(listed, null, 2));
     await mkdir(join(dir, 'nodes/extra'), { recursive: true });
     await writeFile(join(dir, 'nodes/extra/code.js'), 'function run() { return { out: "somebody else" }; }\n');
-    await expect(writeProject(dir, open)).rejects.toThrow(/flow\.json/);
-    expect(JSON.parse(await text('flow.json')).nodes.extra).toBe('code');
+    await expect(writeProject(dir, open)).rejects.toThrow(/nodes\.json/);
+    expect(JSON.parse(await text('nodes.json')).extra).toEqual({ kind: 'code' });
     expect(existsSync(join(dir, 'nodes/extra/code.js'))).toBe(true);
   });
 
@@ -235,7 +253,7 @@ describe('two editors on one folder', () => {
     expect(await changesOnDisk(dir)).toEqual([{ node_id: 'count', field: 'output_definition', value: '' }]);
 
     // The page's blocks, edited in page.json.
-    await touch(join(dir, 'page/page.json'), '[{ "id": "chart", "kind": "plot_window", "label": "Sales" }]\n');
+    await touch(join(dir, 'page.json'), '[{ "id": "chart", "kind": "plot_window", "label": "Sales" }]\n');
     expect(await changesOnDisk(dir)).toEqual([{ node_id: null, field: 'blocks', value: [{ id: 'chart', kind: 'plot_window', label: 'Sales' }] }]);
 
     const graph = await readProject(dir);
@@ -277,8 +295,9 @@ describe('a graph inside a node', () => {
 
     expect(JSON.parse(await text('nodes/part/flow.json')).name).toBe('Inner');
     expect(await text('nodes/part/nodes/shorten/code.js')).toContain('i.text.slice');
-    // None of it is repeated in the node.json above.
-    expect(JSON.parse(await text('nodes/part/node.json')).config).toEqual({});
+    // None of it is repeated in the list above.
+    expect(JSON.parse(await text('nodes.json')).part.config).toBeUndefined();
+    expect(JSON.parse(await text('nodes/part/nodes.json')).shorten.kind).toBe('code');
 
     const inner = (await readProject(dir)).nodes[0].config.subgraph as Graph;
     expect(inner.nodes[0].config.code).toContain('i.text.slice');
