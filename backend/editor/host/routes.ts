@@ -166,7 +166,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
         code: runtime.code,
         files: runtime.files,
         elements: registry,
-        target: await aiSetting(),
+        target: await aiSetting(process.cwd(), process.env, 'write'),
         calls,
       });
     }),
@@ -175,7 +175,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
     generationProgress: (asked) => ({ calls: generating.get(asked.id) ?? [] }),
 
     generateGraph: (asked) => watched(asked.progress_id, async (calls) => {
-      const target = await aiSetting();
+      const target = await aiSetting(process.cwd(), process.env, 'write');
       const current = asked.graph ? parseGraph(asked.graph) : undefined;
       const { graph, explanation } = await generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
       const designed = parseGraph(graph);

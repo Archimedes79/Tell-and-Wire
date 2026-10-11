@@ -86,8 +86,11 @@ node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on
 
 Open **⚙ Settings**, fill in what you need, press **Save**:
 
-- **AI**: the provider and model. This one setting serves ✨, ▶ Try and every AI node
-  that does not name its own model.
+- **AI that runs the nodes** and **AI that writes**: a provider and a model each. The first
+  serves every AI node that does not name its own model, a code node's `node.llm`, ▶ Try and
+  every run, also in a delivered tool. The second serves ✨ (a node's code and prompt, a whole
+  graph, the bar under the canvas) and is the first one until you set it apart -- a larger
+  model may be worth it for writing, a small one enough for the nodes, or the other way round.
 - **Keys** and **Server addresses**: paste an API key or a server address. Keys are
   write-only: saved on this machine, never shown again.
 
@@ -95,7 +98,8 @@ Settings are saved in `ai-settings.json`. It is looked for in the working direct
 folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as
 `~/.tell-and-wire/settings.json`; `TW_SETTINGS` names one file instead. The file is
 gitignored; `ai-settings.example.json` shows its shape. Environment variables win over the
-file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
+file: `TW_AI_PROVIDER`, `TW_AI_MODEL` (the nodes), `TW_WRITING_PROVIDER`, `TW_WRITING_MODEL`
+(writing), and the key and address variables below.
 
 | Provider (id) | Cost | Key or address |
 |---|---|---|

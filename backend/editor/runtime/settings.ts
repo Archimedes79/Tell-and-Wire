@@ -25,8 +25,9 @@ type Env = Record<string, string | undefined>;
 /** The providers whose base URL a person may point somewhere else: the ones the environment can point, too. */
 const ENDPOINT_PROVIDERS = Object.keys(ENDPOINT_ENV);
 
-/** The variables that are the one AI setting on a machine without the dialog. */
+/** The variables that are the two AI settings on a machine without the dialog: the nodes' and the writing one. */
 const AI_ENV = ['TW_AI_PROVIDER', 'TW_AI_MODEL'];
+const WRITING_ENV = ['TW_WRITING_PROVIDER', 'TW_WRITING_MODEL'];
 
 /** What the dialog shows: the AI saved, endpoints, and whether each credential is set — never the credential. */
 export function status(cwd = process.cwd(), env: Env = process.env): SettingsStatus {
@@ -49,6 +50,11 @@ export function status(cwd = process.cwd(), env: Env = process.env): SettingsSta
       provider: file.ai?.provider ?? '',
       model: file.ai?.model ?? '',
       environment: AI_ENV.filter((variable) => env[variable]?.trim()),
+    },
+    writing: {
+      provider: file.writing_ai?.provider ?? '',
+      model: file.writing_ai?.model ?? '',
+      environment: WRITING_ENV.filter((variable) => env[variable]?.trim()),
     },
     endpoints,
     credentials,
@@ -83,6 +89,13 @@ export async function edit(change: (file: SettingsFile) => void, cwd = process.c
   }
 }
 
+/** A provider and a model as the file keeps them: 'default' and a blank are "not set" and left out. */
+function kept(choice: { provider?: string; model?: string }): { provider?: string; model?: string } {
+  const provider = choice.provider && choice.provider !== 'default' ? choice.provider.trim() : '';
+  const model = String(choice.model ?? '').trim();
+  return { ...(provider ? { provider } : {}), ...(model ? { model } : {}) };
+}
+
 /**
  * Merge a change into the file and write it back.
  *
@@ -114,13 +127,17 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
     file.api_keys = apiKeys;
     file.endpoints = endpoints;
 
+    // 'default' or nothing is "not set": the entry goes, and `aiSetting` falls
+    // back as it does on a machine nobody configured.
     if (patch.ai) {
-      // 'default' or nothing is "not set": the entry goes, and `aiSetting` falls
-      // back as it does on a machine nobody configured.
-      const provider = patch.ai.provider && patch.ai.provider !== 'default' ? patch.ai.provider.trim() : '';
-      const model = String(patch.ai.model ?? '').trim();
-      file.ai = { ...(provider ? { provider } : {}), ...(model ? { model } : {}) };
-      if (!provider && !model) delete file.ai;
+      const ai = kept(patch.ai);
+      if (Object.keys(ai).length) file.ai = ai;
+      else delete file.ai;
+    }
+    if (patch.writing) {
+      const writing = kept(patch.writing);
+      if (Object.keys(writing).length) file.writing_ai = writing;
+      else delete file.writing_ai;
     }
   }, cwd, env);
   return status(cwd, env);
@@ -136,8 +153,10 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
  * only whether one is there: this goes to a terminal and into scrollback.
  */
 export async function setupLines(cwd = process.cwd(), env: Env = process.env): Promise<string[]> {
-  const { target, problem } = await providerStatus(cwd, env);
-  return [`AI (✨, ▶ Try, runs): ${target.provider}/${target.model || '(no model)'}${problem ? ` -- ${problem}` : ''}`];
+  const { target, problem, writing, writing_problem } = await providerStatus(cwd, env);
+  const line = (what: string, chosen: Target, trouble: string) => `${what}: ${chosen.provider}/${chosen.model || '(no model)'}${trouble ? ` -- ${trouble}` : ''}`;
+  const apart = writing.provider !== target.provider || writing.model !== target.model;
+  return [line(apart ? 'AI that runs the nodes' : 'AI (✨, ▶ Try, runs)', target, problem), ...(apart ? [line('AI that writes (✨)', writing, writing_problem)] : [])];
 }
 
 /** What a person calls each provider, in a sentence. */
@@ -179,7 +198,7 @@ function troubleWith(target: Target, local: ProviderStatus['local'], cwd: string
   return '';
 }
 
-/** Which providers are usable right now, and what the one AI setting resolves to. */
+/** Which providers are usable right now, and what the two AI settings resolve to. */
 export async function providerStatus(cwd = process.cwd(), env: Env = process.env): Promise<ProviderStatus> {
   const local: ProviderStatus['local'] = {};
   await Promise.all(LOCAL_PROVIDERS.map(async (provider) => {
@@ -187,5 +206,6 @@ export async function providerStatus(cwd = process.cwd(), env: Env = process.env
     local[provider] = { reachable: models !== null, models: models ?? [] };
   }));
   const target = await aiSetting(cwd, env);
-  return { local, target, problem: troubleWith(target, local, cwd, env) };
+  const writing = await aiSetting(cwd, env, 'write');
+  return { local, target, problem: troubleWith(target, local, cwd, env), writing, writing_problem: troubleWith(writing, local, cwd, env) };
 }

@@ -146,17 +146,21 @@ export interface GenerateResponse {
 export interface SettingsStatus {
   settings_file: string;
   /**
-   * The one AI setting as the file saves it, '' for unset; `environment` names
+   * The AI the nodes run on, as the file saves it, '' for unset; `environment` names
    * the variables that set it on this machine instead, and win.
    */
   ai: { provider: string; model: string; environment: string[] };
+  /** The same for the AI that writes (✨); all '' where it is the one the nodes run on. */
+  writing: { provider: string; model: string; environment: string[] };
   endpoints: Record<string, string>;
   credentials: Record<string, { configured: boolean; source: string }>;
 }
 
 export interface SettingsPatch {
-  /** The one AI setting. A provider of 'default' or '' leaves it unset. */
+  /** The AI the nodes run on. A provider of 'default' or '' leaves it unset. */
   ai?: { provider?: string; model?: string };
+  /** The AI that writes. Left unset, it is the one the nodes run on. */
+  writing?: { provider?: string; model?: string };
   endpoints?: Record<string, string>;
   api_keys?: Record<string, string>;
   /** Providers whose stored key is to be removed -- distinct from "left blank". */
@@ -205,10 +209,14 @@ export interface McpSaved {
 /** Which providers answer right now, and what the one AI setting resolves to. */
 export interface ProviderStatus {
   local: Record<string, { reachable: boolean; models: string[] }>;
-  /** What the one AI setting resolves to right now: what every call that names no model of its own goes to. */
+  /** What the AI the nodes run on resolves to right now: what every call of a node that names no model of its own goes to. */
   target: Target;
+  /** What the AI that writes (✨) resolves to: `target`, where it is not set apart. */
+  writing: Target;
   /** Why that cannot answer yet -- a server not running, a key or a model not there -- as a sentence for whoever puts it right; empty when nothing is in the way. */
   problem: string;
+  /** The same for `writing`. */
+  writing_problem: string;
 }
 
 /** A graph file on disk, as Open (and so Reload) and Save return it. */

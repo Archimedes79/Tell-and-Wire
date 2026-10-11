@@ -68,9 +68,14 @@ export function useProviderStatus(): ProviderStatus | null {
   return status;
 }
 
-/** The one AI setting as a person reads it: `provider / model`. */
-export const nowText = (status: ProviderStatus | null): string =>
-  status ? `${status.target.provider} / ${status.target.model || 'no model'}` : '…';
+/** Which of the two AI settings a picker is for: the nodes' (what a run calls) or the writing one (✨). */
+export type Purpose = 'run' | 'write';
+
+/** The AI setting of *purpose* as a person reads it: `provider / model`. */
+export const nowText = (status: ProviderStatus | null, purpose: Purpose = 'run'): string => {
+  const now = purpose === 'write' ? status?.writing : status?.target;
+  return now ? `${now.provider} / ${now.model || 'no model'}` : '…';
+};
 
 /**
  * What the model box offers: the models served by the provider chosen -- for
@@ -83,9 +88,9 @@ export const nowText = (status: ProviderStatus | null): string =>
  * left empty takes the provider's own default.
  */
 function modelHints(
-  provider: AIProvider, status: ProviderStatus | null, { lendsFromSetting }: { lendsFromSetting?: boolean } = {},
+  provider: AIProvider, status: ProviderStatus | null, { lendsFromSetting, purpose }: { lendsFromSetting?: boolean; purpose?: Purpose } = {},
 ): { servedModels: string[]; placeholder: string } {
-  const now = status?.target;
+  const now = purpose === 'write' ? status?.writing : status?.target;
   const effectiveProvider = provider === 'default' ? now?.provider : provider;
   const servedModels = (effectiveProvider && status?.local?.[effectiveProvider]?.models) || [];
   if (lendsFromSetting && now) {
@@ -109,12 +114,14 @@ interface ProviderModelSelectProps {
    * setting as it is now. Left out, a real provider must be named.
    */
   defaultLabel?: (now: string) => string;
-  /** An empty model is filled from the one AI setting, as a node's is: see `modelHints`. */
+  /** An empty model is filled from the AI the nodes run on, as a node's is: see `modelHints`. */
   lendsFromSetting?: boolean;
+  /** Which AI setting this picks, where it is a setting and not a node's own model. */
+  purpose?: Purpose;
 }
 
 export default function ProviderModelSelect({
-  provider, model, onProviderChange, onModelChange, defaultLabel, lendsFromSetting,
+  provider, model, onProviderChange, onModelChange, defaultLabel, lendsFromSetting, purpose,
 }: ProviderModelSelectProps) {
   const status = useProviderStatus();
   const id = useId();
@@ -129,12 +136,12 @@ export default function ProviderModelSelect({
   };
   const options = (Object.entries(AI_PROVIDER_LABELS) as [AIProvider, string][])
     .filter(([value]) => value !== 'default' || defaultLabel)
-    .map(([value, label]) => [value, value === 'default' ? defaultLabel!(nowText(status)) : annotate(value, label)] as const);
+    .map(([value, label]) => [value, value === 'default' ? defaultLabel!(nowText(status, purpose)) : annotate(value, label)] as const);
 
   // Models actually served by the selected local provider (or, for `default`,
   // by whatever it resolves to): pick-or-type via a datalist, because typing
   // an LM Studio model id from memory is exactly the friction this removes.
-  const { servedModels, placeholder } = modelHints(provider, status, { lendsFromSetting });
+  const { servedModels, placeholder } = modelHints(provider, status, { lendsFromSetting, purpose });
 
   const boxClass = 'w-full rounded-lg px-3 py-2 text-sm';
 

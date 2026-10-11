@@ -3,7 +3,7 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { providerStatus, save, status } from './settings.ts';
-import { readSettingsFile } from '../../deployment/runtime/ai/settings.ts';
+import { aiSetting, readSettingsFile } from '../../deployment/runtime/ai/settings.ts';
 
 /**
  * The settings dialog's contract: what it may see, and what a save may change.
@@ -52,6 +52,22 @@ describe('settings', () => {
     await save({ ai: { provider: 'default', model: '' } }, '/nowhere', env);
     expect(readSettingsFile(file).ai).toBeUndefined();
     expect(readSettingsFile(file).api_keys).toEqual({ openai: 'keep-me', anthropic: 'new' });
+  });
+
+  it('keeps two AIs -- the nodes\' and the one that writes, which is the nodes\' until it is set apart -- each of provider and model on its own', async () => {
+    const { file, env } = await own({ ai: { provider: 'google', model: 'flash' } });
+    expect(await aiSetting('/nowhere', env, 'write')).toEqual({ provider: 'google', model: 'flash' });
+    await save({ writing: { provider: 'google', model: 'pro' } }, '/nowhere', env);
+    expect(readSettingsFile(file).writing_ai).toEqual({ provider: 'google', model: 'pro' });
+    expect(await aiSetting('/nowhere', env, 'write')).toEqual({ provider: 'google', model: 'pro' });
+    expect(await aiSetting('/nowhere', env)).toEqual({ provider: 'google', model: 'flash' });
+    // A model named alone is asked of the nodes' provider; the environment wins over the file.
+    await save({ writing: { provider: 'default', model: 'big' } }, '/nowhere', env);
+    expect(await aiSetting('/nowhere', env, 'write')).toEqual({ provider: 'google', model: 'big' });
+    expect(await aiSetting('/nowhere', { ...env, TW_WRITING_PROVIDER: 'openai' }, 'write')).toEqual({ provider: 'openai', model: 'big' });
+    expect(status('/nowhere', { ...env, TW_WRITING_MODEL: 'x' }).writing).toEqual({ provider: '', model: 'big', environment: ['TW_WRITING_MODEL'] });
+    await save({ writing: { provider: 'default', model: '' } }, '/nowhere', env);
+    expect(readSettingsFile(file).writing_ai).toBeUndefined();
   });
 
   it('says why the one AI setting cannot answer yet, in a sentence that says what to do', async () => {

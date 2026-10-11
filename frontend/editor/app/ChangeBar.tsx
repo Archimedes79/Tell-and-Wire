@@ -113,10 +113,10 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
         </Note>
       )}
 
-      {change.phase === 'idle' && ai?.problem && (
+      {change.phase === 'idle' && ai?.writing_problem && (
         <Note>
           <div className="flex items-center gap-3">
-            <span className="flex-1 min-w-0" style={{ color: TEXT }}>⚠ {ai.problem}</span>
+            <span className="flex-1 min-w-0" style={{ color: TEXT }}>⚠ {ai.writing_problem}</span>
             <Button size="sm" className="shrink-0" onClick={onOpenSettings}>⚙ Settings</Button>
           </div>
         </Note>
@@ -137,7 +137,7 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
               void submit();
             }}
             // A server started since the last look is noticed as the bar is used.
-            onFocus={() => { if (ai?.problem) refreshProviderStatus(); }}
+            onFocus={() => { if (ai?.writing_problem) refreshProviderStatus(); }}
             disabled={asking}
             placeholder="Say what to change in the graph…"
             aria-label="Say what to change"

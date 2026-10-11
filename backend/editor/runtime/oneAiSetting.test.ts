@@ -11,8 +11,8 @@ import { graphOf } from '../../deployment/runtime/test/fakes.ts';
 
 /**
  * Where an AI call goes, whoever makes it: to the node's own provider and
- * model when it pins them, and to the one AI setting otherwise -- for a run
- * and ✨ Generate alike.
+ * model when it pins them, and otherwise to the AI the nodes run on -- for a
+ * run -- or to the one that writes, for ✨ Generate.
  *
  * Both are providers nobody has, so the provider layer refuses each by name
  * before anything leaves the machine, and the refusal says where the call
@@ -20,17 +20,20 @@ import { graphOf } from '../../deployment/runtime/test/fakes.ts';
  */
 
 const SETTING = 'the_one_setting';
+const WRITING = 'the_writing_one';
 const PIN = 'the_nodes_own';
 let dir = '';
 
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-one-setting-'));
   const file = join(dir, 'ai-settings.json');
-  await writeFile(file, JSON.stringify({ ai: { provider: SETTING, model: 'm' } }));
+  await writeFile(file, JSON.stringify({ ai: { provider: SETTING, model: 'm' }, writing_ai: { provider: WRITING, model: 'w' } }));
   vi.stubEnv('TW_SETTINGS', file);
   // The developer's own shell must not decide this either.
   vi.stubEnv('TW_AI_PROVIDER', '');
   vi.stubEnv('TW_AI_MODEL', '');
+  vi.stubEnv('TW_WRITING_PROVIDER', '');
+  vi.stubEnv('TW_WRITING_MODEL', '');
 });
 
 afterAll(async () => {
@@ -47,7 +50,7 @@ const asking = (config: Record<string, unknown>): GraphNode => ({
 });
 
 describe('an AI call', () => {
-  it('goes to the node\'s own model when it pins one, and to the one AI setting otherwise -- in a run, and from ✨ Generate', async () => {
+  it('goes to the node\'s own model when it pins one, to the AI the nodes run on otherwise, and from ✨ Generate to the one that writes', async () => {
     const pinned = await executeGraph(graphOf([asking({ ai_provider: PIN, ai_model: 'its-model' })]), { runtime: nodeRuntime(), registry });
     expect(pinned.node_results[0].error).toContain(refusedBy(PIN));
 
@@ -55,6 +58,6 @@ describe('an AI call', () => {
     expect(onSetting.node_results[0].error).toContain(refusedBy(SETTING));
 
     const node = { id: 'count', node_type: 'code', label: 'Count', description: 'Count the words.', inputs: [], outputs: [], config: {} };
-    await expect(editorRoutes().generate!({ node } as never, { loopback: true } as never)).rejects.toThrow(refusedBy(SETTING));
+    await expect(editorRoutes().generate!({ node } as never, { loopback: true } as never)).rejects.toThrow(refusedBy(WRITING));
   }, 30_000);
 });

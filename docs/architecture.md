@@ -172,8 +172,8 @@ the editor or a served tool, and what using it leaves behind. The rules are held
 
 None of it marks the editor's document unsaved or is saved with it
 (`frontend/editor/document/store/graphStore.test.ts`: "shows what a round made, and keeps none of
-it in the document"). Keys and the one AI setting live in `ai-settings.json`, not in a graph; an AI
-node may name its own model in its settings.
+it in the document"). Keys and the two AI settings (the nodes', and the one that writes -- ✨ -- which is the nodes' until set apart:
+`ai` and `writing_ai`) live in `ai-settings.json`, not in a graph; an AI node may name its own model in its settings.
 
 ## The project folder
 
@@ -304,7 +304,7 @@ For the editor only; a package leaves `backend/editor/` behind, so it answers no
 | `POST /api/graphs/rounds/keep` | Keep a round that ran through as a test of the project |
 | `POST /api/ai/generate`, `GET /api/ai/generate/progress` | ✨: write one of a node's files from the standard prompt and what was said to its chat (`ask`), or change the file there is as said (`refine.change`), and watch it being written |
 | `POST /api/ai/generate-graph` | ✨ Describe a graph: design a whole graph from a description, or change one |
-| `GET /api/ai/settings`, `POST /api/ai/settings`, `GET /api/ai/providers` | The one AI setting and the providers to choose from |
+| `GET /api/ai/settings`, `POST /api/ai/settings`, `GET /api/ai/providers` | The two AI settings and the providers to choose from |
 | `GET /api/mcp/servers`, `POST /api/mcp/servers/:name` | The tool servers in `mcp/` and what this machine has set up; set one up (install its packages, write its entry, start it once) (loopback only) |
 | `POST /api/deploy/bundle` | Write the tool as a package zip |
 | `POST /api/files/open-external` | Open a node's file in the person's own editor (loopback only) |
@@ -515,7 +515,8 @@ Besides the provider keys and addresses in the README:
 | Variable | What it sets |
 |---|---|
 | `TW_SETTINGS` | The one settings file, instead of looking for `ai-settings.json` |
-| `TW_AI_PROVIDER`, `TW_AI_MODEL` | The one AI setting, over the file |
+| `TW_AI_PROVIDER`, `TW_AI_MODEL` | The AI the nodes run on, over the file |
+| `TW_WRITING_PROVIDER`, `TW_WRITING_MODEL` | The AI that writes (✨), over the file; the nodes' where unset |
 | `TW_CORE` | A graph core program to run rounds in |
 | `TW_ALLOWED_HOSTS` | Host names a server bound wider than loopback answers to, comma-separated |
 | `TW_EDITOR_ON_NETWORK` | Lets the editor start bound beyond this machine, when nobody else can reach its port |
