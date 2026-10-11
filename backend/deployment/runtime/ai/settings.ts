@@ -19,8 +19,8 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { installFolder } from '../../project/layout.ts';
 import { DEFAULT_SETTINGS, settingsFromEnv, type ProviderSettings } from './providers.ts';
 import type { McpServerConfig } from './mcp.ts';
 import type { ModelChoice } from '../../../../graph/nodes/Runtime.ts';
@@ -52,17 +52,6 @@ export function candidatePaths(
 /** The file the machine's tool servers are written in: the one place a program to run comes from. */
 export function machineSettingsPath(env: Record<string, string | undefined> = process.env): string {
   return env.TW_SETTINGS || join(homedir(), '.tell-and-wire', 'settings.json');
-}
-
-/**
- * The folder the code came in, with its launchers: the one holding `graph/`
- * and `backend/` -- a checkout, the downloadable package, a bundle, which all
- * keep them side by side. Found by name, not counted.
- */
-export function installFolder(): string {
-  let dir = dirname(fileURLToPath(import.meta.url));
-  while (!(existsSync(join(dir, 'graph')) && existsSync(join(dir, 'backend'))) && dirname(dir) !== dir) dir = dirname(dir);
-  return dir;
 }
 
 /**

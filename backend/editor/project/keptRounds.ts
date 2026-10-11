@@ -20,9 +20,10 @@ import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ExecutionResult, Graph } from '../../../graph/graph.ts';
-import type { Runners } from '../../../graph/nodes/NodeRunner.ts';
+import type { Kinds } from '../../../graph/nodes/NodeDefinition.ts';
+import { designs } from '../../../graph/editor/nodes/registry.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
-import { eventOf, outputsOf } from '../../deployment/host/interface.ts';
+import { eventOf, outputsOf } from '../../../graph/interface.ts';
 import { folderName } from '../../../graph/files/names.ts';
 
 /** Where a project keeps its rounds: `tests/<name>.json`, beside `graph-flow.json`. */
@@ -64,7 +65,7 @@ export function keptRound(
   graph: Graph,
   result: ExecutionResult,
   started: { event: string; by: string } | null,
-  registry: Runners,
+  registry: Kinds,
   state: KeptRound['state'] = {},
 ): KeptRound {
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -73,7 +74,7 @@ export function keptRound(
     const node = byId.get(ran.node_id);
     const element = node && registry.node(node.node_type);
     if (!node || !element) continue;
-    const outside = element.takesPackage || element.asksModel(node) || ran.held === true;
+    const outside = element.takesPackage || designs.node(node.node_type)?.asksModel(node) || ran.held === true;
     if (outside && (ran.status === 'success' || ran.status === 'partial' || ran.held)) given[node.id] = ran.outputs;
   }
   return {
@@ -96,7 +97,7 @@ const brief = (value: unknown): string => {
  * model asked -- a node that would ask one fails the round -- and hold what
  * the end points hand back to what they handed back then.
  */
-export async function replayRound(graph: Graph, kept: KeptRound, options: { core: GraphCore; registry: Runners }): Promise<ReplayedRound> {
+export async function replayRound(graph: Graph, kept: KeptRound, options: { core: GraphCore; registry: Kinds }): Promise<ReplayedRound> {
   let result: ExecutionResult;
   try {
     const trigger = eventOf(graph, kept.event, options.registry);
@@ -162,7 +163,7 @@ export interface ReplayedKept {
 export async function replayKeptRounds(
   folder: string,
   graph: () => Graph | Promise<Graph>,
-  options: { core: GraphCore; registry: Runners },
+  options: { core: GraphCore; registry: Kinds },
 ): Promise<ReplayedKept[]> {
   const replayed: ReplayedKept[] = [];
   for (const { name, round, problem } of await readKeptRounds(folder)) {

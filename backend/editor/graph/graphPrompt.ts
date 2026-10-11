@@ -9,15 +9,16 @@
 // from the document. So the facts below are the ones a graph is *wrong* without.
 
 import { registry } from '../../../graph/nodes/registry.ts';
-import { guiAuthorNote } from '../../../gui/gui.ts';
+import { designs } from '../../../graph/editor/nodes/registry.ts';
+import { guiAuthorNote } from '../../../gui/editor/gui.ts';
 
 /**
  * The kinds a generated graph may use, each with what its own class says about
- * its settings (`NodeRunner.graphAuthorNote`). A kind that says nothing is left
+ * its settings (`NodeDesign.graphAuthorNote`). A kind that says nothing is left
  * out -- a subgraph is built by hand -- and a new one appears here by being written.
  */
 const AUTHORED = registry.nodeTypes()
-  .map((type) => [type, registry.node(type)?.graphAuthorNote()] as const)
+  .map((type) => [type, designs.node(type)?.graphAuthorNote()] as const)
   .filter((entry): entry is readonly [string, string] => !!entry[1]);
 const NODE_TYPES = AUTHORED.map(([type]) => type).join(', ');
 

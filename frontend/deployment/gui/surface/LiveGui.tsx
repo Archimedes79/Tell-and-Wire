@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { GuiWidget } from '../../../editor/document/graph';
+import type { GuiWidget } from '../kit/guiWidget';
 import { roundGoing, setEdit, useSession } from '../kit/api/session';
 import { GuiSurface } from './GuiSurface';
 import { guiInUse, roundError, type GuiDesign } from './guiInUse';

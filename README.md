@@ -153,8 +153,8 @@ portfolio_review are teams of AI reviewers.
 
 - [docs/user-guide.md](docs/user-guide.md): how to build a tool, step by step.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
-  between them, the tool's folder format, the wrapper's APIs and the core protocol, and how to
-  extend Tell & Wire.
+  between them, the tool's folder format, the host's APIs and the core protocol, what a package
+  carries, and how to extend Tell & Wire.
 - [mcp/](mcp/README.md): the tool servers that come with Tell & Wire -- they let an AI node read web
   pages and Word and PDF files -- and how a server brings its own settings.
 

@@ -3,9 +3,9 @@
 //
 // `serveCore` is the core's half -- what `node backend/cli/main.ts core` runs,
 // and what a core in another language does in its own way. `processCore` is
-// the wrapper's half: it starts such a program and is a `GraphCore` to the
+// the host's half: it starts such a program and is a `GraphCore` to the
 // session, the command line and the editor alike. `chosenCore` says which
-// one a wrapper runs graphs with.
+// one a host runs graphs with.
 
 import { spawn, type ChildProcessByStdio } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -17,7 +17,7 @@ import { OPERATIONS, PROTOCOL, type CoreAnswer, type CoreEvent, type CoreHello, 
 /**
  * Answer requests from *input* on *output* until *input* ends. Requests are
  * answered as they come, several at once: a `stop` reaches a round while it
- * goes. When *input* ends, whatever still goes is stopped -- a wrapper that
+ * goes. When *input* ends, whatever still goes is stopped -- a host that
  * is gone asks for nothing more.
  */
 export function serveCore(core: GraphCore, input: Readable, output: Writable): Promise<void> {
@@ -164,7 +164,7 @@ export function processCore(
     };
     child.on('error', (error) => end(`The graph core "${program}" could not be started: ${error.message}`));
     child.on('close', (code, signal) => end(`The graph core "${program}" ended (${signal ?? `exit code ${code}`}).`));
-    // Writing to a core that just died is said by its 'close', not by a crash of the wrapper.
+    // Writing to a core that just died is said by its 'close', not by a crash of the host.
     child.stdin.on('error', () => end(`The graph core "${program}" stopped reading what it is asked.`));
 
     createInterface({ input: child.stdout, crlfDelay: Infinity }).on('line', (line) => {
@@ -188,7 +188,7 @@ export function processCore(
 
     run.ready = send<CoreHello>(run, { op: 'hello' }, undefined, undefined, options.helloMs ?? HELLO_MS).then((hello) => {
       if (hello?.protocol !== PROTOCOL) {
-        throw new Error(`The graph core "${program}" speaks protocol ${String(hello?.protocol)}; this wrapper speaks ${PROTOCOL}.`);
+        throw new Error(`The graph core "${program}" speaks protocol ${String(hello?.protocol)}; this host speaks ${PROTOCOL}.`);
       }
       return hello;
     });
@@ -275,7 +275,7 @@ function commandParts(command: string): string[] {
 }
 
 /**
- * The graph core this wrapper runs graphs with: the program `TW_CORE`
+ * The graph core this host runs graphs with: the program `TW_CORE`
  * names, with its arguments -- `node backend/cli/main.ts core`, or a core in
  * another language -- else the JavaScript core in this process.
  */

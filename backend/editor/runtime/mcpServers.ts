@@ -13,16 +13,17 @@
 // `backend/deployment/runtime/ai/mcp.ts`); this is the one place a command line is written for it,
 // from a file in the installation -- never from a request's own words, which
 // can only fill in the variables the server's config lists. Hence
-// `backend/graph-editor/`, and routes that only a server bound to this machine
+// `backend/editor/`, and routes that only a server bound to this machine
 // answers.
 
 import { exec } from 'node:child_process';
 import { readdir, readFile, rm, stat } from 'node:fs/promises';
 import { delimiter, join, resolve } from 'node:path';
-import { configuredMcpServers, installFolder, machineSettingsPath } from '../../deployment/runtime/ai/settings.ts';
+import { configuredMcpServers, machineSettingsPath } from '../../deployment/runtime/ai/settings.ts';
+import { installFolder } from '../../deployment/project/layout.ts';
 import { mcpToolService, type McpServerConfig } from '../../deployment/runtime/ai/mcp.ts';
 import { Refusal, message } from '../../deployment/host/http.ts';
-import type { McpSaved, McpServerView, McpServersView } from '../../deployment/host/api.ts';
+import type { McpSaved, McpServerView, McpServersView } from '../host/api.ts';
 import { edit } from './settings.ts';
 
 type Env = Record<string, string | undefined>;

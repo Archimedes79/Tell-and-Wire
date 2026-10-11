@@ -8,7 +8,7 @@
 // file here would be a second answer to "what does the node get".
 
 import type { GraphNode, GuiWidget, NodeResult } from '../../document/graph';
-import { call } from '../../../deployment/gui/kit/api/client';
+import { call } from '../../api/client';
 import { START_PORT } from '../../../../graph/triggers.ts';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
 import { derivedNodePorts } from '../../document/model/ports';

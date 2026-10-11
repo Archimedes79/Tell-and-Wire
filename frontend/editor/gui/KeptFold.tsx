@@ -1,4 +1,4 @@
-import type { SessionView } from '../../deployment/gui/kit/api/client';
+import type { SessionView } from '../api/client';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { DIMMER, LINE, MUTED } from '../../deployment/gui/kit/ui/theme';
 import { cut } from '../../deployment/gui/kit/ui/cut';

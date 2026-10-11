@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // The server, as far as saving goes: each write waits until the test lets it
 // finish, so the test can edit the graph while it is on its way.
 const writes: { path: string; replace?: boolean; finish: () => void; fail: (error: Error) => void }[] = [];
-vi.mock('../../../deployment/gui/kit/api/client', async (actual) => ({
-  ...(await actual<typeof import('../../../deployment/gui/kit/api/client')>()),
+vi.mock('../../api/client', async (actual) => ({
+  ...(await actual<typeof import('../../api/client')>()),
   call: vi.fn((route: string, body: { path: string; replace?: boolean }) => {
     if (route !== 'saveGraph') throw new Error(`not expected here: ${route}`);
     return new Promise((resolve, reject) => {

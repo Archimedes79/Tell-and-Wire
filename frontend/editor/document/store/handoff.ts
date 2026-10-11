@@ -2,7 +2,7 @@
 // shown on the canvas: the store's two actions for it, and what they remember.
 
 import type { ExecutionResult } from '../graph';
-import { call, type RoundSnapshot } from '../../../deployment/gui/kit/api/client';
+import { call, type RoundSnapshot } from '../../api/client';
 import { useSession, watchSession } from '../../../deployment/gui/kit/api/session';
 import { mergeResults } from '../../../../graph/graph.ts';
 import { withoutAuthoring } from '../../../../graph/editor/handedOn.ts';

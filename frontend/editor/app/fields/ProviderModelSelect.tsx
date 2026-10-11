@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import type { AIProvider } from '../../document/graph';
-import { call, type ProviderStatus } from '../../../deployment/gui/kit/api/client';
+import { call, type ProviderStatus } from '../../api/client';
 import { LINE, MUTED, SUNKEN, TEXT } from '../../../deployment/gui/kit/ui/theme';
 import { lent } from '../../../../graph/nodes/Runtime.ts';
 

@@ -11,6 +11,7 @@ import { nodeFiles, nodeCode } from '../runtime/services.ts';
 import { aiService } from '../runtime/ai/providers.ts';
 import { lent, type Runtime } from '../../../graph/nodes/Runtime.ts';
 import { Session } from './session.ts';
+import { guiHooks } from '../gui/hooks.ts';
 import { writeBundle } from '../../editor/project/deploy/bundle.ts';
 
 /**
@@ -131,7 +132,7 @@ function runBundle(dir: string): Promise<{ code: number; out: string; err: strin
 describe('every example', () => {
   it('runs with a click on Run, on nothing but its own defaults', async () => {
     for (const name of EXAMPLES) {
-      const result = await (await Session.open(await load(name), { runtime })).run(null);
+      const result = await (await Session.open(await load(name), { runtime, gui: guiHooks })).run(null);
       expect(result.node_results.filter((n) => n.status === 'error').map((n) => `${n.node_id}: ${n.error}`), name).toEqual([]);
       expect(result.status, name).toBe('success');
     }

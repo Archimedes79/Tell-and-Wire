@@ -11,7 +11,7 @@ import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, S
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
 import { blocksAt } from '../../document/model/gui';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { carriesFiles, dropExample, droppedFile } from '../authoring/droppedFile';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
@@ -143,7 +143,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
     ? executionResult.messages?.[0] ?? status?.title
     : status?.title;
   // Where a run begins: its ports are events, and nothing gates it.
-  const events = new Set(runnerRegistry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
+  const events = new Set(registry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
   const connected = useGraphStore((s) => guiLine(graphNode, s.gui));
   const summary = builder?.canvasSummary?.(graphNode);
   const Icon = builder?.icon;

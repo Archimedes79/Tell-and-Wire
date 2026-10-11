@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { request as httpRequest, type Server } from 'node:http';
 import { serve } from './serve.ts';
-import { API, pathFor } from './api.ts';
+import { API, GUI_API, pathFor } from './api.ts';
+import { EDITOR_API } from '../../editor/host/api.ts';
+import { editorPart } from '../../editor/host/routes.ts';
+import { guiPart } from '../gui/hooks.ts';
 
 /**
  * The endpoints a deployed gui calls, and the rules about them.
@@ -34,7 +37,7 @@ const MINIMAL = join(mkdtempSync(join(tmpdir(), 'served-')), 'minimal.json');
 copyFileSync(resolve(REPO, 'backend', 'deployment', 'runtime', 'test', 'fixtures', 'minimal.json'), MINIMAL);
 
 async function serveGraph(options: { host?: string } = {}) {
-  const { server, url } = await serve({ graphPath: MINIMAL, port: 0, ...options });
+  const { server, url } = await serve({ graphPath: MINIMAL, port: 0, gui: guiPart, ...options });
   started.push(server);
   return url;
 }
@@ -88,21 +91,22 @@ describe('what a deployed tool serves', () => {
   // and no handler refuses to start, and the editor test below started.
   it('serves its own routes of the contract, none of the editor\'s, and nothing a tool has no business offering', async () => {
     const url = await serveGraph();
-    for (const [name, route] of Object.entries(API)) {
-      const { path } = pathFor(name as keyof typeof API, { id: 'none' });
+    for (const [name, route] of Object.entries({ ...API, ...GUI_API })) {
+      const { path } = pathFor(route, { id: 'none' });
       const stop = new AbortController();
       const init = { method: route.method, headers: { 'Content-Type': 'application/json' }, body: route.method === 'GET' ? undefined : '{}', signal: stop.signal };
       const response = await fetch(`${url}${path}`, init);
       // A stream answers by going on: that it opened is the handler.
       if (response.headers.get('content-type')?.startsWith('text/event-stream')) {
-        expect(route.for, name).toBe('tool');
         stop.abort();
         continue;
       }
       // Any answer but "no such route" means a handler: its own refusals (a run that is not there) are its business.
-      const detail = (await asJson(response)).detail;
-      if (route.for === 'editor') expect(detail, name).toBe('Not part of this server.');
-      else expect(detail, name).not.toBe('Not part of this server.');
+      expect((await asJson(response)).detail, name).not.toBe('Not part of this server.');
+    }
+    for (const [name, route] of Object.entries(EDITOR_API)) {
+      const response = await fetch(`${url}${pathFor(route, { id: 'none' }).path}`, { method: route.method, headers: { 'Content-Type': 'application/json' }, body: route.method === 'GET' ? undefined : '{}' });
+      expect((await asJson(response)).detail, name).toBe('Not part of this server.');
     }
     // Code generation and graph editing belong to building a tool, not to running one; and a tool
     // handed the graph its visitor posts would do what the visitor says, not what it ships.
@@ -172,7 +176,7 @@ describe('the server as the front door of the editor', () => {
     await writeFile(join(dist, 'index.html'), '<!doctype html><title>the editor</title>');
     await writeFile(join(dist, 'my file.js'), 'inside');
     await writeFile(join(parent, 'secret.txt'), 'above');
-    const { server, url } = await serve({ port: 0, editor: { dist } });
+    const { server, url } = await serve({ port: 0, gui: guiPart, editor: editorPart(dist) });
     started.push(server);
     const { host } = new URL(url);
 

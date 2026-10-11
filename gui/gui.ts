@@ -14,16 +14,14 @@
 
 import type { Graph, RawConfig, WidgetKind } from '../graph/graph.ts';
 import type { Runtime } from '../graph/nodes/Runtime.ts';
-import type { Runners } from '../graph/nodes/NodeRunner.ts';
-import { names, type Problem } from '../graph/wiring.ts';
-import type { RuntimeRequirement, Widget, WidgetConnections, WidgetPresentation, WidgetRunner } from './widgets/WidgetRunner.ts';
+import type { Kinds } from '../graph/nodes/NodeDefinition.ts';
+import type { RuntimeRequirement, Widget, WidgetConnections, WidgetDefinition, WidgetPresentation } from './widgets/WidgetDefinition.ts';
 import { WIDGETS } from './widgets/roster.ts';
-import { SENDERS } from '../graph/nodes/start/StartNodeRunner.ts';
 
-const BY_KIND = new Map(WIDGETS.map((element) => [element.widgetKind, element as WidgetRunner<unknown>]));
+const BY_KIND = new Map(WIDGETS.map((element) => [element.widgetKind, element as WidgetDefinition<unknown>]));
 
-/** The element a block of *kind* is, or none for a kind nobody knows. */
-export function widgetElement(kind: WidgetKind | string): WidgetRunner<unknown> | undefined {
+/** The definition of a block of *kind*, or none for a kind nobody knows. */
+export function widgetElement(kind: WidgetKind | string): WidgetDefinition<unknown> | undefined {
   return BY_KIND.get(kind as WidgetKind);
 }
 
@@ -70,7 +68,7 @@ export function guiBlocks(graph: Graph): RawConfig[] {
 }
 
 /** The gui's blocks, read. */
-function guiWidgets(graph: Graph): Widget[] {
+export function guiWidgets(graph: Graph): Widget[] {
   return guiBlocks(graph).map(parseWidget);
 }
 
@@ -87,16 +85,6 @@ export function firedBy(graph: Graph, name: string): Widget[] {
 /** The blocks whose data goes to start point *name*. */
 export function sentBy(graph: Graph, name: string): Widget[] {
   return guiWidgets(graph).filter((widget) => widget.sends_to.includes(name) && !!widgetElement(widget.kind)?.sends(widget));
-}
-
-/**
- * The block a port that takes *field* of start point *name*'s package
- * (`Port.field`) is handed the data of: the one of the field's first name
- * that sends to it -- none, when no block does.
- */
-export function fieldSender(graph: Graph, name: string, field: string): Widget | undefined {
-  const id = field.split('.')[0];
-  return sentBy(graph, name).find((widget) => widget.id === id);
 }
 
 /**
@@ -123,7 +111,7 @@ export async function guiSends(graph: Graph, name: string, runtime: Runtime): Pr
  * starts is sent what the gui holds now, as though the gui had fired it.
  * So a tool run from a terminal starts on what its gui starts on.
  */
-export async function startFromGui(graph: Graph, runtime: Runtime, registry: Runners): Promise<void> {
+export async function startFromGui(graph: Graph, runtime: Runtime, registry: Kinds): Promise<void> {
   if (!guiBlocks(graph).length) return;
   for (const node of graph.nodes) {
     const element = registry.node(node.node_type);
@@ -236,149 +224,4 @@ export function guiRequirements(graph: Graph, name: string | null): RuntimeRequi
   if (!name) return [];
   return sentBy(graph, name).flatMap((widget) => (widgetElement(widget.kind)?.runtimeRequirements(widget) ?? [])
     .map((asked) => ({ key: widget.id, ...asked })));
-}
-
-/** The graph's start points, end points and memory nodes, by name, as its nodes offer them: what a block may name. */
-function points(graph: Graph, registry: Runners): { starts: Map<string, string>; ends: Set<string>; states: Set<string> } {
-  const starts = new Map<string, string>();
-  const ends = new Set<string>();
-  const states = new Set<string>();
-  for (const node of graph.nodes) {
-    const element = registry.node(node.node_type);
-    for (const offer of element?.offers(node) ?? []) {
-      if (offer.kind === 'event') starts.set(offer.name, offer.startedBy ?? 'gui');
-      if (offer.kind === 'output') ends.add(offer.name);
-      if (offer.kind === 'state') states.add(offer.name);
-    }
-  }
-  return { starts, ends, states };
-}
-
-/** Whether a block of the gui shows a memory node: what a person sees of the graph where it has no end point. */
-export function showsMemory(graph: Graph, registry: Runners): boolean {
-  const { states } = points(graph, registry);
-  return guiWidgets(graph).some((block) => !!block.shows && states.has(block.shows));
-}
-
-/**
- * What is wrong with the gui: a block without an id, with another's or with
- * one a round says of a sender that is no block (`SENDERS`), a kind nobody
- * knows, a connection to a start or end point the graph does not have -- or
- * that the block cannot make --, and a block connected to nothing at all. A
- * start point the gui starts that nothing on the gui fires: whoever uses
- * the gui cannot start it. And a node that takes a value of what such a
- * start point is sent that no block sends it: it never arrives.
- */
-export function guiProblems(graph: Graph, registry: Runners, where = 'the gui'): Problem[] {
-  const found: Problem[] = [];
-  const blocks = guiWidgets(graph);
-  if (!blocks.length) return found;
-  const { starts, ends, states } = points(graph, registry);
-  const seen = new Set<string>();
-  for (const block of blocks) {
-    const at = `${where}, block "${block.id || block.kind}"`;
-    if (!block.id) {
-      found.push({ where: at, problem: `A "${block.kind}" block has no id.`, fix: 'Give every block an id: it is the name its data is sent under.' });
-    } else if (seen.has(block.id)) {
-      found.push({ where: at, problem: `More than one block has the id "${block.id}".`, fix: 'Give every block on the gui its own id.' });
-    } else if ((SENDERS as readonly string[]).includes(block.id)) {
-      found.push({
-        where: at,
-        problem: `The id "${block.id}" is what a round no block started says started it: the first node could not tell the two apart.`,
-        fix: 'Give the block another id.',
-      });
-    }
-    seen.add(block.id);
-    const element = widgetElement(block.kind);
-    if (!element) {
-      found.push({ where: at, problem: `Unknown block kind "${block.kind}".`, fix: `Use one of: ${[...BY_KIND.keys()].join(', ')}.` });
-      continue;
-    }
-    if (block.fires) {
-      if (!element.event(block)) {
-        found.push({ where: at, problem: `It fires "${block.fires}", but using it is no event.`, fix: 'Leave "fires" out, or let a button, a box or a choice fire it.' });
-      } else if (!starts.has(block.fires)) {
-        found.push({ where: at, problem: `It fires "${block.fires}", which is no start point of the graph: it starts ${names(starts.keys())}.`, fix: `Add a start point called "${block.fires}", or fire one the graph has.` });
-      } else if (starts.get(block.fires) !== 'gui') {
-        found.push({ where: at, problem: `It fires "${block.fires}", which is not started by the gui.`, fix: `Set "${block.fires}" to be started by the gui.` });
-      }
-    }
-    for (const target of block.sends_to) {
-      if (!element.sends(block)) {
-        found.push({ where: at, problem: `It sends to "${target}", but it holds nothing to send.`, fix: 'Leave "sends_to" out: only a block a person sets sends.' });
-        break;
-      }
-      if (!starts.has(target)) {
-        found.push({ where: at, problem: `It sends to "${target}", which is no start point of the graph: it starts ${names(starts.keys())}.`, fix: `Add a start point called "${target}", or send to one the graph has.` });
-      } else if (starts.get(target) !== 'gui') {
-        // The gui's data goes with the rounds the gui starts, and no other.
-        found.push({ where: at, problem: `It sends to "${target}", which the gui does not start: what it holds never reaches it.`, fix: `Set "${target}" to be started by the gui, or send to one it starts.` });
-      }
-    }
-    if (block.shows) {
-      if (!element.showsEnd(block)) {
-        found.push({ where: at, problem: `It shows "${block.shows}", but it shows nothing.`, fix: 'Leave "shows" out, or let a chart, a table, an image, a text box or a chat show it.' });
-      } else if (!ends.has(block.shows) && !states.has(block.shows)) {
-        found.push({
-          where: at,
-          problem: `It shows "${block.shows}", which is no end point or memory node of the graph: it ends at ${names(ends)}${states.size ? ` and holds ${names(states)}` : ''}.`,
-          fix: `Add an end point called "${block.shows}", or show one the graph has.`,
-        });
-      }
-    }
-    const can = [
-      element.sends(block) && 'send its data to a start point ("sends_to")',
-      element.event(block) && 'fire one ("fires")',
-      element.showsEnd(block) && 'show an end point ("shows")',
-    ].filter(Boolean);
-    if (can.length && !block.sends_to.length && !block.fires && !block.shows) {
-      found.push({ where: at, problem: 'It is connected to nothing: using it reaches no start point, and nothing is ever shown on it.', fix: `Let it ${can.join(', or ')}.` });
-    }
-  }
-  for (const edge of graph.edges) {
-    if (starts.get(edge.source_node_id) !== 'gui') continue;
-    const target = graph.nodes.find((node) => node.id === edge.target_node_id);
-    const field = target?.inputs.find((port) => port.id === edge.target_port_id)?.field;
-    if (!target || !field || fieldSender(graph, edge.source_node_id, field)) continue;
-    const id = field.split('.')[0];
-    const sending = sentBy(graph, edge.source_node_id).map((widget) => widget.id);
-    found.push({
-      where: `node "${target.id}", input "${edge.target_port_id}"`,
-      problem: `It takes "${field}" of what "${edge.source_node_id}" is sent, and no block of the gui sends "${id}" to it: ${sending.length ? `it is sent ${names(sending)}` : 'nothing is sent to it'}.`,
-      fix: `Take one of what it is sent, or let the block "${id}" send to "${edge.source_node_id}".`,
-    });
-  }
-  for (const [name, startedBy] of starts) {
-    if (startedBy !== 'gui' || blocks.some((block) => block.fires === name)) continue;
-    found.push({
-      where: `start point "${name}"`,
-      problem: 'It is started by the gui, and nothing on the gui fires it.',
-      fix: `Let a button, a box or a choice fire "${name}", or have it started by a call or by itself.`,
-    });
-  }
-  return found;
-}
-
-/** What the gui's blocks start on: a picker's file, which a bundle carries. */
-export function guiReferencedPaths(graph: Graph): string[] {
-  return guiWidgets(graph).flatMap((widget) => widgetElement(widget.kind)?.referencedPaths(widget) ?? []);
-}
-
-/**
- * The gui, for the model that designs a whole graph: how a block connects,
- * and every kind with what it says of itself (`WidgetRunner.graphAuthorNote`)
- * -- a kind is listed by being registered, so the prompt cannot leave one out.
- */
-export function guiAuthorNote(): string {
-  const kinds = WIDGETS.map((element) => {
-    const note = element.graphAuthorNote();
-    return `  - ${element.widgetKind}${note ? `: ${note}` : ''}`;
-  });
-  return 'The gui is "gui": {"blocks": [...]} beside "nodes" and "edges" -- not a node, and nothing is wired to it. '
-    + 'A block is {"id", "kind", "label", "w" (1-16 columns), "h" (rows), ...its settings} and connects itself by name: '
-    + '"sends_to": [start point ids] (its data goes into the package of each, under the block\'s id), '
-    + '"fires": a start point id (using it starts the graph there; the start point must have config.started_by "gui"), '
-    + '"shows": an end point id (what arrives at that end point is shown on the block). '
-    + 'A block has no code of its own: what reshapes a value before a block shows it is a code node wired in before the end point. '
-    + `The kinds:\n${kinds.join('\n')}`;
 }

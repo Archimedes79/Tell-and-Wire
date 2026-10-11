@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { call, type McpServerView, type McpServersView } from '../../../../deployment/gui/kit/api/client';
+import { call, type McpServerView, type McpServersView } from '../../../api/client';
 import { errorText } from '../../../../deployment/gui/kit/api/errorText';
 import Button from '../../../../deployment/gui/kit/ui/Button';
 import { DIMMER, LINE, SUNKEN, TEXT, WARNING_TEXT } from '../../../../deployment/gui/kit/ui/theme';

@@ -1,4 +1,4 @@
-// The JavaScript graph core, in the wrapper's own process: the executor and
+// The JavaScript graph core, in the host's own process: the executor and
 // the elements, behind the protocol (`protocol.ts`). The same core is a
 // program of its own with `node backend/cli/main.ts core` (`stdio.ts`).
 //
@@ -16,6 +16,7 @@ import { Latch } from './latch.ts';
 import { LastOutputs } from './reuse.ts';
 import { runExample, testGraph } from './examples.ts';
 import { nodeRuntime } from './services.ts';
+import { withoutModel } from './offline.ts';
 import { PROTOCOL, type CoreEvent, type GraphCore, type RoundEnded } from './protocol.ts';
 
 export interface LocalCoreOptions {
@@ -23,19 +24,12 @@ export interface LocalCoreOptions {
   runtime?: (report: (event: ProgressEvent) => void) => Runtime;
 }
 
-/** A model asked for in a run that asks none: what a kept round's replay and `--offline` want said. */
-function offline(runtime: Runtime): Runtime {
-  return {
-    ...runtime,
-    ai: {
-      complete: async () => {
-        throw new Error('This kept round asks no model: the node was not asked when the round was kept, so the graph changed since.');
-      },
-    },
-  };
-}
+/** A model asked for in a kept round's replay: the node was not asked when the round was kept, so the graph changed since. */
+const offline = (runtime: Runtime): Runtime => withoutModel(
+  runtime, 'This kept round asks no model: the node was not asked when the round was kept, so the graph changed since.',
+);
 
-/** What every node of *graph* keeps now (`NodeRunner.state`), by node id. */
+/** What every node of *graph* keeps now (`NodeDefinition.state`), by node id. */
 function statesOf(graph: Graph): Record<string, Record<string, unknown>> {
   return Object.fromEntries(graph.nodes.map((node) => [node.id, registry.node(node.node_type)?.state(node) ?? {}]));
 }

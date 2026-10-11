@@ -1,18 +1,17 @@
 // What a block is, to the gui: the half of a widget that is delivered.
 //
-// A widget has three roles and they belong in three places. The backend's
-// `WidgetRunner` is what it contributes to a *run* -- a picker produces its
-// path, a chat its message, a slider its number. `WidgetGuiBuilder` is what
-// the builder needs: a settings panel, what the palette drops. And this is the
-// third: what the person using the finished tool looks at and operates.
+// A widget has several faces and they belong in different places. Its
+// `WidgetDefinition` is what it is and what it contributes to a *run* -- a
+// picker produces its path, a chat its message, a slider its number; a package
+// carries it. Its `WidgetDesign` is what building asks of it, and its
+// `WidgetGuiBuilder` is what the builder needs: a settings panel, what the
+// palette drops. And this is the last: what the person using the finished tool
+// looks at and operates.
 //
-// The third one is a `View` and not a third `…Runner`, which is a question the
-// other two names invite. A view is not the running half of anything: the
-// designer draws these same components while the gui is being built, so a
+// It is a `View` because it is not the running half of anything: the designer
+// draws these same components while the gui is being built, so a
 // `SelectWidgetView` is on screen in the builder and in the delivered tool
-// alike. It is *how a widget looks*, which neither of the other two names is
-// about -- `Runner` is what it does in a run, `GuiBuilder` is how it is edited.
-// A widget is the one element with all three; a node has only the first two.
+// alike. It is *how a widget looks*.
 //
 // Only this one is delivered, so only this one may be reachable from
 // `runtime/main.tsx`. The builders' roster next door carries the panel and the
@@ -20,7 +19,8 @@
 // `runtime/boundary.test.ts` asserts it is out of reach.
 
 import type { ComponentType } from 'react';
-import type { GuiWidget, WidgetKind } from '../../../editor/document/graph';
+import type { WidgetKind } from '../../../../graph/graph.ts';
+import type { GuiWidget } from '../kit/guiWidget';
 import type { WidgetViewProps } from '../widgets/WidgetView';
 import { textIoRole } from '../../../../gui/widgets/text_io/role.ts';
 import { asText } from '../../../../gui/widgets/text_io/text.ts';

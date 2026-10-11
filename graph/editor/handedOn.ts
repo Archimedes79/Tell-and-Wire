@@ -12,14 +12,14 @@
 // (`generateGraph`), so leaving them out loses none of them.
 
 import type { Graph } from '../graph.ts';
-import type { Runners } from '../nodes/NodeRunner.ts';
+import type { Kinds } from '../nodes/NodeDefinition.ts';
 import { registry } from '../nodes/registry.ts';
 
 /** A node's settings that only writing it needs. */
 export const AUTHORING_KEYS = ['history', 'input_files', 'output_files'] as const;
 
 /** A copy of *graph* without what only writing it needs (`AUTHORING_KEYS`), in the graphs its nodes hold too. */
-export function withoutAuthoring(graph: Graph, elements: Runners = registry): Graph {
+export function withoutAuthoring(graph: Graph, elements: Kinds = registry): Graph {
   const copy = JSON.parse(JSON.stringify(graph)) as Graph;
   for (const node of copy.nodes) {
     const config = node.config as Record<string, unknown>;

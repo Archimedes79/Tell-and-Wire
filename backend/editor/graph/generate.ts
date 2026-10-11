@@ -3,7 +3,7 @@
 // One entry point for every ✨: a node's input definition (input.js), its
 // output definition (output.js), and its body -- code, an ai node's prompt, a
 // data node's data. What is sent is the standard prompt for that ✨
-// (`authoring/prompts.ts`) with its variables filled from what the node and the
+// (`graph/editor/prompts.ts`) with its variables filled from what the node and the
 // graph hold (`brief.ts`), what the person said to the file's chat (`ask`), and
 // after it the frame (`generatePrompts.ts`, where all the prose is): the file
 // format and how to answer, which is what makes an answer usable and not what
@@ -31,10 +31,13 @@
 // what was sent, and keeps it in the node's history.md.
 
 import type { AiRequest, AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
-import type { NodeRunner, Runners } from '../../../graph/nodes/NodeRunner.ts';
-import { PLAIN_ASK } from '../../../graph/nodes/ai/ask.ts';
-import type { Generation, Language } from '../../../graph/editor/generation.ts';
-import { STANDARD_PROMPTS, fillPrompt, type PromptKind } from '../../../graph/files/prompts.ts';
+import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
+import { designs } from '../../../graph/editor/nodes/registry.ts';
+import { PLAIN_ASK } from '../../deployment/runtime/nodes/ai/ask.ts';
+import { runBody } from '../../deployment/runtime/nodes/body.ts';
+import type { Generation } from '../../../graph/editor/generation.ts';
+import { fillPrompt } from '../../../graph/files/prompts.ts';
+import { STANDARD_PROMPTS, type PromptKind } from '../../../graph/editor/prompts.ts';
 import { definitionExample, definitionKeys, misfits, typedefKeys, unreadableOutput, type Definitions } from '../../../graph/files/definition.ts';
 import { filePorts } from '../../../graph/fileInputs.ts';
 import { fileContent, isInlineFile } from '../../../graph/nodes/fileContent.ts';
@@ -45,7 +48,7 @@ import { BUDGET, clip, variables } from './brief.ts';
 import {
   OUTGROWN, SYSTEMS, bodyChange, codeChange, definitionChange, frame, mendPrompt, repairPrompt, type OutputAsked, type Shape,
 } from './generatePrompts.ts';
-import type { AICall, GenerateRequest, GenerateResponse, ProbeReport, Target } from '../../deployment/host/api.ts';
+import type { AICall, GenerateRequest, GenerateResponse, ProbeReport, Target } from '../host/api.ts';
 
 export class GenerationRefused extends Error {}
 
@@ -153,7 +156,7 @@ const refuse = async (): Promise<never> => { throw new Error('No files here: thi
 const NO_FILES: FileService = { resolve: (path) => path, inProject: (path) => path, size: refuse, read: refuse, write: refuse, list: refuse };
 
 async function probe(
-  runtime: Runtime, target: Target, language: Language, body: string, sample: Record<string, unknown>,
+  runtime: Runtime, target: Target, body: string, sample: Record<string, unknown>,
 ): Promise<{ result: Record<string, unknown> | null; error: string }> {
   // Ended, not merely given up on: a generated body in an endless loop is a
   // process, and one per ✨ press left running is how a laptop gets warm.
@@ -161,12 +164,12 @@ async function probe(
   const clock = setTimeout(() => stop.abort(), PROBE_TIMEOUT_MS);
   clock.unref();
   try {
-    // Run as a graph runs it (`graph/nodes/body.ts`): generated code that asks a
+    // Run as a graph runs it (`runBody`): generated code that asks a
     // model through `node.llm` is tried with a `node` that can be asked.
     // What it asks is answered by the model that wrote it, which is the one
     // AI setting -- where the same call in a run goes, too.
     const ask = { ...PLAIN_ASK, provider: target.provider, model: target.model };
-    const result = await language.run(body, { ...sample }, runtime, { signal: stop.signal, ask });
+    const result = await runBody(body, { ...sample }, runtime, { signal: stop.signal, ask });
     if (!result || typeof result !== 'object' || Array.isArray(result)) {
       return { result: null, error: `run() returned ${Array.isArray(result) ? 'an array' : typeof result}, but it must return an object.` };
     }
@@ -255,7 +258,7 @@ async function writeVerifiedCode(
    * can, and -- for a change -- nothing that would turn it back.
    */
   const verdict = async (body: string) => {
-    const ran = await probe(runtime, target, shape.language!, body, sample);
+    const ran = await probe(runtime, target, body, sample);
     if (!ran.result) return { ...ran, problems: [] as string[], mend: [] as string[], reached: 0 };
     const absent = ports.filter((port) => !(port in ran.result!));
     const missing = absent.map((port) => `it returns no "${port}"`);
@@ -328,8 +331,8 @@ interface GenerateDeps {
   code: CodeService;
   /** Reads the files ✨ Input and ✨ Output are given, where the request does not bring their text. */
   files?: FileService;
-  /** The elements, asked what a node's kind writes and whether it has definitions. */
-  elements: Runners;
+  /** The kinds, asked whether a node has definitions and what it keeps in files. */
+  elements: Kinds;
   target: Target;
   /**
    * Where to write the transcript, if somebody is watching it.
@@ -407,11 +410,11 @@ interface Job {
 }
 
 /** The node a request names and what ✨ writes for it -- or why it writes nothing. */
-function whatIsAsked(given: GenerateRequest, elements: Runners) {
+function whatIsAsked(given: GenerateRequest, elements: Kinds) {
   const node = given.node as GraphNode | undefined;
   if (!node?.node_type) throw new GenerationRefused('A generation names the node it writes for.');
   const element = elements.node(node.node_type);
-  const spec: Generation | undefined = element?.generation();
+  const spec: Generation | undefined = designs.node(node.node_type)?.generation();
   if (!element || !spec) throw new GenerationRefused(`A ${node.node_type} node has nothing ✨ writes.`);
   const write = given.write ?? 'body';
   if (!(WRITES as readonly string[]).includes(write)) {
@@ -424,7 +427,7 @@ function whatIsAsked(given: GenerateRequest, elements: Runners) {
 
 /** What the node is, as far as how to answer depends on it. */
 function shapeOf(
-  node: GraphNode, element: NodeRunner<unknown>, spec: Generation, definitions: Definitions | undefined, request: GenerateRequest, elements: Runners,
+  node: GraphNode, element: NodeDefinition, spec: Generation, definitions: Definitions | undefined, request: GenerateRequest, elements: Kinds,
 ): Shape {
   return {
     inputs: node.inputs.map((port) => port.id),

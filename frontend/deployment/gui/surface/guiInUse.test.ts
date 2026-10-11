@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { GuiWidget } from '../../../editor/document/graph';
+import type { GuiWidget } from '../kit/guiWidget';
 import { GuiSurface, type GuiModel } from './GuiSurface';
 
 /**

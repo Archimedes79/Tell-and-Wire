@@ -8,7 +8,7 @@
 // On a builder, loading a graph would reach into the editor's element
 // registry -- the whole builder, panels and ✨ generation contracts included.
 //
-// Their natural home is graph/, beside `NodeRunner.config`: what a node
+// Their natural home is graph/, beside `NodeDefinition.config`: what a node
 // stores is the element's business, and graph/ already owns reading it.
 // What keeps them here is `NodeConfig`, the one spelled-out settings shape,
 // which lives in the editor's `graph.ts`.
@@ -16,15 +16,15 @@
 import type { GraphNode, NodeType } from '../graph';
 import { derivedNodePorts } from './ports';
 import { withoutDefaults } from '../../../../graph/graph.ts';
-import { SubgraphNodeRunner } from '../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
-import { StartNodeRunner } from '../../../../graph/nodes/start/StartNodeRunner.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { SubgraphNodeDefinition } from '../../../../graph/nodes/subgraph/SubgraphNodeDefinition.ts';
+import { StartNodeDefinition } from '../../../../graph/nodes/start/StartNodeDefinition.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { baseNodeConfig } from './baseNodeConfig';
 import { numberedHeading } from './heading';
 import { freeId } from './ids';
 
-const SUBGRAPH = new SubgraphNodeRunner();
-const START = new StartNodeRunner();
+const SUBGRAPH = new SubgraphNodeDefinition();
+const START = new StartNodeDefinition();
 
 // A new node's description starts empty: on an ai or code node it is the text
 // ✨ writes the body from, and a blurb there -- "Send a prompt to an AI model"
@@ -126,7 +126,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
   data: {
     create(id) {
-      // Its ports follow the fields it holds -- asked of its runner rather than
+      // Its ports follow the fields it holds -- asked of its definition rather than
       // listed again here: with none yet, it has `all` and nothing else.
       const node: GraphNode = {
         id,
@@ -165,7 +165,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
     // that is a result.
     placedAmong(node, others) {
       const taken = others.flatMap((other) => {
-        const element = runnerRegistry.node(other.node_type);
+        const element = registry.node(other.node_type);
         return element?.isResult ? [element.resultLabel(other)] : [];
       });
       return { ...node, label: freeId('Result', taken, ' ') };
@@ -183,7 +183,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
       // nothing in there yet.
       inputs: [],
       outputs: [],
-      // The runner's own idea of an empty graph, rather than a second copy
+      // The definition's own idea of an empty graph, rather than a second copy
       // of what a graph's metadata starts as.
       config: { ...baseNodeConfig(), subgraph: SUBGRAPH.nestedGraph({ config: {} } as never) },
     }),

@@ -1,6 +1,6 @@
 // The graph as it is stored and as a run sees it.
 //
-// **A node's config is opaque here.** Its element owns the type (`nodes/ElementRunner.ts`):
+// **A node's config is opaque here.** Its element owns the type (`nodes/ElementDefinition.ts`):
 // this file knows a config is an object, and only the element knows what is in it.
 
 export type NodeType = 'start' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
@@ -171,7 +171,7 @@ export function defaultMetadata(): GraphMetadata {
  * One default per key: a second one, for what a *loaded* node lacks, is what
  * turned a graph written by hand into a different graph after one Save. Each
  * element reads a missing key as this says (`frontend/editor/document/elements/savedConfig.test.ts`
- * asks every kind's runner).
+ * asks every kind).
  */
 export function defaultNodeConfig(): RawConfig {
   return {
@@ -184,10 +184,10 @@ export function defaultNodeConfig(): RawConfig {
     ai_model: '',
     code: '',
     prompt: '',
-    // A data node's fields (`DataNodeRunner`): none to start with.
+    // A data node's fields (`DataNodeDefinition`): none to start with.
     data_value: {},
     write_mode: 'none',
-    // Once on the whole list (`NodeRunner.batchMode`), as many at once as the run allows.
+    // Once on the whole list (`NodeDefinition.batchMode`), as many at once as the run allows.
     batch_mode: 'whole_list',
     batch_concurrency: 0,
     send_images: false,

@@ -12,10 +12,10 @@ import { useGraphStore } from '../document/store/graphStore';
 import { graphEdge } from '../document/model/wires';
 import { roundGoing, startOver, useSession } from '../../deployment/gui/kit/api/session';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
-import { call } from '../../deployment/gui/kit/api/client';
-import { interfaceOf } from '../../../backend/deployment/host/interface.ts';
+import { call } from '../api/client';
+import { interfaceWithGui } from '../../../gui/interface.ts';
 import { guiStarts } from '../../../graph/triggers.ts';
-import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
 import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../deployment/gui/kit/ui/theme';
@@ -54,11 +54,11 @@ export default function ApplicationView() {
   );
   // Whether using the gui starts the graph -- or only shows what its start
   // points that start themselves, or its one run at start, made.
-  const starts = guiStarts(graph, runnerRegistry);
+  const starts = guiStarts(graph, registry);
   // The graph's names, as the runtime API tells a delivered tool them: which
   // block fires which start point, which blocks a round is sent, and what a
   // gui without blocks shows -- the outputs, under their labels.
-  const offered = useMemo(() => interfaceOf(graph, runnerRegistry), [graph]);
+  const offered = useMemo(() => interfaceWithGui(graph, registry), [graph]);
   const called = offered.events.some((event) => event.started_by === 'call');
   const current = useSession((s) => s.round);
   const view = useSession((s) => s.view);

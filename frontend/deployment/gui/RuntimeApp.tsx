@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { GuiWidget } from '../../editor/document/graph';
+import type { GuiWidget } from './kit/guiWidget';
 import LiveGui from './surface/LiveGui';
 import { useRound } from './surface/useRound';
 import CallForms from './surface/CallForms';
-import type { InterfaceEntry } from '../../../backend/deployment/host/interface.ts';
+import type { InterfaceEntry } from '../../../graph/interface.ts';
 import { connectionsOf, type GuiDesign } from './surface/guiInUse';
 import RequirementsDialog from './kit/dialogs/RequirementsDialog';
 import DeliveredHeader from './surface/DeliveredHeader';

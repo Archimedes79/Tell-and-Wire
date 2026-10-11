@@ -16,7 +16,9 @@ import type {
   GraphNode as FormatNode, NodeResult, NodeType, Port, WidgetKind,
 } from '../../../graph/graph.ts';
 
-export type { DataType, FormatGraph, ExecutionResult, GraphEdge, NodeResult, NodeType, Port, WidgetKind };
+import type { GuiWidget } from '../../deployment/gui/kit/guiWidget';
+
+export type { DataType, FormatGraph, ExecutionResult, GraphEdge, GuiWidget, NodeResult, NodeType, Port, WidgetKind };
 
 /**
  * An edge as the canvas holds it, which port of which node feeds which: the
@@ -59,7 +61,7 @@ export interface GraphNode extends Omit<FormatNode, 'config'> {
 export type NodeConfig = {
   ai_model: string;
   ai_provider: AIProvider;
-  /** code, ai and subgraph only (`NodeRunner.fansOut`): how many items of a fan-out run at once, 0 for the run's default. */
+  /** code, ai and subgraph only (`NodeDefinition.fansOut`): how many items of a fan-out run at once, 0 for the run's default. */
   batch_concurrency: number;
   /** code, ai and subgraph only: run once per item. */
   batch_mode: 'per_item' | 'whole_list';
@@ -109,49 +111,4 @@ export type NodeConfig = {
   temperature?: number;
   /** An end point: also write the run's result to a file, or one file per value into a folder. */
   write_mode: 'none' | 'file' | 'directory';
-};
-
-/**
- * One block on a gui. Nothing is wired to it: it connects itself to the
- * graph's start and end points by name (`sends_to`, `fires`, `shows`), and
- * its `id` is the name its data is sent under -- so it stays stable once
- * assigned, as what reads it reads it by that name.
- *
- * Beyond who it is, how it is drawn and how it connects, a block holds only
- * its own kind's settings, so they are optional here: a divider has no
- * options, and a block written by hand, by ✨ or over MCP leaves out what it
- * does not set. Read one the way its runner does -- `recursive` missing means
- * only the folder itself.
- */
-export type GuiWidget = {
-  /** `input_picker`: the file types a folder's listing keeps. */
-  extensions?: string;
-  h?: number;
-  id: string;
-  kind: WidgetKind;
-  label: string;
-  mode?: string;
-  /** `input_picker`: a folder's listing looks into its subfolders too. */
-  recursive?: boolean;
-  /** `input_picker`: "path" sends only where the file is, not what is in it. */
-  send?: string;
-  tone: 'plain' | 'raised' | 'sunken' | 'accent';
-  /** Draw a frame regardless of the tone; unset lets the tone decide. */
-  border?: boolean;
-  /** A background colour of your own; empty lets the tone decide. */
-  background?: string;
-  /** The start points its data goes to: it is in the package of each, under the block's id. */
-  sends_to?: string[];
-  /** The start point using it fires, or none. */
-  fires?: string | null;
-  /** The end point it shows, or none. */
-  shows?: string | null;
-  /** `select`: its choices, one per line. */
-  options?: string;
-  /** `slider`: the range and increment it moves in. */
-  min?: number;
-  max?: number;
-  step?: number;
-  value?: unknown;
-  w?: number;
 };

@@ -1,5 +1,5 @@
 // What the variables of a node's prompts say, filled from what the node and the
-// graph hold (`authoring/prompts.ts` names them):
+// graph hold (`graph/files/prompts.ts` names them):
 //
 //     {Node Description}   the heading, the id and kind, then the text
 //     {Input Definition}   input.js as it is, where it is written -- and after
@@ -26,7 +26,7 @@ import type { GraphNode, Port } from '../../../graph/graph.ts';
 import { ERROR_PORT } from '../../../graph/wiring.ts';
 import { runsPerItem } from '../../../graph/batching.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import type { GenerateRequest } from '../../deployment/host/api.ts';
+import type { GenerateRequest } from '../host/api.ts';
 
 /** How much of each part is shown, in characters. */
 export const BUDGET = {

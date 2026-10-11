@@ -14,7 +14,7 @@ import { chatValue, type ChatMessage, type ChatValue } from '../../../../../gui/
  * what is there.
  *
  * The turn is written into the transcript when the answer arrives (the
- * backend's `ChatWidgetRunner.settle`), which also empties `pending`. A run that
+ * backend's `ChatWidgetDefinition.settle`), which also empties `pending`. A run that
  * fails leaves it, so the message is still in the box to send again.
  */
 export default function ChatWidgetView({ value, onChange, onTrigger, busy, controlId }: WidgetViewProps) {

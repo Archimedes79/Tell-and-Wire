@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { serve, type Served } from './serve.ts';
+import { guiPart } from '../gui/hooks.ts';
 
 /**
  * The runtime API: a graph used by name, over HTTP, by any frontend -- the
@@ -43,7 +44,7 @@ afterAll(async () => { for (const one of served) await one.shutdown(); });
 async function tool(graph: unknown = ECHO, host?: string): Promise<{ url: string; graphPath: string }> {
   const graphPath = join(await mkdtemp(join(tmpdir(), 'runtime-api-')), 'echo.json');
   await writeFile(graphPath, JSON.stringify(graph));
-  const one = await serve({ graphPath, port: 0, ...(host ? { host } : {}) });
+  const one = await serve({ graphPath, port: 0, gui: guiPart, ...(host ? { host } : {}) });
   served.push(one);
   return { url: one.url, graphPath };
 }

@@ -11,17 +11,17 @@
 // any the input is typed by what it is and has no example.
 
 import type { Graph, GraphNode, Wire } from '../../document/graph';
-import { call } from '../../../deployment/gui/kit/api/client';
+import { call } from '../../api/client';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { definitionExample, definitionsIn, typedefProperties } from '../../../../graph/files/definition.ts';
 import { typeOfValue, type PulledPort } from '../../../../graph/editor/pull.ts';
 import { filePorts } from '../../../../graph/fileInputs.ts';
-import { fieldOf } from '../../../../backend/deployment/runtime/executor.ts';
 import { passiveWires } from '../../../../graph/order.ts';
 import { graphEdge } from '../../document/model/wires';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
-import { ERROR_PORT } from '../../../../graph/wiring.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { ERROR_PORT, fieldOf } from '../../../../graph/wiring.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { firstPath } from './exampleFile';
 import { runsPerItem } from './perItem';
 import { textAsRun } from './readAsRun';
@@ -34,7 +34,7 @@ export const pullable = (node: GraphNode, edges: Wire[]): boolean =>
 export function modelsBefore(node: GraphNode, nodes: GraphNode[], edges: Wire[]): GraphNode[] {
   // A passive wire brings what a memory held, not what runs before.
   const saved = edges.map((edge, at) => graphEdge(edge, at));
-  const reads = passiveWires(nodes, saved, runnerRegistry);
+  const reads = passiveWires(nodes, saved, registry);
   const cut = new Set(edges.filter((_, at) => reads.has(saved[at].id)));
   const seen = new Set([node.id]);
   const asking: GraphNode[] = [];
@@ -46,7 +46,7 @@ export function modelsBefore(node: GraphNode, nodes: GraphNode[], edges: Wire[])
       seen.add(edge.source);
       const source = nodes.find((candidate) => candidate.id === edge.source);
       if (!source) continue;
-      if (runnerRegistry.node(source.node_type)?.asksModel(source as never)) asking.push(source);
+      if (designs.node(source.node_type)?.asksModel(source as never)) asking.push(source);
       queue.push(source.id);
     }
   }
@@ -73,7 +73,7 @@ export async function arrivedAt(node: GraphNode, graph: Graph): Promise<Arrived>
   if (got.error) return { inputs: {}, texts: {}, unread: [], error: got.error };
   const texts: Record<string, string> = {};
   const unread: string[] = [];
-  for (const port of filePorts(node, runnerRegistry)) {
+  for (const port of filePorts(node, registry)) {
     const path = firstPath(got.inputs[port]);
     if (!path) continue;
     try {
@@ -87,7 +87,7 @@ export async function arrivedAt(node: GraphNode, graph: Graph): Promise<Arrived>
 
 /** The inputs of *node* as a pull writes them (`inputFile`), from what *arrived* of a run before it. */
 export function pulledPorts(node: GraphNode, nodes: GraphNode[], edges: Wire[], arrived: Pick<Arrived, 'inputs' | 'texts'>): PulledPort[] {
-  const reads = new Set(filePorts(node, runnerRegistry));
+  const reads = new Set(filePorts(node, registry));
   const perItem = runsPerItem(node);
   return node.inputs.map((port) => {
     const wire = edges.find((edge) => edge.target === node.id && edge.targetHandle === port.id);
@@ -125,7 +125,7 @@ function writtenTo(node: GraphNode, port: string, nodes: GraphNode[], edges: Wir
   for (const edge of edges) {
     if (edge.source !== node.id || (edge.sourceHandle || 'output') !== port || !edge.targetHandle || edge.targetHandle === RUN_PORT) continue;
     const memory = nodes.find((candidate) => candidate.id === edge.target);
-    if (memory && runnerRegistry.node(memory.node_type)?.isMemory) {
+    if (memory && registry.node(memory.node_type)?.isMemory) {
       return { memory, field: edge.targetHandle, example: NODE_BUILDERS[memory.node_type]?.restingValue(memory, edge.targetHandle) };
     }
   }

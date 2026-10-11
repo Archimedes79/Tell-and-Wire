@@ -7,7 +7,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
-import type { RequestOf, ResponseOf, RouteName } from './api.ts';
+import type { RequestOf, ResponseOf, Routes } from './api.ts';
 
 /**
  * A request the route turns down, with the status that says why.
@@ -55,11 +55,12 @@ export interface Exchange {
   loopback: boolean;
 }
 
-export type Handler<K extends RouteName> =
-  (request: RequestOf<K>, exchange: Exchange) =>
-    Promise<ResponseOf<K> | Download | EventStream> | ResponseOf<K> | Download | EventStream;
+export type Handler<R> =
+  (request: RequestOf<R>, exchange: Exchange) =>
+    Promise<ResponseOf<R> | Download | EventStream> | ResponseOf<R> | Download | EventStream;
 
-export type Handlers = { [K in RouteName]?: Handler<K> };
+/** What answers the routes of a table, by the name each is called by. */
+export type HandlersOf<A extends Routes> = { [K in keyof A]?: Handler<A[K]> };
 
 export function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

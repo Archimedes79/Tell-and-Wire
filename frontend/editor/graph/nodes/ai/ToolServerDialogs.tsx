@@ -1,5 +1,5 @@
 import { useCallback, useId, useState } from 'react';
-import { call, type McpSaved, type McpServerView, type McpServersView } from '../../../../deployment/gui/kit/api/client';
+import { call, type McpSaved, type McpServerView, type McpServersView } from '../../../api/client';
 import { errorText } from '../../../../deployment/gui/kit/api/errorText';
 import Button from '../../../../deployment/gui/kit/ui/Button';
 import Modal from '../../../../deployment/gui/kit/ui/Modal';

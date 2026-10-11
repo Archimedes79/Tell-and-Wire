@@ -6,7 +6,7 @@ import { derivedNodePorts } from '../../document/model/ports';
 import { fieldChoices, takenAs } from '../../document/model/gui';
 import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
 import { MUTED, SUNKEN, LINE, TEXT } from '../../../deployment/gui/kit/ui/theme';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { ONCE, type NodeGuiBuilder, type UndoStep } from '../nodes/NodeGuiBuilder';
 import { inputSources, outputTargets } from '../authoring/generationContext';
 import { bodyOf } from '../authoring/generation';
@@ -53,7 +53,7 @@ export default function SettingsPane({ node, builder, panel }: {
   const fromStart = (port: Port) => graphEdges
     .filter((edge) => edge.target === node.id && edge.targetHandle === port.id)
     .map((edge) => graphNodes.find((candidate) => candidate.id === edge.source))
-    .filter((source): source is GraphNode => !!source && runnerRegistry.node(source.node_type)?.takesPackage === true);
+    .filter((source): source is GraphNode => !!source && registry.node(source.node_type)?.takesPackage === true);
   const takes = Object.fromEntries(node.inputs.map((port) => [port.id, fromStart(port).flatMap((source) => fieldChoices(gui, source))]));
   const setPorts = (ports: { inputs: Port[]; outputs: Port[] }, step?: UndoStep) => panel.change((current) => withPorts(current, ports), step);
   // Whether the ports are the person's to name, rather than following a
@@ -96,7 +96,7 @@ export default function SettingsPane({ node, builder, panel }: {
           hints={{ inputs: builder.portHint('inputs', node), outputs: builder.portHint('outputs', node) }}
           wiring={wiring}
           takes={takes}
-          readsFiles={runnerRegistry.node(node.node_type)?.readsFileInputs ?? false}
+          readsFiles={registry.node(node.node_type)?.readsFileInputs ?? false}
           compact={defined}
           perItem={defined && runsPerItem(node)}
           caught={node.config.catch_errors === true}

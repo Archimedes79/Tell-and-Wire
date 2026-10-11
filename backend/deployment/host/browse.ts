@@ -9,7 +9,7 @@
 // do the same thing. Listing a parent directory reveals nothing to anyone the
 // file picker was not already for.
 //
-// What stays behind in `graph-editor/files.ts` is what a recipient has no
+// What stays behind in `backend/editor/project/files.ts` is what a recipient has no
 // business with: looking for project folders, handing a node's file to an
 // editor.
 

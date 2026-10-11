@@ -9,13 +9,13 @@ import { processCore, serveCore } from './stdio.ts';
 import type { CoreAnswer, CoreEvent } from './protocol.ts';
 import { loadGraph } from '../project/folder.ts';
 import { readKeptRounds } from '../../editor/project/keptRounds.ts';
-import { eventOf } from '../host/interface.ts';
+import { eventOf } from '../../../graph/interface.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import type { GraphNode } from '../../../graph/graph.ts';
 import { edge, graphOf, quietRuntime } from './test/fakes.ts';
 
 /**
- * The graph core: what the wrapper asks of whatever runs its graphs, in its
+ * The graph core: what the host asks of whatever runs its graphs, in its
  * own process or as a program of its own -- the same answers either way.
  */
 
@@ -109,7 +109,7 @@ describe('a graph core as a program of its own', () => {
   }, 30_000);
 });
 
-describe('the wrapper\'s half of a core program', () => {
+describe('the host\'s half of a core program', () => {
   /** A core of a few lines, for what the real one never does: *answer* says what it replies to each request. */
   const fake = (answer: string) => {
     const script = join(mkdtempSync(join(tmpdir(), 'core-')), 'core.cjs');
@@ -145,7 +145,7 @@ describe('the wrapper\'s half of a core program', () => {
 
   it('refuses a program that speaks another protocol or does not answer, and says one that ended under a request', async () => {
     const other = fake("process.stdout.write(JSON.stringify({ id: request.id, reply: { protocol: 99, language: 'x', core: 'x' } }) + '\\n');");
-    await expect(other.hello()).rejects.toThrow(/speaks protocol 99; this wrapper speaks 1/);
+    await expect(other.hello()).rejects.toThrow(/speaks protocol 99; this host speaks 1/);
     await other.close();
     const silent = fake('');
     await expect(silent.forget()).rejects.toThrow(/did not answer "hello" within 1.5 s/);

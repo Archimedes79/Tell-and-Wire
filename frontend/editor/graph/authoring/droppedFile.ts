@@ -11,7 +11,7 @@
 // otherwise the backend is asked for the one file of that name and size under
 // the folder it runs in (`findFile`).
 
-import { call } from '../../../deployment/gui/kit/api/client';
+import { call } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { fileValue } from './readAsRun';

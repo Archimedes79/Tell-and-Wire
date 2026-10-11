@@ -1,4 +1,3 @@
-import { PlotWindowWidgetRunner } from '../../../../../gui/widgets/plot_window/PlotWindowWidgetRunner.ts';
 import { DisplayWidgetGuiBuilder } from '../DisplayWidgetGuiBuilder';
 import { CHART_TEXT } from '../../../../deployment/gui/widgets/plot_window/PlotChart';
 import { BarChart3 } from 'lucide-react';
@@ -13,8 +12,6 @@ export class PlotWindowWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   paletteEntries() {
     return [{ label: this.label, icon: BarChart3, also: 'plot graph diagram svg' }];
   }
-
-  readonly runner = new PlotWindowWidgetRunner();
 
   /** Its labels and its title, at the sizes the chart draws them. */
   override textShown(): string {

@@ -1,4 +1,4 @@
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 
 /** What `placement` reads of a node on the canvas (an `rfNode` has all of it). */
 interface Placed {
@@ -39,8 +39,8 @@ export function placement(nodes: Placed[]): { x: number; y: number } {
   return at;
 }
 
-/** What a graph ends in is the runner's to say (`isResult`): an end point. */
-const isResult = (node: Placed): boolean => !!runnerRegistry.node(node.data.graphNode.node_type)?.isResult;
+/** What a graph ends in is the definition's to say (`isResult`): an end point. */
+const isResult = (node: Placed): boolean => !!registry.node(node.data.graphNode.node_type)?.isResult;
 
 /**
  * The end points a node put at *at* would stand on or crowd, and the column

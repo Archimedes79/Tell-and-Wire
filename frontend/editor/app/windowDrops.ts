@@ -7,7 +7,7 @@
 // what lands in a file's box in a node's panel does, and is the box's all the
 // same.
 
-import { call } from '../../deployment/gui/kit/api/client';
+import { call } from '../api/client';
 import { CODE_FIELD } from '../graph/authoring/CodeField';
 
 /**

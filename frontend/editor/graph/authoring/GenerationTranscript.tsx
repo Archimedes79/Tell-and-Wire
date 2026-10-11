@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { AICall } from '../../../deployment/gui/kit/api/client';
+import type { AICall } from '../../api/client';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { ACCENT_TEXT, DIMMER, LINE, MUTED, SUNKEN, TEXT } from '../../../deployment/gui/kit/ui/theme';
 

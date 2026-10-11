@@ -2,8 +2,8 @@ import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document
 // This module reads the element registry, so no element's `…GuiBuilder.ts` may import
 // it: that would be a cycle through the registry (see `document/givenFiles.ts`).
 import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../document/elements/registry';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
-import { fieldOf } from '../../../../backend/deployment/runtime/executor.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { fieldOf } from '../../../../graph/wiring.ts';
 import { blockCan, blockReceives, blocksAt } from '../../document/model/gui';
 import { blockSize } from '../../../deployment/gui/kit/layout';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
@@ -134,7 +134,7 @@ export function inputSources(
     // The port's own words first, then what the node declares of its output
     // (`NodeGuiBuilder.describeOutput`) -- for a start point, what the gui or
     // a call sends it, which says it all.
-    const sent = runnerRegistry.node(source.node_type)?.takesPackage && (gui.length || exampleAt(source)) ? sentWords(source, gui, field) : '';
+    const sent = registry.node(source.node_type)?.takesPackage && (gui.length || exampleAt(source)) ? sentWords(source, gui, field) : '';
     const emits = !withEmits ? ''
       : sent || [...new Set([port?.description?.trim(), NODE_BUILDERS[source.node_type]?.describeOutput(source, edge.sourceHandle ?? undefined)].filter(Boolean))].join('; ');
     if (emits) said += `, which hands on: ${emits}`;
@@ -171,7 +171,7 @@ export function outputTargets(
     // point, by the block that shows it (a chart: a figure).
     const wants = withWants && edge.targetHandle ? NODE_BUILDERS[target.node_type]?.wantsOn(target, edge.targetHandle) : undefined;
     if (wants) said += `, which wants ${wants}`;
-    const shown = runnerRegistry.node(target.node_type)?.isResult && edge.targetHandle !== 'path' ? shownWords(target, gui) : [];
+    const shown = registry.node(target.node_type)?.isResult && edge.targetHandle !== 'path' ? shownWords(target, gui) : [];
     if (shown.length) said += `; ${shown.join('; ')}`;
     (byPort[edge.sourceHandle ?? 'output'] ??= []).push(said);
   }

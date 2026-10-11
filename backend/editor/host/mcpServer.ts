@@ -19,7 +19,7 @@
 // `backend/cli/cli.ts` calls for `--mcp`, and nothing else does.
 //
 // No SDK, for the reason the client has none: Tell & Wire has no runtime
-// dependencies. It lives under `backend/graph-editor/` because it is authoring, and
+// dependencies. It lives under `backend/editor/` because it is authoring, and
 // authoring is what a bundle does not carry -- `backend/editor/project/deploy/bundle.ts` skips that
 // folder, which is why `cli.ts` reaches this file with a dynamic import.
 

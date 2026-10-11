@@ -1,18 +1,16 @@
-// The half of an element that exists so a person can build with it.
+// The face of an element that exists so a person can build with it.
 //
-// The mirror of `graph/nodes/ElementRunner.ts`, class for class: every
-// element class there ends in `Runner`, and its counterpart here swaps that for
-// `GuiBuilder` -- `ElementRunner` / `ElementGuiBuilder`, `NodeRunner` /
-// `NodeGuiBuilder`, `AiNodeRunner` / `AiNodeGuiBuilder` -- in the same folder,
+// The mirror of `graph/nodes/ElementDefinition.ts`, class for class: every
+// element class there ends in `Definition`, and its counterpart here swaps that
+// for `GuiBuilder` -- `ElementDefinition` / `ElementGuiBuilder`, `NodeDefinition` /
+// `NodeGuiBuilder`, `AiNodeDefinition` / `AiNodeGuiBuilder` -- in the same folder,
 // under the same name.
 //
-// **The name is the whole point.** Two axes cross here. `Runner` against
-// `GuiBuilder` is *what the class is for*: running the application, or building
-// it. `Gui` in the middle is *where it lives*: the runners (graph/, backend/) hold the graph and
-// run it, and everything a person clicks is in the browser, which they
-// never import. So a builder is the browser's build-time half, and it is the
-// only one of the three roles that a delivered tool must not contain -- see
-// `gui/surface/blocks.ts` for the third, which is neither.
+// **The name is the whole point.** `Definition` says what an element is, and a
+// tool carries it; `GuiBuilder` says how a person edits it. `Gui` in the middle
+// is *where it lives*: everything a person clicks is in the browser, and the
+// editor's part of it is not carried -- see `deployment/gui/surface/blocks.ts`
+// for the part of the browser a tool does carry.
 //
 // What a builder adds to its element is the editor's part: its panel (the
 // settings), and what the editor's shells ask of it, so no shell switches on a

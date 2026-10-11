@@ -4,7 +4,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { Graph } from './graph';
-import { ApiError, call, watchGeneration, type AICall } from '../../deployment/gui/kit/api/client';
+import { ApiError, call, watchGeneration, type AICall } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
 import { lastAsked } from './lastAsked';
 
@@ -39,7 +39,7 @@ export function useGraphAsk() {
     } catch (error) {
       if (!wanted()) return null;
       // The whole failing exchange, replies included, as a node's ✨ keeps it: the failing case is the one where what was asked matters.
-      setAsk({ phase: 'failed', said, error: errorText(error, 'The graph could not be made.'), calls: error instanceof ApiError && error.body.calls ? error.body.calls : [] });
+      setAsk({ phase: 'failed', said, error: errorText(error, 'The graph could not be made.'), calls: error instanceof ApiError && error.body.calls ? error.body.calls as AICall[] : [] });
       return 'failed';
     }
   };

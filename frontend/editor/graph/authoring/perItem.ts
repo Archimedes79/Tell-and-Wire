@@ -8,7 +8,7 @@
 import type { GraphNode, Port, Wire } from '../../document/graph';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { runsPerItem as executorRunsPerItem } from '../../../../graph/batching.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 
 /**
  * An input ticked "whole list" takes a list whole, whatever else does: a
@@ -52,7 +52,7 @@ export function listPorts(node: GraphNode, example: Record<string, unknown> | un
  * setting says.
  */
 export function runsPerItem(node: GraphNode): boolean {
-  const element = runnerRegistry.node(node.node_type);
+  const element = registry.node(node.node_type);
   return !!element && executorRunsPerItem(node, element.batchMode(node));
 }
 

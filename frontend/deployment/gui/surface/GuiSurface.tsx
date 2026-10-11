@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GuiWidget } from '../../../editor/document/graph';
+import type { GuiWidget } from '../kit/guiWidget';
 import { BLOCKS } from './blocks';
 import { useContainerCell } from './useContainerCell';
 import { blockStyle, gridStyle, resolveWidgetLayout, type WidgetPlacement } from '../kit/layout';
@@ -240,7 +240,7 @@ function RunError({ error }: { error: string }) {
  * A block used is *onValue* -- what it now holds, for a block a round is
  * sent the value of -- and, for a block that fires a start point, *onEvent*,
  * once its value is in. A button is an event and nothing else: it holds no
- * value a round could be sent (`WidgetRunner.takesValue`).
+ * value a round could be sent (`WidgetDefinition.takesValue`).
  */
 export function GuiSurface({ gui, onValue, onEvent }: {
   gui: GuiModel;

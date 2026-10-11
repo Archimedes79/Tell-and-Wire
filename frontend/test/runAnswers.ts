@@ -1,4 +1,4 @@
-// What the runners make of a node, as the editor's tests compare it.
+// What the definitions make of a node, as the editor's tests compare it.
 //
 // Beside the frontend's folders, not in them: a helper for tests, which the layers test has
 // no rank for and no frontend code ever imports. vitest only runs `*.test.ts`, so it is
@@ -14,7 +14,7 @@ export const RUN_QUESTIONS = [
 ] as const;
 
 /**
- * The node's runner's answer to each question a run asks of *node*, as
+ * The node's definition's answer to each question a run asks of *node*, as
  * JSON: two nodes with the same answers are one node to a run. *without*
  * leaves questions out, for a test that compares what they may spell apart.
  */

@@ -12,7 +12,7 @@
 // not there, which can only ever deliver nothing, and two nodes sharing an id.
 
 import type { Graph, GraphNode, Port } from './graph.ts';
-import type { Runners } from './nodes/NodeRunner.ts';
+import type { Kinds } from './nodes/NodeDefinition.ts';
 import { port } from './nodes/port.ts';
 import { RUN_PORT } from './triggers.ts';
 
@@ -24,6 +24,30 @@ export interface Problem {
 }
 
 export const names = (ids: Iterable<string>): string => [...ids].map((id) => `"${id}"`).join(', ') || '(none)';
+
+/**
+ * The value under *field* -- a path, `folder` or `file.content` -- of what
+ * arrived: of a start point's package, one of the values its sender sent; of
+ * anything else, a key of it. Nothing there is undefined: nothing arrived.
+ */
+export function fieldOf(value: unknown, field: string): unknown {
+  const isPackage = !!value && typeof value === 'object' && 'event' in value && 'values' in value;
+  let at: unknown = isPackage ? (value as { values: unknown }).values : value;
+  for (const key of field.split('.')) {
+    if (!at || typeof at !== 'object') return undefined;
+    at = (at as Record<string, unknown>)[key];
+  }
+  return at;
+}
+
+/**
+ * How deep a graph may hold a graph.
+ *
+ * Not a technical ceiling -- nothing here recurses on the stack -- but the
+ * depth past which a person has lost the thread, and the thing that ends a
+ * graph that somehow came to hold itself.
+ */
+export const NESTING_LIMIT = 5;
 
 /**
  * The output a node that catches its own failure grows: empty on success, the
@@ -41,7 +65,7 @@ export function errorOutput(description: string): Port {
 }
 
 /** The ports *node* really has -- derived where its kind derives them, declared where a person names them. */
-function portsOf(node: GraphNode, registry: Runners): { inputs: Set<string>; outputs: Set<string>; derived: boolean } {
+function portsOf(node: GraphNode, registry: Kinds): { inputs: Set<string>; outputs: Set<string>; derived: boolean } {
   const element = registry.node(node.node_type);
   let derived: ReturnType<NonNullable<typeof element>['derivedPorts']> = null;
   try {
@@ -92,7 +116,7 @@ export function fatalProblems(graph: Graph): Problem[] {
 }
 
 /** Everything `fatalProblems` finds, and the ports besides. */
-export function wiringProblems(graph: Graph, registry: Runners): Problem[] {
+export function wiringProblems(graph: Graph, registry: Kinds): Problem[] {
   const problems = fatalProblems(graph);
 
   const byId = new Map<string, GraphNode>();

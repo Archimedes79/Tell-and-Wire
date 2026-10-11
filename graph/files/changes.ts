@@ -18,7 +18,7 @@ export interface TextChange {
  * The name a change to the graph a node holds is reported under.
  *
  * Not a config field: which field a node keeps its graph in is that element's
- * business (`NodeRunner.setNestedGraph`), and a change that came from a
+ * business (`NodeDefinition.setNestedGraph`), and a change that came from a
  * folder says only "this graph, now".
  */
 export const NESTED_GRAPH_FIELD = 'nested_graph';

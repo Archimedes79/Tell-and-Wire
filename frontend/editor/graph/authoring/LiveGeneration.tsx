@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { AICall } from '../../../deployment/gui/kit/api/client';
+import type { AICall } from '../../api/client';
 import { DIMMER, FIELD, LINE, MUTED, PURPLE_TEXT } from '../../../deployment/gui/kit/ui/theme';
 
 /**

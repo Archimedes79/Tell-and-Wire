@@ -4,6 +4,7 @@ FROM node:24-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY graph/package.json graph/
+COPY gui/package.json gui/
 COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 RUN npm ci

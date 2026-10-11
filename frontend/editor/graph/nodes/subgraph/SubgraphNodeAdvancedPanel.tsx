@@ -1,11 +1,11 @@
 import { DIMMER, MUTED } from '../../../../deployment/gui/kit/ui/theme';
-import { SubgraphNodeRunner } from '../../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
-import { registry as runnerRegistry } from '../../../../../graph/nodes/registry.ts';
+import { SubgraphNodeDefinition } from '../../../../../graph/nodes/subgraph/SubgraphNodeDefinition.ts';
+import { registry } from '../../../../../graph/nodes/registry.ts';
 import { CatchFailures } from '../../fields/RunOptions';
 import RunOncePerItem from '../../fields/RunOncePerItem';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
-const ELEMENT = new SubgraphNodeRunner();
+const ELEMENT = new SubgraphNodeDefinition();
 
 /**
  * Its ports, and its settings of its own. The ports are a *view*: the start
@@ -16,7 +16,7 @@ const ELEMENT = new SubgraphNodeRunner();
  * run inside fails this node, so this is how the graph above carries on.
  */
 export default function SubgraphNodeAdvancedPanel({ node, setConfig, updateNode }: NodePanelProps) {
-  const ports = ELEMENT.derivedPorts(node as never, runnerRegistry) ?? { inputs: [], outputs: [] };
+  const ports = ELEMENT.derivedPorts(node as never, registry) ?? { inputs: [], outputs: [] };
   return (
     <>
       <div>

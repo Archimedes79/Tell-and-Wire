@@ -3,7 +3,7 @@
 
 import type { Graph } from '../graph';
 import { withNested } from '../model/graphDoc';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { HISTORY_LIMIT } from './history';
 import { flushPanels } from './flushPanels';
 import { goingIn } from './handoff';
@@ -25,7 +25,7 @@ export function subgraphActions(
       const node = get().rfNodes.find((n) => n.id === nodeId)?.data.graphNode;
       // Whether there is a graph to go into is the same question as whether
       // this node holds one, so it is asked once.
-      const held = node && runnerRegistry.node(node.node_type)?.nestedGraph(node as never) as Graph | null;
+      const held = node && registry.node(node.node_type)?.nestedGraph(node as never) as Graph | null;
       if (!held) return;
 
       const frame = { nodeId, graph: get().exportGraph(), past: get().past, future: get().future };

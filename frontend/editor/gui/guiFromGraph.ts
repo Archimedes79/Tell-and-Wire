@@ -15,7 +15,7 @@
 
 import type { DataType, GraphNode, GuiWidget, Wire } from '../document/graph';
 import { blockCan, blocksAt } from '../document/model/gui';
-import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
 import { GUI_GRID_COLUMNS } from '../../deployment/gui/kit/layout';
 import { ALL_ENTRIES, newBlock } from './DesignerPalette';
 
@@ -159,7 +159,7 @@ export function guiFromGraph(nodes: GraphNode[], edges: Wire[], gui: GuiWidget[]
   const planned: Planned = { now: [], ifSwitched: [] };
   const taken = [...gui];
   for (const node of nodes) {
-    const element = runnerRegistry.node(node.node_type);
+    const element = registry.node(node.node_type);
     const by = element?.startedBy(node as never);
     if (by === 'gui' || by === 'call') {
       const used = blocksAt(gui, node.id);

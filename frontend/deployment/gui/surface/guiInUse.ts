@@ -1,6 +1,6 @@
-import type { GuiWidget } from '../../../editor/document/graph';
+import type { GuiWidget } from '../kit/guiWidget';
 import type { RoundSnapshot } from '../kit/api/client';
-import type { InterfaceEntry } from '../../../../backend/deployment/host/interface.ts';
+import type { InterfaceEntry } from '../../../../graph/interface.ts';
 import { heldValue, type GuiSession } from '../kit/api/session';
 import type { GuiModel } from './GuiSurface';
 

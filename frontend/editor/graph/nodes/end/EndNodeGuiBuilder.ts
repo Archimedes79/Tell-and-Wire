@@ -19,8 +19,6 @@ function destination(node: GraphNode): string {
 export class EndNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'end';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'End point';
 
   readonly hint = 'The run\'s result, under this node\'s name -- also written to a file or a folder, if asked';

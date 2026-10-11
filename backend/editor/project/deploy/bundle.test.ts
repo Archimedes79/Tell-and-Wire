@@ -54,6 +54,14 @@ describe('a bundle', () => {
       expect(plot.inputs.value.points.length).toBeGreaterThan(0);
 
       expect(await readdir(join(dir, 'nodes', 'chart'))).not.toContain('history.md');
+      // The manifest names the version and lists exactly what is there; nothing of the editor is.
+      const manifest = JSON.parse(await readFile(join(dir, 'MANIFEST.json'), 'utf8')) as { package: string; version: string; files: string[] };
+      expect(manifest.package).toBe('tell-and-wire');
+      expect(manifest.version).toBe((JSON.parse(await readFile(join(REPO, 'graph', 'package.json'), 'utf8')) as { version: string }).version);
+      const there = (await readdir(dir, { recursive: true, withFileTypes: true })).filter((entry) => entry.isFile())
+        .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1).split('\\').join('/')).filter((path) => path !== 'MANIFEST.json');
+      expect(manifest.files).toEqual(there.sort());
+      expect(there.filter((path) => path.split('/').includes('editor') || path.startsWith('backend/architecture/'))).toEqual([]);
       expect(await readFile(join(dir, 'LICENSE'), 'utf8')).toBe(await readFile(join(REPO, 'LICENSE'), 'utf8'));
     } finally {
       await rm(dir, { recursive: true, force: true });

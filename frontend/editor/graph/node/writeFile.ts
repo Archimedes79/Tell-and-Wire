@@ -7,7 +7,7 @@
 // and a change that says whether it landed.
 
 import type { Graph, GraphNode } from '../../document/graph';
-import { call } from '../../../deployment/gui/kit/api/client';
+import { call } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
 import { ONCE } from '../nodes/NodeGuiBuilder';
 import { runGenerate } from '../authoring/useGenerate';

@@ -1,14 +1,14 @@
-// What the wrapper asks of a graph core, and what a core answers.
+// What the host asks of a graph core, and what a core answers.
 //
 // A graph core is the one part of Tell & Wire that runs graphs: it takes the
 // graph definition -- nodes, their files, the wires; never the gui -- and
 // executes it in its language, asking the model with a client of its own. It
-// can live in the wrapper's process (`localCore.ts`) or be a program of its
+// can live in the host's process (`localCore.ts`) or be a program of its
 // own that speaks this protocol on stdin and stdout (`stdio.ts`), one JSON
 // object per line. Everything a gui, a script or the editor sees goes through
-// the wrapper (`backend/`), never to a core directly.
+// the host (`backend/`), never to a core directly.
 //
-// What stays the wrapper's: the session -- what nodes keep between rounds, the
+// What stays the host's: the session -- what nodes keep between rounds, the
 // gui and what its blocks hold, state.json, the clock, the queue of rounds --
 // and the graph definition's own rules: start points, end points, packages.
 // What is the core's: running a round, one node, a node's example; what every
@@ -16,8 +16,8 @@
 //
 // The wire, both ways one JSON object per line:
 //
-//   wrapper -> core   { "id": 7, "op": "round", ...RoundAsked }
-//   core -> wrapper   { "id": 7, "event": { "type": "node_start", "node_id": "read" } }   any number
+//   host -> core   { "id": 7, "op": "round", ...RoundAsked }
+//   core -> host   { "id": 7, "event": { "type": "node_start", "node_id": "read" } }   any number
 //                     { "id": 7, "reply": { ...RoundEnded } }                             once, or:
 //                     { "id": 7, "error": "what went wrong" }
 //
@@ -26,18 +26,18 @@
 // nothing else on stdout; what it has to say for people goes to stderr.
 //
 // What any core must do, whatever its language:
-// - Answer `hello` first and at once; the wrapper refuses one that does not
+// - Answer `hello` first and at once; the host refuses one that does not
 //   (15 s), or speaks another `protocol`.
 // - Read requests while one goes: a `stop` arrives in the middle of a round.
-// - Run where the wrapper runs, on the same files: paths in a graph are
+// - Run where the host runs, on the same files: paths in a graph are
 //   resolved against the same working directory.
 // - Keep, between rounds, what every node made last -- `held` comes in with
 //   `open` from state.json and goes back with every round, an opaque value the
-//   wrapper only stores -- and commit what a round left only when it ran to
+//   host only stores -- and commit what a round left only when it ran to
 //   its end.
 // - Say in `nodes` each node's state, keyed as its kind keeps it: a start
 //   point `values`, a data node each field by its name and its `round`
-//   (`NodeRunner.state`).
+//   (`NodeDefinition.state`).
 // - Run a round with `given` as a kept round: those nodes are handed their
 //   outputs instead of running, and nothing of it stands for the next round --
 //   no latch, no reuse.
@@ -69,7 +69,7 @@ export interface RoundAsked {
   /**
    * The graph as the round starts from it: what nodes keep put back into
    * them, what the round was sent put into the start points it reaches
-   * (`NodeRunner.startWith`). The core runs a copy and changes nothing here.
+   * (`NodeDefinition.startWith`). The core runs a copy and changes nothing here.
    */
   graph: Graph;
   /** The start point it begins at; none, a round of the whole graph. */
@@ -83,7 +83,7 @@ export interface RoundAsked {
 /** What a round left. */
 export interface RoundEnded {
   result: ExecutionResult;
-  /** What every node keeps after it (`NodeRunner.state`), by node id: the wrapper keeps what differs from the design. */
+  /** What every node keeps after it (`NodeDefinition.state`), by node id: the host keeps what differs from the design. */
   nodes: Record<string, Record<string, unknown>>;
   /** What every node of the graph was last left holding, for state.json: nothing new when the round was stopped. */
   held: Record<string, Held>;
@@ -144,7 +144,7 @@ export type CoreAnswer =
   | { id: number; error: string };
 
 /**
- * A graph core, as the wrapper holds one: one per session, since what nodes
+ * A graph core, as the host holds one: one per session, since what nodes
  * made last lives in it between rounds. *report* is told how far a request
  * is; *signal* stops it.
  */

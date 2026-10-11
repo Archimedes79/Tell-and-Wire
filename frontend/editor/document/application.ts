@@ -25,17 +25,17 @@
 import { create } from 'zustand';
 import type { Graph } from './graph';
 import { goingRound, useGraphStore } from './store/graphStore';
-import { call } from '../../deployment/gui/kit/api/client';
+import { call } from '../api/client';
 import { stopRound } from '../../deployment/gui/kit/api/session';
 import { startEvents } from '../../../graph/triggers.ts';
-import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
 
 /**
  * Whether ▶ Run opens the App tab for *graph*: it has a gui to use, or a
  * start point a call starts -- the App tab is its caller then.
  */
 export function opensApp(graph: Pick<Graph, 'nodes' | 'gui'>): boolean {
-  return !!graph.gui?.blocks.length || graph.nodes.some((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'call');
+  return !!graph.gui?.blocks.length || graph.nodes.some((node) => registry.node(node.node_type)?.startedBy(node as never) === 'call');
 }
 
 export const useApplication = create<{
@@ -111,7 +111,7 @@ export async function startApplication(graph: Graph, runWhole: () => Promise<voi
       await call('stopApplication', {}).catch(() => {});
       return;
     }
-    if (startEvents(graph, runnerRegistry).includes(null)) await runWhole();
+    if (startEvents(graph, registry).includes(null)) await runWhole();
     // Nothing left to happen: no gui to use, no call to make, no clock to tick.
     if (current() && !opensApp(graph) && !ticks) await end();
   } catch (error) {

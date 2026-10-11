@@ -1,11 +1,11 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../document/graph';
-import { StartNodeRunner } from '../../../../../graph/nodes/start/StartNodeRunner.ts';
+import { StartNodeDefinition } from '../../../../../graph/nodes/start/StartNodeDefinition.ts';
 import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Play } from 'lucide-react';
 
-const ELEMENT = new StartNodeRunner();
+const ELEMENT = new StartNodeDefinition();
 
 /**
  * Where a run begins: a start point, named, started by the gui, by a call
@@ -13,8 +13,6 @@ const ELEMENT = new StartNodeRunner();
  */
 export class StartNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'start';
-
-  // ── Build time ────────────────────────────────────────────────────────────
 
   readonly label = 'Start point';
 

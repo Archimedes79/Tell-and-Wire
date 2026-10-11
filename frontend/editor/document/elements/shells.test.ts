@@ -7,7 +7,7 @@
  * literal. What such a comparison would decide belongs to the element's class
  * (`NodeGuiBuilder`, `WidgetGuiBuilder` and their subclasses), where a new kind answers for
  * itself and nothing shared has to change. The same rule holds in graph/,
- * where the executor asks `NodeRunner` and never names a type.
+ * where the executor asks the node's definition and runner and never names a type.
  */
 import { describe, expect, it } from 'vitest';
 

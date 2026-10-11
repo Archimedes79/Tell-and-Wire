@@ -22,7 +22,7 @@ jobs:
           node-version: '24'
           cache: npm
 
-      # One workspace, one lockfile: graph/, backend/ and frontend/ share it.
+      # One workspace, one lockfile: graph/, gui/, backend/ and frontend/ share it.
       - name: Install
         run: npm ci
 
@@ -39,7 +39,7 @@ jobs:
         run: npm run typecheck
 
       # What the compiler does not see: the rules of hooks in frontend/, a promise
-      # nobody waits for in graph/ and backend/ (an unhandled rejection ends a server).
+      # nobody waits for in graph/, gui/ and backend/ (an unhandled rejection ends a server).
       - name: Lint
         run: npm run lint
 
@@ -109,7 +109,7 @@ jobs:
         run: node --test scripts/package.test.mjs
 
   # The download for people who do not want a container: one zip holding the
-  # source of graph/ and backend/, the built page and the examples. The source has no
+  # source of graph/, gui/ and backend/, the built page and the examples. The source has no
   # runtime dependencies and Node runs its TypeScript unbuilt, so a recipient unzips it
   # and runs it -- no npm install, no build step, no Docker.
   #

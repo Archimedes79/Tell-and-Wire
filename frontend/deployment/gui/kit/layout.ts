@@ -13,7 +13,7 @@
 // height is the least it has, never a cut.
 //
 // Presentational only: never touches ports, wiring, or execution.
-import type { GuiWidget } from '../../../editor/document/graph';
+import type { GuiWidget } from './guiWidget';
 
 /** Cells across the gui. Square, so `w` and `h` are one unit, not two. */
 export const GUI_GRID_COLUMNS = 16;

@@ -3,7 +3,7 @@ import { Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from '../../deployment/gui/kit/ui/ToolbarButton';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { useGoingRound, useGraphStore } from '../document/store/graphStore';
-import { downloadBundle } from '../../deployment/gui/kit/api/client';
+import { downloadBundle } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
 import type { Graph } from '../document/graph';
 import { useRound } from '../../deployment/gui/surface/useRound';

@@ -5,7 +5,7 @@ import { parseGraph, type GraphNode } from '../../../graph/graph.ts';
 import { GenerationFailed, GenerationRefused, firstCodeBlock, generate } from './generate.ts';
 import { generateGraph } from './generateGraph.ts';
 import { nodeCode } from '../../deployment/runtime/services.ts';
-import type { GenerateRequest } from '../../deployment/host/api.ts';
+import type { GenerateRequest } from '../host/api.ts';
 
 /**
  * Writing a node's files with a model, without a model.

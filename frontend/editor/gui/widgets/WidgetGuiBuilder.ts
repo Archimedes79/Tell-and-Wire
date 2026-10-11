@@ -1,4 +1,4 @@
-// A widget's build-time half, in the browser: the mirror of `gui/widgets/WidgetRunner.ts`.
+// A widget's build-time half, in the browser: the mirror of `gui/widgets/WidgetDefinition.ts`.
 
 import type { ComponentType } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -121,7 +121,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
    * goes last.
    *
    * What every block has, and then what this kind keeps (`initialSettings`). A block
-   * carries no setting no runner of its kind reads.
+   * carries no setting its kind's definition does not read.
    */
   create(id: string, label = '', mode = this.defaultMode): GuiWidget {
     return {

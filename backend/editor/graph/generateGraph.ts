@@ -13,7 +13,7 @@ import { exchangeEntry, withExchange } from '../../../graph/editor/history.ts';
 import { GRAPH_SYSTEM } from './graphPrompt.ts';
 import { changePrompt } from './generatePrompts.ts';
 import { GenerationFailed, firstBlock, recording } from './generate.ts';
-import type { AICall, Target } from '../../deployment/host/api.ts';
+import type { AICall, Target } from '../host/api.ts';
 
 /** A value as JSON with every object's keys in one order: two that say the same compare equal. */
 const canonical = (value: unknown): string => JSON.stringify(value, (_key, item: unknown) => (

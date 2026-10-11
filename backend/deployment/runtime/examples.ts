@@ -1,6 +1,6 @@
 // A node's example: what its input.js gives one call, held to its output.js.
 //
-// A node that has definitions (`NodeRunner.definitions`) carries its own test:
+// A node that has definitions (`NodeDefinition.definitions`) carries its own test:
 // the example in its input definition is what one call is handed, and its
 // output definition says what one call returns. ▶ Try runs the one, `test` and
 // the MCP server's `test_graph` run all of them, and `run-node` runs one on
@@ -11,9 +11,10 @@
 
 import type { Graph } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
-import type { Runners } from '../../../graph/nodes/NodeRunner.ts';
+import type { Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { definitionExample, misfits, unreadableOutput } from '../../../graph/files/definition.ts';
 import { callNode } from './executor.ts';
+import { withoutModel } from './offline.ts';
 
 /** How one node did on its example. */
 export interface ExampleRun {
@@ -36,6 +37,9 @@ export interface ExampleRun {
   held: boolean;
 }
 
+/** What a model asked in an offline run answers: how such a run tells a node that asks one from one that fails. */
+const NO_MODEL = 'No model is asked in this run.';
+
 /** Whether an output definition is one a call can be held to: written, and readable. */
 const holds = (output: string): boolean => !!output.trim() && !unreadableOutput(output);
 
@@ -49,7 +53,7 @@ const holds = (output: string): boolean => !!output.trim() && !unreadableOutput(
 export async function runExample(
   graph: Graph,
   nodeId: string,
-  options: { runtime: Runtime; registry: Runners; offline?: boolean; signal?: AbortSignal },
+  options: { runtime: Runtime; registry: Kinds; offline?: boolean; signal?: AbortSignal },
 ): Promise<ExampleRun> {
   const node = graph.nodes.find((candidate) => candidate.id === nodeId);
   const element = node && options.registry.node(node.node_type);
@@ -66,10 +70,12 @@ export async function runExample(
   } else if (node.inputs.length) {
     return { status: 'error', details: ['It has no input.js, so there is nothing to try it on: write one with ✨ Input.'], held };
   }
-  if (options.offline && element.asksModel(node)) {
+  const runtime = options.offline ? withoutModel(options.runtime, NO_MODEL) : options.runtime;
+  const ran = await callNode(graph, nodeId, inputs, { runtime, registry: options.registry, signal: options.signal });
+  // It asked a model, and this run asks none: not a failure of the node.
+  if (options.offline && ran.error?.includes(NO_MODEL)) {
     return { status: 'skipped', details: ['It asks a model, and this run asks none.'], held };
   }
-  const ran = await callNode(graph, nodeId, inputs, { runtime: options.runtime, registry: options.registry, signal: options.signal });
   if (ran.status === 'error') return { status: 'error', details: [ran.error ?? 'It failed.'], outputs: ran.outputs, held };
   const details = misfits(ran.outputs, definitions.output);
   // A caught failure is on its error port, not in what it returns: it did not run through.
@@ -78,7 +84,7 @@ export async function runExample(
 }
 
 /** The graph, and every graph its nodes hold, each with the way down to it (`outer ▸ `). */
-export function everyGraphIn(graph: Graph, registry: Runners, inside = ''): { graph: Graph; inside: string }[] {
+export function everyGraphIn(graph: Graph, registry: Kinds, inside = ''): { graph: Graph; inside: string }[] {
   return [
     { graph, inside },
     ...graph.nodes.flatMap((node) => {
@@ -101,7 +107,7 @@ interface TestedExample { inside: string; nodeId: string; result: ExampleRun }
  */
 export async function testGraph(
   graph: Graph,
-  options: { runtime: () => Runtime; registry: Runners; offline?: boolean; only?: string; signal?: AbortSignal },
+  options: { runtime: () => Runtime; registry: Kinds; offline?: boolean; only?: string; signal?: AbortSignal },
 ): Promise<{ tested: number; results: TestedExample[] }> {
   const results: TestedExample[] = [];
   for (const { graph: level, inside } of everyGraphIn(graph, options.registry)) {

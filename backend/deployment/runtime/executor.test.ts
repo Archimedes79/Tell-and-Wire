@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import type { Graph, GraphNode } from '../../../graph/graph.ts';
 import { executeGraph, inputsFor, runNodeAlone } from './executor.ts';
 import { passiveWires, topologicalLevels } from '../../../graph/order.ts';
-import { NodeRunner } from '../../../graph/nodes/NodeRunner.ts';
+import { NodeRunner, type Runners } from './nodes/NodeRunner.ts';
+import { runners } from './nodes/registry.ts';
 import { type Runtime } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { edge, graphOf, quietRuntime } from './test/fakes.ts';
@@ -90,10 +91,9 @@ describe('a loop', () => {
 
 describe('a failure', () => {
   class Boom extends NodeRunner {
-    readonly nodeType = 'code' as const;
     async execute(): Promise<Record<string, unknown>> { throw new Error('the body blew up'); }
   }
-  const withBoom = { node: (type: string) => (type === 'code' ? new Boom() : registry.node(type)) } as never;
+  const withBoom: Runners = { node: (type) => (type === 'code' ? new Boom(registry.node('code')!) : runners.node(type)) };
   const failing = (config: Record<string, unknown>): GraphNode => ({
     ...node('bad', 'code', config),
     outputs: [
@@ -101,7 +101,7 @@ describe('a failure', () => {
       { id: 'error', name: 'Error', kind: 'output', data_type: 'text', multi: false, required: false, description: '' },
     ],
   });
-  const run = (nodes: GraphNode[], edges: ReturnType<typeof edge>[]) => executeGraph(graphOf(nodes, edges), { runtime: nowhere, registry: withBoom });
+  const run = (nodes: GraphNode[], edges: ReturnType<typeof edge>[]) => executeGraph(graphOf(nodes, edges), { runtime: nowhere, registry, runners: withBoom });
   const status = (result: Awaited<ReturnType<typeof run>>) => Object.fromEntries(result.node_results.map((r) => [r.node_id, r.status]));
 
   it('skips what depended on it and goes on with the rest -- unless the node catches its failure', async () => {
@@ -137,20 +137,19 @@ describe('a result that is handed in', () => {
   it('is taken as the node\'s own, the node does not run, and the answer travels on', async () => {
     let ran = 0;
     class Counts extends NodeRunner {
-      readonly nodeType = 'code' as const;
       async execute(_node: GraphNode, inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
         ran += 1;
         return { output: `saw ${String(inputs.value)}` };
       }
     }
-    const counting = { node: (type: string) => (type === 'code' ? new Counts() : registry.node(type)) };
+    const counting: Runners = { node: (type) => (type === 'code' ? new Counts(registry.node('code')!) : runners.node(type)) };
 
     const result = await executeGraph(
       graphOf([node('source'), node('after'), node('show', 'end')], [
         edge('e1', 'source', 'output', 'after', 'value'),
         edge('e2', 'after', 'output', 'show', 'value'),
       ]),
-      { runtime: nowhere, registry: counting as never, given: { source: { output: 'a value' } } },
+      { runtime: nowhere, registry, runners: counting, given: { source: { output: 'a value' } } },
     );
 
     // Only the two nodes that were not answered ran, and the answer travelled.

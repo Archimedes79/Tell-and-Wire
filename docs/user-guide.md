@@ -329,7 +329,7 @@ gui of its own in `frontend/index.html`, which uses the runtime API by name (see
 An assistant such as Claude Code can design, check, save and run graphs in one folder:
 
 ```bash
-claude mcp add tell-and-wire -- node <repo>/backend/app/main.ts --mcp --mcp-root <tools folder>
+claude mcp add tell-and-wire -- node <repo>/backend/cli/main.ts --mcp --mcp-root <tools folder>
 ```
 
 Its tools are `authoring_guide`, `generate_graph`, `validate_graph`, `save_graph`,

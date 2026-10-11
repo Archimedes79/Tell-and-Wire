@@ -1,4 +1,3 @@
-import { TableWidgetRunner } from '../../../../../gui/widgets/table/TableWidgetRunner.ts';
 import { DisplayWidgetGuiBuilder } from '../DisplayWidgetGuiBuilder';
 import { TABLE_TEXT } from '../../../../deployment/gui/widgets/table/TableWidgetView';
 import { Table } from 'lucide-react';
@@ -13,8 +12,6 @@ export class TableWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   paletteEntries() {
     return [{ label: this.label, icon: Table, also: 'rows grid data' }];
   }
-
-  readonly runner = new TableWidgetRunner();
 
   /** Its rows, at the size the table draws them. */
   override textShown(): string {

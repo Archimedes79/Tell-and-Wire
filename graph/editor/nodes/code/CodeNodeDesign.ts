@@ -1,0 +1,42 @@
+import { NodeDesign, type WhatRuns } from '../NodeDesign.ts';
+import type { GraphNode } from '../../../graph.ts';
+import type { Problem } from '../../../wiring.ts';
+import type { Generation } from '../../generation.ts';
+import { CODE_FIELDS, type CodeNodeDefinition } from '../../../nodes/code/CodeNodeDefinition.ts';
+import { JAVASCRIPT } from './javascript.ts';
+
+export class CodeNodeDesign extends NodeDesign<CodeNodeDefinition> {
+  override graphAuthorNote(): string {
+    return 'its description says in words what it does, and config.code holds it as JavaScript: "function run(inputs) { ... }", '
+      + 'returning an object whose keys are exactly this node\'s output port ids. Use only what Node has built in; there is no '
+      + 'package manager. The function may be async and is handed a second argument, node: "await node.llm({ prompt: \'...\' })" '
+      + 'asks the configured model a question and resolves to its answer as text -- use it when code has to decide what to ask, '
+      + 'or ask in a loop; for one question, use an ai node instead. config.input_definition and config.output_definition may '
+      + 'say what one call is handed and returns, each as a JSDoc typedef followed by "module.exports = <one example as plain JSON>;".';
+  }
+
+  override whatRuns(): WhatRuns {
+    return { by: 'body', where: 'code.js', does: 'Calls run(inputs, node) in code.js, sandboxed, and hands on the object it returns, keyed by output port.' };
+  }
+
+  override problems(node: GraphNode, _kinds: unknown, where: string): Problem[] {
+    if (String(node.config.code ?? '').trim()) return [];
+    // Said as a person meets it -- the file -- and the field only where a graph file is what is read.
+    return [{
+      where,
+      problem: 'Its code.js holds no code yet: it fails the moment it runs.',
+      fix: 'Write it with ✨ Code, or write function run(inputs) { … } in code.js (config.code in a graph file), returning an object keyed by its outputs.',
+    }];
+  }
+
+  /**
+   * Written against the node's own ports and definitions.
+   *
+   * No contract of its own: what a chart must be handed -- the data to plot,
+   * never a drawing -- is the chart's to say (`WidgetDesign.receives`), so
+   * only a node that is wired into one hears it.
+   */
+  override generation(): Generation {
+    return { kind: 'code', fields: CODE_FIELDS, language: JAVASCRIPT };
+  }
+}

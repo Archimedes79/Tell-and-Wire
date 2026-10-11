@@ -7,6 +7,7 @@ import type { Graph, GraphNode } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { Session } from '../../deployment/host/session.ts';
+import { guiHooks } from '../../deployment/gui/hooks.ts';
 import { edge, graphOf, quietRuntime } from '../../deployment/runtime/test/fakes.ts';
 import { keptRound, replayRound, writeKeptRound } from './keptRounds.ts';
 import { localCore } from '../../deployment/runtime/localCore.ts';
@@ -50,7 +51,7 @@ const answering = quietRuntime({ code: inProcess, ai: { complete: async () => 't
 
 /** A round of *graph*, run in a session as a call, kept. */
 async function keptOf(graph: Graph) {
-  const session = await Session.open(graph, { runtime: () => answering });
+  const session = await Session.open(graph, { runtime: () => answering, gui: guiHooks });
   const { id, outcome } = session.start({ node_id: 'ask', port_id: 'data' }, { values: { question: 'How long?' } });
   const result = await outcome;
   return keptRound(graph, result, session.snapshot(id)!.started, registry);
@@ -83,7 +84,7 @@ describe('a round, kept', () => {
       edge('g', 'ask', 'data', 'step', 'go'), edge('r', 'count', 'before', 'step', 'n'),
       edge('w', 'step', 'next', 'count', 'total'), edge('s', 'count', 'total', 'shown', 'value'),
     ]);
-    const session = await Session.open(counter(), { runtime: () => answering });
+    const session = await Session.open(counter(), { runtime: () => answering, gui: guiHooks });
     await session.run({ node_id: 'ask', port_id: 'data' });
     const second = session.start({ node_id: 'ask', port_id: 'data' });
     const kept2 = keptRound(counter(), await second.outcome, session.snapshot(second.id)!.started, registry, session.stateBefore(second.id));

@@ -85,7 +85,7 @@ export class NotOpenable extends Error {}
 
 /**
  * What a node keeps its writing in -- input.js, code.js, prompt.md, data.json,
- * history.md: the files the nodes say they keep (`NodeRunner.texts`), so a
+ * history.md: the files the nodes say they keep (`NodeDefinition.texts`), so a
  * node for another language brings its own. Nothing else is ever handed to
  * another program.
  */

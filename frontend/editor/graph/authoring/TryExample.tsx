@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { Graph, GraphNode } from '../../document/graph';
-import { call } from '../../../deployment/gui/kit/api/client';
+import { call } from '../../api/client';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
-import type { ExampleRun } from '../../../../backend/deployment/runtime/examples.ts';
+import type { ExampleRun } from '../../../../backend/editor/host/api.ts';
 import { AUTHORING_KEYS } from '../../../../graph/editor/handedOn.ts';
 import type { Refine } from './generation';
 import Button from '../../../deployment/gui/kit/ui/Button';

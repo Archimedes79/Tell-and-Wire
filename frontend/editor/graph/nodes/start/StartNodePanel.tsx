@@ -1,14 +1,12 @@
 import { useEffect, useId, useState } from 'react';
 import { DANGER_TEXT, DIM, FIELD, MUTED, TEXT } from '../../../../deployment/gui/kit/ui/theme';
 import { parseInterval } from '../../../../../graph/triggers.ts';
-import { StartNodeRunner } from '../../../../../graph/nodes/start/StartNodeRunner.ts';
+import { designs } from '../../../../../graph/editor/nodes/registry.ts';
 import { useGraphStore } from '../../../document/store/graphStore';
 import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialogs/PathField';
 import FolderListing from '../../../app/fields/FolderListing';
 import { listAsRun } from '../../authoring/readAsRun';
 import type { NodePanelProps } from '../NodeGuiBuilder';
-
-const START = new StartNodeRunner();
 
 /** What a start point that starts itself can send, in the words the panel offers it. */
 const SENDS = [
@@ -54,7 +52,7 @@ function ExampleSent({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConf
   // In a graph a node holds: the example held to what the graph above sends
   // it, which `check` says too (`handedDownProblems`).
   const held = useGraphStore((s) => s.subgraphStack.length > 0);
-  const [unsent] = held ? START.handedDownProblems(node as never, '') : [];
+  const [unsent] = held ? designs.node('start')!.handedDownProblems(node as never, '') : [];
   return (
     <div className="mb-3">
       <label className="block text-xs mb-1" style={{ color: DIM }} htmlFor={`sent-${node.id}`}>What a call sends it, for example</label>
@@ -144,7 +142,7 @@ function SendsFiles({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConfi
 export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
   const startedBy = String(node.config.started_by ?? 'gui');
   const every = String(node.config.every ?? '');
-  // Said while it is being typed, in the runner's own words: the same function
+  // Said while it is being typed, in the words of the start point's definition: the same function
   // reads this field when the tool runs, so what it rejects here it would
   // reject there -- at three in the morning, in a log nobody is reading.
   let problem = '';

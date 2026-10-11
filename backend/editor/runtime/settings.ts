@@ -8,7 +8,7 @@
 //
 // Editor-only: a deployed tool is configured through its environment, and a
 // gui that could write credentials into a file nobody asked for is not a gui
-// a recipient should be handed. Hence `backend/graph-editor/`.
+// a recipient should be handed. Hence `backend/editor/`.
 
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
@@ -17,7 +17,7 @@ import {
 } from '../../deployment/runtime/ai/settings.ts';
 import { Refusal, message } from '../../deployment/host/http.ts';
 import { CREDENTIALS, DEFAULT_SETTINGS, ENDPOINT_ENV } from '../../deployment/runtime/ai/providers.ts';
-import type { ProviderStatus, SettingsPatch, SettingsStatus, Target } from '../../deployment/host/api.ts';
+import type { ProviderStatus, SettingsPatch, SettingsStatus, Target } from '../host/api.ts';
 
 type Env = Record<string, string | undefined>;
 

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useGraphStore } from '../../document/store/graphStore';
-import type { AICall } from '../../../deployment/gui/kit/api/client';
+import type { AICall } from '../../api/client';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
 import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { MUTED } from '../../../deployment/gui/kit/ui/theme';
 import { partExchanges } from '../../../../graph/editor/history.ts';
-import { SENT_WITH } from '../../../../graph/files/prompts.ts';
+import { SENT_WITH } from '../../../../graph/editor/prompts.ts';
 import { Part } from '../authoring/GenerationTranscript';
 import { whatCameOf, type useTryExample } from '../authoring/TryExample';
 import { bodyOf, fileOf, isWritten, partName, type Write } from '../authoring/generation';

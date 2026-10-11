@@ -14,7 +14,7 @@
 // the message still in hand.
 
 import { create } from 'zustand';
-import { pathFor } from '../../../../../backend/deployment/host/api.ts';
+import { API, pathFor } from '../../../../../backend/deployment/host/api.ts';
 import { call, type RoundSnapshot, type SessionView } from './client';
 import { errorText } from './errorText';
 
@@ -82,7 +82,7 @@ let listening: EventSource | null = null;
  */
 export function watchSession(): () => void {
   listening?.close();
-  const stream = new EventSource(pathFor('stream').path);
+  const stream = new EventSource(pathFor(API.stream).path);
   stream.addEventListener('session', (event) => sessionTold(JSON.parse((event as MessageEvent<string>).data) as SessionView));
   stream.addEventListener('round', (event) => roundTold(JSON.parse((event as MessageEvent<string>).data) as RoundSnapshot));
   listening = stream;

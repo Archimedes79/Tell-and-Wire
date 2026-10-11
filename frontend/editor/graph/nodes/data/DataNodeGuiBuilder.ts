@@ -1,11 +1,11 @@
 import type { GraphNode } from '../../../document/graph';
-import { DataNodeRunner, ALL_FIELDS, BEFORE, ROUND, hasField } from '../../../../../graph/nodes/data/DataNodeRunner.ts';
+import { DataNodeDefinition, ALL_FIELDS, BEFORE, ROUND, hasField } from '../../../../../graph/nodes/data/DataNodeDefinition.ts';
 import { derivedNodePorts } from '../../../document/model/ports';
 import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Database } from 'lucide-react';
 
-const DATA = new DataNodeRunner();
+const DATA = new DataNodeDefinition();
 
 /** How much of what a data node holds the nodes wired to it are told, in characters: enough for its keys and a few records. */
 const HELD_SHOWN = 600;
@@ -27,8 +27,6 @@ function valueOf(node: GraphNode, port: string): unknown {
 export class DataNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'data';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Data';
 
   readonly hint = 'Remember fields between runs, so a loop can build on its own last result';
@@ -47,7 +45,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
 
   // A data node IS the graph's register: a struct that holds its fields between
   // runs, which is what lets a loop through a field close. Its ports
-  // are its fields (`DataNodeRunner.derivedPorts`), so there are none to edit, and
+  // are its fields (`DataNodeDefinition.derivedPorts`), so there are none to edit, and
   // its one file, data.json, is edited in its file's pane and written by its chat.
 
   /** A file dropped on it on the canvas is its fields from now on: what the file says, an object -- or one field, "value". */

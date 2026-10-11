@@ -1,4 +1,4 @@
-import type { TextChange } from '../../../backend/deployment/host/api.ts';
+import type { TextChange } from '../../../backend/editor/host/api.ts';
 
 /**
  * What the server said changed in a project on disk, held until the open

@@ -1,4 +1,4 @@
-// A node's build-time half, in the browser: the mirror of `graph/nodes/NodeRunner.ts`.
+// How a person edits a node, in the browser: the mirror of `graph/nodes/NodeDefinition.ts`.
 
 import type { ComponentType } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -41,13 +41,9 @@ export interface NodePanelProps {
 export type PortEditing = 'edit' | 'fixed' | 'none';
 
 export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
-  // ── What it is ────────────────────────────────────────────────────────────
-
   abstract readonly nodeType: NodeType;
 
-  // ── Build time ────────────────────────────────────────────────────────────
-  // The editor: the palette, a new element, its panels, what ✨ is told.
-  // It travels into a tool with the class, and no tool calls it (`runtime/boundary.test.ts`).
+  // The palette, a new element, its panels, what ✨ is told. The editor only: no tool carries it.
 
   /** What the palette calls it, and what a new one's heading starts with: "Code 1". */
   abstract readonly label: string;

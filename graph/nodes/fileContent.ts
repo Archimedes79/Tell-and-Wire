@@ -3,8 +3,9 @@
 // "Read the file at this path" hands a node what is in the file. For text that
 // is the text. A picture or a PDF has no text to hand, so it is handed as
 // itself -- a `data:` URL -- which an AI node sends to the model as the file it
-// is (`ask.ts`). A Word file is not converted here: it is handed on as the path
-// it is, and the documents tool server (`mcp/documents`) reads it as Markdown.
+// is (`backend/deployment/runtime/nodes/ai/ask.ts`). A Word file is not
+// converted here: it is handed on as the path it is, and the documents tool
+// server (`mcp/documents`) reads it as Markdown.
 
 import type { FileService } from './Runtime.ts';
 import { imageMediaType, readWithinLimit } from './images.ts';

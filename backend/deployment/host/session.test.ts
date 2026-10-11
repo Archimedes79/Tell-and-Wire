@@ -8,8 +8,10 @@ import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
 import { edge, graphOf, quietRuntime } from '../runtime/test/fakes.ts';
 import { Session, holderOf, type SessionOptions } from './session.ts';
-import { NotOffered } from './interface.ts';
-import { loadGraph, saveGraph, STATE_FILE, stateFileOf, writeProject } from '../project/folder.ts';
+import { guiHooks } from '../gui/hooks.ts';
+import { NotOffered } from '../../../graph/interface.ts';
+import { loadGraph, STATE_FILE, stateFileOf } from '../project/folder.ts';
+import { saveGraph, writeProject } from '../../editor/project/write.ts';
 import { folderProblems } from '../../editor/project/folderCheck.ts';
 import { writeBundle } from '../../editor/project/deploy/bundle.ts';
 
@@ -44,7 +46,7 @@ const inProcess: Runtime['code'] = {
   },
 };
 const fake: SessionOptions['runtime'] = (report) => quietRuntime({ code: inProcess, report });
-const open = (graph: Graph, file?: string) => Session.open(graph, { runtime: fake, file });
+const open = (graph: Graph, file?: string) => Session.open(graph, { runtime: fake, file, gui: guiHooks });
 const wait = (ms: number) => new Promise((wake) => setTimeout(wake, ms));
 const scratch = async () => join(await mkdtemp(join(tmpdir(), 'session-')), 'state.json');
 const NOTHING = { nodes: {}, gui: {} };
@@ -285,6 +287,7 @@ describe('a chatbot is a gui and a model', () => {
     };
     const asked: string[] = [];
     const session = await Session.open(chatbot, {
+      gui: guiHooks,
       runtime: (report) => quietRuntime({ report, ai: { complete: async (request) => { asked.push(request.prompt); return asked.length === 1 ? '4' : '6'; } } }),
     });
     const say = (message: string) => session.run({ node_id: 'send', port_id: 'data' }, { values: { chat: message }, by: 'chat' });
@@ -301,7 +304,7 @@ describe('the document the editor hands over', () => {
 
   it('keeps its session when it is saved, moves its state along when saved as another file, and is given a session of its own when another editor took the server meanwhile', async () => {
     // Used in the App tab and then saved for the first time, a chat began again.
-    const holder = holderOf(null, { runtime: fake });
+    const holder = holderOf(null, { runtime: fake, gui: guiHooks });
     const session = await holder.hold(counter());
     await session.run(null);
     const saved = await file('counter.json');
@@ -316,7 +319,7 @@ describe('the document the editor hands over', () => {
 
     // Two editors on one server: the second's document went into the first's
     // session, and its state into the first one's project.
-    const shared = holderOf(null, { runtime: fake });
+    const shared = holderOf(null, { runtime: fake, gui: guiHooks });
     const mine = await file('mine.json');
     const theirs = await file('theirs.json');
     const first = await shared.hold(counter(), { path: mine });
@@ -421,7 +424,7 @@ describe('a session whose rounds run in a graph core of its own process', () => 
     const { fileURLToPath } = await import('node:url');
     const project = fileURLToPath(new URL('../../../examples/nested_statistics', import.meta.url));
     const main = fileURLToPath(new URL('../../cli/main.ts', import.meta.url));
-    const session = await Session.open(await loadGraph(project), { core: () => processCore(process.execPath, [main, 'core']) });
+    const session = await Session.open(await loadGraph(project), { gui: guiHooks, core: () => processCore(process.execPath, [main, 'core']) });
     try {
       const result = await session.run({ node_id: 'measure', port_id: 'data' }, { values: { paragraph: 'One two three. Four five.' } });
       expect(result.status).toBe('success');

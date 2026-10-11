@@ -17,11 +17,15 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Graph } from '../../../../graph/graph.ts';
-import { guiBlocks, guiReferencedPaths } from '../../../../gui/gui.ts';
+import { guiBlocks } from '../../../../gui/gui.ts';
+import { guiReferencedPaths } from '../../../../gui/editor/gui.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
+import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
-import { FRONTEND_DIR, writeProject } from '../../../deployment/project/folder.ts';
-import { SETTINGS_FILENAME, candidatePaths, installFolder } from '../../../deployment/runtime/ai/settings.ts';
+import { FRONTEND_DIR } from '../../../deployment/project/folder.ts';
+import { writeProject } from '../write.ts';
+import { SETTINGS_FILENAME, candidatePaths } from '../../../deployment/runtime/ai/settings.ts';
+import { WEB_DIR, installFolder } from '../../../deployment/project/layout.ts';
 import { NODE_MAJOR, runCmd, runSh, zipMode } from './launchers.ts';
 
 /** The checkout's root: a bundle copies `graph/`, `gui/` and `backend/` from it, at the same paths. This file sits in `backend/editor/project/deploy/`. */
@@ -49,7 +53,7 @@ export function bundleNeeds(graph: Graph, top = true): BundleNeeds {
     const element = registry.node(node.node_type);
     if (!element) continue;
 
-    const asked = element.deployNeeds(node);
+    const asked = designs.node(node.node_type)!.deployNeeds(node);
     if (asked.needsInterface) needs.interface = true;
     // A start point a call starts is called through a served tool -- a script,
     // a frontend, its own gui's call forms -- at the top. In a graph a node
@@ -125,9 +129,8 @@ async function dataFiles(graph: Graph, from: string): Promise<Carried[]> {
   const collect = (inside: Graph): void => {
     for (const path of guiReferencedPaths(inside)) wanted.add(path);
     for (const node of inside.nodes) {
-      const element = registry.node(node.node_type);
-      for (const path of element?.referencedPaths(node) ?? []) wanted.add(path);
-      const held = element?.nestedGraph(node);
+      for (const path of designs.node(node.node_type)?.referencedPaths(node) ?? []) wanted.add(path);
+      const held = registry.node(node.node_type)?.nestedGraph(node);
       // A file an inner node reads is a file the bundle must carry, and its
       // path is relative to the same project folder.
       if (held) collect(held);
@@ -199,39 +202,31 @@ export async function filesIn(dir: string, under = ''): Promise<string[]> {
   return found;
 }
 
-/** Every source file a tool runs on, so the copy is complete without a list to maintain. */
-async function sourceFiles(dir = ROOT, top = true): Promise<string[]> {
+/**
+ * What a package carries of the code, by folder: the neutral definitions, and the deployment's
+ * command line and modules. A folder not named here -- `backend/editor`, the architecture
+ * tests -- is not carried, and inside these a folder named `editor` (the editor's part of
+ * `graph/` and `gui/`), a test and its fixtures stay behind: a recipient runs the tool, not
+ * its test suite and not an editor. `bundle.test.ts` is the check that says so.
+ */
+const CARRIED = ['graph', 'gui', 'backend/cli', 'backend/deployment'];
+const LEFT_BEHIND = new Set(['editor', 'test', 'node_modules']);
+
+/** The file that says what a package is and lists what is in it. */
+export const MANIFEST = 'MANIFEST.json';
+
+/** Every source file of *dir* a package carries, so the copy is complete without a list per file. */
+async function sourceFiles(dir: string): Promise<string[]> {
   const found: string[] = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
-    // A folder named `editor` is what only the editor uses -- generation,
-    // project files, settings -- and it must never reach a recipient, who was
-    // handed a tool and not an editor. `bundle.test.ts` is the check that says so.
     if (entry.isDirectory()) {
-      if (top ? !['graph', 'gui', 'backend'].includes(entry.name) : ['editor', 'test', 'node_modules'].includes(entry.name)) continue;
-      found.push(...await sourceFiles(full, false));
+      if (!LEFT_BEHIND.has(entry.name)) found.push(...await sourceFiles(full));
+    } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) {
+      found.push(full);
     }
-    // Tests stay behind: a recipient runs the graph, not its test suite.
-    else if (!top && entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) found.push(full);
   }
   return found;
-}
-
-/**
- * Where a bundle keeps the built gui, beside the project. Not `gui.json`:
- * in a project folder that is the gui itself, its blocks.
- */
-export const WEB_DIR = 'web';
-
-/**
- * The gui this checkout built, when it has one: what a bundle carries, what
- * `--serve` serves a graph that brings none, and the editor's Deploy. Looked
- * up rather than passed, because the person writing a bundle should not have
- * to know where a build lands.
- */
-export function builtGui(): string | undefined {
-  const dist = join(installFolder(), 'frontend', 'dist');
-  return existsSync(join(dist, 'runtime.html')) ? dist : undefined;
 }
 
 /**
@@ -290,7 +285,7 @@ export async function writeBundle(
   await writeProject(target, withoutAuthoring(moved(graph, data)));
   written.push(...await filesIn(target));
 
-  for (const file of await sourceFiles()) {
+  for (const file of (await Promise.all(CARRIED.map((folder) => sourceFiles(join(ROOT, folder))))).flat()) {
     const relativePath = relative(ROOT, file).replace(/\\/g, '/');
     const path = resolve(target, relativePath);
     await mkdir(dirname(path), { recursive: true });
@@ -341,6 +336,12 @@ export async function writeBundle(
   // `./run.sh` and "Permission denied".
   await chmod(resolve(target, 'run.sh'), zipMode('run.sh')!);
   await put('README.md', readme(name, needs, servesGui, data));
+
+  // What this is and what is in it: which Tell & Wire it was made by, and every file, so a copy
+  // that was saved, moved or unpacked can be checked against it.
+  const version = (JSON.parse(await readFile(join(installFolder(), 'graph', 'package.json'), 'utf8')) as { version?: string }).version ?? '';
+  const files = (await filesIn(target)).filter((path) => path !== MANIFEST).sort();
+  await put(MANIFEST, `${JSON.stringify({ package: 'tell-and-wire', version, tool: name, files }, null, 2)}\n`);
 
   return written;
 }

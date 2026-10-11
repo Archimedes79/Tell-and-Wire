@@ -11,6 +11,7 @@ import { listPorts, withPerItem } from '../graph/authoring/perItem';
 import { heldBy, writeName, writtenInto, type Write } from '../graph/authoring/generation';
 import { definitionExample } from '../../../graph/files/definition.ts';
 import { Session } from '../../../backend/deployment/host/session.ts';
+import { guiHooks } from '../../../backend/deployment/gui/hooks.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { problemsIn } from '../../../gui/editor/check.ts';
 import { readProject } from '../../../backend/deployment/project/folder.ts';
@@ -198,7 +199,7 @@ function runtime(asked: string[]): Runtime {
 }
 
 /** The graph in use, as the server holds it for a gui: a session -- of a copy, the store's graph is frozen. */
-const use = (graph: Graph, asked: string[]) => Session.open(parseGraph(JSON.parse(JSON.stringify(graph))), { runtime: () => runtime(asked) });
+const use = (graph: Graph, asked: string[]) => Session.open(parseGraph(JSON.parse(JSON.stringify(graph))), { runtime: () => runtime(asked), gui: guiHooks });
 
 /** Block *by* used on the gui: a round at the start point it fires, sent what the gui set. */
 async function used(graph: Graph, by: string, values: Record<string, unknown> = {}, asked: string[] = []) {

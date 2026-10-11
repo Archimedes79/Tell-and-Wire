@@ -20,7 +20,7 @@
 // started again: nothing is due for it to look up.
 
 import type { Graph } from '../../../graph/graph.ts';
-import type { Runners } from '../../../graph/nodes/NodeRunner.ts';
+import type { Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { after, graphTriggers, parseInterval, startEvents, type GraphTrigger, type Trigger } from '../../../graph/triggers.ts';
 
 export interface Clock {
@@ -54,7 +54,7 @@ const same = (a: Trigger, b: Trigger): boolean => a.node_id === b.node_id && (a.
  * hand each round to *round*, one at a time. A round's failure is the host's
  * to report; a round that throws does not stop the clock.
  */
-export function startClock(graph: () => Graph, elements: Runners, round: (event: Trigger) => Promise<void>): Clock {
+export function startClock(graph: () => Graph, elements: Kinds, round: (event: Trigger) => Promise<void>): Clock {
   let stopped = false;
   let inFlight: Promise<void> = Promise.resolve();
 

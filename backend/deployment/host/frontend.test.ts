@@ -3,7 +3,8 @@ import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { serve, type Served } from './serve.ts';
-import { API } from './api.ts';
+import { API, GUI_API } from './api.ts';
+import { guiPart } from '../gui/hooks.ts';
 
 /**
  * A gui of a project's own, written by hand against the runtime API: served
@@ -23,7 +24,7 @@ describe('a project\'s own frontend', () => {
     await writeFile(join(dir, 'frontend', 'style.css'), 'body { color: red }');
     const guiDir = await mkdtemp(join(tmpdir(), 'built-'));
     await writeFile(join(guiDir, 'runtime.html'), '<title>built</title>');
-    const one = await serve({ graphPath: dir, guiDir, port: 0 });
+    const one = await serve({ graphPath: dir, guiDir, port: 0, gui: guiPart });
     served.push(one);
     expect(await (await fetch(`${one.url}/`)).text()).toContain('<title>Nested statistics</title>');
     expect(await (await fetch(`${one.url}/style.css`)).text()).toBe('body { color: red }');
@@ -34,7 +35,7 @@ describe('a project\'s own frontend', () => {
       ...[...page.matchAll(/`?(\/api\/[a-z/]+)/g)].map((match) => match[1].replace(/\/$/, '')).filter((path) => path !== '/api/runtime'),
     ]);
     expect(called.size).toBeGreaterThan(2);
-    const tool = Object.values(API).filter((route) => route.for === 'tool' && route.path.startsWith('/api/runtime/')).map((route) => route.path);
+    const tool = Object.values({ ...API, ...GUI_API }).filter((route) => route.path.startsWith('/api/runtime/')).map((route) => route.path);
     for (const path of called) expect(tool, path).toContain(path);
   });
 });

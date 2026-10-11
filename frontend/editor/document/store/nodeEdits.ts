@@ -6,7 +6,7 @@ import type { RFNodeData } from './nodeData';
 import { defaultField, withoutPoints } from '../model/gui';
 import { NODE_KINDS } from '../model/nodeKinds';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { freeId, slugOf } from '../model/ids';
 import { makeRoom } from '../model/placement';
 import { followRenames, graphEdge, pruneDangling, retypeJoined, takesNewInputs, untouchedInput } from '../model/wires';
@@ -78,7 +78,7 @@ export function editActions(
       const source = nodeOf(wire.source);
       const from = source?.outputs.find((port) => port.id === wire.sourceHandle);
       // From a start point the gui sends one block to: named after that block.
-      const sent = source && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(get().gui, source) : undefined;
+      const sent = source && registry.node(source.node_type)?.takesPackage ? defaultField(get().gui, source) : undefined;
       // From a node with one output, named after that node: a judge's inputs
       // were "output" and "output2", beside its own output "output".
       const one = source && source.outputs.filter((port) => port.id !== ERROR_PORT).length === 1 ? source.label : undefined;

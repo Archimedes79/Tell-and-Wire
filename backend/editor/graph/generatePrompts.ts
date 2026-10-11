@@ -6,15 +6,15 @@
 // are elsewhere; what is here is what the backend adds -- who the model is told it is,
 // how to answer, and what a change or a repair is shown.
 
-import type { PromptKind } from '../../../graph/files/prompts.ts';
+import type { PromptKind } from '../../../graph/editor/prompts.ts';
 import type { Language } from '../../../graph/editor/generation.ts';
 import { textOutput, type Definitions } from '../../../graph/files/definition.ts';
 import { names } from '../../../graph/wiring.ts';
-import { ALL_FIELDS, BEFORE, ROUND } from '../../../graph/nodes/data/DataNodeRunner.ts';
+import { ALL_FIELDS, BEFORE, ROUND } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { Graph } from '../../../graph/graph.ts';
 import { withoutAuthoring } from '../../../graph/editor/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
-import type { Refine } from '../../deployment/host/api.ts';
+import type { Refine } from '../host/api.ts';
 
 /** Who the model is told it is, for each thing it writes -- for code, the node's language says (`Language.system`). */
 export const SYSTEMS: Record<Exclude<PromptKind, 'code'>, string> = {

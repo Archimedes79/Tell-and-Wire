@@ -1,11 +1,11 @@
 // The ports a node has, where they follow from its settings.
 import type { GraphNode, Port } from '../graph';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { keepingFields } from '../../../../graph/nodes/port.ts';
 
 /**
  * The ports a node has, when they follow from its settings rather than being
- * named by hand -- the runner's answer (`NodeRunner.derivedPorts`), the same
+ * named by hand -- the definition's answer (`NodeDefinition.derivedPorts`), the same
  * one a load and a run get, so the canvas never draws a port a run will
  * not produce.
  *
@@ -17,6 +17,6 @@ import { keepingFields } from '../../../../graph/nodes/port.ts';
  * part of a start point's package a person chose for it (`keepingFields`).
  */
 export function derivedNodePorts(node: GraphNode): { inputs: Port[]; outputs: Port[] } | null {
-  const derived = runnerRegistry.node(node.node_type)?.derivedPorts(node as never, runnerRegistry as never);
+  const derived = registry.node(node.node_type)?.derivedPorts(node as never, registry as never);
   return derived ? keepingFields(derived, node.inputs as never) as { inputs: Port[]; outputs: Port[] } : null;
 }

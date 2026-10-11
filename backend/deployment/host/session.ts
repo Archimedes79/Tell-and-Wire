@@ -10,7 +10,7 @@
 // - Using a graph never changes its design. A round runs on a working copy,
 //   the design with the kept values put back into it and what the round was sent
 //   put into the start point it fires, and what the round leaves is read back
-//   off the copy afterwards (`NodeRunner.state`).
+//   off the copy afterwards (`NodeDefinition.state`).
 // - A round that ran to its end commits. One that was stopped, or could not
 //   start, does not: what it began is nobody's to keep.
 // - A kept value is kept with the design value it started from, and is dropped --
@@ -34,16 +34,13 @@ import { randomUUID } from 'node:crypto';
 import { readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { mergeResults, type ExecutionResult, type Graph } from '../../../graph/graph.ts';
 import { triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
-import { NotOffered, applySent, checkSent, memoryState, outputsOf, sentOf, stateOf } from './interface.ts';
+import { NotOffered, applySent, checkSent, interfaceOf, memoryState, outputsOf, sentOf, stateOf } from '../../../graph/interface.ts';
 import { names } from '../../../graph/wiring.ts';
-import type { RuntimeRequirement } from '../../../gui/widgets/WidgetRunner.ts';
+import type { RuntimeRequirement } from '../../../gui/widgets/WidgetDefinition.ts';
 import { startClock, type Clock } from '../runtime/clock.ts';
 import type { Held } from '../runtime/latch.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import {
-  applyGuiValues, clearDeliveredGui, firedBy, guiBlock, guiRequirements, guiSends, guiState, sentBy, setGuiState, settleGui, shownFromState,
-  startFromGui, takesGuiValue,
-} from '../../../gui/gui.ts';
+import type { GuiHooks } from '../gui/hooks.ts';
 import type { ProgressEvent, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { stateFileOf } from '../project/folder.ts';
 import { NotFound } from '../../../graph/errors.ts';
@@ -114,7 +111,22 @@ export interface SessionOptions {
    * JavaScript core in this process with *runtime* (`core/stdio.ts`).
    */
   core?: () => GraphCore;
+  /** The gui of the graph, if it has one: what its blocks hold, and what a round a block starts does (`../gui/hooks.ts`). */
+  gui?: GuiHooks;
 }
+
+/** A graph with no gui: no block holds anything, and no round is started by one. */
+export const NO_GUI: GuiHooks = {
+  interfaceOf: (graph) => interfaceOf(graph, registry),
+  state: () => ({}),
+  setState: () => {},
+  shownFromState: () => ({}),
+  pathBlocks: () => [],
+  starts: () => false,
+  check: () => {},
+  requirements: () => [],
+  before: async () => ({ sent: false, settle: async () => ({}) }),
+};
 
 /** How often a watcher is told how far a round is: a fan-out over 500 items reports 500 times. */
 const PROGRESS_EVERY_MS = 100;
@@ -134,6 +146,7 @@ export class Session {
   /** What every node was last left holding, as the core said after the last round: for state.json. */
   private held: Record<string, Held> = {};
   private readonly core: GraphCore;
+  private readonly gui: GuiHooks;
   private readonly rounds: Rounds;
   private shown: ExecutionResult | null = null;
   private count = 0;
@@ -162,6 +175,7 @@ export class Session {
     this.file = options.file ?? null;
     this.runtime = options.runtime ?? ((report) => nodeRuntime({ report }));
     this.core = options.core?.() ?? chosenCore({ runtime: options.runtime });
+    this.gui = options.gui ?? NO_GUI;
     this.rounds = new Rounds((round, moment) => this.roundChanged(round, moment));
   }
 
@@ -237,9 +251,22 @@ export class Session {
   private inUse(): Graph {
     const at = this.cached;
     if (at && at.design === this.design && at.nodes === this.keptNodes && at.blocks === this.keptBlocks) return at.copy;
-    const copy = withState(this.design, this.keptNodes, this.keptBlocks);
+    const copy = withState(this.design, this.keptNodes, this.keptBlocks, this.gui);
     this.cached = { design: this.design, nodes: this.keptNodes, blocks: this.keptBlocks, copy };
     return copy;
+  }
+
+  /**
+   * Refuse *answers* to a question nobody asked: only a round the gui starts
+   * asks, and only the blocks that send to its start point, by their ids.
+   */
+  private checkAnswers(graph: Graph, trigger: Trigger | null, viaGui: boolean, by: string, answers: Record<string, unknown>): void {
+    const asked = viaGui ? this.gui.requirements(graph, trigger, by, {}).map((question) => question.key) : [];
+    const unasked = Object.keys(answers).filter((key) => !asked.includes(key));
+    if (!unasked.length) return;
+    throw new NotOffered(asked.length
+      ? `Nothing asked ${names(unasked)}: this round asks ${names(asked)}.`
+      : `Nothing asked ${names(unasked)}: this round asks nothing.`);
   }
 
   /** The session as whoever uses the graph sees it: by name, never by node. */
@@ -252,10 +279,10 @@ export class Session {
       sent: sentOf(copy, registry),
       outputs: outputsOf(this.design, this.shown, registry),
       state,
-      gui: guiState(copy),
+      gui: this.gui.state(copy),
       // What a block shows of a memory node is what it holds now, over what the block showed before it was
       // pointed at it: no round settles a memory node into a block (`settleGui`).
-      shown: { ...this.guiShown, ...shownFromState(copy, state) },
+      shown: { ...this.guiShown, ...this.gui.shownFromState(copy, state) },
       kept: this.kept(),
       rounds: this.count,
       finished_at: this.finishedAt,
@@ -280,12 +307,10 @@ export class Session {
    */
   requirements(trigger: Trigger | null, ask: RoundAsk = {}): RuntimeRequirement[] {
     const { values = {}, answers = {}, by = 'call' } = ask;
-    const copy = withState(this.design, this.keptNodes, this.keptBlocks);
-    if (!fromGui(copy, trigger, by)) return [];
-    applyGuiValues(copy, values);
+    const copy = withState(this.design, this.keptNodes, this.keptBlocks, this.gui);
     // An empty value -- a cleared picker -- answers nothing.
     const given = (from: Record<string, unknown>, key: string): boolean => from[key] !== undefined && from[key] !== '';
-    return guiRequirements(copy, trigger!.node_id).filter((asked) => !given(values, asked.key) && !given(answers, asked.key));
+    return this.gui.requirements(copy, trigger, by, values).filter((asked) => !given(values, asked.key) && !given(answers, asked.key));
   }
 
   /**
@@ -335,10 +360,10 @@ export class Session {
     const design = this.design;
     const asked: Sent = { trigger, values: ask.values ?? {}, answers: ask.answers ?? {}, by: ask.by ?? 'call' };
     const { values, answers, by } = asked;
-    const gui = fromGui(design, trigger, by);
-    if (gui) checkGuiRound(design, trigger!, by, values);
+    const viaGui = this.gui.starts(design, trigger, by);
+    if (viaGui) this.gui.check(design, trigger!, by, values);
     else checkSent(design, trigger, values, registry);
-    checkAnswers(design, trigger, gui, answers);
+    this.checkAnswers(design, trigger, viaGui, by, answers);
     // How many nodes it runs, said before it is queued -- the slice its start point reaches.
     const only = trigger ? triggeredNodes(design, trigger, registry) : null;
     const total = only?.size ?? design.nodes.length;
@@ -440,23 +465,14 @@ export class Session {
   private async round(asked: Sent, work: RoundWork): Promise<ExecutionResult> {
     const design = this.design;
     const { trigger } = asked;
-    const copy = withState(design, this.keptNodes, this.keptBlocks);
+    const copy = withState(design, this.keptNodes, this.keptBlocks, this.gui);
     const runtime = this.runtime(work.report);
     // The gui starts it: what its blocks hold now is kept, and the start
     // point is sent what the blocks that send to it hold -- read where it is
     // read, a folder's listing, a file's text. Anyone else's values are the
     // package as they come.
-    const gui = fromGui(copy, trigger, asked.by);
-    const delivered = gui ? sentBy(copy, trigger!.node_id).map((widget) => widget.id) : [];
-    if (gui) {
-      applyGuiValues(copy, { ...asked.values, ...asked.answers });
-      applySent(copy, trigger, await guiSends(copy, trigger!.node_id, runtime), asked.by, registry);
-    } else {
-      applySent(copy, trigger, asked.values, asked.by, registry);
-      // A round of everything counts the gui's events as fired too.
-      if (!trigger) await startFromGui(copy, runtime, registry);
-    }
-    const sentGui = guiState(copy);
+    const around = await this.gui.before(copy, trigger, asked.by, asked.values, asked.answers, runtime);
+    if (!around.sent) applySent(copy, trigger, asked.values, asked.by, registry);
     this.before.set(work.id, memoryState(copy, registry));
     for (const old of [...this.before.keys()].slice(0, -BEFORE_KEPT)) this.before.delete(old);
     const ended = await this.core.round({ graph: copy, trigger }, work.report, work.signal);
@@ -472,9 +488,8 @@ export class Session {
     // a conversation must not be told twice -- reaches the blocks that show
     // them; a message the gui sent with it is said, and emptied.
     const fresh = { ...result, node_results: result.node_results.filter((one) => !one.held && (one.status === 'success' || one.status === 'partial')) };
-    const shown = await settleGui(copy, outputsOf(copy, fresh, registry), runtime);
-    clearDeliveredGui(copy, Object.fromEntries(Object.entries(sentGui).filter(([id]) => delivered.includes(id))));
-    ({ nodes: this.keptNodes, gui: this.keptBlocks } = keptOf(copy, design));
+    const shown = await around.settle(copy, outputsOf(copy, fresh, registry), runtime);
+    ({ nodes: this.keptNodes, gui: this.keptBlocks } = keptOf(copy, design, this.gui));
     // A design handed over while the round ran is the one that holds now.
     if (this.design !== design) this.fit(this.keptNodes, this.keptBlocks);
     this.held = ended.held;
@@ -527,7 +542,7 @@ export class Session {
       const kept = fitting(held, designed, notes, (key) => `What "${nodeId}" kept in "${key}"`, (key) => `"${key}" is no longer there`);
       if (kept.size) this.keptNodes.set(nodeId, kept);
     }
-    this.keptBlocks = fitting(gui, guiState(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the gui');
+    this.keptBlocks = fitting(gui, this.gui.state(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the gui');
     this.notes = notes;
   }
 
@@ -673,47 +688,14 @@ interface Sent {
   by: string;
 }
 
-/**
- * Refuse *answers* to a question nobody asked: only a round the gui starts
- * asks, and only the blocks that send to its start point, by their ids.
- */
-function checkAnswers(graph: Graph, trigger: Trigger | null, gui: boolean, answers: Record<string, unknown>): void {
-  const asked = gui ?guiRequirements(graph, trigger!.node_id).map((question) => question.key) : [];
-  const unasked = Object.keys(answers).filter((key) => !asked.includes(key));
-  if (!unasked.length) return;
-  throw new NotOffered(asked.length
-    ? `Nothing asked ${names(unasked)}: this round asks ${names(asked)}.`
-    : `Nothing asked ${names(unasked)}: this round asks nothing.`);
-}
-
-/** Whether a round for *trigger* is one the gui starts: sent by one of its blocks, at a start point. */
-function fromGui(graph: Graph, trigger: Trigger | null, by: string): boolean {
-  if (!trigger || !guiBlock(graph, by)) return false;
-  const node = graph.nodes.find((one) => one.id === trigger.node_id);
-  return !!node && !!registry.node(node.node_type)?.takesPackage;
-}
-
-/**
- * Refuse a round the gui could not have started: *by* is a block that does
- * not fire the start point, or *values* name a block that takes none.
- */
-function checkGuiRound(graph: Graph, trigger: Trigger, by: string, values: Record<string, unknown>): void {
-  const firing = firedBy(graph, trigger.node_id).map((widget) => widget.id);
-  if (!firing.includes(by)) {
-    throw new NotOffered(`The block "${by}" does not fire "${trigger.node_id}"${firing.length ? `; it is fired by ${names(firing)}` : ''}.`);
-  }
-  const unknown = Object.keys(values).filter((id) => !takesGuiValue(graph, id));
-  if (unknown.length) throw new NotOffered(`No block ${names(unknown)} on the gui takes a value.`);
-}
-
 /** *design* with what the session keeps put back into it -- each node's values, and the gui's -- on a copy: what a round starts from. */
-function withState(design: Graph, nodes: KeptNodes, gui: KeptBlocks): Graph {
+function withState(design: Graph, nodes: KeptNodes, blocks: KeptBlocks, gui: GuiHooks): Graph {
   const copy = structuredClone(design);
   for (const node of copy.nodes) {
     const held = nodes.get(node.id);
     if (held) registry.node(node.node_type)?.setState(node, Object.fromEntries([...held].map(([key, kept]) => [key, kept.value])));
   }
-  if (gui.size) setGuiState(copy, Object.fromEntries([...gui].map(([id, kept]) => [id, kept.value])));
+  if (blocks.size) gui.setState(copy, Object.fromEntries([...blocks].map(([id, kept]) => [id, kept.value])));
   return copy;
 }
 
@@ -727,7 +709,7 @@ function differing(now: Record<string, unknown>, designed: Record<string, unknow
 }
 
 /** What each node of *copy*, and each block of its gui, keeps that differs from what *design* says it holds. */
-function keptOf(copy: Graph, design: Graph): { nodes: KeptNodes; gui: KeptBlocks } {
+function keptOf(copy: Graph, design: Graph, gui: GuiHooks): { nodes: KeptNodes; gui: KeptBlocks } {
   const designed = new Map(design.nodes.map((node) => [node.id, node]));
   const nodes: KeptNodes = new Map();
   for (const node of copy.nodes) {
@@ -737,7 +719,7 @@ function keptOf(copy: Graph, design: Graph): { nodes: KeptNodes; gui: KeptBlocks
     const held = differing(element.state(node), element.state(plan));
     if (held.size) nodes.set(node.id, held);
   }
-  return { nodes, gui: differing(guiState(copy), guiState(design)) };
+  return { nodes, gui: differing(gui.state(copy), gui.state(design)) };
 }
 
 /**

@@ -2,12 +2,12 @@ import { useId } from 'react';
 import PathField from '../../../../deployment/gui/kit/dialogs/PathField';
 import { useGraphStore } from '../../../document/store/graphStore';
 import { DANGER_TEXT, DIMMER, FIELD, MUTED } from '../../../../deployment/gui/kit/ui/theme';
-import { EndNodeRunner } from '../../../../../graph/nodes/end/EndNodeRunner.ts';
-import { resultKeys } from '../../../../../graph/nodes/NodeRunner.ts';
-import { registry as runnerRegistry } from '../../../../../graph/nodes/registry.ts';
+import { EndNodeDefinition } from '../../../../../graph/nodes/end/EndNodeDefinition.ts';
+import { resultKeys } from '../../../../../graph/nodes/NodeDefinition.ts';
+import { registry } from '../../../../../graph/nodes/registry.ts';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
-const END = new EndNodeRunner();
+const END = new EndNodeDefinition();
 
 /**
  * An end point: what a run hands back under the node's name -- always --
@@ -29,7 +29,7 @@ export default function EndNodePanel({ node, setConfig }: NodePanelProps) {
   // end point before it has that already (`resultKeys`, as a run asks).
   const nodes = useGraphStore((s) => s.rfNodes);
   const label = END.resultLabel(node as never);
-  const key = resultKeys(nodes.map((n) => (n.id === node.id ? node : n.data.graphNode)) as never, runnerRegistry).get(node.id) ?? label;
+  const key = resultKeys(nodes.map((n) => (n.id === node.id ? node : n.data.graphNode)) as never, registry).get(node.id) ?? label;
 
   return (
     <div className="space-y-4">

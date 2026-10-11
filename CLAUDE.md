@@ -8,18 +8,24 @@
 
 ## The parts
 
+The editor designs a project (files); a deployment keeps one in use and executes it; a package is
+a project with the deployment's code. Graph and gui are apart all the way. Tier first, then role.
+
 | Part | Folder |
 |---|---|
-| Graph editor, frontend | `frontend/graph-editor/` |
-| Graph editor, backend | `backend/graph-editor/` |
-| The graph's code (JavaScript) and its execution | `graph/` |
-| Gui editor, frontend | `frontend/gui-editor/` |
-| Gui editor, backend | `backend/gui-editor/` |
-| The shell around them | `frontend/app/`, `backend/app/` |
+| The graph's definition (format, node kinds, rules), neutral | `graph/`; the editor's part `graph/editor/` |
+| The gui's definition (blocks), neutral | `gui/`; the editor's part `gui/editor/` |
+| Deployment, Node: project, runtime, host, gui hooks | `backend/deployment/{project,runtime,host,gui}/` |
+| Editor, Node: project, graph, runtime, host | `backend/editor/{project,graph,runtime,host}/` |
+| Composition root (command line), structure tests | `backend/cli/`, `backend/architecture/` |
+| Deployment, browser: a deployed tool's gui | `frontend/deployment/gui/` |
+| Editor, browser: graph, gui, document, app | `frontend/editor/{graph,gui,document,app}/` |
 | Optional tool servers (MCP) | `mcp/web/`, `mcp/documents/` |
 
-`graph/` imports nothing from the others; a deployed tool carries `graph/`, `backend/app/`
-and `backend/gui-editor/`. Imports are relative. More in `docs/architecture.md`.
+One rule: a package carries every path except those with a folder named `editor`, and nothing
+outside an `editor` folder imports from one (`backend/architecture/layers.test.ts`). `graph/` and
+`gui/` also import no Node and nothing of `backend/` or `frontend/`. Imports are relative. More in
+`docs/architecture.md`.
 
 Each server under `mcp/` is a package of its own, outside the workspace: its own `package.json`
 and lockfile, nothing imported from the others (not from `graph/`, not from each other) and

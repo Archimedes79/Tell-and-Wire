@@ -8,13 +8,14 @@
 // browser can ask it; what only a project folder gets wrong is `folderCheck.ts`.
 
 import type { Graph, GraphEdge, GraphNode } from '../../graph/graph.ts';
-import { NESTING_LIMIT, fieldOf } from '../../backend/deployment/runtime/executor.ts';
 import { passiveWires, topologicalLevels } from '../../graph/order.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
-import { fieldSender, guiProblems, showsMemory, widgetElement } from '../gui.ts';
-import { ERROR_PORT, names, wiringProblems, type Problem } from '../../graph/wiring.ts';
+import { widgetElement } from '../gui.ts';
+import { fieldSender, guiProblems, showsMemory } from './gui.ts';
+import { ERROR_PORT, NESTING_LIMIT, fieldOf, names, wiringProblems, type Problem } from '../../graph/wiring.ts';
 import { registry } from '../../graph/nodes/registry.ts';
-import { resultKeys } from '../../graph/nodes/NodeRunner.ts';
+import { designs } from '../../graph/editor/nodes/registry.ts';
+import { resultKeys } from '../../graph/nodes/NodeDefinition.ts';
 import { portMisfit } from '../../graph/schema.ts';
 import { definitionExample } from '../../graph/files/definition.ts';
 import { unsavableIds } from '../../graph/files/flow.ts';
@@ -72,7 +73,7 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
         fix: 'Give it one (its "label"): a few words saying what it does -- the canvas, its panel and every ✨ call it by that.',
       });
     }
-    if (element.generation() && !node.description.trim()) {
+    if (designs.node(node.node_type)?.generation() && !node.description.trim()) {
       problems.push({
         where,
         problem: 'Its text is empty: nothing says what it should do, and what ✨ writes for it is written from that text.',
@@ -215,7 +216,7 @@ function within(problem: Problem, inside: string): Problem {
  * The graph a node holds, checked as a graph -- by the function that checked
  * the one above it, with the node in front of what it found.
  *
- * What is wrong with the *node* is the element's to say (`NodeRunner.problems`);
+ * What is wrong with the *node* is the element's to say (`NodeDesign.problems`);
  * what is here is the walking, and how far it may go.
  */
 function nestedProblems(graph: Graph, node: GraphNode, where: string, depth: number): Problem[] {
@@ -228,7 +229,7 @@ function nestedProblems(graph: Graph, node: GraphNode, where: string, depth: num
     problem: `Its input "${port.id}" takes "${port.field}" of what arrives, and nothing is wired to it.`,
     fix: `Wire a node to it -- a memory's "before", a start point's "data" -- and name in "field" a key of what arrives there, never a node.`,
   }));
-  const own = [...element.problems(node, registry, where, wired), ...unwired];
+  const own = [...(designs.node(node.node_type)?.problems(node, registry, where, wired) ?? []), ...unwired];
   const held = element.nestedGraph(node);
   if (!held) return own;
 

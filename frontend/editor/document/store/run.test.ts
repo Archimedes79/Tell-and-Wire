@@ -1,24 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ExecutionResult } from '../graph';
-import type { RoundSnapshot } from '../../../deployment/gui/kit/api/client';
+import type { RoundSnapshot } from '../../api/client';
 
 // The server, as far as a document's session goes: it goes on with the session a
 // document is handed over as, and any other is a new one.
-const server = vi.hoisted(() => ({ sessions: 0, stopped: [] as string[] }));
-vi.mock('../../../deployment/gui/kit/api/client', async (actual) => ({
-  ...(await actual<typeof import('../../../deployment/gui/kit/api/client')>()),
-  call: vi.fn(async (route: string, body?: { session?: string | null }) => {
+const server = vi.hoisted(() => {
+  const state = { sessions: 0, stopped: [] as string[] };
+  const call = async (route: string, body?: { session?: string | null }) => {
     if (route === 'holdGraph') {
-      if (!body?.session || body.session !== `s${server.sessions}`) server.sessions += 1;
-      return { session: `s${server.sessions}`, dropped: [] };
+      if (!body?.session || body.session !== `s${state.sessions}`) state.sessions += 1;
+      return { session: `s${state.sessions}`, dropped: [] };
     }
     if (route === 'stopRound') {
-      server.stopped.push((body as unknown as { id: string }).id);
+      state.stopped.push((body as unknown as { id: string }).id);
       return {};
     }
     throw new Error(`not expected here: ${route}`);
-  }),
-}));
+  };
+  return Object.assign(state, { call });
+});
+// The editor's client and the one a gui has (the session helpers call that one) both reach this server.
+vi.mock('../../api/client', async (actual) => ({ ...(await actual<typeof import('../../api/client')>()), call: server.call }));
+vi.mock('../../../deployment/gui/kit/api/client', async (actual) => ({ ...(await actual<typeof import('../../../deployment/gui/kit/api/client')>()), call: server.call }));
 // Listening to a session is the stream's; here, rounds are told by hand.
 vi.mock('../../../deployment/gui/kit/api/session', async (actual) => ({
   ...(await actual<typeof import('../../../deployment/gui/kit/api/session')>()),

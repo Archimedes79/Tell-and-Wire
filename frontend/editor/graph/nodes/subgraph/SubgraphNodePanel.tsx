@@ -2,10 +2,10 @@ import { DANGER_TEXT, DIMMER } from '../../../../deployment/gui/kit/ui/theme';
 import Button from '../../../../deployment/gui/kit/ui/Button';
 import { useGraphStore } from '../../../document/store/graphStore';
 import { roundGoing, useSession } from '../../../../deployment/gui/kit/api/session';
-import { SubgraphNodeRunner } from '../../../../../graph/nodes/subgraph/SubgraphNodeRunner.ts';
+import { SubgraphNodeDefinition } from '../../../../../graph/nodes/subgraph/SubgraphNodeDefinition.ts';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
-const ELEMENT = new SubgraphNodeRunner();
+const ELEMENT = new SubgraphNodeDefinition();
 
 /**
  * In. The panel goes first, because what is behind it is about to be a

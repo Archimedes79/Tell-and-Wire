@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { parseGraph, type ExecutionResult, type Graph } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { executeGraph } from '../runtime/executor.ts';
-import { applySent, eventOf, interfaceOf, outputsOf, sentOf } from './interface.ts';
+import { applySent, eventOf, outputsOf, sentOf } from '../../../graph/interface.ts';
+import { interfaceWithGui } from '../../../gui/interface.ts';
 import { quietRuntime } from '../runtime/test/fakes.ts';
 
 /**
@@ -49,7 +50,7 @@ const names = (entries: { name: string }[]) => entries.map((entry) => entry.name
 
 describe('a graph used from outside', () => {
   it('offers its start points and end points by their ids -- with what each reads and what the gui sends -- and no port', () => {
-    const offered = interfaceOf(tool(), registry);
+    const offered = interfaceWithGui(tool(), registry);
     expect(names(offered.events)).toEqual(['ask', 'api', 'clock']);
     expect(offered.events.map((entry) => entry.started_by)).toEqual(['gui', 'call', 'itself']);
     expect(names(offered.outputs)).toEqual(['answer', 'report']);

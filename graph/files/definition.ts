@@ -23,7 +23,7 @@
 
 import { inferSchema, mismatches, type Schema } from '../schema.ts';
 import type { GraphNode } from '../graph.ts';
-import type { TextFile } from '../nodes/NodeRunner.ts';
+import type { TextFile } from '../nodes/NodeDefinition.ts';
 
 /** A node's two definitions as it holds them, each '' while it has none. */
 export interface Definitions {

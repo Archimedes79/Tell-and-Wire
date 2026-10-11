@@ -1,6 +1,6 @@
 // Handing an element a file's content instead of its name.
 //
-// A code or AI node (`NodeRunner.readsFileInputs`) is handed the text of a file
+// A code or AI node (`NodeDefinition.readsFileInputs`) is handed the text of a file
 // on each input that says so: the port typed `file_path`, which is "Read the
 // file at this path" among its ports in its panel. A summary of three stories, not a
 // summary of three filenames. The executor does it, for any element that
@@ -17,7 +17,7 @@
 
 import type { GraphNode } from './graph.ts';
 import type { FileService } from './nodes/Runtime.ts';
-import type { Runners } from './nodes/NodeRunner.ts';
+import type { Kinds } from './nodes/NodeDefinition.ts';
 import { fileContent } from './nodes/fileContent.ts';
 import { atMost } from './batching.ts';
 
@@ -27,7 +27,7 @@ import { atMost } from './batching.ts';
  * handed the path, whatever its port says. Asked by the run, by `check`, by
  * what a run asks for first and by the editor, so none of them can disagree.
  */
-export function filePorts(node: GraphNode, elements: Runners): string[] {
+export function filePorts(node: GraphNode, elements: Kinds): string[] {
   if (!elements.node(node.node_type)?.readsFileInputs) return [];
   return node.inputs.filter((port) => port.data_type === 'file_path').map((port) => port.id);
 }

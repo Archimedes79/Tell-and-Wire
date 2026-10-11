@@ -76,7 +76,7 @@ function viewHearsEscape(
  * takes it back (`nodePanel.ts`); there is no Save and no Cancel. Esc or the
  * way back closes it; what was changed stays, and so do the words typed to a chat (`PartChat`).
  *
- * What a node is made of is not decided here: the node's runner says which
+ * What a node is made of is not decided here: the node's definition says which
  * files it keeps (`partsOf`), its builder what else is set.
  */
 export default function NodeView({ nodeId, onClose, onOpenGui }: { nodeId: string; onClose: () => void; onOpenGui: () => void }) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGraphStore } from '../../document/store/graphStore';
-import { call } from '../../../deployment/gui/kit/api/client';
+import { call } from '../../api/client';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { DIMMER, MUTED } from '../../../deployment/gui/kit/ui/theme';

@@ -18,6 +18,7 @@
 // the wire.
 
 import type { AiRequest, AiService, ToolAccess, ToolSpec } from '../../../../graph/nodes/Runtime.ts';
+import { DEFAULT_ENDPOINTS } from '../../../../graph/endpoints.ts';
 
 /**
  * How to reach the providers: where, with which key, how patiently. Not which
@@ -46,15 +47,7 @@ export interface ProviderSettings {
 
 export const DEFAULT_SETTINGS: ProviderSettings = {
   apiKeys: {},
-  endpoints: {
-    ollama: 'http://localhost:11434',
-    lmstudio: 'http://localhost:1234/v1',
-    openai: 'https://api.openai.com/v1',
-    anthropic: 'https://api.anthropic.com/v1',
-    google: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    github_copilot: 'https://models.github.ai/inference',
-    openai_compatible: '',
-  },
+  endpoints: DEFAULT_ENDPOINTS,
   attempts: 3,
   retryDelay: 1,
   maxTokens: 4096,

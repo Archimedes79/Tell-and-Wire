@@ -23,10 +23,10 @@
 // **Batching.** A node marked per-item runs once per element of its list input,
 // bounded, and a failing item costs that item rather than the batch.
 //
-// Everything else — what a node *does* — belongs to its element.
+// Everything else — what a node *does* — belongs to its runner (`nodes/`).
 
 import type { Graph, GraphEdge, GraphNode, ExecutionResult, NodeResult, Port } from '../../../graph/graph.ts';
-import { resultKeys, type NodeRunner, type Runners } from '../../../graph/nodes/NodeRunner.ts';
+import { resultKeys, type Kinds, type NodeDefinition } from '../../../graph/nodes/NodeDefinition.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from '../../../graph/batching.ts';
 import { Unread, filePorts, readPorts } from '../../../graph/fileInputs.ts';
@@ -35,22 +35,9 @@ import { passiveWires, nodeName, topologicalLevels } from '../../../graph/order.
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from '../../../graph/schema.ts';
-import { ERROR_PORT, fatalProblems, unrunnable } from '../../../graph/wiring.ts';
-
-/**
- * The value under *field* -- a path, `folder` or `file.content` -- of what
- * arrived: of a start point's package, one of the values its sender sent; of
- * anything else, a key of it. Nothing there is undefined: nothing arrived.
- */
-export function fieldOf(value: unknown, field: string): unknown {
-  const isPackage = !!value && typeof value === 'object' && 'event' in value && 'values' in value;
-  let at: unknown = isPackage ? (value as { values: unknown }).values : value;
-  for (const key of field.split('.')) {
-    if (!at || typeof at !== 'object') return undefined;
-    at = (at as Record<string, unknown>)[key];
-  }
-  return at;
-}
+import { ERROR_PORT, NESTING_LIMIT, fatalProblems, fieldOf, unrunnable } from '../../../graph/wiring.ts';
+import { runners as realRunners } from './nodes/registry.ts';
+import type { NodeRunner, Runners } from './nodes/NodeRunner.ts';
 
 /**
  * Gather what the wires deliver to *nodeId*.
@@ -97,7 +84,10 @@ function collectInputs(
 export interface RunOptions {
   /** Wired file paths are read into text for elements that asked. */
   runtime: Runtime;
-  registry: Runners;
+  /** What each kind of node is. */
+  registry: Kinds;
+  /** What runs each kind of node. Absent: the real ones; a test brings its own. */
+  runners?: Runners;
   /**
    * The event that started this run: a start point. With one, only what it is
    * wired to runs, plus whatever those nodes need -- see `triggers.ts`.
@@ -141,7 +131,7 @@ export interface RunOptions {
  * it already is. No event, no slice of the graph, nothing held or reused: it
  * is one node, asked directly.
  */
-export type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'signal' | 'depth'>;
+export type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'runners' | 'signal' | 'depth'>;
 
 /**
  * Run the graph once.
@@ -152,6 +142,7 @@ export type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'signal' 
  */
 export async function executeGraph(graph: Graph, options: RunOptions): Promise<ExecutionResult> {
   const { registry } = options;
+  const runners = options.runners ?? realRunners;
   // Before anything runs: an edge that ends nowhere delivers nothing and fails
   // nothing, so a run that went ahead would report a result computed without
   // it. Said here rather than in each caller -- `check` says the same thing
@@ -192,7 +183,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // A memory a wire reads round a loop has not run when that wire is read: it hands on what it held when the round began.
   for (const id of new Set(edges.filter((e) => reads.has(e.id)).map((e) => e.source_node_id))) {
     const node = byId.get(id)!;
-    outputs.set(id, await registry.node(node.node_type)!.execute(node, {}, runtime));
+    outputs.set(id, await runners.node(node.node_type)!.execute(node, {}, runtime));
   }
   // Nodes whose outputs this round are the ones they were left holding: not
   // run, so not settled into memory again and not a reason for anything to run.
@@ -278,8 +269,9 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       if (signal?.aborted) continue;
       const node = byId.get(nodeId)!;
       const element = registry.node(node.node_type);
+      const runner = runners.node(node.node_type);
 
-      if (!element) {
+      if (!element || !runner) {
         failed.add(nodeId);
         finish({
           node_id: nodeId, status: 'error', inputs: {}, outputs: {},
@@ -356,7 +348,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
           continue;
         }
         const { produced, failures } = await runNode(
-          element, node, arrived, withSubgraph(atNode(runtime, nodeId), options, node, depth), signal,
+          runner, node, arrived, withSubgraph(atNode(runtime, nodeId), options, node, depth), signal,
         );
         if (signal?.aborted) throw new Error('Stopped.');
         outputs.set(nodeId, produced);
@@ -426,15 +418,6 @@ function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
 }
 
 /**
- * How deep a graph may hold a graph.
- *
- * Not a technical ceiling -- nothing here recurses on the stack -- but the
- * depth past which a person has lost the thread, and the thing that ends a
- * graph that somehow came to hold itself.
- */
-export const NESTING_LIMIT = 5;
-
-/**
  * The runtime a node that holds a graph is handed: the same one, plus the way
  * to run that graph.
  *
@@ -500,7 +483,7 @@ function isNothing(value: unknown): boolean {
  * say.
  */
 function nothingToDo(
-  element: NodeRunner<unknown>,
+  element: NodeDefinition,
   node: GraphNode,
   inputs: Record<string, unknown>,
   edges: GraphEdge[],
@@ -566,7 +549,8 @@ export async function executeNode(
 ): Promise<NodeResult> {
   const node = graph.nodes.find((n) => n.id === nodeId);
   const element = node && options.registry.node(node.node_type);
-  if (!node || !element) {
+  const runner = node && (options.runners ?? realRunners).node(node.node_type);
+  if (!node || !element || !runner) {
     return { node_id: nodeId, status: 'error', inputs, outputs: {}, error: `No such node: ${nodeId}` };
   }
   const why = nothingToDo(element, node, inputs, graph.edges);
@@ -575,7 +559,7 @@ export async function executeNode(
   try {
     const arrived = await readInputs(element, node, inputs, runtime, options.registry);
     const { produced, failures } = await runNode(
-      element, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0), options.signal,
+      runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0), options.signal,
     );
     return ranTo(element, node, inputs, produced, failures);
   } catch (error) {
@@ -598,12 +582,13 @@ export async function callNode(
 ): Promise<NodeResult> {
   const node = graph.nodes.find((n) => n.id === nodeId);
   const element = node && options.registry.node(node.node_type);
-  if (!node || !element) {
+  const runner = node && (options.runners ?? realRunners).node(node.node_type);
+  if (!node || !element || !runner) {
     return { node_id: nodeId, status: 'error', inputs, outputs: {}, error: `No such node: ${nodeId}` };
   }
   try {
     const runtime = withSubgraph(stoppable(options.runtime, options.signal), options, node, options.depth ?? 0);
-    const outputs = reconcileOutputs(node, await element.execute(node, inputs, runtime));
+    const outputs = reconcileOutputs(node, await runner.execute(node, inputs, runtime));
     return { node_id: nodeId, status: 'success', inputs, outputs, error: null };
   } catch (error) {
     return failedWith(element, node, inputs, error);
@@ -618,7 +603,7 @@ export async function callNode(
  * than blamed three nodes later by whatever read the wrong shape.
  */
 function ranTo(
-  element: NodeRunner,
+  element: NodeDefinition,
   node: GraphNode,
   inputs: Record<string, unknown>,
   produced: Record<string, unknown>,
@@ -641,7 +626,7 @@ function ranTo(
  * `partial`, never `success`: a node whose outputs are nulls nobody explains
  * is how a broken run comes to look like a clean one.
  */
-function failedWith(element: NodeRunner, node: GraphNode, inputs: Record<string, unknown>, error: unknown): NodeResult {
+function failedWith(element: NodeDefinition, node: GraphNode, inputs: Record<string, unknown>, error: unknown): NodeResult {
   const message = error instanceof Error ? error.message : String(error);
   if (element.catchesErrors(node)) {
     return { node_id: node.id, status: 'partial', inputs, outputs: failureOutputs(node, message), error: message };
@@ -688,11 +673,11 @@ export async function runNodeAlone(
  * by what its files say (`reuse.ts`).
  */
 async function readInputs(
-  element: NodeRunner<unknown>,
+  element: NodeDefinition,
   node: GraphNode,
   inputs: Record<string, unknown>,
   runtime: Runtime,
-  registry: Runners,
+  registry: Kinds,
 ): Promise<Record<string, unknown>> {
   const ports = filePorts(node, registry);
   if (!ports.length) return inputs;
@@ -766,14 +751,15 @@ function itemFailures(failures: string[] & { total: number }): string {
  * once for the node, the way a whole-node failure puts one message there.
  */
 async function runNode(
-  element: NodeRunner<unknown>,
+  runner: NodeRunner,
   node: GraphNode,
   inputs: Record<string, unknown>,
   runtime: Runtime,
   signal?: AbortSignal,
 ): Promise<{ produced: Record<string, unknown>; failures: string[] & { total: number } }> {
+  const element = runner.kind;
   if (element.batchMode(node) !== 'per_item') {
-    const produced = reconcileOutputs(node, await element.execute(node, inputs, runtime));
+    const produced = reconcileOutputs(node, await runner.execute(node, inputs, runtime));
     return { produced, failures: Object.assign([] as string[], { total: 1 }) };
   }
 
@@ -787,7 +773,7 @@ async function runNode(
     try {
       const unread = Object.values(items[index]).find((value) => value instanceof Unread);
       if (unread) throw unreadable(unread);
-      produced[index] = reconcileOutputs(node, await element.execute(node, items[index], runtime));
+      produced[index] = reconcileOutputs(node, await runner.execute(node, items[index], runtime));
     } catch (error) {
       // One bad item must not take the other 499 down with it -- but it is
       // not nothing either: it is counted, and the first is quoted.
@@ -829,7 +815,7 @@ function settleMemory(
   graph: Graph,
   outputs: Map<string, Record<string, unknown>>,
   results: NodeResult[],
-  registry: Runners,
+  registry: Kinds,
   caught: Set<string>,
 ): Set<string> {
   const took = new Set(results.filter((r) => (r.status === 'success' || r.status === 'partial') && !r.held).map((r) => r.node_id));
@@ -862,7 +848,7 @@ function settleMemory(
 function finalOutputs(
   nodes: GraphNode[],
   outputs: Map<string, Record<string, unknown>>,
-  registry: Runners,
+  registry: Kinds,
 ): Record<string, unknown> {
   const final: Record<string, unknown> = {};
   for (const [nodeId, key] of resultKeys(nodes, registry)) {

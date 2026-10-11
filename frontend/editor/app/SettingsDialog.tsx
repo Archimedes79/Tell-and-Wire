@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { AIProvider } from '../document/graph';
-import { call, type SettingsPatch, type SettingsStatus } from '../../deployment/gui/kit/api/client';
+import { call, type SettingsPatch, type SettingsStatus } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
 import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
-import { DEFAULT_SETTINGS } from '../../../backend/deployment/runtime/ai/providers.ts';
+import { DEFAULT_ENDPOINTS } from '../../../graph/endpoints.ts';
 import { ACCENT_FILL, ACCENT_TEXT, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /** Where each provider's key comes from, said where the key is typed. */
@@ -170,7 +170,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
                       style={FIELD}
                       value={endpoints[id] ?? ''}
                       onChange={(e) => setEndpoints((now) => ({ ...now, [id]: e.target.value }))}
-                      placeholder={DEFAULT_SETTINGS.endpoints[id] || 'https://my-endpoint.example.com/v1'}
+                      placeholder={DEFAULT_ENDPOINTS[id] || 'https://my-endpoint.example.com/v1'}
                     />
                   </div>
                 ))}

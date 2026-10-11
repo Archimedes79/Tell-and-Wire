@@ -6,10 +6,12 @@ import { describe, expect, it } from 'vitest';
  * An area may import from a lower one, never from a higher one, and never from
  * a sibling of its own rank. What each rank is:
  *
+ *  -1 block type        what a block of a gui is made of
  *   0 ui, layout        look, without knowing a graph: theme, tone, colour scheme, Modal
  *   1 graph types       the document's types
  *   2 model             what a graph *is* to the editor: node kinds, the gui's connections, grid placement
  *     api               the contract's client, and the host a gui follows
+ *   2.5 editor api      the same, with the routes only the editor's server has
  *   3 store             the open graph, its undo, what a round shows on it
  *     views             the node view's drawing, pure: props in, callbacks out
  *   4 dialogs           small dialogs that ask the server something
@@ -39,11 +41,13 @@ const ELEMENTS = [
 ];
 /** [area, rank, the folders and files it is made of]; the longest path a file starts with decides. */
 const AREAS: [string, number, ...string[]][] = [
+  ['block type', -1, 'deployment/gui/kit/guiWidget.ts'],
   ['ui', 0, 'deployment/gui/kit/ui/'],
   ['layout', 0, 'deployment/gui/kit/layout.ts'],
   ['graph types', 1, 'editor/document/graph.ts'],
   ['model', 2, 'editor/document/model/'],
   ['api', 2, 'deployment/gui/kit/api/'],
+  ['editor api', 2.5, 'editor/api/'],
   ['store', 3, 'editor/document/store/'],
   ['views', 3, 'editor/graph/views/'],
   ['dialogs', 4, 'deployment/gui/kit/dialogs/', 'editor/app/dialogs/'],

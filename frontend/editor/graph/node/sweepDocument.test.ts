@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { GenerateResponse } from '../../../deployment/gui/kit/api/client';
+import type { GenerateResponse } from '../../api/client';
 import type { GraphNode } from '../../document/graph';
 
 // ✨'s server, as far as a sweep goes: each generation waits until the test
 // lets it answer, so the test can open another graph meanwhile.
 const answers: ((response: GenerateResponse) => void)[] = [];
-vi.mock('../../../deployment/gui/kit/api/client', async (actual) => ({
-  ...(await actual<typeof import('../../../deployment/gui/kit/api/client')>()),
+vi.mock('../../api/client', async (actual) => ({
+  ...(await actual<typeof import('../../api/client')>()),
   call: vi.fn((route: string) => {
     if (route !== 'generate') throw new Error(`not expected here: ${route}`);
     return new Promise((resolve) => { answers.push(resolve); });

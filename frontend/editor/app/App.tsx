@@ -22,7 +22,7 @@ import { useDialogs } from './dialogs/useDialogs';
 
 import { useGraphStore } from '../document/store/graphStore';
 import { placement } from '../document/model/placement';
-import { ApiError, call } from '../../deployment/gui/kit/api/client';
+import { ApiError, call } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
 import type { NodeType, Graph } from '../document/graph';
 import { defaultMetadata } from '../../../graph/graph.ts';

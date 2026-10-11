@@ -10,8 +10,6 @@ import { Code2 } from 'lucide-react';
 export class CodeNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'code';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Code';
 
   readonly hint = 'Run JavaScript -- say what it should do, and ✨ writes it';

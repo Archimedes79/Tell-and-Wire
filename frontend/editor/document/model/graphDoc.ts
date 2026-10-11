@@ -6,10 +6,10 @@
 
 import type { Node, Edge } from 'reactflow';
 import type { Graph, GraphNode, GraphEdge, GraphMetadata, GuiWidget, NodeType } from '../graph';
-import type { TextChange } from '../../../../backend/deployment/host/api.ts';
+import type { TextChange } from '../../../../backend/editor/host/api.ts';
 import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
 import { defaultMetadata as formatDefaults } from '../../../../graph/graph.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import { derivedNodePorts } from './ports';
 import { NODE_KINDS, savedNode } from './nodeKinds';
@@ -84,7 +84,7 @@ export function withNested(outer: Graph, nodeId: string, inner: Graph): Graph {
     nodes: outer.nodes.map((node) => {
       if (node.id !== nodeId) return node;
       const held = { ...node, config: { ...node.config } };
-      runnerRegistry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
+      registry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
       return { ...held, ...(derivedNodePorts(held) ?? {}) };
     }),
   };
@@ -115,7 +115,7 @@ export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: Graph
  * level leaves out.
  */
 function keptNested(node: GraphNode): GraphNode {
-  const element = runnerRegistry.node(node.node_type);
+  const element = registry.node(node.node_type);
   const held = element?.nestedGraph(node as never) as Graph | null | undefined;
   if (!element || !held) return node;
   const graph = normalizeGraph(held);
@@ -131,7 +131,7 @@ export const guiOf = (change: TextChange): GuiWidget[] => (Array.isArray(change.
 /** *change* taken into *node*: a file of it as it is on disk, or the graph it holds; its ports follow. */
 export function takeIn(node: GraphNode, change: TextChange): void {
   // Where a node keeps the graph it holds is the element's business.
-  if (change.field === NESTED_GRAPH_FIELD) runnerRegistry.node(node.node_type)?.setNestedGraph(node as never, change.value as never);
+  if (change.field === NESTED_GRAPH_FIELD) registry.node(node.node_type)?.setNestedGraph(node as never, change.value as never);
   else (node.config as unknown as Record<string, unknown>)[change.field] = change.value;
   Object.assign(node, derivedNodePorts(node) ?? {});
 }

@@ -19,7 +19,7 @@ import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED } from '../../../deployment/gui
  *
  * Shown only where the ports are the person's to name. A data node's follow
  * from its fields and a start point's are its one package, and the element says
- * which it is (`NodeRunner.derivedPorts`), so nothing here switches on a node type.
+ * which it is (`NodeDefinition.derivedPorts`), so nothing here switches on a node type.
  *
  * **The id is what the code sees.** A body reads `inputs.csv` and returns
  * `{ figure }`, so the id is the contract with the body, not decoration -- which

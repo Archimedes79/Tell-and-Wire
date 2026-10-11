@@ -12,11 +12,12 @@
 // history.md.
 
 import type { Graph, GraphNode, GuiWidget, Port, Wire } from '../../document/graph';
-import { call, type AICall, type GenerateRequest, type GenerateResponse, type ProbeReport } from '../../../deployment/gui/kit/api/client';
-import type { Refine } from '../../../../backend/deployment/host/api.ts';
+import { call, type AICall, type GenerateRequest, type GenerateResponse, type ProbeReport } from '../../api/client';
+import type { Refine } from '../../../../backend/editor/host/api.ts';
 import { definitionExample, definitionKeys } from '../../../../graph/files/definition.ts';
 import { exchangeEntry, exchangeLabel, withExchange } from '../../../../graph/editor/history.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { inputSources, outputTargets } from './generationContext';
 import { graphContext } from './graphContext';
@@ -32,31 +33,31 @@ export type Part = Write | 'example';
 
 export type { Refine };
 
-/** Where a node keeps its body -- and a second file written with it, where it has one -- and what the body is: the runner's own answer (`NodeRunner.generation`). */
+/** Where a node keeps its body -- and a second file written with it, where it has one -- and what the body is: the node's design's answer (`NodeDesign.generation`). */
 export function bodyOf(node: GraphNode): { field: string; example?: string; kind: 'code' | 'prompt' | 'data' } | undefined {
-  const generation = runnerRegistry.node(node.node_type)?.generation();
+  const generation = designs.node(node.node_type)?.generation();
   return generation && { field: generation.fields.body, ...(generation.fields.example ? { example: generation.fields.example } : {}), kind: generation.kind };
 }
 
 /** Whether a ✨ of *node*'s writes definitions as well as a body: a code or an ai node's. */
 export function hasDefinitions(node: GraphNode): boolean {
-  return runnerRegistry.node(node.node_type)?.definitions(node as never) !== undefined;
+  return registry.node(node.node_type)?.definitions(node as never) !== undefined;
 }
 
-/** *node*'s definitions as its runner reads them: '' for one it has none of. */
+/** *node*'s definitions as its kind reads them: '' for one it has none of. */
 function definitionsOf(node: GraphNode): { input: string; output: string } {
-  return runnerRegistry.node(node.node_type)?.definitions(node as never) ?? { input: '', output: '' };
+  return registry.node(node.node_type)?.definitions(node as never) ?? { input: '', output: '' };
 }
 
 /**
  * Where a node keeps what *write* writes: the setting, and the file it is kept
- * in with that file's stub -- asked of the node's runner, which says which of
- * a node's settings are files (`NodeRunner.texts`).
+ * in with that file's stub -- asked of the node's definition, which says which of
+ * a node's settings are files (`NodeDefinition.texts`).
  */
 export function fileOf(node: GraphNode, part: Part): { field: string; file: string; stub: string; json: boolean } {
   const field = part === 'input' ? 'input_definition' : part === 'output' ? 'output_definition'
     : part === 'example' ? bodyOf(node)?.example ?? 'data_example' : bodyOf(node)?.field ?? 'code';
-  const text = runnerRegistry.node(node.node_type)?.texts(node as never).find((candidate) => candidate.field === field);
+  const text = registry.node(node.node_type)?.texts(node as never).find((candidate) => candidate.field === field);
   return { field, file: text?.file ?? field, stub: text?.standard ?? '', json: text?.json === true };
 }
 

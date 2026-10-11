@@ -1,8 +1,8 @@
 // What the server answers only while a graph is being built.
 //
-// The `editor` rows of the table in `api.ts`. Loaded by `serve.ts` with a
-// dynamic import when it is the editor, and never otherwise -- this folder is
-// not in a bundle, so a deployed tool cannot answer these even by mistake.
+// The rows of `EDITOR_API` (`api.ts`). The command line loads this with a dynamic
+// import when it serves the editor (`backend/cli`), and never otherwise -- this folder
+// is not in a package, so a deployed tool cannot answer these even by mistake.
 //
 // Each handler takes the request the table promises and returns its response;
 // a refusal is thrown as a `Refusal` with its status. What the handlers do is
@@ -18,19 +18,21 @@ import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { withoutAuthoring } from '../../../graph/editor/handedOn.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { startFromGui } from '../../../gui/gui.ts';
-import { CannotBundle, builtGui, filesIn, writeBundle } from '../project/deploy/bundle.ts';
+import { CannotBundle, filesIn, writeBundle } from '../project/deploy/bundle.ts';
+import { builtGui } from '../../deployment/project/layout.ts';
 import { expandHome } from '../../deployment/host/browse.ts';
 import { zipMode } from '../project/deploy/launchers.ts';
 import { nodeRuntime } from '../../deployment/runtime/services.ts';
 import { aiSetting, settingsPath } from '../../deployment/runtime/ai/settings.ts';
-import { Download, Refusal, message, type Handlers } from '../../deployment/host/http.ts';
-import type { AICall, GraphFile } from '../../deployment/host/api.ts';
+import { Download, Refusal, message, type HandlersOf } from '../../deployment/host/http.ts';
+import { EDITOR_API, type AICall, type GraphFile } from './api.ts';
 import { holderOf, type SessionHolder } from '../../deployment/host/session.ts';
 import * as files from '../project/files.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 import * as settings from '../runtime/settings.ts';
 import * as servers from '../runtime/mcpServers.ts';
 import * as project from '../../deployment/project/folder.ts';
+import * as write from '../project/write.ts';
 import { keptRound, writeKeptRound, TESTS_DIR } from '../project/keptRounds.ts';
 import * as gen from '../graph/generate.ts';
 import { generateGraph } from '../graph/generateGraph.ts';
@@ -41,7 +43,7 @@ import { zip } from '../project/deploy/zip.ts';
  *   -- see `holdGraph`. The editor's own server starts with none; the page
  *   hands one over.
  */
-export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
+export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeof EDITOR_API> {
   // The graph core ▶ Try runs nodes with, made when first asked: one for the
   // editor's life, so asking what arrives at a node again and again while
   // writing it need not ask the model upstream again when nothing there changed.
@@ -124,12 +126,12 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       const graph = parseGraph(asked.graph);
       // Writing over a graph that is there is said, never done by the way:
       // Save as onto a project's name replaced that project, and said "Saved".
-      const there = asked.replace ? null : project.graphAt(path);
+      const there = asked.replace ? null : write.graphAt(path);
       if (there) {
         throw new Refusal(409, `${project.projectFolderOf(there) ? 'A project' : 'A graph file'} is already at ${there}. `
           + 'Replace it, or save under another name.', { taken: true });
       }
-      await project.saveGraph(path, graph);
+      await write.saveGraph(path, graph);
       return graph;
     }),
 
@@ -149,7 +151,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       const folder = asked.path ? project.projectFolderOf(resolve(expandHome(asked.path))) : null;
       if (!folder) return { changes: [] };
       try {
-        return { changes: await project.changesOnDisk(folder) };
+        return { changes: await write.changesOnDisk(folder) };
       } catch (error) {
         // Half-written by another editor, most likely: asked again in a moment.
         throw new Refusal(409, message(error));
@@ -236,7 +238,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       try {
         const folder = project.projectFolderOf(resolve(expandHome(asked.graph_path)));
         if (!folder) throw new Refusal(400, 'Only a project folder keeps files to open: save the graph as one first.');
-        const file = await project.nodeFileOf(folder, asked.node_id, asked.file || undefined, asked.inside ?? []);
+        const file = await write.nodeFileOf(folder, asked.node_id, asked.file || undefined, asked.inside ?? []);
         return await files.openExternal(folder, file);
       } catch (error) {
         if (error instanceof Refusal) throw error;
@@ -244,4 +246,9 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       }
     },
   };
+}
+
+/** The editor as a part of a server (`serve`): the page it serves, the routes it adds, and what answers them. */
+export function editorPart(dist: string) {
+  return { dist, api: EDITOR_API, handlers: editorRoutes };
 }

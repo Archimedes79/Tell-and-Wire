@@ -1,5 +1,6 @@
 import type { GraphNode } from '../../document/graph';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { DIMMER, LINE, MUTED } from '../../../deployment/gui/kit/ui/theme';
 
 /**
@@ -7,14 +8,14 @@ import { DIMMER, LINE, MUTED } from '../../../deployment/gui/kit/ui/theme';
  * that does the work, and in one sentence what that is. Folded, and the last
  * thing in every node's panel: for the curious.
  *
- * Asked of the node's runner (`whatRuns`), so the panel and the documentation
+ * Asked of the node's design (`whatRuns`), so the panel and the documentation
  * say the same thing in the same words.
  */
 export default function WhatRuns({ node }: { node: GraphNode }) {
-  const runner = runnerRegistry.node(node.node_type);
+  const kind = registry.node(node.node_type);
   // A start or an end point does no work of its own: where a run begins or leaves, not what it does.
-  if (runner?.isResult || runner?.startedBy(node as never)) return null;
-  const runs = runner?.whatRuns(node as never);
+  if (kind?.isResult || kind?.startedBy(node as never)) return null;
+  const runs = designs.node(node.node_type)?.whatRuns(node as never);
   if (!runs?.does) return null;
   return (
     <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}>

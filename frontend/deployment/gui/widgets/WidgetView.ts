@@ -1,7 +1,7 @@
-import type { GuiWidget } from '../../../editor/document/graph';
+import type { GuiWidget } from '../kit/guiWidget';
 
 /**
- * What every widget view is handed (`gui-editor/widgets/<kind>/<Kind>WidgetView.tsx`).
+ * What every widget view is handed (`widgets/<kind>/<Kind>WidgetView.tsx`).
  *
  * The two values are deliberately separate. `value` is what the widget itself
  * holds -- the user's edit, or its stored value -- and is what it sends.

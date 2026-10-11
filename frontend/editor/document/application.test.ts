@@ -5,8 +5,8 @@ import type { Graph, GraphNode } from './graph';
 // clock kept by the server's session, the document handed to it first.
 
 const server = vi.hoisted(() => ({ asked: [] as string[], ticks: false, hold: null as Promise<void> | null, down: false }));
-vi.mock('../../deployment/gui/kit/api/client', async (actual) => ({
-  ...(await actual<typeof import('../../deployment/gui/kit/api/client')>()),
+vi.mock('../api/client', async (actual) => ({
+  ...(await actual<typeof import('../api/client')>()),
   call: vi.fn(async (route: string, _request?: unknown, options?: { keepalive?: boolean }) => {
     server.asked.push(options?.keepalive ? `${route}, as the page closes` : route);
     if (route === 'holdGraph') {

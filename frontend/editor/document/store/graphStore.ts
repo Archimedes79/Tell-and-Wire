@@ -4,7 +4,7 @@ import type { Node, Edge } from 'reactflow';
 import type { Graph, GraphNode, GraphMetadata, ExecutionResult, GuiWidget, NodeType } from '../graph';
 import type { RFNodeData } from './nodeData';
 import type { PortRenames } from './portRenames';
-import { call, type RoundSnapshot } from '../../../deployment/gui/kit/api/client';
+import { call, type RoundSnapshot } from '../../api/client';
 import { forgetSession, stopRound, useSession } from '../../../deployment/gui/kit/api/session';
 import {
   buildReactFlowGraph, defaultMetadata, exported, normalizeGraph,
@@ -15,7 +15,7 @@ import { subgraphActions } from './subgraphs';
 import { diskActions } from './diskChanges';
 import { editActions } from './nodeEdits';
 import { goingIn, handoffActions, isHanding, serverHoldsAnother } from './handoff';
-import type { TextChange } from '../../../../backend/deployment/host/api.ts';
+import type { TextChange } from '../../../../backend/editor/host/api.ts';
 import { wireOf } from '../../../../graph/files/flow.ts';
 
 export interface GraphStore {

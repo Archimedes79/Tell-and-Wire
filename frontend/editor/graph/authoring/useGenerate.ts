@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { create } from 'zustand';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
-import { ApiError, watchGeneration, type AICall } from '../../../deployment/gui/kit/api/client';
+import { ApiError, watchGeneration, type AICall } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
 
 /** Said when ✨ was stopped: what it wrote before stays, what was on its way does not come. */
@@ -111,7 +111,7 @@ export async function runGenerate<T>(nodeId: string, options: GenerateOptions<T>
       say(key, { message: STOPPED });
       return false;
     }
-    const calls = error instanceof ApiError ? error.body.calls : undefined;
+    const calls = error instanceof ApiError ? error.body.calls as AICall[] | undefined : undefined;
     if (calls) say(key, { transcript: calls });
     if (calls?.length) options.failed?.(calls);
     say(key, { message: `❌ ${errorText(error, options.failure ?? 'Generation failed')}` });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { InterfaceEntry } from '../../../../backend/deployment/host/interface.ts';
+import type { InterfaceEntry } from '../../../../graph/interface.ts';
 import Button from '../kit/ui/Button';
 import { DIMMER, FIELD, LINE, MUTED } from '../kit/ui/theme';
 

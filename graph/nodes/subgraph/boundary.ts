@@ -3,7 +3,7 @@
 // Nothing is invented for the edge of a subgraph: the start points and end
 // points that are the edge of *any* graph are its edge here too -- a gui
 // starts the one, a call the other, and the graph above is a call. Which
-// nodes those are is the elements' own answer (`NodeRunner.boundaryRole`),
+// nodes those are is the elements' own answer (`NodeDefinition.boundaryRole`),
 // so this file names no node type and holds no second copy of anyone's
 // settings.
 //
@@ -12,27 +12,27 @@
 // never which edges lead to it.
 
 import type { Graph, GraphNode, Port } from '../../graph.ts';
-import type { Runners } from '../NodeRunner.ts';
+import type { Kinds } from '../NodeDefinition.ts';
 import { port } from '../port.ts';
 
-const withRole = (graph: Graph, elements: Runners, role: 'in' | 'out'): GraphNode[] =>
+const withRole = (graph: Graph, elements: Kinds, role: 'in' | 'out'): GraphNode[] =>
   graph.nodes.filter((node) => elements.node(node.node_type)?.boundaryRole(node) === role);
 
 /**
  * The inner nodes where what the graph above hands down arrives: its start
  * points, but one that starts itself -- nobody above can start that.
  */
-export function boundaryInputs(graph: Graph, elements: Runners): GraphNode[] {
+export function boundaryInputs(graph: Graph, elements: Kinds): GraphNode[] {
   return withRole(graph, elements, 'in');
 }
 
 /** The inner nodes that stand for values handed back out. */
-export function boundaryOutputs(graph: Graph, elements: Runners): GraphNode[] {
+export function boundaryOutputs(graph: Graph, elements: Kinds): GraphNode[] {
   return withRole(graph, elements, 'out');
 }
 
 /** What a boundary node carries: whatever its element says is its value. */
-export function carried(node: GraphNode, elements: Runners): Port[] {
+export function carried(node: GraphNode, elements: Kinds): Port[] {
   return elements.node(node.node_type)?.valuePorts(node) ?? node.inputs;
 }
 
@@ -41,7 +41,7 @@ export function carried(node: GraphNode, elements: Runners): Port[] {
  *
  * `path` is left out -- on an end point it says where to write, not what.
  */
-export function handedUp(node: GraphNode, arrived: Record<string, unknown>, elements: Runners): unknown {
+export function handedUp(node: GraphNode, arrived: Record<string, unknown>, elements: Kinds): unknown {
   const wanted = carried(node, elements)[0]?.id;
   // Explicitly null rather than missing: a node that produced nothing must
   // still fill its port, or `reconcileOutputs` reads the empty record as the
@@ -51,15 +51,15 @@ export function handedUp(node: GraphNode, arrived: Record<string, unknown>, elem
 
 /**
  * What a boundary node is answered with, instead of running: the value handed
- * down, as its element hands it on (`NodeRunner.answerWith`) -- a start
+ * down, as its element hands it on (`NodeDefinition.answerWith`) -- a start
  * point's package.
  */
-export function handedDown(node: GraphNode, value: unknown, elements: Runners): Record<string, unknown> {
+export function handedDown(node: GraphNode, value: unknown, elements: Kinds): Record<string, unknown> {
   return elements.node(node.node_type)?.answerWith(node, value) ?? {};
 }
 
 /** The holding node's ports, as the graph inside it describes them. */
-export function boundaryPorts(graph: Graph, elements: Runners): { inputs: Port[]; outputs: Port[] } {
+export function boundaryPorts(graph: Graph, elements: Kinds): { inputs: Port[]; outputs: Port[] } {
   // `any` throughout: of the data types only `file_path` means anything to a
   // run, and it would mean the wrong thing here -- a path that crosses this
   // boundary is a path, not a file to read on the way in.

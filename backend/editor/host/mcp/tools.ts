@@ -15,7 +15,8 @@ import type { GraphCore } from '../../../deployment/runtime/protocol.ts';
 import { replayKeptRounds, TESTS_DIR } from '../../project/keptRounds.ts';
 import type { Trigger } from '../../../../graph/triggers.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { NotOffered, interfaceOf, outputsOf, sendFromOutside } from '../../../deployment/host/interface.ts';
+import { NotOffered, outputsOf, sendFromOutside } from '../../../../graph/interface.ts';
+import { interfaceWithGui } from '../../../../gui/interface.ts';
 import { startFromGui } from '../../../../gui/gui.ts';
 import { message } from '../../../deployment/host/http.ts';
 import { clip } from '../../graph/brief.ts';
@@ -23,8 +24,9 @@ import { generateGraph } from '../../graph/generateGraph.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
 import {
   FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
-  projectFolderOf, projectTexts, readStructure, saveGraph as saveToDisk, type Guard,
+  projectFolderOf, projectTexts, readStructure, type Guard,
 } from '../../../deployment/project/folder.ts';
+import { saveGraph as saveToDisk } from '../../project/write.ts';
 import { problemsIn, type Problem } from '../../../../gui/editor/check.ts';
 import { folderProblems } from '../../project/folderCheck.ts';
 import { BadDocument, Refused, SKIPPED_FOLDERS, confinement, scrubber } from './confine.ts';
@@ -400,7 +402,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       return json({
         name: graph.metadata.name,
         description: graph.metadata.description,
-        ...interfaceOf(graph, registry),
+        ...interfaceWithGui(graph, registry),
       });
     },
 

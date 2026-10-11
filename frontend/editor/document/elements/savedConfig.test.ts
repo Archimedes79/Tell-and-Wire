@@ -4,7 +4,7 @@
  *
  * `savedNode` drops every key that still holds its one default
  * (`baseNodeConfig`). That is only safe while a run reads a missing key
- * the same way it reads that value, so this asks the node's own runner,
+ * the same way it reads that value, so this asks the node's own definition,
  * for every node type and every mode, the questions a run asks, and holds the
  * lean node to the full node's answers.
  */
@@ -14,7 +14,7 @@ import type { GraphNode, NodeConfig } from '../graph';
 import { answers as runAnswers } from '../../../test/runAnswers';
 
 /**
- * The runner's answers, with an ai node's provider as a run takes it: left out
+ * The definition's answers, with an ai node's provider as a run takes it: left out
  * and 'default' are one provider, the one AI setting (`lent`), and `config`
  * spells them apart.
  */

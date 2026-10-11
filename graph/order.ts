@@ -8,7 +8,7 @@
 // loop without one is an error, said by name, and how to close it.
 
 import type { GraphEdge, GraphNode } from './graph.ts';
-import type { Runners } from './nodes/NodeRunner.ts';
+import type { Kinds } from './nodes/NodeDefinition.ts';
 
 /** *from* and every node reached along *edges* -- downstream when *forward*, else upstream. */
 export function walk(from: Iterable<string>, edges: GraphEdge[], forward: boolean): Set<string> {
@@ -82,7 +82,7 @@ function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { 
  * it takes its `before` -- while the wires into the memory are in the order
  * like any other, so it fills, and then forwards what it holds.
  */
-export function passiveWires(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): Set<string> {
+export function passiveWires(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): Set<string> {
   const passive = new Map<string, Set<string>>();
   for (const node of nodes) {
     const outputs = registry.node(node.node_type)?.derivedPorts(node, registry)?.outputs ?? node.outputs;
@@ -93,7 +93,7 @@ export function passiveWires(nodes: GraphNode[], edges: GraphEdge[], registry: R
 }
 
 /** Execution stages: everything in a stage waits only for earlier stages. A loop that no memory closes is an error. */
-export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], registry: Runners): string[][] {
+export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): string[][] {
   const reads = passiveWires(nodes, edges, registry);
   const { levels, stuck } = levelsOf(nodes, edges, reads);
   if (stuck.size) {

@@ -42,9 +42,9 @@
 // happened, which is what "run everything" means.
 
 import type { Graph } from './graph.ts';
-import type { Runners } from './nodes/NodeRunner.ts';
+import type { Kinds } from './nodes/NodeDefinition.ts';
 import { passiveWires, walk } from './order.ts';
-import type { StartedBy } from './nodes/NodeRunner.ts';
+import type { StartedBy } from './nodes/NodeDefinition.ts';
 
 /** The input every node has and nobody declares: the ◆, a gate. What arrives opens it or does not, and is never handed on. */
 export const RUN_PORT = '__run';
@@ -68,8 +68,8 @@ export interface GraphTrigger {
   every: string;
 }
 
-/** The graph's start points that start by themselves, as their elements say (`NodeRunner.trigger`). */
-export function graphTriggers(graph: Graph, elements: Runners): GraphTrigger[] {
+/** The graph's start points that start by themselves, as their elements say (`NodeDefinition.trigger`). */
+export function graphTriggers(graph: Graph, elements: Kinds): GraphTrigger[] {
   return graph.nodes.flatMap((node) => {
     const element = elements.node(node.node_type);
     const trigger = element?.trigger(node);
@@ -78,7 +78,7 @@ export function graphTriggers(graph: Graph, elements: Runners): GraphTrigger[] {
 }
 
 /** Whether one of the graph's start points is started by one of *who*. */
-function startedBy(graph: Graph, elements: Runners, who: readonly StartedBy[]): boolean {
+function startedBy(graph: Graph, elements: Kinds, who: readonly StartedBy[]): boolean {
   return graph.nodes.some((node) => {
     const by = elements.node(node.node_type)?.startedBy(node);
     return !!by && who.includes(by);
@@ -86,7 +86,7 @@ function startedBy(graph: Graph, elements: Runners, who: readonly StartedBy[]): 
 }
 
 /** Whether the gui starts the graph when somebody uses it: a start point the gui starts. */
-export function guiStarts(graph: Graph, elements: Runners): boolean {
+export function guiStarts(graph: Graph, elements: Kinds): boolean {
   return startedBy(graph, elements, ['gui']);
 }
 
@@ -97,7 +97,7 @@ export function guiStarts(graph: Graph, elements: Runners): boolean {
  * call starts -- waits for them; one with no start point at all runs whole
  * once, as a program runs when it is started (`null` is "everything").
  */
-export function startEvents(graph: Graph, elements: Runners): (Trigger | null)[] {
+export function startEvents(graph: Graph, elements: Kinds): (Trigger | null)[] {
   const triggers = graphTriggers(graph, elements);
   if (triggers.length) return triggers.filter((trigger) => trigger.on_start).map((trigger) => trigger.event);
   return startedBy(graph, elements, ['gui', 'call']) ? [] : [null];
@@ -148,7 +148,7 @@ export function after(ms: number, then: () => void, keepsAlive = true): () => vo
  * model waits for (`unneeded`). A passive wire carries no event: what only
  * reads a node is not for the event that reaches it.
  */
-export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Runners): Set<string> | null {
+export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Kinds): Set<string> | null {
   const downstream = firedNodes(graph, trigger, registry);
   if (!downstream) return null;
   // The ◆ of a node the event is wired to is opened by the event itself.
@@ -166,7 +166,7 @@ export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Runners
  * The rest of what the event runs is context, which a run may reuse; this part
  * always runs fresh.
  */
-export function firedNodes(graph: Graph, trigger: Trigger, registry: Runners): Set<string> | null {
+export function firedNodes(graph: Graph, trigger: Trigger, registry: Kinds): Set<string> | null {
   const reads = passiveWires(graph.nodes, graph.edges, registry);
   const live = graph.edges.filter((edge) => !reads.has(edge.id));
   const fired = live.filter((edge) => edge.source_node_id === trigger.node_id
@@ -181,7 +181,7 @@ export function firedNodes(graph: Graph, trigger: Trigger, registry: Runners): S
  * the passive ones. A round started somewhere else only shows
  * what the memory holds; it does not run what writes it.
  */
-function unneeded(graph: Graph, registry: Runners): Set<string> {
+function unneeded(graph: Graph, registry: Kinds): Set<string> {
   const remembering = new Set(graph.nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
   return new Set([
     ...passiveWires(graph.nodes, graph.edges, registry),
@@ -208,7 +208,7 @@ export function upstreamOf(graph: Graph, nodeIds: Iterable<string>, skip: Set<st
  * never computed, and never opens -- nor does anything behind it. Not the ◆
  * of a node in *opened*, which the event opens itself.
  */
-export function neededFor(graph: Graph, nodeIds: Iterable<string>, registry: Runners, opened: Set<string> = new Set()): Set<string> {
+export function neededFor(graph: Graph, nodeIds: Iterable<string>, registry: Kinds, opened: Set<string> = new Set()): Set<string> {
   const skip = unneeded(graph, registry);
   const gates = graph.edges.filter((edge) => !skip.has(edge.id) && edge.target_port_id === RUN_PORT);
   const needed = new Set<string>();

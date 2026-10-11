@@ -5,7 +5,8 @@ import type { Edge, Node } from 'reactflow';
 import type { GraphEdge, GraphNode, GuiWidget, Wire } from '../graph';
 import { wireOf } from '../../../../graph/files/flow.ts';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { derivedNodePorts } from './ports';
 import { defaultField, takenAs } from './gui';
 import { NODE_KINDS } from './nodeKinds';
@@ -45,7 +46,7 @@ type CanvasNode = Node<{ graphNode: GraphNode }>;
 
 /** Whether a wire dropped on *node* becomes a new input of it: a code or AI node, whose inputs are its own to name. */
 export function takesNewInputs(node: GraphNode): boolean {
-  return derivedNodePorts(node) === null && runnerRegistry.node(node.node_type)?.readsFileInputs === true;
+  return derivedNodePorts(node) === null && registry.node(node.node_type)?.readsFileInputs === true;
 }
 
 /**
@@ -60,8 +61,8 @@ export function untouchedInput(node: GraphNode, wired: boolean): string | undefi
   const [made, ...madeMore] = NODE_KINDS[node.node_type]?.create(node.id).inputs ?? [];
   if (!only || more.length || wired || !made || madeMore.length) return undefined;
   if (only.id !== made.id || only.name !== made.name || only.data_type !== made.data_type || only.multi !== made.multi || only.field) return undefined;
-  const element = runnerRegistry.node(node.node_type);
-  const body = element?.generation()?.fields.body;
+  const element = registry.node(node.node_type);
+  const body = designs.node(node.node_type)?.generation()?.fields.body;
   const written = !!element?.definitions(node as never)?.input.trim() || (!!body && !!String(node.config[body as keyof typeof node.config] ?? '').trim());
   return written ? undefined : only.id;
 }
@@ -86,7 +87,7 @@ export function retypeJoined(
   // its example the input is named after, or its one part. A port that
   // follows from its node's settings takes the part and keeps its type.
   // Its ports can say otherwise.
-  const sent = source && to && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(gui, source, to) : undefined;
+  const sent = source && to && registry.node(source.node_type)?.takesPackage ? defaultField(gui, source, to) : undefined;
   if (sent && to && !to.field) Object.assign(to, takenAs(to, sent.choice, own));
   // A wire from a port that carries file paths -- a picker, a folder --
   // ticks "Read the file at this path" on the input it ends on: the port is
@@ -96,15 +97,15 @@ export function retypeJoined(
   // (`readsFileInputs`), not on one whose ports follow from its settings, and
   // only a port with nobody's word on it: a port typed `text` said what it
   // wants, and a run reads it the same way (`execution/fileInputs.ts`).
-  const reads = !!into && runnerRegistry.node(into.node_type)?.readsFileInputs === true && derivedNodePorts(into) === null;
+  const reads = !!into && registry.node(into.node_type)?.readsFileInputs === true && derivedNodePorts(into) === null;
   if (reads && from?.data_type === 'file_path' && to && to.data_type === 'any') {
     to.data_type = 'file_path';
     if (from.multi) to.multi = true;
   }
   // A list wired into what an end point hands back is a list it hands
   // back: so the graph's interface says, and a block that shows it.
-  const result = !!into && runnerRegistry.node(into.node_type)?.isResult === true
-    && runnerRegistry.node(into.node_type)!.valuePorts(into as never).some((port) => port.id === to?.id);
+  const result = !!into && registry.node(into.node_type)?.isResult === true
+    && registry.node(into.node_type)!.valuePorts(into as never).some((port) => port.id === to?.id);
   if (result && from?.multi && to) to.multi = true;
 }
 

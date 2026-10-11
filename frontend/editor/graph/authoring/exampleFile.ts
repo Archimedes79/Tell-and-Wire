@@ -14,9 +14,9 @@ import { NODE_BUILDERS } from '../../document/elements/registry';
 import { filesOf } from '../../document/model/givenFiles';
 import { blockCan, blocksAt, startsOn } from '../../document/model/gui';
 import { lastRunInputs } from './generationContext';
-import { fieldOf } from '../../../../backend/deployment/runtime/executor.ts';
+import { fieldOf } from '../../../../graph/wiring.ts';
 import { filePorts } from '../../../../graph/fileInputs.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 
 /** A path in *value*: a text, or the first text of a list. */
 export function firstPath(value: unknown): string | undefined {
@@ -46,7 +46,7 @@ function sentFile(start: GraphNode, gui: GuiWidget[], field: string | undefined)
  * path", of a kind that reads its files.
  */
 function graphFileOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, gui: GuiWidget[]): string | undefined {
-  const ports = filePorts(node, runnerRegistry);
+  const ports = filePorts(node, registry);
   const last = lastRunInputs(node.id, result);
   for (const port of ports) {
     const path = firstPath(last?.[port]);

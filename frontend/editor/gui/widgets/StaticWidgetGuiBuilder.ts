@@ -1,4 +1,4 @@
-// The mirror of `gui/widgets/StaticWidgetRunner.ts`: a widget
+// The mirror of `gui/widgets/StaticWidgetDefinition.ts`: a widget
 // that is part of the gui rather than part of the graph -- a heading, a rule,
 // a gap. No connections, nothing to run, nothing to author.
 

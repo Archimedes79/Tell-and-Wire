@@ -2,14 +2,16 @@
 // start and end points by name.
 //
 // What a block can do with the graph -- send its data, fire a start point,
-// show an end point -- is the runner's answer (`WidgetRunner.sends`, `event`,
-// `showsEnd`), asked of the same element a round asks, so the Gui tab never
-// offers a connection a round then ignores and `check` names.
+// show an end point -- is the definition's answer (`WidgetDefinition.sends`,
+// `event`, `showsEnd`), asked of the same one a round asks, so the Gui tab never
+// offers a connection a round then ignores and `check` names. What only
+// building asks is the design's (`WidgetDesign`).
 
 import type { DataType, GraphNode, GuiWidget, Port } from '../graph';
-import type { Sent } from '../../../../gui/widgets/WidgetRunner.ts';
+import type { Sent } from '../../../../gui/widgets/WidgetDefinition.ts';
 import { parseWidget, widgetElement } from '../../../../gui/gui.ts';
-import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
+import { widgetDesign } from '../../../../gui/editor/widgets/roster.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 
 /** What *widget* can do with the graph: what it sends -- none, for a heading or a button --, whether using it is an event, whether it shows an end point. */
 export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolean; shows: boolean } {
@@ -22,7 +24,7 @@ export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolea
   };
 }
 
-/** Whether a person sets what this block sends, and a round the gui starts is given it by the block's id -- the runner's answer. */
+/** Whether a person sets what this block sends, and a round the gui starts is given it by the block's id -- the definition's answer. */
 export function widgetTakesValue(widget: GuiWidget): boolean {
   return widgetElement(widget.kind)?.takesValue(parseWidget(widget)) ?? false;
 }
@@ -30,20 +32,20 @@ export function widgetTakesValue(widget: GuiWidget): boolean {
 /**
  * Whether what this block holds is part of the gui's design, set while the
  * gui is built -- not a conversation, which is only ever the session's -- the
- * runner's answer (`WidgetRunner.valueIsDesign`).
+ * design's answer (`WidgetDesign.valueIsDesign`).
  */
 export function widgetValueIsDesign(widget: GuiWidget): boolean {
-  return widgetElement(widget.kind)?.valueIsDesign(parseWidget(widget)) ?? true;
+  return widgetDesign(widget.kind)?.valueIsDesign(parseWidget(widget)) ?? true;
 }
 
 /** What the node wired into the end point *widget* shows should hand it, in the block's words -- or nothing, for a block that takes whatever comes. */
 export function blockReceives(widget: GuiWidget): string | undefined {
-  return widgetElement(widget.kind)?.receives(parseWidget(widget));
+  return widgetDesign(widget.kind)?.receives(parseWidget(widget));
 }
 
-/** The files and folders *widget* starts on -- what a picker is set to -- the runner's answer (`WidgetRunner.referencedPaths`). */
+/** The files and folders *widget* starts on -- what a picker is set to -- the design's answer (`WidgetDesign.referencedPaths`). */
 export function startsOn(widget: GuiWidget): string[] {
-  return widgetElement(widget.kind)?.referencedPaths(parseWidget(widget)) ?? [];
+  return widgetDesign(widget.kind)?.referencedPaths(parseWidget(widget)) ?? [];
 }
 
 /** A start or end point, or a memory node, as a block's settings offer it: what it is called by, and what a person reads. */
@@ -57,21 +59,21 @@ export interface Point {
 /** The start points a block can send to and fire: the ones the gui starts. */
 export function guiStartPoints(nodes: GraphNode[]): Point[] {
   return nodes
-    .filter((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'gui')
+    .filter((node) => registry.node(node.node_type)?.startedBy(node as never) === 'gui')
     .map((node) => ({ id: node.id, label: node.label || node.id }));
 }
 
 /** The end points a block can show: what the graph hands back, by name. */
 export function endPoints(nodes: GraphNode[]): Point[] {
   return nodes.flatMap((node) => {
-    const element = runnerRegistry.node(node.node_type);
+    const element = registry.node(node.node_type);
     return element?.isResult ? [{ id: node.id, label: element.resultLabel(node as never) }] : [];
   });
 }
 
 /** The memory nodes a block can show, and each part of what they hold -- a field, the round count: what each holds, by name, whether or not a round has run. */
 export function memoryPoints(nodes: GraphNode[]): Point[] {
-  return nodes.flatMap((node) => (runnerRegistry.node(node.node_type)?.offers(node as never) ?? [])
+  return nodes.flatMap((node) => (registry.node(node.node_type)?.offers(node as never) ?? [])
     .filter((offer) => offer.kind === 'state')
     .map((offer) => ({ id: offer.name, label: offer.label, memory: true })));
 }

@@ -9,8 +9,6 @@ import { Bot } from 'lucide-react';
 export class AiNodeGuiBuilder extends NodeGuiBuilder {
   readonly nodeType = 'ai';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'AI';
 
   readonly hint = 'Ask a local or hosted model -- say what it should do, and ✨ writes its prompt';
