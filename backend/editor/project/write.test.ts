@@ -49,7 +49,7 @@ function sample(): Graph {
     ],
     edges: [
       { id: 'e1', source_node_id: 'pick', source_port_id: 'data', target_node_id: 'count', target_port_id: 'files' },
-      { id: 'e2', source_node_id: 'count', source_port_id: 'total', target_node_id: 'say', target_port_id: 'total' },
+      { id: 'e2', source_node_id: 'count', source_port_id: 'total', target_node_id: 'say', target_port_id: 'total', via: ['B2'] },
       { id: 'e3', source_node_id: 'say', source_port_id: 'output', target_node_id: 'told', target_port_id: 'value' },
     ],
     gui: { blocks: [{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }] },
@@ -90,11 +90,11 @@ describe('a project folder', () => {
     expect(existsSync(join(dir, 'nodes/told'))).toBe(false);
     expect(JSON.parse(await text('gui.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
 
-    // The flow says no more than who is wired to whom; what a node is, is the list's.
+    // The flow says no more than who is wired to whom, and through which cell a wire is drawn; what a node is, is the list's.
     expect(JSON.parse(await text('graph-flow.json'))).toEqual({
       name: 'Sample',
       description: 'All the writing there is.',
-      wires: ['pick.data -> count.files', 'count.total -> say.total', 'say.output -> told.value'],
+      wires: ['pick.data -> count.files', 'count.total -> say.total via B2', 'say.output -> told.value'],
     });
     const listed = JSON.parse(await text('graph-nodes.json'));
     expect(Object.keys(listed)).toEqual(['pick', 'count', 'say', 'told']);

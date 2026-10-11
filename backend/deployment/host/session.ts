@@ -666,10 +666,11 @@ export function holderOf(session: Session | null = null, options: Omit<SessionOp
 /** Where a node is drawn on the canvas: not part of what a graph does or a gui shows. */
 const DRAWN = new Set(['position', 'width', 'height']);
 
-/** *graph* written out without where its nodes are drawn: dragging one is no new design. */
+/** *graph* written out without where its nodes are drawn and through which cells its wires: dragging one, or pulling one, is no new design. */
 function designText(graph: Graph): string {
   return JSON.stringify(graph, function (this: Record<string, unknown>, key, value) {
-    return DRAWN.has(key) && 'node_type' in this ? undefined : value;
+    const drawn = (DRAWN.has(key) && 'node_type' in this) || (key === 'via' && 'source_node_id' in this);
+    return drawn ? undefined : value;
   });
 }
 
