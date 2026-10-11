@@ -312,7 +312,7 @@ export function changePrompt(current: Graph, description: string): string {
     `This is the graph as it is now:\n\`\`\`json\n${JSON.stringify(withoutWriting(current), null, 2)}\n\`\`\``,
     `Change it as follows:\n${description}`,
     'Answer with the whole graph after the change, as one complete document of the same shape. Keep every '
-      + 'node\'s id, and keep everything the change does not touch -- nodes, wires, positions, labels, settings, '
+      + 'node\'s id, and keep everything the change does not touch -- nodes, wires, labels, settings, '
       + 'code and prompts -- exactly as it is. A new node gets an id no other node has.',
   ].join('\n\n');
 }

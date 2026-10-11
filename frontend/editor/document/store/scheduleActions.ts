@@ -53,7 +53,7 @@ const still = (table: Table): Moved => ({ table, column: (c) => c, row: (r) => r
 export function scheduleActions(
   set: (recipe: (state: GraphStore) => void) => void,
   get: () => GraphStore,
-): Pick<GraphStore, 'refit' | 'aimCard' | 'clearAim' | 'dropCard' | 'targetFor' | 'thinOut' | 'resizeCard' | 'routeWire' | 'pullWire' | 'endPull'> {
+): Pick<GraphStore, 'refit' | 'aimCard' | 'clearAim' | 'springBack' | 'dropCard' | 'targetFor' | 'thinOut' | 'resizeCard' | 'routeWire' | 'pullWire' | 'endPull'> {
   return {
     refit: () => {
       const s = get();
@@ -90,6 +90,14 @@ export function scheduleActions(
       });
     },
 
+    springBack: () => {
+      const s = get();
+      set((state) => {
+        state.aim = null;
+        moveCards(state, placed(s.table, nodesOf(s)));
+      });
+    },
+
     dropCard: (id) => {
       const s = get();
       const at = s.aim?.id === id ? s.aim.target : null;
@@ -118,13 +126,13 @@ export function scheduleActions(
     },
 
     thinOut: () => {
-      get().commit();
       const s = get();
       const nodes = nodesOf(s);
       const before = s.table;
       const table = thinTable(nodes, edgesOf(s), registry, before);
       const size = (t: Table): string => `${Math.max(0, ...t.map((row) => row.length))} columns, ${t.length} rows`;
       if (JSON.stringify(table) === JSON.stringify(before)) return `Already thin: ${size(before)}.`;
+      get().commit();
       set((state) => {
         state.table = table;
         moveCards(state, placed(table, nodes));

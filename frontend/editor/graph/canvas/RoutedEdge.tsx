@@ -8,6 +8,8 @@ export interface Route {
   points: { x: number; y: number }[];
   /** The wire touches the card that is chosen: its handle is shown. */
   lit: boolean;
+  /** There is a column between its ends, so a cell it could be drawn through. */
+  routable: boolean;
 }
 
 /**
@@ -41,7 +43,7 @@ export default function RoutedEdge(props: EdgeProps<Route>) {
   const [straight, straightX, straightY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
   const path = routed ? pathThrough(sourceX, sourceY, targetX, targetY, points) : straight;
   const handle = routed ? points[Math.floor((points.length - 1) / 2)] : { x: straightX, y: straightY };
-  const shown = hover || pulling || !!selected || !!data?.lit || routed;
+  const shown = (data?.routable || routed) && (hover || pulling || !!selected || !!data?.lit || routed);
   const over = (on: boolean): void => {
     window.clearTimeout(leaving.current);
     if (on) setHover(true);

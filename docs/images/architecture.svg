@@ -54,7 +54,7 @@
 <line class="arr" x1="68" y1="220" x2="68" y2="266" marker-end="url(#a)"/>
 <text class="s" x="76" y="244">writes</text>
 <rect class="file" x="16" y="268" width="440" height="50" rx="8"/>
-<text class="t" x="236" y="286" text-anchor="middle" dominant-baseline="central">graph-flow.json · graph-nodes.json · graph-layout.json</text>
+<text class="t" x="236" y="286" text-anchor="middle" dominant-baseline="central">graph-flow.json · graph-nodes.json · graph-schedule.json</text>
 <text class="s" x="236" y="306" text-anchor="middle" dominant-baseline="central">and a folder per node: input, output, code, prompt, history</text>
 <rect class="file" x="484" y="268" width="180" height="50" rx="8"/>
 <text class="t" x="574" y="286" text-anchor="middle" dominant-baseline="central">gui.json</text>

@@ -30,7 +30,7 @@ import { useGlide } from './useGlide';
 import { NEW, nodesOf } from '../../document/store/scheduleActions';
 import { sizesOf } from '../../document/model/graphDoc';
 import { CARD, gridOf, topLeft } from '../../document/model/scheduleLayout';
-import { cellName, parseCell } from '../../../../graph/schedule.ts';
+import { cellName, columnsOf, parseCell } from '../../../../graph/schedule.ts';
 import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
@@ -86,6 +86,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
     const selected = new Set(lit.split('\n'));
     const reads = new Set(passive ? passive.split('\u0000') : []);
     const grid = gridOf(table, sizesOf(nodesOf(useGraphStore.getState())), { column: opens, row: !!pulling });
+    const column = columnsOf(table);
     return rfEdges.map((edge) => {
       const named = pulling?.edge === edge.id ? (pulling.cell ? [cellName(pulling.cell.column, pulling.cell.row)] : []) : (edge.data?.via as string[] | undefined) ?? [];
       const points = named.flatMap((name) => {
@@ -94,7 +95,9 @@ export default function GraphCanvas({ active }: { active: boolean }) {
         const row = cell && grid.rows[cell.row];
         return column && row ? [{ x: column.centre, y: row.centre }] : [];
       });
-      return { ...drawnWire(edge, selected, reads), type: 'routed', data: { points, lit: selected.has(edge.source) || selected.has(edge.target) } };
+      // A wire between neighbouring columns has no cell to go through.
+      const span = Math.abs((column.get(edge.target) ?? 0) - (column.get(edge.source) ?? 0));
+      return { ...drawnWire(edge, selected, reads), type: 'routed', data: { points, lit: selected.has(edge.source) || selected.has(edge.target), routable: span > 1 } };
     });
     // `sized` stands for the sizes the grid is worked out from.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,6 +175,27 @@ export default function GraphCanvas({ active }: { active: boolean }) {
     const { dx, dy } = panToShow(onScreen(node), view);
     if (dx || dy) rfInstance.setViewport({ x: x + dx, y: y + dy, zoom }, { duration: 250 });
   }, [rfNodes, rfInstance, active, documentOpen, minZoom]);
+  // A column that opened, or a card made bigger, can push what is after it out of sight: once the cards have
+  // settled, the view takes it in again where that still reads (as for a node added).
+  const tableKey = useGraphStore((s) => JSON.stringify(s.table));
+  React.useEffect(() => {
+    const wrapper = reactFlowWrapper.current;
+    if (!rfInstance || !wrapper || !active) return undefined;
+    const timer = window.setTimeout(() => {
+      const nodes = rfInstance.getNodes();
+      if (!nodes.length || !nodes.every((node) => !!node.width && !!node.height)) return;
+      const { x, y, zoom } = rfInstance.getViewport();
+      const view = { x: 0, y: 0, width: wrapper.clientWidth, height: wrapper.clientHeight };
+      const seen = nodes.map((node) => {
+        const at = node.positionAbsolute ?? node.position;
+        return { x: at.x * zoom + x, y: at.y * zoom + y, width: (node.width ?? 0) * zoom, height: (node.height ?? 0) * zoom };
+      });
+      if (allInView(seen, view)) return;
+      const whole = getViewportForBounds(getNodesBounds(nodes), view.width, view.height, minZoom, Math.min(zoom, 1), 0.1);
+      if (whole.zoom >= READABLE_ZOOM) rfInstance.setViewport(whole, { duration: 250 });
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [tableKey, rfInstance, active, minZoom]);
   // The map of the whole graph, only where the canvas has room for it beside
   // what it maps: in a narrow window it covered a third of it.
   const roomy = useStore((s) => s.width >= 640);
@@ -301,8 +325,13 @@ export default function GraphCanvas({ active }: { active: boolean }) {
           useGraphStore.getState().aimCard(node.id, { x: node.position.x + size.width / 2, y: node.position.y + size.height / 2 });
         }}
         onNodeDragStop={(_, node, dragged) => {
-          if (dragged.length > 1) useGraphStore.getState().clearAim();
-          else useGraphStore.getState().dropCard(node.id);
+          const size = sizesOf(nodesOf(useGraphStore.getState())).get(node.id) ?? { width: CARD.width, height: CARD.height };
+          if (dragged.length > 1) useGraphStore.getState().springBack();
+          else {
+            // The last place it was moved to counts, whether or not a move of it was reported since.
+            useGraphStore.getState().aimCard(node.id, { x: node.position.x + size.width / 2, y: node.position.y + size.height / 2 });
+            useGraphStore.getState().dropCard(node.id);
+          }
         }}
         // A drag begins once the node moves, not when the button goes down:
         // at ReactFlow's 0 every click on a node began one, and so was an

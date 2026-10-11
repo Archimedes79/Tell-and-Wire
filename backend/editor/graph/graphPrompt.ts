@@ -30,7 +30,6 @@ The JSON document must have this exact shape:
   "nodes": [
     {
       "id": str, "node_type": str, "label": str, "description": str,
-      "position": {"x": number, "y": number},
       "inputs": [{"id": str, "name": str, "kind": "input", "data_type": str, "multi": bool, "required": bool, "field": str (optional)}, ...],
       "outputs": [{"id": str, "name": str, "kind": "output", "data_type": str, "multi": bool, "required": bool}, ...],
       "config": {...}
@@ -98,17 +97,14 @@ const EXAMPLE = `A complete, working example:
   "metadata": {"name": "Count rows", "description": ""},
   "nodes": [
     {"id": "count", "node_type": "start", "label": "Count", "description": "The gui's Count button starts it.",
-     "position": {"x": 80, "y": 120},
      "inputs": [],
      "outputs": [{"id": "data", "name": "Data", "kind": "output", "data_type": "json", "multi": false, "required": false}],
      "config": {"started_by": "gui"}},
     {"id": "rows", "node_type": "code", "label": "Count rows", "description": "Count the lines of the text.",
-     "position": {"x": 420, "y": 120},
      "inputs": [{"id": "csv", "name": "CSV", "kind": "input", "data_type": "text", "multi": false, "required": false, "field": "csv"}],
      "outputs": [{"id": "rows", "name": "Rows", "kind": "output", "data_type": "number", "multi": false, "required": false}],
      "config": {"code": "function run(inputs) { const text = String(inputs.csv ?? '').trim(); return { rows: text ? text.split('\\\\n').length : 0 }; }"}},
     {"id": "shown", "node_type": "end", "label": "Rows", "description": "",
-     "position": {"x": 760, "y": 120},
      "inputs": [{"id": "value", "name": "Value", "kind": "input", "data_type": "any", "multi": false, "required": false}],
      "outputs": [],
      "config": {}}

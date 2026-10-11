@@ -80,6 +80,25 @@ opens a search: type `code` and press Enter, and the node arrives already wired.
 wire also sets what the input **takes** of the package: here the chosen file's content
 (`file.content`). The node's settings show it and let you change it.
 
+### The order the nodes run in
+
+The Graph tab is a table. **Time runs to the right**: a ruler on top counts the steps, one to a
+column, and a node runs after every node whose wire leads to it, so every wire ends in a later
+column than it starts. Cards **stacked in one column** have no wire between them: they may run
+in parallel or in any order, and a chip says so. A faint **+** marks the centre of each cell.
+
+- **Move a card** by dragging it. The cells it may stand in light up -- after the cards that feed
+  it, before the cards that need it -- and it is pulled to the nearest. Hold it in the **space
+  between two columns** and the columns after it slide over: it gets a column of its own. A column
+  that ends up empty closes by itself. A card dragged from the palette does the same.
+- **Make a card bigger** with the grip at its corner when it is chosen; the columns and rows after
+  it move over.
+- **Pull a wire** by the dot on it (it shows on a chosen card's wires and under the pointer) to
+  another cell, and it is drawn through that cell, round the cards. Double-click the dot for the
+  straight way; Esc while pulling lets go.
+- **Thin out** moves every card to the earliest column its wires allow and closes the empty rows.
+  Wires drawn round cards are straightened by it.
+
 An empty Graph tab says where to start. A node's card has a 🗑 to delete it, as the Delete
 key does: nothing is asked, and Ctrl+Z brings it back. A **⚠ N problems** chip in the bar
 under the canvas lists what `check` finds, for example a loop that no data node closes or
@@ -279,7 +298,7 @@ it; the delivered gui has a Stop of its own while a run goes.
 **File → Open…** and **Save as…** open a file browser: pick a folder or file, or type a
 path in its address box and press Enter. **Save as…** with a name without `.json` writes
 the tool as a folder: `graph-flow.json` (a line per wire), `graph-nodes.json` (each node's kind,
-heading, text, settings and ports), `graph-layout.json` (positions), `gui.json` (the blocks),
+heading, text, settings and ports), `graph-schedule.json` (the order they run in, and where they stand), `gui.json` (the blocks),
 and a folder `nodes/<id>/` for each node that keeps code or text of its own. A name ending
 in `.json` writes one file with everything inline. **Save as…** onto a tool or graph file
 that is already there asks first (**Replace**). Anything that would drop unsaved changes (New, Open, Reload, a drop) asks

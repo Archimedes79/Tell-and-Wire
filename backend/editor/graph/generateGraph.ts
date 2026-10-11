@@ -37,7 +37,7 @@ function said(node: unknown): string {
 
 /**
  * *answer* with what it left out of *current* put back: the graph's name and
- * scheme, where each node it kept stands and the size it was drawn at, and
+ * scheme, where each node it kept stands (the schedule) and the size it was drawn at, and
  * the gui, when the answer says nothing of it. Left out, each fell to its
  * default -- a change to one node renamed the tool and moved every node into
  * the corner.
@@ -59,6 +59,8 @@ function keptFrom(current: Graph, answer: unknown, entry: string): unknown {
   return {
     ...document, metadata: { ...current.metadata, ...(document.metadata ?? {}) }, nodes,
     ...(document.gui === undefined && current.gui ? { gui: current.gui } : {}),
+    // How the cards stand is the person's: a node the change adds comes in at the left, and one it removes leaves (`tableFor`).
+    ...(current.schedule ? { schedule: current.schedule } : {}),
   };
 }
 

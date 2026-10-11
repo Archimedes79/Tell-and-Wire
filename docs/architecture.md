@@ -182,9 +182,9 @@ keys are sorted, and an unchanged save changes no byte (`backend/editor/project/
 
 ```
 my_tool/
-  graph-flow.json      name, description, every wire as one line: "draw.data -> chart.csv"
+  graph-flow.json      name, description, every wire as one line: "draw.data -> chart.csv", or "draw.data -> chart.csv via C2" when it is drawn through a cell
   graph-nodes.json     id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is, as a person said it
-  graph-layout.json    id -> { x, y, width?, height? }: positions and sizes on the canvas
+  graph-schedule.json  { table, size? }: the order the nodes run in and where they stand (the schedule, below)
   gui.json             the gui: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
     input.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
@@ -194,18 +194,28 @@ my_tool/
     data.json          the fields it starts with, an object; its ports follow them           (data)
     example.json       the same struct filled, an example of what it holds; absent, data.json stands in (data)
     history.md         every exchange with the model about this node
-    graph-flow.json, graph-nodes.json, graph-layout.json, nodes/   the graph a subgraph holds: a project folder of its own   (subgraph)
+    graph-flow.json, graph-nodes.json, graph-schedule.json, nodes/   the graph a subgraph holds: a project folder of its own   (subgraph)
   tests/<name>.json    kept rounds
   frontend/            optional: a page of the project's own, served at / instead of the built gui
   state.json           not the project's: what using it left behind
 ```
 
 - **The graph is three files**: `graph-flow.json` (the wires), `graph-nodes.json` (the nodes) and
-  `graph-layout.json` (where they sit). A run needs the first two and the node folders; the editor
-  alone reads `graph-layout.json`, and a node missing from it is put in a row. Every node has an
+  `graph-schedule.json` (when they run, and where they stand). A run needs the first two and the node
+  folders, and reads the third for the order; without it, a graph runs in the order of its wires. Every node has an
   entry in `graph-nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a `check`
   problem. The gui is no part of the graph: `gui.json` names start and end points by id, and a tool
   without a gui has no such file.
+- **The schedule** (`graph/schedule.ts`) is a table: rows of text, one id or `.` for an empty cell each,
+  `"table": ["start read .", ". clean summarize"]`. Its columns are the steps and time runs to the right;
+  nodes in one column have no wire between them, so they may run in parallel or in any order, and the
+  engine takes them top to bottom. One rule holds it: every wire but one that leaves a memory (`passiveWires`)
+  ends in a later column than it starts. A table that breaks it refuses the run and is a `check` problem,
+  naming the wire. `size` keeps the size of the cards a person resized (`{ "id": { "width", "height" } }`), and a
+  wire's `via` the cells it is drawn through, named as a spreadsheet does (`C2`: third column, second row): how
+  it is drawn, nothing a run does. Where a card is drawn follows from the table and the sizes, and is stored
+  nowhere. The editor keeps the table holding -- a card dropped, a wire made, a node deleted or added -- and
+  without a file a graph is laid out from its wires (`thinTable`).
 - **A folder in an older format is refused** with a message that says which files to rename.
 - **Only what a person said.** A setting at its default is not written, by the editor or by the
   folder's writer alike (`defaultNodeConfig`, `withoutDefaults` in `graph/graph.ts`), and neither

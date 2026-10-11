@@ -188,6 +188,8 @@ export interface GraphStore {
   aimCard: (id: string, centre: { x: number; y: number }) => void;
   /** The card in the hand let go with nothing to land on: everything back where the table says. */
   clearAim: () => void;
+  /** Every card back where the table says: cards dragged together are not put anywhere, they only spring back. */
+  springBack: () => void;
   /** The card *id* let go: put where it was aimed at, as one change of the table. */
   dropCard: (id: string) => void;
   /** Where a card brought to the point *point* of the canvas would go. */
