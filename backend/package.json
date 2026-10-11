@@ -1,6 +1,6 @@
 {
   "name": "tell-and-wire-backend",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "type": "module",
   "description": "Node code: what a deployment does (read a project, run its graph, serve it and its gui), what the editor adds (write, try, hand over), and the command line that puts them together.",

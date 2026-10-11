@@ -1,6 +1,6 @@
 {
   "name": "tell-and-wire-gui",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "type": "module",
   "description": "What a gui is, for the browser and for Node alike: its blocks and what each says of itself, and the format of gui.json. No build, no dependencies.",
