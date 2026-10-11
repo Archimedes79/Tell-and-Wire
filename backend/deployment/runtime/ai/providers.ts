@@ -768,7 +768,7 @@ export function aiService(settings: Partial<ProviderSettings> = {}): AiService {
     endpoints: { ...DEFAULT_SETTINGS.endpoints, ...settings.endpoints },
   };
 
-  const attempt = async <T>(call: () => Promise<T>): Promise<T> => {
+  const attempt = async <T>(call: () => Promise<T>, signal?: AbortSignal): Promise<T> => {
     let lastError: unknown;
     for (let tries = 1; tries <= config.attempts; tries += 1) {
       try {
@@ -777,7 +777,12 @@ export function aiService(settings: Partial<ProviderSettings> = {}): AiService {
         lastError = error;
         if (tries === config.attempts || !isRetryable(error)) throw error;
         const delay = config.retryDelay * 2 ** (tries - 1) * 1000;
-        await new Promise((wake) => setTimeout(wake, delay));
+        // A Stop is not made to wait out the pause before the next try.
+        await new Promise<void>((wake) => {
+          const timer = setTimeout(wake, delay);
+          signal?.addEventListener('abort', () => { clearTimeout(timer); wake(); }, { once: true });
+        });
+        if (signal?.aborted) throw lastError;
       }
     }
     throw lastError;
@@ -820,7 +825,7 @@ export function aiService(settings: Partial<ProviderSettings> = {}): AiService {
           throw new EmptyCompletionError(provider, model);
         }
         return turn;
-      });
+      }, request.signal);
 
       // An empty tool list is no tools: some providers reject `tools: []`, and
       // a session that opened no servers should cost a request nothing.
