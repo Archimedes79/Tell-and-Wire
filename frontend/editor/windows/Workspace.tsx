@@ -113,7 +113,8 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
   useEffect(() => {
     const node = left.current;
     if (!node) return;
-    const measure = () => setRoom({ width: node.clientWidth, height: node.clientHeight });
+    // Side by side from 1024 px; under it the panes stand one above the other and the page scrolls, so the height of the pane says nothing.
+    const measure = () => setRoom({ width: node.clientWidth, height: typeof matchMedia !== 'undefined' && !matchMedia('(min-width: 1024px)').matches ? Infinity : node.clientHeight });
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
@@ -124,7 +125,7 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
   // The cell it is drawn at: the product's, or -- fitted -- as large as the pane lets the whole window be, across and down.
   const rows = windowRows(window);
   const across = Math.floor((Math.max(120, room.width - 64) + GUI_GAP) / window.span - GUI_GAP);
-  const down = Math.floor((Math.max(160, room.height - 150) - 28 + GUI_GAP) / rows - GUI_GAP);
+  const down = !Number.isFinite(room.height) ? Infinity : Math.floor((Math.max(160, room.height - 150) - 28 + GUI_GAP) / rows - GUI_GAP);
   const cell = Math.max(16, Math.min(fit ? FIT_CELL : GUI_MAX_CELL, across, fit ? down : Infinity));
 
   const jump = (key: string) => {
@@ -195,8 +196,8 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0 flex">
-        <div ref={left} className="min-w-0 overflow-auto flex flex-col" style={{ flex: '1 1 0', background: SUNKEN }} data-pane="interface">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
+        <div ref={left} className="min-w-0 flex flex-col lg:flex-1 lg:basis-0 lg:overflow-auto" style={{ background: SUNKEN }} data-pane="interface">
           <div className="px-8 pt-3 flex items-center gap-3">
             <span className="text-[11px] uppercase tracking-wider" style={{ color: DIMMER }}>The window, as it will be used</span>
             <span className="flex-1" />
@@ -211,8 +212,8 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
           )}
           <AiContext text={windowContext(doc, window.id)} />
         </div>
-        <div style={{ width: 1, background: LINE }} aria-hidden />
-        <div className="min-w-0 overflow-auto px-6 py-4" style={{ flex: '1 1 0' }} data-pane="cells">
+        <div className="h-px w-full lg:h-auto lg:w-px shrink-0" style={{ background: LINE }} aria-hidden />
+        <div className="min-w-0 px-6 py-4 lg:flex-1 lg:basis-0 lg:overflow-auto" data-pane="cells">
           {problems.length > 0 && (
             <ul className="mb-4 rounded-lg px-4 py-3 text-xs flex flex-col gap-1" style={{ background: WARNING_FILL, color: WARNING_TEXT }}>
               {problems.map((problem) => <li key={problem.problem}>{problem.problem} <span style={{ opacity: 0.8 }}>{problem.fix}</span></li>)}
