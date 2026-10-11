@@ -82,7 +82,7 @@ export async function runMcpServer(folder?: string): Promise<void> {
     ai: { complete: (request) => nodeRuntime().ai.complete(request) },
     runtime: () => nodeRuntime(),
     core: () => chosenCore(),
-    target: () => aiSetting(),
+    target: () => aiSetting(process.cwd(), process.env, 'write'),
     secrets: machineSecrets,
   });
 

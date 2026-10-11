@@ -86,8 +86,11 @@ node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on
 
 Open **⚙ Settings**, fill in what you need, press **Save**:
 
-- **AI**: the provider and model. This one setting serves ✨, ▶ Try and every AI node
-  that does not name its own model.
+- **AI that runs the nodes** and **AI that writes**: a provider and a model each. The first
+  serves every AI node that does not name its own model, a code node's `node.llm`, ▶ Try and
+  every run, also in a delivered tool. The second serves ✨ (a node's code and prompt, a whole
+  graph, the bar under the canvas) and is the first one until you set it apart -- a larger
+  model may be worth it for writing, a small one enough for the nodes, or the other way round.
 - **Keys** and **Server addresses**: paste an API key or a server address. Keys are
   write-only: saved on this machine, never shown again.
 
@@ -95,7 +98,8 @@ Settings are saved in `ai-settings.json`. It is looked for in the working direct
 folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as
 `~/.tell-and-wire/settings.json`; `TW_SETTINGS` names one file instead. The file is
 gitignored; `ai-settings.example.json` shows its shape. Environment variables win over the
-file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
+file: `TW_AI_PROVIDER`, `TW_AI_MODEL` (the nodes), `TW_WRITING_PROVIDER`, `TW_WRITING_MODEL`
+(writing), and the key and address variables below.
 
 | Provider (id) | Cost | Key or address |
 |---|---|---|
@@ -108,7 +112,9 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
 | OpenAI-compatible (`openai_compatible`) | depends | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` |
 
 With nothing set, Tell & Wire uses a local model server that is running (Ollama or
-LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
+LM Studio), else Ollama, and the editor says at once if that is not running. For Gemini, use
+the `-latest` model names; dated names are retired. Ollama is asked for a context window as large
+as the request (4096 to 32768 tokens), since it cuts a longer prompt silently at its own default.
 
 A small local model slips now and then: an empty answer, broken JSON, a key left out. Tell & Wire
 asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see

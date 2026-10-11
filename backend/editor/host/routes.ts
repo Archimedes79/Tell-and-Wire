@@ -18,6 +18,7 @@ import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { withoutWriting } from '../../../graph/editor/handedOn.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { startFromGui } from '../../../gui/gui.ts';
+import { completeGui } from '../../../gui/editor/complete.ts';
 import { CannotBundle, filesIn, writeBundle } from '../project/deploy/bundle.ts';
 import { builtGui } from '../../deployment/project/layout.ts';
 import { expandHome } from '../../deployment/host/browse.ts';
@@ -165,7 +166,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
         code: runtime.code,
         files: runtime.files,
         elements: registry,
-        target: await aiSetting(),
+        target: await aiSetting(process.cwd(), process.env, 'write'),
         calls,
       });
     }),
@@ -174,10 +175,12 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
     generationProgress: (asked) => ({ calls: generating.get(asked.id) ?? [] }),
 
     generateGraph: (asked) => watched(asked.progress_id, async (calls) => {
-      const target = await aiSetting();
+      const target = await aiSetting(process.cwd(), process.env, 'write');
       const current = asked.graph ? parseGraph(asked.graph) : undefined;
       const { graph, explanation } = await generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
-      return { graph: parseGraph(graph), explanation };
+      const designed = parseGraph(graph);
+      completeGui(designed, registry);
+      return { graph: designed, explanation };
     }),
 
     async bundle(asked) {

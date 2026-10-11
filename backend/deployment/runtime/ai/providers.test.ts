@@ -155,6 +155,31 @@ describe('the wire formats', () => {
   });
 });
 
+/** What someone with nothing set up meets first: Node's "fetch failed", a bare 400, and a window too small for the prompt. */
+describe('a newcomer', () => {
+  it('is told where nothing answers and what to do about a key, a model or a limit -- and Ollama is given a window as large as the request', async () => {
+    const refused = vi.fn(async () => { throw Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNREFUSED' } }); });
+    vi.stubGlobal('fetch', refused);
+    await expect(service({ provider: 'ollama', model: 'llama3', retryDelay: 0 }).complete({ prompt: 'x' })).rejects.toThrow(/Could not reach localhost:11434.*⚙ Settings/);
+    expect(refused).toHaveBeenCalledTimes(1);
+
+    const google = service({ provider: 'google', model: 'm', apiKeys: { google: 'k' }, attempts: 1 });
+    stubFetch([{ status: 400, body: [{ error: { message: 'Please pass a valid API key' } }] }]);
+    await expect(google.complete({ prompt: 'x' })).rejects.toThrow(/valid API key.*Check the key in ⚙ Settings/);
+    stubFetch([{ status: 429, body: { error: { message: 'Resource exhausted' } } }]);
+    await expect(google.complete({ prompt: 'x' })).rejects.toThrow(/wait a minute/);
+    stubFetch([{ status: 404, body: { error: 'model "llama3" not found' } }]);
+    await expect(service({ provider: 'ollama', model: 'llama3', attempts: 1 }).complete({ prompt: 'x' })).rejects.toThrow(/ollama pull/);
+
+    // Ollama cuts a prompt longer than its window from the start, where the instructions are: the window follows the request.
+    const calls = stubFetch([ollamaReply('ok')]);
+    const ollama = service({ provider: 'ollama', model: 'llama3' });
+    await ollama.complete({ prompt: 'hi' });
+    await ollama.complete({ prompt: 'hi', system: 'x'.repeat(45_000) });
+    expect(calls.map((call) => call.body.options.num_ctx)).toEqual([8192, 32768]);
+  });
+});
+
 describe('retrying', () => {
   it('goes again on an empty answer and on a busy provider, not on a refused request', async () => {
     // A local model answers "" under load, and counted as success that becomes

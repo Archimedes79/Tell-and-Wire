@@ -7,6 +7,7 @@ import LiveGeneration from '../graph/writing/LiveGeneration';
 import GraphProblems from './GraphProblems';
 import ProblemsChip from './ProblemsChip';
 import { useGraphAsk, type GraphAsk } from '../document/graphAsk';
+import { refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
 import { describeChange, graphChange } from '../document/graphChange';
 import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
@@ -17,7 +18,9 @@ import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } fro
  * before it is applied as one undo step. A change to one node's files is said
  * in that node's chats, with the node open.
  */
-export default function ChangeBar() {
+export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => void }) {
+  // Whether the AI can answer at all: a machine with nothing set up says so here, before the first words are lost to "fetch failed".
+  const ai = useProviderStatus();
   const lastStep = useGraphStore((s) => s.past[s.past.length - 1]);
   const [text, setText] = useState('');
   // One request at a time, and only the last is still wanted: Stop leaves the one on its way unwanted.
@@ -89,6 +92,7 @@ export default function ChangeBar() {
         <Note>
           <div className="flex items-start gap-3">
             <span className="flex-1 min-w-0" style={{ color: DANGER_TEXT }}>❌ {change.error}</span>
+            {change.error.includes('⚙ Settings') && <Button size="sm" className="shrink-0" onClick={onOpenSettings}>⚙ Settings</Button>}
             <Button variant="quiet" size="sm" className="shrink-0" onClick={reset} aria-label="Dismiss" title="Dismiss">✕</Button>
           </div>
           {change.calls.length > 0 && (
@@ -109,6 +113,15 @@ export default function ChangeBar() {
         </Note>
       )}
 
+      {change.phase === 'idle' && ai?.writing_problem && (
+        <Note>
+          <div className="flex items-center gap-3">
+            <span className="flex-1 min-w-0" style={{ color: TEXT }}>⚠ {ai.writing_problem}</span>
+            <Button size="sm" className="shrink-0" onClick={onOpenSettings}>⚙ Settings</Button>
+          </div>
+        </Note>
+      )}
+
       <div className="flex items-center gap-2.5 min-w-0">
         <label
           className="flex h-10 flex-1 min-w-0 items-center gap-2.5 rounded-lg px-3"
@@ -123,6 +136,8 @@ export default function ChangeBar() {
               event.preventDefault();
               void submit();
             }}
+            // A server started since the last look is noticed as the bar is used.
+            onFocus={() => { if (ai?.writing_problem) refreshProviderStatus(); }}
             disabled={asking}
             placeholder="Say what to change in the graph…"
             aria-label="Say what to change"

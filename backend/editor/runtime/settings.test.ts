@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { save, status } from './settings.ts';
-import { readSettingsFile } from '../../deployment/runtime/ai/settings.ts';
+import { providerStatus, save, status } from './settings.ts';
+import { aiSetting, readSettingsFile } from '../../deployment/runtime/ai/settings.ts';
 
 /**
  * The settings dialog's contract: what it may see, and what a save may change.
@@ -12,6 +12,8 @@ import { readSettingsFile } from '../../deployment/runtime/ai/settings.ts';
  * environment, so nothing here can read the developer's real keys or write
  * into their real file.
  */
+
+afterEach(() => { vi.unstubAllGlobals(); });
 
 async function own(contents?: unknown) {
   const dir = await mkdtemp(join(tmpdir(), 'ai-settings-'));
@@ -50,6 +52,34 @@ describe('settings', () => {
     await save({ ai: { provider: 'default', model: '' } }, '/nowhere', env);
     expect(readSettingsFile(file).ai).toBeUndefined();
     expect(readSettingsFile(file).api_keys).toEqual({ openai: 'keep-me', anthropic: 'new' });
+  });
+
+  it('keeps two AIs -- the nodes\' and the one that writes, which is the nodes\' until it is set apart -- each of provider and model on its own', async () => {
+    const { file, env } = await own({ ai: { provider: 'google', model: 'flash' } });
+    expect(await aiSetting('/nowhere', env, 'write')).toEqual({ provider: 'google', model: 'flash' });
+    await save({ writing: { provider: 'google', model: 'pro' } }, '/nowhere', env);
+    expect(readSettingsFile(file).writing_ai).toEqual({ provider: 'google', model: 'pro' });
+    expect(await aiSetting('/nowhere', env, 'write')).toEqual({ provider: 'google', model: 'pro' });
+    expect(await aiSetting('/nowhere', env)).toEqual({ provider: 'google', model: 'flash' });
+    // A model named alone is asked of the nodes' provider; the environment wins over the file.
+    await save({ writing: { provider: 'default', model: 'big' } }, '/nowhere', env);
+    expect(await aiSetting('/nowhere', env, 'write')).toEqual({ provider: 'google', model: 'big' });
+    expect(await aiSetting('/nowhere', { ...env, TW_WRITING_PROVIDER: 'openai' }, 'write')).toEqual({ provider: 'openai', model: 'big' });
+    expect(status('/nowhere', { ...env, TW_WRITING_MODEL: 'x' }).writing).toEqual({ provider: '', model: 'big', environment: ['TW_WRITING_MODEL'] });
+    await save({ writing: { provider: 'default', model: '' } }, '/nowhere', env);
+    expect(readSettingsFile(file).writing_ai).toBeUndefined();
+  });
+
+  it('says why the one AI setting cannot answer yet, in a sentence that says what to do', async () => {
+    vi.stubGlobal('fetch', async () => { throw new TypeError('fetch failed'); });
+    // Nothing set up resolves to Ollama, which is not there: "Now: ollama / llama3" would read as ready.
+    expect((await providerStatus('/nowhere', (await own()).env)).problem).toMatch('Ollama is not running at http://localhost:11434');
+    expect((await providerStatus('/nowhere', (await own({ ai: { provider: 'google' } })).env)).problem).toMatch(/No Google Gemini key yet.*aistudio/);
+    expect((await providerStatus('/nowhere', (await own({ ai: { provider: 'google' }, api_keys: { google: 'k' } })).env)).problem).toBe('');
+    // Running, but without the model it is asked for.
+    vi.stubGlobal('fetch', async () => ({ json: async () => ({ models: [{ name: 'mistral:latest' }] }) }));
+    const asked = (await own({ ai: { provider: 'ollama', model: 'llama3' } })).env;
+    expect((await providerStatus('/nowhere', asked)).problem).toMatch(/does not have "llama3".*ollama pull llama3.*mistral:latest/);
   });
 
   it('will not save over a file it cannot read, which would lose its keys and tool servers', async () => {

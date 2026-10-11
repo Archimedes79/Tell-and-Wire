@@ -15,7 +15,8 @@
 // Which tool servers this machine has is not said by this file but by the
 // machine's own settings file -- see `configuredMcpServers`.
 //
-// And it holds the one AI setting, which `aiSetting` alone resolves.
+// And it holds the two AI settings -- the one that writes (✨) and the one the nodes run on --
+// which `aiSetting` alone resolves.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -68,8 +69,10 @@ export function settingsPath(cwd = process.cwd(), env: Record<string, string | u
 }
 
 export interface SettingsFile {
-  /** The one AI setting (`aiSetting`), as ⚙ Settings saves it. */
+  /** The AI the nodes run on (`aiSetting`), as ⚙ Settings saves it. */
   ai?: { provider?: string; model?: string };
+  /** The AI that writes -- ✨ and the bar under the canvas --, where it is not the same one (`aiSetting`, 'write'). */
+  writing_ai?: { provider?: string; model?: string };
   api_keys?: Record<string, string>;
   /** Keyed by provider name: `endpoints.lmstudio`. */
   endpoints?: Record<string, string>;
@@ -210,24 +213,11 @@ export async function probeLocal(
 }
 
 /**
- * The one AI setting: where every AI call goes that does not name its own
- * provider and model -- ✨ and its probe, ▶ Try, and
- * every run, in the editor, from the command line and in a deployed tool
- * alike. Only a node that pins its own model is answered by
- * anything else.
- *
- * Read here and nowhere else, so the editor's "now: …" and what a run calls
- * cannot disagree. The file's `ai` section is what ⚙ Settings saves;
- * `TW_AI_PROVIDER` / `TW_AI_MODEL` are the same setting for a
- * machine with no dialog, and win over the file. With nothing set it is
- * whichever local provider is running, else Ollama. A provider named without a
- * model takes *its own* default, not whatever another provider has loaded.
+ * What a provider and a model, either of them left unsaid, come to. With no
+ * provider it is whichever local one is running, else Ollama. A provider named
+ * without a model takes *its own* default, not whatever another provider has loaded.
  */
-export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Promise<ModelChoice> {
-  // Each of the two on its own: a variable naming the model leaves the file's provider standing.
-  const saved = readSettingsFile(settingsPath(cwd, env)).ai;
-  let provider = env.TW_AI_PROVIDER || saved?.provider || '';
-  const model = env.TW_AI_MODEL || saved?.model || '';
+async function chosen(provider: string, model: string, cwd: string, env: Env): Promise<ModelChoice> {
   if (!provider) {
     for (const local of LOCAL_PROVIDERS) {
       if (await probeLocal(local, { cwd, env })) { provider = local; break; }
@@ -237,6 +227,33 @@ export async function aiSetting(cwd = process.cwd(), env: Env = process.env): Pr
   if (model) return { provider, model };
   const served = await probeLocal(provider, { cwd, env });
   return { provider, model: served?.[0] ?? DEFAULT_MODELS[provider] ?? '' };
+}
+
+/**
+ * The AI settings: two, because writing and running ask different things of a
+ * model. *run* (the default) is where every call of a node goes that does not
+ * name its own provider and model -- an AI node, a code node's `node.llm`, ▶ Try and
+ * every run, in the editor, from the command line and in a deployed tool alike.
+ * *write* is where ✨ goes -- a node's code and prompt, a whole graph, the bar under
+ * the canvas -- and is the first one's when nothing else is said: one AI is enough.
+ * Only a node that pins its own model is answered by anything else.
+ *
+ * Read here and nowhere else, so the editor's "now: …" and what a call goes to
+ * cannot disagree. The file's `ai` and `writing_ai` sections are what ⚙ Settings
+ * saves; `TW_AI_PROVIDER` / `TW_AI_MODEL` and `TW_WRITING_PROVIDER` /
+ * `TW_WRITING_MODEL` are the same settings for a machine with no dialog, and win
+ * over the file. Each of provider and model stands on its own: a variable naming the
+ * model leaves the file's provider standing, and a model named for writing alone
+ * is asked of the provider the nodes run on.
+ */
+export async function aiSetting(cwd = process.cwd(), env: Env = process.env, purpose: 'run' | 'write' = 'run'): Promise<ModelChoice> {
+  const file = readSettingsFile(settingsPath(cwd, env));
+  const running = await chosen(env.TW_AI_PROVIDER || file.ai?.provider || '', env.TW_AI_MODEL || file.ai?.model || '', cwd, env);
+  if (purpose === 'run') return running;
+  const provider = env.TW_WRITING_PROVIDER || file.writing_ai?.provider || '';
+  const model = env.TW_WRITING_MODEL || file.writing_ai?.model || '';
+  if (!provider && !model) return running;
+  return chosen(provider || running.provider, model, cwd, env);
 }
 
 /**

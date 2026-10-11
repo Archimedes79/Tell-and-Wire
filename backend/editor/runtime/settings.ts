@@ -13,10 +13,10 @@
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import {
-  aiSetting, LOCAL_PROVIDERS, parseSettingsFile, probeLocal, readSettingsFile, settingsPath, type SettingsFile,
+  aiSetting, configuredSettings, LOCAL_PROVIDERS, parseSettingsFile, probeLocal, readSettingsFile, settingsPath, type SettingsFile,
 } from '../../deployment/runtime/ai/settings.ts';
 import { Refusal } from '../../deployment/host/http.ts';
-import { CREDENTIALS, DEFAULT_SETTINGS, ENDPOINT_ENV } from '../../deployment/runtime/ai/providers.ts';
+import { CREDENTIALS, DEFAULT_SETTINGS, ENDPOINT_ENV, needsKey } from '../../deployment/runtime/ai/providers.ts';
 import type { ProviderStatus, SettingsPatch, SettingsStatus, Target } from '../host/api.ts';
 import { messageOf } from '../../../graph/errors.ts';
 
@@ -25,8 +25,9 @@ type Env = Record<string, string | undefined>;
 /** The providers whose base URL a person may point somewhere else: the ones the environment can point, too. */
 const ENDPOINT_PROVIDERS = Object.keys(ENDPOINT_ENV);
 
-/** The variables that are the one AI setting on a machine without the dialog. */
+/** The variables that are the two AI settings on a machine without the dialog: the nodes' and the writing one. */
 const AI_ENV = ['TW_AI_PROVIDER', 'TW_AI_MODEL'];
+const WRITING_ENV = ['TW_WRITING_PROVIDER', 'TW_WRITING_MODEL'];
 
 /** What the dialog shows: the AI saved, endpoints, and whether each credential is set — never the credential. */
 export function status(cwd = process.cwd(), env: Env = process.env): SettingsStatus {
@@ -49,6 +50,11 @@ export function status(cwd = process.cwd(), env: Env = process.env): SettingsSta
       provider: file.ai?.provider ?? '',
       model: file.ai?.model ?? '',
       environment: AI_ENV.filter((variable) => env[variable]?.trim()),
+    },
+    writing: {
+      provider: file.writing_ai?.provider ?? '',
+      model: file.writing_ai?.model ?? '',
+      environment: WRITING_ENV.filter((variable) => env[variable]?.trim()),
     },
     endpoints,
     credentials,
@@ -83,6 +89,13 @@ export async function edit(change: (file: SettingsFile) => void, cwd = process.c
   }
 }
 
+/** A provider and a model as the file keeps them: 'default' and a blank are "not set" and left out. */
+function kept(choice: { provider?: string; model?: string }): { provider?: string; model?: string } {
+  const provider = choice.provider && choice.provider !== 'default' ? choice.provider.trim() : '';
+  const model = String(choice.model ?? '').trim();
+  return { ...(provider ? { provider } : {}), ...(model ? { model } : {}) };
+}
+
 /**
  * Merge a change into the file and write it back.
  *
@@ -114,13 +127,17 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
     file.api_keys = apiKeys;
     file.endpoints = endpoints;
 
+    // 'default' or nothing is "not set": the entry goes, and `aiSetting` falls
+    // back as it does on a machine nobody configured.
     if (patch.ai) {
-      // 'default' or nothing is "not set": the entry goes, and `aiSetting` falls
-      // back as it does on a machine nobody configured.
-      const provider = patch.ai.provider && patch.ai.provider !== 'default' ? patch.ai.provider.trim() : '';
-      const model = String(patch.ai.model ?? '').trim();
-      file.ai = { ...(provider ? { provider } : {}), ...(model ? { model } : {}) };
-      if (!provider && !model) delete file.ai;
+      const ai = kept(patch.ai);
+      if (Object.keys(ai).length) file.ai = ai;
+      else delete file.ai;
+    }
+    if (patch.writing) {
+      const writing = kept(patch.writing);
+      if (Object.keys(writing).length) file.writing_ai = writing;
+      else delete file.writing_ai;
     }
   }, cwd, env);
   return status(cwd, env);
@@ -136,30 +153,59 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
  * only whether one is there: this goes to a terminal and into scrollback.
  */
 export async function setupLines(cwd = process.cwd(), env: Env = process.env): Promise<string[]> {
-  const { local, target } = await providerStatus(cwd, env);
-  const configured = status(cwd, env);
-
-  const trouble = (chosen: Target): string => {
-    if ((LOCAL_PROVIDERS as readonly string[]).includes(chosen.provider)) {
-      return local[chosen.provider]?.reachable
-        ? ''
-        : ` -- not answering at ${configured.endpoints[chosen.provider] || DEFAULT_SETTINGS.endpoints[chosen.provider]}`;
-    }
-    const wanted = CREDENTIALS[chosen.provider];
-    return wanted && !configured.credentials[chosen.provider]?.configured
-      ? ` -- no ${chosen.provider} API key (⚙ Settings, or ${wanted.env})`
-      : '';
-  };
-
-  return [`AI (✨, ▶ Try, runs): ${target.provider}/${target.model || '(no model)'}${trouble(target)}`];
+  const { target, problem, writing, writing_problem } = await providerStatus(cwd, env);
+  const line = (what: string, chosen: Target, trouble: string) => `${what}: ${chosen.provider}/${chosen.model || '(no model)'}${trouble ? ` -- ${trouble}` : ''}`;
+  const apart = writing.provider !== target.provider || writing.model !== target.model;
+  return [line(apart ? 'AI that runs the nodes' : 'AI (✨, ▶ Try, runs)', target, problem), ...(apart ? [line('AI that writes (✨)', writing, writing_problem)] : [])];
 }
 
-/** Which providers are usable right now, and what the one AI setting resolves to. */
+/** What a person calls each provider, in a sentence. */
+const NAMES: Record<string, string> = {
+  ollama: 'Ollama', lmstudio: 'LM Studio', openai: 'OpenAI', anthropic: 'Anthropic', google: 'Google Gemini',
+  github_copilot: 'GitHub Models', openai_compatible: 'The OpenAI-compatible server',
+};
+
+/** A model as a server lists it: Ollama's "llama3:latest" is what "llama3" asks for. */
+const bare = (model: string): string => model.replace(/:latest$/, '');
+
+/**
+ * Why *target* cannot answer yet, in one sentence that says what to do -- or
+ * nothing. A machine with nothing configured resolves to Ollama whether or not
+ * it runs, and "Now: ollama / llama3" reads as ready until the first call
+ * fails with a word nobody can use: this is asked before that.
+ */
+function troubleWith(target: Target, local: ProviderStatus['local'], cwd: string, env: Env): string {
+  const { provider, model } = target;
+  const name = NAMES[provider] ?? provider;
+  const probed = local[provider];
+  if (probed) {
+    const address = configuredSettings(env, cwd).endpoints?.[provider] ?? DEFAULT_SETTINGS.endpoints[provider];
+    if (!probed.reachable) return `${name} is not running at ${address}. Start it, or choose another AI in ⚙ Settings (Google Gemini has a free tier).`;
+    const pull = provider === 'ollama' ? ` In a terminal: ollama pull ${model || 'llama3'}` : ' Load one in it';
+    if (!probed.models.length) return `${name} is running but has no model yet.${pull}.`;
+    if (model && !probed.models.map(bare).includes(bare(model))) {
+      return `${name} does not have "${model}". ${pull.trim()}, or name one it has in ⚙ Settings: ${probed.models.join(', ')}.`;
+    }
+    return '';
+  }
+  if (!model) return `No model is named for ${name} yet: name one in ⚙ Settings.`;
+  if (provider === 'openai_compatible' && !configuredSettings(env, cwd).endpoints?.[provider]) {
+    return 'No address for the OpenAI-compatible server yet: paste one in ⚙ Settings.';
+  }
+  if (needsKey(provider) && !status(cwd, env).credentials[provider]?.configured) {
+    return `No ${name} key yet: paste one in ⚙ Settings${provider === 'google' ? ' (a free one: aistudio.google.com/apikey)' : ''}.`;
+  }
+  return '';
+}
+
+/** Which providers are usable right now, and what the two AI settings resolve to. */
 export async function providerStatus(cwd = process.cwd(), env: Env = process.env): Promise<ProviderStatus> {
   const local: ProviderStatus['local'] = {};
   await Promise.all(LOCAL_PROVIDERS.map(async (provider) => {
     const models = await probeLocal(provider, { refresh: true, cwd, env });
     local[provider] = { reachable: models !== null, models: models ?? [] };
   }));
-  return { local, target: await aiSetting(cwd, env) };
+  const target = await aiSetting(cwd, env);
+  const writing = await aiSetting(cwd, env, 'write');
+  return { local, target, problem: troubleWith(target, local, cwd, env), writing, writing_problem: troubleWith(writing, local, cwd, env) };
 }

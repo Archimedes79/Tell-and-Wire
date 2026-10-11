@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { AIProvider } from '../document/graph';
 import { call, type SettingsPatch, type SettingsStatus } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
-import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
+import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus, useProviderStatus, type Purpose } from './fields/ProviderModelSelect';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { DEFAULT_ENDPOINTS } from '../../../graph/endpoints.ts';
@@ -18,6 +18,43 @@ const KEY_HINTS: Record<string, string> = {
 };
 
 const label = (id: string): string => AI_PROVIDER_LABELS[id as AIProvider] ?? id;
+
+/** Where an AI comes from and what it takes, said under the provider that is chosen: the first question of someone who has none yet. */
+const PROVIDER_HELP: Partial<Record<AIProvider, string>> = {
+  ollama: 'Free, on your computer: install Ollama (ollama.com), then run `ollama pull llama3` in a terminal.',
+  lmstudio: 'Free, on your computer: load a model in LM Studio and start its local server.',
+  google: 'Free tier: get a key at aistudio.google.com/apikey and paste it under Keys.',
+  github_copilot: 'Free tier: a GitHub token with the models:read scope, pasted under Keys.',
+  openai: 'Paid: paste a key under Keys.',
+  anthropic: 'Paid: paste a key under Keys.',
+  openai_compatible: 'Any server that speaks the OpenAI API: its address under Server addresses.',
+};
+
+/**
+ * What a chosen AI comes to and what is wrong with it: where it comes from and what it takes, what
+ * it resolves to now, and -- for the AI as it is saved, not for a choice not saved yet -- why it
+ * cannot answer. Where an environment variable sets it, that wins over what is saved here.
+ */
+function Chosen({ purpose, provider, saved, probe }: {
+  purpose: Purpose; provider: AIProvider; saved?: SettingsStatus['ai']; probe: ReturnType<typeof useProviderStatus>;
+}) {
+  const trouble = purpose === 'write' ? probe?.writing_problem : probe?.problem;
+  // A writing AI left to the nodes' says nothing of its own: it is the nodes' problem, said there.
+  const own = purpose === 'run' || !!saved?.provider || !!saved?.model;
+  return (
+    <>
+      {PROVIDER_HELP[provider] && <p className="text-xs mt-2" style={{ color: DIM }}>{PROVIDER_HELP[provider]}</p>}
+      <p className="text-xs mt-3" style={{ color: DIM }}>Now: <strong style={{ color: TEXT }}>{nowText(probe, purpose)}</strong></p>
+      {trouble && own && provider === (saved?.provider || 'default') && <p className="text-xs mt-1" style={{ color: DANGER_TEXT }} role="status">{trouble}</p>}
+      {saved && saved.environment.length > 0 && (
+        <div className="text-xs rounded-lg px-3 py-2 mt-3" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
+          {saved.environment.map((variable, i) => <span key={variable}>{i > 0 && ' and '}<code>{variable}</code></span>)}{' '}
+          {saved.environment.length > 1 ? 'are' : 'is'} set where the editor was started and wins over what is saved here.
+        </div>
+      )}
+    </>
+  );
+}
 
 /**
  * The AI the tool asks and what it needs to ask it, as one form with one Save:
@@ -39,6 +76,8 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   const [saved, setSaved] = useState<SettingsStatus | null>(null);
   const [provider, setProvider] = useState<AIProvider>('default');
   const [model, setModel] = useState('');
+  const [writingProvider, setWritingProvider] = useState<AIProvider>('default');
+  const [writingModel, setWritingModel] = useState('');
   const [endpoints, setEndpoints] = useState<Record<string, string>>({});
   /** Keys typed and not saved yet, by provider; and the stored keys to take away. */
   const [keys, setKeys] = useState<Record<string, string>>({});
@@ -53,19 +92,25 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
       setSaved(data);
       setProvider((data.ai.provider || 'default') as AIProvider);
       setModel(data.ai.model);
+      setWritingProvider((data.writing.provider || 'default') as AIProvider);
+      setWritingModel(data.writing.model);
       setEndpoints(data.endpoints);
     }).catch((error) => setProblem(errorText(error, 'Could not read the AI settings file.')));
   }, []);
 
+  // The keys the two AIs need come first, the nodes' before the writing one's.
+  const needed = [provider === 'default' ? probe?.target.provider : provider, writingProvider === 'default' ? probe?.writing.provider : writingProvider];
+  const rank = (id: string) => { const at = needed.indexOf(id); return at < 0 ? needed.length : at; };
   const typedKeys = Object.fromEntries(Object.entries(keys).map(([id, key]) => [id, key.trim()]).filter(([, key]) => key));
   const changed = saved !== null && (
     provider !== (saved.ai.provider || 'default') || model !== saved.ai.model
+    || writingProvider !== (saved.writing.provider || 'default') || writingModel !== saved.writing.model
     || Object.keys(saved.endpoints).some((id) => (endpoints[id] ?? '') !== saved.endpoints[id])
     || Object.keys(typedKeys).length > 0 || removing.length > 0
   );
 
   const save = async () => {
-    const patch: SettingsPatch = { ai: { provider, model }, endpoints, api_keys: typedKeys, clear_keys: removing };
+    const patch: SettingsPatch = { ai: { provider, model }, writing: { provider: writingProvider, model: writingModel }, endpoints, api_keys: typedKeys, clear_keys: removing };
     setSaving(true);
     setProblem('');
     try {
@@ -95,9 +140,9 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
     >
       <div className="p-5 space-y-6">
         <section>
-          <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI</h3>
+          <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI that runs the nodes</h3>
           <p className="text-xs mb-3" style={{ color: DIM }}>
-            What ✨, ▶ Try and every run call, unless a node names its own.
+            What AI nodes, a code node&apos;s <code>node.llm</code>, ▶ Try and every run call, unless a node names its own.
           </p>
           <ProviderModelSelect
             provider={provider}
@@ -106,13 +151,23 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             onModelChange={setModel}
             defaultLabel={() => 'Not set (a local model that is running, else Ollama)'}
           />
-          <p className="text-xs mt-3" style={{ color: DIM }}>Now: <strong style={{ color: TEXT }}>{nowText(probe)}</strong></p>
-          {saved && saved.ai.environment.length > 0 && (
-            <div className="text-xs rounded-lg px-3 py-2 mt-3" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
-              {saved.ai.environment.map((variable, i) => <span key={variable}>{i > 0 && ' and '}<code>{variable}</code></span>)}{' '}
-              {saved.ai.environment.length > 1 ? 'are' : 'is'} set where the editor was started and wins over what is saved here.
-            </div>
-          )}
+          <Chosen purpose="run" provider={provider} saved={saved?.ai} probe={probe} />
+        </section>
+
+        <section>
+          <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI that writes</h3>
+          <p className="text-xs mb-3" style={{ color: DIM }}>
+            What ✨ Code, ✨ Prompt, Generate all and the bar under the canvas call. A larger model than the nodes need may be worth it here.
+          </p>
+          <ProviderModelSelect
+            provider={writingProvider}
+            model={writingModel}
+            onProviderChange={setWritingProvider}
+            onModelChange={setWritingModel}
+            defaultLabel={() => 'Same as the AI that runs the nodes'}
+            purpose="write"
+          />
+          <Chosen purpose="write" provider={writingProvider} saved={saved?.writing} probe={probe} />
         </section>
 
         {saved && (
@@ -120,7 +175,8 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             <section>
               <h3 className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Keys</h3>
               <div className="space-y-2">
-                {Object.keys(saved.credentials).map((id) => {
+                {/* The keys of the AIs chosen come first: they are the ones that are needed. */}
+                {Object.keys(saved.credentials).sort((a, b) => rank(a) - rank(b)).map((id) => {
                   const state = saved.credentials[id];
                   const going = removing.includes(id);
                   return (
