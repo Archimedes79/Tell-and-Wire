@@ -16,10 +16,10 @@ describe('which files a graph may reach', () => {
     for (const written of ['/etc/passwd', 'C:\\Windows\\win.ini', '\\\\host\\share\\x', '../x', 'data/../../x']) expect(() => inProject(written)).toThrow(/absolute|leaves/);
 
     const outside = mkdtempSync(join(tmpdir(), 'tell-and-wire-confine-'));
-    const link = join(process.cwd(), 'confine-probe-link');
+    const link = join(process.cwd(), '.confine-probe-link');
     try {
       symlinkSync(outside, link, 'junction');
-      expect(() => inProject('confine-probe-link/secret.txt')).toThrow(/leads out/);
+      expect(() => inProject('.confine-probe-link/secret.txt')).toThrow(/leads out/);
     } finally {
       rmSync(link, { force: true });
       rmSync(outside, { recursive: true, force: true });

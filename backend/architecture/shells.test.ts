@@ -10,24 +10,17 @@
  * One file is allowed to read the document without asking: `graph/triggers.ts`
  * lists a graph's start points that start themselves, from the file alone.
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { filesUnder } from './filesUnder.ts';
 
 /** The repository: the shells are graph/, gui/ and backend/, the elements the folders of the nodes' and widgets' definitions, runners and designs. */
 const ROOT = new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const ELEMENTS = ['graph/nodes/', 'graph/editor/nodes/', 'backend/deployment/runtime/nodes/', 'gui/widgets/', 'gui/editor/widgets/'];
 const TYPE_SWITCH = /\b(node_type|nodeType)\s*[!=]==?\s*['"]/;
 
-function sources(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    if (name === 'node_modules') return [];
-    return statSync(path).isDirectory() ? sources(path) : [path];
-  });
-}
-
-const SHELLS = [...sources(join(ROOT, 'graph')), ...sources(join(ROOT, 'gui')), ...sources(join(ROOT, 'backend'))]
+const SHELLS = [...filesUnder(join(ROOT, 'graph')), ...filesUnder(join(ROOT, 'gui')), ...filesUnder(join(ROOT, 'backend'))]
   .map((path) => ({ path, name: relative(ROOT, path).split(sep).join('/') }))
   .filter(({ name }) => /\.ts$/.test(name) && !/\.test\.ts$/.test(name) && !ELEMENTS.some((element) => name.startsWith(element)));
 
@@ -47,7 +40,7 @@ describe('the shells around the elements', () => {
 
 describe('the graph\'s code', () => {
   it('imports nothing from backend/ or frontend/: a core in another language is a graph/ of its own', () => {
-    const graph = sources(join(ROOT, 'graph')).filter((path) => /\.ts$/.test(path) && !/\.test\.ts$/.test(path) && !path.includes(`${sep}test${sep}`));
+    const graph = filesUnder(join(ROOT, 'graph')).filter((path) => /\.ts$/.test(path) && !/\.test\.ts$/.test(path) && !path.includes(`${sep}test${sep}`));
     const reaching = graph.flatMap((path) => [...readFileSync(path, 'utf8').matchAll(/(?:from|import\()\s*'(\.[^']+)'/g)]
       .map((match) => relative(ROOT, join(path, '..', match[1])).split(sep).join('/'))
       .filter((target) => !target.startsWith('graph/'))

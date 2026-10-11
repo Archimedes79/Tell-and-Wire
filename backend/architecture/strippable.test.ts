@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { filesUnder } from './filesUnder.ts';
 
 /**
  * The graph's code and the backend run with no build step, anywhere.
@@ -43,21 +44,13 @@ const FORBIDDEN: { pattern: RegExp; what: string; instead: string }[] = [
   },
 ];
 
-async function sourcesUnder(dir: string): Promise<string[]> {
-  const found: string[] = [];
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) { if (entry.name !== 'node_modules') found.push(...await sourcesUnder(full)); }
-    else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) found.push(full);
-  }
-  return found;
-}
+const sourcesUnder = (dir: string): string[] => filesUnder(dir).filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'));
 
 describe('every source Node runs survives type stripping', () => {
   it('uses nothing that Node would have to compile', async () => {
     const offences: string[] = [];
 
-    for (const file of [...await sourcesUnder(join(ROOT, 'graph')), ...await sourcesUnder(join(ROOT, 'gui')), ...await sourcesUnder(join(ROOT, 'backend'))]) {
+    for (const file of [...sourcesUnder(join(ROOT, 'graph')), ...sourcesUnder(join(ROOT, 'gui')), ...sourcesUnder(join(ROOT, 'backend'))]) {
       const source = await readFile(file, 'utf8');
       // Comments talk about these constructs on purpose; only code counts.
       const code = source

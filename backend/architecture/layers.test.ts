@@ -15,19 +15,14 @@
  *    other. The wire's files (`host/api.ts`) are types and tables for either end and rank with nothing.
  * 4. `frontend/` imports of `backend/` only the wire's files.
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { filesUnder } from './filesUnder.ts';
 
 const ROOT = resolve(dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', '..');
 
-function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    if (name === 'node_modules' || name === 'dist') return [];
-    const path = join(dir, name);
-    return statSync(path).isDirectory() ? walk(path) : [path];
-  });
-}
+const walk = (dir: string): string[] => filesUnder(dir, ['node_modules', 'dist']);
 
 const rel = (path: string): string => relative(ROOT, path).split(sep).join('/');
 const SOURCES = ['graph', 'gui', 'backend', 'frontend'].flatMap((dir) => walk(join(ROOT, dir)))

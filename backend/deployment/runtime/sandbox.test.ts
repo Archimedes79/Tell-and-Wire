@@ -19,8 +19,8 @@ import { nodeCode } from './services.ts';
 
 describe('a code body', () => {
   it('may read the working directory but not the settings file, and write nowhere but its own folder', async () => {
-    const settings = join(process.cwd(), 'sandbox-probe-settings.json');
-    const beside = join(process.cwd(), 'sandbox-probe-beside.txt');
+    const settings = join(process.cwd(), '.sandbox-probe-settings.json');
+    const beside = join(process.cwd(), '.sandbox-probe-beside.txt');
     writeFileSync(settings, '{"api_keys":{"openai":"sk-planted"}}');
     process.env.TW_SETTINGS = settings;
     try {

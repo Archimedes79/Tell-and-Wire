@@ -43,3 +43,8 @@ tell-and-wire*.zip
 
 # What an example's end point writes when a test runs one from a workspace folder.
 /backend/output/
+
+# What tests leave in backend/ when they are stopped halfway: scratch files, hidden so that no scan of the sources looks into them.
+/backend/.tell-and-wire-listing-*
+/backend/.confine-probe-link
+/backend/.sandbox-probe-*

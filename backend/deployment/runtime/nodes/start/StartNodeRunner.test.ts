@@ -14,7 +14,7 @@ import type { GraphNode } from '../../../../../graph/graph.ts';
  */
 let dir = '';
 beforeAll(async () => {
-  dir = await mkdtemp(join(process.cwd(), 'tell-and-wire-listing-'));
+  dir = await mkdtemp(join(process.cwd(), '.tell-and-wire-listing-'));
   await mkdir(join(dir, 'more'));
   for (const name of ['a.CSV', 'b.csv', 'c.txt', join('more', 'd.csv')]) await writeFile(join(dir, name), 'x');
 });
