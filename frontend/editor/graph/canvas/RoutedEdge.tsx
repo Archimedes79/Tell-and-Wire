@@ -41,8 +41,8 @@ function loopUnder(sx: number, sy: number, tx: number, ty: number, lane: number)
 
 /**
  * A wire: the soft curve the canvas has always drawn, or -- when it was routed -- the curve through the cells
- * it is drawn through. Its handle, on the wire's middle or on the cell it goes through, is pulled to
- * another cell to route it round the cards; a double-click on it takes the route off.
+ * it is drawn through. The wire itself, or its handle on its middle or on the cell it goes through, is pulled to
+ * another cell to route it round the cards; a double-click on the handle takes the route off.
  */
 export default function RoutedEdge(props: EdgeProps<Route>) {
   const { id, source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, selected, data } = props;
@@ -66,9 +66,12 @@ export default function RoutedEdge(props: EdgeProps<Route>) {
     if (on) setHover(true);
     else leaving.current = window.setTimeout(() => setHover(false), 150);
   };
+  // A wire with a cell to go through is taken by the wire: a click still selects it, a few pixels of pull route it.
+  const grab = usePull(id, 6);
+  const grabbable = !!data?.routable || routed;
   return (
     <>
-      <g onMouseEnter={() => over(true)} onMouseLeave={() => over(false)}>
+      <g onMouseEnter={() => over(true)} onMouseLeave={() => over(false)} onPointerDown={grabbable ? grab : undefined} style={grabbable ? { cursor: 'grab' } : undefined}>
         <BaseEdge id={id} path={path} style={style} markerEnd={markerEnd} interactionWidth={22} />
       </g>
       <EdgeLabelRenderer>
@@ -78,28 +81,43 @@ export default function RoutedEdge(props: EdgeProps<Route>) {
   );
 }
 
-/** The dot on a wire that is pulled. */
-function Handle({ edge, x, y, shown, routed, onOver }: { edge: string; x: number; y: number; shown: boolean; routed: boolean; onOver: (on: boolean) => void }) {
+/**
+ * What the pointer going down on wire *edge* does: pulls it toward the cells it may go through, until the button is
+ * let go (it is routed there) or Escape is pressed (it stays). From its dot at once (*after* 0); from the wire
+ * itself once the pointer has moved *after* pixels -- until then it is a click, and selects the wire.
+ */
+function usePull(edge: string, after: number): (event: React.PointerEvent) => void {
   const { screenToFlowPosition } = useReactFlow();
-  const pull = (event: React.PointerEvent<HTMLDivElement>): void => {
+  return (event) => {
+    if (event.button !== 0) return;
     event.stopPropagation();
     event.preventDefault();
-    const store = useGraphStore.getState();
     const at = (e: { clientX: number; clientY: number }) => screenToFlowPosition({ x: e.clientX, y: e.clientY });
-    const move = (e: PointerEvent): void => useGraphStore.getState().pullWire(edge, at(e));
+    const from = { x: event.clientX, y: event.clientY };
+    let pulled = false;
+    const move = (e: { clientX: number; clientY: number }): void => {
+      if (!pulled && Math.hypot(e.clientX - from.x, e.clientY - from.y) < after) return;
+      pulled = true;
+      useGraphStore.getState().pullWire(edge, at(e));
+    };
     const end = (apply: boolean) => (): void => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('keydown', key);
-      useGraphStore.getState().endPull(apply);
+      if (pulled) useGraphStore.getState().endPull(apply);
     };
     const up = end(true);
     const key = (e: KeyboardEvent): void => { if (e.key === 'Escape') end(false)(); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('keydown', key);
-    store.pullWire(edge, at(event.nativeEvent));
+    if (after === 0) move(event);
   };
+}
+
+/** The dot on a wire that is pulled. */
+function Handle({ edge, x, y, shown, routed, onOver }: { edge: string; x: number; y: number; shown: boolean; routed: boolean; onOver: (on: boolean) => void }) {
+  const pull = usePull(edge, 0);
   return (
     <div
       className="nodrag nopan"

@@ -69,7 +69,7 @@ export default function Sidebar({ onAddNode }: SidebarProps) {
 
       <p className="mt-auto pt-4 text-[11px] leading-snug" style={{ color: DIMMER }}>
         Click or drag to add. Double-click a node to open it. Connect ports by dragging from dot to dot.
-        Drop a card between two columns for a column of its own; pull a wire by its dot to route it round the cards.
+        Drop a card between two columns for a column of its own; pull a wire by its line or its dot to route it round the cards.
       </p>
     </aside>
   );
