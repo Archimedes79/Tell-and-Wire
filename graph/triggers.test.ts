@@ -4,7 +4,7 @@ import { executeGraph } from '../backend/deployment/runtime/executor.ts';
 import { passiveWires } from './order.ts';
 import type { Runtime } from './nodes/Runtime.ts';
 import { registry } from './nodes/registry.ts';
-import { RUN_PORT, pageStarts, startEvents, triggeredNodes } from './triggers.ts';
+import { RUN_PORT, guiStarts, startEvents, triggeredNodes } from './triggers.ts';
 import { LastOutputs } from '../backend/deployment/runtime/reuse.ts';
 import { edge, graphOf, quietRuntime } from '../backend/deployment/runtime/test/fakes.ts';
 
@@ -101,11 +101,11 @@ describe('a round started at a start point', () => {
 describe('starting the application', () => {
   it('waits for its page or for a call where a start point is started by one; runs whole once with no start point; starts only those set to start', () => {
     const paged = graphOf([start('go'), node('a')], []);
-    expect(pageStarts(paged, registry)).toBe(true);
+    expect(guiStarts(paged, registry)).toBe(true);
     expect(startEvents(paged, registry)).toEqual([]);
 
     const called = graphOf([node('api', 'start', { started_by: 'call' }), node('a')], []);
-    expect(pageStarts(called, registry)).toBe(false);
+    expect(guiStarts(called, registry)).toBe(false);
     expect(startEvents(called, registry)).toEqual([]);
 
     expect(startEvents(graphOf([node('a')], []), registry)).toEqual([null]);

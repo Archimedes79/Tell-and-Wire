@@ -10,7 +10,7 @@ import { errorLine, portPreviews } from '../../document/elements/resultPreview';
 import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
-import { blocksAt } from '../../document/model/page';
+import { blocksAt } from '../../document/model/gui';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import { carriesFiles, dropExample, droppedFile } from '../authoring/droppedFile';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
@@ -94,7 +94,7 @@ const labelsOf = (blocks: GuiWidget[]): string => blocks.map((block) => block.la
  * it and send to it, or show it -- what the card cannot otherwise show, since
  * nothing is wired between the page and the graph.
  */
-function pageLine(node: GraphNode, page: GuiWidget[]): string | undefined {
+function guiLine(node: GraphNode, page: GuiWidget[]): string | undefined {
   const { fire, send, show } = blocksAt(page, node.id);
   const said = [
     fire.length ? `⚡ ${labelsOf(fire)}` : '',
@@ -144,7 +144,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
     : status?.title;
   // Where a run begins: its ports are events, and nothing gates it.
   const events = new Set(runnerRegistry.node(graphNode.node_type)?.eventPorts(graphNode as never) ?? []);
-  const connected = useGraphStore((s) => pageLine(graphNode, s.page));
+  const connected = useGraphStore((s) => guiLine(graphNode, s.page));
   const summary = builder?.canvasSummary?.(graphNode);
   const Icon = builder?.icon;
   // What it is, for the pointer: its heading, its kind and id, then what it should do.

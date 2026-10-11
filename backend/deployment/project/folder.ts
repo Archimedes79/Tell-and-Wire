@@ -48,7 +48,7 @@ import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 
 export { FLOW_FILE, NODES_FILE };
 export const LAYOUT_FILE = 'graph-layout.json';
-export const PAGE_FILE = 'gui.json';
+export const GUI_FILE = 'gui.json';
 export const NODES_DIR = 'nodes';
 
 export class FileChanged extends Error {
@@ -127,7 +127,7 @@ export function nodeFolder(nodeId: string): string {
 }
 
 /** The field the page's text is reported under (`TextChange`): its blocks. */
-const PAGE_FIELD = 'blocks';
+const GUI_FIELD = 'blocks';
 
 /** One piece of writing in a graph: whose it is, which field holds it, and where its file goes. */
 export interface ProjectText {
@@ -147,11 +147,11 @@ export interface ProjectText {
 /**
  * Every piece of writing *graph* can keep in files, whether or not it holds
  * any: each node's, and the page's -- which, to be read into, is given a
- * place in *graph* while it has none (`withoutEmptyPage` takes it out again).
+ * place in *graph* while it has none (`withoutEmptyGui` takes it out again).
  */
 export function projectTexts(graph: Graph): ProjectText[] {
   graph.page ??= { blocks: [] };
-  const found: ProjectText[] = [{ node_id: null, field: PAGE_FIELD, path: PAGE_FILE, holder: graph.page as unknown as Record<string, unknown>, json: true }];
+  const found: ProjectText[] = [{ node_id: null, field: GUI_FIELD, path: GUI_FILE, holder: graph.page as unknown as Record<string, unknown>, json: true }];
   // Each node claims its folder once. Compared without case: on the disk most
   // people use, "Count" and "count" are one folder, and whichever was written
   // last would be the only one there.
@@ -182,7 +182,7 @@ export function projectTexts(graph: Graph): ProjectText[] {
 }
 
 /** *graph* without the page `projectTexts` gave it a place for, when nothing was put there: a page is its blocks. */
-function withoutEmptyPage(graph: Graph): Graph {
+function withoutEmptyGui(graph: Graph): Graph {
   if (!graph.page?.blocks?.length) delete graph.page;
   return graph;
 }
@@ -469,7 +469,7 @@ export async function readProject(folder: string, guard?: Guard): Promise<Graph>
   }
   // Last: a data node's ports follow from the fields read above, a subgraph's from the graph just put into it.
   derivePorts(graph);
-  return withoutEmptyPage(graph);
+  return withoutEmptyGui(graph);
 }
 
 /**
@@ -482,7 +482,7 @@ export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
   if (folder) return readProject(folder, guard);
   if (!existsSync(full)) throw new NotFound(`Nothing at ${full}`);
   if (statSync(full).isDirectory()) {
-    const older = existsSync(join(full, 'flow.json')) ? ` It has a flow.json: that is the format of an older version. Rename flow.json, nodes.json, layout.json and page.json to ${FLOW_FILE}, ${NODES_FILE}, ${LAYOUT_FILE} and ${PAGE_FILE}.` : '';
+    const older = existsSync(join(full, 'flow.json')) ? ` It has a flow.json: that is the format of an older version. Rename flow.json, nodes.json, layout.json and page.json to ${FLOW_FILE}, ${NODES_FILE}, ${LAYOUT_FILE} and ${GUI_FILE}.` : '';
     throw new NotAGraph(`${full} is a folder without a ${FLOW_FILE}: not a project.${older}`);
   }
   await guard?.(full);
@@ -735,7 +735,7 @@ export async function nodeFileOf(folder: string, nodeId: string, file?: string, 
   const node = graph.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new NotFound(`No node "${nodeId}" in ${here}. Save the graph first.`);
   const texts = projectTexts(graph).filter((text) => text.node_id === nodeId);
-  withoutEmptyPage(graph);
+  withoutEmptyGui(graph);
   const generation = registry.node(node.node_type)?.generation();
   const body = file === undefined
     ? texts.find((text) => text.field === generation?.fields.body) ?? texts[0]

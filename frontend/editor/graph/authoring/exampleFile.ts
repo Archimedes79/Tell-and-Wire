@@ -12,7 +12,7 @@
 import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document/graph';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { filesOf } from '../../document/model/givenFiles';
-import { blockCan, blocksAt, startsOn } from '../../document/model/page';
+import { blockCan, blocksAt, startsOn } from '../../document/model/gui';
 import { lastRunInputs } from './generationContext';
 import { fieldOf } from '../../../../backend/deployment/runtime/executor.ts';
 import { filePorts } from '../../../../graph/fileInputs.ts';

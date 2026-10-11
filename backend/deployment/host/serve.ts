@@ -18,7 +18,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { startEvents } from '../../../graph/triggers.ts';
-import { pageBlocks, pathBlocks } from '../../../gui/gui.ts';
+import { guiBlocks, pathBlocks } from '../../../gui/gui.ts';
 import { names } from '../../../graph/wiring.ts';
 import { confineEverything } from '../runtime/confine.ts';
 import { aiSetting, settingsPath } from '../runtime/ai/settings.ts';
@@ -46,7 +46,7 @@ export interface ServeOptions {
    */
   graphPath?: string;
   /** Where the built page lives, if this bundle carries one. */
-  pageDir?: string;
+  guiDir?: string;
   port?: number;
   host?: string;
   /** Serve the editor instead of a deployed page: `dist` is the built editor. */
@@ -161,7 +161,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
     if (options.editor) return servePage(response, path, options.editor.dist, 'index.html');
     // A page of the project's own, written by hand against the runtime API, wins over the built one.
     if (frontend) return servePage(response, path, frontend, 'index.html');
-    if (options.pageDir) return servePage(response, path, options.pageDir, 'runtime.html');
+    if (options.guiDir) return servePage(response, path, options.guiDir, 'runtime.html');
     return sendJson(response, 404, { detail: 'No page.' });
   }
 
@@ -305,7 +305,7 @@ function toolRoutes(
         name: graph.metadata.name,
         description: graph.metadata.description ?? '',
         scheme: String(graph.metadata.gui_scheme ?? ''),
-        blocks: pageBlocks(graph),
+        blocks: guiBlocks(graph),
         starts_whole: startEvents(graph, registry).includes(null),
       };
     },

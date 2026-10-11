@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { GraphNode, GuiWidget } from '../document/graph';
-import LivePage from '../../deployment/gui/surface/LivePage';
-import { connectionsOf } from '../../deployment/gui/surface/pageInUse';
+import LiveGui from '../../deployment/gui/surface/LiveGui';
+import { connectionsOf } from '../../deployment/gui/surface/guiInUse';
 import { useRound } from '../../deployment/gui/surface/useRound';
 import DeliveredHeader from '../../deployment/gui/surface/DeliveredHeader';
 import CallForms from '../../deployment/gui/surface/CallForms';
@@ -14,7 +14,7 @@ import { roundGoing, startOver, useSession } from '../../deployment/gui/kit/api/
 import { errorText } from '../../deployment/gui/kit/api/errorText';
 import { call } from '../../deployment/gui/kit/api/client';
 import { interfaceOf } from '../../../backend/deployment/host/interface.ts';
-import { pageStarts } from '../../../graph/triggers.ts';
+import { guiStarts } from '../../../graph/triggers.ts';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
@@ -27,7 +27,7 @@ const holdDocument = () => useGraphStore.getState().holdDocument();
  * The application, running (▶ Run, `app/application.ts`): its page, as the
  * deployed tool draws it -- the same component, not a rendition.
  *
- * `GuiSurfacePage` is what `runtime/RuntimeApp.tsx` renders when a bundle is
+ * `GuiSurface` is what `runtime/RuntimeApp.tsx` renders when a bundle is
  * opened on someone else's machine, under the same `DeliveredHeader`, and
  * each round goes through the same `useRound` against the same session. So
  * what is seen here is what they get: a block unreadable, mis-sized or
@@ -54,7 +54,7 @@ export default function ApplicationView() {
   );
   // Whether using the page starts the graph -- or only shows what its start
   // points that start themselves, or its one run at start, made.
-  const starts = pageStarts(graph, runnerRegistry);
+  const starts = guiStarts(graph, runnerRegistry);
   // The graph's names, as the runtime API tells a delivered tool them: which
   // block fires which start point, which blocks a round is sent, and what a
   // page without blocks shows -- the outputs, under their labels.
@@ -179,7 +179,7 @@ export default function ApplicationView() {
         onCall={(event, values) => { void round.run(event, undefined, values); }}
       />
 
-      <LivePage design={design} onEvent={fire} />
+      <LiveGui design={design} onEvent={fire} />
 
       <RequirementsDialog
         requirements={round.requirements}

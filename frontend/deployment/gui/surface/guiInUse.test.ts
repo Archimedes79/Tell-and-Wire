@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { GuiWidget } from '../../../editor/document/graph';
-import { GuiSurfacePage, type PageModel } from './GuiPage';
+import { GuiSurface, type GuiModel } from './GuiSurface';
 
 /**
  * A page in use, pressed and changed as a person does: what a block now holds
@@ -18,7 +18,7 @@ const blocks = [
   { id: 'go', kind: 'button', label: 'Go', w: 4, h: 1 },
   { id: 'pick', kind: 'select', label: 'Pick', options: 'a\nb', value: 'a', w: 4, h: 1 },
 ] as GuiWidget[];
-const page: PageModel = {
+const page: GuiModel = {
   name: 'Tool', description: '', blocks,
   valueOf: (block) => block.value, shownOn: () => undefined, busy: false, error: '', outputs: [],
   // As the graph's names say: the button is an event, the dropdown a value.
@@ -36,7 +36,7 @@ beforeEach(async () => {
   document.body.appendChild(host);
   root = createRoot(host);
   await act(async () => {
-    root.render(createElement(GuiSurfacePage, {
+    root.render(createElement(GuiSurface, {
       page,
       onValue: (block, value) => { told.push(`value ${block.id} ${JSON.stringify(value)}`); },
       onEvent: (block) => { told.push(`event ${block.id}`); },

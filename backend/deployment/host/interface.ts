@@ -76,7 +76,7 @@ const entry = ({ name, label, type, list, description, startedBy }: Offer): Inte
 });
 
 /** What the page sends with start point *name*, as a caller is told it: each block's data, by the block's id. */
-function pageSent(graph: Graph, name: string): InterfaceEntry[] {
+function guiSent(graph: Graph, name: string): InterfaceEntry[] {
   return sentBy(graph, name).map((widget) => {
     const sent = widgetElement(widget.kind)!.sends(widget)!;
     return { name: widget.id, label: widget.label || widget.id, type: sent.type, ...(sent.list ? { list: true } : {}), description: sent.description };
@@ -114,7 +114,7 @@ export function interfaceOf(graph: Graph, registry: Runners): GraphInterface {
   const events = [...found.event.values()].map(({ node, offer }) => {
     const said = entry(offer);
     const fired = firedBy(graph, offer.name).map((widget) => widget.id);
-    const sends = pageSent(graph, offer.name);
+    const sends = guiSent(graph, offer.name);
     const reads = readOf(graph, node, offer.port);
     return { ...said, ...(fired.length ? { fired_by: fired } : {}), ...(sends.length ? { sends } : {}), ...(reads.length ? { reads } : {}) };
   });
@@ -161,7 +161,7 @@ export function applySent(graph: Graph, trigger: Trigger | null, values: Record<
  * event *name*, or the whole graph for none, sent *values* as a call sends
  * them. Refused (`NotOffered`) before anything is written. Returns the event
  * to run; a round of the whole graph still starts the page's start points
- * when it runs (`startFromPage`).
+ * when it runs (`startFromGui`).
  */
 export function sendFromOutside(graph: Graph, name: string | null | undefined, values: Record<string, unknown>, registry: Runners): Trigger | null {
   const trigger = eventOf(graph, name, registry);

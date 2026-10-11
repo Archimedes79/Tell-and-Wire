@@ -86,7 +86,7 @@ function startedBy(graph: Graph, elements: Runners, who: readonly StartedBy[]): 
 }
 
 /** Whether the page starts the graph when somebody uses it: a start point the page starts. */
-export function pageStarts(graph: Graph, elements: Runners): boolean {
+export function guiStarts(graph: Graph, elements: Runners): boolean {
   return startedBy(graph, elements, ['page']);
 }
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseGraph, type Graph } from '../graph/graph.ts';
-import { pageBlock, pageSends } from './gui.ts';
+import { guiBlock, guiSends } from './gui.ts';
 import { quietRuntime } from '../backend/deployment/runtime/test/fakes.ts';
 
 /**
@@ -35,13 +35,13 @@ const tool = (): Graph => parseGraph({
 describe('the page, connected by name', () => {
   it('sends a start point the data of each block that sends to it, by id, and fails by the name of a block that cannot say what it holds', async () => {
     const graph = tool();
-    pageBlock(graph, 'file')!.value = 'notes.txt';
+    guiBlock(graph, 'file')!.value = 'notes.txt';
     const runtime = quietRuntime({ files: { read: async () => 'the notes' } });
-    expect(await pageSends(graph, 'summarize', runtime)).toEqual({
+    expect(await guiSends(graph, 'summarize', runtime)).toEqual({
       file: { path: 'notes.txt', content: 'the notes' }, length: 'long', note: 'a note',
     });
-    expect(await pageSends(graph, 'api', runtime)).toEqual({});
+    expect(await guiSends(graph, 'api', runtime)).toEqual({});
     const broken = quietRuntime({ files: { read: async () => { throw new Error('no such file'); } } });
-    await expect(pageSends(graph, 'summarize', broken)).rejects.toThrow('"File" could not say what it holds: no such file');
+    await expect(guiSends(graph, 'summarize', broken)).rejects.toThrow('"File" could not say what it holds: no such file');
   });
 });

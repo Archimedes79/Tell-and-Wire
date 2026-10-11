@@ -6,7 +6,7 @@
 // while the block still holds it: a run that sent the message empties the box,
 // and a new default path in the panel replaces the picker's path.
 //
-// A plain function beside the designer, as `pageWrite.ts` is, so a test can
+// A plain function beside the designer, as `guiWrite.ts` is, so a test can
 // say what it does.
 import type { GuiWidget } from '../document/graph';
 

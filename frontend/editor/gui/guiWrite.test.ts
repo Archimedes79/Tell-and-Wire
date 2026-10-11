@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { connectToNewPoint, insertBlock, removeBlock } from './pageWrite';
+import { connectToNewPoint, insertBlock, removeBlock } from './guiWrite';
 import type { GraphNode } from '../document/graph';
 import { WIDGET_BUILDERS } from '../document/elements/registry';
 import { useGraphStore } from '../document/store/graphStore';

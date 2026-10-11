@@ -5,7 +5,7 @@ import type { Graph, GraphNode, GuiWidget, NodeType, Port, WidgetKind } from '..
 import { withPorts } from '../graph/node/nodeDraft';
 import { nodePanel } from '../graph/node/nodePanel';
 import { newBlock } from '../gui/DesignerPalette';
-import { insertBlock, patchBlock } from '../gui/pageWrite';
+import { insertBlock, patchBlock } from '../gui/guiWrite';
 import { ONCE } from '../graph/nodes/NodeGuiBuilder';
 import { listPorts, withPerItem } from '../graph/authoring/perItem';
 import { heldBy, writeName, writtenInto, type Write } from '../graph/authoring/generation';

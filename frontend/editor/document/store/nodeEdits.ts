@@ -3,7 +3,7 @@
 import type { Edge, Node } from 'reactflow';
 import type { GraphNode, GuiWidget } from '../graph';
 import type { RFNodeData } from './nodeData';
-import { defaultField, withoutPoints } from '../model/page';
+import { defaultField, withoutPoints } from '../model/gui';
 import { NODE_KINDS } from '../model/nodeKinds';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';

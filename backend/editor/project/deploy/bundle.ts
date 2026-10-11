@@ -17,7 +17,7 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Graph } from '../../../../graph/graph.ts';
-import { pageBlocks, pageReferencedPaths } from '../../../../gui/gui.ts';
+import { guiBlocks, guiReferencedPaths } from '../../../../gui/gui.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
 import { FRONTEND_DIR, writeProject } from '../../../deployment/project/folder.ts';
@@ -43,7 +43,7 @@ export interface BundleNeeds {
 export function bundleNeeds(graph: Graph, top = true): BundleNeeds {
   // A page with blocks is the page a person uses the tool through; a start
   // point the page starts says the same of a graph whose page is still to come.
-  const needs: BundleNeeds = { interface: pageBlocks(graph).length > 0, ai: false };
+  const needs: BundleNeeds = { interface: guiBlocks(graph).length > 0, ai: false };
 
   for (const node of graph.nodes) {
     const element = registry.node(node.node_type);
@@ -123,7 +123,7 @@ export class CannotBundle extends Error {}
 async function dataFiles(graph: Graph, from: string): Promise<Carried[]> {
   const wanted = new Set<string>();
   const collect = (inside: Graph): void => {
-    for (const path of pageReferencedPaths(inside)) wanted.add(path);
+    for (const path of guiReferencedPaths(inside)) wanted.add(path);
     for (const node of inside.nodes) {
       const element = registry.node(node.node_type);
       for (const path of element?.referencedPaths(node) ?? []) wanted.add(path);
@@ -229,7 +229,7 @@ export const WEB_DIR = 'web';
  * up rather than passed, because the person writing a bundle should not have
  * to know where a build lands.
  */
-export function builtPage(): string | undefined {
+export function builtGui(): string | undefined {
   const dist = join(installFolder(), 'frontend', 'dist');
   return existsSync(join(dist, 'runtime.html')) ? dist : undefined;
 }
@@ -241,14 +241,14 @@ export function builtPage(): string | undefined {
  * in the same folder, and a bundle that copied everything would ship the graph
  * editor to someone who was handed a finished tool.
  */
-async function pageFiles(pageDir: string): Promise<string[]> {
-  const html = join(pageDir, 'runtime.html');
+async function guiFiles(guiDir: string): Promise<string[]> {
+  const html = join(guiDir, 'runtime.html');
   if (!existsSync(html)) return [];
   const source = await readFile(html, 'utf8');
   const referenced = [...source.matchAll(/(?:src|href)="\/?([^"]+)"/g)]
     .map((match) => match[1])
     .filter((path) => !path.startsWith('http'));
-  return ['runtime.html', ...new Set(referenced)].filter((path) => existsSync(join(pageDir, path)));
+  return ['runtime.html', ...new Set(referenced)].filter((path) => existsSync(join(guiDir, path)));
 }
 
 /**
@@ -261,7 +261,7 @@ export async function writeBundle(
   graph: Graph,
   target: string,
   options: {
-    pageDir?: string;
+    guiDir?: string;
     dataFrom?: string;
     /** The project's own page, written by hand (`frontendOf`): carried whole, and served in place of the built one. */
     frontend?: string | null;
@@ -305,15 +305,15 @@ export async function writeBundle(
   // The page, if this graph has one and a build is at hand. A bundle without
   // it still runs -- once, on the terminal, the page's start points sent what
   // its blocks hold -- which is why a missing build is not an error here.
-  let servesPage = false;
-  if (needs.interface && options.pageDir) {
-    for (const file of await pageFiles(options.pageDir)) {
+  let servesGui = false;
+  if (needs.interface && options.guiDir) {
+    for (const file of await guiFiles(options.guiDir)) {
       const relativePath = join(WEB_DIR, file).replace(/\\/g, '/');
       const path = resolve(target, relativePath);
       await mkdir(dirname(path), { recursive: true });
-      await copyFile(join(options.pageDir, file), path);
+      await copyFile(join(options.guiDir, file), path);
       written.push(relativePath);
-      servesPage = true;
+      servesGui = true;
     }
   }
 
@@ -328,24 +328,24 @@ export async function writeBundle(
   if (options.frontend) {
     await cp(options.frontend, resolve(target, FRONTEND_DIR), { recursive: true, filter: (path) => !isSettingsFile(path) });
     written.push(...(await filesIn(options.frontend)).map((file) => `${FRONTEND_DIR}/${file}`));
-    servesPage = true;
+    servesGui = true;
   }
 
   // The same pair the downloadable package ships (see launchers.ts): from its
   // own folder, with Node checked before it is needed and a window that stays
   // open long enough to read a failure.
-  const command = servesPage ? 'backend/cli/main.ts . --serve' : 'backend/cli/main.ts .';
+  const command = servesGui ? 'backend/cli/main.ts . --serve' : 'backend/cli/main.ts .';
   await put('run.cmd', runCmd({ command }));
   await put('run.sh', runSh({ command }));
   // A no-op on Windows; on a Mac or Linux box it is the difference between
   // `./run.sh` and "Permission denied".
   await chmod(resolve(target, 'run.sh'), zipMode('run.sh')!);
-  await put('README.md', readme(name, needs, servesPage, data));
+  await put('README.md', readme(name, needs, servesGui, data));
 
   return written;
 }
 
-function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carried[] = []): string {
+function readme(name: string, needs: BundleNeeds, servesGui = false, data: Carried[] = []): string {
   const lines = [
     `# ${name}`,
     '',
@@ -361,7 +361,7 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
     './run.sh          # or run.cmd on Windows',
     '```',
     '',
-    ...(servesPage
+    ...(servesGui
       ? [
         'That opens the tool in your browser, and its page runs it: a button',
         'pressed, a file chosen.',
@@ -428,7 +428,7 @@ function readme(name: string, needs: BundleNeeds, servesPage = false, data: Carr
 
   lines.push(
     '', '## Licence', '',
-    ...(servesPage
+    ...(servesGui
       ? [
         'The code in graph/ and backend/ and the page in web/ come under the terms in LICENSE,',
         'except the packages the page is built from: web/licenses.txt names each,',

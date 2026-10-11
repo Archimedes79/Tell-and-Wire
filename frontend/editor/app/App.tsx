@@ -101,7 +101,7 @@ export default function App() {
   // Editing the page means the Page tab -- at the size it will really be, next
   // to the blocks it will really sit beside -- which a start or end point the
   // page uses offers from its own view.
-  const openPage = useCallback(() => setView('design'), []);
+  const openGui = useCallback(() => setView('design'), []);
 
   // The folder the last graph was opened from or saved to -- '' before one
   // was: the folder the server was started in. Where the file browser starts
@@ -455,7 +455,7 @@ export default function App() {
               <ChangeBar />
             </div>
           </div>
-          {openNodeId && <NodeView key={openNodeId} nodeId={openNodeId} onClose={closeNode} onOpenPage={openPage} />}
+          {openNodeId && <NodeView key={openNodeId} nodeId={openNodeId} onClose={closeNode} onOpenGui={openGui} />}
         </div>
         {/* The page is the top graph's: inside a node's graph there is none to
             build or try, and these would act on the graph in there. */}

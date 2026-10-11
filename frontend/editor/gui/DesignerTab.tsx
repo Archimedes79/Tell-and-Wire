@@ -7,14 +7,14 @@ import DesignerPalette, { newBlock, type PaletteEntry } from './DesignerPalette'
 import { useRound } from '../../deployment/gui/surface/useRound';
 import RequirementsDialog from '../../deployment/gui/kit/dialogs/RequirementsDialog';
 import { roundGoing, setEdit, useSession } from '../../deployment/gui/kit/api/session';
-import { blockCan, widgetTakesValue, widgetValueIsDesign } from '../document/model/page';
-import { addBlocks, insertBlock, moveBlock, patchBlock, removeBlock } from './pageWrite';
-import { pageFromGraph } from './pageFromGraph';
+import { blockCan, widgetTakesValue, widgetValueIsDesign } from '../document/model/gui';
+import { addBlocks, insertBlock, moveBlock, patchBlock, removeBlock } from './guiWrite';
+import { guiFromGraph } from './guiFromGraph';
 import { useDialogs } from '../app/dialogs/useDialogs';
 import { liveTypedValues } from './typedValues';
-import PageHeading from './PageHeading';
+import GuiHeading from './GuiHeading';
 import WidgetEditor from './WidgetEditor';
-import PageSettings from './PageSettings';
+import GuiSettings from './GuiSettings';
 import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
 import { ACCENT, LINE, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
@@ -50,7 +50,7 @@ export default function DesignerTab() {
   // question of the ones a call starts.
   const nodes = useGraphStore(useShallow((s) => s.rfNodes.map((node) => node.data.graphNode as GraphNode)));
   const edges = useGraphStore((s) => s.rfEdges);
-  const lacking = pageFromGraph(nodes, edges, widgets);
+  const lacking = guiFromGraph(nodes, edges, widgets);
   const dialogs = useDialogs();
 
   /**
@@ -78,7 +78,7 @@ export default function DesignerTab() {
     setSelectedId(added[0].id);
   };
 
-  // Every change to the page goes through `pageWrite`, which reads it from the
+  // Every change to the page goes through `guiWrite`, which reads it from the
   // store when the change lands: a block's editor may hand its change on long
   // after it was drawn.
 
@@ -207,7 +207,7 @@ export default function DesignerTab() {
     // Only text is remembered as an edit in progress; a block that stores
     // something richer holds it itself and has no half-typed state to protect.
     if (typeof value === 'string') setTyped((prev) => ({ ...prev, [widget.id]: value }));
-    // Through `pageWrite`, as every edit of the page: a value and the event
+    // Through `guiWrite`, as every edit of the page: a value and the event
     // that follows it arrive in the same tick.
     patchBlock(widget.id, { value });
   };
@@ -227,7 +227,7 @@ export default function DesignerTab() {
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <PageHeading name={metadata.name} description={metadata.description} onChange={setMetadata} />
+        <GuiHeading name={metadata.name} description={metadata.description} onChange={setMetadata} />
         <div
           data-gui-dropzone
           className="flex-1 overflow-auto px-8 py-6"
@@ -262,7 +262,7 @@ export default function DesignerTab() {
       >
         {selected
           ? <WidgetEditor widget={selected} onChange={(patch) => patchBlock(selected.id, patch)} />
-          : <PageSettings />}
+          : <GuiSettings />}
       </aside>
 
       <RequirementsDialog requirements={round.requirements} onSubmit={round.submit} onCancel={round.cancel} />

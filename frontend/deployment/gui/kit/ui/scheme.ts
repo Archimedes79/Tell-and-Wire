@@ -4,7 +4,7 @@
 // tint behind a node -- not an accent colour. What people mean by a colour
 // scheme is dark blue versus warm paper, and that is what these are.
 //
-// It is the PAGE's scheme: every value here becomes a CSS variable on the
+// It is the GUI's scheme: every value here becomes a CSS variable on the
 // page's own container (see schemeVars) -- the page surface of the Page tab,
 // the App tab, the delivered tool -- and every colour in `ui/theme.ts` is a
 // `var()` pointing at one, so a block asks for SURFACE and needs to know

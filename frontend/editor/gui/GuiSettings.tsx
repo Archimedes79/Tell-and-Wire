@@ -9,7 +9,7 @@ import { DIMMER, FIELD_ON_SURFACE, MUTED } from '../../deployment/gui/kit/ui/the
  * the block is, this says what the tool looks like. Every accent is picked to
  * sit on the same surfaces, so no combination can come out wrong.
  */
-export default function PageSettings() {
+export default function GuiSettings() {
   const scheme = useGraphStore((s) => s.metadata.gui_scheme);
   const setMetadata = useGraphStore((s) => s.setMetadata);
 

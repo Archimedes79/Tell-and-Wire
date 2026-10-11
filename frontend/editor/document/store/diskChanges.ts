@@ -1,7 +1,7 @@
 // Taking in what another editor changed in the project folder on disk.
 
 import type { Edge } from 'reactflow';
-import { lostWire, pageOf, takeIn, withDiskChanges } from '../model/graphDoc';
+import { lostWire, guiOf, takeIn, withDiskChanges } from '../model/graphDoc';
 import { graphEdge } from '../model/wires';
 import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
 import { endCoalescing } from './history';
@@ -41,7 +41,7 @@ export function diskActions(
       endCoalescing();
       set((state) => {
         for (const change of taken) {
-          if (change.node_id === null) state.page = pageOf(change) as never;
+          if (change.node_id === null) state.page = guiOf(change) as never;
           else takeIn(state.rfNodes.find((n) => n.id === change.node_id)!.data.graphNode, change);
         }
         const touched = new Set(taken.flatMap((change) => change.node_id ?? []));

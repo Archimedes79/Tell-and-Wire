@@ -78,7 +78,7 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
 
 1. **Asked.** The page, a script, the clock or a caller asks the session
    (`backend/deployment/host/session.ts`) for a round at a start point, with values. A round the
-   page starts is sent what the blocks that send to that start point hold (`pageSends`).
+   page starts is sent what the blocks that send to that start point hold (`guiSends`).
 2. **Queued.** `rounds.ts` runs one round at a time, in the order asked, and turns progress
    into the snapshots a page follows on the stream.
 3. **Run.** The core gets a working copy: the design, with what nodes keep and what the
@@ -92,7 +92,7 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
    (`latch.ts`); unchanged context upstream is reused (`reuse.ts`).
 4. **Settled.** Data nodes keep what arrived, field by field (`settleMemory`), and count the
    round (`endRound`). The session
-   hands each end point's value to the blocks that show it (`settlePage`). A round that ran
+   hands each end point's value to the blocks that show it (`settleGui`). A round that ran
    to its end commits and writes `state.json`.
 
 ## State

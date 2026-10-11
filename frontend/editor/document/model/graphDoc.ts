@@ -126,7 +126,7 @@ function keptNested(node: GraphNode): GraphNode {
 }
 
 /** The page's blocks as a change of gui.json says them. */
-export const pageOf = (change: TextChange): GuiWidget[] => (Array.isArray(change.value) ? change.value : []) as GuiWidget[];
+export const guiOf = (change: TextChange): GuiWidget[] => (Array.isArray(change.value) ? change.value : []) as GuiWidget[];
 
 /** *change* taken into *node*: a file of it as it is on disk, or the graph it holds; its ports follow. */
 export function takeIn(node: GraphNode, change: TextChange): void {
@@ -152,7 +152,7 @@ export function withDiskChanges(snapshot: string, changes: TextChange[]): string
   const graph = normalizeGraph(JSON.parse(snapshot) as Graph);
   let blocks = graph.page?.blocks ?? [];
   for (const change of changes) {
-    if (change.node_id === null) blocks = pageOf(change);
+    if (change.node_id === null) blocks = guiOf(change);
     else {
       const node = graph.nodes.find((candidate) => candidate.id === change.node_id);
       if (node) takeIn(node, change);

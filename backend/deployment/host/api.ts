@@ -131,7 +131,7 @@ export interface ClockView {
  * whole, as a program runs when it is started: nothing on the page or in a
  * start point of its own starts it otherwise (`startEvents`).
  */
-export interface PageView {
+export interface GuiView {
   session: string;
   /** Which design of the session this page is: see SessionView.design_revision. */
   design_revision: number;
@@ -481,7 +481,7 @@ export const API = {
 
   // -- what the built-in page reads besides ----------------------------------
   /** The page as it was designed: what the built-in page draws, by the names its blocks are called. */
-  page: route<InSession, PageView>('GET', '/api/runtime/page', 'tool'),
+  page: route<InSession, GuiView>('GET', '/api/runtime/page', 'tool'),
   /** Which model the tool calls. Read-only: a recipient configures it in a file, not in a page. */
   toolAiSettings: route<void, ToolAiSettings>('GET', '/api/runtime/ai-settings', 'tool'),
   /** Listing directories is for the person at the keyboard. */

@@ -55,7 +55,7 @@ export interface Point {
 }
 
 /** The start points a block can send to and fire: the ones the page starts. */
-export function pageStartPoints(nodes: GraphNode[]): Point[] {
+export function guiStartPoints(nodes: GraphNode[]): Point[] {
   return nodes
     .filter((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'page')
     .map((node) => ({ id: node.id, label: node.label || node.id }));

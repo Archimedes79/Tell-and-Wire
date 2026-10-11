@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 const PERMISSIVE = ['MIT', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2.0', '0BSD'];
 const DEVELOPMENT = [...PERMISSIVE, 'CC0-1.0', 'CC-BY-4.0', 'Python-2.0', 'BlueOak-1.0.0'];
 /** Development tools that write code of their own into the page (frontend/vite.config.ts says which). */
-const WRITE_INTO_THE_PAGE = ['vite', 'tailwindcss'];
+const WRITE_INTO_THE_GUI = ['vite', 'tailwindcss'];
 
 /**
  * Whether an SPDX expression holds under *allowed*: one side of an OR, every
@@ -39,7 +39,7 @@ for (const [path, entry] of Object.entries(lock.packages)) {
   if (!path.includes('node_modules/') || entry.link) continue;
   const name = path.slice(path.lastIndexOf('node_modules/') + 'node_modules/'.length);
   const license = typeof entry.license === 'string' ? entry.license : '';
-  const group = entry.dev && !WRITE_INTO_THE_PAGE.includes(name) ? 'development' : 'page';
+  const group = entry.dev && !WRITE_INTO_THE_GUI.includes(name) ? 'development' : 'page';
   if (!license || !allowedBy(license, group === 'page' ? PERMISSIVE : DEVELOPMENT)) {
     refused.push(`  ${name} ${entry.version}: ${license || 'no licence given'}${group === 'page' ? '' : ' (a development tool)'}`);
   }

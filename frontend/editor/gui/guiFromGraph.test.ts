@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { GraphNode, Port, Wire } from '../document/graph';
 import { NODE_KINDS } from '../document/model/nodeKinds';
-import { pageFromGraph } from './pageFromGraph';
+import { guiFromGraph } from './guiFromGraph';
 
 /**
  * A first page drawn from the graph: an input for each thing a start point
@@ -34,7 +34,7 @@ const edges = [
 
 describe('a page drawn from the graph', () => {
   it('has an input for what each start point reads and one that starts it, a text for each end point, and asks before a start point a call starts is put on the page', () => {
-    const planned = pageFromGraph(nodes, edges, []);
+    const planned = guiFromGraph(nodes, edges, []);
     // The page's start point: a picker for the file whose parts are read, a text box for the length, a picker for the path -- each sending under the name its input takes it by -- and a button to start it; then the end point shown.
     expect(planned.now.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.label, block.send, block.sends_to, block.fires, block.shows])])).toEqual([
       ['read', [
@@ -61,12 +61,12 @@ describe('a page drawn from the graph', () => {
 
     // What the page already meets is left as it is.
     const drawn = planned.now.flatMap((made) => made.blocks);
-    expect(pageFromGraph(nodes, edges, drawn).now).toEqual([]);
+    expect(guiFromGraph(nodes, edges, drawn).now).toEqual([]);
   });
 
   it('leaves a conversation the whole width and as tall as it is, not an input among the others', () => {
     const talk = [start('talk', 'page'), code('answer', [port('message', { field: 'chat.message', data_type: 'text' })])];
-    const [{ blocks }] = pageFromGraph(talk, [wire('talk', 'answer', 'message')], []).now;
+    const [{ blocks }] = guiFromGraph(talk, [wire('talk', 'answer', 'message')], []).now;
     expect(blocks.map((block) => [block.kind, block.w, block.h])).toEqual([['chat', 16, 9]]);
   });
 });

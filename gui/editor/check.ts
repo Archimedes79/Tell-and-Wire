@@ -11,7 +11,7 @@ import type { Graph, GraphEdge, GraphNode } from '../../graph/graph.ts';
 import { NESTING_LIMIT, fieldOf } from '../../backend/deployment/runtime/executor.ts';
 import { passiveWires, topologicalLevels } from '../../graph/order.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
-import { fieldSender, pageProblems, showsMemory, widgetElement } from '../gui.ts';
+import { fieldSender, guiProblems, showsMemory, widgetElement } from '../gui.ts';
 import { ERROR_PORT, names, wiringProblems, type Problem } from '../../graph/wiring.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { resultKeys } from '../../graph/nodes/NodeRunner.ts';
@@ -169,7 +169,7 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
       fix: 'End every branch in an "end" node -- an end point, what the graph hands back under its name, which a block on the page can show; config.write_mode "file" or "directory" writes it too.',
     });
   }
-  if (!inside) problems.push(...sharedResultLabels(graph), ...pageProblems(graph, registry));
+  if (!inside) problems.push(...sharedResultLabels(graph), ...guiProblems(graph, registry));
 
   return problems;
 }
@@ -284,7 +284,7 @@ function definitionProblems(node: GraphNode, where: string): Problem[] {
  * and every node written against that example -- is handed nothing there.
  * Only where there is an example: a start point that holds none says nothing
  * of what a call sends, and nothing can disagree with it. The page's own
- * contract, what its blocks send, is `pageProblems`'.
+ * contract, what its blocks send, is `guiProblems`'.
  */
 function exampleMiss(graph: Graph, edge: GraphEdge): Omit<Problem, 'where'> | undefined {
   const start = graph.nodes.find((node) => node.id === edge.source_node_id);

@@ -110,7 +110,7 @@ describe('deployment boundary', () => {
     // because nothing was found rather than because nothing is wrong.
     expect(BY_PATH.has('deployment/gui/main.tsx')).toBe(true);
     expect(reachable.has('deployment/gui/RuntimeApp.tsx')).toBe(true);
-    expect(reachable.has('deployment/gui/surface/GuiPage.tsx')).toBe(true);
+    expect(reachable.has('deployment/gui/surface/GuiSurface.tsx')).toBe(true);
     expect(reachable.size).toBeGreaterThan(10);
     expect(reachable.has('deployment/gui/surface/blocks.ts')).toBe(true);
     expect(reachable.has('deployment/gui/kit/api/session.ts')).toBe(true);

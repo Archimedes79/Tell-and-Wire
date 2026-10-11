@@ -108,9 +108,9 @@ export interface GraphStore {
    * The page's blocks replaced by *blocks*, as one undo step -- named by
    * *coalesce*, as a node's panel names its own (`commit`) -- and, with
    * *add*, those nodes put into the graph in the same step: a block's start
-   * or end point, made with the block (`page/pageWrite.ts`).
+   * or end point, made with the block (`page/guiWrite.ts`).
    */
-  setPage: (blocks: GuiWidget[], options?: { coalesce?: string; add?: GraphNode[] }) => void;
+  setGui: (blocks: GuiWidget[], options?: { coalesce?: string; add?: GraphNode[] }) => void;
   setCurrentFilePath: (path: string | null, isProject?: boolean) => void;
   /**
    * Add a node and return its id, so a caller can immediately fill it in --
@@ -307,7 +307,7 @@ export const useGraphStore = create<GraphStore>()(
       });
     },
 
-    setPage: (blocks, { coalesce, add = [] } = {}) => {
+    setGui: (blocks, { coalesce, add = [] } = {}) => {
       get().commit(coalesce);
       set((state) => {
         state.page = blocks as never;

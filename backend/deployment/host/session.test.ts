@@ -151,9 +151,9 @@ describe('state', () => {
     await second.run(null);
     expect(second.kept().nodes).toEqual({ count: { total: 3, round: 3 } });
 
-    const pageFile = await scratch();
-    await picked(await open(echo(), pageFile), { pick: 'b' });
-    const again = await open(echo(), pageFile);
+    const guiFile = await scratch();
+    await picked(await open(echo(), guiFile), { pick: 'b' });
+    const again = await open(echo(), guiFile);
     expect(again.kept().page).toEqual({ pick: 'b', shown: 'picked b' });
     expect(again.view().shown).toEqual({ shown: 'picked b' });
   });

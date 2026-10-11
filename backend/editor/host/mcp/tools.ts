@@ -16,13 +16,13 @@ import { replayKeptRounds, TESTS_DIR } from '../../project/keptRounds.ts';
 import type { Trigger } from '../../../../graph/triggers.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { NotOffered, interfaceOf, outputsOf, sendFromOutside } from '../../../deployment/host/interface.ts';
-import { startFromPage } from '../../../../gui/gui.ts';
+import { startFromGui } from '../../../../gui/gui.ts';
 import { message } from '../../../deployment/host/http.ts';
 import { clip } from '../../graph/brief.ts';
 import { generateGraph } from '../../graph/generateGraph.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
 import {
-  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, PAGE_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
+  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, saveGraph as saveToDisk, type Guard,
 } from '../../../deployment/project/folder.ts';
 import { problemsIn, type Problem } from '../../../../gui/editor/check.ts';
@@ -379,7 +379,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
 
       const runtime = options.runtime();
       // A run of everything starts the page's start points on what the page holds.
-      if (!trigger) await startFromPage(graph, runtime, registry);
+      if (!trigger) await startFromGui(graph, runtime, registry);
       const { result } = await withCore((core) => core.round({ graph, trigger }));
       return json({
         status: result.status,
@@ -431,7 +431,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
           if (!entry.isFile() || extname(entry.name).toLowerCase() !== '.json') continue;
           // A project's own parts: its graph-flow.json stands for all of them. What a
           // session of a graph keeps beside it is no graph either.
-          if ([NODES_FILE, LAYOUT_FILE, PAGE_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
+          if ([NODES_FILE, LAYOUT_FILE, GUI_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
           try {
             // The same door as every other read, so the same files stay shut.
             await confine(full, 'path');

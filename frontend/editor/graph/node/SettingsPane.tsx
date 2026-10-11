@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { GraphNode, Port } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
 import { derivedNodePorts } from '../../document/model/ports';
-import { fieldChoices, takenAs } from '../../document/model/page';
+import { fieldChoices, takenAs } from '../../document/model/gui';
 import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
 import { MUTED, SUNKEN, LINE, TEXT } from '../../../deployment/gui/kit/ui/theme';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';

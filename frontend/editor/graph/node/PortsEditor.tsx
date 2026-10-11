@@ -4,7 +4,7 @@ import { ONCE, type PortEditing, type UndoStep } from '../nodes/NodeGuiBuilder';
 import { useTyped } from '../authoring/useTyped';
 import { wholeList } from '../authoring/perItem';
 import { caughtErrorAt, portIdProblems } from './portIds';
-import { takenAs, type FieldChoice } from '../../document/model/page';
+import { takenAs, type FieldChoice } from '../../document/model/gui';
 import { freeId } from '../../document/model/ids';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED } from '../../../deployment/gui/kit/ui/theme';

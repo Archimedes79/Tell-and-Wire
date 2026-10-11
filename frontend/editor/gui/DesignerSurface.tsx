@@ -2,20 +2,20 @@ import React from 'react';
 import { Trash2 } from 'lucide-react';
 import type { GuiWidget } from '../document/graph';
 import { WIDGET_BUILDERS } from '../document/elements/registry';
-import { blockValue, GuiBlock, PageGrid } from '../../deployment/gui/surface/GuiPage';
+import { blockValue, GuiBlock, GuiGrid } from '../../deployment/gui/surface/GuiSurface';
 import { heldValue, roundGoing, useSession } from '../../deployment/gui/kit/api/session';
-import { moveBlock, patchBlock } from './pageWrite';
+import { moveBlock, patchBlock } from './guiWrite';
 import { cellsFromDrag, resolveWidgetLayout, GUI_GRID_COLUMNS, GUI_MAX_CELL } from '../../deployment/gui/kit/layout';
 import QuickInsert from './QuickInsert';
 import type { PaletteEntry } from './DesignerPalette';
-import { blockCan, widgetValueIsDesign } from '../document/model/page';
+import { blockCan, widgetValueIsDesign } from '../document/model/gui';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * The page, plus the few affordances needed to build one.
  *
- * Everything a *user* sees comes from `GuiPage.tsx` — the same grid, the same
+ * Everything a *user* sees comes from `GuiSurface.tsx` — the same grid, the same
  * blocks, the same widgets the deployed tool renders. What is added here is
  * only what a builder needs, and it is modelled on a document editor rather
  * than a layout tool, because a document is what a page is:
@@ -30,7 +30,7 @@ import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../deploy
  *    is moved by its grip.
  *
  * None of it is reachable from the runtime entry point, which is the whole
- * point of the split (see the note at the top of GuiPage.tsx).
+ * point of the split (see the note at the top of GuiSurface.tsx).
  *
  * The blocks stay **live** while you design: you can type into a field and
  * press ▶ and watch the same blocks fill, because designing and using are the
@@ -65,7 +65,7 @@ export default function DesignerSurface({
   const [cell, setCell] = React.useState(GUI_MAX_CELL);
   const placements = resolveWidgetLayout(widgets);
 
-  // Every change goes through `pageWrite`, which reads the page from the store
+  // Every change goes through `guiWrite`, which reads the page from the store
   // when the change lands: what this render drew may be a keystroke old.
 
   // ---- reorder by dragging ---------------------------------------------------
@@ -136,7 +136,7 @@ export default function DesignerSurface({
     <div onMouseDown={() => onSelect(null)}>
       {/* An empty page is still a page: without a minimum height the grid is
           zero pixels tall and there is nothing to aim a first element at. */}
-      <PageGrid minRows={4} onCell={setCell}>
+      <GuiGrid minRows={4} onCell={setCell}>
         {placements.map((placement, index) => {
           const { widget } = placement;
           const incoming = view?.shown[widget.id];
@@ -284,7 +284,7 @@ export default function DesignerSurface({
             ＋ Add a block — or press <kbd>/</kbd>
           </button>
         )}
-      </PageGrid>
+      </GuiGrid>
     </div>
   );
 }

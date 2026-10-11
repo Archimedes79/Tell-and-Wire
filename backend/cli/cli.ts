@@ -31,8 +31,8 @@ import { registry } from '../../graph/nodes/registry.ts';
 import { nodeRuntime } from '../deployment/runtime/services.ts';
 import { installFolder } from '../deployment/runtime/ai/settings.ts';
 import { memoryState, sendFromOutside } from '../deployment/host/interface.ts';
-import { startFromPage } from '../../gui/gui.ts';
-import { builtPage, WEB_DIR, writeBundle } from '../editor/project/deploy/bundle.ts';
+import { startFromGui } from '../../gui/gui.ts';
+import { builtGui, WEB_DIR, writeBundle } from '../editor/project/deploy/bundle.ts';
 import { isLoopbackHost, portTaken, serve } from '../deployment/host/serve.ts';
 import { untilStopped } from '../deployment/host/lifecycle.ts';
 import { dirname, join, resolve } from 'node:path';
@@ -160,7 +160,7 @@ export function parseArgs(argv: string[]): CliOptions {
 
 async function runOnce(graph: Graph, trigger: Trigger | null, options: CliOptions, core: GraphCore): Promise<number> {
   // A run of everything starts the page's start points on what the page holds.
-  if (!trigger) await startFromPage(graph, nodeRuntime(), registry);
+  if (!trigger) await startFromGui(graph, nodeRuntime(), registry);
   // Where the memory stood when the round began: a round kept starts it there again.
   const before = memoryState(graph, registry);
   const { result, nodes } = await core.round({ graph, trigger }, (event) => {
@@ -216,7 +216,7 @@ async function makeBundle(options: CliOptions): Promise<number> {
   const graph = await loadGraph(options.graphPath);
   // A bundle without the built page still runs once on the terminal; with it,
   // the recipient gets the tool they were shown.
-  const written = await writeBundle(graph, options.bundle!, { pageDir: builtPage(), frontend: frontendOf(options.graphPath) });
+  const written = await writeBundle(graph, options.bundle!, { guiDir: builtGui(), frontend: frontendOf(options.graphPath) });
   process.stderr.write(
     `Wrote ${written.length} files to ${options.bundle}
 `
@@ -250,7 +250,7 @@ async function runServer(options: CliOptions): Promise<number> {
   const hasGraph = options.graphNamed || (!options.editor && existsSync(resolve(options.graphPath)));
   // Beside the project -- a bundle is one -- or beside a single graph file.
   const carried = resolve(projectFolderOf(options.graphPath) ?? dirname(resolve(options.graphPath)), WEB_DIR);
-  const pageDir = !hasGraph ? undefined : existsSync(join(carried, 'runtime.html')) ? carried : builtPage();
+  const guiDir = !hasGraph ? undefined : existsSync(join(carried, 'runtime.html')) ? carried : builtGui();
 
   // The editor opens, saves and runs code at any path, and keeps the keys, for
   // whoever reaches it, asking nobody who they are: beyond this machine that is
@@ -265,7 +265,7 @@ async function runServer(options: CliOptions): Promise<number> {
 
   const start = (port: number) => serve({
     ...(hasGraph ? { graphPath: options.graphPath } : {}),
-    pageDir,
+    guiDir,
     port,
     ...(options.editor ? { editor: { dist: resolve(options.editor) } } : {}),
     ...(options.host ? { host: options.host } : {}),

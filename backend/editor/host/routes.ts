@@ -17,8 +17,8 @@ import { chosenCore } from '../../deployment/runtime/stdio.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { withoutAuthoring } from '../../../graph/editor/handedOn.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import { startFromPage } from '../../../gui/gui.ts';
-import { CannotBundle, builtPage, filesIn, writeBundle } from '../project/deploy/bundle.ts';
+import { startFromGui } from '../../../gui/gui.ts';
+import { CannotBundle, builtGui, filesIn, writeBundle } from '../project/deploy/bundle.ts';
 import { expandHome } from '../../deployment/host/browse.ts';
 import { zipMode } from '../project/deploy/launchers.ts';
 import { nodeRuntime } from '../../deployment/runtime/services.ts';
@@ -113,7 +113,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       const graph = parseGraph(asked);
       const runtime = nodeRuntime();
       // What would arrive is what the page sends its start points now.
-      await startFromPage(graph, runtime, registry);
+      await startFromGui(graph, runtime, registry);
       const { inputs, upstream } = await tries().arriving({ graph, node: String(asked.node_id ?? '') });
       const failed = upstream.node_results.find((result) => result.status === 'error');
       return { inputs, error: failed ? `${failed.node_id}: ${failed.error}` : null };
@@ -184,7 +184,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       try {
         // The page `--bundle` carries -- a bundle from the editor is the same
         // bundle -- and the project's own, when it has one.
-        await writeBundle(graph, work, { pageDir: builtPage(), frontend: asked.path ? project.frontendOf(asked.path) : null });
+        await writeBundle(graph, work, { guiDir: builtGui(), frontend: asked.path ? project.frontendOf(asked.path) : null });
         const entries = [];
         for (const path of (await filesIn(work)).sort()) {
           entries.push({ path, content: await readFile(join(work, path)), mode: zipMode(path) });

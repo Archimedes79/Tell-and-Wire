@@ -27,7 +27,7 @@ import RunResult, { type ShownOutput } from './RunResult';
  */
 
 /** The page as it is drawn: what was designed, and what is in use. */
-export interface PageModel {
+export interface GuiModel {
   name: string;
   description: string;
   /** The blocks, as designed. */
@@ -71,10 +71,10 @@ export function blockValue(
 }
 
 /** Whether the page is narrow (`GUI_NARROW`): set by the grid, read by each block. */
-const NarrowPage = React.createContext(false);
+const NarrowGui = React.createContext(false);
 
 /** The grid the page flows on: 16 square columns, capped at a readable width. */
-export function PageGrid({
+export function GuiGrid({
   children, minRows, onCell,
 }: {
   children: React.ReactNode;
@@ -102,7 +102,7 @@ export function PageGrid({
         minHeight: minRows ? cell * minRows : undefined,
       }}
     >
-      <NarrowPage.Provider value={narrow}>{children}</NarrowPage.Provider>
+      <NarrowGui.Provider value={narrow}>{children}</NarrowGui.Provider>
     </div>
   );
 }
@@ -147,7 +147,7 @@ export function GuiBlock({
   const look = { border: widget.border, background: widget.background };
   const bare = toneIsBare(widget.tone as Tone, look);
   const waiting = !keepRoom && kind?.waits?.(widget, value) === true;
-  const narrow = React.useContext(NarrowPage);
+  const narrow = React.useContext(NarrowGui);
 
   return (
     <div
@@ -189,7 +189,7 @@ export function GuiBlock({
  * its blocks; one whose last block was removed has nothing to draw, and drew
  * an empty rectangle where the run's result belongs.
  */
-function WithoutPage({ page }: { page: PageModel }) {
+function WithoutGui({ page }: { page: GuiModel }) {
   // A graph of nothing is not ready to run: it said it was, run or not.
   if (page.empty) {
     return (
@@ -242,12 +242,12 @@ function RunError({ error }: { error: string }) {
  * once its value is in. A button is an event and nothing else: it holds no
  * value a round could be sent (`WidgetRunner.takesValue`).
  */
-export function GuiSurfacePage({ page, onValue, onEvent }: {
-  page: PageModel;
+export function GuiSurface({ page, onValue, onEvent }: {
+  page: GuiModel;
   onValue: (block: GuiWidget, value: unknown) => void;
   onEvent: (block: GuiWidget) => void;
 }) {
-  if (page.blocks.length === 0) return <><RunError error={page.error} /><WithoutPage page={page} /></>;
+  if (page.blocks.length === 0) return <><RunError error={page.error} /><WithoutGui page={page} /></>;
   const keep = (block: GuiWidget, value: unknown) => {
     if (value !== undefined && page.takes(block)) onValue(block, value);
   };
@@ -262,7 +262,7 @@ export function GuiSurfacePage({ page, onValue, onEvent }: {
     <>
       <RunError error={page.error} />
       <div className="flex-1 overflow-auto px-8 py-6">
-        <PageGrid>
+        <GuiGrid>
           {resolveWidgetLayout(page.blocks).map((placement) => {
             const { widget } = placement;
             const incoming = page.shownOn(widget);
@@ -279,7 +279,7 @@ export function GuiSurfacePage({ page, onValue, onEvent }: {
               />
             );
           })}
-        </PageGrid>
+        </GuiGrid>
       </div>
     </>
   );

@@ -9,7 +9,7 @@
 // from the document. So the facts below are the ones a graph is *wrong* without.
 
 import { registry } from '../../../graph/nodes/registry.ts';
-import { pageAuthorNote } from '../../../gui/gui.ts';
+import { guiAuthorNote } from '../../../gui/gui.ts';
 
 /**
  * The kinds a generated graph may use, each with what its own class says about
@@ -63,7 +63,7 @@ const CONFIG_KEYS = `Where each node type keeps what it does. Put it anywhere el
 ${[...AUTHORED.map(([type, note]) => `- ${type}: ${note}`), FILE_WORK].join('\n')}`;
 
 /** The page: blocks that connect themselves by name, every kind with what it says of itself. */
-const PAGE = pageAuthorNote();
+const GUI = guiAuthorNote();
 
 /**
  * The rule a graph is useless without.
@@ -124,4 +124,4 @@ const EXAMPLE = `A complete, working example:
 }
 \`\`\``;
 
-export const GRAPH_SYSTEM = [SHAPE, NODE_WORDS, EVENTS, CONFIG_KEYS, PAGE, MUST_SHOW, DERIVED_PORTS, EXAMPLE].join('\n\n');
+export const GRAPH_SYSTEM = [SHAPE, NODE_WORDS, EVENTS, CONFIG_KEYS, GUI, MUST_SHOW, DERIVED_PORTS, EXAMPLE].join('\n\n');

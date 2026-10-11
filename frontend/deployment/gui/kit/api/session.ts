@@ -18,7 +18,7 @@ import { pathFor } from '../../../../../backend/deployment/host/api.ts';
 import { call, type RoundSnapshot, type SessionView } from './client';
 import { errorText } from './errorText';
 
-export interface PageSession {
+export interface GuiSession {
   /** The session as the server last told it; none before it has. */
   view: SessionView | null;
   /** The round going now, or the last one -- told as it goes. */
@@ -29,7 +29,7 @@ export interface PageSession {
   sent: Record<string, Record<string, unknown>>;
 }
 
-export const useSession = create<PageSession>(() => ({ view: null, round: null, edits: {}, sent: {} }));
+export const useSession = create<GuiSession>(() => ({ view: null, round: null, edits: {}, sent: {} }));
 
 /** Rounds that ended before this page heard what it had sent them: a quick one beats its own answer. */
 const endedEarly = new Map<string, boolean>();
@@ -109,14 +109,14 @@ export function setEdit(id: string, value: unknown): void {
 }
 
 /** What block *id* holds as this page shows it: what was set here, else what the session holds, else *design*. */
-export function heldValue(state: Pick<PageSession, 'view' | 'edits'>, id: string, design: unknown): unknown {
+export function heldValue(state: Pick<GuiSession, 'view' | 'edits'>, id: string, design: unknown): unknown {
   if (id in state.edits) return state.edits[id];
   if (state.view && id in state.view.page) return state.view.page[id];
   return design;
 }
 
 /** Whether a round is going: the page's, another tab's, the clock's. */
-export const roundGoing = (state: PageSession): boolean => !!state.round && !state.round.done;
+export const roundGoing = (state: GuiSession): boolean => !!state.round && !state.round.done;
 
 /** What a round is asked with, beside its event: what it is sent, what it asked, who sends it (`RoundRequest`). */
 export interface RoundAsk {

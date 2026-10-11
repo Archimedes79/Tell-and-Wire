@@ -41,8 +41,8 @@ import { startClock, type Clock } from '../runtime/clock.ts';
 import type { Held } from '../runtime/latch.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import {
-  applyPageValues, clearDeliveredPage, firedBy, pageBlock, pageRequirements, pageSends, pageState, sentBy, setPageState, settlePage, shownFromState,
-  startFromPage, takesPageValue,
+  applyGuiValues, clearDeliveredGui, firedBy, guiBlock, guiRequirements, guiSends, guiState, sentBy, setGuiState, settleGui, shownFromState,
+  startFromGui, takesGuiValue,
 } from '../../../gui/gui.ts';
 import type { ProgressEvent, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { stateFileOf } from '../project/folder.ts';
@@ -74,7 +74,7 @@ interface StateFile {
   nodes: Record<string, Record<string, Kept>>;
   /** What the page's blocks hold, by block id, and what each that shows an end point shows. */
   page: Record<string, Kept>;
-  page_shown: Record<string, unknown>;
+  gui_shown: Record<string, unknown>;
   held: Record<string, Held>;
   shown: ExecutionResult | null;
   rounds: number;
@@ -130,7 +130,7 @@ export class Session {
   /** The design with what is kept put back (`inUse`), while none of the three has been replaced. */
   private cached: { design: Graph; nodes: KeptNodes; blocks: KeptBlocks; copy: Graph } | null = null;
   /** What each block that shows an end point shows, laid over from every round. */
-  private pageShown: Record<string, unknown> = {};
+  private guiShown: Record<string, unknown> = {};
   /** What every node was last left holding, as the core said after the last round: for state.json. */
   private held: Record<string, Held> = {};
   private readonly core: GraphCore;
@@ -252,10 +252,10 @@ export class Session {
       sent: sentOf(copy, registry),
       outputs: outputsOf(this.design, this.shown, registry),
       state,
-      page: pageState(copy),
+      page: guiState(copy),
       // What a block shows of a memory node is what it holds now, over what the block showed before it was
-      // pointed at it: no round settles a memory node into a block (`settlePage`).
-      shown: { ...this.pageShown, ...shownFromState(copy, state) },
+      // pointed at it: no round settles a memory node into a block (`settleGui`).
+      shown: { ...this.guiShown, ...shownFromState(copy, state) },
       kept: this.kept(),
       rounds: this.count,
       finished_at: this.finishedAt,
@@ -281,11 +281,11 @@ export class Session {
   requirements(trigger: Trigger | null, ask: RoundAsk = {}): RuntimeRequirement[] {
     const { values = {}, answers = {}, by = 'call' } = ask;
     const copy = withState(this.design, this.keptNodes, this.keptBlocks);
-    if (!fromPage(copy, trigger, by)) return [];
-    applyPageValues(copy, values);
+    if (!fromGui(copy, trigger, by)) return [];
+    applyGuiValues(copy, values);
     // An empty value -- a cleared picker -- answers nothing.
     const given = (from: Record<string, unknown>, key: string): boolean => from[key] !== undefined && from[key] !== '';
-    return pageRequirements(copy, trigger!.node_id).filter((asked) => !given(values, asked.key) && !given(answers, asked.key));
+    return guiRequirements(copy, trigger!.node_id).filter((asked) => !given(values, asked.key) && !given(answers, asked.key));
   }
 
   /**
@@ -335,8 +335,8 @@ export class Session {
     const design = this.design;
     const asked: Sent = { trigger, values: ask.values ?? {}, answers: ask.answers ?? {}, by: ask.by ?? 'call' };
     const { values, answers, by } = asked;
-    const page = fromPage(design, trigger, by);
-    if (page) checkPageRound(design, trigger!, by, values);
+    const page = fromGui(design, trigger, by);
+    if (page) checkGuiRound(design, trigger!, by, values);
     else checkSent(design, trigger, values, registry);
     checkAnswers(design, trigger, page, answers);
     // How many nodes it runs, said before it is queued -- the slice its start point reaches.
@@ -422,7 +422,7 @@ export class Session {
     return this.rounds.exclusive(async () => {
       this.keptNodes = new Map();
       this.keptBlocks = new Map();
-      this.pageShown = {};
+      this.guiShown = {};
       this.held = {};
       await this.core.forget();
       this.shown = null;
@@ -446,17 +446,17 @@ export class Session {
     // point is sent what the blocks that send to it hold -- read where it is
     // read, a folder's listing, a file's text. Anyone else's values are the
     // package as they come.
-    const page = fromPage(copy, trigger, asked.by);
+    const page = fromGui(copy, trigger, asked.by);
     const delivered = page ? sentBy(copy, trigger!.node_id).map((widget) => widget.id) : [];
     if (page) {
-      applyPageValues(copy, { ...asked.values, ...asked.answers });
-      applySent(copy, trigger, await pageSends(copy, trigger!.node_id, runtime), asked.by, registry);
+      applyGuiValues(copy, { ...asked.values, ...asked.answers });
+      applySent(copy, trigger, await guiSends(copy, trigger!.node_id, runtime), asked.by, registry);
     } else {
       applySent(copy, trigger, asked.values, asked.by, registry);
       // A round of everything counts the page's events as fired too.
-      if (!trigger) await startFromPage(copy, runtime, registry);
+      if (!trigger) await startFromGui(copy, runtime, registry);
     }
-    const sentPage = pageState(copy);
+    const sentGui = guiState(copy);
     this.before.set(work.id, memoryState(copy, registry));
     for (const old of [...this.before.keys()].slice(0, -BEFORE_KEPT)) this.before.delete(old);
     const ended = await this.core.round({ graph: copy, trigger }, work.report, work.signal);
@@ -472,14 +472,14 @@ export class Session {
     // a conversation must not be told twice -- reaches the blocks that show
     // them; a message the page sent with it is said, and emptied.
     const fresh = { ...result, node_results: result.node_results.filter((one) => !one.held && (one.status === 'success' || one.status === 'partial')) };
-    const shown = await settlePage(copy, outputsOf(copy, fresh, registry), runtime);
-    clearDeliveredPage(copy, Object.fromEntries(Object.entries(sentPage).filter(([id]) => delivered.includes(id))));
+    const shown = await settleGui(copy, outputsOf(copy, fresh, registry), runtime);
+    clearDeliveredGui(copy, Object.fromEntries(Object.entries(sentGui).filter(([id]) => delivered.includes(id))));
     ({ nodes: this.keptNodes, page: this.keptBlocks } = keptOf(copy, design));
     // A design handed over while the round ran is the one that holds now.
     if (this.design !== design) this.fit(this.keptNodes, this.keptBlocks);
     this.held = ended.held;
     this.shown = this.shown ? mergeResults(this.shown, result) : result;
-    this.pageShown = { ...this.pageShown, ...shown };
+    this.guiShown = { ...this.guiShown, ...shown };
     this.count += 1;
     this.finishedAt = Date.now();
     await this.save();
@@ -527,7 +527,7 @@ export class Session {
       const kept = fitting(held, designed, notes, (key) => `What "${nodeId}" kept in "${key}"`, (key) => `"${key}" is no longer there`);
       if (kept.size) this.keptNodes.set(nodeId, kept);
     }
-    this.keptBlocks = fitting(page, pageState(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the page');
+    this.keptBlocks = fitting(page, guiState(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the page');
     this.notes = notes;
   }
 
@@ -535,7 +535,7 @@ export class Session {
   private recall(kept: StateFile): void {
     const nodes: KeptNodes = new Map(Object.entries(kept.nodes ?? {}).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
     this.fit(nodes, new Map(Object.entries(kept.page ?? {})));
-    this.pageShown = kept.page_shown ?? {};
+    this.guiShown = kept.gui_shown ?? {};
     this.held = kept.held ?? {};
     this.shown = kept.shown ?? null;
     this.count = Number(kept.rounds) || 0;
@@ -555,7 +555,7 @@ export class Session {
           saved_at: new Date().toISOString(),
           nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries(values)])),
           page: Object.fromEntries(this.keptBlocks),
-          page_shown: this.pageShown,
+          gui_shown: this.guiShown,
           held: Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))),
           shown: this.shown,
           rounds: this.count,
@@ -678,7 +678,7 @@ interface Sent {
  * asks, and only the blocks that send to its start point, by their ids.
  */
 function checkAnswers(graph: Graph, trigger: Trigger | null, page: boolean, answers: Record<string, unknown>): void {
-  const asked = page ? pageRequirements(graph, trigger!.node_id).map((question) => question.key) : [];
+  const asked = page ? guiRequirements(graph, trigger!.node_id).map((question) => question.key) : [];
   const unasked = Object.keys(answers).filter((key) => !asked.includes(key));
   if (!unasked.length) return;
   throw new NotOffered(asked.length
@@ -687,8 +687,8 @@ function checkAnswers(graph: Graph, trigger: Trigger | null, page: boolean, answ
 }
 
 /** Whether a round for *trigger* is one the page starts: sent by one of its blocks, at a start point. */
-function fromPage(graph: Graph, trigger: Trigger | null, by: string): boolean {
-  if (!trigger || !pageBlock(graph, by)) return false;
+function fromGui(graph: Graph, trigger: Trigger | null, by: string): boolean {
+  if (!trigger || !guiBlock(graph, by)) return false;
   const node = graph.nodes.find((one) => one.id === trigger.node_id);
   return !!node && !!registry.node(node.node_type)?.takesPackage;
 }
@@ -697,12 +697,12 @@ function fromPage(graph: Graph, trigger: Trigger | null, by: string): boolean {
  * Refuse a round the page could not have started: *by* is a block that does
  * not fire the start point, or *values* name a block that takes none.
  */
-function checkPageRound(graph: Graph, trigger: Trigger, by: string, values: Record<string, unknown>): void {
+function checkGuiRound(graph: Graph, trigger: Trigger, by: string, values: Record<string, unknown>): void {
   const firing = firedBy(graph, trigger.node_id).map((widget) => widget.id);
   if (!firing.includes(by)) {
     throw new NotOffered(`The block "${by}" does not fire "${trigger.node_id}"${firing.length ? `; it is fired by ${names(firing)}` : ''}.`);
   }
-  const unknown = Object.keys(values).filter((id) => !takesPageValue(graph, id));
+  const unknown = Object.keys(values).filter((id) => !takesGuiValue(graph, id));
   if (unknown.length) throw new NotOffered(`No block ${names(unknown)} on the page takes a value.`);
 }
 
@@ -713,7 +713,7 @@ function withState(design: Graph, nodes: KeptNodes, page: KeptBlocks): Graph {
     const held = nodes.get(node.id);
     if (held) registry.node(node.node_type)?.setState(node, Object.fromEntries([...held].map(([key, kept]) => [key, kept.value])));
   }
-  if (page.size) setPageState(copy, Object.fromEntries([...page].map(([id, kept]) => [id, kept.value])));
+  if (page.size) setGuiState(copy, Object.fromEntries([...page].map(([id, kept]) => [id, kept.value])));
   return copy;
 }
 
@@ -737,7 +737,7 @@ function keptOf(copy: Graph, design: Graph): { nodes: KeptNodes; page: KeptBlock
     const held = differing(element.state(node), element.state(plan));
     if (held.size) nodes.set(node.id, held);
   }
-  return { nodes, page: differing(pageState(copy), pageState(design)) };
+  return { nodes, page: differing(guiState(copy), guiState(design)) };
 }
 
 /**

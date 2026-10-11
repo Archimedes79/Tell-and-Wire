@@ -4,7 +4,7 @@ import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document
 import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../document/elements/registry';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import { fieldOf } from '../../../../backend/deployment/runtime/executor.ts';
-import { blockCan, blockReceives, blocksAt } from '../../document/model/page';
+import { blockCan, blockReceives, blocksAt } from '../../document/model/gui';
 import { blockSize } from '../../../deployment/gui/kit/layout';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 

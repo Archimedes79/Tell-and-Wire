@@ -21,9 +21,9 @@ describe('a project\'s own frontend', () => {
     const dir = join(await mkdtemp(join(tmpdir(), 'frontend-')), 'nested_statistics');
     await cp(EXAMPLE, dir, { recursive: true });
     await writeFile(join(dir, 'frontend', 'style.css'), 'body { color: red }');
-    const pageDir = await mkdtemp(join(tmpdir(), 'built-'));
-    await writeFile(join(pageDir, 'runtime.html'), '<title>built</title>');
-    const one = await serve({ graphPath: dir, pageDir, port: 0 });
+    const guiDir = await mkdtemp(join(tmpdir(), 'built-'));
+    await writeFile(join(guiDir, 'runtime.html'), '<title>built</title>');
+    const one = await serve({ graphPath: dir, guiDir, port: 0 });
     served.push(one);
     expect(await (await fetch(`${one.url}/`)).text()).toContain('<title>Nested statistics</title>');
     expect(await (await fetch(`${one.url}/style.css`)).text()).toBe('body { color: red }');

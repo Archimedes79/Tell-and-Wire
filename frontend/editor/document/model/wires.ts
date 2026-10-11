@@ -7,7 +7,7 @@ import { wireOf } from '../../../../graph/files/flow.ts';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import { registry as runnerRegistry } from '../../../../graph/nodes/registry.ts';
 import { derivedNodePorts } from './ports';
-import { defaultField, takenAs } from './page';
+import { defaultField, takenAs } from './gui';
 import { NODE_KINDS } from './nodeKinds';
 
 /**

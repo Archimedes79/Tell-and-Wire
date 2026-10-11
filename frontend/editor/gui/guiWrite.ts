@@ -20,7 +20,7 @@ import { useGraphStore } from '../document/store/graphStore';
 import { placement } from '../document/model/placement';
 import { NODE_KINDS } from '../document/model/nodeKinds';
 import { freeId, slugOf } from '../document/model/ids';
-import { blockCan, blocksAt, endPoints, pageStartPoints } from '../document/model/page';
+import { blockCan, blocksAt, endPoints, guiStartPoints } from '../document/model/gui';
 import { WIDGET_BUILDERS } from '../document/elements/registry';
 
 /**
@@ -33,7 +33,7 @@ function rewrite(edit: (widgets: GuiWidget[]) => GuiWidget[], coalesce?: string,
   const store = useGraphStore.getState();
   const widgets = edit(store.page);
   if (!add.length && JSON.stringify(widgets) === JSON.stringify(store.page)) return;
-  store.setPage(widgets, { coalesce, add });
+  store.setGui(widgets, { coalesce, add });
 }
 
 /**
@@ -135,7 +135,7 @@ function connected(widget: GuiWidget, nodes: GraphNode[], blocks: GuiWidget[]): 
   const block: GuiWidget = { ...widget };
   const always = can.fires && !!WIDGET_BUILDERS[widget.kind]?.firesWhenMade;
   if (can.sends || always) {
-    const starts = pageStartPoints(nodes);
+    const starts = guiStartPoints(nodes);
     let start = starts.length === 1 ? starts[0].id : undefined;
     if (!starts.length) {
       const made = newPoint('start', 'Start', add);
@@ -174,14 +174,14 @@ export function insertBlock(widget: GuiWidget, at?: number): void {
 }
 
 /**
- * The blocks of a page drawn from the graph (`pageFromGraph`), added at the
+ * The blocks of a page drawn from the graph (`guiFromGraph`), added at the
  * end in one undo step -- with the start points a call started that the person
  * put on the page, which are then started by it.
  */
-export function addBlocks(blocks: GuiWidget[], toPage: GraphNode[] = []): void {
+export function addBlocks(blocks: GuiWidget[], toGui: GraphNode[] = []): void {
   const step = 'page.from-graph';
   rewrite((widgets) => [...widgets, ...blocks], step);
-  for (const start of toPage) useGraphStore.getState().updateNode(start.id, { config: { ...start.config, started_by: 'page' } }, undefined, step);
+  for (const start of toGui) useGraphStore.getState().updateNode(start.id, { config: { ...start.config, started_by: 'page' } }, undefined, step);
 }
 
 /**

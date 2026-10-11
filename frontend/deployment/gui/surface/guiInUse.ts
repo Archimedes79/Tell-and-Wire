@@ -1,8 +1,8 @@
 import type { GuiWidget } from '../../../editor/document/graph';
 import type { RoundSnapshot } from '../kit/api/client';
 import type { InterfaceEntry } from '../../../../backend/deployment/host/interface.ts';
-import { heldValue, type PageSession } from '../kit/api/session';
-import type { PageModel } from './GuiPage';
+import { heldValue, type GuiSession } from '../kit/api/session';
+import type { GuiModel } from './GuiSurface';
 
 /**
  * A page as it was designed, and how it is connected to the graph: what a
@@ -12,7 +12,7 @@ import type { PageModel } from './GuiPage';
  * is told it by the runtime API, the editor asks the backend, and the page
  * asks neither (`connectionsOf`).
  */
-export interface PageDesign {
+export interface GuiDesign {
   name: string;
   description: string;
   blocks: GuiWidget[];
@@ -27,7 +27,7 @@ export interface PageDesign {
 }
 
 /** How the page is connected, as the graph's interface says it: which block fires which start point, and which blocks are sent. */
-export function connectionsOf(events: InterfaceEntry[]): Pick<PageDesign, 'fires' | 'sends'> {
+export function connectionsOf(events: InterfaceEntry[]): Pick<GuiDesign, 'fires' | 'sends'> {
   const fires: Record<string, string> = {};
   const sends = new Set<string>();
   for (const event of events) {
@@ -49,7 +49,7 @@ export function roundError(round: RoundSnapshot | null): string {
  * id -- what it holds, what it shows -- and whether a round is going, and how
  * the last one failed.
  */
-export function pageInUse(design: PageDesign, session: Pick<PageSession, 'view' | 'edits'> & { busy: boolean; error: string }): PageModel {
+export function guiInUse(design: GuiDesign, session: Pick<GuiSession, 'view' | 'edits'> & { busy: boolean; error: string }): GuiModel {
   const outputs = session.view?.outputs ?? {};
   const shown = session.view?.shown ?? {};
   const sends = new Set(design.sends);

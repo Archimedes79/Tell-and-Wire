@@ -14,7 +14,7 @@
 // since it then stops serving the command line.
 
 import type { DataType, GraphNode, GuiWidget, Wire } from '../document/graph';
-import { blockCan, blocksAt } from '../document/model/page';
+import { blockCan, blocksAt } from '../document/model/gui';
 import { registry as runnerRegistry } from '../../../graph/nodes/registry.ts';
 import { GUI_GRID_COLUMNS } from '../../deployment/gui/kit/layout';
 import { ALL_ENTRIES, newBlock } from './DesignerPalette';
@@ -155,7 +155,7 @@ function outputsLaidOut(planned: Planned, page: GuiWidget[]): void {
  * page cannot start it. Pure: the person is asked about the ones a call
  * starts before any of it is applied.
  */
-export function pageFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget[]): Planned {
+export function guiFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget[]): Planned {
   const planned: Planned = { now: [], ifSwitched: [] };
   const taken = [...page];
   for (const node of nodes) {

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuiWidget } from '../../editor/document/graph';
-import LivePage from './surface/LivePage';
+import LiveGui from './surface/LiveGui';
 import { useRound } from './surface/useRound';
 import CallForms from './surface/CallForms';
 import type { InterfaceEntry } from '../../../backend/deployment/host/interface.ts';
-import { connectionsOf, type PageDesign } from './surface/pageInUse';
+import { connectionsOf, type GuiDesign } from './surface/guiInUse';
 import RequirementsDialog from './kit/dialogs/RequirementsDialog';
 import DeliveredHeader from './surface/DeliveredHeader';
 import RuntimeAISettings from './RuntimeAISettings';
@@ -31,14 +31,14 @@ const designOf = (session: string, revision: number): string => `${session}#${re
  * loaded again whenever the server holds another one -- the editor's
  * document, edited while the tool is open beside it.
  *
- * Every block is drawn through the component the editor used -- `GuiPage`,
+ * Every block is drawn through the component the editor used -- `GuiSurface`,
  * each widget's `View` -- so a deployed tool cannot look or behave
  * differently from what was designed.
  *
  * Served by the bundle's `backend/deployment/host/serve.ts` at `runtime.html`.
  */
 export default function RuntimeApp() {
-  const [design, setDesign] = useState<(PageDesign & { scheme: string; startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
+  const [design, setDesign] = useState<(GuiDesign & { scheme: string; startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
   const [loadError, setLoadError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const view = useSession((s) => s.view);
@@ -146,7 +146,7 @@ export default function RuntimeApp() {
           <CallForms events={design.events} sent={view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />
         )}
         {design && (
-          <LivePage design={design} onEvent={fire} />
+          <LiveGui design={design} onEvent={fire} />
         )}
         <RequirementsDialog
           requirements={round.requirements}

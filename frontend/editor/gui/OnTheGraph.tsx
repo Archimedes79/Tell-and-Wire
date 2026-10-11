@@ -3,8 +3,8 @@ import { useShallow } from 'zustand/react/shallow';
 import type { GraphNode, GuiWidget } from '../document/graph';
 import { WIDGET_BUILDERS } from '../document/elements/registry';
 import { useGraphStore } from '../document/store/graphStore';
-import { blockCan, endPoints, memoryPoints, pageStartPoints, type Point } from '../document/model/page';
-import { connectToNewPoint } from './pageWrite';
+import { blockCan, endPoints, memoryPoints, guiStartPoints, type Point } from '../document/model/gui';
+import { connectToNewPoint } from './guiWrite';
 import Chip from '../../deployment/gui/kit/ui/Chip';
 import Toggle from '../../deployment/gui/kit/ui/Toggle';
 import { DIMMER, EVENT, FIELD_ON_SURFACE, MUTED } from '../../deployment/gui/kit/ui/theme';
@@ -64,7 +64,7 @@ export default function OnTheGraph({ widget, onChange }: {
   const can = blockCan(widget);
   if (!can.sends && !can.fires && !can.shows) return null;
 
-  const starts = pageStartPoints(nodes);
+  const starts = guiStartPoints(nodes);
   // What a block shows: what the graph hands back, or what a memory node holds.
   const ends = [...endPoints(nodes), ...memoryPoints(nodes)];
   const sendsTo = widget.sends_to ?? [];

@@ -65,28 +65,28 @@ export function parseWidget(raw: unknown): Widget {
 }
 
 /** The page's blocks as the page keeps them -- none, for a graph without a page. */
-export function pageBlocks(graph: Graph): RawConfig[] {
+export function guiBlocks(graph: Graph): RawConfig[] {
   return graph.page?.blocks ?? [];
 }
 
 /** The page's blocks, read. */
-function pageWidgets(graph: Graph): Widget[] {
-  return pageBlocks(graph).map(parseWidget);
+function guiWidgets(graph: Graph): Widget[] {
+  return guiBlocks(graph).map(parseWidget);
 }
 
 /** The block of the page called *id*, as the page keeps it. */
-export function pageBlock(graph: Graph, id: string): RawConfig | undefined {
-  return pageBlocks(graph).find((block) => block.id === id);
+export function guiBlock(graph: Graph, id: string): RawConfig | undefined {
+  return guiBlocks(graph).find((block) => block.id === id);
 }
 
 /** The blocks whose event fires start point *name*, in the page's order. */
 export function firedBy(graph: Graph, name: string): Widget[] {
-  return pageWidgets(graph).filter((widget) => widget.fires === name && !!widgetElement(widget.kind)?.event(widget));
+  return guiWidgets(graph).filter((widget) => widget.fires === name && !!widgetElement(widget.kind)?.event(widget));
 }
 
 /** The blocks whose data goes to start point *name*. */
 export function sentBy(graph: Graph, name: string): Widget[] {
-  return pageWidgets(graph).filter((widget) => widget.sends_to.includes(name) && !!widgetElement(widget.kind)?.sends(widget));
+  return guiWidgets(graph).filter((widget) => widget.sends_to.includes(name) && !!widgetElement(widget.kind)?.sends(widget));
 }
 
 /**
@@ -105,7 +105,7 @@ export function fieldSender(graph: Graph, name: string, field: string): Widget |
  * point hands on. A block that cannot say what it holds -- a folder that is
  * gone -- fails the round before it starts.
  */
-export async function pageSends(graph: Graph, name: string, runtime: Runtime): Promise<Record<string, unknown>> {
+export async function guiSends(graph: Graph, name: string, runtime: Runtime): Promise<Record<string, unknown>> {
   const values: Record<string, unknown> = {};
   for (const widget of sentBy(graph, name)) {
     try {
@@ -123,12 +123,12 @@ export async function pageSends(graph: Graph, name: string, runtime: Runtime): P
  * starts is sent what the page holds now, as though the page had fired it.
  * So a tool run from a terminal starts on what its page starts on.
  */
-export async function startFromPage(graph: Graph, runtime: Runtime, registry: Runners): Promise<void> {
-  if (!pageBlocks(graph).length) return;
+export async function startFromGui(graph: Graph, runtime: Runtime, registry: Runners): Promise<void> {
+  if (!guiBlocks(graph).length) return;
   for (const node of graph.nodes) {
     const element = registry.node(node.node_type);
     if (!element?.takesPackage || element.startedBy(node) !== 'page') continue;
-    element.startWith(node, { by: 'page', values: await pageSends(graph, node.id, runtime) });
+    element.startWith(node, { by: 'page', values: await guiSends(graph, node.id, runtime) });
   }
 }
 
@@ -137,9 +137,9 @@ export async function startFromPage(graph: Graph, runtime: Runtime, registry: Ru
  * block that takes a value: a heading's text is its design, whatever a caller
  * sends under its id.
  */
-export function applyPageValues(graph: Graph, values: Record<string, unknown>): void {
+export function applyGuiValues(graph: Graph, values: Record<string, unknown>): void {
   for (const [id, value] of Object.entries(values)) {
-    const stored = pageBlock(graph, id);
+    const stored = guiBlock(graph, id);
     const element = stored && widgetElement(String(stored.kind));
     if (stored && element?.takesValue(parseWidget(stored))) element.setValue(stored, value);
   }
@@ -148,14 +148,14 @@ export function applyPageValues(graph: Graph, values: Record<string, unknown>): 
 /** Of the block ids *ids*, those of blocks whose value is a path this machine reads. */
 export function pathBlocks(graph: Graph, ids: string[]): string[] {
   return ids.filter((id) => {
-    const stored = pageBlock(graph, id);
+    const stored = guiBlock(graph, id);
     return !!stored && !!widgetElement(String(stored.kind))?.readsPath(parseWidget(stored));
   });
 }
 
 /** Whether *id* is a block of the page a person sets: what a round the page starts is sent by. */
-export function takesPageValue(graph: Graph, id: string): boolean {
-  const stored = pageBlock(graph, id);
+export function takesGuiValue(graph: Graph, id: string): boolean {
+  const stored = guiBlock(graph, id);
   return !!stored && !!widgetElement(String(stored.kind))?.takesValue(parseWidget(stored));
 }
 
@@ -164,18 +164,18 @@ export function takesPageValue(graph: Graph, id: string): boolean {
  * conversation, what an end point handed back. A block that keeps nothing is
  * its design.
  */
-export function pageState(graph: Graph): Record<string, unknown> {
+export function guiState(graph: Graph): Record<string, unknown> {
   const kept: Record<string, unknown> = {};
-  for (const stored of pageBlocks(graph)) {
+  for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
     if (widgetElement(widget.kind)?.keepsState(widget)) kept[widget.id] = stored.value ?? null;
   }
   return kept;
 }
 
-/** Put what `pageState` read back where the blocks keep it. */
-export function setPageState(graph: Graph, kept: Record<string, unknown>): void {
-  for (const stored of pageBlocks(graph)) {
+/** Put what `guiState` read back where the blocks keep it. */
+export function setGuiState(graph: Graph, kept: Record<string, unknown>): void {
+  for (const stored of guiBlocks(graph)) {
     const id = String(stored.id ?? '');
     if (!(id in kept)) continue;
     if (kept[id] === null) delete stored.value;
@@ -184,8 +184,8 @@ export function setPageState(graph: Graph, kept: Record<string, unknown>): void 
 }
 
 /** Empty what a block held only until a round delivered it (`clearsValueAfterRun`). *sent*: the page's state as the round was handed it. */
-export function clearDeliveredPage(graph: Graph, sent: Record<string, unknown>): void {
-  for (const stored of pageBlocks(graph)) {
+export function clearDeliveredGui(graph: Graph, sent: Record<string, unknown>): void {
+  for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
     if (!widgetElement(widget.kind)?.clearsValueAfterRun(widget)) continue;
     if (JSON.stringify(stored.value ?? null) === JSON.stringify(sent[widget.id] ?? null)) stored.value = '';
@@ -199,9 +199,9 @@ export function clearDeliveredPage(graph: Graph, sent: Record<string, unknown>):
  * it (`displayValue`): an image's path read into the picture. A block whose
  * end point handed back nothing this round is left as it was, and out.
  */
-export async function settlePage(graph: Graph, outputs: Record<string, unknown>, runtime: Runtime): Promise<Record<string, unknown>> {
+export async function settleGui(graph: Graph, outputs: Record<string, unknown>, runtime: Runtime): Promise<Record<string, unknown>> {
   const shown: Record<string, unknown> = {};
-  for (const stored of pageBlocks(graph)) {
+  for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
     const element = widgetElement(widget.kind);
     if (!element?.showsEnd(widget) || !widget.shows || !(widget.shows in outputs)) continue;
@@ -216,11 +216,11 @@ export async function settlePage(graph: Graph, outputs: Record<string, unknown>,
  * What each block that shows a memory node shows: the whole content as it is
  * now (*state*, by the node's name), by the block's id -- there from the
  * design's values on, with no round: a round settles end points into blocks
- * (`settlePage`), never a memory node.
+ * (`settleGui`), never a memory node.
  */
 export function shownFromState(graph: Graph, state: Record<string, unknown>): Record<string, unknown> {
   const shown: Record<string, unknown> = {};
-  for (const stored of pageBlocks(graph)) {
+  for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
     if (widgetElement(widget.kind)?.showsEnd(widget) && widget.shows && widget.shows in state) shown[widget.id] = state[widget.shows];
   }
@@ -232,7 +232,7 @@ export function shownFromState(graph: Graph, state: Record<string, unknown>): Re
  * that send to it ask -- a picker with nothing chosen --, each under its block's
  * id. None for a round the page does not send.
  */
-export function pageRequirements(graph: Graph, name: string | null): RuntimeRequirement[] {
+export function guiRequirements(graph: Graph, name: string | null): RuntimeRequirement[] {
   if (!name) return [];
   return sentBy(graph, name).flatMap((widget) => (widgetElement(widget.kind)?.runtimeRequirements(widget) ?? [])
     .map((asked) => ({ key: widget.id, ...asked })));
@@ -257,7 +257,7 @@ function points(graph: Graph, registry: Runners): { starts: Map<string, string>;
 /** Whether a block of the page shows a memory node: what a person sees of the graph where it has no end point. */
 export function showsMemory(graph: Graph, registry: Runners): boolean {
   const { states } = points(graph, registry);
-  return pageWidgets(graph).some((block) => !!block.shows && states.has(block.shows));
+  return guiWidgets(graph).some((block) => !!block.shows && states.has(block.shows));
 }
 
 /**
@@ -269,9 +269,9 @@ export function showsMemory(graph: Graph, registry: Runners): boolean {
  * the page cannot start it. And a node that takes a value of what such a
  * start point is sent that no block sends it: it never arrives.
  */
-export function pageProblems(graph: Graph, registry: Runners, where = 'the page'): Problem[] {
+export function guiProblems(graph: Graph, registry: Runners, where = 'the page'): Problem[] {
   const found: Problem[] = [];
-  const blocks = pageWidgets(graph);
+  const blocks = guiWidgets(graph);
   if (!blocks.length) return found;
   const { starts, ends, states } = points(graph, registry);
   const seen = new Set<string>();
@@ -360,8 +360,8 @@ export function pageProblems(graph: Graph, registry: Runners, where = 'the page'
 }
 
 /** What the page's blocks start on: a picker's file, which a bundle carries. */
-export function pageReferencedPaths(graph: Graph): string[] {
-  return pageWidgets(graph).flatMap((widget) => widgetElement(widget.kind)?.referencedPaths(widget) ?? []);
+export function guiReferencedPaths(graph: Graph): string[] {
+  return guiWidgets(graph).flatMap((widget) => widgetElement(widget.kind)?.referencedPaths(widget) ?? []);
 }
 
 /**
@@ -369,7 +369,7 @@ export function pageReferencedPaths(graph: Graph): string[] {
  * and every kind with what it says of itself (`WidgetRunner.graphAuthorNote`)
  * -- a kind is listed by being registered, so the prompt cannot leave one out.
  */
-export function pageAuthorNote(): string {
+export function guiAuthorNote(): string {
   const kinds = WIDGETS.map((element) => {
     const note = element.graphAuthorNote();
     return `  - ${element.widgetKind}${note ? `: ${note}` : ''}`;

@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import type { GuiWidget } from '../../../editor/document/graph';
 import { roundGoing, setEdit, useSession } from '../kit/api/session';
-import { GuiSurfacePage } from './GuiPage';
-import { pageInUse, roundError, type PageDesign } from './pageInUse';
+import { GuiSurface } from './GuiSurface';
+import { guiInUse, roundError, type GuiDesign } from './guiInUse';
 
 /**
  * The page in use, for the host that runs rounds: *design* with what the
@@ -10,12 +10,12 @@ import { pageInUse, roundError, type PageDesign } from './pageInUse';
  * page shows -- not to every tick of a round, which would draw every chart
  * again ten times a second -- and, memoed, is not drawn again for its host's.
  */
-const LivePage = memo(function LivePage({ design, onEvent }: { design: PageDesign; onEvent: (block: GuiWidget) => void }) {
+const LiveGui = memo(function LiveGui({ design, onEvent }: { design: GuiDesign; onEvent: (block: GuiWidget) => void }) {
   const view = useSession((s) => s.view);
   const edits = useSession((s) => s.edits);
   const busy = useSession(roundGoing);
   const error = useSession((s) => roundError(s.round));
-  return <GuiSurfacePage page={pageInUse(design, { view, edits, busy, error })} onValue={(block, value) => setEdit(block.id, value)} onEvent={onEvent} />;
+  return <GuiSurface page={guiInUse(design, { view, edits, busy, error })} onValue={(block, value) => setEdit(block.id, value)} onEvent={onEvent} />;
 });
 
-export default LivePage;
+export default LiveGui;

@@ -13,7 +13,7 @@ type ToolWords = Partial<Pick<GraphMetadata, 'name' | 'description'>>;
  * recipient reads, could be set nowhere at all. A graph has one page, so the
  * page is called what the graph is called.
  */
-export default function PageHeading({ name, description, onChange }: {
+export default function GuiHeading({ name, description, onChange }: {
   name: string;
   description: string;
   onChange: (words: ToolWords) => void;

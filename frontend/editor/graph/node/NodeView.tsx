@@ -6,7 +6,7 @@ import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { derivedNodePorts } from '../../document/model/ports';
 import { neighbours } from '../../document/model/wires';
-import { blocksAt } from '../../document/model/page';
+import { blocksAt } from '../../document/model/gui';
 import { headingFromText, isNumberedHeading } from '../../document/model/heading';
 import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
@@ -79,17 +79,17 @@ function viewHearsEscape(
  * What a node is made of is not decided here: the node's runner says which
  * files it keeps (`partsOf`), its builder what else is set.
  */
-export default function NodeView({ nodeId, onClose, onOpenPage }: { nodeId: string; onClose: () => void; onOpenPage: () => void }) {
+export default function NodeView({ nodeId, onClose, onOpenGui }: { nodeId: string; onClose: () => void; onOpenGui: () => void }) {
   const panel = useNodePanel(nodeId);
   const node = panel.node();
-  return node ? <Opened node={node} panel={panel} onClose={onClose} onOpenPage={onOpenPage} /> : null;
+  return node ? <Opened node={node} panel={panel} onClose={onClose} onOpenGui={onOpenGui} /> : null;
 }
 
-function Opened({ node, panel, onClose, onOpenPage }: {
+function Opened({ node, panel, onClose, onOpenGui }: {
   node: GraphNode;
   panel: ReturnType<typeof useNodePanel>;
   onClose: () => void;
-  onOpenPage: () => void;
+  onOpenGui: () => void;
 }) {
   const builder: NodeGuiBuilder | undefined = NODE_BUILDERS[node.node_type];
   const writing = usePartGenerate(node.id, panel);
@@ -243,7 +243,7 @@ function Opened({ node, panel, onClose, onOpenPage }: {
       {usedBy.length > 0 && (
         <div className="text-xs flex items-center gap-2 flex-wrap" style={{ color: DIMMER }}>
           <span className="min-w-0">On the page: {usedBy.map((name) => `“${name}”`).join(', ')}</span>
-          <Button size="sm" onClick={onOpenPage} title="Show it on the Page tab">Edit the page</Button>
+          <Button size="sm" onClick={onOpenGui} title="Show it on the Page tab">Edit the page</Button>
         </div>
       )}
 

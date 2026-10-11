@@ -38,7 +38,7 @@ export interface StartConfig {
  * Who a package says sent it when no block of the page did: the page as a
  * whole (a run of everything), a call, the graph itself, the graph above, or
  * a run nobody named. A block is named by its id, so no block may have one
- * of these (`pageProblems`).
+ * of these (`guiProblems`).
  */
 export const SENDERS = ['page', 'call', 'itself', 'graph', 'run'] as const;
 
