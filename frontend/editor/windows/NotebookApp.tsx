@@ -28,7 +28,7 @@ export default function NotebookApp() {
   const dirty = useNotebook(isDirty);
   const canUndo = useNotebook((s) => s.past.length > 0);
   const canRedo = useNotebook((s) => s.future.length > 0);
-  const { edit, undo, redo, open, save, clearError, start } = useNotebook.getState();
+  const { edit, undo, redo, open, save, clearError, start, select } = useNotebook.getState();
   const going = useSession(roundGoing);
   const [browsing, setBrowsing] = useState<'open' | 'save' | null>(null);
   const problems = doc ? windowProblems(doc) : [];
@@ -91,9 +91,13 @@ export default function NotebookApp() {
         <span className="flex-1" />
         {going && <Button size="sm" onClick={() => { void stopRound(); }}>■ Stop</Button>}
         {problems.length > 0 && (
-          <span className="text-xs rounded-full px-2 py-0.5" style={{ background: WARNING_FILL, color: WARNING_TEXT }} title={problems.map((p) => `${p.where}: ${p.problem}`).join('\n')}>
+          <button
+            type="button" className="text-xs rounded-full px-2 py-0.5" style={{ background: WARNING_FILL, color: WARNING_TEXT }}
+            title={problems.map((p) => `${p.where}: ${p.problem}`).join('\n')}
+            onClick={() => select(doc!.windows.find((one) => problems[0].where === `window "${one.id}"`)?.id ?? null)}
+          >
             {problems.length} to fix
-          </span>
+          </button>
         )}
         {path && <span className="text-xs truncate max-w-[280px]" style={{ color: DIMMER }} title={path}>{path}</span>}
         {dirty && <span className="text-xs" style={{ color: MUTED }} aria-label="Unsaved changes">● unsaved</span>}

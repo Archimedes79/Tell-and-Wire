@@ -47,10 +47,17 @@ function PageView({ doc, run }: { doc: Windows; run: Run }) {
   const [change, setChange] = useState('');
   const making = busy === 'describing';
 
+  const problems = windowProblems(doc);
+  const mine = (id: string): string[] => problems.filter((one) => one.where === `window "${id}"`).map((one) => one.problem);
   const decorate: Decoration = {
     window: (window: PageWindow) => ({
       children: (
-        <div style={{ position: 'absolute', top: 8, right: 112, zIndex: 3 }}>
+        <div style={{ position: 'absolute', top: 8, right: 112, zIndex: 3 }} className="flex items-center gap-2">
+          {mine(window.id).length > 0 && (
+            <Button size="sm" variant="quiet" title={mine(window.id).join('\n')} onClick={() => select(window.id)}>
+              <span style={{ color: WARNING_TEXT }}>⚠ {mine(window.id).length} to fix</span>
+            </Button>
+          )}
           <Button size="sm" aria-label={`Edit ${window.title}`} title="Open this window beside its cells" onClick={() => select(window.id)}>
             ✎ Edit
           </Button>

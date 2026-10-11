@@ -53,7 +53,7 @@ export default function CellList({ doc, window, hot, onHot, onChange }: {
         {window.inputs.map((one, at) => {
           const key = inBlock(window, one);
           return (
-            <Row key={key + at} cellKey={key} badge={numbers.get(key)} hot={hot} onHot={onHot} first={at === 0} last={at === lastOf('inputs')}
+            <Row key={at} cellKey={key} badge={numbers.get(key)} hot={hot} onHot={onHot} first={at === 0} last={at === lastOf('inputs')}
               onUp={() => move({ list: 'inputs', at }, -1)} onDown={() => move({ list: 'inputs', at }, 1)} onRemove={() => remove({ list: 'inputs', at })}>
               <InputCell
                 window={window} one={one} others={others}
@@ -75,8 +75,8 @@ export default function CellList({ doc, window, hot, onHot, onChange }: {
       </Section>
 
       <Section title="Do" hint="Steps, one sentence each. A step takes what its sentence points at with @.">
-        {window.steps.map((step, at) => (
-          <Row key={step.name + at} cellKey={`step:${at}`} badge="▸" hot={hot} onHot={onHot} first={at === 0} last={at === lastOf('steps')}
+        {window.steps.map((_step, at) => (
+          <Row key={at} cellKey={`step:${at}`} badge="▸" hot={hot} onHot={onHot} first={at === 0} last={at === lastOf('steps')}
             onUp={() => move({ list: 'steps', at }, -1)} onDown={() => move({ list: 'steps', at }, 1)} onRemove={() => remove({ list: 'steps', at })}>
             <StepCell
               window={window} at={at} hasFolder={hasFolder}
@@ -98,7 +98,7 @@ export default function CellList({ doc, window, hot, onHot, onChange }: {
         {window.outputs.map((one, at) => {
           const key = outEnd(window, one);
           return (
-            <Row key={key + at} cellKey={key} badge={numbers.get(key)} hot={hot} onHot={onHot} first={at === 0} last={at === lastOf('outputs')}
+            <Row key={at} cellKey={key} badge={numbers.get(key)} hot={hot} onHot={onHot} first={at === 0} last={at === lastOf('outputs')}
               onUp={() => move({ list: 'outputs', at }, -1)} onDown={() => move({ list: 'outputs', at }, 1)} onRemove={() => remove({ list: 'outputs', at })}>
               <OutputCell
                 window={window} one={one} results={results}

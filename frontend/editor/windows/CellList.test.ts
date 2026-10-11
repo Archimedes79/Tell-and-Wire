@@ -81,8 +81,11 @@ describe('the cells of a window', () => {
     expect(screen.textContent).toContain('takes:');
   });
 
-  it('renames an input and the sentences that point at it, so a rename breaks nothing', async () => {
-    await type(field('Name', 0), 'Story');
+  it('renames an input and the sentences that point at it, so a rename breaks nothing -- in the box the person is typing in, which stays the same box', async () => {
+    const box = field('Name', 0);
+    await type(box, 'Sto');
+    await type(box, 'Story');
+    expect(field('Name', 0)).toBe(box);
     expect(window0().inputs[0].name).toBe('Story');
     expect(window0().steps[0].sentence).toBe('Say it more simply: @Story');
   });

@@ -428,7 +428,7 @@ function blocksOf(doc: Windows, window: Window): RawConfig[] {
       case 'text': return { ...common, kind: 'text_io', mode: 'input', value: one.value ?? '' };
       case 'number': return { ...common, kind: 'slider', value: one.value ?? one.min ?? 0, min: one.min ?? 0, max: one.max ?? 100, step: one.step ?? 1 };
       case 'choice': return { ...common, kind: 'select', options: (one.options ?? []).join('\n'), value: one.value ?? one.options?.[0] ?? '' };
-      default: return { ...on, id, kind: 'text', mode: 'caption', label: '', w, h, tone: 'plain', value: `${one.name}: from ${one.from?.window} (${one.from?.output})` };
+      default: return { ...on, id, kind: 'text', mode: 'caption', label: '', w, h, tone: 'plain', value: `${one.name}: “${one.from?.output}” from “${doc.windows.find((other) => other.id === one.from?.window)?.title ?? one.from?.window}”` };
     }
   };
   const showing = (one: WindowOut, w: number, h: number): RawConfig => {
