@@ -36,5 +36,8 @@ describe('running once per item', () => {
     expect(mergeBatchOutputs(n, [{ out: 1 }, { out: 2, note: 'b' }, { out: 3 }], true)).toEqual({ out: [1, 2, 3], note: [null, 'b', null] });
     // A port declared multi is flattened.
     expect(mergeBatchOutputs(node([], [port('out', 'output', true)]), [{ out: [1, 2] }, { out: [3] }], true)).toEqual({ out: [1, 2, 3] });
+    // However long a list one item brings: millions of lines of a log are no reason for the run to fail on the stack.
+    const long = Array.from({ length: 3_000_000 }, (_, at) => at);
+    expect(mergeBatchOutputs(node([], [port('out', 'output', true)]), [{ out: long }], true).out).toHaveLength(3_000_000);
   });
 });

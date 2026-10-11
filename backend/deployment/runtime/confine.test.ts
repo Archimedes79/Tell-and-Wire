@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { linkSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { confineEverything, inProject } from './confine.ts';
@@ -38,6 +38,11 @@ describe('which files a graph may reach', () => {
       await expect(nodeFiles.write(settings, '{}')).rejects.toThrow(/holds keys/);
       expect(await nodeFiles.list(outside)).toEqual([other.replace(/\\/g, '/')]);
       expect(await nodeFiles.read(other)).toBe('x');
+      // The same file under another name is the same file: a hard link is no way round it.
+      const alias = join(outside, 'alias.txt');
+      linkSync(settings, alias);
+      await expect(nodeFiles.read(alias)).rejects.toThrow(/holds keys/);
+      await expect(nodeFiles.write(alias, '{}')).rejects.toThrow(/holds keys/);
       confineEverything();
       await expect(nodeFiles.read(other)).rejects.toThrow(/served beyond/);
     } finally {

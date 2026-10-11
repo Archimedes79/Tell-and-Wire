@@ -45,8 +45,8 @@ they run in the browser and in Node.
 
 | Folder | What it holds |
 |---|---|
-| `graph/` | **The graph's definition.** `graph.ts` (the format), `wiring.ts`, `order.ts`, `triggers.ts`, `batching.ts`, `interface.ts` (what a graph offers by name), `nodes/` (the **definition** of every node kind and its registry), `files/` (the project's file formats: flow, nodes, names, definitions, the run prompt). |
-| `graph/editor/` | What only the editor adds to the graph: `nodes/` (the **design** of every node kind: how an AI writes it, `check`, what a package needs), `prompts.ts`, `generation.ts`, `history.ts`, `pull.ts`, `handedOn.ts`. |
+| `graph/` | **The graph's definition.** `graph.ts` (the format), `wiring.ts`, `order.ts`, `triggers.ts`, `schedule.ts` (the table the cards stand in), `batching.ts`, `interface.ts` (what a graph offers by name), `nodes/` (the **definition** of every node kind and its registry), `files/` (the project's file formats: flow, nodes, names, definitions, the run prompt). |
+| `graph/editor/` | What only the editor adds to the graph: `nodes/` (the **design** of every node kind: how an AI writes it, `check`, what a package needs), `prompts.ts`, `generation.ts`, `history.ts`, `pull.ts`, `handedOn.ts`, `scheduleEdit.ts` (where a card may be put in the table). |
 | `gui/` | **The gui's definition.** `gui.ts` (blocks, what they send and show), `interface.ts` (what a gui adds to a graph's interface), `widgets/` (the **definition** of every block kind). |
 | `gui/editor/` | What only the editor adds to the gui: `check.ts` (the one list of problems), `gui.ts`, `widgets/` (the **design** of every block kind). |
 | `backend/deployment/project/` | Reads a project folder (`folder.ts`) and knows where things are in an install (`layout.ts`). |
@@ -217,7 +217,6 @@ my_tool/
   it is drawn, nothing a run does. Where a card is drawn follows from the table and the sizes, and is stored
   nowhere. The editor keeps the table holding -- a card dropped, a wire made, a node deleted or added -- and
   without a file a graph is laid out from its wires (`thinTable`).
-- **A folder in an older format is refused** with a message that says which files to rename.
 - **Only what a person said.** A setting at its default is not written, by the editor or by the
   folder's writer alike (`defaultNodeConfig`, `withoutDefaults` in `graph/graph.ts`), and neither
   are the ports that follow from a node's settings (a start point's, a data node's from its fields,
@@ -447,7 +446,7 @@ except the settings file, and its own folder; it writes its own folder only. Nod
 only allow, so the entries it may read are listed for every body; a link in the working directory
 that points at the settings file is followed anyway. A file elsewhere reaches it as an input typed
 `file_path`, which the executor reads for it. It ends after `TW_BODY_TIMEOUT_MS`. It talks in lines
-(`backend/deployment/runtime/services.ts`; `node.test.ts`, `sandbox.test.ts`):
+(`backend/deployment/runtime/services.ts`; `services.test.ts`, `sandbox.test.ts`):
 
 ```
 stdin   {"inputs": {…}, "calls": ["llm", …]}                  what it is handed
@@ -543,9 +542,9 @@ Besides the provider keys and addresses in the README:
 
 ## Checks
 
-`npm run typecheck` (all four workspaces), `npm run lint` (hooks in `frontend/`, a promise nobody
+`npm run typecheck` (`graph/`, `gui/`, `backend/` and `frontend/`), `npm run lint` (hooks in `frontend/`, a promise nobody
 waits for in `graph/`, `gui/` and `backend/`), `npm run build` (`frontend/dist`; the package test
-needs it), `npm test` (Vitest in all four workspaces), `npm run licenses` (every installed package
+needs it), `npm test` (Vitest in `graph/`, `backend/` and `frontend/`), `npm run licenses` (every installed package
 against the licences it may have, `scripts/licenses.mjs`). CI (`.github/workflows/ci.yml`) runs
 these, then `node backend/cli/main.ts check` and `test --offline` over every folder in `examples/`,
 and `node --test scripts/launcher.test.mjs scripts/package.test.mjs` (the package test on Linux and

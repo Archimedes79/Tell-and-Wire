@@ -17,7 +17,7 @@ import { FLOW_FILE, flowOf } from '../../../graph/files/flow.ts';
 import { tableFor, tableLines } from '../../../graph/schedule.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 import {
-  ABSENT, FileChanged, SCHEDULE_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  ABSENT, FileChanged, SCHEDULE_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, keyOf, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readProject, readStructure, remember, seen, signature, textFields, toFile, withoutEmptyGui, type Guard,
 } from '../../deployment/project/folder.ts';
 
@@ -59,7 +59,7 @@ interface Plan {
 }
 
 /** What writing *graph* into *folder* comes to, this level and every level below it. */
-function planProject(folder: string, copy: Graph, root = folder): Plan[] {
+function planProject(folder: string, copy: Graph): Plan[] {
   // A node whose ports follow from its settings -- a start point's, a
   // subgraph's from its graph -- has them as they follow, and graph-nodes.json keeps
   // only what a person chose of them. Before the graphs a node holds are
@@ -70,7 +70,7 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   for (const held of nestedGraphs(copy)) {
     const inside = join(folder, held.folder);
     untouched.add(inside);
-    deeper.push(...planProject(inside, held.graph, root));
+    deeper.push(...planProject(inside, held.graph));
     // Written down there, so it comes out of this node's settings up here --
     // the same rule that keeps a code node's body out of them.
     registry.node(held.node.node_type)?.setNestedGraph(held.node, null);
@@ -156,8 +156,8 @@ async function commit(plan: Plan, guard?: Guard): Promise<void> {
     }
     await remember(path);
   }
-  const claimed = new Set(plan.files.keys());
-  await tidy(join(plan.folder, NODES_DIR), claimed, plan.untouched);
+  // Compared as the disk compares them (`keyOf`): a node folder spelled `Count` is the folder of `count` on Windows.
+  await tidy(join(plan.folder, NODES_DIR), new Set([...plan.files.keys()].map(keyOf)), new Set([...plan.untouched].map(keyOf)));
 }
 
 /**
@@ -184,10 +184,10 @@ async function tidy(directory: string, claimed: Set<string>, untouched: Set<stri
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      if (untouched.has(path)) empty = false;
+      if (untouched.has(keyOf(path))) empty = false;
       else if (await tidy(path, claimed, untouched)) await rmdir(path);
       else empty = false;
-    } else if (!claimed.has(path) && seen.has(path)) {
+    } else if (!claimed.has(keyOf(path)) && seen.has(path)) {
       await rm(path);
       seen.delete(path);
     } else {

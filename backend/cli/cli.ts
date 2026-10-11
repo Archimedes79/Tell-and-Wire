@@ -79,13 +79,18 @@ const PORTS_TRIED = 10;
 
 /** *values* with *value* put at the dotted *name*: `file.content` inside `file`. */
 function put(values: Record<string, unknown>, name: string, value: string): void {
+  // Own keys only, defined rather than assigned: `__proto__.x=1` would otherwise reach the object every object shares.
+  const own = (into: Record<string, unknown>, key: string, held: unknown): void => {
+    Object.defineProperty(into, key, { value: held, enumerable: true, writable: true, configurable: true });
+  };
   const keys = name.split('.');
   let inner = values;
   for (const key of keys.slice(0, -1)) {
-    if (!inner[key] || typeof inner[key] !== 'object') inner[key] = {};
+    const held = Object.prototype.hasOwnProperty.call(inner, key) ? inner[key] : undefined;
+    if (!held || typeof held !== 'object') own(inner, key, {});
     inner = inner[key] as Record<string, unknown>;
   }
-  inner[keys[keys.length - 1]] = value;
+  own(inner, keys[keys.length - 1], value);
 }
 
 export function parseArgs(argv: string[]): CliOptions {
@@ -235,7 +240,7 @@ async function runServer(options: CliOptions): Promise<number> {
   // whoever reaches it, asking nobody who they are: beyond this machine that is
   // said out loud, not left to a flag typed in passing. A container opts in
   // (its loopback is its own); a tool the editor is not serving needs no opt-in.
-  if (options.editor && options.host && !isLoopbackHost(options.host) && !process.env.TW_EDITOR_ON_NETWORK) {
+  if (options.editor && options.host && !isLoopbackHost(options.host) && process.env.TW_EDITOR_ON_NETWORK !== '1') {
     throw new Error(
       `The editor runs code, writes files and keeps keys for whoever reaches it, so it is not offered on ${options.host}.`
       + ' If this port cannot be reached by anyone else (a container published on 127.0.0.1), set TW_EDITOR_ON_NETWORK=1.',

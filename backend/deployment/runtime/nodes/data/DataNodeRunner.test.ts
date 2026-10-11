@@ -39,7 +39,7 @@ describe('a data node', () => {
     element.settleMemory(counter, 'nothing', 3);
     // Each value is kept on its own, and put back on its own: one the design no longer has is nobody's.
     expect(element.state(counter)).toEqual({ seen: 2, recent: ['a'] });
-    element.setState(counter, { seen: 0, round: 5, gone: 1 });
+    element.setState(counter, { seen: 0, gone: 1 });
     expect(counter.config.data_value).toEqual({ seen: 0, recent: ['a'] });
     expect(element.holds(counter)).toEqual({ seen: 0, recent: ['a'] });
     // Watched by name: the whole and each field.

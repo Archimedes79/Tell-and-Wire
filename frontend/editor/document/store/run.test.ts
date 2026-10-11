@@ -75,4 +75,19 @@ describe('a round of the session', () => {
     expect(store().executionResult).toBeNull();
     expect(store().isDirty()).toBe(false);
   });
+
+  it('shows nothing inside a node it is not the round of, and nothing of a node that was deleted on the next one of its id', async () => {
+    const part = store().addNode('subgraph', { x: 0, y: 0 });
+    const code = store().addNode('code', { x: 0, y: 0 });
+    await store().holdDocument();
+    store().openSubgraph(part);
+    store().followRound(round({ result: made(code, { output: 1 }) }));
+    expect(store().executionResult).toBeNull();
+    store().closeSubgraph();
+
+    store().followRound(round({ result: made(code, { output: 1 }) }));
+    expect(store().executionResult?.node_results).toHaveLength(1);
+    store().deleteNodes([code]);
+    expect(store().executionResult?.node_results).toEqual([]);
+  });
 });

@@ -93,9 +93,10 @@ in parallel or in any order, and a chip says so. A faint **+** marks the centre 
   that ends up empty closes by itself. A card dragged from the palette does the same.
 - **Make a card bigger** with the grip at its corner when it is chosen; the columns and rows after
   it move over.
-- **Pull a wire** by the dot on it (it shows on a chosen card's wires and under the pointer) to
-  another cell, and it is drawn through that cell, round the cards. Double-click the dot for the
-  straight way; Esc while pulling lets go.
+- **Pull a wire** to another cell, by the wire itself or by the dot on it (the dot shows on a chosen
+  card's wires and under the pointer), and it is drawn through that cell, round the cards. Only a
+  wire with a column between its two cards has a cell to go through; a click on it still chooses it.
+  Double-click the dot for the straight way; Esc while pulling lets go.
 - **Thin out** moves every card to the earliest column its wires allow and closes the empty rows.
   Wires drawn round cards are straightened by it.
 

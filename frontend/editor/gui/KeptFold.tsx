@@ -8,7 +8,7 @@ function brief(value: unknown): string {
   return cut(typeof value === 'string' ? value : JSON.stringify(value), 120);
 }
 
-/** What a node keeps, in words: what a start point was sent -- else the value by its name: a memory's field, or the rounds it has been through. */
+/** What a node keeps, in words: what a start point was sent -- else the value by its name: a memory's field. */
 function keptWords(key: string): string {
   return key === 'values' ? 'was sent' : `· ${key}`;
 }

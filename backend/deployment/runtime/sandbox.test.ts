@@ -55,6 +55,18 @@ describe('a code body', () => {
     }
   });
 
+  it('is not the end of the process when it writes a line that only Tell & Wire may write, whatever follows the mark', async () => {
+    // What a body prints is its own: a call that is no object, or asks for what does not exist, is answered, not thrown.
+    const body = `
+      export function run() {
+        process.stdout.write('\\x1etell-and-wire:call null\\n');
+        process.stdout.write('\\x1etell-and-wire:call {"id":1,"name":"constructor","args":[]}\\n');
+        return { value: 'ran' };
+      }
+    `;
+    expect(await nodeCode.run(body, {})).toEqual({ value: 'ran' });
+  });
+
   it('may not start another program, and is handed no key of the process that runs it: it asks through node.llm', async () => {
     const body = `
       export function run() {
@@ -63,7 +75,7 @@ describe('a code body', () => {
         return { value: 'ran' };
       }
     `;
-    await expect(nodeCode.run(body, {})).rejects.toThrow(/ERR_ACCESS_DENIED|not allowed|ERR_REQUIRE|Error/);
+    await expect(nodeCode.run(body, {})).rejects.toThrow(/Access to this API has been restricted/);
 
     // Fake values, set for this test only: what matters is which names arrive.
     const planted = { OPENAI_API_KEY: 'sk-planted', GITHUB_TOKEN: 'ghp-planted', SERVICE_PASSWORD: 'planted', TW_PLAIN: 'kept' };

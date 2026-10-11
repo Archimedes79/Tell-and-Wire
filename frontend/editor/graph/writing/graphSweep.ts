@@ -56,6 +56,8 @@ interface SweepDeps {
   unitFor: (node: GraphNode) => SweepUnit | undefined;
   /** Asked before each node, so a long sweep can be stopped from the toolbar. */
   stopped?: () => boolean;
+  /** Where the nodes stand in the schedule, which says which wires read a memory: the order a run takes. */
+  columns?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -69,9 +71,9 @@ interface SweepDeps {
  * generate in, and inventing one would write every node against a guess while
  * looking like it worked.
  */
-export function generationOrder(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
+export function generationOrder(nodes: GraphNode[], edges: GraphEdge[], columns?: ReadonlyMap<string, number>): GraphNode[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
-  return topologicalLevels(nodes, edges, registry).flat()
+  return topologicalLevels(nodes, edges, registry, columns).flat()
     .map((id) => byId.get(id))
     .filter((node): node is GraphNode => node !== undefined);
 }
@@ -93,7 +95,7 @@ export async function* sweep(
   edges: GraphEdge[],
   deps: SweepDeps,
 ): AsyncGenerator<SweepStep> {
-  for (const node of generationOrder(nodes, edges)) {
+  for (const node of generationOrder(nodes, edges, deps.columns)) {
     if (deps.stopped?.()) return;
 
     const label = node.label || node.id;

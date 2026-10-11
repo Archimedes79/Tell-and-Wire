@@ -190,6 +190,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   };
 
   const outputs = new Map<string, Record<string, unknown>>();
+  // What each memory node was handed when it ran: what it is filled from, however its source has changed since (a memory read from a later card).
+  const handed = new Map<string, Record<string, unknown>>();
   // A memory a wire reads round a loop has not run when that wire is read: it hands on what it held when the round began.
   for (const id of new Set(edges.filter((e) => reads.has(e.id)).map((e) => e.source_node_id))) {
     const node = byId.get(id)!;
@@ -303,6 +305,11 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       // What a node that remembers is not handed: the nulls of a source that failed and caught it -- "nothing arrived", not a value to keep.
       const inputs = collectInputs(nodeId, edges, outputs, node.inputs,
         (e) => !(element.isMemory && caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
+      // What it keeps is what arrived on wires whose source made something for the port, as it arrived now.
+      if (element.isMemory) {
+        handed.set(nodeId, collectInputs(nodeId, edges, outputs, node.inputs,
+          (e) => e.source_port_id in (outputs.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT)));
+      }
 
       // The ◆ is a gate. Wired, it must be opened by this round: by the event
       // the round began with, or by a `true` some node computed in it. Shut,
@@ -310,7 +317,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       // for a node fed only by nodes that stood still: nothing new reached it.
       const shut = standsStill(nodeId);
       if (shut) {
-        const kept = options.latch?.get(latchKey(node));
+        // A memory stands on what it holds now, which a design edit may have changed since the latch last saw it; any other node on what it last made.
+        const kept = element.isMemory ? outputs.get(nodeId) ?? await runner.execute(node, {}, runtime) : options.latch?.get(latchKey(node));
         if (kept) {
           held.add(nodeId);
           outputs.set(nodeId, kept);
@@ -391,7 +399,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // What stood still is not news: a reply held from the last round must not be
   // added to the conversation a second time, nor handed back as this round's result.
   for (const nodeId of held) outputs.delete(nodeId);
-  settleMemory(graph, outputs, results, registry, caught);
+  settleMemory(graph, handed, results, registry);
 
   const status: ExecutionResult['status'] = signal?.aborted
     ? 'cancelled'
@@ -822,18 +830,17 @@ async function runNode(
  */
 function settleMemory(
   graph: Graph,
-  outputs: Map<string, Record<string, unknown>>,
+  handed: Map<string, Record<string, unknown>>,
   results: NodeResult[],
   registry: Kinds,
-  caught: Set<string>,
 ): void {
   const took = new Set(results.filter((r) => (r.status === 'success' || r.status === 'partial') && !r.held).map((r) => r.node_id));
   for (const target of graph.nodes) {
     const element = registry.node(target.node_type);
     if (!element?.isMemory || !took.has(target.id)) continue;
-    // What a node that caught its failure put on its ports is "nothing arrived", not a value to keep: a counter would go 6, null, 1.
-    const arrived = collectInputs(target.id, graph.edges, outputs, target.inputs,
-      (e) => e.source_port_id in (outputs.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
+    // As handed to it when it ran, not worked out again from what every node made by the end: a source that ran later had made something else by then.
+    // (What a node that caught its failure put on its ports was left out then: "nothing arrived", not a value to keep.)
+    const arrived = handed.get(target.id) ?? {};
     for (const [port, value] of Object.entries(arrived)) if (value !== undefined) element.settleMemory(target, port, value);
   }
 }

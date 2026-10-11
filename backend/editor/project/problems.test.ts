@@ -100,7 +100,7 @@ describe('what check finds', () => {
     const lone = graph();
     lone.nodes[1].inputs.push({ ...port('state', 'input'), field: 'state.count' } as never);
     expect(said(lone)).toMatch(/Its input "state" takes "state.count" of what arrives, and nothing is wired to it/);
-    // A loop goes through a memory: the wire back to the node that reads it is a read. Where the schedule stands the memory before that node, nothing closes the loop: a cycle, said with the way out.
+    // A loop goes through a memory: the wire back to the node that reads it is a read. Where the schedule stands the memory before that node, the table is what is wrong, and it is said for the wire.
     const memory = (schedule?: string[]): Graph => parseGraph({
       metadata: { name: 'Loop' },
       nodes: [
@@ -117,7 +117,15 @@ describe('what check finds', () => {
     });
     expect(said(memory())).toBe('');
     expect(said(memory(['add count show']))).toBe('');
-    expect(problemsIn(memory(['count add show']))).toEqual([expect.objectContaining({ problem: expect.stringMatching(/feed each other in a circle/), fix: expect.stringMatching(/runs before it/) })]);
+    expect(problemsIn(memory(['count add show']))).toEqual([expect.objectContaining({ problem: expect.stringMatching(/puts "count" before "add"/), fix: expect.stringMatching(/later column/) })]);
+    // A loop no memory closes is the wires' own, whatever the table says.
+    const circle = memory(['add count show']);
+    circle.nodes.push({ id: 'twin', node_type: 'code', label: 'Twin', description: 'Passes it on.', inputs: [port('n', 'input')], outputs: [port('next', 'output')], config: { code: 'function run(i) { return { next: i.n }; }' } } as never);
+    circle.edges.push(
+      { id: 'x', source_node_id: 'add', source_port_id: 'next', target_node_id: 'twin', target_port_id: 'n' },
+      { id: 'y', source_node_id: 'twin', source_port_id: 'next', target_node_id: 'add', target_port_id: 'n' },
+    );
+    expect(problemsIn(circle).map((one) => one.problem)).toContainEqual(expect.stringMatching(/feed each other in a circle/));
 
     const twins = graph();
     twins.nodes[2].label = 'Answer';

@@ -30,11 +30,14 @@ import { textAsRun } from './readAsRun';
 export const pullable = (node: GraphNode, edges: Wire[]): boolean =>
   node.inputs.some((port) => edges.some((edge) => edge.target === node.id && edge.targetHandle === port.id));
 
-/** The nodes before *node* that ask a model when they run: a pull runs them, and it is said so. */
-export function modelsBefore(node: GraphNode, nodes: GraphNode[], edges: Wire[]): GraphNode[] {
+/**
+ * The nodes before *node* that ask a model when they run: a pull runs them, and it is said so. *columns*: where the nodes stand in the
+ * schedule, which says which wires read a memory, as a run takes them.
+ */
+export function modelsBefore(node: GraphNode, nodes: GraphNode[], edges: Wire[], columns?: ReadonlyMap<string, number>): GraphNode[] {
   // A wire that reads a memory brings what it held, not what runs before.
   const saved = edges.map((edge, at) => graphEdge(edge, at));
-  const reads = readingWires(nodes, saved, registry);
+  const reads = readingWires(nodes, saved, registry, columns);
   const cut = new Set(edges.filter((_, at) => reads.has(saved[at].id)));
   const seen = new Set([node.id]);
   const asking: GraphNode[] = [];

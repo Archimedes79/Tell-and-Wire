@@ -111,7 +111,8 @@ export function scheduleProblems(graph: Graph, registry: Kinds): Problem[] {
     if (!column.has(id)) problems.push({ where: `node "${id}"`, problem: 'The schedule does not place it.', fix: 'Add it to the table, or leave the schedule out to have one made from the wires.' });
   }
   // No order of columns holds a loop that no memory closes: that is said as the loop (`check`), not again for each wire of it.
-  const round = new Set(loopNodes(graph.nodes, graph.edges, registry, column).map((node) => node.id));
+  // A loop a memory closes, but the table puts the wrong way round, is the table's: said for the wire that stands wrong.
+  const round = new Set(loopNodes(graph.nodes, graph.edges, registry).map((node) => node.id));
   const seen = new Set<string>();
   for (const [from, to] of orderedWires(graph.nodes, graph.edges, registry, column)) {
     const a = column.get(from);
@@ -127,13 +128,19 @@ export function scheduleProblems(graph: Graph, registry: Kinds): Problem[] {
   return problems;
 }
 
-/** The levels of the wires, or -- for a loop no memory closes, which is an error said elsewhere -- one node to a column. */
+/**
+ * The levels of the wires as the nodes stand (*columns*), or -- where standing makes a loop a memory would close the other way round --
+ * as they are wired; or, for a loop no memory closes, which is an error said elsewhere, one node to a column.
+ */
 function levelsOf(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): string[][] {
-  try {
-    return topologicalLevels(nodes, edges, registry, columns);
-  } catch {
-    return nodes.map((node) => [node.id]);
+  for (const standing of columns ? [columns, undefined] : [undefined]) {
+    try {
+      return topologicalLevels(nodes, edges, registry, standing);
+    } catch {
+      // the next way of reading the wires
+    }
   }
+  return nodes.map((node) => [node.id]);
 }
 
 /**
@@ -174,12 +181,20 @@ export function thinTable(nodes: GraphNode[], edges: GraphEdge[], registry: Kind
  */
 function forward(table: Table, nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns: ReadonlyMap<string, number>): Table {
   let order: string[];
+  let standing: ReadonlyMap<string, number> | undefined = columns;
   try {
-    order = topologicalLevels(nodes, edges, registry, columns).flat();
+    order = topologicalLevels(nodes, edges, registry, standing).flat();
   } catch {
-    return table;
+    // Where they stand makes a loop: a wire drawn from the memory first, with the node that fills it right of it. Read as it is wired,
+    // the wire that closes the loop is the memory's read, and the nodes move to say so. A loop no memory closes stays for `check` to say.
+    standing = undefined;
+    try {
+      order = topologicalLevels(nodes, edges, registry).flat();
+    } catch {
+      return table;
+    }
   }
-  const wires = runsBefore(nodes, edges, registry, columns);
+  const wires = runsBefore(nodes, edges, registry, standing);
   const column = new Map<string, number>();
   const row = new Map<string, number>();
   table.forEach((cells, r) => cells.forEach((id, c) => { if (id !== null) { column.set(id, c); row.set(id, r); } }));

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Graph, GraphNode } from '../../../graph/graph.ts';
@@ -9,7 +9,7 @@ import { registry } from '../../../graph/nodes/registry.ts';
 import { Session } from '../../deployment/host/session.ts';
 import { guiHooks } from '../../deployment/gui/hooks.ts';
 import { edge, graphOf, quietRuntime } from '../../deployment/runtime/test/fakes.ts';
-import { keptRound, replayRound, writeKeptRound } from './keptRounds.ts';
+import { keptRound, readKeptRounds, replayRound, writeKeptRound } from './keptRounds.ts';
 import { localCore } from '../../deployment/runtime/localCore.ts';
 
 /**
@@ -102,5 +102,14 @@ describe('a round, kept', () => {
     // Kept at the same time, two rounds get two names.
     const [a, b] = await Promise.all([1, 2].map(() => writeKeptRound(folder, { event: 'go', given: {}, outputs: {} })));
     expect(a).not.toBe(b);
+  });
+
+  it('says a file that is no kept round, whatever is in it, under its name -- a null is no object', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'kept-'));
+    await mkdir(join(folder, 'tests'));
+    await writeFile(join(folder, 'tests', 'empty.json'), '{"given": {}, "outputs": null}', 'utf8');
+    await writeFile(join(folder, 'tests', 'nothing.json'), 'null', 'utf8');
+    const read = await readKeptRounds(folder);
+    expect(read.map((one) => [one.name, one.round, typeof one.problem])).toEqual([['empty', null, 'string'], ['nothing', null, 'string']]);
   });
 });

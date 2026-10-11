@@ -69,6 +69,8 @@ export function handoffActions(
       // Another document is open now. Its nodes may share that one's ids, and
       // what that round made is not theirs.
       if (heldOpened !== get().opened) return;
+      // A level inside a node is open: the round is of the graph at the top, and the nodes in here are others that may share its ids.
+      if (get().subgraphStack.length) return;
       // Another tab's document: the server holds one session, and that round is of its graph.
       if (serverHoldsAnother()) return;
       if (!round.done) return;

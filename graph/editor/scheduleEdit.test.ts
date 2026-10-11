@@ -39,6 +39,8 @@ describe('changing a schedule', () => {
     expect(graph.edges[0]).toMatchObject({ id: 'a.o -> b.i', via: ['B1', 'C1'] });
     expect(wireLine(graph.edges[0])).toBe('a.o -> b.i via B1 C1');
     expect(() => graphFrom({ wires: ['a.o -> b.i via 2B'] }, nodes, 'flow', 'nodes')).toThrow(/not a cell/);
+    // Said, not half read: a second "via" would have dropped the cells after it.
+    expect(() => graphFrom({ wires: ['a.o -> b.i via B1 via C1'] }, nodes, 'flow', 'nodes')).toThrow(/more than one "via"/);
     const scheduled = { ...graph, schedule: ['a b'] };
     expect(routeProblems(scheduled).map((problem) => problem.problem)).toEqual(['It is drawn via B1, where node "b" stands.', 'It is drawn via C1, and the schedule has no such cell.']);
   });

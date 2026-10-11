@@ -254,13 +254,15 @@ function converse(
     let pending = '';
     let err = '';
 
-    const answer = async (asked: { id: number; name: string; args: unknown }): Promise<void> => {
-      const call = calls[asked.name];
+    // What the body sent is whatever it printed: nothing in it is trusted to be an object, and nothing in here may reject unseen.
+    const answer = async (asked: { id?: number; name?: string; args?: unknown } | null): Promise<void> => {
       try {
-        if (!call) throw new Error(`This body may not ask for "${asked.name}".`);
-        say(JSON.stringify({ id: asked.id, result: (await call(asked.args)) ?? null }));
+        const name = asked && typeof asked === 'object' ? asked.name : undefined;
+        const call = typeof name === 'string' && Object.prototype.hasOwnProperty.call(calls, name) ? calls[name] : undefined;
+        if (!call) throw new Error(`This body may not ask for "${String(name)}".`);
+        say(JSON.stringify({ id: asked?.id, result: (await call(asked?.args)) ?? null }));
       } catch (error) {
-        say(JSON.stringify({ id: asked.id, error: messageOf(error) }));
+        say(JSON.stringify({ id: asked && typeof asked === 'object' ? asked.id : undefined, error: messageOf(error) }));
       }
     };
 

@@ -190,7 +190,8 @@ const files = [
   ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/')),
   'backend/package.json',
   ...await walk('frontend/dist'),
-  ...await walk('examples'),
+  // Not what a session left beside an example (state.json, .gitignore'd): a download starts every example as it was written.
+  ...await walk('examples', (path) => !/(^|\/)([^/]*\.)?state\.json$/.test(path)),
   'LICENSE',
 ];
 

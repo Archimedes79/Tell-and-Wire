@@ -13,3 +13,12 @@ describe('Markdown links', () => {
     expect(html).toContain('js caps tab data');
   });
 });
+
+describe('Markdown lines', () => {
+  it('end however the text ends them: a heading before a carriage return is a heading, and the page does not stop', () => {
+    const html = renderToStaticMarkup(createElement(Markdown, { source: '# Title\r\nbody\r\n\r\n## Next - one\r- two' }));
+    expect(html).toContain('Title');
+    expect(html).toContain('Next');
+    expect(html.match(/<li>/g)).toHaveLength(2);
+  });
+});

@@ -34,7 +34,8 @@ export class LastOutputs extends Lru<Record<string, unknown>> {
 
   /** One key for this node, as written, receiving these inputs, with *setting* the one AI setting. */
   key(node: GraphNode, inputs: Record<string, unknown>, setting?: ModelChoice): string {
-    const written = { type: node.node_type, config: node.config, inputs: node.inputs, outputs: node.outputs };
+    // The words too: an AI node with no prompt file is told its label and description, so two of them that differ only there are two questions.
+    const written = { id: node.id, type: node.node_type, label: node.label, description: node.description, config: node.config, inputs: node.inputs, outputs: node.outputs };
     return createHash('sha256').update(JSON.stringify([written, inputs, setting ?? null])).digest('hex');
   }
 }

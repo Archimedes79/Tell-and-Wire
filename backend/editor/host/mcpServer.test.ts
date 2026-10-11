@@ -23,7 +23,7 @@ const port = (id: string, kind: 'input' | 'output') =>
 /** A data node holding a text in a field called "text": what a graph starts from when nobody sends it anything. */
 const textData = (id: string, value = 'hello') => ({
   id, node_type: 'data', label: id, description: 'A greeting to hand on.', position: { x: 0, y: 0 },
-  inputs: [], outputs: [port('text', 'output'), port('all', 'output')], config: { data_value: { text: value } },
+  inputs: [], outputs: [port('text', 'output')], config: { data_value: { text: value } },
 });
 
 const code = (id: string, body = 'function run(inputs) { return { out: inputs.in }; }') => ({
@@ -136,6 +136,26 @@ describe('generate_graph', () => {
     expect((await answer(tools, 'list_graphs')).json.graphs).toEqual([
       { path: 'made/hello.json', name: 'Hello', description: 'Hello, described', nodes: 2 },
     ]);
+  });
+
+  it('changes a graph that has a schedule when the change adds or removes a node, instead of refusing to save it', async () => {
+    const before = { ...hello(), schedule: ['greeting result'] };
+    expect((await answer(toolsWith(), 'save_graph', { path: 'sched.json', graph: before })).json.saved).toBe('sched.json');
+    // The model's answer knows nothing of the table: it adds a node between the two.
+    const changed = graphOf(
+      [textData('greeting'), code('pass'), output('result')],
+      [edge('e1', 'greeting.text', 'pass.in'), edge('e2', 'pass.out', 'result.value')], 'Hello',
+    );
+    const tools = toolsWith({ ai: replying(fenced(changed)) });
+    const made = await answer(tools, 'generate_graph', { description: 'pass it on', path: 'sched.json', save_as: 'sched.json' });
+    expect(made.json.problems).toEqual([]);
+    expect(made.json.saved).toBe('sched.json');
+    expect(JSON.parse(await readFile(join(root, 'sched.json'), 'utf8')).schedule).toEqual(['greeting .    result', '.        pass .']);
+
+    // And back: a node the answer drops leaves the table too.
+    const back = await answer(toolsWith({ ai: replying(fenced(hello())) }), 'generate_graph', { description: 'drop it', path: 'sched.json', save_as: 'sched.json' });
+    expect(back.json.problems).toEqual([]);
+    expect(JSON.parse(await readFile(join(root, 'sched.json'), 'utf8')).schedule).toEqual(['greeting result']);
   });
 });
 

@@ -7,7 +7,8 @@ import type { Edge, Node } from 'reactflow';
 import type { GraphEdge, GraphNode } from '../graph';
 import type { RFNodeData } from './nodeData';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { cellName, columnsOf, orderedWires, tableFor, tableLines, thinTable, type Table } from '../../../../graph/schedule.ts';
+import { cellName, columnsOf, orderedWires, parseCell, tableFor, tableLines, thinTable, type Table } from '../../../../graph/schedule.ts';
+import { loopNodes } from '../../../../graph/order.ts';
 import { ANYWHERE, put, reachOf, rerouted, type Moved } from '../../../../graph/editor/scheduleEdit.ts';
 import { aim, CARD, gridOf, routeAim, snapped, topLeft, type Opening } from '../model/scheduleLayout';
 import { graphEdge } from '../model/wires';
@@ -48,13 +49,23 @@ export function moveCards(state: Pick<GraphStore, 'rfNodes'>, at: ReadonlyMap<st
   }
 }
 
-/** The wires with their routes carried to where the cells went. */
+/**
+ * The wires with their routes carried to where the cells went -- and only those that still run between the ends of
+ * their wire: a route is drawn through a column between the two (`routeAim`), and a card moved past it leaves it behind.
+ */
 export function rerouteEdges(edges: Edge[], moved: Moved): Edge[] {
+  const column = columnsOf(moved.table);
   return edges.map((edge) => {
     const via = (edge.data as { via?: string[] } | undefined)?.via;
     if (!via?.length) return edge;
     const [kept] = rerouted([{ via }], moved);
-    return { ...edge, data: kept.via ? { via: kept.via } : undefined };
+    const from = column.get(edge.source);
+    const to = column.get(edge.target);
+    const between = from === undefined || to === undefined ? [] : (kept.via ?? []).filter((name) => {
+      const cell = parseCell(name);
+      return !!cell && cell.column > Math.min(from, to) && cell.column < Math.max(from, to);
+    });
+    return { ...edge, data: between.length ? { via: between } : undefined };
   });
 }
 
@@ -121,6 +132,8 @@ export function scheduleActions(
         return;
       }
       const moved = put(s.table, id, at);
+      // A drag that ends where it began is no change: no undo step, and no Redo thrown away.
+      if (JSON.stringify(moved.table) !== JSON.stringify(s.table)) get().commit();
       set((state) => {
         state.aim = null;
         state.table = moved.table;
@@ -140,8 +153,12 @@ export function scheduleActions(
       const s = get();
       const nodes = nodesOf(s);
       const before = s.table;
+      // With a loop no memory closes there is no order to thin out to, and the table would collapse to one card to a column.
+      const loop = loopNodes(nodes, edgesOf(s), registry);
+      if (loop.length) return `Cannot thin out while the wires go round in a loop through ${loop.map((one) => `"${one.label || one.id}"`).join(', ')}: close it through a data node first.`;
       const table = thinTable(nodes, edgesOf(s), registry, before);
-      const size = (t: Table): string => `${Math.max(0, ...t.map((row) => row.length))} columns, ${t.length} rows`;
+      const count = (n: number, what: string): string => `${n} ${what}${n === 1 ? '' : 's'}`;
+      const size = (t: Table): string => `${count(Math.max(0, ...t.map((row) => row.length)), 'column')}, ${count(t.length, 'row')}`;
       if (JSON.stringify(table) === JSON.stringify(before)) return `Already thin: ${size(before)}.`;
       get().commit();
       set((state) => {
@@ -155,6 +172,12 @@ export function scheduleActions(
 
     resizeCard: (id, size) => {
       const want = snapped(size);
+      const card = get().rfNodes.find((one: RFNode) => one.id === id);
+      if (!card) return;
+      // A click on the grip ends where it began: nothing was resized, so no card is pinned to the size it happens to have, and no step is added.
+      const { width, height } = card.data.graphNode;
+      const unchanged = typeof width === 'number' ? width === want.width && height === want.height : card.width === size.width && card.height === size.height;
+      if (unchanged) return;
       get().commit();
       set((state) => {
         const node = state.rfNodes.find((one: RFNode) => one.id === id);
@@ -168,6 +191,13 @@ export function scheduleActions(
     },
 
     routeWire: (edgeId, cell) => {
+      const now = get().rfEdges.find((one: Edge) => one.id === edgeId)?.data?.via as string[] | undefined;
+      const next = cell ? [cellName(cell.column, cell.row)] : undefined;
+      // The route it already has is no change: no undo step.
+      if (now?.join() === next?.join()) {
+        set((state) => { state.pulling = null; });
+        return;
+      }
       get().commit();
       set((state) => {
         state.pulling = null;

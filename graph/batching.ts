@@ -103,7 +103,7 @@ export function mergeBatchOutputs(
         continue;
       }
       const target = (merged[key] ??= []) as unknown[];
-      if (multi.has(key) && Array.isArray(value)) target.push(...value);
+      if (multi.has(key) && Array.isArray(value)) for (const one of value) target.push(one);
       else if (!multi.has(key) || key in own) target.push(value);
     }
   }

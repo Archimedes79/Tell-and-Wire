@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdir, mkdtemp, readFile, rm, writeFile, utimes } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -333,5 +333,14 @@ describe('a graph inside a node', () => {
     expect(rest).toEqual([]);
     expect(change).toMatchObject({ node_id: 'part', field: 'nested_graph' });
     expect((change.value as Graph).nodes[0].config.code).toContain('"hi"');
+  });
+
+  // Where the disk does not tell cases apart a folder is the node's whatever its spelling: Save must not take it for a stray one.
+  it.skipIf(process.platform !== 'win32')('keeps the files of a node whose folder is spelled in other letters than its id', async () => {
+    await writeProject(dir, sample());
+    await rename(join(dir, 'nodes/count'), join(dir, 'nodes/spelled'));
+    await rename(join(dir, 'nodes/spelled'), join(dir, 'nodes/Count'));
+    await writeProject(dir, await readProject(dir));
+    expect(existsSync(join(dir, 'nodes/count/code.js'))).toBe(true);
   });
 });

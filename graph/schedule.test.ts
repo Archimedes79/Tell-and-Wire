@@ -38,7 +38,7 @@ describe('the schedule', () => {
     expect(scheduleProblems(graph(['start a c m', '.     b . .']), registry)).toEqual([]);
     expect(scheduleProblems(graph(['start c a m', '.     b . .']), registry).map((problem) => problem.where))
       .toEqual(['the wire from "a" to "c"', 'the wire from "b" to "c"']);
-    expect(scheduleProblems(graph(['start a b c', 'ghost . . m']), registry).map((problem) => problem.problem))
+    expect(scheduleProblems(graph(['start a c m', 'ghost b . .']), registry).map((problem) => problem.problem))
       .toEqual(['It places "ghost", and there is no such node.']);
     // A wire that closes a loop no memory closes has no later column to end in: the loop is the problem, said by `check`.
     const circle = { ...graph(['start a c m', '.     b . .']), edges: [...edges, wire('back', 'c', 'out', 'a', 'in')] };
@@ -51,14 +51,16 @@ describe('the schedule', () => {
     expect(reads('start a c m', '.     b . .')).toEqual(['read']);
     // Without a schedule the wire that closes the loop is the read.
     expect([...readingWires(nodes, edges, registry)]).toEqual(['read']);
-    // m before c, or beside it: the same wire carries what m holds then -- and with c writing m, that is a loop no memory closes: said as the loop.
+    // m before c, or beside it: the same wire carries what m holds then -- and with c writing m, that is a loop the table makes: said for the wire that stands wrong.
     for (const rows of [['start a m c', '.     b . .'], ['start a b c', '.     . . m']]) {
       expect(reads(...rows)).toEqual([]);
       expect(loopNodes(nodes, edges, registry, columnsOf(parseTable(rows))).map((one) => one.id)).toEqual(['c', 'm']);
-      expect(scheduleProblems(graph(rows), registry)).toEqual([]);
+      expect(scheduleProblems(graph(rows), registry).map((problem) => problem.where)).toContain('the wire from "c" to "m"');
     }
     // Kept right of what it reads, where a card moves: c may not be pulled right of m, nor m left of c.
     expect(tableLines(tableFor(nodes, edges, registry, ['start a b c m']))).toEqual(['start a b c m']);
+    // A loop drawn from the memory first -- m left of c, and then c's wire back to it -- is mended to read as it is wired: c before m.
+    expect(tableLines(tableFor(nodes, edges, registry, ['start a b m c']))).toEqual(['start a b c m']);
     expect(tableLines(thinTable(nodes, edges, registry, [['start', 'a', 'c', 'm'], [null, 'b', null, null]]))).toEqual(['start a c m', '.     b . .']);
   });
 

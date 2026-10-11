@@ -39,4 +39,14 @@ describe('Rounds', () => {
     expect(rounds.snapshot(second.id)).toMatchObject({ done: true, cancelled: true });
     expect(await rounds.stopAll()).toBe(0);
   });
+
+  it('does not stop a round that has ended: it keeps what it was, and the answer says nothing was stopped', async () => {
+    const rounds = new Rounds();
+    const ended = rounds.start(1, named, async () => done());
+    await ended.outcome;
+    await wait(0);
+    expect(rounds.stop(ended.id)).toBe(false);
+    expect(rounds.snapshot(ended.id)).toMatchObject({ done: true, cancelled: false, result: { status: 'success' } });
+    expect(rounds.stop('nobody')).toBe(false);
+  });
 });

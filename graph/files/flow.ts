@@ -37,7 +37,8 @@ export function wireLine(edge: GraphEdge): string {
 }
 
 function edgeOf(wire: unknown, path: string): GraphEdge {
-  const [text, route] = String(wire).split(/\s+via\s+/);
+  const [text, route, ...more] = String(wire).split(/\s+via\s+/);
+  if (more.length) throw new NotAGraph(`${path}: "${String(wire)}" has more than one "via". Name every cell after one: "via C2 D1".`);
   const via = route === undefined ? [] : route.trim().split(/\s+/);
   if (via.some((cell) => !parseCell(cell))) throw new NotAGraph(`${path}: "${String(wire)}" goes via something that is not a cell. Name cells as a spreadsheet does: C2.`);
   const sides = text.split('->').map((side) => side.trim());

@@ -45,6 +45,19 @@ describe('saving the document', () => {
     expect(store().isDirty()).toBe(false);
   });
 
+  it('tells nothing of itself to the document that was opened while it was on its way', async () => {
+    store().addNode('code', { x: 0, y: 0 });
+    const saving = store().save('graph', { name: 'graph' });
+    store().newGraph();
+    store().addNode('end', { x: 0, y: 0 });
+    writes[0].finish();
+    expect(await saving).toEqual({ path: '/abs/graph' });
+    // The new document is nobody's file yet and is not saved: Ctrl+S would have written over the other one.
+    expect(store().currentFilePath).toBeNull();
+    expect(store().metadata.name).toBe(defaultName);
+    expect(store().isDirty()).toBe(true);
+  });
+
   it('marks nothing saved, and renames nothing, when the write fails or is refused', async () => {
     // A Save as refused because a project is already there left the graph called by the new name all the same.
     store().addNode('code', { x: 0, y: 0 });

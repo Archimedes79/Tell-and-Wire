@@ -115,21 +115,25 @@ const MAX_BODY_BYTES = 128 * 1024 * 1024;
 /** The request body as it came, as bytes, before it is read as JSON. */
 export function readBytes(request: IncomingMessage, limit = MAX_BODY_BYTES): Promise<Buffer> {
   return new Promise((done, fail) => {
+    const chunks: Buffer[] = [];
     const tooBig = (): void => {
-      // Nothing more is read and nothing already read is kept: the point of
-      // the limit is the memory, and a handler is never given half a body.
-      request.destroy();
+      // Nothing more is kept and nothing already read is kept: the point of
+      // the limit is the memory, and a handler is never given half a body. The
+      // rest is read and dropped, not cut off: a connection torn down under the
+      // client shows it "failed to fetch", where the 413 says what was wrong.
+      chunks.length = 0;
+      request.removeAllListeners('data');
+      request.resume();
       fail(new Refusal(413, `The body is larger than ${Math.round(limit / (1024 * 1024))} MB.`));
     };
     const declared = Number(request.headers['content-length']);
     if (Number.isFinite(declared) && declared > limit) return tooBig();
 
-    const chunks: Buffer[] = [];
     let size = 0;
     request.on('data', (chunk: Buffer) => {
       size += chunk.length;
       // A body that arrives without a length, or with one that was not true.
-      if (size > limit) { chunks.length = 0; return tooBig(); }
+      if (size > limit) return tooBig();
       chunks.push(chunk);
     });
     request.on('end', () => done(Buffer.concat(chunks)));

@@ -97,7 +97,7 @@ describe('the folders', () => {
       if (!one.from.startsWith('backend/') || isWire(one.to)) return false;
       const [from, to] = [moduleOf(one.from), moduleOf(one.to)];
       if (!from || !to || from === to) return false;
-      return RANK[to] >= RANK[from] && !(from.startsWith('editor/') && to.startsWith('editor/') && RANK[to] < RANK[from]);
+      return RANK[to] >= RANK[from];
     });
     expect(show(against)).toEqual([]);
   });

@@ -12,7 +12,7 @@
 // The folder is the working directory: a deployed tool and the MCP server run
 // in their project folder, and the editor in the folder it was started in.
 
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { candidatePaths } from './ai/settings.ts';
 import { ownPathProblem } from '../../../graph/nodes/ownPath.ts';
@@ -52,10 +52,23 @@ export function confineEverything(on = true): void {
   everything = on;
 }
 
+/**
+ * Whether two paths are one file on the disk: the same device and index, however each is spelled -- another case on a volume that
+ * does not tell them apart, a short name, a stream name, a hard link. Names compared as text miss all of those.
+ */
+export function sameFile(a: string, b: string): boolean {
+  try {
+    const [x, y] = [statSync(a, { bigint: true }), statSync(b, { bigint: true })];
+    return x.ino !== 0n && x.dev === y.dev && x.ino === y.ino;
+  } catch {
+    return false;
+  }
+}
+
 /** *path*, if a file service may touch it at all; else an error. */
 export function reachable(path: string): string {
   const here = real(path);
-  if (candidatePaths().some((key) => relative(real(key), here) === '')) throw new Error("A file that holds keys or a command to start (the settings) is not for a graph to touch.");
+  if (candidatePaths().some((key) => relative(real(key), here) === '' || sameFile(key, here))) throw new Error("A file that holds keys or a command to start (the settings) is not for a graph to touch.");
   if (everything && !inside(real('.'), here)) throw new Error(`"${path}" is outside the folder this tool runs in, which a tool served beyond this machine may not touch.`);
   return path;
 }

@@ -9,6 +9,7 @@
 import type { Graph, GraphNode } from '../../document/graph';
 import { call } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
+import { columnsOf } from '../../../../graph/schedule.ts';
 import { ONCE } from '../nodes/NodeGuiBuilder';
 import { runGenerate } from '../writing/useGenerate';
 import {
@@ -124,7 +125,7 @@ export async function writeFile(nodeId: string, target: Target, write: Write, sa
   const current = target.node();
   if (!current) return false;
   const { nodes, edges } = around(target);
-  if (write === 'input' && pullable(current, edges) && !(noModels && modelsBefore(current, nodes, edges).length)) {
+  if (write === 'input' && pullable(current, edges) && !(noModels && modelsBefore(current, nodes, edges, columnsOf(useGraphStore.getState().table)).length)) {
     return pullInput(nodeId, target);
   }
   if (write === 'output' && !(say.ask || say.refine) && pullableOutput(current, nodes, edges)) return pullOutput(nodeId, target);

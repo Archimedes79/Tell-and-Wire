@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseGraph, type Graph } from '../../../graph/graph.ts';
-import { guiBlock, guiSends } from '../../../gui/gui.ts';
+import { guiBlock, guiSends, settleGui } from '../../../gui/gui.ts';
 import { quietRuntime } from '../runtime/test/fakes.ts';
 
 /**
@@ -43,5 +43,17 @@ describe('the gui, connected by name', () => {
     expect(await guiSends(graph, 'api', runtime)).toEqual({});
     const broken = quietRuntime({ files: { read: async () => { throw new Error('no such file'); } } });
     await expect(guiSends(graph, 'summarize', broken)).rejects.toThrow('"File" could not say what it holds: no such file');
+  });
+
+  it('settles what an end point handed back into the block that shows it -- a record as its keys, not as "[object Object]"', async () => {
+    const graph = parseGraph({
+      metadata: { name: 'chat' },
+      nodes: [{ id: 'send', node_type: 'start', config: {} }, { id: 'reply', node_type: 'end', config: {} }],
+      gui: { blocks: [{ id: 'chat', kind: 'chat', sends_to: ['send'], fires: 'send', shows: 'reply' }] },
+    });
+    guiBlock(graph, 'chat')!.value = { messages: [], pending: 'how many?' };
+    await settleGui(graph, { reply: { words: 32, lines: 4 } }, quietRuntime());
+    const said = (guiBlock(graph, 'chat')!.value as { messages: { role: string; text: string }[] }).messages;
+    expect(said).toEqual([{ role: 'user', text: 'how many?' }, { role: 'assistant', text: 'words: 32\nlines: 4' }]);
   });
 });

@@ -70,7 +70,6 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   const setRFNodes = useGraphStore((s) => s.setRFNodes);
   const setRFEdges = useGraphStore((s) => s.setRFEdges);
   const connect = useGraphStore((s) => s.connect);
-  const commit = useGraphStore((s) => s.commit);
   const setEditingNode = useGraphStore((s) => s.setEditingNode);
   const clearSelection = useGraphStore((s) => s.clearSelection);
   // The nodes whose wires are drawn in the accent, as one string: it changes
@@ -88,7 +87,8 @@ export default function GraphCanvas({ active }: { active: boolean }) {
     const column = columnsOf(table);
     // A wire from a memory to a card in an earlier column reads what it held when the round began: drawn dotted.
     const reads = readingWires(nodesOf(state), edgesOf(state), registry, column);
-    const grid = gridOf(table, sizesOf(nodesOf(state)), { column: opens, row: !!pulling });
+    // With the row below the table: a route may go through it, whether or not one is being pulled.
+    const grid = gridOf(table, sizesOf(nodesOf(state)), { column: opens, row: true });
     return rfEdges.map((edge) => {
       const named = pulling?.edge === edge.id ? (pulling.cell ? [cellName(pulling.cell.column, pulling.cell.row)] : []) : (edge.data?.via as string[] | undefined) ?? [];
       const points = named.flatMap((name) => {
@@ -179,11 +179,14 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   }, [rfNodes, rfInstance, active, documentOpen, minZoom]);
   // A column that opened, or a card made bigger, can push what is after it out of sight: once the cards have
   // settled, the view takes it in again where that still reads (as for a node added).
+  // Only for a table that is new to the view: coming back to the canvas after another tab is not a reason to move what was left where it was.
   const tableKey = useGraphStore((s) => JSON.stringify(s.table));
+  const seenTable = useRef(tableKey);
   React.useEffect(() => {
     const wrapper = reactFlowWrapper.current;
-    if (!rfInstance || !wrapper || !active) return undefined;
+    if (!rfInstance || !wrapper || !active || seenTable.current === tableKey) return undefined;
     const timer = window.setTimeout(() => {
+      seenTable.current = tableKey;
       const nodes = rfInstance.getNodes();
       if (!nodes.length || !nodes.every((node) => !!node.width && !!node.height)) return;
       const { x, y, zoom } = rfInstance.getViewport();
@@ -315,12 +318,11 @@ export default function GraphCanvas({ active }: { active: boolean }) {
         edges={edges}
         edgeTypes={edgeTypes}
         // A drag reports a position change per frame, so its undo step comes
-        // from onNodeDragStart instead. Nothing is removed through here: the
+        // from dropCard instead, when it changes the table. Nothing is removed through here: the
         // canvas's Delete is its own (`deleteKeyCode` below). Applied to the
         // nodes as they are now, not as the last drawing had them: the cards
         // that slide over while one is held are moved meanwhile.
         onNodesChange={(changes: NodeChange[]) => setRFNodes(applyNodeChanges(changes, useGraphStore.getState().rfNodes) as typeof rfNodes)}
-        onNodeDragStart={() => commit()}
         // Held, a card is pulled toward the cell it would land on, and the space between two columns opens a column for it;
         // let go, it is put there as one change of the table. Dragged along with others it only springs back.
         onNodeDrag={(_, node, dragged) => {
@@ -337,10 +339,14 @@ export default function GraphCanvas({ active }: { active: boolean }) {
             useGraphStore.getState().dropCard(node.id);
           }
         }}
+        // Cards chosen together, dragged by the frame round them, are not put anywhere by hand: back to their cells.
+        onSelectionDragStop={() => useGraphStore.getState().springBack()}
         // A drag begins once the node moves, not when the button goes down:
-        // at ReactFlow's 0 every click on a node began one, and so was an
-        // undo step -- Redo thrown away, and the next Ctrl+Z undoing nothing.
+        // at ReactFlow's 0 every click on a node began one.
         nodeDragThreshold={1}
+        // ReactFlow's arrow keys moved a chosen card five pixels off its cell, with no drop to put it back: a card is moved by the table.
+        // Enter opens a card (above); nothing else of ReactFlow's keys is wanted.
+        disableKeyboardA11y
         onEdgesChange={(changes: EdgeChange[]) => setRFEdges(applyEdgeChanges(changes, rfEdges))}
         onConnect={onConnect}
         // Not to itself: a node's output into its own input waits on itself.

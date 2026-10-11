@@ -11,7 +11,7 @@
 // them too.
 
 import { chmod, copyFile, cp, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, lstatSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Graph } from '../../../../graph/graph.ts';
@@ -21,6 +21,7 @@ import { registry } from '../../../../graph/nodes/registry.ts';
 import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { withoutWriting } from '../../../../graph/editor/handedOn.ts';
 import { FRONTEND_DIR } from '../../../deployment/project/folder.ts';
+import { sameFile } from '../../../deployment/runtime/confine.ts';
 import { writeProject } from '../write.ts';
 import { SETTINGS_FILENAME, candidatePaths } from '../../../deployment/runtime/ai/settings.ts';
 import { WEB_DIR, installFolder } from '../../../deployment/project/layout.ts';
@@ -95,8 +96,14 @@ async function sizeOf(path: string): Promise<number> {
  */
 function isSettingsFile(path: string): boolean {
   const full = resolve(path).toLowerCase();
-  return basename(full) === SETTINGS_FILENAME || candidatePaths().some((candidate) => resolve(candidate).toLowerCase() === full);
+  return basename(full) === SETTINGS_FILENAME || candidatePaths().some((candidate) => resolve(candidate).toLowerCase() === full || sameFile(candidate, path));
 }
+
+/**
+ * What a folder is copied without: a settings file by any name, and a link. A link is copied as a link, and the zip is
+ * written from what it points at -- a name that said nothing of the keys it led to.
+ */
+const notCarried = (path: string): boolean => isSettingsFile(path) || lstatSync(path).isSymbolicLink();
 
 /** One file the tool starts on: where it is here, and where it goes in the bundle. */
 interface Carried {
@@ -310,13 +317,13 @@ export async function writeBundle(
   for (const file of data) {
     await mkdir(dirname(resolve(target, file.place)), { recursive: true });
     // A folder may hold the settings file: everything but that.
-    await cp(file.source, resolve(target, file.place), { recursive: true, filter: (path) => !isSettingsFile(path) });
+    await cp(file.source, resolve(target, file.place), { recursive: true, filter: (path) => !notCarried(path) });
     written.push(file.place);
   }
 
   // A gui the project brings of its own: all of it, as it is.
   if (options.frontend) {
-    await cp(options.frontend, resolve(target, FRONTEND_DIR), { recursive: true, filter: (path) => !isSettingsFile(path) });
+    await cp(options.frontend, resolve(target, FRONTEND_DIR), { recursive: true, filter: (path) => !notCarried(path) });
     written.push(...(await filesIn(options.frontend)).map((file) => `${FRONTEND_DIR}/${file}`));
     servesGui = true;
   }

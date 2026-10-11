@@ -24,5 +24,9 @@ describe('reading a request body', () => {
     expect((refused as Refusal).status).toBe(413);
     const announced = await readBytes(request(['{}'], { 'content-length': '999999999' }), 4).catch((error: unknown) => error);
     expect((announced as Refusal).status).toBe(413);
+    // The answer still has a connection to go out on: the rest of the body is dropped, not cut off.
+    const long = request(['0123456789']);
+    await readBytes(long, 4).catch(() => undefined);
+    expect(long.destroyed).toBe(false);
   });
 });
