@@ -106,7 +106,7 @@ one by one in `backend/deployment/host/session.test.ts`.
    value set, a conversation, what an end point handed back). Beside them: what every node
    made last (the latch, held by the graph core), what the page shows, how many rounds ran.
    Not state: the reuse cache, a round in flight.
-2. **Where.** In the session, and in `state.json` beside `flow.json` (`<file>.state.json`
+2. **Where.** In the session, and in `state.json` beside `graph-flow.json` (`<file>.state.json`
    beside a single graph file). Not part of the project: a save and `check` leave it alone,
    a bundle does not carry it.
 3. **When.** A round runs on a working copy. One that ran to its end commits; one that was
@@ -126,16 +126,16 @@ an AI node may name its own model in its settings.
 
 ## The project folder
 
-A tool is saved as a project folder: a folder with a `flow.json`. Each fact is in one
+A tool is saved as a project folder: a folder with a `graph-flow.json`. Each fact is in one
 place, keys are sorted, and an unchanged save changes no byte
 (`backend/deployment/project/folder.test.ts`).
 
 ```
 my_tool/
-  flow.json            name, description, every wire as one line: "draw.data -> chart.csv"
-  nodes.json           id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is, as a person said it
-  layout.json          id -> { x, y, width?, height? }: positions and sizes on the canvas
-  page.json            the page: a list of its blocks, each with sends_to / fires / shows
+  graph-flow.json            name, description, every wire as one line: "draw.data -> chart.csv"
+  graph-nodes.json           id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is, as a person said it
+  graph-layout.json          id -> { x, y, width?, height? }: positions and sizes on the canvas
+  gui.json            the page: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
     input.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
     output.js          what one call returns, the same way; its keys are the outputs        (code, ai)
@@ -144,17 +144,17 @@ my_tool/
     data.json          the fields it starts with, an object; its ports follow them           (data)
     example.json       the same struct filled, an example of what it holds; absent, data.json stands in (data)
     history.md         every exchange with the model about this node
-    flow.json, nodes.json, layout.json, nodes/   the graph a subgraph holds: a project folder of its own   (subgraph)
+    graph-flow.json, graph-nodes.json, graph-layout.json, nodes/   the graph a subgraph holds: a project folder of its own   (subgraph)
   tests/<name>.json    kept rounds
   frontend/            optional: a page of the project's own, served at / instead of the built one
   state.json           not the project's: what using it left behind
 ```
 
-- **The graph is three files**: `flow.json` (the wires), `nodes.json` (the nodes) and
-  `layout.json` (where they sit). A run needs the first two and the node folders; the
-  editor alone reads `layout.json`, and a node missing from it is put in a row. Every node
-  has an entry in `nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a
-  `check` problem. The page is no part of the graph: `page.json` names start and end points
+- **The graph is three files**: `graph-flow.json` (the wires), `graph-nodes.json` (the nodes) and
+  `graph-layout.json` (where they sit). A run needs the first two and the node folders; the
+  editor alone reads `graph-layout.json`, and a node missing from it is put in a row. Every node
+  has an entry in `graph-nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a
+  `check` problem. The page is no part of the graph: `gui.json` names start and end points
   by id, and a tool without a page has no such file.
 - **Only what a person said.** A setting at its default is not written, by the editor or by
   the folder's writer alike (`defaultNodeConfig`, `withoutDefaults` in `graph/graph.ts`), and

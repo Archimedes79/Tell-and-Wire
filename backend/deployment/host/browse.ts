@@ -23,7 +23,7 @@ import { NotFound } from '../../../graph/errors.ts';
 
 const exists = (path: string): Promise<boolean> => access(path).then(() => true, () => false);
 
-/** Whether *path*, a folder, is a project: it holds a `flow.json`. */
+/** Whether *path*, a folder, is a project: it holds a `graph-flow.json`. */
 const isProject = (path: string): Promise<boolean> => exists(join(path, FLOW_FILE));
 
 /** A drive that answers within a second: a disconnected network drive can take far longer to say no. */

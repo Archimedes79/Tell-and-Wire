@@ -6,5 +6,5 @@
 /** What was asked for is not there. */
 export class NotFound extends Error {}
 
-/** What is there is not a graph: a folder without a flow.json, a file that is something else. */
+/** What is there is not a graph: a folder without a graph-flow.json, a file that is something else. */
 export class NotAGraph extends Error {}

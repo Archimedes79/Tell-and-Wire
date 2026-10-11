@@ -28,7 +28,7 @@ export function diskActions(
       // thrown away -- when every change was refused, for a node gone, or what
       // the node held.
       const taken = changes.filter((change) => {
-        // The page's own text, page.json: its blocks. Only at the top: a graph inside a node has none.
+        // The page's own text, gui.json: its blocks. Only at the top: a graph inside a node has none.
         if (change.node_id === null) return !get().subgraphStack.length && JSON.stringify(get().page) !== JSON.stringify(change.value ?? []);
         const node = nodeOf(change.node_id);
         if (!node) return false;

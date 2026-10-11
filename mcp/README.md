@@ -67,7 +67,7 @@ no page gets its variables as `NAME=value` lines, each explained under the box.
 A program such as `npx -y some-server`, or a URL: write it in the machine's settings file as Claude
 Desktop's `mcpServers` has it, under `mcp_servers`, and name it in the node (**Add MCP server →
 Another server**; in a project folder `"config": { "mcp_servers": ["<name>"] }` in the node's
-entry in `nodes.json`). The editor does not write or change an entry it did not write.
+entry in `graph-nodes.json`). The editor does not write or change an entry it did not write.
 
 ## What the servers here have in common
 

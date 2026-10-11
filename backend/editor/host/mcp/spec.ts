@@ -43,7 +43,7 @@ export const SPECS: ToolSpec[] = [
       type: 'object',
       properties: {
         description: { type: 'string', description: `What the graph should do, or what to change, in plain words. At most ${MAX_DESCRIPTION_CHARS} characters.` },
-        path: { type: 'string', description: 'Optional: the saved graph to change rather than design a new one, as a .json path relative to the server\'s folder (a project: its flow.json).' },
+        path: { type: 'string', description: 'Optional: the saved graph to change rather than design a new one, as a .json path relative to the server\'s folder (a project: its graph-flow.json).' },
         save_as: { type: 'string', description: 'Optional .json path, relative to the server\'s folder, to save the graph to.' },
       },
       required: ['description'],
@@ -66,7 +66,7 @@ export const SPECS: ToolSpec[] = [
   },
   {
     name: 'save_graph',
-    description: 'Validate a graph and write it: as one pretty-printed .json file, or -- given a project\'s flow.json -- as that '
+    description: 'Validate a graph and write it: as one pretty-printed .json file, or -- given a project\'s graph-flow.json -- as that '
       + 'project, each node\'s files in its folder. Refuses, and returns the problems, when validation finds any. Only .json '
       + 'paths inside the server\'s folder; an existing file is replaced only if it is already a graph. Over a graph that is '
       + 'there, each node\'s history and the files its ✨ was given stay; a file changed on disk since this server last read the project '
@@ -110,7 +110,7 @@ export const SPECS: ToolSpec[] = [
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder (a project: its flow.json).' },
+        path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder (a project: its graph-flow.json).' },
       },
       required: ['path'],
       additionalProperties: false,
@@ -125,7 +125,7 @@ export const SPECS: ToolSpec[] = [
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder (a project: its flow.json).' },
+        path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder (a project: its graph-flow.json).' },
         node_id: { type: 'string', description: 'The node to run.' },
         inputs: { type: 'object', description: 'Values by input port id. Omit to use what the graph feeds the node.' },
       },
@@ -145,7 +145,7 @@ export const SPECS: ToolSpec[] = [
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder (a project: its flow.json).' },
+        path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder (a project: its graph-flow.json).' },
         node_id: { type: 'string', description: 'Only this node.' },
         offline: { type: 'boolean', description: 'Ask no model.' },
       },

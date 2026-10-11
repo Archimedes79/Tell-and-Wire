@@ -278,8 +278,8 @@ it; the delivered page has a Stop of its own while a run goes.
 
 **File → Open…** and **Save as…** open a file browser: pick a folder or file, or type a
 path in its address box and press Enter. **Save as…** with a name without `.json` writes
-the tool as a folder: `flow.json` (a line per wire), `nodes.json` (each node's kind,
-heading, text, settings and ports), `layout.json` (positions), `page.json` (the blocks),
+the tool as a folder: `graph-flow.json` (a line per wire), `graph-nodes.json` (each node's kind,
+heading, text, settings and ports), `graph-layout.json` (positions), `gui.json` (the blocks),
 and a folder `nodes/<id>/` for each node that keeps code or text of its own. A name ending
 in `.json` writes one file with everything inline. **Save as…** onto a tool or graph file
 that is already there asks first (**Replace**). Anything that would drop unsaved changes (New, Open, Reload, a drop) asks

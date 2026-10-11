@@ -186,7 +186,7 @@ describe('a graph inside a node', () => {
 });
 
 describe('graphStore.connect', () => {
-  it('names a new wire the way flow.json writes it, and draws none twice, whatever the one already there is called', () => {
+  it('names a new wire the way graph-flow.json writes it, and draws none twice, whatever the one already there is called', () => {
     const nodes = () => [
       graphNode({ id: 'a', node_type: 'code', outputs: [port('out', 'output')] }),
       graphNode({ id: 'b', node_type: 'code', inputs: [port('in', 'input')] }),

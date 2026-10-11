@@ -26,7 +26,7 @@ By hand, in a copy of the repository: `cd mcp/web && npm ci`, then in `ai-settin
 }
 ```
 
-and `"config": { "mcp_servers": ["web"] }` in the node's entry in `nodes.json`. The model then
+and `"config": { "mcp_servers": ["web"] }` in the node's entry in `graph-nodes.json`. The model then
 reads a page when the node's text asks about one.
 
 The download's own test unzips it, sets this server up the way **Add MCP server** does and starts it

@@ -39,7 +39,7 @@ folder the server does not start):
 }
 ```
 
-and `"config": { "mcp_servers": ["documents"] }` in the node's entry in `nodes.json`.
+and `"config": { "mcp_servers": ["documents"] }` in the node's entry in `graph-nodes.json`.
 The download's own test checks that this server and its packages are in it
 (`scripts/package.test.mjs`).
 

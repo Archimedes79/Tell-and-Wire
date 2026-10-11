@@ -48,7 +48,7 @@ export function editActions(
     },
 
     connect: (wire, coalesce) => {
-      // Named the way flow.json writes a wire, and known by its two ends: a
+      // Named the way graph-flow.json writes a wire, and known by its two ends: a
       // graph pasted in or designed by ✨ may call its wires anything.
       const id = wireOf(graphEdge(wire));
       const joins = (edge: Edge): boolean => edge.source === wire.source && edge.target === wire.target

@@ -201,7 +201,7 @@ export interface HeldGraph {
  */
 export type Requirement = RuntimeRequirement;
 
-/** `project`: a folder with a `flow.json` in it, which opens rather than being walked into. */
+/** `project`: a folder with a `graph-flow.json` in it, which opens rather than being walked into. */
 export interface BrowseEntry { name: string; path: string; is_dir: boolean; project?: boolean }
 /**
  * One directory, for a picker -- on this machine only: it is for the person at the keyboard.
@@ -503,7 +503,7 @@ export const API = {
 
   /**
    * A project folder or a single graph file: see `project/folder.ts`. Also
-   * Reload: the same path opened again, after its `flow.json`, or a node's
+   * Reload: the same path opened again, after its `graph-flow.json`, or a node's
    * settings or ports, changed outside the editor.
    */
   openGraph: route<{ path: string }, GraphFile>('POST', '/api/graphs/file/load', 'editor'),

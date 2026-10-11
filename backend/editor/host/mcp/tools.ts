@@ -185,7 +185,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     return graphFrom(raw, given);
   };
 
-  /** A graph file, or a project -- its `flow.json` -- with everything in it read in from its files. */
+  /** A graph file, or a project -- its `graph-flow.json` -- with everything in it read in from its files. */
   const loadGraph = async (given: unknown): Promise<{ graph: Graph; full: string }> => {
     const full = await confine(given, 'path');
     if (!projectFolderOf(full)) return { graph: await readGraphFile(full, String(given)), full };
@@ -220,7 +220,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     const problems = problemsIn(parseGraph(structuredClone(graph)));
     if (problems.length) return { problems };
 
-    // As the editor saves: into a project, the wiring to `flow.json` and each
+    // As the editor saves: into a project, the wiring to `graph-flow.json` and each
     // node to its own folder; anywhere else, one file (`confine` lets only a
     // `.json` path through). The guard holds for the one file too. Over a graph that
     // is there, what the document says nothing of stays: the history and the files ✨ was
@@ -429,7 +429,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
             continue;
           }
           if (!entry.isFile() || extname(entry.name).toLowerCase() !== '.json') continue;
-          // A project's own parts: its flow.json stands for all of them. What a
+          // A project's own parts: its graph-flow.json stands for all of them. What a
           // session of a graph keeps beside it is no graph either.
           if ([NODES_FILE, LAYOUT_FILE, PAGE_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
           try {

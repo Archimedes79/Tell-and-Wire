@@ -242,10 +242,10 @@ export default function App() {
       say(`❌ ${file.name} is not a .json graph file.`, true);
       return;
     }
-    // A project's flow.json is its wiring only: the nodes are in files beside
+    // A project's graph-flow.json is its wiring only: the nodes are in files beside
     // it, which a browser does not hand over.
-    if (file.name === 'flow.json') {
-      say('❌ This is a tool\'s flow.json: its nodes are in files beside it, which a browser '
+    if (file.name === 'graph-flow.json') {
+      say('❌ This is a tool\'s graph-flow.json: its nodes are in files beside it, which a browser '
         + 'does not hand over. Drop the tool\'s folder, or open it with File → Open….', true);
       return;
     }

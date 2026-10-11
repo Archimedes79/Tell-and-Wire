@@ -11,7 +11,7 @@
 //      out of it.
 //   2. Only a `.json` path is taken, and never under a dot-folder or
 //      `node_modules`: what `list_graphs` would not show, nothing else touches.
-//      A project is named by its `flow.json`, and its nodes' files -- code.js,
+//      A project is named by its `graph-flow.json`, and its nodes' files -- code.js,
 //      prompt.md, history.md -- are read and written with it, inside the root.
 //   3. A file that exists is overwritten only if it is already a graph. That is
 //      what stops `save_graph` from being "write any JSON file" -- it cannot
@@ -107,7 +107,7 @@ function mustBeInside(root: string, full: string, given: string): void {
     throw new Refused(`"${given}" is under a dot-folder, node_modules or dist. Graphs do not live there, and this server does not go there.`);
   }
   if (extname(full).toLowerCase() !== '.json') {
-    throw new Refused(`"${given}" is not a .json file. A graph is a .json file -- a project is named by its flow.json -- and that is the only path this server takes.`);
+    throw new Refused(`"${given}" is not a .json file. A graph is a .json file -- a project is named by its graph-flow.json -- and that is the only path this server takes.`);
   }
   const settings = candidatePaths(root).map((path) => fold(resolve(path)));
   if (basename(full).toLowerCase() === SETTINGS_FILENAME || settings.includes(fold(full))) {
@@ -142,7 +142,7 @@ export function confinement(folder: string): {
 
   /**
    * Rule 1 for the files of a project: its code and prompts live in
-   * `nodes/…` beside the `flow.json` that was confined, and a link among them
+   * `nodes/…` beside the `graph-flow.json` that was confined, and a link among them
    * is a way out of the folder like any other. Their extensions are their own.
    */
   const insideRoot = async (path: string): Promise<void> => {

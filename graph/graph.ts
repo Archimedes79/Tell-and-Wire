@@ -141,7 +141,7 @@ export function mergeResults(previous: ExecutionResult, fresh: ExecutionResult):
 /**
  * A graph's settings when nothing says otherwise: a new graph's, and what a
  * file that leaves one out means. The one statement of them -- the
- * editor starts a new graph from it, and `flow.json` leaves out what equals
+ * editor starts a new graph from it, and `graph-flow.json` leaves out what equals
  * it. A fresh object each call, so no two graphs share one.
  *
  * Which AI a graph calls is not among them: that is the machine's one AI

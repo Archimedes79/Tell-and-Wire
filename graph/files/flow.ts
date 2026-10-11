@@ -1,4 +1,4 @@
-// `flow.json`: the graph's name and every wire -- nothing about any node.
+// `graph-flow.json`: the graph's name and every wire -- nothing about any node.
 //
 //     {
 //       "name": "Population plotter",
@@ -9,7 +9,7 @@
 //     }
 //
 // The one file that says how a graph runs, read in one glance. What a node is
-// -- its kind, heading, text, settings and ports -- is `nodes.json`'s, and a
+// -- its kind, heading, text, settings and ports -- is `graph-nodes.json`'s, and a
 // graph is put together here from the two. No file system: `folder.ts` reads
 // the files, and so can a test or a page that already has their contents.
 
@@ -19,7 +19,7 @@ import type { Problem } from '../wiring.ts';
 import { nodesFrom, sorted } from './nodesFile.ts';
 import { folderName } from './names.ts';
 
-export const FLOW_FILE = 'flow.json';
+export const FLOW_FILE = 'graph-flow.json';
 
 /** A wire, as the flow writes it: `from.port -> to.port`. It is also the edge's id. */
 export function wireOf(edge: GraphEdge): string {
@@ -55,7 +55,7 @@ function particular(metadata: GraphMetadata): Record<string, unknown> {
   };
 }
 
-/** Why *name* cannot end a wire in `flow.json`, or '' when it can. */
+/** Why *name* cannot end a wire in `graph-flow.json`, or '' when it can. */
 function unwritable(name: string): string {
   if (!name.trim()) return 'is empty';
   if (name !== name.trim()) return 'starts or ends with a space';
@@ -67,7 +67,7 @@ function unwritable(name: string): string {
  * Ids a project folder could write and not read back the same: said by
  * `check`, and refused by a save before anything is written.
  *
- * A node's id is a key of `nodes.json` and the start of each wire, and names
+ * A node's id is a key of `graph-nodes.json` and the start of each wire, and names
  * its folder. So it may hold no "." (the wire could not say where
  * the port begins), is not a number (a JSON object lists those first, and the
  * graph would come back in another order), and two ids may not name one
@@ -80,7 +80,7 @@ export function unsavableIds(graph: Graph): Problem[] {
     const where = `node "${node.id}"`;
     const why = unwritable(node.id)
       || (node.id.includes('.') ? 'has a "." in it, so a wire could not say where the node ends and its port begins' : '')
-      || (/^\d+$/.test(node.id) ? 'is a number, which nodes.json would list before every other node' : '');
+      || (/^\d+$/.test(node.id) ? 'is a number, which graph-nodes.json would list before every other node' : '');
     if (why) problems.push({ where, problem: `Its id ${why}.`, fix: 'Rename it, for example with letters, digits and "_".' });
     const folder = folderName(node.id).toLowerCase();
     const other = folders.get(folder);
@@ -92,13 +92,13 @@ export function unsavableIds(graph: Graph): Problem[] {
   for (const edge of graph.edges) {
     for (const portId of new Set([edge.source_port_id, edge.target_port_id])) {
       const why = unwritable(portId);
-      if (why) problems.push({ where: `edge "${edge.id}"`, problem: `Its port "${portId}" ${why}, so flow.json could not read the wire back.`, fix: 'Rename the port.' });
+      if (why) problems.push({ where: `edge "${edge.id}"`, problem: `Its port "${portId}" ${why}, so graph-flow.json could not read the wire back.`, fix: 'Rename the port.' });
     }
   }
   return problems;
 }
 
-/** What `flow.json` says for *graph*. */
+/** What `graph-flow.json` says for *graph*. */
 export function flowOf(graph: Graph): Record<string, unknown> {
   const [unsavable] = unsavableIds(graph);
   if (unsavable) throw new NotAGraph(`${unsavable.where}: ${unsavable.problem} ${unsavable.fix}`);

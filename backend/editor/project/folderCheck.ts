@@ -19,7 +19,7 @@ import { problemsIn } from '../../../gui/editor/check.ts';
 
 /**
  * What only a project folder can get wrong: a folder under `nodes/` that
- * belongs to no node (the node was deleted, or renamed in `nodes.json` by
+ * belongs to no node (the node was deleted, or renamed in `graph-nodes.json` by
  * hand), and a file in a node's folder that nothing reads --
  * `instructions.md` where an AI node reads `prompt.md` is a text somebody
  * wrote and nobody will ever send.
@@ -41,8 +41,8 @@ export async function folderProblems(folder: string): Promise<Problem[]> {
     if (!expected.has(nodeDir)) expected.set(nodeDir, new Set());
   }
 
-  // A node that holds a graph holds a project folder: its own flow.json,
-  // nodes.json and layout.json belong there, and what is under them is that
+  // A node that holds a graph holds a project folder: its own graph-flow.json,
+  // graph-nodes.json and graph-layout.json belong there, and what is under them is that
   // project's, looked at below by the same function.
   const nested = new Set<string>();
   for (const { folder: dir } of nestedGraphs(graph)) {
@@ -62,7 +62,7 @@ export async function folderProblems(folder: string): Promise<Problem[]> {
     for (const entry of entries) {
       const path = `${relative}/${entry.name}`;
       // Its own project: checked as one, not walked as part of this one. A
-      // `nodes/` there without a flow.json is read by nobody, and said below.
+      // `nodes/` there without a graph-flow.json is read by nobody, and said below.
       if (entry.isDirectory() && entry.name === NODES_DIR && nested.has(relative) && isProjectFolder(join(folder, relative))) {
         found.push(...(await folderProblems(join(folder, relative)))
           .map((problem) => ({ ...problem, where: `${relative}/${problem.where}` })));
@@ -73,7 +73,7 @@ export async function folderProblems(folder: string): Promise<Problem[]> {
         if (!owned) {
           found.push({
             where: path,
-            problem: 'This folder belongs to no node in nodes.json.',
+            problem: 'This folder belongs to no node in graph-nodes.json.',
             fix: 'Delete it, or give the node it was for this id again.',
           });
           continue;

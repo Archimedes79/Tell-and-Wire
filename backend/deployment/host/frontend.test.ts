@@ -17,7 +17,7 @@ afterAll(async () => { for (const one of served) await one.shutdown(); });
 
 describe('a project\'s own frontend', () => {
   it('is served at / and beside it in place of the built page, and the example\'s calls nothing but the runtime API', async () => {
-    // A copy of the example: a served project keeps its state beside its flow.json.
+    // A copy of the example: a served project keeps its state beside its graph-flow.json.
     const dir = join(await mkdtemp(join(tmpdir(), 'frontend-')), 'nested_statistics');
     await cp(EXAMPLE, dir, { recursive: true });
     await writeFile(join(dir, 'frontend', 'style.css'), 'body { color: red }');

@@ -1,10 +1,10 @@
 // A graph as a folder: the project.
 //
 //     my_tool/
-//       flow.json           the flow: the graph's name, and every wire
-//       nodes.json          the nodes: each one's kind, heading, text, settings and ports
-//       layout.json         where each node sits on the canvas, and its size
-//       page.json           the page: what whoever uses the tool sees -- its blocks,
+//       graph-flow.json           the flow: the graph's name, and every wire
+//       graph-nodes.json          the nodes: each one's kind, heading, text, settings and ports
+//       graph-layout.json         where each node sits on the canvas, and its size
+//       gui.json           the page: what whoever uses the tool sees -- its blocks,
 //                           in order, each with what it connects to
 //       nodes/
 //         count/            one folder per node that keeps writing, by id
@@ -47,8 +47,8 @@ import { folderName } from '../../../graph/files/names.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 
 export { FLOW_FILE, NODES_FILE };
-export const LAYOUT_FILE = 'layout.json';
-export const PAGE_FILE = 'page.json';
+export const LAYOUT_FILE = 'graph-layout.json';
+export const PAGE_FILE = 'gui.json';
 export const NODES_DIR = 'nodes';
 
 export class FileChanged extends Error {
@@ -70,7 +70,7 @@ export type Guard = (path: string) => Promise<void>;
 // Where things are
 // ---------------------------------------------------------------------------
 
-/** A folder with a `flow.json` in it. */
+/** A folder with a `graph-flow.json` in it. */
 export function isProjectFolder(path: string): boolean {
   try {
     return statSync(path).isDirectory() && existsSync(join(path, FLOW_FILE));
@@ -82,7 +82,7 @@ export function isProjectFolder(path: string): boolean {
 /**
  * The project folder *path* means, or null for a plain graph file.
  *
- * A folder is one; so is its `flow.json`, named directly -- which is how a tool
+ * A folder is one; so is its `graph-flow.json`, named directly -- which is how a tool
  * that only deals in `.json` paths (the MCP server, a shell's tab completion)
  * reaches one.
  */
@@ -97,7 +97,7 @@ export function projectFolderOf(path: string): string | null {
  * A page of a project's own, written by hand: served at `/` in place of the
  * built page when it holds an `index.html`, and carried by a bundle. It uses
  * the graph only through the runtime API, by name (`backend/deployment/host/api.ts`). Not
- * `page.json`: that is the built-in page's, its blocks.
+ * `gui.json`: that is the built-in page's, its blocks.
  */
 export const FRONTEND_DIR = 'frontend';
 
@@ -108,7 +108,7 @@ export function frontendOf(path: string): string | null {
   return frontend && existsSync(join(frontend, 'index.html')) ? frontend : null;
 }
 
-/** What a session of a project keeps beside its `flow.json`: never read or written as part of the project. */
+/** What a session of a project keeps beside its `graph-flow.json`: never read or written as part of the project. */
 export const STATE_FILE = 'state.json';
 
 /**
@@ -380,7 +380,7 @@ function asGraph(raw: unknown, path: string): Graph {
   }
 }
 
-/** Where each node sits: from `layout.json` when there is one, in a row when it says nothing. */
+/** Where each node sits: from `graph-layout.json` when there is one, in a row when it says nothing. */
 function applyLayout(graph: Graph, layout: unknown): void {
   if (!layout || typeof layout !== 'object') return;
   const placed = layout as Record<string, { x?: number; y?: number; width?: number | null; height?: number | null }>;
@@ -473,7 +473,7 @@ export async function readProject(folder: string, guard?: Guard): Promise<Graph>
 }
 
 /**
- * Whatever *path* is: a project folder (or its `flow.json`), or a single
+ * Whatever *path* is: a project folder (or its `graph-flow.json`), or a single
  * graph file. The one way anything in the backend opens a graph.
  */
 export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
@@ -481,7 +481,10 @@ export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
   const folder = projectFolderOf(full);
   if (folder) return readProject(folder, guard);
   if (!existsSync(full)) throw new NotFound(`Nothing at ${full}`);
-  if (statSync(full).isDirectory()) throw new NotAGraph(`${full} is a folder without a ${FLOW_FILE}: not a project.`);
+  if (statSync(full).isDirectory()) {
+    const older = existsSync(join(full, 'flow.json')) ? ` It has a flow.json: that is the format of an older version. Rename flow.json, nodes.json, layout.json and page.json to ${FLOW_FILE}, ${NODES_FILE}, ${LAYOUT_FILE} and ${PAGE_FILE}.` : '';
+    throw new NotAGraph(`${full} is a folder without a ${FLOW_FILE}: not a project.${older}`);
+  }
   await guard?.(full);
   return asGraph(await readJson(full, 'graph'), full);
 }
@@ -493,7 +496,7 @@ export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
 /**
  * Write *graph* as the project folder *folder*.
  *
- * Every text goes to its file and out of its node's settings in `nodes.json`; a text that is empty
+ * Every text goes to its file and out of its node's settings in `graph-nodes.json`; a text that is empty
  * has no file, and one that was emptied loses it. Files a node no longer has
  * -- it was deleted, or became another kind -- are removed, but only files with the
  * names elements write: whatever else a person put in the folder stays.
@@ -526,7 +529,7 @@ interface Plan {
 /** What writing *graph* into *folder* comes to, this level and every level below it. */
 function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   // A node whose ports follow from its settings -- a start point's, a
-  // subgraph's from its graph -- has them as they follow, and nodes.json keeps
+  // subgraph's from its graph -- has them as they follow, and graph-nodes.json keeps
   // only what a person chose of them. Before the graphs a node holds are
   // taken out below: its ports are read from them.
   const derived = derivePorts(copy);
@@ -545,11 +548,11 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
   const flow = flowOf(copy);
   for (const node of copy.nodes) {
     const element = registry.node(node.node_type);
-    // A typo in a kind in nodes.json must not cost the node its code on the next save.
+    // A typo in a kind in graph-nodes.json must not cost the node its code on the next save.
     if (!element) untouched.add(join(folder, nodeFolder(node.id)));
     else {
       // A node that became another kind -- by ✨ Describe a graph, the bar, a model
-      // over MCP -- keeps none of the old kind's writing: in nodes.json it
+      // over MCP -- keeps none of the old kind's writing: in graph-nodes.json it
       // would be a setting nothing reads. Its file goes as one no node keeps.
       const own = new Set(element.texts(node).map((text) => text.field));
       for (const field of textFields(node)) if (!own.has(field)) delete node.config[field];
@@ -809,7 +812,7 @@ export async function changesOnDisk(folder: string): Promise<TextChange[]> {
  * or written.
  *
  * Nothing is marked as seen until the whole folder has been looked at without
- * trouble: a `flow.json` caught half-written throws, and a file marked seen
+ * trouble: a `graph-flow.json` caught half-written throws, and a file marked seen
  * on the way to that would never be reported again.
  */
 async function changedUnder(folder: string): Promise<boolean> {

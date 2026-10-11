@@ -25,7 +25,7 @@ import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { eventOf, outputsOf } from '../../deployment/host/interface.ts';
 import { folderName } from '../../../graph/files/names.ts';
 
-/** Where a project keeps its rounds: `tests/<name>.json`, beside `flow.json`. */
+/** Where a project keeps its rounds: `tests/<name>.json`, beside `graph-flow.json`. */
 export const TESTS_DIR = 'tests';
 
 /** A round, kept: what began it, what was handed in, and what it handed back. */

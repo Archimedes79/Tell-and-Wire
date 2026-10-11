@@ -125,7 +125,7 @@ function keptNested(node: GraphNode): GraphNode {
   return kept;
 }
 
-/** The page's blocks as a change of page.json says them. */
+/** The page's blocks as a change of gui.json says them. */
 export const pageOf = (change: TextChange): GuiWidget[] => (Array.isArray(change.value) ? change.value : []) as GuiWidget[];
 
 /** *change* taken into *node*: a file of it as it is on disk, or the graph it holds; its ports follow. */

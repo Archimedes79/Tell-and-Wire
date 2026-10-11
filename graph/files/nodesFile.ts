@@ -1,4 +1,4 @@
-// `nodes.json`: the list of a graph's nodes -- what each one is.
+// `graph-nodes.json`: the list of a graph's nodes -- what each one is.
 //
 //     {
 //       "chart": {
@@ -13,7 +13,7 @@
 //
 // By id, in the order the graph lists them. A node's kind, its heading and its
 // text, its settings and its ports: all it is, and nothing about its
-// neighbours -- that is `flow.json` --, nor where it sits -- `layout.json` --,
+// neighbours -- that is `graph-flow.json` --, nor where it sits -- `graph-layout.json` --,
 // nor its writing -- code and prompts, files in its own folder. Every node has
 // an entry, at least `{ "kind": … }`; the rest may be left out.
 //
@@ -29,7 +29,7 @@ import type { DataType, GraphNode, Port, PortKind } from '../graph.ts';
 import { withoutDefaults } from '../graph.ts';
 import { NotAGraph } from '../errors.ts';
 
-export const NODES_FILE = 'nodes.json';
+export const NODES_FILE = 'graph-nodes.json';
 
 /** Keys in one order, so saving an unchanged graph changes nothing in the file. */
 export function sorted<T extends Record<string, unknown>>(record: T): T {
@@ -81,7 +81,7 @@ function stubOnDisk(port: Port): { port: string; list?: true; field?: string } {
 }
 
 /**
- * What `nodes.json` says for *nodes*: the writing already taken out of their
+ * What `graph-nodes.json` says for *nodes*: the writing already taken out of their
  * settings. *derived* is the ids of the nodes whose ports follow from their
  * settings: of those, only the choices a person made are kept.
  */

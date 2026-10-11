@@ -178,34 +178,34 @@ describe('save_graph', () => {
     const document = (body: string) => graphOf([textData('greeting'), code('work', body), output('result')],
       [edge('e1', 'greeting.text', 'work.in'), edge('e2', 'work.out', 'result.value')]);
     const path = (...parts: string[]) => join(root, 'proj', ...parts);
-    expect((await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 1 }; }') })).isError).toBeUndefined();
-    expect(JSON.parse(await readFile(path('flow.json'), 'utf8')).wires).toEqual(['greeting.text -> work.in', 'work.out -> result.value']);
-    expect((await answer(tools, 'run_graph', { path: 'proj/flow.json' })).json.status).toBe('success');
+    expect((await tools.call('save_graph', { path: 'proj/graph-flow.json', graph: document('function run() { return { out: 1 }; }') })).isError).toBeUndefined();
+    expect(JSON.parse(await readFile(path('graph-flow.json'), 'utf8')).wires).toEqual(['greeting.text -> work.in', 'work.out -> result.value']);
+    expect((await answer(tools, 'run_graph', { path: 'proj/graph-flow.json' })).json.status).toBe('success');
     expect(ranBody).toContain('out: 1');
 
     // What the person's own editor keeps beside it, as a server that never read the project meets it: the node's history, and a file its chat was given.
     forgetSeen();
     await writeFile(path('nodes', 'work', 'history.md'), '## 2026-10-04 12:00 · Code\n\nNothing was sent.\n');
-    const listed = JSON.parse(await readFile(path('nodes.json'), 'utf8'));
+    const listed = JSON.parse(await readFile(path('graph-nodes.json'), 'utf8'));
     listed.work.config = { ...listed.work.config, input_files: ['data/a.csv'] };
-    await writeFile(path('nodes.json'), `${JSON.stringify(listed, null, 2)}\n`);
+    await writeFile(path('graph-nodes.json'), `${JSON.stringify(listed, null, 2)}\n`);
 
-    const again = await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 2 }; }') });
+    const again = await tools.call('save_graph', { path: 'proj/graph-flow.json', graph: document('function run() { return { out: 2 }; }') });
     expect(again.isError).toBeUndefined();
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 2');
     expect(await readFile(path('nodes', 'work', 'history.md'), 'utf8')).toContain('Nothing was sent.');
-    expect(JSON.parse(await readFile(path('nodes.json'), 'utf8')).work.config.input_files).toEqual(['data/a.csv']);
+    expect(JSON.parse(await readFile(path('graph-nodes.json'), 'utf8')).work.config.input_files).toEqual(['data/a.csv']);
 
     // The code was edited elsewhere since this process wrote it: that is said, not overwritten.
     await writeFile(path('nodes', 'work', 'code.js'), 'function run() { return { out: "by hand, in an editor" }; }\n');
-    const refused = await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 3 }; }') });
+    const refused = await tools.call('save_graph', { path: 'proj/graph-flow.json', graph: document('function run() { return { out: 3 }; }') });
     expect(refused.isError).toBe(true);
-    expect(refused.text).toMatch(/"nodes\/work\/code\.js" of "proj\/flow\.json" was changed on disk/);
+    expect(refused.text).toMatch(/"nodes\/work\/code\.js" of "proj\/graph-flow\.json" was changed on disk/);
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('by hand');
 
     // Read again, it is saved over.
-    await tools.call('describe_graph', { path: 'proj/flow.json' });
-    expect((await tools.call('save_graph', { path: 'proj/flow.json', graph: document('function run() { return { out: 3 }; }') })).isError).toBeUndefined();
+    await tools.call('describe_graph', { path: 'proj/graph-flow.json' });
+    expect((await tools.call('save_graph', { path: 'proj/graph-flow.json', graph: document('function run() { return { out: 3 }; }') })).isError).toBeUndefined();
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 3');
   });
 });
@@ -255,10 +255,10 @@ describe('confinement', () => {
 
     await writeFile(join(outside, 'code.js'), 'function run() { return { out: "from outside" }; }');
     await mkdir(join(root, 'proj', 'nodes'), { recursive: true });
-    await writeFile(join(root, 'proj', 'flow.json'), JSON.stringify({ wires: ['work.out -> result.value'] }));
-    await writeFile(join(root, 'proj', 'nodes.json'), JSON.stringify({ work: { kind: 'code' }, result: { kind: 'end' } }));
+    await writeFile(join(root, 'proj', 'graph-flow.json'), JSON.stringify({ wires: ['work.out -> result.value'] }));
+    await writeFile(join(root, 'proj', 'graph-nodes.json'), JSON.stringify({ work: { kind: 'code' }, result: { kind: 'end' } }));
     await symlink(outside, join(root, 'proj', 'nodes', 'work'), kind);
-    const ran = await tools.call('run_graph', { path: 'proj/flow.json' });
+    const ran = await tools.call('run_graph', { path: 'proj/graph-flow.json' });
     expect(ran.isError).toBe(true);
     expect(ran.text).toMatch(/outside the folder/);
     expect(ranBody).toBe('');
@@ -275,12 +275,12 @@ describe('confinement', () => {
 
   it('lists a project once, not the subgraphs in its nodes folder', async () => {
     await mkdir(join(root, 'proj', 'nodes', 'inner'), { recursive: true });
-    await writeFile(join(root, 'proj', 'flow.json'), JSON.stringify({ wires: [] }));
-    await writeFile(join(root, 'proj', 'nodes.json'), JSON.stringify({ inner: { kind: 'subgraph' } }));
-    await writeFile(join(root, 'proj', 'nodes', 'inner', 'flow.json'), JSON.stringify({ wires: [] }));
-    await writeFile(join(root, 'proj', 'nodes', 'inner', 'nodes.json'), JSON.stringify({}));
+    await writeFile(join(root, 'proj', 'graph-flow.json'), JSON.stringify({ wires: [] }));
+    await writeFile(join(root, 'proj', 'graph-nodes.json'), JSON.stringify({ inner: { kind: 'subgraph' } }));
+    await writeFile(join(root, 'proj', 'nodes', 'inner', 'graph-flow.json'), JSON.stringify({ wires: [] }));
+    await writeFile(join(root, 'proj', 'nodes', 'inner', 'graph-nodes.json'), JSON.stringify({}));
     const listed = (await answer(toolsWith(), 'list_graphs')).json.graphs as { path: string }[];
-    expect(listed.map((graph) => graph.path)).toEqual(['proj/flow.json']);
+    expect(listed.map((graph) => graph.path)).toEqual(['proj/graph-flow.json']);
   });
 
   it('never opens the settings file, even when it would pass for a graph', async () => {
