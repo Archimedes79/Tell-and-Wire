@@ -250,6 +250,19 @@ describe('graphStore.connectToNewInput', () => {
   });
 });
 
+describe('graphStore.connectToNewInput, on a node with inputs of its own', () => {
+  it('takes a wire dropped on an end point on its value, not its path -- and on a data node, whose inputs are its fields, does nothing', () => {
+    loadTestGraph([
+      graphNode({ id: 'src', node_type: 'code', outputs: [port('out', 'output')] }),
+      NODE_KINDS.end.create('done'),
+      NODE_KINDS.data.create('memory'),
+    ]);
+    expect(store().connectToNewInput({ source: 'src', sourceHandle: 'out', target: 'done' })).toBe(true);
+    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['src.out -> done.value']);
+    expect(store().connectToNewInput({ source: 'src', sourceHandle: 'out', target: 'memory' })).toBe(false);
+  });
+});
+
 describe('graphStore.addNodeFrom', () => {
   it('adds the node a wire was let go for, and wires it -- on a new input where the node names its own, else on its first -- as one undo step', () => {
     loadTestGraph([graphNode({ id: 'read', node_type: 'code', label: 'Read', outputs: [port('info', 'output', 'Info')] })]);

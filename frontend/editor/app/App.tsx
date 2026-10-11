@@ -102,6 +102,8 @@ export default function App() {
   // to the blocks it will really sit beside -- which a start or end point the
   // gui uses offers from its own view.
   const openGui = useCallback(() => setView('design'), []);
+  // A node the run stopped at: its own view, on the graph.
+  const showNode = useCallback((nodeId: string) => { setView('graph'); useGraphStore.getState().setEditingNode(nodeId); }, []);
 
   // The folder the last graph was opened from or saved to -- '' before one
   // was: the folder the server was started in. Where the file browser starts
@@ -461,7 +463,7 @@ export default function App() {
         {/* The gui is the top graph's: inside a node's graph there is none to
             build or try, and these would act on the graph in there. */}
         {view === 'design' && <TopGraphOnly><DesignerTab /></TopGraphOnly>}
-        {view === 'app' && <TopGraphOnly><ApplicationView /></TopGraphOnly>}
+        {view === 'app' && <TopGraphOnly><ApplicationView onShowNode={showNode} /></TopGraphOnly>}
 
         {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
         {dialogs.dialogs}

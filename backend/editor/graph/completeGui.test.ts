@@ -31,6 +31,7 @@ describe('a gui written whole', () => {
       ],
       gui: { blocks: [
         { id: 'go', kind: 'button', label: 'Go', fires: 'begin' },
+        { id: 'ask', kind: 'button', label: 'Ask', sends_to: ['a'] },
         { id: 'name', kind: 'text_io', mode: 'input', sends_to: ['a'], fires: 'a' },
         { id: 'free', kind: 'text_io', mode: 'input' },
         { id: 'one', kind: 'text_io', mode: 'output', shows: 'done' },
@@ -42,5 +43,8 @@ describe('a gui written whole', () => {
     // "a" and "b" are both started by the gui: which one "free" sends to is for the person to say.
     expect(graph.gui!.blocks.find((block) => block.id === 'free')?.sends_to).toBeUndefined();
     expect(graph.gui!.blocks.find((block) => block.id === 'two')).toMatchObject({ shows: 'answer' });
+    // A button holds nothing to send: it means to fire the start point it names.
+    const ask = graph.gui!.blocks.find((block) => block.id === 'ask')!;
+    expect([ask.fires, ask.sends_to]).toEqual(['a', undefined]);
   });
 });

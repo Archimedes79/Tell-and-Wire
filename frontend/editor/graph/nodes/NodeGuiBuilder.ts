@@ -89,6 +89,14 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
    * so they are shown and not changed. `none`: the side is not shown; the
    * node has no such ports. Only asked where the ports are not derived (`derivedNodePorts`).
    */
+  /**
+   * Whether an output is drawn only while it is wired or the card is the one selected: a port the
+   * node has that most never wire, and that would be one more row of dots on every card.
+   */
+  quietOutput(_node: GraphNode, _port: string): boolean {
+    return false;
+  }
+
   readonly portEditing: { inputs: PortEditing; outputs: PortEditing } = { inputs: 'edit', outputs: 'edit' };
 
   /** One line under each side of the port list: how the node's body sees them. */

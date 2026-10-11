@@ -44,6 +44,11 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
   // are its fields (`DataNodeDefinition.derivedPorts`), so there are none to edit, and
   // its one file, data.json, is edited in its file's pane and written by its chat.
 
+  /** Its fields are what is wired: `round`, `all` and `before` stand behind them until they are wired, or the card is the one selected. */
+  override quietOutput(_node: GraphNode, port: string): boolean {
+    return port === ALL_FIELDS || port === ROUND || port === BEFORE;
+  }
+
   /** A file dropped on it on the canvas is its fields from now on: what the file says, an object -- or one field, "value". */
   override dropPort(): 'text' {
     return 'text';

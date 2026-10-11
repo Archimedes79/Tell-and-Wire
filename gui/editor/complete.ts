@@ -29,6 +29,8 @@ const words = (id: string): string => {
 
 /**
  * Give the gui of *graph* what it lacks, in place:
+ * - a connection a block cannot make is taken off: a button "sends" to the start point it
+ *   means to fire -- that is what it then fires --, a text that shows nothing "shows" nothing;
  * - a start or end point a block names (`sends_to`, `fires`, `shows`) that is no node of
  *   the graph is made, under that name;
  * - an input that sends nowhere sends to the start point the gui starts -- or to the one it
@@ -39,6 +41,17 @@ const words = (id: string): string => {
  * Points are made unwired and beside the graph; wiring them is the graph's author's.
  */
 export function completeGui(graph: Graph, registry: Kinds): void {
+  for (const stored of guiBlocks(graph)) {
+    const widget = parseWidget(stored);
+    const element = widgetElement(widget.kind);
+    if (!element) continue;
+    if (widget.sends_to.length && !element.sends(widget)) {
+      if (element.event(widget) && !widget.fires) stored.fires = widget.sends_to[0];
+      delete stored.sends_to;
+    }
+    if (widget.fires && !element.event(widget)) delete stored.fires;
+    if (widget.shows && !element.showsEnd(widget)) delete stored.shows;
+  }
   const blocks = guiBlocks(graph).flatMap((stored) => {
     const widget = parseWidget(stored);
     const element = widgetElement(widget.kind);

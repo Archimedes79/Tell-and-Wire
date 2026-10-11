@@ -30,9 +30,12 @@ export const names = (ids: Iterable<string>): string => [...ids].map((id) => `"$
  * The value under *field* -- a path, `folder` or `file.content` -- of what
  * arrived: of a start point's package, one of the values its sender sent; of
  * anything else, a key of it. Nothing there is undefined: nothing arrived.
+ * A text, a number or a list has no keys, and is itself the part asked for: a model
+ * that wires a list on and names "pantry.ingredients" of it means the list.
  */
 export function fieldOf(value: unknown, field: string): unknown {
   const isPackage = !!value && typeof value === 'object' && 'event' in value && 'values' in value;
+  if (!isPackage && (!value || typeof value !== 'object' || Array.isArray(value))) return value;
   let at: unknown = isPackage ? (value as { values: unknown }).values : value;
   for (const key of field.split('.')) {
     if (!at || typeof at !== 'object') return undefined;

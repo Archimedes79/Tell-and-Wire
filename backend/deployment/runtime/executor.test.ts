@@ -6,7 +6,7 @@ import { NodeRunner, type Runners } from './nodes/NodeRunner.ts';
 import { runners } from './nodes/registry.ts';
 import { type Runtime } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import { edge, graphOf, quietRuntime } from './test/fakes.ts';
+import { edge, graphOf, node as nodeWith, quietRuntime } from './test/fakes.ts';
 
 function node(id: string, type = 'code', config: Record<string, unknown> = {}): GraphNode {
   return {
@@ -86,6 +86,16 @@ describe('a loop', () => {
       runtime: { ...nowhere, code: { run: async () => ({ output: { a: 'the a', b: 'the b' } }) } }, registry,
     });
     expect(picky.config.data_value).toEqual({ value: 'the a' });
+  });
+});
+
+describe('an input that takes a field', () => {
+  it('is handed a list whole where it names a part of it: a list has no parts, and what a small model meant is the list', async () => {
+    const source = nodeWith('src', 'code', { code: 'SRC' }, { out: ['items'] });
+    const sink = nodeWith('sink', 'code', {}, { in: ['x:src.items'], out: ['x'] });
+    const runtime = quietRuntime({ code: { run: async (body, inputs) => (body === 'SRC' ? { items: [1, 2, 3] } : inputs) } });
+    const result = await executeGraph(graphOf([source, sink], [edge('e', 'src', 'items', 'sink', 'x')]), { runtime, registry });
+    expect(result.node_results.find((one) => one.node_id === 'sink')?.outputs).toEqual({ x: [1, 2, 3] });
   });
 });
 
