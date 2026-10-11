@@ -15,3 +15,6 @@ ai-settings.json
 .idea/
 .claude/
 *.tsbuildinfo
+.env
+.env.*
+tell-and-wire*.zip

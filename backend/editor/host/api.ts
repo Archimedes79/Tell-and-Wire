@@ -169,7 +169,7 @@ export interface SettingsPatch {
 
 /** A tool server that came with this installation (`mcp/<name>/config.json`), and what this machine has done with it. */
 export interface McpServerView {
-  /** Its folder's name, and the name a graph and `ai-settings.json` call it by. */
+  /** Its folder's name, and the name a graph and the machine's settings file call it by. */
   name: string;
   title: string;
   about: string;
@@ -183,13 +183,13 @@ export interface McpServerView {
   values: Record<string, string> | null;
   /** Its packages are in its folder, or it needs none. */
   installed: boolean;
-  /** `ai-settings.json` has an entry of this name that is not this server's: it is used as it is, and not edited here. */
+  /** The machine's settings file has an entry of this name that is not this server's: it is used as it is, and not edited here. */
   by_hand: boolean;
   /** Why its `config.json` cannot be used, in a sentence. */
   problem: string;
 }
 
-/** The servers that came with this installation, and every name `ai-settings.json` has an entry for. */
+/** The servers that came with this installation, and every name the machine's settings file has an entry for. */
 export interface McpServersView {
   servers: McpServerView[];
   configured: string[];
@@ -330,7 +330,7 @@ export const EDITOR_API = {
 
   /**
    * The tool servers in `mcp/`, and what this machine has set up. Setting one
-   * up writes the command that starts it into `ai-settings.json` and may run
+   * up writes the command that starts it into the machine's settings file and may run
    * npm: the person's, at the keyboard.
    */
   mcpServers: local(route<void, McpServersView>('GET', '/api/mcp/servers')),
