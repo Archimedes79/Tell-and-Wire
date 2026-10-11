@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, type EdgeProps } from 'reactflow';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, useStore, type EdgeProps } from 'reactflow';
 import { useGraphStore } from '../../document/store/graphStore';
 import { ACCENT, SURFACE } from '../../../deployment/gui/kit/ui/theme';
 
@@ -29,20 +29,37 @@ function pathThrough(sx: number, sy: number, tx: number, ty: number, points: Rou
 }
 
 /**
+ * A wire that goes back -- a memory's, read round a loop -- leaves its card to the right, runs under both cards and
+ * comes in from the left: the way a loop is drawn, instead of a line through the cards between.
+ */
+function loopUnder(sx: number, sy: number, tx: number, ty: number, lane: number): string {
+  const r = 14;
+  const x1 = sx + 26;
+  const x2 = tx - 26;
+  return `M${sx},${sy} H${x1 - r} Q${x1},${sy} ${x1},${sy + r} V${lane - r} Q${x1},${lane} ${x1 - r},${lane} H${x2 + r} Q${x2},${lane} ${x2},${lane - r} V${ty + r} Q${x2},${ty} ${x2 + r},${ty} H${tx}`;
+}
+
+/**
  * A wire: the soft curve the canvas has always drawn, or -- when it was routed -- the curve through the cells
  * it is drawn through. Its handle, on the wire's middle or on the cell it goes through, is pulled to
  * another cell to route it round the cards; a double-click on it takes the route off.
  */
 export default function RoutedEdge(props: EdgeProps<Route>) {
-  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, selected, data } = props;
+  const { id, source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, selected, data } = props;
+  // Under both cards, for a wire that goes back.
+  const lane = useStore((s) => Math.max(...[source, target].map((one) => {
+    const card = s.nodeInternals.get(one);
+    return card ? (card.positionAbsolute?.y ?? card.position.y) + (card.height ?? 0) : 0;
+  })) + 36);
   const points = data?.points ?? [];
   const routed = points.length > 0;
   const [hover, setHover] = useState(false);
   const leaving = useRef(0);
   const pulling = useGraphStore((s) => s.pulling?.edge === id);
   const [straight, straightX, straightY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
-  const path = routed ? pathThrough(sourceX, sourceY, targetX, targetY, points) : straight;
-  const handle = routed ? points[Math.floor((points.length - 1) / 2)] : { x: straightX, y: straightY };
+  const back = !routed && sourceX > targetX - 12;
+  const path = routed ? pathThrough(sourceX, sourceY, targetX, targetY, points) : back ? loopUnder(sourceX, sourceY, targetX, targetY, lane) : straight;
+  const handle = routed ? points[Math.floor((points.length - 1) / 2)] : back ? { x: (sourceX + targetX) / 2, y: lane } : { x: straightX, y: straightY };
   const shown = (data?.routable || routed) && (hover || pulling || !!selected || !!data?.lit || routed);
   const over = (on: boolean): void => {
     window.clearTimeout(leaving.current);
