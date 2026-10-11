@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   addWindow, moveWindow, patchWindow, removeWindow,
 } from '../../../gui/editor/windows/edit.ts';
@@ -16,6 +16,9 @@ import {
 import CellList, { numbering, type Hot } from './CellList';
 import { useNotebook } from './notebookStore';
 import { useNotebookRun } from './useNotebookRun';
+
+/** The largest a cell is drawn when a window is fitted to its pane: more than a tool's own, to be read at a glance. */
+const FIT_CELL = 84;
 
 /** The page of windows and, when one is chosen, that window beside its cells. */
 export default function Workspace({ doc }: { doc: Windows }) {
@@ -89,8 +92,10 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
   const edit = useNotebook((s) => s.edit);
   const select = useNotebook((s) => s.select);
   const [hot, setHot] = useState<Hot>(null);
+  // As large as the pane lets it be, or at the size a delivered tool draws it.
+  const [fit, setFit] = useState(true);
   const left = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(560);
+  const [room, setRoom] = useState({ width: 560, height: 640 });
   const going = useSession(roundGoing);
   const problems = windowProblems(doc).filter((problem) => problem.where === `window "${window.id}"`);
   const numbers = numbering(window);
@@ -99,7 +104,7 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
   useEffect(() => {
     const node = left.current;
     if (!node) return;
-    const measure = () => setWidth(node.clientWidth);
+    const measure = () => setRoom({ width: node.clientWidth, height: node.clientHeight });
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
@@ -107,9 +112,11 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
     return () => observer.disconnect();
   }, []);
 
-  // The cell the product would draw it at, as large as the pane lets the window be: it is the same window, only more of the screen.
-  const room = Math.max(120, width - 64);
-  const cell = Math.max(16, Math.min(GUI_MAX_CELL, Math.floor((room + GUI_GAP) / window.span - GUI_GAP)));
+  // The cell it is drawn at: the product's, or -- fitted -- as large as the pane lets the whole window be, across and down.
+  const rows = windowRows(window);
+  const across = Math.floor((Math.max(120, room.width - 64) + GUI_GAP) / window.span - GUI_GAP);
+  const down = Math.floor((Math.max(160, room.height - 150) - 28 + GUI_GAP) / rows - GUI_GAP);
+  const cell = Math.max(16, Math.min(fit ? FIT_CELL : GUI_MAX_CELL, across, fit ? down : Infinity));
 
   const jump = (key: string) => {
     const row = document.getElementById(`cell-${key}`);
@@ -128,10 +135,12 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
         frame: {
           onMouseEnter: () => setHot(key),
           onMouseLeave: () => setHot(null),
-          style: lit ? { outline: `2px solid ${ACCENT}`, outlineOffset: -2 } : undefined,
         },
         children: (
-          <button
+          <>
+            {/* An overlay, not a style on the block: what the frame carries replaces the block's own style, its place on the grid. */}
+            {lit && <span aria-hidden className="absolute inset-0 rounded-xl pointer-events-none" style={{ border: `2px solid ${ACCENT}`, zIndex: 2 }} />}
+            <button
             type="button"
             aria-label={isRun ? 'Starts when' : `Element ${number}`}
             title="Show its cell"
@@ -139,8 +148,9 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
             className="absolute flex items-center justify-center rounded-full text-[11px] font-semibold"
             style={{ top: 4, right: 4, minWidth: 18, height: 18, padding: '0 5px', zIndex: 3, background: lit ? ACCENT : ACCENT_FILL, color: lit ? ON_ACCENT : ACCENT_TEXT }}
           >
-            {isRun ? '▶' : number}
-          </button>
+              {isRun ? '▶' : number}
+            </button>
+          </>
         ),
       };
     },
@@ -178,7 +188,12 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
 
       <div className="flex-1 min-h-0 flex">
         <div ref={left} className="min-w-0 overflow-auto flex flex-col" style={{ flex: '1 1 0', background: SUNKEN }} data-pane="interface">
-          <Caption>The window, as it will be used</Caption>
+          <div className="px-8 pt-3 flex items-center gap-3">
+            <span className="text-[11px] uppercase tracking-wider" style={{ color: DIMMER }}>The window, as it will be used</span>
+            <span className="flex-1" />
+            <Button size="sm" variant={fit ? 'primary' : 'quiet'} aria-pressed={fit} onClick={() => setFit(true)} title="As large as this pane allows">Fit</Button>
+            <Button size="sm" variant={fit ? 'quiet' : 'primary'} aria-pressed={!fit} onClick={() => setFit(false)} title="The size a delivered tool draws it at">Real size</Button>
+          </div>
           <LiveWindows design={run.design} onEvent={run.fire} cell={cell} only={window.id} decorate={decorate} />
           {going && (
             <div className="px-8 pb-4">
@@ -199,10 +214,6 @@ function SplitView({ doc, window, run }: { doc: Windows; window: Window; run: Ru
       </div>
     </div>
   );
-}
-
-function Caption({ children }: { children: ReactNode }) {
-  return <div className="px-8 pt-3 text-[11px] uppercase tracking-wider" style={{ color: DIMMER }}>{children}</div>;
 }
 
 /** What a model is told about this window (room, outputs, the other windows): shown, since it is part of what the tool is. */

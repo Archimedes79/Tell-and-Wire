@@ -147,7 +147,7 @@ export function idOf(name: string): string {
 // row each; the elements between flow left to right in lines, wrapping as the
 // gui's blocks do, and a line is as tall as its tallest element.
 
-const IN_ROWS: Record<InKind, number> = { file: 1, folder: 1, text: 2, number: 1, choice: 1, from: 1 };
+const IN_ROWS: Record<InKind, number> = { file: 2, folder: 2, text: 2, number: 1, choice: 2, from: 1 };
 
 /** How many rows an output of *kind* is given by default, small, medium or large. */
 export const SIZES: Record<OutKind, Record<'S' | 'M' | 'L', number>> = {

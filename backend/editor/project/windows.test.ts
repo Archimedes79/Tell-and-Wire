@@ -132,10 +132,10 @@ describe('windows', () => {
     expect(graph.nodes.filter((node) => node.node_type === 'start').map((node) => node.id)).toEqual(['summarize', 'english', 'stories']);
     expect(graph.nodes.find((node) => node.id === 'stories_each_story')!.config).toEqual({ batch_mode: 'per_item', batch_concurrency: 3 });
     // A window is as tall as its elements say: heading, a text box of two rows and a choice, Run and sentence, three rows of output.
-    expect(windowRows(DOC.windows[0])).toBe(1 + (2 + 1) + 1 + 3);
+    expect(windowRows(DOC.windows[0])).toBe(1 + (2 + 2) + 1 + 3);
     // Two outputs that fit side by side share a line, and the line is as tall as the taller.
     const side = { ...DOC.windows[0], span: 16, outputs: [{ name: 'A', kind: 'text' as const, rows: 3, width: 0.625 }, { name: 'B', kind: 'text' as const, rows: 5, width: 0.375 }] };
-    expect(windowRows(side)).toBe(1 + (2 + 1) + 1 + 5);
+    expect(windowRows(side)).toBe(1 + (2 + 2) + 1 + 5);
     expect(windowsToGraph({ ...DOC, windows: [side] }).gui!.blocks.filter((block) => block.shows).map((block) => [block.w, block.h])).toEqual([[10, 5], [6, 5]]);
 
     // What a model wrote for a step survives a new sentence, but not a step that is not the same any more.
