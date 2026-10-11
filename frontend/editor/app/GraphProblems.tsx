@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 import type { Graph } from '../document/graph';
 import { parseGraph } from '../../../graph/graph.ts';
-import { problemsIn, type Problem } from '../../../gui/editor/check.ts';
+import type { Problem } from '../../../graph/wiring.ts';
+import { problemsIn } from '../../../gui/editor/check.ts';
 import { TEXT, WARNING_FILL, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** What `check` says of *graph*: its problems -- or, when it cannot be read as one, that. */
 export function problemsOf(graph: Graph): Problem[] {
   try {
     return problemsIn(parseGraph(graph));
   } catch (error) {
-    return [{ where: 'graph', problem: error instanceof Error ? error.message : String(error), fix: 'Fix the graph so it can be read.' }];
+    return [{ where: 'graph', problem: messageOf(error), fix: 'Fix the graph so it can be read.' }];
   }
 }
 

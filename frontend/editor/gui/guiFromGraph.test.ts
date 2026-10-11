@@ -54,10 +54,10 @@ describe('a gui drawn from the graph', () => {
       ['api', [['topic', 'text_io', ['api'], 'api']]],
     ]);
 
-    // Sized so that a first gui needs no resizing: inputs two to a row with the button beside the last, the one output across the row, in a raised box.
+    // Sized so that a first gui needs no resizing: inputs two to a row with the button beside the last, the one output across the row, as tall as a text box added by hand, in a raised box.
     const [inputs, outputs] = planned.now.map((made) => made.blocks);
     expect(inputs.map((block) => [block.id, block.w, block.h])).toEqual([['file', 8, 1], ['length', 8, 2], ['source', 12, 1], ['button', 4, 1]]);
-    expect(outputs.map((block) => [block.kind, block.w, block.tone])).toEqual([['divider', 16, 'plain'], ['text_io', 16, 'raised']]);
+    expect(outputs.map((block) => [block.kind, block.w, block.h, block.tone])).toEqual([['divider', 16, 1, 'plain'], ['text_io', 16, 4, 'raised']]);
 
     // What the gui already meets is left as it is.
     const drawn = planned.now.flatMap((made) => made.blocks);

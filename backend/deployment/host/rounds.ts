@@ -18,7 +18,7 @@
 import type { ExecutionResult } from '../../../graph/graph.ts';
 import type { CoreEvent } from '../runtime/protocol.ts';
 import type { RoundSnapshot, RoundStart } from './api.ts';
-import { message } from './http.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** How long a finished round can still be looked at. A long session must not accumulate them. */
 const KEEP_MS = 300_000;
@@ -155,7 +155,7 @@ export class Rounds {
     // the ones ahead of it, which a round stopped while it waited did not end.
     this.ahead = before.then(() => outcome).then(() => {}, () => {});
     round.ended = outcome
-      .then((result) => { round.result = result; }, (error: unknown) => { round.error = message(error); })
+      .then((result) => { round.result = result; }, (error: unknown) => { round.error = messageOf(error); })
       .finally(() => {
         round.finishedAt = Date.now();
         signal?.removeEventListener('abort', halt);

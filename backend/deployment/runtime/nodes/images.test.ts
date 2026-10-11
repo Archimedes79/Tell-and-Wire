@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { imageDataUrl } from './images.ts';
-import { nodeFiles } from '../../backend/deployment/runtime/services.ts';
-import { parseWidget, widgetElement } from '../../gui/gui.ts';
-import type { FileService, Runtime } from './Runtime.ts';
+import { imageDataUrl } from '../../../../graph/nodes/images.ts';
+import { nodeFiles } from '../services.ts';
+import { parseWidget, widgetElement } from '../../../../gui/gui.ts';
+import type { FileService, Runtime } from '../../../../graph/nodes/Runtime.ts';
 
 /**
  * Pictures, on the way to a browser or to a model.

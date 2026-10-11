@@ -206,7 +206,7 @@ describe('save_graph', () => {
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('by hand');
 
     // Read again, it is saved over.
-    await tools.call('describe_graph', { path: 'proj/graph-flow.json' });
+    await tools.call('graph_interface', { path: 'proj/graph-flow.json' });
     expect((await tools.call('save_graph', { path: 'proj/graph-flow.json', graph: document('function run() { return { out: 3 }; }') })).isError).toBeUndefined();
     expect(await readFile(path('nodes', 'work', 'code.js'), 'utf8')).toContain('out: 3');
   });

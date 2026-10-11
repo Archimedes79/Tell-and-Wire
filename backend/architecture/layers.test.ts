@@ -8,7 +8,8 @@
  * 1. Nothing outside an `editor` folder imports from one. (`backend/cli` may `import()` it: it
  *    composes, and a package without the editor is told so when a command asks for it.)
  * 2. `graph/` and `gui/` are neutral: they run in the browser and in Node, so they import no `node:*`,
- *    nothing of `backend/` or `frontend/`, and `graph/` nothing of `gui/`.
+ *    nothing of `backend/` or `frontend/`, and `graph/` nothing of `gui/`. Their tests too: a test that
+ *    needs a run belongs to `backend/`, which runs.
  * 3. In `backend/`, a module imports only from below: project, then runtime and gui, then host, then
  *    cli -- the editor's modules above the deployment's. Two modules of one rank do not import each
  *    other. The wire's files (`host/api.ts`) are types and tables for either end and rank with nothing.
@@ -39,17 +40,27 @@ const IMPORT = /(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?[^'";]*?\s*from\s*['"
 
 const IMPORTS: Import[] = [];
 const BUILTINS: { from: string; to: string }[] = [];
-for (const from of SOURCES) {
-  const text = readFileSync(join(ROOT, from), 'utf8');
-  for (const match of text.matchAll(IMPORT)) {
+/** The imports of one file: the ones into this repo, and the ones of Node. */
+function importsOf(from: string): { found: Import[]; builtins: { from: string; to: string }[] } {
+  const found: Import[] = [];
+  const builtins: { from: string; to: string }[] = [];
+  for (const match of readFileSync(join(ROOT, from), 'utf8').matchAll(IMPORT)) {
     const spec = match[1] ?? match[2] ?? match[3];
-    if (spec.startsWith('node:')) { BUILTINS.push({ from, to: spec }); continue; }
+    if (spec.startsWith('node:')) { builtins.push({ from, to: spec }); continue; }
     if (!spec.startsWith('.')) continue;
     const base = rel(resolve(ROOT, dirname(from), spec));
     const to = [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`].find((candidate) => KNOWN.has(candidate));
-    if (to) IMPORTS.push({ from, to, dynamic: match[2] !== undefined });
+    if (to) found.push({ from, to, dynamic: match[2] !== undefined });
   }
+  return { found, builtins };
 }
+for (const from of SOURCES) {
+  const { found, builtins } = importsOf(from);
+  IMPORTS.push(...found);
+  BUILTINS.push(...builtins);
+}
+/** The tests of graph/ and gui/ are not carried, but they sit in the neutral folders and import like them. */
+const NEUTRAL_TESTS = ['graph', 'gui'].flatMap((dir) => walk(join(ROOT, dir))).map(rel).filter((path) => /\.test\.tsx?$/.test(path));
 
 const inEditor = (path: string): boolean => path.split('/').includes('editor');
 const show = (found: Import[]): string[] => found.map((one) => `${one.from} -> ${one.to}`).sort();
@@ -81,7 +92,8 @@ describe('the folders', () => {
   it('keep graph/ and gui/ neutral: no Node, no backend, no frontend, and graph/ knows no gui', () => {
     const neutral = (path: string): boolean => path.startsWith('graph/') || path.startsWith('gui/');
     expect(BUILTINS.filter((one) => neutral(one.from)).map((one) => `${one.from} -> ${one.to}`)).toEqual([]);
-    const against = IMPORTS.filter((one) => neutral(one.from) && (/^(backend|frontend)\//.test(one.to) || (one.from.startsWith('graph/') && one.to.startsWith('gui/'))));
+    const imports = [...IMPORTS, ...NEUTRAL_TESTS.flatMap((path) => importsOf(path).found)];
+    const against = imports.filter((one) => neutral(one.from) && (/^(backend|frontend)\//.test(one.to) || (one.from.startsWith('graph/') && one.to.startsWith('gui/'))));
     expect(show(against)).toEqual([]);
   });
 

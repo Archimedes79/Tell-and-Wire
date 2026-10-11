@@ -17,6 +17,7 @@ import type { Runtime } from '../graph/nodes/Runtime.ts';
 import type { Kinds } from '../graph/nodes/NodeDefinition.ts';
 import type { RuntimeRequirement, Widget, WidgetConnections, WidgetDefinition, WidgetPresentation } from './widgets/WidgetDefinition.ts';
 import { WIDGETS } from './widgets/roster.ts';
+import { messageOf } from '../graph/errors.ts';
 
 const BY_KIND = new Map<string, WidgetDefinition<unknown>>(WIDGETS.map((element) => [element.widgetKind, element as WidgetDefinition<unknown>]));
 
@@ -99,7 +100,7 @@ export async function guiSends(graph: Graph, name: string, runtime: Runtime): Pr
     try {
       values[widget.id] = await widgetElement(widget.kind)!.data(widget, runtime);
     } catch (error) {
-      throw new Error(`"${widget.label || widget.id}" could not say what it holds: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`"${widget.label || widget.id}" could not say what it holds: ${messageOf(error)}`);
     }
   }
   return values;

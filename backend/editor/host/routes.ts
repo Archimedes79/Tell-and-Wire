@@ -24,11 +24,11 @@ import { expandHome } from '../../deployment/host/browse.ts';
 import { zipMode } from '../project/deploy/launchers.ts';
 import { nodeRuntime } from '../../deployment/runtime/services.ts';
 import { aiSetting, settingsPath } from '../../deployment/runtime/ai/settings.ts';
-import { Download, Refusal, message, type HandlersOf } from '../../deployment/host/http.ts';
+import { Download, Refusal, type HandlersOf } from '../../deployment/host/http.ts';
 import { EDITOR_API, type AICall, type GraphFile } from './api.ts';
 import { holderOf, type SessionHolder } from '../../deployment/host/session.ts';
 import * as files from '../project/files.ts';
-import { NotAGraph, NotFound } from '../../../graph/errors.ts';
+import { NotAGraph, NotFound, messageOf } from '../../../graph/errors.ts';
 import * as settings from '../runtime/settings.ts';
 import * as servers from '../runtime/mcpServers.ts';
 import * as project from '../../deployment/project/folder.ts';
@@ -70,7 +70,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
       if (error instanceof gen.GenerationRefused) throw new Refusal(400, error.message);
       // The failing generation is the one whose transcript is worth reading.
       const failed = error instanceof gen.GenerationFailed ? error.calls : calls;
-      throw new Refusal(500, message(error), { calls: failed });
+      throw new Refusal(500, messageOf(error), { calls: failed });
     } finally {
       if (id) generating.delete(id);
     }
@@ -89,7 +89,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
       if (error instanceof NotFound) throw new Refusal(404, error.message);
       if (error instanceof NotAGraph) throw new Refusal(400, error.message);
       if (error instanceof project.FileChanged) throw new Refusal(409, error.message);
-      throw new Refusal(400, `Could not ${action} graph file: ${message(error)}`);
+      throw new Refusal(400, `Could not ${action} graph file: ${messageOf(error)}`);
     }
   }
 
@@ -154,7 +154,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
         return { changes: await write.changesOnDisk(folder) };
       } catch (error) {
         // Half-written by another editor, most likely: asked again in a moment.
-        throw new Refusal(409, message(error));
+        throw new Refusal(409, messageOf(error));
       }
     },
 
@@ -194,7 +194,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
         const name = (graph.metadata.name || 'graph').replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/^_+|_+$/g, '') || 'graph';
         return new Download(zip(entries), `${name}_bundle.zip`, 'application/zip');
       } catch (error) {
-        throw error instanceof CannotBundle ? new Refusal(422, error.message) : new Refusal(500, `The server could not write the bundle: ${message(error)}`);
+        throw error instanceof CannotBundle ? new Refusal(422, error.message) : new Refusal(500, `The server could not write the bundle: ${messageOf(error)}`);
       } finally {
         await rm(work, { recursive: true, force: true });
       }
@@ -224,7 +224,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
       try {
         return await settings.save(asked);
       } catch (error) {
-        throw new Refusal(500, `Could not write ${settingsPath()}: ${message(error)}`);
+        throw new Refusal(500, `Could not write ${settingsPath()}: ${messageOf(error)}`);
       }
     },
 
@@ -242,7 +242,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
         return await files.openExternal(folder, file);
       } catch (error) {
         if (error instanceof Refusal) throw error;
-        throw new Refusal(error instanceof NotFound ? 404 : 400, message(error));
+        throw new Refusal(error instanceof NotFound ? 404 : 400, messageOf(error));
       }
     },
   };

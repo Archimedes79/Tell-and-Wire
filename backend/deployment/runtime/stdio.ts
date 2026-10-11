@@ -13,6 +13,7 @@ import type { Readable, Writable } from 'node:stream';
 import type { Held } from './latch.ts';
 import { localCore, type LocalCoreOptions } from './localCore.ts';
 import { OPERATIONS, PROTOCOL, type CoreAnswer, type CoreEvent, type CoreHello, type CoreRequest, type GraphCore } from './protocol.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /**
  * Answer requests from *input* on *output* until *input* ends. Requests are
@@ -63,7 +64,7 @@ export function serveCore(core: GraphCore, input: Readable, output: Writable): P
     }
     answer(request).then(
       (reply) => send({ id: request.id, reply: reply ?? null }),
-      (error: unknown) => send({ id: request.id, error: error instanceof Error ? error.message : String(error) }),
+      (error: unknown) => send({ id: request.id, error: messageOf(error) }),
     );
   });
   return new Promise((ended) => {

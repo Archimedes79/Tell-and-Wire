@@ -13,7 +13,7 @@ import {
 import { endCoalescing, historyActions } from './history';
 import { flushPanels } from './flushPanels';
 import { subgraphActions } from './subgraphs';
-import { diskActions } from './diskChanges';
+import { diskActions } from './diskActions';
 import { editActions } from './nodeEdits';
 import { goingIn, handoffActions, isHanding, serverHoldsAnother } from './handoff';
 import type { TextChange } from '../../../../backend/editor/host/api.ts';

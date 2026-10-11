@@ -17,6 +17,7 @@ import { isWriting, writingSaid } from '../writing/useGenerate';
 import { missingExamples, sweep, type SweepUnit } from '../writing/graphSweep';
 import { nodePanel } from './nodePanel';
 import { ANOTHER_GRAPH, writeFile } from './writeFile';
+import { messageOf } from '../../../../graph/errors.ts';
 
 interface SweepState {
   run: () => Promise<void>;
@@ -103,7 +104,7 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
     const rest = held.length ? ` ${held.length} left alone: ${held.join(', ')}` : '';
     say(written ? `✅ ${written} written.${rest}` : `Nothing to generate.${rest}`);
   } catch (error) {
-    say(`⚠️ ${error instanceof Error ? error.message : String(error)}`);
+    say(`⚠️ ${messageOf(error)}`);
   }
 }
 

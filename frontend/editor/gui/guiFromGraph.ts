@@ -132,8 +132,8 @@ function blocksForStart(start: GraphNode, nodes: GraphNode[], edges: Wire[], tak
 
 /**
  * What each end point shows gets a raised box -- two to a row, an odd one last
- * across the whole row -- under a rule that sets it off from the inputs, where
- * there are some.
+ * across the whole row, as tall as a text box the person adds is -- under a rule
+ * that sets it off from the inputs, where there are some.
  */
 function outputsLaidOut(planned: Planned, gui: GuiWidget[]): void {
   const shown = planned.now.filter((made) => made.blocks.some((block) => block.shows));
@@ -141,7 +141,7 @@ function outputsLaidOut(planned: Planned, gui: GuiWidget[]): void {
   const inputs = gui.length > 0 || planned.now.some((made) => !made.blocks.some((block) => block.shows));
   shown.forEach((made, index) => {
     const alone = shown.length % 2 === 1 && index === shown.length - 1;
-    const laid = made.blocks.map((block) => ({ ...block, w: alone ? GUI_GRID_COLUMNS : GUI_GRID_COLUMNS / 2, h: 6, tone: 'raised' as const }));
+    const laid = made.blocks.map((block) => ({ ...block, w: alone ? GUI_GRID_COLUMNS : GUI_GRID_COLUMNS / 2, tone: 'raised' as const }));
     const rule = index === 0 && inputs ? [newBlock('divider', undefined, taken)] : [];
     taken.push(...rule);
     made.blocks = [...rule, ...laid];

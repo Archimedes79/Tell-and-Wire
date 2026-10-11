@@ -5,6 +5,7 @@ import { names, type Problem } from '../../../wiring.ts';
 import { RUN_PORT, START_PORT, parseInterval } from '../../../triggers.ts';
 import { ownPathProblem } from '../../../nodes/ownPath.ts';
 import type { StartNodeDefinition } from '../../../nodes/start/StartNodeDefinition.ts';
+import { messageOf } from '../../../errors.ts';
 
 export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
   override graphAuthorNote(): string {
@@ -47,7 +48,7 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
       try {
         parseInterval(every);
       } catch (error) {
-        found.push({ where, problem: error instanceof Error ? error.message : String(error), fix: 'Write the interval as 45, 30s, 5m, 2h or 1d.' });
+        found.push({ where, problem: messageOf(error), fix: 'Write the interval as 45, 30s, 5m, 2h or 1d.' });
         return found;
       }
     }

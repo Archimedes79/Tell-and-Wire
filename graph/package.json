@@ -3,7 +3,7 @@
   "version": "0.7.2",
   "private": true,
   "type": "module",
-  "description": "The graph's own code, in JavaScript: its format, how it runs, its nodes and the model client. Runs under Node with no build and no dependencies.",
+  "description": "What a graph is, for the browser and for Node alike: its format, its node kinds and their rules, its files. No build, no dependencies.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24"

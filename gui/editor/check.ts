@@ -21,8 +21,6 @@ import { portMisfit } from '../../graph/schema.ts';
 import { definitionExample } from '../../graph/files/definition.ts';
 import { unsavableIds } from '../../graph/files/flow.ts';
 
-export { type Problem } from '../../graph/wiring.ts';
-
 /**
  * Everything that would make *graph* parse, open, and then not work.
  *

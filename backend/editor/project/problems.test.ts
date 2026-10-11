@@ -3,11 +3,11 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { parseGraph, type Graph } from '../../graph/graph.ts';
-import { problemsIn } from './check.ts';
-import { checkPath } from '../../backend/editor/project/folderCheck.ts';
-import { forgetSeen } from '../../backend/deployment/project/folder.ts';
-import { writeProject } from '../../backend/editor/project/write.ts';
+import { parseGraph, type Graph } from '../../../graph/graph.ts';
+import { problemsIn } from '../../../gui/editor/check.ts';
+import { checkPath } from './folderCheck.ts';
+import { forgetSeen } from '../../deployment/project/folder.ts';
+import { writeProject } from './write.ts';
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 

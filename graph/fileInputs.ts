@@ -20,6 +20,7 @@ import type { FileService } from './nodes/Runtime.ts';
 import type { Kinds } from './nodes/NodeDefinition.ts';
 import { fileContent } from './nodes/fileContent.ts';
 import { atMost } from './batching.ts';
+import { messageOf } from './errors.ts';
 
 /**
  * The input ports of *node* that are read: the ones typed `file_path`, on a
@@ -72,7 +73,7 @@ export async function readPorts(
           texts[index] = await read(value[index]);
         } catch (error) {
           if (!items) throw error;
-          texts[index] = new Unread(error instanceof Error ? error.message : String(error));
+          texts[index] = new Unread(messageOf(error));
         }
       });
       resolved[key] = texts;

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { readPorts } from './fileInputs.ts';
-import { executeNode } from '../backend/deployment/runtime/executor.ts';
-import { registry } from './nodes/registry.ts';
-import type { FileService, Runtime } from './nodes/Runtime.ts';
-import type { DataType, Graph, GraphNode, Port } from './graph.ts';
+import { readPorts } from '../../../graph/fileInputs.ts';
+import { executeNode } from './executor.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
+import type { FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { DataType, Graph, GraphNode, Port } from '../../../graph/graph.ts';
 
 /**
  * Which inputs are paths to be read, and who gets to say so: the port itself,

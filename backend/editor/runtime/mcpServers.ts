@@ -22,9 +22,10 @@ import { delimiter, join, resolve } from 'node:path';
 import { configuredMcpServers, machineSettingsPath } from '../../deployment/runtime/ai/settings.ts';
 import { installFolder } from '../../deployment/project/layout.ts';
 import { mcpToolService, type McpServerConfig } from '../../deployment/runtime/ai/mcp.ts';
-import { Refusal, message } from '../../deployment/host/http.ts';
+import { Refusal } from '../../deployment/host/http.ts';
 import type { McpSaved, McpServerView, McpServersView } from '../host/api.ts';
 import { edit } from './settings.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 type Env = Record<string, string | undefined>;
 
@@ -115,7 +116,7 @@ async function found(root: string): Promise<Found[]> {
     try {
       servers.push({ name, folder, config: parseConfig(source), page, problem: '' });
     } catch (error) {
-      servers.push({ name, folder, config: null, page, problem: `mcp/${name}/config.json: ${message(error)}.` });
+      servers.push({ name, folder, config: null, page, problem: `mcp/${name}/config.json: ${messageOf(error)}.` });
     }
   }
   return servers;
@@ -234,7 +235,7 @@ async function started(name: string, entry: McpServerConfig): Promise<{ tools: s
       await session.close();
     }
   } catch (error) {
-    return { tools: [], problem: message(error) };
+    return { tools: [], problem: messageOf(error) };
   }
 }
 
@@ -250,7 +251,7 @@ async function install(one: Found): Promise<void> {
     }
     // npm empties node_modules before it installs: what is left after a failure is half a server.
     await rm(join(one.folder, 'node_modules'), { recursive: true, force: true });
-    throw new Refusal(422, `npm could not install its packages: ${output.slice(-600) || message(error)}`);
+    throw new Refusal(422, `npm could not install its packages: ${output.slice(-600) || messageOf(error)}`);
   }
 }
 

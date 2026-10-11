@@ -3,9 +3,9 @@
 // Knows nothing of what the tools do: it is handed them (`tools.ts`) and speaks the
 // protocol for them.
 
-import { message } from '../../../deployment/host/http.ts';
 import { INSTRUCTIONS, MAX_GRAPH_BYTES } from './spec.ts';
 import type { GraphTools, ToolResult } from './tools.ts';
+import { messageOf } from '../../../../graph/errors.ts';
 
 /** One protocol line: the largest graph, plus room for JSON's own escaping around it. */
 const MAX_LINE_CHARS = 2 * MAX_GRAPH_BYTES;
@@ -110,7 +110,7 @@ export function serveStdio(
         result = await tools.call(name, (given ?? {}) as Record<string, unknown>);
       } catch (error) {
         // `call` promises not to throw. This is for the day a change breaks that promise.
-        result = { text: `${name} failed: ${message(error)}`, isError: true };
+        result = { text: `${name} failed: ${messageOf(error)}`, isError: true };
       }
       return send({ id, result: { content: [{ type: 'text', text: result.text }], ...(result.isError ? { isError: true } : {}) } });
     }
@@ -119,7 +119,7 @@ export function serveStdio(
 
   const start = (line: string): void => {
     const work: Promise<void> = handle(line)
-      .catch((error) => { log?.write(`tell-and-wire mcp: ${message(error)}\n`); })
+      .catch((error) => { log?.write(`tell-and-wire mcp: ${messageOf(error)}\n`); })
       .finally(() => { running.delete(work); });
     running.add(work);
   };

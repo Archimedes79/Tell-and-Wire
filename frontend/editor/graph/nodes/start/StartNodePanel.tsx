@@ -7,6 +7,7 @@ import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialog
 import FolderListing from '../../../app/fields/FolderListing';
 import { listAsRun } from '../../writing/readAsRun';
 import type { NodePanelProps } from '../NodeGuiBuilder';
+import { messageOf } from '../../../../../graph/errors.ts';
 
 /** What a start point that starts itself can send, in the words the panel offers it. */
 const SENDS = [
@@ -149,7 +150,7 @@ export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
   try {
     if (every.trim()) parseInterval(every);
   } catch (error) {
-    problem = error instanceof Error ? error.message : String(error);
+    problem = messageOf(error);
   }
 
   return (

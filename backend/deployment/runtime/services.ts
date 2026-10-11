@@ -15,6 +15,7 @@ import { aiService, withoutKeys } from './ai/providers.ts';
 import { mcpToolService } from './ai/mcp.ts';
 import { inProject, inside, reachable } from './confine.ts';
 import { aiSetting, configuredMcpServers, configuredSettings, candidatePaths } from './ai/settings.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 export const nodeFiles: FileService = {
   resolve: (path: string) => resolve(path),
@@ -259,7 +260,7 @@ function converse(
         if (!call) throw new Error(`This body may not ask for "${asked.name}".`);
         say(JSON.stringify({ id: asked.id, result: (await call(asked.args)) ?? null }));
       } catch (error) {
-        say(JSON.stringify({ id: asked.id, error: error instanceof Error ? error.message : String(error) }));
+        say(JSON.stringify({ id: asked.id, error: messageOf(error) }));
       }
     };
 

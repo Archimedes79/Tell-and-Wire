@@ -27,11 +27,11 @@ import { existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { aiSetting, configuredMcpServers, configuredSettings } from '../../deployment/runtime/ai/settings.ts';
 import { SECRET_NAME } from '../../deployment/runtime/ai/providers.ts';
-import { message } from '../../deployment/host/http.ts';
 import { nodeRuntime } from '../../deployment/runtime/services.ts';
 import { chosenCore } from '../../deployment/runtime/stdio.ts';
 import { createGraphTools } from './mcp/tools.ts';
 import { serveStdio } from './mcp/transport.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** Every string on this machine that a result must not contain (`scrubber` skips the short ones). Read fresh each time: keys change while a server runs. */
 function machineSecrets(): string[] {
@@ -72,8 +72,8 @@ export async function runMcpServer(folder?: string): Promise<void> {
 
   // A server a client started is not watched by anyone. One rejected promise
   // in a run must cost that run, not every tool call after it.
-  process.on('uncaughtException', (error) => toStderr('tell-and-wire mcp:', message(error)));
-  process.on('unhandledRejection', (error) => toStderr('tell-and-wire mcp:', message(error)));
+  process.on('uncaughtException', (error) => toStderr('tell-and-wire mcp:', messageOf(error)));
+  process.on('unhandledRejection', (error) => toStderr('tell-and-wire mcp:', messageOf(error)));
 
   const tools = createGraphTools({
     root,

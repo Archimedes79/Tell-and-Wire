@@ -38,6 +38,7 @@ import { mismatches } from '../../../graph/schema.ts';
 import { ERROR_PORT, NESTING_LIMIT, fatalProblems, fieldOf, unrunnable } from '../../../graph/wiring.ts';
 import { runners as realRunners } from './nodes/registry.ts';
 import type { NodeRunner, Runners } from './nodes/NodeRunner.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /**
  * Gather what the wires deliver to *nodeId*.
@@ -627,7 +628,7 @@ function ranTo(
  * is how a broken run comes to look like a clean one.
  */
 function failedWith(element: NodeDefinition, node: GraphNode, inputs: Record<string, unknown>, error: unknown): NodeResult {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = messageOf(error);
   if (element.catchesErrors(node)) {
     return { node_id: node.id, status: 'partial', inputs, outputs: failureOutputs(node, message), error: message };
   }
@@ -698,7 +699,7 @@ async function readInputs(
  * for one.
  */
 function unreadable(error: unknown): Error {
-  return new Error(`Reading its input files: ${error instanceof Error ? error.message : String(error)}`);
+  return new Error(`Reading its input files: ${messageOf(error)}`);
 }
 
 /** The run's own sentence about what went wrong: which nodes, by name, and why -- and how many of *failed* could not run because of them. */
@@ -780,7 +781,7 @@ async function runNode(
       produced[index] = Object.fromEntries(node.outputs
         .filter((p) => !(catches && p.id === ERROR_PORT))
         .map((p) => [p.id, null]));
-      const message = error instanceof Error ? error.message : String(error);
+      const message = messageOf(error);
       failed.push({ index, message });
       runtime.report?.({ type: 'activity', node_id: node.id, message: `item ${index + 1}: ${message}` });
     }

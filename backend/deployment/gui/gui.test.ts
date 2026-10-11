@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { parseGraph, type Graph } from '../graph/graph.ts';
-import { guiBlock, guiSends } from './gui.ts';
-import { quietRuntime } from '../backend/deployment/runtime/test/fakes.ts';
+import { parseGraph, type Graph } from '../../../graph/graph.ts';
+import { guiBlock, guiSends } from '../../../gui/gui.ts';
+import { quietRuntime } from '../runtime/test/fakes.ts';
 
 /**
  * The gui a graph is used through: blocks that connect themselves to the

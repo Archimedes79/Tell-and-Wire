@@ -15,9 +15,10 @@ import { dirname } from 'node:path';
 import {
   aiSetting, LOCAL_PROVIDERS, parseSettingsFile, probeLocal, readSettingsFile, settingsPath, type SettingsFile,
 } from '../../deployment/runtime/ai/settings.ts';
-import { Refusal, message } from '../../deployment/host/http.ts';
+import { Refusal } from '../../deployment/host/http.ts';
 import { CREDENTIALS, DEFAULT_SETTINGS, ENDPOINT_ENV } from '../../deployment/runtime/ai/providers.ts';
 import type { ProviderStatus, SettingsPatch, SettingsStatus, Target } from '../host/api.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 type Env = Record<string, string | undefined>;
 
@@ -66,7 +67,7 @@ export async function edit(change: (file: SettingsFile) => void, cwd = process.c
   try {
     file = parseSettingsFile(path);
   } catch (error) {
-    throw new Refusal(409, `${path} cannot be read (${message(error)}). Fix it by hand first: saving over it now would lose the keys and tool servers in it.`);
+    throw new Refusal(409, `${path} cannot be read (${messageOf(error)}). Fix it by hand first: saving over it now would lose the keys and tool servers in it.`);
   }
   change(file);
   await mkdir(dirname(path), { recursive: true });

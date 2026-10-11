@@ -22,14 +22,11 @@ import { names } from '../../../graph/wiring.ts';
 import { confineEverything } from '../runtime/confine.ts';
 import { aiSetting, settingsPath } from '../runtime/ai/settings.ts';
 import { API, GUI_API, matchRoute, type RequestOf, type Routes } from './api.ts';
-import {
-  Download, EventStream, Refusal, foreignRequest, hostnameOf, message, namesFor, readJson, sendDownload, sendEvents, sendFailure, sendJson, servePage,
-  type Exchange, type HandlersOf,
-} from './http.ts';
+import { Download, EventStream, Refusal, foreignRequest, hostnameOf, namesFor, readJson, sendDownload, sendEvents, sendFailure, sendJson, servePage, type Exchange, type HandlersOf } from './http.ts';
 import { NotOffered, eventOf, outputsOf } from '../../../graph/interface.ts';
 import { browse, startFolder } from './browse.ts';
 import { extensionFilter } from '../../../graph/nodes/folderListing.ts';
-import { NotFound } from '../../../graph/errors.ts';
+import { NotFound, messageOf } from '../../../graph/errors.ts';
 import { NO_GUI, Session, holderOf, type SessionHolder } from './session.ts';
 import type { GuiHooks, GuiPart } from '../gui/hooks.ts';
 import { Lifecycle } from './lifecycle.ts';
@@ -195,7 +192,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
   self.port = (server.address() as AddressInfo).port;
   // Only now: a server that could not listen (the next port is tried) must not have run what starts with a tool.
   if (held.session && !options.editor) {
-    held.session.startApplication().catch((error: unknown) => { process.stderr.write(`The tool's start failed: ${message(error)}\n`); });
+    held.session.startApplication().catch((error: unknown) => { process.stderr.write(`The tool's start failed: ${messageOf(error)}\n`); });
   }
   // An IPv6 address in brackets, as a browser takes it -- and every address,
   // which no browser can open, as this machine's own.
@@ -280,7 +277,7 @@ function toolRoutes(
       const ended = await outcome.then((result) => result, (error: unknown) => {
         // Stopped while it waited: a round that did not run, not a graph that cannot.
         if (session.snapshot(id)?.cancelled) return null;
-        throw new Refusal(422, `The graph could not run: ${message(error)}`);
+        throw new Refusal(422, `The graph could not run: ${messageOf(error)}`);
       });
       return {
         session: session.id,
@@ -323,7 +320,7 @@ function toolRoutes(
         // started; for the editor, where it was started (`toolRoot`).
         return await browse(asked.path ?? '', extensionFilter(asked.extensions ?? ''), toolRoot);
       } catch (error) {
-        throw new Refusal(error instanceof NotFound ? 404 : 400, message(error));
+        throw new Refusal(error instanceof NotFound ? 404 : 400, messageOf(error));
       }
     },
   };

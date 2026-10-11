@@ -31,13 +31,13 @@ import { memoryState, sendFromOutside } from '../../graph/interface.ts';
 import { startFromGui } from '../../gui/gui.ts';
 import { guiPart } from '../deployment/gui/hooks.ts';
 import { WEB_DIR, builtGui, installFolder } from '../deployment/project/layout.ts';
-import { message } from '../deployment/host/http.ts';
 import { isLoopbackHost, portTaken, serve } from '../deployment/host/serve.ts';
 import { untilStopped } from '../deployment/host/lifecycle.ts';
 import { dirname, join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { after, graphTriggers, parseInterval, type Trigger } from '../../graph/triggers.ts';
+import { messageOf } from '../../graph/errors.ts';
 
 interface CliOptions {
   graphPath: string;
@@ -197,7 +197,7 @@ async function runEvery(graph: Graph, trigger: Trigger | null, options: CliOptio
       await new Promise<void>((wake) => { after(seconds * 1000, wake); });
     }
     code = await runOnce(graph, trigger, options, core).catch((error: unknown) => {
-      process.stderr.write(`\nThis run failed: ${message(error)}\n`);
+      process.stderr.write(`\nThis run failed: ${messageOf(error)}\n`);
       return 1;
     });
   }

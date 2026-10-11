@@ -2,6 +2,7 @@ import { type Runtime } from '../../../graph/nodes/Runtime.ts';
 import { type Widget } from '../WidgetDefinition.ts';
 import { imageDataUrl, isInlineUrl } from '../../../graph/nodes/images.ts';
 import { DisplayWidgetDefinition } from '../DisplayWidgetDefinition.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** An image, by path, URL or data URL. */
 export class ImageViewWidgetDefinition extends DisplayWidgetDefinition {
@@ -28,7 +29,7 @@ export class ImageViewWidgetDefinition extends DisplayWidgetDefinition {
     try {
       return await imageDataUrl(value, runtime.files);
     } catch (error) {
-      return `⚠ ${error instanceof Error ? error.message : String(error)}`;
+      return `⚠ ${messageOf(error)}`;
     }
   }
 }

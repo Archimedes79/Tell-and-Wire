@@ -22,6 +22,7 @@ import { topologicalLevels } from '../../../../graph/order.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import type { GraphEdge, GraphNode, GuiWidget } from '../../document/graph';
 import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../document/elements/registry';
+import { messageOf } from '../../../../graph/errors.ts';
 
 /** What happened to one node. */
 type SweepStatus =
@@ -116,7 +117,7 @@ export async function* sweep(
         nodeId: node.id,
         label,
         status: 'failed',
-        message: error instanceof Error ? error.message : String(error),
+        message: messageOf(error),
       };
       return;
     }

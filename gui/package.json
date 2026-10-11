@@ -9,12 +9,10 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "typescript": "^5.2.2",
-    "vitest": "^1.6.1"
+    "typescript": "^5.2.2"
   }
 }

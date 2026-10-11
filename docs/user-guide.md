@@ -332,8 +332,8 @@ An assistant such as Claude Code can design, check, save and run graphs in one f
 claude mcp add tell-and-wire -- node <repo>/backend/cli/main.ts --mcp --mcp-root <tools folder>
 ```
 
-Its tools are `authoring_guide`, `generate_graph`, `validate_graph`, `save_graph`,
-`run_graph`, `describe_graph`, `run_node`, `test_graph` and `list_graphs`. Every path stays
+Its tools are `graph_guide`, `generate_graph`, `validate_graph`, `save_graph`,
+`run_graph`, `graph_interface`, `run_node`, `test_graph` and `list_graphs`. Every path stays
 inside `--mcp-root`; it never opens `ai-settings.json` and filters keys out of what it
 returns. A graph it runs runs for real, so point the root at a folder of tools, not at your
 home folder.

@@ -45,7 +45,6 @@ import { FLOW_FILE, graphFrom } from '../../../graph/files/flow.ts';
 import { folderName } from '../../../graph/files/names.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 
-export { FLOW_FILE, NODES_FILE };
 export const LAYOUT_FILE = 'graph-layout.json';
 export const GUI_FILE = 'gui.json';
 export const NODES_DIR = 'nodes';

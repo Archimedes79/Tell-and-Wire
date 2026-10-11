@@ -33,7 +33,6 @@
 import type { AiRequest, AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
 import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { designs } from '../../../graph/editor/nodes/registry.ts';
-import { message } from '../../deployment/host/http.ts';
 import { PLAIN_ASK } from '../../deployment/runtime/nodes/ai/ask.ts';
 import { runBody } from '../../deployment/runtime/nodes/body.ts';
 import type { Generation } from '../../../graph/editor/generation.ts';
@@ -50,6 +49,7 @@ import {
   OUTGROWN, SYSTEMS, bodyChange, codeChange, definitionChange, frame, mendPrompt, repairPrompt, type OutputAsked, type Shape,
 } from './generatePrompts.ts';
 import type { AICall, GenerateRequest, GenerateResponse, ProbeReport, Target } from '../host/api.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 export class GenerationRefused extends Error {}
 
@@ -89,7 +89,7 @@ export function recording(ai: AiService, calls: AICall[]): AiService {
         entry.reply_chars = reply.length;
         return reply;
       } catch (error) {
-        entry.error = message(error);
+        entry.error = messageOf(error);
         throw error;
       } finally {
         entry.seconds = Math.round((Date.now() - started) / 10) / 100;
@@ -175,7 +175,7 @@ async function probe(
     if (stop.signal.aborted) {
       return { result: null, error: `The function did not finish within ${PROBE_TIMEOUT_MS / 1000}s on its example.` };
     }
-    return { result: null, error: message(error).trim() };
+    return { result: null, error: messageOf(error).trim() };
   } finally {
     clearTimeout(clock);
   }
@@ -607,7 +607,7 @@ function failed(error: unknown, calls: AICall[]): GenerateResponse {
   }
   if (error instanceof GenerationRefused) throw error;
   // The failing generation is the one whose transcript is worth reading.
-  throw new GenerationFailed(message(error), calls);
+  throw new GenerationFailed(messageOf(error), calls);
 }
 
 /** Write one of a node's files, whatever kind of node it is: its input definition, its output definition, or its body. */

@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { type Graph, type GraphNode } from './graph.ts';
-import { executeGraph } from '../backend/deployment/runtime/executor.ts';
-import { passiveWires } from './order.ts';
-import type { Runtime } from './nodes/Runtime.ts';
-import { registry } from './nodes/registry.ts';
-import { RUN_PORT, guiStarts, startEvents, triggeredNodes } from './triggers.ts';
-import { LastOutputs } from '../backend/deployment/runtime/reuse.ts';
-import { edge, graphOf, quietRuntime } from '../backend/deployment/runtime/test/fakes.ts';
+import { type Graph, type GraphNode } from '../../../graph/graph.ts';
+import { executeGraph } from './executor.ts';
+import { passiveWires } from '../../../graph/order.ts';
+import type { Runtime } from '../../../graph/nodes/Runtime.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
+import { RUN_PORT, guiStarts, startEvents, triggeredNodes } from '../../../graph/triggers.ts';
+import { LastOutputs } from './reuse.ts';
+import { edge, graphOf, quietRuntime } from './test/fakes.ts';
 
 /** A code node needs a body to be allowed to run; the fake runner ignores what it says. */
 const BODY = { code: 'function run(inputs) { return inputs; }' };

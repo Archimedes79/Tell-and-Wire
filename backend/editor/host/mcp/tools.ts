@@ -20,7 +20,6 @@ import { registry } from '../../../../graph/nodes/registry.ts';
 import { NotOffered, outputsOf, sendFromOutside } from '../../../../graph/interface.ts';
 import { interfaceWithGui } from '../../../../gui/interface.ts';
 import { startFromGui } from '../../../../gui/gui.ts';
-import { message } from '../../../deployment/host/http.ts';
 import { clip } from '../../graph/brief.ts';
 import { generateGraph } from '../../graph/generateGraph.ts';
 import { WRITING_KEYS, withoutWriting } from '../../../../graph/editor/handedOn.ts';
@@ -32,7 +31,8 @@ import { saveGraph as saveToDisk } from '../../project/write.ts';
 import { problemsIn } from '../../../../gui/editor/check.ts';
 import { folderProblems } from '../../project/folderCheck.ts';
 import { BadDocument, Refused, SKIPPED_FOLDERS, confinement, scrubber } from './confine.ts';
-import { ERROR_LIMIT, MAX_DESCRIPTION_CHARS, MAX_GRAPH_BYTES, SPECS, VALUE_LIMIT, authoringGuide } from './spec.ts';
+import { ERROR_LIMIT, MAX_DESCRIPTION_CHARS, MAX_GRAPH_BYTES, SPECS, VALUE_LIMIT, graphGuide } from './spec.ts';
+import { messageOf } from '../../../../graph/errors.ts';
 
 const LIST_DEPTH = 4;
 const LIST_LIMIT = 200;
@@ -76,7 +76,7 @@ const json = (value: unknown): string => JSON.stringify(value, null, 2);
  * id, in the graphs nodes hold too. A document written by a model has none of them, and
  * a save would delete them.
  */
-function withAuthoringOf(graph: Graph, kept: Graph): Graph {
+function withWritingOf(graph: Graph, kept: Graph): Graph {
   const before = new Map(kept.nodes.map((node) => [node.id, node]));
   const copy = structuredClone(graph);
   for (const node of copy.nodes) {
@@ -87,7 +87,7 @@ function withAuthoringOf(graph: Graph, kept: Graph): Graph {
     const element = registry.node(node.node_type);
     const inside = element?.nestedGraph(node);
     const wasInside = registry.node(was.node_type)?.nestedGraph(was);
-    if (inside && wasInside) element!.setNestedGraph(node, withAuthoringOf(inside, wasInside));
+    if (inside && wasInside) element!.setNestedGraph(node, withWritingOf(inside, wasInside));
   }
   return copy;
 }
@@ -98,7 +98,7 @@ function withAuthoringOf(graph: Graph, kept: Graph): Graph {
  * *read*: `loadProject` records every file as seen, and a save would then find nothing
  * changed since.
  */
-async function authoringOf(folder: string, guard: Guard): Promise<Graph> {
+async function writingOf(folder: string, guard: Guard): Promise<Graph> {
   const { graph } = await readStructure(folder, guard);
   for (const text of projectTexts(graph)) {
     const path = join(folder, text.path);
@@ -109,7 +109,7 @@ async function authoringOf(folder: string, guard: Guard): Promise<Graph> {
   }
   for (const nested of nestedGraphs(graph)) {
     const inside = join(folder, nested.folder);
-    if (isProjectFolder(inside)) registry.node(nested.node.node_type)?.setNestedGraph(nested.node, await authoringOf(inside, guard));
+    if (isProjectFolder(inside)) registry.node(nested.node.node_type)?.setNestedGraph(nested.node, await writingOf(inside, guard));
   }
   return graph;
 }
@@ -139,7 +139,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
   /** A graph argument, bounded and parsed. */
   const graphFrom = (raw: unknown, argument: string): Graph => {
     if (!looksLikeGraph(raw)) {
-      throw new BadDocument(`"${argument}" must be a graph document: an object with a "nodes" array and an "edges" array. authoring_guide shows the shape.`);
+      throw new BadDocument(`"${argument}" must be a graph document: an object with a "nodes" array and an "edges" array. graph_guide shows the shape.`);
     }
     if (JSON.stringify(raw).length > MAX_GRAPH_BYTES) {
       throw new BadDocument(`"${argument}" is larger than ${MAX_GRAPH_BYTES / 1024 / 1024} MB. A graph holds wiring and code, not data: keep the data in a file, and have a node read it -- an input typed "file_path" is handed the file's text.`);
@@ -148,7 +148,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     try {
       graph = parseGraph(raw);
     } catch (error) {
-      throw new BadDocument(`"${argument}" is not a graph: ${message(error)}`);
+      throw new BadDocument(`"${argument}" is not a graph: ${messageOf(error)}`);
     }
     // `parseGraph` is forgiving about shape on purpose; the code below it is
     // not, and "Cannot read properties of null" is not something a model can fix.
@@ -181,7 +181,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     try {
       raw = JSON.parse(text);
     } catch (error) {
-      throw new BadDocument(`"${given}" is not valid JSON: ${message(error)}`);
+      throw new BadDocument(`"${given}" is not valid JSON: ${messageOf(error)}`);
     }
     if (!looksLikeGraph(raw)) throw new BadDocument(`"${given}" is JSON but not a graph: it has no "nodes" array.`);
     return graphFrom(raw, given);
@@ -195,7 +195,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       return { graph: await loadProject(full, insideRoot), full };
     } catch (error) {
       if (error instanceof Refused) throw error;
-      throw new BadDocument(`"${String(given)}" could not be read as a project: ${message(error)}`);
+      throw new BadDocument(`"${String(given)}" could not be read as a project: ${messageOf(error)}`);
     }
   };
 
@@ -227,14 +227,14 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     // `.json` path through). The guard holds for the one file too. Over a graph that
     // is there, what the document says nothing of stays: the history and the files ✨ was
     // given are the project's. A file changed on disk since this process read the project is not
-    // written over (`FileChanged`); the read for what stays is not that read (`authoringOf`).
-    if (folder) kept = await authoringOf(folder, insideRoot);
+    // written over (`FileChanged`); the read for what stays is not that read (`writingOf`).
+    if (folder) kept = await writingOf(folder, insideRoot);
     try {
-      await saveToDisk(full, kept ? withAuthoringOf(graph, kept) : graph, insideRoot);
+      await saveToDisk(full, kept ? withWritingOf(graph, kept) : graph, insideRoot);
     } catch (error) {
       if (error instanceof FileChanged) {
         throw new Refused(`"${error.fileName}" of "${String(given)}" was changed on disk since this server last read the project, so nothing was written. `
-          + 'describe_graph reads it again; then save.');
+          + 'graph_interface reads it again; then save.');
       }
       throw error;
     }
@@ -242,8 +242,8 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
   };
 
   const tools: Record<string, (args: Record<string, unknown>) => Promise<string>> = {
-    async authoring_guide() {
-      return authoringGuide();
+    async graph_guide() {
+      return graphGuide();
     },
 
     async generate_graph(args) {
@@ -259,7 +259,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       // ids and what the change does not touch are kept, each node's history too.
       const current = args.path !== undefined ? (await loadGraph(args.path)).graph : undefined;
 
-      const otherwise = 'The other way needs no model here: call authoring_guide, write the graph yourself, then validate_graph and save_graph.';
+      const otherwise = 'The other way needs no model here: call graph_guide, write the graph yourself, then validate_graph and save_graph.';
       const target = await options.target();
       if (!target.provider || !target.model) {
         throw new Refused(`No model is configured on this machine (⚙ Settings in the Tell & Wire editor, or TW_AI_PROVIDER and TW_AI_MODEL). ${otherwise}`);
@@ -269,7 +269,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       try {
         generated = await generateGraph(description, { ai: options.ai, target }, current);
       } catch (error) {
-        throw new Refused(`Generation with ${target.provider} / ${target.model} failed: ${message(error).slice(0, ERROR_LIMIT)}\n`
+        throw new Refused(`Generation with ${target.provider} / ${target.model} failed: ${messageOf(error).slice(0, ERROR_LIMIT)}\n`
           + `If that model is not set up or not running, configure one in the Tell & Wire editor's Settings. ${otherwise}`);
       }
 
@@ -299,7 +299,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         // graph is an answer to the question that was asked -- told apart by
         // the class it was thrown as, not by what its message says.
         if (!(error instanceof BadDocument)) throw error;
-        return json({ valid: false, problems: [{ where: 'graph', problem: error.message, fix: 'A graph is { "metadata": {...}, "nodes": [...], "edges": [...] }; authoring_guide shows a complete one.' }] });
+        return json({ valid: false, problems: [{ where: 'graph', problem: error.message, fix: 'A graph is { "metadata": {...}, "nodes": [...], "edges": [...] }; graph_guide shows a complete one.' }] });
       }
       const problems = problemsIn(graph);
       // A project also has its folder to be wrong about: files nothing reads, folders no node owns.
@@ -375,7 +375,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       try {
         trigger = sendFromOutside(graph, args.event as string | null | undefined, given as Record<string, unknown>, registry);
       } catch (error) {
-        if (error instanceof NotOffered) throw new Refused(`${error.message} describe_graph lists the names.`);
+        if (error instanceof NotOffered) throw new Refused(`${error.message} graph_interface lists the names.`);
         throw error;
       }
 
@@ -397,7 +397,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       });
     },
 
-    async describe_graph(args) {
+    async graph_interface(args) {
       const { graph } = await loadGraph(args.path);
       return json({
         name: graph.metadata.name,
@@ -469,7 +469,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         // A refusal is already a sentence for the caller. Anything else is a
         // bug or the machine, and is said briefly: a stack trace is a map of
         // this computer, and nobody asked for one.
-        const text = error instanceof Refused ? error.message : `${name} failed: ${message(error).slice(0, ERROR_LIMIT)}`;
+        const text = error instanceof Refused ? error.message : `${name} failed: ${messageOf(error).slice(0, ERROR_LIMIT)}`;
         return { text: scrub(text), isError: true };
       }
     },

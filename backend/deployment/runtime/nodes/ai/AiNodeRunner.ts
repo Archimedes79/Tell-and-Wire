@@ -1,6 +1,6 @@
 import { NodeRunner } from '../NodeRunner.ts';
 import type { Runtime } from '../../../../../graph/nodes/Runtime.ts';
-import type { GraphNode, Port } from '../../../../../graph/graph.ts';
+import { isStruct, type GraphNode, type Port } from '../../../../../graph/graph.ts';
 import { ERROR_PORT } from '../../../../../graph/wiring.ts';
 import { definitionExample } from '../../../../../graph/files/definition.ts';
 import type { AiNodeDefinition } from '../../../../../graph/nodes/ai/AiNodeDefinition.ts';
@@ -105,19 +105,18 @@ function jsonObject(answer: string): Record<string, unknown> | null {
   const said = answer.trim();
   const fenced = /```[^\n`]*\n([\s\S]*?)\n?[ \t]*```/.exec(said)?.[1];
   const braced = said.slice(said.indexOf('{'), said.lastIndexOf('}') + 1);
-  const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
   for (const candidate of [fenced, braced]) {
     if (!candidate?.trim()) continue;
     try {
       const value: unknown = JSON.parse(candidate);
-      if (isObject(value)) return value;
+      if (isStruct(value)) return value;
     } catch {
       // Not this one: the next place the object may be.
     }
   }
   const asFile = definitionExample(fenced ?? said);
   const value = 'example' in asFile ? asFile.example : undefined;
-  return isObject(value) ? value : null;
+  return isStruct(value) ? value : null;
 }
 
 /** What a node says when its answer holds no JSON object, quoting how it began. */

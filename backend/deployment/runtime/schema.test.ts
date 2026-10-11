@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { inferSchema, mismatches } from './schema.ts';
-import { executeGraph } from '../backend/deployment/runtime/executor.ts';
-import { registry } from './nodes/registry.ts';
-import { parseGraph } from './graph.ts';
-import { quietRuntime } from '../backend/deployment/runtime/test/fakes.ts';
+import { inferSchema, mismatches } from '../../../graph/schema.ts';
+import { executeGraph } from './executor.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
+import { parseGraph } from '../../../graph/graph.ts';
+import { quietRuntime } from './test/fakes.ts';
 
 describe('an interface inferred from a run', () => {
   it('describes what a node produced, port by port, and a list by what its items have in common -- and holds a later run to it', () => {

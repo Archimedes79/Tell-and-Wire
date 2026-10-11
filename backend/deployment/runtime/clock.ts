@@ -22,6 +22,7 @@
 import type { Graph } from '../../../graph/graph.ts';
 import type { Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { after, graphTriggers, parseInterval, startEvents, type GraphTrigger, type Trigger } from '../../../graph/triggers.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 export interface Clock {
   /** Whether it runs anything by itself: a start point starts when the tool starts, or keeps time. */
@@ -64,7 +65,7 @@ export function startClock(graph: () => Graph, elements: Kinds, round: (event: T
     try {
       return { ms: parseInterval(trigger.every) * 1000, problem: null };
     } catch (error) {
-      return { ms: 0, problem: error instanceof Error ? error.message : String(error) };
+      return { ms: 0, problem: messageOf(error) };
     }
   };
 

@@ -25,7 +25,7 @@ import { designs } from '../../../graph/editor/nodes/registry.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { eventOf, outputsOf } from '../../../graph/interface.ts';
 import { folderName } from '../../../graph/files/names.ts';
-import { message } from '../../deployment/host/http.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** Where a project keeps its rounds: `tests/<name>.json`, beside `graph-flow.json`. */
 export const TESTS_DIR = 'tests';
@@ -110,7 +110,7 @@ export async function replayRound(graph: Graph, kept: KeptRound, options: { core
     }
     ({ result } = await options.core.round({ graph: start, trigger, given: kept.given, offline: true }));
   } catch (error) {
-    return { status: 'error', details: [message(error)], outputs: {} };
+    return { status: 'error', details: [messageOf(error)], outputs: {} };
   }
   const outputs = outputsOf(graph, result, options.registry);
   if (result.status === 'error' || result.status === 'cancelled') {
@@ -144,7 +144,7 @@ export async function readKeptRounds(folder: string): Promise<{ name: string; ro
       }
       return { name, round: { ...read, event: read.event ?? null } };
     } catch (error) {
-      return { name, round: null, problem: `It cannot be read: ${message(error)}` };
+      return { name, round: null, problem: `It cannot be read: ${messageOf(error)}` };
     }
   }));
 }

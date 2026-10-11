@@ -27,7 +27,7 @@ export const ERROR_LIMIT = 1_500;
 
 export const SPECS: ToolSpec[] = [
   {
-    name: 'authoring_guide',
+    name: 'graph_guide',
     description: 'How to write a Tell & Wire graph document yourself: the JSON shape, where each node type keeps what it does, '
       + 'the port names some node types derive from their settings, how a gui connects to start and end points, and one complete example. Read this before writing a '
       + 'graph by hand, then use validate_graph and save_graph. No model on this machine is needed for that route.',
@@ -38,7 +38,7 @@ export const SPECS: ToolSpec[] = [
     description: 'Have the model configured on this machine design a whole graph from a description -- or, given the path '
       + 'of a saved graph, change that graph as the description says, its ids and whatever the change does not touch kept. '
       + 'Returns the graph, the model\'s explanation and any problems validation found. With save_as, a graph without '
-      + 'problems is also written there. If no model is configured, use authoring_guide and save_graph instead.',
+      + 'problems is also written there. If no model is configured, use graph_guide and save_graph instead.',
     parameters: {
       type: 'object',
       properties: {
@@ -70,7 +70,7 @@ export const SPECS: ToolSpec[] = [
       + 'project, each node\'s files in its folder. Refuses, and returns the problems, when validation finds any. Only .json '
       + 'paths inside the server\'s folder; an existing file is replaced only if it is already a graph. Over a graph that is '
       + 'there, each node\'s history and the files its ✨ was given stay; a file changed on disk since this server last read the project '
-      + 'makes the call write nothing and say which, until describe_graph has read the project again.',
+      + 'makes the call write nothing and say which, until graph_interface has read the project again.',
     parameters: {
       type: 'object',
       properties: {
@@ -87,14 +87,14 @@ export const SPECS: ToolSpec[] = [
       + `each node's outputs, and the graph's outputs by name, with every value cut to about ${VALUE_LIMIT} characters. `
       + 'Runs the graph\'s code and calls its models for real. A graph is used by name, as a gui or any frontend uses it: '
       + 'event, one of its start points, runs only what that start point is wired to. It is sent values under whatever names '
-      + 'you give them -- the names describe_graph says the graph reads of it, and for one the gui starts, the names the gui '
+      + 'you give them -- the names graph_interface says the graph reads of it, and for one the gui starts, the names the gui '
       + 'sends -- and hands them on in one package to the node it is wired to. Without an event the whole graph runs, the '
-      + 'gui\'s start points on what the gui holds, and it is sent nothing. describe_graph lists the names.',
+      + 'gui\'s start points on what the gui holds, and it is sent nothing. graph_interface lists the names.',
     parameters: {
       type: 'object',
       properties: {
         path: { type: 'string', description: 'The saved graph, as a .json path relative to the server\'s folder.' },
-        values: { type: 'object', description: 'What the start point the round starts at is sent: values under names of your own, the ones describe_graph says the graph reads. Only with an event.' },
+        values: { type: 'object', description: 'What the start point the round starts at is sent: values under names of your own, the ones graph_interface says the graph reads. Only with an event.' },
         event: { type: 'string', description: 'The start point to start the round at, by name. Left out: the whole graph.' },
       },
       required: ['path'],
@@ -102,7 +102,7 @@ export const SPECS: ToolSpec[] = [
     },
   },
   {
-    name: 'describe_graph',
+    name: 'graph_interface',
     description: 'What a saved graph offers whoever uses it, by name: its events (its start points; who starts each -- the '
       + 'gui, a call, the graph itself --; what the graph reads of the values each is sent; for one the gui starts, which '
       + 'blocks fire it and what the gui sends with it) and the outputs it hands back (its end points). The names run_graph '
@@ -166,10 +166,10 @@ export const SPECS: ToolSpec[] = [
 
 /** What the server says when a client connects. */
 export const INSTRUCTIONS = 'Designs, checks, saves and runs Tell & Wire graphs inside one folder. To write a graph yourself, read '
-  + 'authoring_guide first; to have this machine\'s model write one, use generate_graph. Validate before saving.';
+  + 'graph_guide first; to have this machine\'s model write one, use generate_graph. Validate before saving.';
 
-/** What `authoring_guide` answers: the model's own brief for designing a graph, and how to use it through this server. */
-export function authoringGuide(): string {
+/** What `graph_guide` answers: the model's own brief for designing a graph, and how to use it through this server. */
+export function graphGuide(): string {
   return [
     GRAPH_SYSTEM,
     '---',

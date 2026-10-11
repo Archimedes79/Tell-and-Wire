@@ -6,7 +6,6 @@
 // graph it was sent (`keptFrom`).
 
 import type { AiService } from '../../../graph/nodes/Runtime.ts';
-import { message } from '../../deployment/host/http.ts';
 import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { WRITING_KEYS } from '../../../graph/editor/handedOn.ts';
@@ -15,6 +14,7 @@ import { GRAPH_SYSTEM } from './graphPrompt.ts';
 import { changePrompt } from './generatePrompts.ts';
 import { GenerationFailed, firstBlock, recording } from './generate.ts';
 import type { AICall, Target } from '../host/api.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** A value as JSON with every object's keys in one order: two that say the same compare equal. */
 const canonical = (value: unknown): string => JSON.stringify(value, (_key, item: unknown) => (
@@ -102,7 +102,7 @@ export async function generateGraph(
   try {
     raw = await ai.complete({ prompt, system: GRAPH_SYSTEM, ...deps.target });
   } catch (error) {
-    throw new GenerationFailed(message(error), calls);
+    throw new GenerationFailed(messageOf(error), calls);
   }
   // Read as every other answer is: a code node's body in the document may
   // write "```" into a string, and the block does not end there.

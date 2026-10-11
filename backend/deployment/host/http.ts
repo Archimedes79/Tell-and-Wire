@@ -8,6 +8,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import type { RequestOf, ResponseOf, Routes } from './api.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /**
  * A request the route turns down, with the status that says why.
@@ -61,10 +62,6 @@ type Handler<R> =
 
 /** What answers the routes of a table, by the name each is called by. */
 export type HandlersOf<A extends Routes> = { [K in keyof A]?: Handler<A[K]> };
-
-export function message(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 export function sendJson(response: ServerResponse, status: number, payload: unknown): void {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -238,7 +235,7 @@ export function foreignRequest(
  */
 export function sendFailure(response: ServerResponse, error: unknown): void {
   if (response.headersSent) response.destroy();
-  else sendJson(response, 500, { detail: message(error) });
+  else sendJson(response, 500, { detail: messageOf(error) });
 }
 
 const MIME: Record<string, string> = {

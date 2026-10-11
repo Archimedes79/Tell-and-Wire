@@ -74,7 +74,7 @@ program without the editor's folders.
 | Rule | Held by |
 |---|---|
 | **A package carries every path except those with a folder named `editor`, and nothing outside an `editor` folder imports from one** (`import()` in `backend/cli` aside: it composes, and a package without the editor says so when a command asks for it). | `backend/architecture/layers.test.ts` |
-| `graph/` and `gui/` import no `node:*`, nothing from `backend/` or `frontend/`; `graph/` imports nothing from `gui/`. | `layers.test.ts` |
+| `graph/` and `gui/` import no `node:*`, nothing from `backend/` or `frontend/`; `graph/` imports nothing from `gui/`. Their tests too: a test that needs a run lives in `backend/`, which runs. | `layers.test.ts` |
 | In `backend/`, a module imports only from below: project, then runtime and gui, then host, then cli; the editor's modules above the deployment's. Modules of one rank do not import each other. The wire's files (`host/api.ts`) rank with nothing. | `layers.test.ts` |
 | `frontend/` reaches `backend/` only through the wire's files. | `layers.test.ts` |
 | A deployed tool's browser loads nothing of an `editor` folder, no panel, and of `graph/`, `gui/` and `backend/` only the wire and the shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
