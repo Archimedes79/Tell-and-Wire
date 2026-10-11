@@ -2,19 +2,20 @@
 // change -- the part of the bar that is a rule rather than drawing, so a test
 // can hold it. A change to one node is said in that node's chats.
 
-import type { Graph, GraphNode, Port } from './graph';
+import type { Graph, GraphNode, GuiWidget, Port } from './graph';
 import { baseNodeConfig } from './model/baseNodeConfig';
 import { derivedNodePorts } from './model/ports';
 import { savedNode } from './model/nodeKinds';
 import { wireOf } from '../../../graph/files/flow.ts';
 
-/** What a change of the whole graph changes: nodes by id, and wires by what they join. */
+/** What a change of the whole graph changes: nodes by id, wires by what they join, and the gui's blocks by id. */
 interface GraphChange {
   added: GraphNode[];
   removed: GraphNode[];
   /** Kept, and different in what they say or hold -- as the change has them. */
   changed: GraphNode[];
   wires: { added: number; removed: number };
+  blocks: { added: GuiWidget[]; removed: GuiWidget[]; changed: GuiWidget[] };
 }
 
 /**
@@ -37,7 +38,15 @@ export function graphChange(before: Graph, after: Graph): GraphChange {
   const now = new Set(after.nodes.map((node) => node.id));
   const wiresBefore = new Set(before.edges.map(wireOf));
   const wiresAfter = new Set(after.edges.map(wireOf));
+  const blocksBefore = new Map((before.gui?.blocks ?? []).map((block) => [block.id, block]));
+  const blocksAfter = after.gui?.blocks ?? [];
+  const blocksNow = new Set(blocksAfter.map((block) => block.id));
   return {
+    blocks: {
+      added: blocksAfter.filter((block) => !blocksBefore.has(block.id)),
+      removed: [...blocksBefore.values()].filter((block) => !blocksNow.has(block.id)),
+      changed: blocksAfter.filter((block) => blocksBefore.has(block.id) && JSON.stringify(blocksBefore.get(block.id)) !== JSON.stringify(block)),
+    },
     added: after.nodes.filter((node) => !was.has(node.id)),
     removed: before.nodes.filter((node) => !now.has(node.id)),
     changed: after.nodes.filter((node) => was.has(node.id) && said(was.get(node.id)!) !== said(node)),
@@ -48,15 +57,19 @@ export function graphChange(before: Graph, after: Graph): GraphChange {
   };
 }
 
-/** *change* in a line or two: what it adds, removes and changes -- or that it changes nothing. */
+/** *change* in a line or two: what it adds, removes and changes, the gui's blocks too -- or that it changes nothing. */
 export function describeChange(change: GraphChange): string[] {
   const names = (nodes: GraphNode[]) => nodes.map((node) => node.label || node.id).join(', ');
+  const blocks = (list: GuiWidget[]) => list.map((block) => block.label || block.id).join(', ');
   const { added, removed } = change.wires;
   const lines = [
     change.added.length ? `Adds ${names(change.added)}.` : '',
     change.removed.length ? `Removes ${names(change.removed)}.` : '',
     change.changed.length ? `Changes ${names(change.changed)}.` : '',
     added || removed ? `Wires: ${added} added, ${removed} removed.` : '',
+    change.blocks.added.length ? `Gui adds ${blocks(change.blocks.added)}.` : '',
+    change.blocks.removed.length ? `Gui removes ${blocks(change.blocks.removed)}.` : '',
+    change.blocks.changed.length ? `Gui changes ${blocks(change.blocks.changed)}.` : '',
   ].filter(Boolean);
-  return lines.length ? lines : ['Nothing in the graph changes.'];
+  return lines.length ? lines : ['Nothing in the graph or the gui changes.'];
 }
