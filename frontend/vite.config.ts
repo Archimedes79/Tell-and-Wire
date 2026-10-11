@@ -67,7 +67,7 @@ export default defineConfig({
     rollupOptions: {
       // Two entry points, one bundle of shared chunks: index.html is the
       // editor, runtime.html is what a deployed graph serves (see
-      // gui-editor/runtime/RuntimeApp.tsx). They share every widget component, which
+      // deployment/gui/RuntimeApp.tsx). They share every widget component, which
       // is the point -- a deployed tool renders through the same code the
       // designer previewed.
       input: {
@@ -92,7 +92,7 @@ export default defineConfig({
         // resolves to ::1 first, the page would load and its API calls would not.
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-        // The backend answers only its own origin (backend/app/http.ts `foreignRequest`);
+        // The backend answers only its own origin (backend/deployment/host/http.ts `foreignRequest`);
         // the dev page on :3000 is the editor all the same.
         headers: { origin: 'http://127.0.0.1:8000' },
       },

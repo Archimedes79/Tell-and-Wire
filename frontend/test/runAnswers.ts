@@ -5,7 +5,7 @@
 // imported and that is all.
 import { registry } from '../../graph/nodes/registry.ts';
 import type { GraphNode as FormatNode } from '../../graph/graph.ts';
-import type { GraphNode } from '../app/graph';
+import type { GraphNode } from '../editor/document/graph';
 
 /** What a run asks a node's element before and while running it. None of them runs anything. */
 export const RUN_QUESTIONS = [

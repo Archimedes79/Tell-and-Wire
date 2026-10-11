@@ -80,7 +80,7 @@ export interface GraphMetadata {
  * The page a graph is used through: its blocks, in order, each as the file
  * keeps it. Not a node: a block connects itself to the graph by name -- where
  * its data goes, which start point it fires, which end point it shows
- * (`backend/gui-editor/widgets/page.ts`) -- and nothing is wired to it.
+ * (`gui/gui.ts`) -- and nothing is wired to it.
  */
 export interface Page {
   blocks: RawConfig[];
@@ -116,7 +116,7 @@ export interface NodeResult {
 /**
  * What a run produced. What memory nodes kept is not in it: the run settled
  * that into the copy of the graph it ran on, which is what a session keeps
- * (`backend/gui-editor/session.ts`).
+ * (`backend/deployment/host/session.ts`).
  */
 export interface ExecutionResult {
   status: 'success' | 'error' | 'partial' | 'cancelled';
@@ -170,7 +170,7 @@ export function defaultMetadata(): GraphMetadata {
  *
  * One default per key: a second one, for what a *loaded* node lacks, is what
  * turned a graph written by hand into a different graph after one Save. Each
- * element reads a missing key as this says (`frontend/app/elements/savedConfig.test.ts`
+ * element reads a missing key as this says (`frontend/editor/document/elements/savedConfig.test.ts`
  * asks every kind's runner).
  */
 export function defaultNodeConfig(): RawConfig {
@@ -178,7 +178,7 @@ export function defaultNodeConfig(): RawConfig {
     path: '',
     recursive: false,
     extensions: '',
-    // 'default' -> the one AI setting in ⚙ Settings (graph/ai/settings.ts
+    // 'default' -> the one AI setting in ⚙ Settings (backend/deployment/runtime/ai/settings.ts
     // `aiSetting`), until someone pins this node to a provider of its own.
     ai_provider: 'default',
     ai_model: '',

@@ -83,7 +83,7 @@ test('the zip holds what a person runs, and its launcher starts from its own fol
   const unpacked = unzip(zip, work);
   assert.equal(unpacked.status, 0, unpacked.stderr);
 
-  for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/app/main.ts', 'frontend/dist/index.html', 'frontend/dist/licenses.txt']) {
+  for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/cli/main.ts', 'frontend/dist/index.html', 'frontend/dist/licenses.txt']) {
     assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
   }
   assert.match(readFileSync(join(folder, 'VERSION'), 'utf8'), /^Tell & Wire test\ncommit \S+\nbuilt /);

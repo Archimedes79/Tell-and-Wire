@@ -1,11 +1,11 @@
 import { NodeRunner, type TextFile, type WhatRuns } from '../NodeRunner.ts';
 import { type Runtime } from '../Runtime.ts';
-import { Logic, logicFrom } from '../../authoring/logic.ts';
+import { Logic, logicFrom } from '../../files/logic.ts';
 import type { GraphNode } from '../../graph.ts';
-import type { LogicFields } from '../../authoring/logic.ts';
-import type { Generation } from '../../authoring/generation.ts';
-import { DEFINITION_TEXTS, definitionsIn, type Definitions } from '../../authoring/definition.ts';
-import type { Problem } from '../../execution/wiring.ts';
+import type { LogicFields } from '../../files/logic.ts';
+import type { Generation } from '../../editor/generation.ts';
+import { DEFINITION_TEXTS, definitionsIn, type Definitions } from '../../files/definition.ts';
+import type { Problem } from '../../wiring.ts';
 import { JAVASCRIPT } from './javascript.ts';
 
 /** What a code node stores. Its own fields, and no one else's. */
@@ -47,7 +47,7 @@ if (/^code(\\.js)?$/.test(process.getBuiltinModule('node:path').basename(process
   process.getBuiltinModule('node:vm').runInNewContext(process.getBuiltinModule('node:fs').readFileSync(file, 'utf8'), { module: input });
   const example = input.exports;
   if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input.js has no example yet -- an object keyed by input, written by ✨ Input.');
-  const node = { llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/app/main.ts run-node <project> <node id>'); } };
+  const node = { llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/cli/main.ts run-node <project> <node id>'); } };
   Promise.resolve(run(example, node)).then((out) => console.log(JSON.stringify(out, null, 2)));
 }`;
 

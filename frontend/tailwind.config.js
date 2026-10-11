@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
-// No colours here: every colour of the app is a token in `app/ui/theme.ts`.
+// No colours here: every colour of the app is a token in `deployment/gui/kit/ui/theme.ts`.
 export default {
   content: [
     "./index.html",
-    "./{app,graph-editor,gui-editor}/**/*.{js,ts,jsx,tsx}",
+    "./{editor,deployment}/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {},

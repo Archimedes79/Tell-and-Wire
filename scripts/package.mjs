@@ -19,8 +19,8 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, execSync } from 'node:child_process';
-import { zip } from '../backend/graph-editor/zip.ts';
-import { NODE_MAJOR, runCmd, runSh, zipMode } from '../backend/app/cli/launchers.ts';
+import { zip } from '../backend/editor/project/deploy/zip.ts';
+import { NODE_MAJOR, runCmd, runSh, zipMode } from '../backend/editor/project/deploy/launchers.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -89,13 +89,13 @@ async function toolServers() {
   return entries;
 }
 
-// The same launchers every deploy bundle gets (backend/app/cli/launchers.ts):
+// The same launchers every deploy bundle gets (backend/editor/project/deploy/launchers.ts):
 // they check for Node before it is needed, start from their own folder, and
 // keep a Windows window open long enough to read a failure. No port is passed
 // unless PORT is set, so the server takes the first free one from 8000 --
 // the version before always passed 8000, and died on a machine that already
 // had an editor running there.
-const LAUNCHER = { command: 'backend/app/main.ts --editor frontend/dist', portFromEnv: true };
+const LAUNCHER = { command: 'backend/cli/main.ts --editor frontend/dist', portFromEnv: true };
 
 /**
  * What this zip was built from, in a file beside the README.

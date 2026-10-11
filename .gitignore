@@ -40,3 +40,6 @@ state.json
 
 # The downloadable package, built by scripts/package.mjs.
 tell-and-wire*.zip
+
+# What an example's end point writes when a test runs one from a workspace folder.
+/backend/output/

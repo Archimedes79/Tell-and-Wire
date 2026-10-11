@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import type { GraphNode } from '../../graph.ts';
 import type { AiRequest, Runtime } from '../Runtime.ts';
 import { registry } from '../registry.ts';
-import { nodeCode } from '../../core/node.ts';
-import { quietRuntime } from '../../test/fakes.ts';
+import { nodeCode } from '../../../backend/deployment/runtime/services.ts';
+import { quietRuntime } from '../../../backend/deployment/runtime/test/fakes.ts';
 
 /**
  * `node.llm`: a body asking the process that holds the keys for a model call.

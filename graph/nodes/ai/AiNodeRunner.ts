@@ -1,11 +1,11 @@
 import { NodeRunner, type TextFile, type WhatRuns } from '../NodeRunner.ts';
 import { type Runtime } from '../Runtime.ts';
 import type { GraphNode, Port } from '../../graph.ts';
-import { ERROR_PORT } from '../../execution/wiring.ts';
-import type { LogicFields } from '../../authoring/logic.ts';
-import type { Generation } from '../../authoring/generation.ts';
-import { DEFINITION_TEXTS, definitionExample, definitionsIn, textOutput, type Definitions } from '../../authoring/definition.ts';
-import { answeredAs, fillPrompt, nodeDescription, standardRunPrompt } from '../../authoring/prompts.ts';
+import { ERROR_PORT } from '../../wiring.ts';
+import type { LogicFields } from '../../files/logic.ts';
+import type { Generation } from '../../editor/generation.ts';
+import { DEFINITION_TEXTS, definitionExample, definitionsIn, textOutput, type Definitions } from '../../files/definition.ts';
+import { answeredAs, fillPrompt, nodeDescription, standardRunPrompt } from '../../files/prompts.ts';
 import { askModel, type AskSettings, type Repair } from './ask.ts';
 
 /** Where an ai node keeps its body: the instructions it runs with, `prompt.md`. */

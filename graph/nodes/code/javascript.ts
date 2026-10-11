@@ -5,7 +5,7 @@
 // code node (`CodeNodeRunner.generation`), so the writer (`backend/graph-editor/
 // generate.ts`) names no language: a node for another one declares its own.
 
-import type { Language } from '../../authoring/generation.ts';
+import type { Language } from '../../editor/generation.ts';
 import { runBody } from '../body.ts';
 
 /**

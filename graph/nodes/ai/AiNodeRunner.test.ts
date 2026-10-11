@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AiNodeRunner } from './AiNodeRunner.ts';
-import { nodeFiles } from '../../core/node.ts';
+import { nodeFiles } from '../../../backend/deployment/runtime/services.ts';
 import type { AiRequest, ProgressEvent, Runtime } from '../Runtime.ts';
 import type { GraphNode, Port } from '../../graph.ts';
 

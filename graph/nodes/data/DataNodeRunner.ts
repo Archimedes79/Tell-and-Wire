@@ -2,9 +2,9 @@ import { NodeRunner, type Offer, type TextFile, type WhatRuns } from '../NodeRun
 import { type Runtime } from '../Runtime.ts';
 import { port } from '../port.ts';
 import type { GraphNode } from '../../graph.ts';
-import type { Generation } from '../../authoring/generation.ts';
-import type { Problem } from '../../execution/wiring.ts';
-import { RUN_PORT } from '../../execution/triggers.ts';
+import type { Generation } from '../../editor/generation.ts';
+import type { Problem } from '../../wiring.ts';
+import { RUN_PORT } from '../../triggers.ts';
 
 export interface DataConfig {
   /** What it holds between rounds: each field, by its name. */

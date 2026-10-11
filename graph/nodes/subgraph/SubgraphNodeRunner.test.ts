@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { executeGraph } from '../../execution/executor.ts';
+import { executeGraph } from '../../../backend/deployment/runtime/executor.ts';
 import { registry } from '../registry.ts';
 import { parseGraph, type Graph, type GraphEdge, type GraphNode } from '../../graph.ts';
 import type { Runtime } from '../Runtime.ts';
-import { edge, quietRuntime } from '../../test/fakes.ts';
+import { edge, quietRuntime } from '../../../backend/deployment/runtime/test/fakes.ts';
 
 /**
  * A graph inside a node, run by the executor that runs every graph.

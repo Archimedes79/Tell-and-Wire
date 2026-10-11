@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EndNodeRunner } from './EndNodeRunner.ts';
 import type { Runtime } from '../Runtime.ts';
-import { quietRuntime } from '../../test/fakes.ts';
+import { quietRuntime } from '../../../backend/deployment/runtime/test/fakes.ts';
 import type { GraphNode } from '../../graph.ts';
 
 /**

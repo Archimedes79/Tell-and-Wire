@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DataNodeRunner } from './DataNodeRunner.ts';
-import { quietRuntime } from '../../test/fakes.ts';
+import { quietRuntime } from '../../../backend/deployment/runtime/test/fakes.ts';
 import type { GraphNode } from '../../graph.ts';
 
 function dataNode(value: unknown, more: Record<string, unknown> = {}): GraphNode {

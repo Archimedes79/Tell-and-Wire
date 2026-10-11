@@ -2,9 +2,9 @@ import { NodeRunner, type Runners, type WhatRuns } from '../NodeRunner.ts';
 import type { Runtime } from '../Runtime.ts';
 import type { GraphNode } from '../../graph.ts';
 import { port } from '../port.ts';
-import { names, type Problem } from '../../execution/wiring.ts';
+import { names, type Problem } from '../../wiring.ts';
 import type { Offer, StartedBy } from '../NodeRunner.ts';
-import { RUN_PORT, START_PORT, parseInterval } from '../../execution/triggers.ts';
+import { RUN_PORT, START_PORT, parseInterval } from '../../triggers.ts';
 import { readChosen } from '../folderListing.ts';
 import { ownPathProblem } from '../ownPath.ts';
 

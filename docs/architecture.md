@@ -21,13 +21,13 @@ the files relate. Where a test holds a claim, the test is named.
 dependencies. `frontend/` is React and Vite; `npm run build` writes `frontend/dist`.
 `examples/` holds project folders that tests and CI run; `scripts/` the launchers, the
 packaging and the licence check. One process serves the editor:
-`node backend/app/main.ts --editor frontend/dist`. A deployed tool runs the same server
+`node backend/cli/main.ts --editor frontend/dist`. A deployed tool runs the same server
 without `backend/graph-editor/`.
 
-Node and the browser talk over HTTP through one table, `API` in `backend/app/api.ts`: every
+Node and the browser talk over HTTP through one table, `API` in `backend/deployment/host/api.ts`: every
 route with its method, path, audience (`tool` or `editor`) and types. The server refuses to
 start when a route has no handler, and the page calls routes by name
-(`frontend/app/api/client.ts`), so the compiler checks both ends.
+(`frontend/deployment/gui/kit/api/client.ts`), so the compiler checks both ends.
 
 ## Elements
 
@@ -38,7 +38,7 @@ both sides.
 |---|---|---|
 | Runs (Node) | `graph/nodes/<kind>/<Kind>NodeRunner.ts` | `backend/gui-editor/widgets/<kind>/<Kind>WidgetRunner.ts` |
 | Builds (browser) | `frontend/graph-editor/nodes/<kind>/<Kind>NodeGuiBuilder.ts`, panels | `frontend/gui-editor/widgets/<kind>/<Kind>WidgetGuiBuilder.ts`, `<Kind>WidgetView.tsx`, panel |
-| Registry | `graph/nodes/registry.ts`, `frontend/app/elements/registry.ts` | `backend/gui-editor/widgets/roster.ts`, `frontend/gui-editor/widgets/roster.ts` |
+| Registry | `graph/nodes/registry.ts`, `frontend/editor/document/elements/registry.ts` | `gui/widgets/roster.ts`, `frontend/editor/gui/widgets/roster.ts` |
 
 Node kinds today: start, folder, ai, code, data, end, subgraph. Block kinds: text, divider,
 spacer, input_picker, text_io, select, slider, button, chat, plot_window, table, image_view.
@@ -51,39 +51,39 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
   a block sends, fires and shows (`sends`, `event`, `showsEnd`), how ✨ writes its body
   (`generation()`), what `check` says (`problems()`). Shared code asks the element.
 - An element touches the world only through the `Runtime` it is handed
-  (`graph/nodes/Runtime.ts`); `graph/core/node.ts` gives the real one, `graph/test/fakes.ts`
+  (`graph/nodes/Runtime.ts`); `backend/deployment/runtime/services.ts` gives the real one, `backend/deployment/runtime/test/fakes.ts`
   a fake.
 - **The page is no node.** It is the graph's list of blocks (`graph.page.blocks`). A block
   connects by name: the start points its data goes to (`sends_to`), the one using it fires
-  (`fires`), the end point it shows (`shows`). `backend/gui-editor/widgets/page.ts` holds
+  (`fires`), the end point it shows (`shows`). `gui/gui.ts` holds
   what a round, `check` and a bundle ask of the page.
 
 ## Dependency rules
 
 | Rule (as of 2026-10-04) | Held by |
 |---|---|
-| `graph/` imports nothing from `backend/` or `frontend/` (its tests may). | `backend/app/shells.test.ts` |
-| `backend/gui-editor/` does not import `backend/graph-editor/`; `backend/app/` reaches it only by dynamic import, when it serves the editor or `--mcp` (`serve.ts`, `cli/cli.ts`). A bundle carries `graph/`, `backend/app/`, `backend/gui-editor/` and leaves `backend/graph-editor/` out. | `backend/app/cli/bundle.test.ts` (runs a bundle from its own folder) |
-| A deployed tool serves only the `tool` routes; `editor` routes answer 404. | `backend/app/serve.test.ts` |
+| `graph/` imports nothing from `backend/` or `frontend/` (its tests may). | `backend/architecture/shells.test.ts` |
+| `backend/gui-editor/` does not import `backend/graph-editor/`; `backend/app/` reaches it only by dynamic import, when it serves the editor or `--mcp` (`serve.ts`, `cli/cli.ts`). A bundle carries `graph/`, `backend/app/`, `backend/gui-editor/` and leaves `backend/graph-editor/` out. | `backend/editor/project/deploy/bundle.test.ts` (runs a bundle from its own folder) |
+| A deployed tool serves only the `tool` routes; `editor` routes answer 404. | `backend/deployment/host/serve.test.ts` |
 | `backend/` imports nothing from `frontend/`. `frontend/` imports `graph/`, `backend/app/` and `backend/gui-editor/` for shared rules (which ports a node has, the route table, `check`), not `backend/graph-editor/`. | Read off the imports; no test |
 | All imports are relative paths; there are no aliases. | Read off the imports; no test |
-| Every node kind is a folder of the same name in `graph/nodes/` and `frontend/graph-editor/nodes/`; every block kind in `backend/gui-editor/widgets/` and `frontend/gui-editor/widgets/`. Names and class trees mirror; both registries list the same kinds. | `frontend/app/elements/symmetry.test.ts` |
-| The page's layers import only downward: `app/ui` · `app/graph` · `app/document`, `app/api` · `app/store`, `graph-editor/views` · `app/dialogs` · the elements (`app/elements`, `app/fields`, `graph-editor/nodes`, `graph-editor/fields`, `graph-editor/authoring`, `gui-editor/widgets`) · `gui-editor/page`, `graph-editor/canvas`, `graph-editor/node` · `app` · `app/App`, `gui-editor/runtime` · `app/main`. | `frontend/app/layers.test.ts` |
-| A deployed page reaches no `GuiBuilder`, no panel, nothing in `store/`, `canvas/`, `authoring/` or the shell's files; of `graph/` and `backend/` only the route table and the value shapes its views read. | `frontend/gui-editor/runtime/boundary.test.ts` |
-| Every element member stands under one of the three bars. In a runner nothing above Build time reaches below it; a `GuiBuilder` has no run-time members. | `backend/app/times.test.ts`, `frontend/app/elements/times.test.ts` |
-| No shell compares a node type or block kind with a literal. | `backend/app/shells.test.ts`, `frontend/app/elements/shells.test.ts` |
-| `graph/` and `backend/` use no TypeScript that needs a compiler (enums, parameter properties, namespaces, decorators). | `backend/app/strippable.test.ts` |
+| Every node kind is a folder of the same name in `graph/nodes/` and `frontend/graph-editor/nodes/`; every block kind in `backend/gui-editor/widgets/` and `frontend/gui-editor/widgets/`. Names and class trees mirror; both registries list the same kinds. | `frontend/editor/document/elements/symmetry.test.ts` |
+| The page's layers import only downward: `app/ui` · `app/graph` · `app/document`, `app/api` · `app/store`, `graph-editor/views` · `app/dialogs` · the elements (`app/elements`, `app/fields`, `graph-editor/nodes`, `graph-editor/fields`, `graph-editor/authoring`, `gui-editor/widgets`) · `gui-editor/page`, `graph-editor/canvas`, `graph-editor/node` · `app` · `app/App`, `gui-editor/runtime` · `app/main`. | `frontend/editor/app/layers.test.ts` |
+| A deployed page reaches no `GuiBuilder`, no panel, nothing in `store/`, `canvas/`, `authoring/` or the shell's files; of `graph/` and `backend/` only the route table and the value shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
+| Every element member stands under one of the three bars. In a runner nothing above Build time reaches below it; a `GuiBuilder` has no run-time members. | `backend/architecture/times.test.ts`, `frontend/editor/document/elements/times.test.ts` |
+| No shell compares a node type or block kind with a literal. | `backend/architecture/shells.test.ts`, `frontend/editor/document/elements/shells.test.ts` |
+| `graph/` and `backend/` use no TypeScript that needs a compiler (enums, parameter properties, namespaces, decorators). | `backend/architecture/strippable.test.ts` |
 
 ## How a round runs
 
 1. **Asked.** The page, a script, the clock or a caller asks the session
-   (`backend/gui-editor/session.ts`) for a round at a start point, with values. A round the
+   (`backend/deployment/host/session.ts`) for a round at a start point, with values. A round the
    page starts is sent what the blocks that send to that start point hold (`pageSends`).
 2. **Queued.** `rounds.ts` runs one round at a time, in the order asked, and turns progress
    into the snapshots a page follows on the stream.
 3. **Run.** The core gets a working copy: the design, with what nodes keep and what the
-   round was sent put in. `graph/core/localCore.ts` runs `executeGraph`
-   (`graph/execution/executor.ts`): it orders nodes in levels (`order.ts`), where a loop may only pass
+   round was sent put in. `backend/deployment/runtime/localCore.ts` runs `executeGraph`
+   (`backend/deployment/runtime/executor.ts`): it orders nodes in levels (`order.ts`), where a loop may only pass
    through a data node (the wires from a passive output are left out: `passiveWires`); runs what the start point is wired to, what
    follows and what those need (`triggers.ts`; a data node holds its value, so what writes it is not needed); per node, hands each input its `field` of
    the package, skips a node with nothing to do, reads files on `file_path` inputs
@@ -99,7 +99,7 @@ spacer, input_picker, text_io, select, slider, button, chat, plot_window, table,
 
 **Using a graph does not change its design.** A session holds one graph as it was handed
 over, by the editor or a served tool, and what using it leaves behind. The rules are held
-one by one in `backend/gui-editor/session.test.ts`.
+one by one in `backend/deployment/host/session.test.ts`.
 
 1. **What state is.** Each node's kept values, as its element says (`NodeRunner.state`): a start
    point's `values`, a data node's fields and its `round`. The page's: what each block holds, by id (a
@@ -116,11 +116,11 @@ one by one in `backend/gui-editor/session.test.ts`.
 5. **Start over.** **↺ Start over** (`POST /api/runtime/reset`) empties the session and
    deletes the file; the App tab lists what it forgets under *What using it keeps*.
 6. **One session per server**, its id in every runtime route
-   (`backend/app/runtimeApi.test.ts`). The command line and `run_graph` keep nothing: they
+   (`backend/deployment/host/runtimeApi.test.ts`). The command line and `run_graph` keep nothing: they
    start from the design.
 
 None of it marks the editor's document unsaved or is saved with it
-(`frontend/app/store/graphStore.test.ts`: "shows what a round made, and keeps none of it in
+(`frontend/editor/document/store/graphStore.test.ts`: "shows what a round made, and keeps none of it in
 the document"). Keys and the one AI setting live in `ai-settings.json`, not in a graph;
 an AI node may name its own model in its settings.
 
@@ -128,7 +128,7 @@ an AI node may name its own model in its settings.
 
 A tool is saved as a project folder: a folder with a `flow.json`. Each fact is in one
 place, keys are sorted, and an unchanged save changes no byte
-(`backend/app/project/folder.test.ts`).
+(`backend/deployment/project/folder.test.ts`).
 
 ```
 my_tool/
@@ -162,17 +162,17 @@ my_tool/
   from its fields, a subgraph's from its graph): they are worked out when the folder is read.
   Of those inputs the file keeps what a person chose: `field` and `list`.
 - The page is a flow, not coordinates: its blocks sit in the order of the list, each `w`
-  cells wide (of 16 across) and at least `h` high -- a row grows with what is in it --, wrapping like text (`frontend/app/document/layout.ts`).
+  cells wide (of 16 across) and at least `h` high -- a row grows with what is in it --, wrapping like text (`frontend/deployment/gui/kit/layout.ts`).
 - Which setting is which file is the element's to say (`NodeRunner.texts`). Every file is
   there from the start as a stub that reads back as nothing.
-- `backend/app/project/folder.ts` reads and writes folders for the editor, the CLI, a served
+- `backend/deployment/project/folder.ts` reads and writes folders for the editor, the CLI, a served
   tool and the MCP server. The same graph as one `.json` file has everything inline.
 - A save refuses to overwrite a file changed on disk since it was read; the editor takes
   outside changes in as one undo step.
-- A kept round (`backend/app/project/keptRounds.ts`) holds `event`, `by`, `given` (what came
+- A kept round (`backend/editor/project/keptRounds.ts`) holds `event`, `by`, `given` (what came
   from outside or from before, by node id: packages, model answers, memory) and `outputs`.
   `test` replays it with `given` handed in, asks no model, and compares the end points.
-- `check` (`backend/app/project/check.ts`, `folderCheck.ts`) is the one list of problems,
+- `check` (`gui/editor/check.ts`, `folderCheck.ts`) is the one list of problems,
   for the CLI, CI, the MCP server and the editor.
 
 ## The wrapper
@@ -188,7 +188,7 @@ the graph in use and talks to everything outside. **Frontends** talk only to the
  │ the session: what nodes keep, the page and what its blocks hold, state.json, the clock, │
  │ the queue of rounds; start points, end points, packages; files, ✨, settings, deploy    │
  └───────────────────────────────────────────┬─────────────────────────────────────────────┘
-                                             │  core protocol (graph/core/protocol.ts)
+                                             │  core protocol (backend/deployment/runtime/protocol.ts)
                                              ▼  in this process, or a program on stdin/stdout
  ┌──────────────────────────── graph core: graph/core (JavaScript) ───────────────────────┐
  │ runs a round, one node, a node's example; what every node made last (the latch);        │
@@ -223,8 +223,8 @@ route answers JSON except the stream; a refusal is `{ "detail": "…" }`.
 
 With `by` (a block id) a round is one the page starts, refused unless that block fires the
 start point; without it, a call, and `values` are the package as sent. Types:
-`backend/app/api.ts` (routes marked `tool`); handlers: `toolRoutes` in `backend/app/serve.ts`;
-tests: `backend/app/runtimeApi.test.ts`, `frontend.test.ts`.
+`backend/deployment/host/api.ts` (routes marked `tool`); handlers: `toolRoutes` in `backend/deployment/host/serve.ts`;
+tests: `backend/deployment/host/runtimeApi.test.ts`, `frontend.test.ts`.
 
 ### The design API
 
@@ -248,12 +248,12 @@ For the editor only; a bundle leaves `backend/graph-editor/` behind.
 | `POST /api/deploy/bundle` | Write the tool as a bundle zip |
 | `POST /api/files/open-external` | Open a node's file in the person's own editor (loopback only) |
 
-Types: `backend/app/api.ts` (routes marked `editor`); handlers: `editorRoutes` in
-`backend/graph-editor/routes.ts`.
+Types: `backend/deployment/host/api.ts` (routes marked `editor`); handlers: `editorRoutes` in
+`backend/editor/host/routes.ts`.
 
 ### The core protocol
 
-What the wrapper asks of a graph core (`graph/core/protocol.ts`, `GraphCore`). One core
+What the wrapper asks of a graph core (`backend/deployment/runtime/protocol.ts`, `GraphCore`). One core
 serves one session: what every node made last lives in it between rounds.
 
 | Operation | Asked with | Answers |
@@ -275,12 +275,12 @@ nodes it runs), then the executor's `node_start`, `node_done`, `batch` and `acti
 stdout, one JSON object per line. The wrapper writes `{ "id": 7, "op": "round", … }`; the core
 writes any number of `{ "id": 7, "event": … }` and then `{ "id": 7, "reply": … }` or
 `{ "id": 7, "error": "…" }`. Nothing else goes to stdout; what a core says for people goes to
-stderr. `node backend/app/main.ts core` is the JavaScript core as such a program
-(`graph/core/stdio.ts`). The wrapper uses one when `TW_CORE` names it, a program and its
-arguments; without it the core runs in the wrapper's process (`graph/core/localCore.ts`):
+stderr. `node backend/cli/main.ts core` is the JavaScript core as such a program
+(`backend/deployment/runtime/stdio.ts`). The wrapper uses one when `TW_CORE` names it, a program and its
+arguments; without it the core runs in the wrapper's process (`backend/deployment/runtime/localCore.ts`):
 
 ```bash
-TW_CORE="node backend/app/main.ts core" node backend/app/main.ts --editor frontend/dist
+TW_CORE="node backend/cli/main.ts core" node backend/cli/main.ts --editor frontend/dist
 ```
 
 **What every core must do**, whatever its language:
@@ -300,20 +300,20 @@ TW_CORE="node backend/app/main.ts core" node backend/app/main.ts --editor fronte
 - end when stdin ends, stopping what still goes; say an error as a sentence.
 
 The shapes asked and answered (`Graph`, `Trigger`, `ExecutionResult`, `NodeResult`,
-`ExampleRun`) are the types of `graph/graph.ts`, `graph/execution/triggers.ts` and
-`graph/authoring/examples.ts`, as JSON.
+`ExampleRun`) are the types of `graph/graph.ts`, `graph/triggers.ts` and
+`backend/deployment/runtime/examples.ts`, as JSON.
 
 **What a core does not do:** the page, the session, state.json, the clock, the queue of
 rounds, HTTP. It is handed a graph with what the round was sent already in its start points
 and what nodes keep already in them, and it changes nothing it was handed.
 
 **Conformance.** A core in another language is correct when it runs the examples as this
-one does: `node backend/app/main.ts test --offline examples/<name>` with `TW_CORE` naming it
+one does: `node backend/cli/main.ts test --offline examples/<name>` with `TW_CORE` naming it
 runs each node's example and replays the kept rounds (`tests/*.json`), which came from real
-runs. Its model client reads the same `ai-settings.json`. Held by `graph/core/core.test.ts`
+runs. Its model client reads the same `ai-settings.json`. Held by `backend/deployment/runtime/core.test.ts`
 (a round, a stopped round, the wire, a kept round replayed in this process and by
-`main.ts core` with the same answer) and `backend/gui-editor/session.test.ts` ("a session
-whose rounds run in a graph core of its own process"). `backend/app/wrapperDoc.test.ts`
+`main.ts core` with the same answer) and `backend/deployment/host/session.test.ts` ("a session
+whose rounds run in a graph core of its own process"). `backend/architecture/wrapperDoc.test.ts`
 holds that every route of `api.ts` and every operation of the protocol is in this section.
 
 ## Writing a plugin
@@ -326,9 +326,9 @@ each registered in one list. The tests named below fail until both halves exist 
 1. `graph/nodes/csv/CsvNodeRunner.ts`: extend `NodeRunner` and keep its three bars. Add it
    to `NODES` (`graph/nodes/registry.ts`) and to `NodeType` (`graph/graph.ts`).
 2. `frontend/graph-editor/nodes/csv/CsvNodeGuiBuilder.ts` and its panel: add it to
-   `NODE_BUILDERS` (`frontend/app/elements/registry.ts`); the compiler then asks for its
-   entry in `NODE_KINDS` (`frontend/app/document/nodeKinds.ts`).
-3. If ✨ Describe a graph should offer it: a `graphAuthorNote` (`backend/graph-editor/graphPrompt.test.ts`).
+   `NODE_BUILDERS` (`frontend/editor/document/elements/registry.ts`); the compiler then asks for its
+   entry in `NODE_KINDS` (`frontend/editor/document/model/nodeKinds.ts`).
+3. If ✨ Describe a graph should offer it: a `graphAuthorNote` (`backend/editor/graph/graphPrompt.test.ts`).
 
 Checked by `symmetry.test.ts`, both `times.test.ts` and both `shells.test.ts`.
 
@@ -336,24 +336,24 @@ Checked by `symmetry.test.ts`, both `times.test.ts` and both `shells.test.ts`.
 
 1. `backend/gui-editor/widgets/gauge/GaugeWidgetRunner.ts`: extend `WidgetRunner`
    (`StaticWidgetRunner` for a block that is only design, `DisplayWidgetRunner` for one that
-   only shows). Add it to `backend/gui-editor/widgets/roster.ts` and to `WidgetKind`
+   only shows). Add it to `gui/widgets/roster.ts` and to `WidgetKind`
    (`graph/graph.ts`).
 2. `frontend/gui-editor/widgets/gauge/`: `GaugeWidgetGuiBuilder.ts`, `GaugeWidgetView.tsx`
    and, if it has settings, a panel. The builder goes into
-   `frontend/gui-editor/widgets/roster.ts`, the view into `BLOCKS`
-   (`frontend/gui-editor/page/blocks.ts`).
+   `frontend/editor/gui/widgets/roster.ts`, the view into `BLOCKS`
+   (`frontend/deployment/gui/surface/blocks.ts`).
 
 Checked by `symmetry.test.ts`, and by `boundary.test.ts`, since a deployed page draws the view.
 
 **A language.** Everything that is JavaScript about writing and trying a body is the code
 node's `Language` (`JAVASCRIPT` in `graph/nodes/code/javascript.ts`; the interface is in
-`graph/authoring/generation.ts`): the file, the fence, what the model is told, the empty
+`graph/editor/generation.ts`): the file, the fence, what the model is told, the empty
 `run` it completes, the limits, and how a written body is run. The writer
-(`backend/graph-editor/generate.ts`) names no language. Two ways:
+(`backend/editor/graph/generate.ts`) names no language. Two ways:
 
 1. **A node kind for it**: a node kind as above whose runner declares its own `Language`,
    and a `CodeService` (`graph/nodes/Runtime.ts`) that runs bodies in that language, beside
-   `nodeCode` in `graph/core/node.ts`.
+   `nodeCode` in `backend/deployment/runtime/services.ts`.
 2. **A whole graph in that language**: a second graph core -- a program in that language
    that speaks the core protocol above and runs whole graphs. `TW_CORE` names it; the
    conformance run above checks it. The rules that are language-neutral (ports, wiring,
@@ -366,7 +366,7 @@ working directory except the settings file, and its own folder; it writes its ow
 only. Node's permission flags only allow, so the entries it may read are listed for every
 body; a link in the working directory that points at the settings file is followed anyway.
 A file elsewhere reaches it as an input typed `file_path`, which the executor reads for it.
-It ends after `TW_BODY_TIMEOUT_MS`. It talks in lines (`graph/core/node.ts`; `node.test.ts`,
+It ends after `TW_BODY_TIMEOUT_MS`. It talks in lines (`backend/deployment/runtime/services.ts`; `node.test.ts`,
 `sandbox.test.ts`):
 
 ```
@@ -381,12 +381,12 @@ stdout  ␞tell-and-wire:result {…}                               what it made
 
 ## What a deployed bundle carries
 
-`backend/app/cli/bundle.ts` writes it; `bundle.test.ts` runs one from a temporary folder.
+`backend/editor/project/deploy/bundle.ts` writes it; `bundle.test.ts` runs one from a temporary folder.
 It carries the project folder (without `history.md` or the files ✨ was given); `graph/`, `backend/app/` and `backend/gui-editor/` as they are, without tests;
 `web/` with the built `runtime.html`, what it references and `licenses.txt` (when the graph
 has a page and `npm run build` ran); the files the graph starts on, those from outside the
 project in `data/` (one that is missing or over 50 MB stops the bundle; a settings file is never carried, whatever folder holds it); the project's own `frontend/`;
-`LICENSE`, a `README.md`, and `run.cmd` / `run.sh`, which run `node backend/app/main.ts .`,
+`LICENSE`, a `README.md`, and `run.cmd` / `run.sh`, which run `node backend/cli/main.ts .`,
 with `--serve` when there is a page. It leaves out `backend/graph-editor/`, tests and
 `state.json`. Its model comes from the `TW_AI_*` variables or `ai-settings.json` beside
 `run.sh`.
@@ -403,9 +403,9 @@ with `--serve` when there is a page. It leaves out `backend/graph-editor/`, test
   code and the settings with their keys.
 - A request must name `127.0.0.1`, `localhost`, `[::1]` or a name in `TW_ALLOWED_HOSTS`, come
   from the server's own host (the scheme is not compared: a TLS proxy in front shows https) and send `application/json` (`foreignRequest`,
-  `backend/app/http.ts`). Every page it serves forbids being framed (`servePage`).
+  `backend/deployment/host/http.ts`). Every page it serves forbids being framed (`servePage`).
 - A graph is a file somebody may hand you, so it reaches files in two ways only
-  (`graph/core/confine.ts`, `confine.test.ts`). A path written in the graph file -- a start or
+  (`backend/deployment/runtime/confine.ts`, `confine.test.ts`). A path written in the graph file -- a start or
   end point's `path` -- is relative and stays below the working directory (links followed);
   `check` says so, and a run refuses. A path that comes at run time from the person -- a
   file chosen on the page, a call's values, the command line -- is theirs. The files that
@@ -458,7 +458,7 @@ waits for in `graph/` and `backend/`), `npm run build`
 (`frontend/dist`; the package test needs it), `npm test` (Vitest in all three workspaces),
 `npm run licenses` (every installed package against the licences it may have,
 `scripts/licenses.mjs`). CI (`.github/workflows/ci.yml`) runs these, then
-`node backend/app/main.ts check` and `test --offline` over every folder in `examples/`, and
+`node backend/cli/main.ts check` and `test --offline` over every folder in `examples/`, and
 `node --test scripts/launcher.test.mjs scripts/package.test.mjs` (the package test on Linux
 and Windows). A green push to `main` rebuilds the `latest` pre-release and the container
 image; a `vX.Y.Z` tag publishes a release with the Windows and Linux zips.

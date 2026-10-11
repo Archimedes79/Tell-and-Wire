@@ -1,7 +1,7 @@
 import { NodeRunner, type Runners, type WhatRuns } from '../NodeRunner.ts';
 import { type Runtime } from '../Runtime.ts';
 import { parseGraph, type ExecutionResult, type Graph, type GraphNode } from '../../graph.ts';
-import { errorOutput, type Problem } from '../../execution/wiring.ts';
+import { errorOutput, type Problem } from '../../wiring.ts';
 import { boundaryInputs, boundaryOutputs, boundaryPorts, carried, handedDown, handedUp } from './boundary.ts';
 
 /**

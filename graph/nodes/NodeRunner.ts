@@ -5,12 +5,12 @@
 // A block on a page shows or hands on what it holds, and writes nothing.
 
 import type { DataType, Graph, GraphNode, NodeResult, NodeType, Port } from '../graph.ts';
-import { collectedInterface, type Schema } from '../execution/interface.ts';
-import { runsPerItem } from '../execution/batching.ts';
-import type { Problem } from '../execution/wiring.ts';
-import type { Logic } from '../authoring/logic.ts';
-import type { Generation } from '../authoring/generation.ts';
-import { definitionShape, type Definitions } from '../authoring/definition.ts';
+import { collectedInterface, type Schema } from '../schema.ts';
+import { runsPerItem } from '../batching.ts';
+import type { Problem } from '../wiring.ts';
+import type { Logic } from '../files/logic.ts';
+import type { Generation } from '../editor/generation.ts';
+import { definitionShape, type Definitions } from '../files/definition.ts';
 import { ElementRunner } from './ElementRunner.ts';
 import type { Runtime } from './Runtime.ts';
 
@@ -320,7 +320,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * What this node offers whoever uses the graph from outside -- a page, a
    * script, the graph above: an event that starts a round, or an output it
    * hands back. Each under a name a caller uses, never a port:
-   * `backend/gui-editor/graphInterface.ts` gathers them into the graph's own.
+   * `backend/deployment/host/interface.ts` gathers them into the graph's own.
    */
   offers(_node: GraphNode): Offer[] {
     return [];
@@ -414,7 +414,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * designed -- a data node's fields and its round count, what a start point
    * was sent. A session reads it after a round and puts it back before the
    * next (`setState`), on a copy, so that using a graph never changes its
-   * design (`backend/gui-editor/session.ts`); a value whose design changed is
+   * design (`backend/deployment/host/session.ts`); a value whose design changed is
    * dropped, and only that one. Nothing, for a node that keeps nothing. A value
    * that holds nothing is `null`.
    */
@@ -428,7 +428,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   // ── Build time ────────────────────────────────────────────────────────────
   // What only building asks: the editor, `check`, `test`, a bundle being made.
   // It travels with the class -- one class per kind is worth more than a
-  // smaller tool -- but nothing a run calls may reach it (`backend/app/times.test.ts`).
+  // smaller tool -- but nothing a run calls may reach it (`backend/architecture/times.test.ts`).
 
   /**
    * How an AI writes this node's body, or undefined if none does: a code
@@ -456,7 +456,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * What someone writing a graph for this kind must know about its settings:
    * which keys hold what it does, and what goes wrong if they are put anywhere
    * else. A sentence or a paragraph, without a heading -- the prompt that
-   * designs a whole graph (`backend/graph-editor/graphPrompt.ts`) collects one from
+   * designs a whole graph (`backend/editor/graph/graphPrompt.ts`) collects one from
    * every kind, so a new kind is described in its own file.
    *
    * None means a generated graph is not meant to use this kind, and it is left

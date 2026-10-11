@@ -2,7 +2,7 @@
 
 How to build a tool in Tell & Wire, step by step. The running example is
 [examples/population_plotter](../examples/population_plotter/): choose a CSV, see a bar
-chart. `frontend/app/masterExamples.test.ts` builds this example, folder_summaries and
+chart. `frontend/editor/app/masterExamples.test.ts` builds this example, folder_summaries and
 chat the way this guide does (blocks added, a node dropped, a wire dragged) and runs them.
 
 Start the editor and set up a model first, as the [README](../README.md) says. ✨ needs a
@@ -295,7 +295,7 @@ tool's `tests/` folder (the tool must be saved). From the command line, `--keep`
 the same:
 
 ```bash
-node backend/app/main.ts my_tool --event measure --value "paragraph=One two." --keep
+node backend/cli/main.ts my_tool --event measure --value "paragraph=One two." --keep
 ```
 
 The file holds what came from outside the graph (the start point's package, what the models
@@ -305,13 +305,13 @@ else. It also runs each code and AI node on its `input.js` example and holds the
 `output.js`; `--offline` skips what needs a model:
 
 ```bash
-node backend/app/main.ts test --offline my_tool    # what CI runs for every example
-node backend/app/main.ts check my_tool             # what is wrong, without running
+node backend/cli/main.ts test --offline my_tool    # what CI runs for every example
+node backend/cli/main.ts check my_tool             # what is wrong, without running
 ```
 
 ## 10. Deploy
 
-**File → Deploy as zip** downloads a zip; `node backend/app/main.ts my_tool --bundle ./out`
+**File → Deploy as zip** downloads a zip; `node backend/cli/main.ts my_tool --bundle ./out`
 writes the same folder. The person who gets it unzips it and starts `run.cmd` or `./run.sh`.
 They need Node 24 or newer and nothing else. With a page, the tool opens in the browser on
 port 8000 or the next free one. Without a page or a call, it runs once and prints JSON.

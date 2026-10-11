@@ -3,8 +3,8 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { imageDataUrl } from './images.ts';
-import { nodeFiles } from '../core/node.ts';
-import { parseWidget, widgetElement } from '../../backend/gui-editor/widgets/page.ts';
+import { nodeFiles } from '../../backend/deployment/runtime/services.ts';
+import { parseWidget, widgetElement } from '../../gui/gui.ts';
 import type { FileService, Runtime } from './Runtime.ts';
 
 /**

@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { listFolder } from './folderListing.ts';
-import { nodeRuntime } from '../core/node.ts';
+import { nodeRuntime } from '../../backend/deployment/runtime/services.ts';
 import { registry } from './registry.ts';
-import { parseWidget, widgetElement } from '../../backend/gui-editor/widgets/page.ts';
+import { parseWidget, widgetElement } from '../../gui/gui.ts';
 import type { GraphNode } from '../graph.ts';
 
 /**

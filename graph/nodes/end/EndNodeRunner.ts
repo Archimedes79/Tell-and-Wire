@@ -3,7 +3,7 @@ import { type Runtime } from '../Runtime.ts';
 import { type GraphNode, type NodeResult, type Port } from '../../graph.ts';
 import type { Offer } from '../NodeRunner.ts';
 import type { Runners } from '../NodeRunner.ts';
-import type { Problem } from '../../execution/wiring.ts';
+import type { Problem } from '../../wiring.ts';
 import { ownPathProblem } from '../ownPath.ts';
 
 /**

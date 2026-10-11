@@ -39,7 +39,7 @@ try {
   process.exit(1);
 }
 
-const editor = spawn(process.execPath, ['backend/app/main.ts', '--editor', 'frontend/dist', ...args], { cwd: root, stdio: 'inherit' });
+const editor = spawn(process.execPath, ['backend/cli/main.ts', '--editor', 'frontend/dist', ...args], { cwd: root, stdio: 'inherit' });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => editor.kill(signal));
 editor.on('exit', (code, signal) => process.exit(code ?? (signal ? 0 : 1)));
 editor.on('error', (error) => {

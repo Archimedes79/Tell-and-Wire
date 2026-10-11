@@ -64,7 +64,7 @@ start.cmd         # Windows cmd, or double-click it
 
 The launcher installs on first use, builds the page when its sources changed, restarts an
 editor already on the port and opens the browser; `stop.*` stops it. By hand it is
-`npm ci`, `npm run build`, then `npm start` (`node backend/app/main.ts --editor frontend/dist`).
+`npm ci`, `npm run build`, then `npm start` (`node backend/cli/main.ts --editor frontend/dist`).
 `npm run dev` serves the page with live reload on <http://127.0.0.1:3000>. Keep a checkout
 out of folders that Dropbox or OneDrive sync: they lock files during `npm ci` and the build.
 
@@ -72,12 +72,12 @@ A graph also runs without the editor. Paths inside a graph resolve against the w
 directory, so run the examples from the repository root:
 
 ```bash
-node backend/app/main.ts examples/population_plotter          # run once, print the result as JSON
-node backend/app/main.ts check examples/population_plotter    # what is wrong, without running
-node backend/app/main.ts test --offline examples/nested_statistics   # node examples and kept runs
-node backend/app/main.ts my_tool --serve                      # serve its page
-node backend/app/main.ts my_tool --bundle ./out               # write a deployable folder
-node backend/app/main.ts --mcp --mcp-root ./tools             # an MCP server on stdio
+node backend/cli/main.ts examples/population_plotter          # run once, print the result as JSON
+node backend/cli/main.ts check examples/population_plotter    # what is wrong, without running
+node backend/cli/main.ts test --offline examples/nested_statistics   # node examples and kept runs
+node backend/cli/main.ts my_tool --serve                      # serve its page
+node backend/cli/main.ts my_tool --bundle ./out               # write a deployable folder
+node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on stdio
 ```
 
 ## Set up a model
