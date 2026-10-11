@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialogs/PathField';
-import { listBlockAsRun } from '../../../graph/authoring/readAsRun';
+import { listBlockAsRun } from '../../../graph/writing/readAsRun';
 import { FIELD_ON_SURFACE, MUTED } from '../../../../deployment/gui/kit/ui/theme';
 import FolderListing from '../../../app/fields/FolderListing';
 import type { WidgetPanelProps } from '../WidgetGuiBuilder';

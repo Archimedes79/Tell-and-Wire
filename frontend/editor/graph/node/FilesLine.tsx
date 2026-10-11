@@ -5,8 +5,8 @@ import FileBrowserDialog from '../../../deployment/gui/kit/dialogs/FileBrowserDi
 import { filesOf } from '../../document/model/givenFiles';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
-import { carriesFiles, droppedFile, droppedPath } from '../authoring/droppedFile';
-import { fileValue } from '../authoring/readAsRun';
+import { carriesFiles, droppedFile, droppedPath } from '../writing/droppedFile';
+import { fileValue } from '../writing/readAsRun';
 import { DIMMER, FIELD, MUTED, TEXT } from '../../../deployment/gui/kit/ui/theme';
 
 /**

@@ -12,12 +12,12 @@ import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
 import { blocksAt } from '../../document/model/gui';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { carriesFiles, dropExample, droppedFile } from '../authoring/droppedFile';
+import { carriesFiles, dropExample, droppedFile } from '../writing/droppedFile';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import ResultPreview, { ErrorPreview } from './ResultPreview';
 import Button from '../../../deployment/gui/kit/ui/Button';
-import { useIsWriting } from '../authoring/useGenerate';
+import { useIsWriting } from '../writing/useGenerate';
 
 // Colour AND a glyph: a red/green 8px dot is unreadable both to a screen
 // reader and to a colour-blind user scanning a canvas for the failed node.

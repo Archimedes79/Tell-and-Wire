@@ -117,7 +117,7 @@ describe('deployment boundary', () => {
     expect([...reachable].some((path) => /WidgetView\.tsx$/.test(path))).toBe(true);
   });
 
-  it('reaches nothing of the editor: no store, canvas, authoring or shell, no panel, no module for building a graph', () => {
+  it('reaches nothing of the editor: no store, canvas, writing or shell, no panel, no module for building a graph', () => {
     // Panels are registered with `lazy(() => import(…))`, which this walk --
     // like the bundler's static graph -- does not follow: a panel is a chunk
     // the editor fetches when an element is opened, and a tool never does.

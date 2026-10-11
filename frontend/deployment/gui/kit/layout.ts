@@ -97,7 +97,7 @@ export function resolveWidgetLayout(widgets: GuiWidget[]): WidgetPlacement[] {
  * gaps between them -- and the cells it spans. The gui never needs the sum,
  * since the browser's grid does it; a node wired into the end point the
  * block shows does, to write what it sends for the room there is
- * (`authoring/generationContext.ts`). On a
+ * (`writing/generationContext.ts`). On a
  * narrower gui every cell shrinks alike (`cellSize`), so this is the most the
  * block gets.
  */

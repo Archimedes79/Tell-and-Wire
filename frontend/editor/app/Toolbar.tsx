@@ -11,7 +11,7 @@ import RequirementsDialog from '../../deployment/gui/kit/dialogs/RequirementsDia
 import { flushPanels } from '../document/store/flushPanels';
 import { useGraphSweep } from '../graph/node/useGraphSweep';
 import Modal from '../../deployment/gui/kit/ui/Modal';
-import LiveGeneration from '../graph/authoring/LiveGeneration';
+import LiveGeneration from '../graph/writing/LiveGeneration';
 import { useGraphAsk } from '../document/graphAsk';
 import SubgraphTrail from './SubgraphTrail';
 import GraphProblems from './GraphProblems';

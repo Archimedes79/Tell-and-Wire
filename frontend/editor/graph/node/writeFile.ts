@@ -10,13 +10,13 @@ import type { Graph, GraphNode } from '../../document/graph';
 import { call } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
 import { ONCE } from '../nodes/NodeGuiBuilder';
-import { runGenerate } from '../authoring/useGenerate';
+import { runGenerate } from '../writing/useGenerate';
 import {
   exchangeName, generateRequest, generationGuard, outputsAsDefined, resultMessage, unfitDefinition, withHistory, writeName, writtenInto,
   type Refine, type Write,
-} from '../authoring/generation';
-import { inputFilesOf } from '../authoring/exampleFile';
-import { arrivedAt, modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts, type Arrived } from '../authoring/pull';
+} from '../writing/generation';
+import { inputFilesOf } from '../writing/exampleFile';
+import { arrivedAt, modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts, type Arrived } from '../writing/pull';
 import { inputFile, outputFile } from '../../../../graph/editor/pull.ts';
 import type { NodePanel } from './nodePanel';
 
@@ -61,7 +61,7 @@ function change(target: Target, edit: (node: GraphNode) => GraphNode): void {
 }
 
 /**
- * Pull input.js off the graph (`authoring/pull.ts`): what the nodes before it
+ * Pull input.js off the graph (`writing/pull.ts`): what the nodes before it
  * say they hand on, and an example from running them. No model is asked of it
  * -- unless a node before it asks one to run. Resolves to whether it was
  * written *and* every wired input has an example: what is written after it is

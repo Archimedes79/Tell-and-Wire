@@ -3,7 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { useGraphStore } from '../document/store/graphStore';
 import { flushPanels } from '../document/store/flushPanels';
 import Button from '../../deployment/gui/kit/ui/Button';
-import LiveGeneration from '../graph/authoring/LiveGeneration';
+import LiveGeneration from '../graph/writing/LiveGeneration';
 import GraphProblems from './GraphProblems';
 import ProblemsChip from './ProblemsChip';
 import { useGraphAsk, type GraphAsk } from '../document/graphAsk';

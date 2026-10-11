@@ -3,11 +3,11 @@ import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { DANGER_SOFT, FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
 import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
-import CodeField, { type CodeLanguage } from '../authoring/CodeField';
-import { OpenInEditor } from '../authoring/FileChip';
-import TryExample, { type useTryExample } from '../authoring/TryExample';
-import { useTyped } from '../authoring/useTyped';
-import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Part } from '../authoring/generation';
+import CodeField, { type CodeLanguage } from '../writing/CodeField';
+import { OpenInEditor } from '../writing/FileChip';
+import TryExample, { type useTryExample } from '../writing/TryExample';
+import { useTyped } from '../writing/useTyped';
+import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Part } from '../writing/generation';
 import { PaneHeader } from '../views/NodeViewLayout';
 import FilesLine from './FilesLine';
 

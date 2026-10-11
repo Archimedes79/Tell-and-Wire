@@ -1,7 +1,7 @@
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { ACCENT_FILL, ACCENT_TEXT } from '../../../deployment/gui/kit/ui/theme';
-import GenerationTranscript, { useLiveGeneration } from '../authoring/GenerationTranscript';
-import LiveGeneration from '../authoring/LiveGeneration';
+import GenerationTranscript, { useLiveGeneration } from '../writing/GenerationTranscript';
+import LiveGeneration from '../writing/LiveGeneration';
 
 /**
  * What the model is doing for the node and what it last said: the prompt as it

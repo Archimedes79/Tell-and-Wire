@@ -86,7 +86,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
 
   /**
    * How the block draws the text of what arrives, in words for the node wired
-   * into the end point it shows (`authoring/generationContext.ts`), so that node can write a title that
+   * into the end point it shows (`writing/generationContext.ts`), so that node can write a title that
    * fits or a summary that is read in the room there is. The text of a box on
    * the gui by default; a kind that draws its own says so from the constant
    * its view draws with, and one that draws none says nothing.

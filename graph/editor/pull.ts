@@ -12,7 +12,7 @@
 //
 // This is the files' format and the rules for an example; what feeds each input,
 // and what each output feeds, is read from the graph by the editor
-// (`frontend/editor/graph/authoring/pull.ts`).
+// (`frontend/editor/graph/writing/pull.ts`).
 
 /** One input as a pull writes it into input.js. */
 export interface PulledPort {

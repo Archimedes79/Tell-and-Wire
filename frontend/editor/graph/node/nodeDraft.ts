@@ -2,7 +2,7 @@ import type { GraphNode, Port } from '../../document/graph';
 import { derivedNodePorts } from '../../document/model/ports';
 import { useGraphStore } from '../../document/store/graphStore';
 import { portRenames, renamedPorts, untracked } from '../../document/store/portRenames';
-import { definitionFollowingPorts } from '../authoring/definitionPorts';
+import { definitionFollowingPorts } from '../writing/definitionPorts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { ERROR_PORT, errorOutput } from '../../../../graph/wiring.ts';
 

@@ -18,7 +18,7 @@ import { describe, expect, it } from 'vitest';
  *     deployed widgets  the views of the blocks, drawn alike in the editor and in a tool
  *     surface           the gui a tool renders, and the editor draws the same way
  *   5 the elements      document/elements (the registry), graph/nodes, gui/widgets,
- *                       the fields their panels are made of, and graph/authoring
+ *                       the fields their panels are made of, and graph/writing
  *   6 gui               a gui, designed
  *     canvas            the graph, drawn
  *     node              one node, opened: what the view's rows and chats do
@@ -27,17 +27,17 @@ import { describe, expect, it } from 'vitest';
  *   9 main              the entry
  *
  * The elements are one tier and reach each other on purpose: a panel is made of
- * authoring editors and fields, and an authoring editor asks the registry what a
+ * writing editors and fields, and a writing editor asks the registry what a
  * node is. A panel is a lazy chunk, so the static graph has no cycle in it
  * (`deployment/gui/boundary.test.ts` holds that a tool never loads either).
  *
  * The deployed app ranks with `App` -- both are served -- but reaches far less:
- * nothing in the store, the canvas, authoring or the app's files, however
+ * nothing in the store, the canvas, writing or the app's files, however
  * indirectly, as a delivered tool holds no graph. That is a rule on what is
  * reached, not on one import, so `deployment/gui/boundary.test.ts` holds it.
  */
 const ELEMENTS = [
-  'editor/document/elements/', 'editor/app/fields/', 'editor/graph/nodes/', 'editor/graph/fields/', 'editor/graph/authoring/', 'editor/gui/widgets/',
+  'editor/document/elements/', 'editor/app/fields/', 'editor/graph/nodes/', 'editor/graph/fields/', 'editor/graph/writing/', 'editor/gui/widgets/',
 ];
 /** [area, rank, the folders and files it is made of]; the longest path a file starts with decides. */
 const AREAS: [string, number, ...string[]][] = [

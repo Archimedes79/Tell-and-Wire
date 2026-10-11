@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import type { DataType, Port } from '../../document/graph';
 import { ONCE, type PortEditing, type UndoStep } from '../nodes/NodeGuiBuilder';
-import { useTyped } from '../authoring/useTyped';
-import { wholeList } from '../authoring/perItem';
+import { useTyped } from '../writing/useTyped';
+import { wholeList } from '../writing/perItem';
 import { caughtErrorAt, portIdProblems } from './portIds';
 import { takenAs, type FieldChoice } from '../../document/model/gui';
 import { freeId } from '../../document/model/ids';

@@ -12,9 +12,9 @@ import { useCallback, useRef, useState } from 'react';
 import type { GraphEdge, GraphNode } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
 import { graphEdge } from '../../document/model/wires';
-import { generationGuard, isWritten, bodyOf, writesFor, type Write } from '../authoring/generation';
-import { isWriting, writingSaid } from '../authoring/useGenerate';
-import { missingExamples, sweep, type SweepUnit } from '../authoring/graphSweep';
+import { generationGuard, isWritten, bodyOf, writesFor, type Write } from '../writing/generation';
+import { isWriting, writingSaid } from '../writing/useGenerate';
+import { missingExamples, sweep, type SweepUnit } from '../writing/graphSweep';
 import { nodePanel } from './nodePanel';
 import { ANOTHER_GRAPH, writeFile } from './writeFile';
 

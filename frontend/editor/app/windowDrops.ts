@@ -8,7 +8,7 @@
 // same.
 
 import { call } from '../api/client';
-import { CODE_FIELD } from '../graph/authoring/CodeField';
+import { CODE_FIELD } from '../graph/writing/CodeField';
 
 /**
  * Whether a drop landed in a file's box (`CodeField`) -- one of a node's

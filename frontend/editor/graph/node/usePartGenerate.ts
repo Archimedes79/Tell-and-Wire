@@ -1,5 +1,5 @@
-import { useGenerate } from '../authoring/useGenerate';
-import { previewGeneration, writesFor, type Press, type Write } from '../authoring/generation';
+import { useGenerate } from '../writing/useGenerate';
+import { previewGeneration, writesFor, type Press, type Write } from '../writing/generation';
 import type { useNodePanel } from './nodePanel';
 import { graphOf, pullInput, pullOutput, requestFor, writeFile, type Say } from './writeFile';
 

@@ -5,7 +5,7 @@ import { designs } from '../../../../../graph/editor/nodes/registry.ts';
 import { useGraphStore } from '../../../document/store/graphStore';
 import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialogs/PathField';
 import FolderListing from '../../../app/fields/FolderListing';
-import { listAsRun } from '../../authoring/readAsRun';
+import { listAsRun } from '../../writing/readAsRun';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
 /** What a start point that starts itself can send, in the words the panel offers it. */
