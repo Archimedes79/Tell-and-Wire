@@ -26,7 +26,7 @@ const VARIABLES = {
   'Node Description': 'Its heading, id and kind as "# <heading> (ID <id>, <kind> node)", then its text',
   'Input Definition': 'input.js as it is, where it is written -- then each input as wired: its type, where it comes from, what arrives there',
   'Output Definition': 'output.js as it is, where it is written -- then each output as wired: where it goes, what the node there wants',
-  Context: 'The graph around the node, in words: what it is for, its pages, what is wired to what',
+  Context: 'The graph around the node, in words: what it is for, its gui, what is wired to what',
   'Example Files': 'For ✨ Input: the files it is given -- examples, a spec -- each path and the start of it',
   'Output Files': 'For ✨ Output: the files it is given, the same way',
 } as const;

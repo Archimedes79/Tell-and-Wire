@@ -35,9 +35,9 @@ const node = (id: string, node_type: string, config: Record<string, unknown> = {
   id, node_type, label: id, description: '', position: { x: 0, y: 0 }, inputs: [], outputs: [], config,
 } as unknown as GraphNode);
 const graphOf = (...nodes: GraphNode[]): Graph => ({ metadata: { name: 'Tool', description: '', gui_scheme: 'night' }, nodes, edges: [] } as Graph);
-/** A graph with a page of *blocks*, and the start point "go" they fire. */
-const paged = (blocks: Record<string, unknown>[], ...nodes: GraphNode[]): Graph => ({
-  ...graphOf(node('go', 'start'), ...nodes), page: { blocks: blocks as never },
+/** A graph with a gui of *blocks*, and the start point "go" they fire. */
+const withGui = (blocks: Record<string, unknown>[], ...nodes: GraphNode[]): Graph => ({
+  ...graphOf(node('go', 'start'), ...nodes), gui: { blocks: blocks as never },
 });
 const button = { id: 'press', kind: 'button', fires: 'go' };
 
@@ -58,15 +58,15 @@ afterEach(async () => {
 });
 
 describe('the application ▶ Run starts', () => {
-  it('with a page, hands the document over, starts the server clock and waits: the graph runs when the page is used', async () => {
-    const graph = open(paged([{ id: 'msg', kind: 'text_io', mode: 'input', value: 'hello', sends_to: ['go'] }, button], node('work', 'code')));
+  it('with a gui, hands the document over, starts the server clock and waits: the graph runs when the gui is used', async () => {
+    const graph = open(withGui([{ id: 'msg', kind: 'text_io', mode: 'input', value: 'hello', sends_to: ['go'] }, button], node('work', 'code')));
     await startApplication(graph, runWhole);
     expect(server.asked).toEqual(['holdGraph', 'startApplication']);
     expect(whole).toBe(0);
     expect(useApplication.getState().running).toBe(true);
   });
 
-  it('without a page, runs whole once, as a program does -- and has then ended', async () => {
+  it('without a gui, runs whole once, as a program does -- and has then ended', async () => {
     const graph = open(graphOf(node('work', 'code'), node('shown', 'end')));
     await startApplication(graph, runWhole);
     expect(whole).toBe(1);
@@ -75,7 +75,7 @@ describe('the application ▶ Run starts', () => {
   });
 
   it('is not started by what comes after a ■ Stop pressed while the document is on its way -- and a document that cannot be handed over leaves it not running', async () => {
-    const graph = open(paged([button], node('work', 'code')));
+    const graph = open(withGui([button], node('work', 'code')));
     let release!: () => void;
     server.hold = new Promise<void>((resolve) => { release = resolve; });
     const starting = startApplication(graph, runWhole);

@@ -8,7 +8,7 @@ import { DANGER, DANGER_FILL, DANGER_TEXT, DIM, MUTED, TEXT } from '../kit/ui/th
 import RunResult, { type ShownOutput } from './RunResult';
 
 /**
- * The page a graph shows: its blocks, in order, on one grid.
+ * The gui a graph shows: its blocks, in order, on one grid.
  *
  * **This module is the deployment boundary.** It holds what a *user* of the
  * finished tool sees and nothing else — no selection, no drag handle, no resize
@@ -21,12 +21,12 @@ import RunResult, { type ShownOutput } from './RunResult';
  * base. Only the import graph decides what ends up in a bundle, so the boundary
  * is a module boundary — `runtime/boundary.test.ts` asserts that it stays one.
  *
- * It knows no graph and no store: whoever draws it hands it the page as
+ * It knows no graph and no store: whoever draws it hands it the gui as
  * designed and what is in use -- the delivered tool from the runtime API, the
  * editor from its document and the same API -- and is told what was used.
  */
 
-/** The page as it is drawn: what was designed, and what is in use. */
+/** The gui as it is drawn: what was designed, and what is in use. */
 export interface GuiModel {
   name: string;
   description: string;
@@ -36,15 +36,15 @@ export interface GuiModel {
   valueOf: (block: GuiWidget) => unknown;
   /** What a block shows of what the end point it shows handed back; undefined for nothing yet. */
   shownOn: (block: GuiWidget) => unknown;
-  /** Using the block starts a round: it fires a start point the page starts. */
+  /** Using the block starts a round: it fires a start point the gui starts. */
   fires: (block: GuiWidget) => boolean;
-  /** A round the page starts is sent what the block holds, under its id. */
+  /** A round the gui starts is sent what the block holds, under its id. */
   takes: (block: GuiWidget) => boolean;
   /** A round is going: a block that starts one waits. */
   busy: boolean;
   /** Why the last round failed, in its own words; empty when it did not. */
   error: string;
-  /** For a page without blocks: what the graph hands back, each output under its label. */
+  /** For a gui without blocks: what the graph hands back, each output under its label. */
   outputs: ShownOutput[];
   /** The graph has no nodes at all: nothing to run, nothing to show. */
   empty?: boolean;
@@ -70,15 +70,15 @@ export function blockValue(
   return incoming !== undefined && overrides?.[widget.id] === undefined ? incoming : held;
 }
 
-/** Whether the page is narrow (`GUI_NARROW`): set by the grid, read by each block. */
+/** Whether the gui is narrow (`GUI_NARROW`): set by the grid, read by each block. */
 const NarrowGui = React.createContext(false);
 
-/** The grid the page flows on: 16 square columns, capped at a readable width. */
+/** The grid the gui flows on: 16 square columns, capped at a readable width. */
 export function GuiGrid({
   children, minRows, onCell,
 }: {
   children: React.ReactNode;
-  /** Keep this much height when empty, so there is a page to aim at. */
+  /** Keep this much height when empty, so there is a gui to aim at. */
   minRows?: number;
   /**
    * The measured cell size, whenever it changes.
@@ -133,7 +133,7 @@ export function GuiBlock({
   children?: React.ReactNode;
   /**
    * Drawn in place of the block's own widget. Designer only: it is how a
-   * heading becomes a box you type in while it is selected. A deployed page
+   * heading becomes a box you type in while it is selected. A deployed gui
    * passes none, so nothing that edits can be reached from it.
    */
   content?: React.ReactNode;
@@ -184,19 +184,19 @@ export function GuiBlock({
 }
 
 /**
- * What a tool shows when its page has no blocks: what it does, how to start
- * it, and what its run handed back -- each output under its name. A page is
+ * What a tool shows when its gui has no blocks: what it does, how to start
+ * it, and what its run handed back -- each output under its name. A gui is
  * its blocks; one whose last block was removed has nothing to draw, and drew
  * an empty rectangle where the run's result belongs.
  */
-function WithoutGui({ page }: { page: GuiModel }) {
+function WithoutGui({ gui }: { gui: GuiModel }) {
   // A graph of nothing is not ready to run: it said it was, run or not.
-  if (page.empty) {
+  if (gui.empty) {
     return (
       <div className="m-6 max-w-2xl">
         <p className="text-sm mb-2" style={{ color: TEXT }}>This graph has no nodes yet.</p>
         <p className="text-xs" style={{ color: DIM }}>
-          Add one from the palette on the Graph tab, or a block on the Page tab.
+          Add one from the palette on the Graph tab, or a block on the Gui tab.
         </p>
       </div>
     );
@@ -204,20 +204,20 @@ function WithoutGui({ page }: { page: GuiModel }) {
   return (
     <div className="m-6 max-w-2xl">
       <p className="text-sm mb-2" style={{ color: TEXT }}>
-        {page.description || `${page.name} is ready to run.`}
+        {gui.description || `${gui.name} is ready to run.`}
       </p>
       <p className="text-xs" style={{ color: DIM }}>
         It runs when it is started -- by itself, or by a call -- and what it hands back appears here.
       </p>
-      <RunResult outputs={page.outputs} />
+      <RunResult outputs={gui.outputs} />
     </div>
   );
 }
 
 /**
  * Why the last round failed, in the round's own words -- which can be several
- * lines long, and belong above the page rather than squeezed into the header
- * beside its "❌ Failed". Part of what the page shows, so every host draws it:
+ * lines long, and belong above the gui rather than squeezed into the header
+ * beside its "❌ Failed". Part of what the gui shows, so every host draws it:
  * the editor's running application once said only "❌ Failed".
  */
 function RunError({ error }: { error: string }) {
@@ -233,8 +233,8 @@ function RunError({ error }: { error: string }) {
 }
 
 /**
- * The page in use: what a deployed tool serves, and what the editor's running
- * application shows -- or, with no blocks, the tool without a page. One
+ * The gui in use: what a deployed tool serves, and what the editor's running
+ * application shows -- or, with no blocks, the tool without a gui. One
  * component, so what is tried in the editor cannot flatter.
  *
  * A block used is *onValue* -- what it now holds, for a block a round is
@@ -242,40 +242,40 @@ function RunError({ error }: { error: string }) {
  * once its value is in. A button is an event and nothing else: it holds no
  * value a round could be sent (`WidgetRunner.takesValue`).
  */
-export function GuiSurface({ page, onValue, onEvent }: {
-  page: GuiModel;
+export function GuiSurface({ gui, onValue, onEvent }: {
+  gui: GuiModel;
   onValue: (block: GuiWidget, value: unknown) => void;
   onEvent: (block: GuiWidget) => void;
 }) {
-  if (page.blocks.length === 0) return <><RunError error={page.error} /><WithoutGui page={page} /></>;
+  if (gui.blocks.length === 0) return <><RunError error={gui.error} /><WithoutGui gui={gui} /></>;
   const keep = (block: GuiWidget, value: unknown) => {
-    if (value !== undefined && page.takes(block)) onValue(block, value);
+    if (value !== undefined && gui.takes(block)) onValue(block, value);
   };
   // A block used: what it holds now is kept first -- the value and the event
   // that follows it arrive in the same tick -- and only a block that fires a
   // start point starts a round, and not while one is going.
   const fire = (block: GuiWidget, value?: unknown) => {
     keep(block, value);
-    if (page.fires(block) && !page.busy) onEvent(block);
+    if (gui.fires(block) && !gui.busy) onEvent(block);
   };
   return (
     <>
-      <RunError error={page.error} />
+      <RunError error={gui.error} />
       <div className="flex-1 overflow-auto px-8 py-6">
         <GuiGrid>
-          {resolveWidgetLayout(page.blocks).map((placement) => {
+          {resolveWidgetLayout(gui.blocks).map((placement) => {
             const { widget } = placement;
-            const incoming = page.shownOn(widget);
+            const incoming = gui.shownOn(widget);
             return (
               <GuiBlock
                 key={widget.id}
                 placement={placement}
                 incoming={incoming}
-                value={blockValue(widget, page.valueOf(widget), incoming)}
+                value={blockValue(widget, gui.valueOf(widget), incoming)}
                 onChange={(next) => keep(widget, next)}
                 onTrigger={(next) => fire(widget, next)}
-                fires={page.fires(widget)}
-                busy={page.busy}
+                fires={gui.fires(widget)}
+                busy={gui.busy}
               />
             );
           })}

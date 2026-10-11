@@ -20,16 +20,16 @@ import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 /**
  * The three master examples, built by hand.
  *
- * A plotter, a folder of summaries, a chat: each is a page, a start point,
+ * A plotter, a folder of summaries, a chat: each is a gui, a start point,
  * one node and an end point, and each is put together here the way a person
- * puts it together -- blocks added to the page (each connects itself: what it
- * sends to the page's start point, a display to an end point), a node dropped
+ * puts it together -- blocks added to the gui (each connects itself: what it
+ * sends to the gui's start point, a display to an end point), a node dropped
  * on the canvas, its text typed and its ✨ pressed in its panel, and a wire
  * dragged from one port to another -- what an input takes of the start
  * point's package following from the wire, as the port editor's "takes" box
  * then shows it. No mouse, no browser, and no copy of
  * what the editor's handlers do: a block comes from the palette's `newBlock`
- * and reaches the page through `insertBlock` and `patchBlock`, a node's panel
+ * and reaches the gui through `insertBlock` and `patchBlock`, a node's panel
  * is its own `nodePanel` -- changed as its ports editor and its fields change
  * it, and what ✨ brings back written in by `writtenInto`, as the panel writes
  * it -- and a wire is the store's `connect`: the functions the designer and
@@ -41,14 +41,14 @@ import type { Runtime } from '../../../graph/nodes/Runtime.ts';
  *   - is what was built sound (`check` finds nothing)?
  *   - is it *the example*: the same blocks connected the same way, the same
  *     wires, as the folder in `examples/` that people open first?
- *   - does it work: used on a file, a folder, a message, does the page show it?
+ *   - does it work: used on a file, a folder, a message, does the gui show it?
  *
  * The second is what keeps the examples honest. An example somebody can open
  * but could not have built -- a port type no panel sets, a wire no handle
  * offers -- is a trick, and this is where it is caught.
  */
 
-/** The examples as the backend reads their folders: the flow, each node's settings and ports, its files, and the page. */
+/** The examples as the backend reads their folders: the flow, each node's settings and ports, its files, and the gui. */
 const EXAMPLES: Record<string, Graph> = {};
 beforeAll(async () => {
   for (const name of ['population_plotter', 'folder_summaries', 'chat']) {
@@ -67,17 +67,17 @@ const writtenFor = (name: string, id: string): Partial<Record<Write, string>> =>
 // ── What a person does ────────────────────────────────────────────────────
 
 const store = () => useGraphStore.getState();
-const blockOf = (id: string): GuiWidget => store().page.find((block) => block.id === id)!;
+const blockOf = (id: string): GuiWidget => store().gui.find((block) => block.id === id)!;
 
 /** Drop a node on the canvas. */
 const drop = (type: NodeType, x: number): string => store().addNode(type, { x, y: 160 });
 
 /**
- * Add a block to the page from the palette, then set what its panel sets: the
+ * Add a block to the gui from the palette, then set what its panel sets: the
  * designer's own steps (`newBlock`, `insertBlock`, then `patchBlock`).
  */
 function addBlock(kind: WidgetKind, mode: string | undefined, settings: Partial<GuiWidget>): string {
-  const block = newBlock(kind, mode, store().page);
+  const block = newBlock(kind, mode, store().gui);
   insertBlock(block);
   patchBlock(block.id, settings);
   return block.id;
@@ -151,7 +151,7 @@ const wire = (source: string, sourceHandle: string, target: string, targetHandle
  */
 function shapeOf(graph: Graph) {
   const type = (id: string | null | undefined): string => graph.nodes.find((node) => node.id === id)?.node_type ?? `(${id})`;
-  const blocks = graph.page?.blocks ?? [];
+  const blocks = graph.gui?.blocks ?? [];
   const kindOf = new Map(blocks.map((block) => [block.id, block.kind]));
   const part = (field: string): string => {
     const [id, ...rest] = field.split('.');
@@ -197,10 +197,10 @@ function runtime(asked: string[]): Runtime {
   };
 }
 
-/** The graph in use, as the server holds it for a page: a session -- of a copy, the store's graph is frozen. */
+/** The graph in use, as the server holds it for a gui: a session -- of a copy, the store's graph is frozen. */
 const use = (graph: Graph, asked: string[]) => Session.open(parseGraph(JSON.parse(JSON.stringify(graph))), { runtime: () => runtime(asked) });
 
-/** Block *by* used on the page: a round at the start point it fires, sent what the page set. */
+/** Block *by* used on the gui: a round at the start point it fires, sent what the gui set. */
 async function used(graph: Graph, by: string, values: Record<string, unknown> = {}, asked: string[] = []) {
   const session = await use(graph, asked);
   const result = await session.run({ node_id: blockOf(by).fires!, port_id: 'data' }, { values, by });
@@ -216,7 +216,7 @@ beforeEach(() => {
 
 describe('population plotter: choose a CSV, see the chart', () => {
   const build = () => {
-    // Alone on the page, picking a file is what starts it: no setting to make.
+    // Alone on the gui, picking a file is what starts it: no setting to make.
     const file = addBlock('input_picker', 'file', { label: 'CSV file', extensions: '.csv', value: 'data/population.csv' });
     const plot = addBlock('plot_window', undefined, { label: '' });
     const chart = drop('code', 560);
@@ -274,7 +274,7 @@ describe('summarize a folder: choose a folder, read the summaries', () => {
   });
 });
 
-describe('chat: a page with a chat block, and a model', () => {
+describe('chat: a gui with a chat block, and a model', () => {
   const build = () => {
     const chat = addBlock('chat', undefined, {});
     const assistant = drop('ai', 560);
@@ -298,7 +298,7 @@ describe('chat: a page with a chat block, and a model', () => {
   it('answers a message, and remembers the turn for the next one -- in the session, not in the document', async () => {
     const { graph, chat } = build();
     const asked: string[] = [];
-    // What the server does with what the page sends: the message under the chat's id, the round its start point's.
+    // What the server does with what the gui sends: the message under the chat's id, the round its start point's.
     const session = await use(graph, asked);
     const say = async (text: string) => {
       const result = await session.run({ node_id: blockOf(chat).fires!, port_id: 'data' }, { values: { [chat]: text }, by: chat });
@@ -312,7 +312,7 @@ describe('chat: a page with a chat block, and a model', () => {
     expect(asked[1]).toContain('Assistant: answer 1');
     expect(asked[1].endsWith('message:\nAnd again')).toBe(true);
     // Both turns are the session's; the block in the document is as it was built.
-    expect((session.view().page[chat] as { messages: unknown[] }).messages).toHaveLength(4);
-    expect(blockOf(chat).value).toEqual(graph.page!.blocks.find((block) => block.id === chat)!.value);
+    expect((session.view().gui[chat] as { messages: unknown[] }).messages).toHaveLength(4);
+    expect(blockOf(chat).value).toEqual(graph.gui!.blocks.find((block) => block.id === chat)!.value);
   });
 });

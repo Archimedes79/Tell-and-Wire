@@ -118,7 +118,7 @@ export interface ModelChoice {
  *
  * A run applies it (`core/node.ts`, `aiService`), and the
  * editor's model box applies it to say what an empty model will mean, so it
- * lives here, where both halves and the page can read it.
+ * lives here, where both halves and the browser can read it.
  */
 export function lent(asked: Partial<ModelChoice>, home: Partial<ModelChoice>): ModelChoice {
   const pinned = asked.provider && asked.provider !== 'default' ? asked.provider : '';

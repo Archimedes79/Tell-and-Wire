@@ -1,8 +1,8 @@
-// The blocks a page is built from.
+// The blocks a gui is built from.
 //
 // Each is an element like any other: it owns its settings and says what it can
 // do with the graph -- what it sends, what event it fires, whether it shows an
-// end point -- and the page connects it by name (`page.ts`). The executor
+// end point -- and the gui connects it by name (`gui.ts`). The executor
 // never sees one: what a block sends arrives in a start point's package.
 //
 // This file is the roster — the only place that knows the whole set, which is

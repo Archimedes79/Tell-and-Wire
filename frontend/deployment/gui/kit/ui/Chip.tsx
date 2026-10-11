@@ -5,7 +5,7 @@ import { EVENT, LINE, MUTED, RAISE, TEXT } from './theme';
 /**
  * A small pill that names one thing -- a start point a block sends to, the end
  * point it shows. `onRemove` gives it a ✕. `event` is the colour of a point the
- * page meets the graph at (the amber of the ◆), `neutral` anything else.
+ * gui meets the graph at (the amber of the ◆), `neutral` anything else.
  */
 export default function Chip({ children, onRemove, removeLabel = 'Remove', tone = 'neutral', title }: {
   children: ReactNode;

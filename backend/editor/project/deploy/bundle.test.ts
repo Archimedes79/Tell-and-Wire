@@ -71,7 +71,7 @@ describe('a bundle', () => {
         metadata: { name: 'Key' },
         nodes: [{ id: 'result', node_type: 'end', label: 'result', position: { x: 0, y: 0 }, inputs: [], outputs: [], config: {} }],
         edges: [],
-        page: { blocks: [{ id: 'pick', kind: 'input_picker', mode: 'directory', value: 'data' }] },
+        gui: { blocks: [{ id: 'pick', kind: 'input_picker', mode: 'directory', value: 'data' }] },
       });
       await writeBundle(graph, dir, { dataFrom: source });
       expect(await readdir(join(dir, 'data'))).toEqual(['a.csv']);

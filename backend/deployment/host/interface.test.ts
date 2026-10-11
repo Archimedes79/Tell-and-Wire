@@ -9,7 +9,7 @@ import { quietRuntime } from '../runtime/test/fakes.ts';
  * A graph used from outside, by name: what any frontend, script or model
  * calls -- a start point, an end point, each by its own id -- and never a
  * port. There is one kind of way in and one of way out: nothing else of the
- * graph is set from outside. The page's blocks are not among the names: they
+ * graph is set from outside. The gui's blocks are not among the names: they
  * connect themselves to them.
  */
 
@@ -21,7 +21,7 @@ const wire = (id: string, to: string) =>
 const tool = (): Graph => parseGraph({
   metadata: { name: 'tool' },
   nodes: [
-    { id: 'ask', node_type: 'start', label: 'Ask', config: { started_by: 'page' } },
+    { id: 'ask', node_type: 'start', label: 'Ask', config: { started_by: 'gui' } },
     { id: 'api', node_type: 'start', config: { started_by: 'call' } },
     { id: 'clock', node_type: 'start', config: { started_by: 'itself', every: '5m' } },
     { id: 'topic', node_type: 'data', label: 'Topic', config: { data_value: { topic: 'cats' } } },
@@ -34,7 +34,7 @@ const tool = (): Graph => parseGraph({
     { id: 'report', node_type: 'end', label: 'Report', inputs: [{ id: 'value', name: 'value', kind: 'input', data_type: 'text' }], config: { write_mode: 'file', path: 'out.md' } },
   ],
   edges: [wire('a', 'topic'), wire('b', 'size'), wire('c', 'again'), wire('d', 'all')],
-  page: {
+  gui: {
     blocks: [
       { id: 'title', kind: 'text', value: 'A tool' },
       { id: 'go', kind: 'button', label: 'Go', fires: 'ask' },
@@ -48,10 +48,10 @@ const tool = (): Graph => parseGraph({
 const names = (entries: { name: string }[]) => entries.map((entry) => entry.name);
 
 describe('a graph used from outside', () => {
-  it('offers its start points and end points by their ids -- with what each reads and what the page sends -- and no port', () => {
+  it('offers its start points and end points by their ids -- with what each reads and what the gui sends -- and no port', () => {
     const offered = interfaceOf(tool(), registry);
     expect(names(offered.events)).toEqual(['ask', 'api', 'clock']);
-    expect(offered.events.map((entry) => entry.started_by)).toEqual(['page', 'call', 'itself']);
+    expect(offered.events.map((entry) => entry.started_by)).toEqual(['gui', 'call', 'itself']);
     expect(names(offered.outputs)).toEqual(['answer', 'report']);
     expect(JSON.stringify(offered)).not.toMatch(/_out"|_in"|"node_id"|"port"/);
     const [ask, api] = offered.events;
@@ -60,7 +60,7 @@ describe('a graph used from outside', () => {
       { name: 'topic', label: 'Topic', type: 'text' },
       { name: 'options.size', label: 'Size', type: 'number' },
     ]);
-    // A start point the page starts: which blocks fire it, and what the page sends with it.
+    // A start point the gui starts: which blocks fire it, and what the gui sends with it.
     expect(ask.fired_by).toEqual(['go', 'talk']);
     expect(ask.sends).toEqual([
       { name: 'length', label: 'Length', type: 'text', description: 'one of: short, long' },

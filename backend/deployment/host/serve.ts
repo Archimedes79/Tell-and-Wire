@@ -1,6 +1,6 @@
 // The server: a built page, and the routes of `api.ts`.
 //
-// One server for both uses. A deployed tool gets its page and the `tool` rows
+// One server for both uses. A deployed tool gets its gui and the `tool` rows
 // of the table -- the graph it ships, a way to run it, the file picker its own
 // blocks need. The editor gets its page and every row, the `editor` ones
 // loaded from `graph-editor/routes.ts` only when this is the editor, so none of
@@ -9,7 +9,7 @@
 // The table is the security boundary, and it is written out in one place
 // (`api.ts`) rather than assembled from a router someone might extend later
 // without noticing where it ends up. A route this server has no handler for is
-// a server that cannot start: the page and the server never disagree about
+// a server that cannot start: the gui and the server never disagree about
 // what exists.
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
@@ -45,11 +45,11 @@ export interface ServeOptions {
    * and the folder the file picker opens in.
    */
   graphPath?: string;
-  /** Where the built page lives, if this bundle carries one. */
+  /** Where the built gui lives, if this bundle carries one. */
   guiDir?: string;
   port?: number;
   host?: string;
-  /** Serve the editor instead of a deployed page: `dist` is the built editor. */
+  /** Serve the editor instead of a deployed gui: `dist` is the built editor. */
   editor?: { dist: string };
 }
 
@@ -82,7 +82,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
   const self = { loopback, port: 0, names: namesFor(host) };
 
   // The graph in use, and what using it leaves behind: one session, shared by
-  // the clock and every page, so all queue for one graph and all read what its
+  // the clock and every gui, so all queue for one graph and all read what its
   // nodes were left holding. A deployed tool's is opened with the server, goes
   // on from its state.json and keeps its clock from the start; the editor's
   // begins with the graph it hands over, and its clock runs from ▶ Run to ■ Stop.
@@ -106,7 +106,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
     // `graph-editor/` folder beside it, and a static import would stop every
     // deployed tool.
     // `held` goes in so the editor can hand this server the graph it is
-    // editing and then open `runtime.html` against it: the delivered page, in
+    // editing and then open `runtime.html` against it: the delivered gui, in
     // its own window, served by the same route a bundle serves.
     ...(options.editor ? (await import('../../editor/host/routes.ts')).editorRoutes(held) : {}),
   };
@@ -159,7 +159,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
     }
 
     if (options.editor) return servePage(response, path, options.editor.dist, 'index.html');
-    // A page of the project's own, written by hand against the runtime API, wins over the built one.
+    // A gui of the project's own, written by hand against the runtime API, wins over the built one.
     if (frontend) return servePage(response, path, frontend, 'index.html');
     if (options.guiDir) return servePage(response, path, options.guiDir, 'runtime.html');
     return sendJson(response, 404, { detail: 'No page.' });
@@ -292,11 +292,11 @@ function toolRoutes(
       return session.view();
     },
 
-    // -- what the built-in page reads besides ----------------------------------
+    // -- what the built-in gui reads besides ----------------------------------
 
-    // The page as it was designed, and no more of the graph: its blocks are
+    // The gui as it was designed, and no more of the graph: its blocks are
     // what it draws, by the names they are called by.
-    page(asked) {
+    gui(asked) {
       const session = sessionAsked(asked);
       const { graph } = session;
       return {
@@ -311,10 +311,10 @@ function toolRoutes(
     },
 
     // Read-only on purpose: a deployed tool is configured by whoever runs it,
-    // in the file beside it or its environment. A page that wrote credentials
+    // in the file beside it or its environment. A gui that wrote credentials
     // would put them in a file nobody asked for.
     async toolAiSettings() {
-      // The function a run asks, so the page says what a run calls.
+      // The function a run asks, so the gui says what a run calls.
       const { provider, model } = await aiSetting();
       // Whether the file is there, not where: any caller on the network may ask.
       return { provider, model, settings_file_exists: existsSync(settingsPath()) };

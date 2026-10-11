@@ -83,7 +83,7 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
                   style={{
                     textAlign: 'left', padding: '3px 8px', position: 'sticky', top: 0,
                     borderBottom: `1px solid ${LINE}`, color: MUTED, fontWeight: 600,
-                    // The page's own recessed colour, so the header follows its
+                    // The gui's own recessed colour, so the header follows its
                     // scheme -- a fixed near-black band sat on the light ones --
                     // and opaque, because rows scroll under a sticky header.
                     background: SUNKEN,

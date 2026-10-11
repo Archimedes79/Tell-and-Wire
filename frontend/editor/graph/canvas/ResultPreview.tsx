@@ -4,7 +4,7 @@ import { computeAxisRange } from '../../../deployment/gui/widgets/plot_window/Pl
 import { statusTone } from '../../document/store/executionStatus';
 
 /**
- * One value a node made, on its card by the port it stands at -- on the page's
+ * One value a node made, on its card by the port it stands at -- on the gui's
  * card, under its block's row: a line, a count and its first row, a sketch, or
  * a thumbnail -- never more than a small picture high, so a run does not push
  * the graph apart. What the value *is* was decided

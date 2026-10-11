@@ -22,7 +22,7 @@ const node = (id: string) => store().rfNodes.find((item) => item.id === id)?.dat
 let root: Root;
 let screen: HTMLElement;
 
-/** A code node wired to an end point, which a block of the page shows. */
+/** A code node wired to an end point, which a block of the gui shows. */
 beforeEach(async () => {
   const answer = { ...WIDGET_BUILDERS.text_io.create('answer', 'Answer', 'output'), shows: 'shown' };
   store().loadGraph({
@@ -34,7 +34,7 @@ beforeEach(async () => {
     edges: [
       { id: 'e', source_node_id: 'count', source_port_id: 'output', target_node_id: 'shown', target_port_id: 'value' },
     ],
-    page: { blocks: [answer] },
+    gui: { blocks: [answer] },
   });
   screen = document.createElement('div');
   document.body.appendChild(screen);
@@ -88,12 +88,12 @@ describe('Delete on the canvas', () => {
     press(card('shown'), 'Delete');
     expect(node('shown')).toBeUndefined();
     expect(store().rfEdges).toEqual([]);
-    expect(store().page[0].shows).toBeUndefined();
+    expect(store().gui[0].shows).toBeUndefined();
     expect(store().past).toHaveLength(1);
     done(() => store().undo());
     expect(node('shown')).toBeDefined();
     expect(store().rfEdges.map((edge) => edge.id)).toEqual(['e']);
-    expect(store().page[0].shows).toBe('shown');
+    expect(store().gui[0].shows).toBe('shown');
   });
 });
 

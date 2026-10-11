@@ -1,7 +1,7 @@
 // What the runners make of a node, as the editor's tests compare it.
 //
-// Beside the page's folders, not in them: a helper for tests, which the layers test has
-// no rank for and no page ever imports. vitest only runs `*.test.ts`, so it is
+// Beside the frontend's folders, not in them: a helper for tests, which the layers test has
+// no rank for and no frontend code ever imports. vitest only runs `*.test.ts`, so it is
 // imported and that is all.
 import { registry } from '../../graph/nodes/registry.ts';
 import type { GraphNode as FormatNode } from '../../graph/graph.ts';

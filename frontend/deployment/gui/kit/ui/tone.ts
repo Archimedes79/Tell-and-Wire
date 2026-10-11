@@ -1,4 +1,4 @@
-// How a block sits on the page, chosen from a closed set rather than picked
+// How a block sits on the gui, chosen from a closed set rather than picked
 // from a colour wheel.
 //
 // A colour picker is how interfaces get ugly: every value is available, most
@@ -13,14 +13,14 @@ import { ACCENT, ACCENT_FILL, LINE, RAISE, SUNKEN } from './theme';
 
 export type Tone = 'plain' | 'raised' | 'sunken' | 'accent';
 
-/** What lifts a block off the page: a light edge along the top, which a shadow alone cannot give on a dark page, and a close shadow and a soft one. */
+/** What lifts a block off the gui: a light edge along the top, which a shadow alone cannot give on a dark gui, and a close shadow and a soft one. */
 const LIFT = 'inset 0 1px 0 color-mix(in srgb, white 7%, transparent), 0 1px 2px color-mix(in srgb, black 22%, transparent), 0 6px 16px -6px color-mix(in srgb, black 28%, transparent)';
 
 export const TONES: Tone[] = ['plain', 'raised', 'sunken', 'accent'];
 
 export const TONE_LABELS: Record<Tone, string> = {
   plain: 'Plain — no box (headings, prose)',
-  raised: 'Raised — lifts off the page (windows, plots)',
+  raised: 'Raised — lifts off the gui (windows, plots)',
   sunken: 'Sunken — recessed (input fields)',
   accent: 'Accent — tinted (the one thing to notice)',
 };

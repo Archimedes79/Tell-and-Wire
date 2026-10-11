@@ -3,18 +3,18 @@ import { call, type Requirement } from '../kit/api/client';
 import { roundRefused, startRound, useSession, type RoundAsk } from '../kit/api/session';
 
 /**
- * Starting a round the way every page starts one.
+ * Starting a round the way every gui starts one.
  *
- * Three hosts draw a page in use -- `runtime/RuntimeApp.tsx` for a tool
- * someone was handed, the editor's running application, and the editor's Page
+ * Three hosts draw a gui in use -- `runtime/RuntimeApp.tsx` for a tool
+ * someone was handed, the editor's running application, and the editor's Gui
  * tab, whose blocks are live -- and ▶ Run starts the rounds of a graph without
- * a page the same way again. A round from any of them has the same two steps:
- * ask what the page still needs (a file nobody chose on a picker), and only
- * then start it, with what was set on the page and the answers, by name.
+ * a gui the same way again. A round from any of them has the same two steps:
+ * ask what the gui still needs (a file nobody chose on a picker), and only
+ * then start it, with what was set on the gui and the answers, by name.
  *
  * *before*, given, runs first: the editor hands its document to the server,
- * so the round runs what is being edited. *values* is what the page sends
- * besides what was set on it -- the Page tab's design.
+ * so the round runs what is being edited. *values* is what the gui sends
+ * besides what was set on it -- the Gui tab's design.
  */
 export function useRound(before?: () => Promise<void>, values?: () => Record<string, unknown>) {
   const [requirements, setRequirements] = useState<Requirement[] | null>(null);
@@ -24,8 +24,8 @@ export function useRound(before?: () => Promise<void>, values?: () => Record<str
 
   /**
    * Start a round at start point *event* -- the whole graph for none -- once
-   * whatever it still needs is answered. *by*, a block of the page that fired
-   * it: the round is sent what the page holds. Without one it is a call, sent
+   * whatever it still needs is answered. *by*, a block of the gui that fired
+   * it: the round is sent what the gui holds. Without one it is a call, sent
    * *sent* -- nothing, for a round of everything, which reads what the
    * session keeps.
    */

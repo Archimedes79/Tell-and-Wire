@@ -46,8 +46,8 @@ export function fileActions({ busyWith, isProject, deploying, onNew, onDesign, o
       label: 'Reload from disk', hint: 'graph-flow.json or graph-nodes.json changed outside the editor', blocked: busyWith, onSelect: onReload,
     }] : []),
     { label: 'Copy / paste as JSON…', divided: true, onSelect: onJson },
-    // The tool detached from the editor: the graph, its page and the code that runs them.
-    { label: 'Deploy as zip', hint: 'The tool as one of its own: graph, page and code', blocked: deploying ? 'The zip is being made…' : null, onSelect: onDeploy },
+    // The tool detached from the editor: the graph, its gui and the code that runs them.
+    { label: 'Deploy as zip', hint: 'The tool as one of its own: graph, gui and code', blocked: deploying ? 'The zip is being made…' : null, onSelect: onDeploy },
   ];
 }
 

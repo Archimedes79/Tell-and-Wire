@@ -189,18 +189,18 @@ export class SubgraphNodeRunner extends NodeRunner {
       });
     }
 
-    if (held.page?.blocks.length) {
+    if (held.gui?.blocks.length) {
       found.push({
-        where: `${inside}the page`,
-        problem: 'A page belongs to the graph at the top; a page in here would never be shown.',
-        fix: 'Move its blocks up onto the page of the graph at the top, and connect them to the start and end points there.',
+        where: `${inside}the gui`,
+        problem: 'A gui belongs to the graph at the top; a gui in here would never be shown.',
+        fix: 'Move its blocks up onto the gui of the graph at the top, and connect them to the start and end points there.',
       });
     }
     for (const inner of held.nodes) {
-      if (elements.node(inner.node_type)?.startedBy(inner) !== 'page') continue;
+      if (elements.node(inner.node_type)?.startedBy(inner) !== 'gui') continue;
       found.push({
         where: `${inside}${inner.label || inner.id}`,
-        problem: 'A start point in here is started by the page, and a page belongs to the graph at the top: nothing would start it.',
+        problem: 'A start point in here is started by the gui, and a gui belongs to the graph at the top: nothing would start it.',
         fix: 'Let a call start it: the graph above is one, and it starts it through the port of the same name on this node.',
       });
     }

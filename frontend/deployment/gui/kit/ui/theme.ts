@@ -10,27 +10,27 @@
  */
 
 /**
- * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The page's
- * container sets the variables (the Page tab's surface, the App tab, a deployed
+ * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The gui's
+ * container sets the variables (the Gui tab's surface, the App tab, a deployed
  * tool), so the blocks on it are in its scheme; the editor's own chrome sets
  * none, and so keeps the literal after the comma -- the Night scheme -- under
  * every scheme. Keep those literals equal to Night's values.
  *
  * That indirection is the whole mechanism: a component asks for SURFACE and
- * knows nothing of schemes, and switching scheme repaints the page without one
+ * knows nothing of schemes, and switching scheme repaints the gui without one
  * call site changing.
  *
  * CSS variables resolve in style *properties* only, never in SVG presentation
  * attributes -- an SVG shape must take these through `style`, not `fill=`.
  */
 
-/** Recessed surfaces: page background, inputs, code areas, dialog headers. */
+/** Recessed surfaces: gui background, inputs, code areas, dialog headers. */
 export const SUNKEN = 'var(--ui-sunken, #0f1117)';
 /** Raised surfaces: panels, modals, nodes, floating windows. */
 export const SURFACE = 'var(--ui-surface, #1a1d2e)';
 /** Borders — and the neutral button fill, which is the same colour by design. */
 export const LINE = 'var(--ui-line, #2d3148)';
-/** The barely-there lift of a block off the page. */
+/** The barely-there lift of a block off the gui. */
 export const RAISE = 'var(--ui-raise, rgba(255,255,255,0.03))';
 /** A row or button under the pointer. */
 export const HOVER = 'var(--ui-hover, rgba(255,255,255,0.06))';
@@ -61,7 +61,7 @@ export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 30%, transparent)`;
 /**
  * An event: the ◆ a run begins at, and a wire into one. Amber whatever the
  * scheme -- it is the one colour that says "a run starts here", on the canvas
- * and on the page alike.
+ * and on the gui alike.
  */
 export const EVENT = 'var(--ui-event, #f59e0b)';
 
@@ -103,7 +103,7 @@ export const NODE = {
  * chip. `NODE` is the dark fill a tag sits on; this is the same kind in a
  * colour that reads on the editor's own surfaces. Literals, because the editor
  * is Night under every scheme. A start and an end point are the amber of an
- * event: where a run begins and ends is one colour, on the canvas and the page.
+ * event: where a run begins and ends is one colour, on the canvas and the gui.
  */
 export const INK = {
   ai: '#cdaef2',

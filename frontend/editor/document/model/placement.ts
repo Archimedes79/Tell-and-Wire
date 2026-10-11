@@ -21,7 +21,7 @@ const bottom = (node: Placed): number => node.position.y + (node.height ?? CARD.
 
 /**
  * Where a node that nobody put anywhere goes -- a palette click, the start
- * point a block on the page makes: to the right of the selected node, else of
+ * point a block on the gui makes: to the right of the selected node, else of
  * the rightmost one that is not an end point (where a graph ends: what is
  * added is not after it) -- and never on a card: where one is, below it. An
  * end point is not such a card: it makes room (`makeRoom`).

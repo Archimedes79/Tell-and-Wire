@@ -14,7 +14,7 @@ interface RequirementsDialogProps {
 const KIND_ICON: Record<string, string> = { file: '📄', directory: '📁' };
 
 /**
- * The "before running" window: what a run the page starts asks before it
+ * The "before running" window: what a run the gui starts asks before it
  * can go -- a file or a folder for each picker with nothing chosen.
  */
 export default function RequirementsDialog({ requirements, onSubmit, onCancel }: RequirementsDialogProps) {
@@ -59,7 +59,7 @@ export default function RequirementsDialog({ requirements, onSubmit, onCancel }:
     >
       <div className="px-6 pt-4 pb-1">
         <p className="text-xs" style={{ color: MUTED }}>
-          The page needs a few paths before it can run.
+          The gui needs a few paths before it can run.
         </p>
       </div>
 

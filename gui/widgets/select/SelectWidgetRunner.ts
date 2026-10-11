@@ -7,7 +7,7 @@ export interface SelectConfig {
 }
 
 /**
- * One choice from a fixed list, picked on the page.
+ * One choice from a fixed list, picked on the gui.
  *
  * The list is written once, in the block's own settings — not generated, not
  * wired in: a dropdown is furniture whose options a person decides, the same

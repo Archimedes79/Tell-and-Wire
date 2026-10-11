@@ -35,12 +35,12 @@ export interface Graph {
   metadata: GraphMetadata;
   nodes: GraphNode[];
   edges: GraphEdge[];
-  /** The page the graph is used through: its blocks, which connect themselves to its start and end points by name. None, for a graph without one. */
-  page?: Page;
+  /** The gui the graph is used through: its blocks, which connect themselves to its start and end points by name. None, for a graph without one. */
+  gui?: Gui;
 }
 
-/** A page: its blocks, in order. One with none is no page. */
-interface Page {
+/** A gui: its blocks, in order. One with none is no gui. */
+interface Gui {
   blocks: GuiWidget[];
 }
 
@@ -91,8 +91,8 @@ export type NodeConfig = {
   mcp_servers?: string;
   /** An ai node: how often to ask again when the answer cannot be used (no JSON, a key left out, cut off). Unset: the machine's setting, else 2. */
   repairs?: number;
-  /** A start point: who starts it -- the page, a call, itself -- and, by itself, when the tool starts and how often (`5m`). */
-  started_by: 'page' | 'call' | 'itself';
+  /** A start point: who starts it -- the gui, a call, itself -- and, by itself, when the tool starts and how often (`5m`). */
+  started_by: 'gui' | 'call' | 'itself';
   /** A start point: what it is sent when nobody sends it anything -- a run of it on its own, ▶ Try -- as a caller would name it. */
   values?: Record<string, unknown>;
   on_start: boolean;
@@ -112,7 +112,7 @@ export type NodeConfig = {
 };
 
 /**
- * One block on a page. Nothing is wired to it: it connects itself to the
+ * One block on a gui. Nothing is wired to it: it connects itself to the
  * graph's start and end points by name (`sends_to`, `fires`, `shows`), and
  * its `id` is the name its data is sent under -- so it stays stable once
  * assigned, as what reads it reads it by that name.

@@ -153,11 +153,11 @@ describe('a whole graph, changed as said', () => {
       { id: 'notes', node_type: 'data', label: 'Notes', position: { x: 40, y: 80 }, width: 340, height: 300 },
     ],
     edges: [],
-    page: { blocks: [{ id: 'text', kind: 'text_io', mode: 'input', sends_to: ['count'] }] },
+    gui: { blocks: [{ id: 'text', kind: 'text_io', mode: 'input', sends_to: ['count'] }] },
   });
 
-  it('keeps what the answer leaves out: the graph\'s name and scheme, where each node stands, its size, the page', async () => {
-    // An answer that says nothing of the metadata, of positions, of a size or of the page.
+  it('keeps what the answer leaves out: the graph\'s name and scheme, where each node stands, its size, the gui', async () => {
+    // An answer that says nothing of the metadata, of positions, of a size or of the gui.
     const answer = {
       nodes: [
         { id: 'count', node_type: 'code', label: 'Count words' },
@@ -173,7 +173,7 @@ describe('a whole graph, changed as said', () => {
       ['count', 'Count words', { x: 420, y: 120 }], ['notes', 'Notes', { x: 40, y: 80 }], ['shown', 'Words', { x: 800, y: 120 }],
     ]);
     expect(graph.nodes[1]).toMatchObject({ width: 340, height: 300 });
-    expect(graph.page).toEqual(current.page);
+    expect(graph.gui).toEqual(current.gui);
     // What the answer does say is what it says: a new name is a change.
     const renamed = await generateGraph('Rename it.', {
       ai: scripted(['```json\n{"metadata":{"name":"Counter"},"nodes":[],"edges":[]}\n```']), target,

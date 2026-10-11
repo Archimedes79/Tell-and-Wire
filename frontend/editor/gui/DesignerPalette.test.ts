@@ -4,10 +4,10 @@ import { ALL_ENTRIES, GROUPS } from './DesignerPalette';
 
 const key = (kind: string, mode?: string) => `${kind}:${mode ?? ''}`;
 
-describe('the page designer\'s palette', () => {
+describe('the gui designer\'s palette', () => {
   it('stands every entry a kind offers in exactly one place, and nothing a kind does not offer', () => {
     // The entries are the kinds' own; the palette only places them. A kind
-    // added without a place here would be missing from the page designer and
+    // added without a place here would be missing from the gui designer and
     // from "/" -- this says so instead.
     const offered = Object.entries(WIDGET_BUILDERS)
       .flatMap(([kind, builder]) => builder.paletteEntries().map((entry) => key(kind, entry.mode)))

@@ -24,7 +24,7 @@ import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../deployment/gui/k
 const holdDocument = () => useGraphStore.getState().holdDocument();
 
 /**
- * The application, running (▶ Run, `app/application.ts`): its page, as the
+ * The application, running (▶ Run, `app/application.ts`): its gui, as the
  * deployed tool draws it -- the same component, not a rendition.
  *
  * `GuiSurface` is what `runtime/RuntimeApp.tsx` renders when a bundle is
@@ -33,10 +33,10 @@ const holdDocument = () => useGraphStore.getState().holdDocument();
  * what is seen here is what they get: a block unreadable, mis-sized or
  * missing in the bundle is so here, because there is nothing else to be.
  *
- * It is the tool in use, not the document: what is set on its page is the
+ * It is the tool in use, not the document: what is set on its gui is the
  * session's, never an edit of the graph -- nothing to undo, nothing to save.
- * What the page starts lights up the nodes on the graph next door. The graph
- * runs when the page is used -- a block that fires a start point -- and when
+ * What the gui starts lights up the nodes on the graph next door. The graph
+ * runs when the gui is used -- a block that fires a start point -- and when
  * it is called: for a start point a call starts, this tab is the caller
  * (`CallForms`), as a script or a frontend would be.
  */
@@ -44,20 +44,20 @@ export default function ApplicationView() {
   const metadata = useGraphStore((s) => s.metadata);
   const nodes = useGraphStore((s) => s.rfNodes);
   const wires = useGraphStore((s) => s.rfEdges);
-  const widgets = useGraphStore((s) => s.page);
+  const widgets = useGraphStore((s) => s.gui);
   // What starts a round and what one hands back are the nodes' to say, and
-  // which block fires which the page's; what a call is sent that the graph
+  // which block fires which the gui's; what a call is sent that the graph
   // reads, the wires out of each start point's.
   const graph = useMemo(
-    () => ({ metadata, nodes: nodes.map((node) => node.data.graphNode as GraphNode), edges: wires.map(graphEdge), page: { blocks: widgets } }),
+    () => ({ metadata, nodes: nodes.map((node) => node.data.graphNode as GraphNode), edges: wires.map(graphEdge), gui: { blocks: widgets } }),
     [metadata, nodes, wires, widgets],
   );
-  // Whether using the page starts the graph -- or only shows what its start
+  // Whether using the gui starts the graph -- or only shows what its start
   // points that start themselves, or its one run at start, made.
   const starts = guiStarts(graph, runnerRegistry);
   // The graph's names, as the runtime API tells a delivered tool them: which
   // block fires which start point, which blocks a round is sent, and what a
-  // page without blocks shows -- the outputs, under their labels.
+  // gui without blocks shows -- the outputs, under their labels.
   const offered = useMemo(() => interfaceOf(graph, runnerRegistry), [graph]);
   const called = offered.events.some((event) => event.started_by === 'call');
   const current = useSession((s) => s.round);
@@ -148,10 +148,10 @@ export default function ApplicationView() {
         </span>
         <span className="text-xs" style={{ color: DIMMER }}>
           {starts
-            ? 'As whoever gets it will use it: the graph runs when you use the page. ■ Stop ends it.'
+            ? 'As whoever gets it will use it: the graph runs when you use the gui. ■ Stop ends it.'
             : called
               ? 'As whoever gets it will use it: it runs when it is called -- here, as a script would call it. ■ Stop ends it.'
-              : 'As whoever gets it will use it: what starts the graph starts it, and the page shows what it makes. ■ Stop ends it.'}
+              : 'As whoever gets it will use it: what starts the graph starts it, and the gui shows what it makes. ■ Stop ends it.'}
         </span>
         {explained && (
           <span className="text-xs ml-auto truncate" style={{ color: MUTED }}

@@ -1,4 +1,4 @@
-// The page a graph is used through, as a document rather than a canvas.
+// The gui a graph is used through, as a document rather than a canvas.
 //
 // Free positioning needs a designer's eye; a document flow is decent by default,
 // which is why a LaTeX file looks better than a hand-arranged slide. So the
@@ -15,14 +15,14 @@
 // Presentational only: never touches ports, wiring, or execution.
 import type { GuiWidget } from '../../../editor/document/graph';
 
-/** Cells across the page. Square, so `w` and `h` are one unit, not two. */
+/** Cells across the gui. Square, so `w` and `h` are one unit, not two. */
 export const GUI_GRID_COLUMNS = 16;
 
 /**
  * The widest a cell is allowed to get.
  *
  * Without a cap, a square cell on a 4K monitor would be ~250px and every block
- * would inflate with the window. A capped cell means the page has a maximum
+ * would inflate with the window. A capped cell means the gui has a maximum
  * width and centres, with margins growing instead — a printed page, and the
  * reason a text column stays readable.
  */
@@ -53,13 +53,13 @@ export function cellsFromDrag(pixels: number, cell: number): number {
 }
 
 /**
- * Below this width the page is one column: every block takes the whole width, in
- * the page's order. Three columns on a phone left each of them a sliver, and a
- * person who built the page on a desktop is not asked to build another.
+ * Below this width the gui is one column: every block takes the whole width, in
+ * the gui's order. Three columns on a phone left each of them a sliver, and a
+ * person who built the gui on a desktop is not asked to build another.
  */
 export const GUI_NARROW = 640;
 
-/** The least a row is high on a narrow page, where a cell is a few pixels and a block of four rows would be a sliver. */
+/** The least a row is high on a narrow gui, where a cell is a few pixels and a block of four rows would be a sliver. */
 const NARROW_ROW = 28;
 
 /** Cells a widget occupies when it has none of its own yet. */
@@ -93,12 +93,12 @@ export function resolveWidgetLayout(widgets: GuiWidget[]): WidgetPlacement[] {
 }
 
 /**
- * A block's size on a page at its full width, in pixels -- its cells and the
- * gaps between them -- and the cells it spans. The page never needs the sum,
+ * A block's size on a gui at its full width, in pixels -- its cells and the
+ * gaps between them -- and the cells it spans. The gui never needs the sum,
  * since the browser's grid does it; a node wired into the end point the
  * block shows does, to write what it sends for the room there is
  * (`authoring/generationContext.ts`). On a
- * narrower page every cell shrinks alike (`cellSize`), so this is the most the
+ * narrower gui every cell shrinks alike (`cellSize`), so this is the most the
  * block gets.
  */
 export function blockSize(widget: GuiWidget): { w: number; h: number; width: number; height: number } {
@@ -108,7 +108,7 @@ export function blockSize(widget: GuiWidget): { w: number; h: number; width: num
 }
 
 /**
- * The text in a box on the page -- what a text box shows and is typed into:
+ * The text in a box on the gui -- what a text box shows and is typed into:
  * 14 px on 20 px lines, as Tailwind's `text-sm`, which the other boxes (a
  * dropdown, the field under a chat) still ask for by that name. Held here
  * because a node that writes into a box is told how large its text is
@@ -120,7 +120,7 @@ export const BOX_TEXT = { fontSize: 14, lineHeight: '20px' } as const;
 /**
  * The side of one square cell for a container of *containerWidth* pixels.
  *
- * Below the capped width the cells shrink with the container, so the same page
+ * Below the capped width the cells shrink with the container, so the same gui
  * looks identical in the editor panel, the runtime window and a deployed
  * bundle — only smaller.
  */
@@ -142,7 +142,7 @@ export function gridStyle(cell: number, narrow = false): React.CSSProperties {
   };
 }
 
-/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be; on a *narrow* page every block is as wide as it, and one a cell wide -- a vertical rule, a gap -- is gone. */
+/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be; on a *narrow* gui every block is as wide as it, and one a cell wide -- a vertical rule, a gap -- is gone. */
 export function blockStyle(placement: WidgetPlacement, waiting = false, narrow = false): React.CSSProperties {
   return {
     gridColumn: `span ${narrow ? GUI_GRID_COLUMNS : placement.w}`,

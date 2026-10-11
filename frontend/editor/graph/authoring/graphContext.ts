@@ -5,9 +5,9 @@
 // how large the chart it feeds will be drawn. That is what this says, once, the
 // same for every ✨: the graph's name and text; every node in the order it runs,
 // with its id, kind, heading and the first line of its text, this one marked;
-// the wires; and the page -- its colour scheme, and each block with its size
+// the wires; and the gui -- its colour scheme, and each block with its size
 // and the start and end points it connects to.
-// The editor owns the page's grid and its schemes, so the editor says it; and
+// The editor owns the gui's grid and its schemes, so the editor says it; and
 // it is cut to a budget, so a large graph leaves a small model room to answer.
 
 import type { Graph, GraphNode, GuiWidget, Wire } from '../../document/graph';
@@ -44,8 +44,8 @@ function connections(widget: GuiWidget): string {
 }
 
 /** {Context} for node *nodeId*: the graph it is in, cut to `CONTEXT_LIMIT`. */
-export function graphContext(nodeId: string, around: { nodes: GraphNode[]; edges: Wire[]; metadata: Graph['metadata']; page: GuiWidget[] }): string {
-  const { nodes, edges, metadata, page } = around;
+export function graphContext(nodeId: string, around: { nodes: GraphNode[]; edges: Wire[]; metadata: Graph['metadata']; gui: GuiWidget[] }): string {
+  const { nodes, edges, metadata, gui } = around;
   const lines = [`Graph: ${metadata.name}`];
   if (metadata.description?.trim()) lines.push(metadata.description.trim());
 
@@ -60,10 +60,10 @@ export function graphContext(nodeId: string, around: { nodes: GraphNode[]; edges
     for (const edge of edges) lines.push(`- ${edge.source}.${edge.sourceHandle ?? ''} -> ${edge.target}.${edge.targetHandle ?? ''}`);
   }
 
-  if (page.length) {
+  if (gui.length) {
     const colours = scheme(metadata.gui_scheme);
-    lines.push('', `Its page, on the ${colours.label} scheme -- background ${colours.sunken}, text ${colours.text}, accent ${colours.accent}:`);
-    for (const widget of page) {
+    lines.push('', `Its gui, on the ${colours.label} scheme -- background ${colours.sunken}, text ${colours.text}, accent ${colours.accent}:`);
+    for (const widget of gui) {
       const { width, height } = blockSize(widget);
       const joined = connections(widget);
       lines.push(`- ${widget.id}: ${calledBlock(widget)}, about ${width} x ${height} px${joined ? `; ${joined}` : ''}`);

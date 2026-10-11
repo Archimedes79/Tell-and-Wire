@@ -3,7 +3,7 @@
 // One class per node type and per widget kind, holding everything that kind
 // needs to behave: what it stores, which ports it contributes, and what it
 // does when the graph runs. Two branches share this base -- `NodeRunner` for a
-// node, `WidgetRunner` for a block on a page -- and what they share is little:
+// node, `WidgetRunner` for a block on a gui -- and what they share is little:
 // settings of their own, and whether a failure is caught. The rest is each
 // branch's: a node has a body someone writes and files of its own, a block
 // shows or hands on what it holds and writes nothing.

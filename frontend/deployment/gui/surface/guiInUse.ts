@@ -5,11 +5,11 @@ import { heldValue, type GuiSession } from '../kit/api/session';
 import type { GuiModel } from './GuiSurface';
 
 /**
- * A page as it was designed, and how it is connected to the graph: what a
+ * A gui as it was designed, and how it is connected to the graph: what a
  * host knows of it before anything is used. Which blocks start a round, at
  * which start point, and which a round is sent what they hold, is the
  * graph's to say (`InterfaceEntry.fired_by`, `sends`) -- the delivered tool
- * is told it by the runtime API, the editor asks the backend, and the page
+ * is told it by the runtime API, the editor asks the backend, and the gui
  * asks neither (`connectionsOf`).
  */
 export interface GuiDesign {
@@ -18,15 +18,15 @@ export interface GuiDesign {
   blocks: GuiWidget[];
   /** The start point each block that starts a round fires, by the block's id. */
   fires: Record<string, string>;
-  /** The blocks a round the page starts is sent what they hold, by id. */
+  /** The blocks a round the gui starts is sent what they hold, by id. */
   sends: string[];
-  /** The graph's outputs, each with its label: what a page without blocks shows under it. */
+  /** The graph's outputs, each with its label: what a gui without blocks shows under it. */
   outputs: { name: string; label: string }[];
   /** The graph has no nodes at all. */
   empty?: boolean;
 }
 
-/** How the page is connected, as the graph's interface says it: which block fires which start point, and which blocks are sent. */
+/** How the gui is connected, as the graph's interface says it: which block fires which start point, and which blocks are sent. */
 export function connectionsOf(events: InterfaceEntry[]): Pick<GuiDesign, 'fires' | 'sends'> {
   const fires: Record<string, string> = {};
   const sends = new Set<string>();
@@ -45,7 +45,7 @@ export function roundError(round: RoundSnapshot | null): string {
 }
 
 /**
- * The page in use: *design*, with what the session says of each block by its
+ * The gui in use: *design*, with what the session says of each block by its
  * id -- what it holds, what it shows -- and whether a round is going, and how
  * the last one failed.
  */

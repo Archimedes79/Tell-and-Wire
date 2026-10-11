@@ -1,14 +1,14 @@
-// The page a graph is used through: its blocks, and how each connects itself.
+// The gui a graph is used through: its blocks, and how each connects itself.
 //
-// A page is not a node. Nothing is wired to it, and it is in neither the
+// A gui is not a node. Nothing is wired to it, and it is in neither the
 // graph's order nor its rounds: a block connects itself by name -- its data
 // goes to start points (`sends_to`), its event fires one (`fires`), it shows
 // an end point (`shows`) -- and the graph owns those points. What a round the
-// page starts begins with is one package, made here of the data of the blocks
+// gui starts begins with is one package, made here of the data of the blocks
 // that send to the start point it fires; what the round hands back reaches the
 // blocks that show its end points, settled here.
 //
-// The page's own state -- what was typed or chosen, a conversation -- is kept
+// The gui's own state -- what was typed or chosen, a conversation -- is kept
 // by whoever uses the graph: the session (`backend/deployment/host/session.ts`), as it keeps each
 // node's.
 
@@ -64,22 +64,22 @@ export function parseWidget(raw: unknown): Widget {
   };
 }
 
-/** The page's blocks as the page keeps them -- none, for a graph without a page. */
+/** The gui's blocks as the gui keeps them -- none, for a graph without a gui. */
 export function guiBlocks(graph: Graph): RawConfig[] {
-  return graph.page?.blocks ?? [];
+  return graph.gui?.blocks ?? [];
 }
 
-/** The page's blocks, read. */
+/** The gui's blocks, read. */
 function guiWidgets(graph: Graph): Widget[] {
   return guiBlocks(graph).map(parseWidget);
 }
 
-/** The block of the page called *id*, as the page keeps it. */
+/** The block of the gui called *id*, as the gui keeps it. */
 export function guiBlock(graph: Graph, id: string): RawConfig | undefined {
   return guiBlocks(graph).find((block) => block.id === id);
 }
 
-/** The blocks whose event fires start point *name*, in the page's order. */
+/** The blocks whose event fires start point *name*, in the gui's order. */
 export function firedBy(graph: Graph, name: string): Widget[] {
   return guiWidgets(graph).filter((widget) => widget.fires === name && !!widgetElement(widget.kind)?.event(widget));
 }
@@ -100,7 +100,7 @@ export function fieldSender(graph: Graph, name: string, field: string): Widget |
 }
 
 /**
- * What the page sends with start point *name*: the data of each block that
+ * What the gui sends with start point *name*: the data of each block that
  * sends to it, under the block's id -- the values of the package the start
  * point hands on. A block that cannot say what it holds -- a folder that is
  * gone -- fails the round before it starts.
@@ -119,16 +119,16 @@ export async function guiSends(graph: Graph, name: string, runtime: Runtime): Pr
 
 /**
  * A run of everything -- the command line, a call that names no event --
- * counts every event as fired, the page's too: each start point the page
- * starts is sent what the page holds now, as though the page had fired it.
- * So a tool run from a terminal starts on what its page starts on.
+ * counts every event as fired, the gui's too: each start point the gui
+ * starts is sent what the gui holds now, as though the gui had fired it.
+ * So a tool run from a terminal starts on what its gui starts on.
  */
 export async function startFromGui(graph: Graph, runtime: Runtime, registry: Runners): Promise<void> {
   if (!guiBlocks(graph).length) return;
   for (const node of graph.nodes) {
     const element = registry.node(node.node_type);
-    if (!element?.takesPackage || element.startedBy(node) !== 'page') continue;
-    element.startWith(node, { by: 'page', values: await guiSends(graph, node.id, runtime) });
+    if (!element?.takesPackage || element.startedBy(node) !== 'gui') continue;
+    element.startWith(node, { by: 'gui', values: await guiSends(graph, node.id, runtime) });
   }
 }
 
@@ -153,14 +153,14 @@ export function pathBlocks(graph: Graph, ids: string[]): string[] {
   });
 }
 
-/** Whether *id* is a block of the page a person sets: what a round the page starts is sent by. */
+/** Whether *id* is a block of the gui a person sets: what a round the gui starts is sent by. */
 export function takesGuiValue(graph: Graph, id: string): boolean {
   const stored = guiBlock(graph, id);
   return !!stored && !!widgetElement(String(stored.kind))?.takesValue(parseWidget(stored));
 }
 
 /**
- * What the page's blocks hold, each under its id: what was typed or chosen, a
+ * What the gui's blocks hold, each under its id: what was typed or chosen, a
  * conversation, what an end point handed back. A block that keeps nothing is
  * its design.
  */
@@ -183,7 +183,7 @@ export function setGuiState(graph: Graph, kept: Record<string, unknown>): void {
   }
 }
 
-/** Empty what a block held only until a round delivered it (`clearsValueAfterRun`). *sent*: the page's state as the round was handed it. */
+/** Empty what a block held only until a round delivered it (`clearsValueAfterRun`). *sent*: the gui's state as the round was handed it. */
 export function clearDeliveredGui(graph: Graph, sent: Record<string, unknown>): void {
   for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
@@ -195,7 +195,7 @@ export function clearDeliveredGui(graph: Graph, sent: Record<string, unknown>): 
 /**
  * Settle what the end points handed back, by name, into the blocks that show
  * them -- each block decides what arriving means (`settle`): most become it, a
- * conversation adds a turn -- and say what each now shows, as the page draws
+ * conversation adds a turn -- and say what each now shows, as the gui draws
  * it (`displayValue`): an image's path read into the picture. A block whose
  * end point handed back nothing this round is left as it was, and out.
  */
@@ -228,9 +228,9 @@ export function shownFromState(graph: Graph, state: Record<string, unknown>): Re
 }
 
 /**
- * What the page asks before a round of start point *name* runs: what the blocks
+ * What the gui asks before a round of start point *name* runs: what the blocks
  * that send to it ask -- a picker with nothing chosen --, each under its block's
- * id. None for a round the page does not send.
+ * id. None for a round the gui does not send.
  */
 export function guiRequirements(graph: Graph, name: string | null): RuntimeRequirement[] {
   if (!name) return [];
@@ -246,7 +246,7 @@ function points(graph: Graph, registry: Runners): { starts: Map<string, string>;
   for (const node of graph.nodes) {
     const element = registry.node(node.node_type);
     for (const offer of element?.offers(node) ?? []) {
-      if (offer.kind === 'event') starts.set(offer.name, offer.startedBy ?? 'page');
+      if (offer.kind === 'event') starts.set(offer.name, offer.startedBy ?? 'gui');
       if (offer.kind === 'output') ends.add(offer.name);
       if (offer.kind === 'state') states.add(offer.name);
     }
@@ -254,22 +254,22 @@ function points(graph: Graph, registry: Runners): { starts: Map<string, string>;
   return { starts, ends, states };
 }
 
-/** Whether a block of the page shows a memory node: what a person sees of the graph where it has no end point. */
+/** Whether a block of the gui shows a memory node: what a person sees of the graph where it has no end point. */
 export function showsMemory(graph: Graph, registry: Runners): boolean {
   const { states } = points(graph, registry);
   return guiWidgets(graph).some((block) => !!block.shows && states.has(block.shows));
 }
 
 /**
- * What is wrong with the page: a block without an id, with another's or with
+ * What is wrong with the gui: a block without an id, with another's or with
  * one a round says of a sender that is no block (`SENDERS`), a kind nobody
  * knows, a connection to a start or end point the graph does not have -- or
  * that the block cannot make --, and a block connected to nothing at all. A
- * start point the page starts that nothing on the page fires: whoever uses
- * the page cannot start it. And a node that takes a value of what such a
+ * start point the gui starts that nothing on the gui fires: whoever uses
+ * the gui cannot start it. And a node that takes a value of what such a
  * start point is sent that no block sends it: it never arrives.
  */
-export function guiProblems(graph: Graph, registry: Runners, where = 'the page'): Problem[] {
+export function guiProblems(graph: Graph, registry: Runners, where = 'the gui'): Problem[] {
   const found: Problem[] = [];
   const blocks = guiWidgets(graph);
   if (!blocks.length) return found;
@@ -280,7 +280,7 @@ export function guiProblems(graph: Graph, registry: Runners, where = 'the page')
     if (!block.id) {
       found.push({ where: at, problem: `A "${block.kind}" block has no id.`, fix: 'Give every block an id: it is the name its data is sent under.' });
     } else if (seen.has(block.id)) {
-      found.push({ where: at, problem: `More than one block has the id "${block.id}".`, fix: 'Give every block on the page its own id.' });
+      found.push({ where: at, problem: `More than one block has the id "${block.id}".`, fix: 'Give every block on the gui its own id.' });
     } else if ((SENDERS as readonly string[]).includes(block.id)) {
       found.push({
         where: at,
@@ -299,8 +299,8 @@ export function guiProblems(graph: Graph, registry: Runners, where = 'the page')
         found.push({ where: at, problem: `It fires "${block.fires}", but using it is no event.`, fix: 'Leave "fires" out, or let a button, a box or a choice fire it.' });
       } else if (!starts.has(block.fires)) {
         found.push({ where: at, problem: `It fires "${block.fires}", which is no start point of the graph: it starts ${names(starts.keys())}.`, fix: `Add a start point called "${block.fires}", or fire one the graph has.` });
-      } else if (starts.get(block.fires) !== 'page') {
-        found.push({ where: at, problem: `It fires "${block.fires}", which is not started by the page.`, fix: `Set "${block.fires}" to be started by the page.` });
+      } else if (starts.get(block.fires) !== 'gui') {
+        found.push({ where: at, problem: `It fires "${block.fires}", which is not started by the gui.`, fix: `Set "${block.fires}" to be started by the gui.` });
       }
     }
     for (const target of block.sends_to) {
@@ -310,9 +310,9 @@ export function guiProblems(graph: Graph, registry: Runners, where = 'the page')
       }
       if (!starts.has(target)) {
         found.push({ where: at, problem: `It sends to "${target}", which is no start point of the graph: it starts ${names(starts.keys())}.`, fix: `Add a start point called "${target}", or send to one the graph has.` });
-      } else if (starts.get(target) !== 'page') {
-        // The page's data goes with the rounds the page starts, and no other.
-        found.push({ where: at, problem: `It sends to "${target}", which the page does not start: what it holds never reaches it.`, fix: `Set "${target}" to be started by the page, or send to one it starts.` });
+      } else if (starts.get(target) !== 'gui') {
+        // The gui's data goes with the rounds the gui starts, and no other.
+        found.push({ where: at, problem: `It sends to "${target}", which the gui does not start: what it holds never reaches it.`, fix: `Set "${target}" to be started by the gui, or send to one it starts.` });
       }
     }
     if (block.shows) {
@@ -336,7 +336,7 @@ export function guiProblems(graph: Graph, registry: Runners, where = 'the page')
     }
   }
   for (const edge of graph.edges) {
-    if (starts.get(edge.source_node_id) !== 'page') continue;
+    if (starts.get(edge.source_node_id) !== 'gui') continue;
     const target = graph.nodes.find((node) => node.id === edge.target_node_id);
     const field = target?.inputs.find((port) => port.id === edge.target_port_id)?.field;
     if (!target || !field || fieldSender(graph, edge.source_node_id, field)) continue;
@@ -344,28 +344,28 @@ export function guiProblems(graph: Graph, registry: Runners, where = 'the page')
     const sending = sentBy(graph, edge.source_node_id).map((widget) => widget.id);
     found.push({
       where: `node "${target.id}", input "${edge.target_port_id}"`,
-      problem: `It takes "${field}" of what "${edge.source_node_id}" is sent, and no block of the page sends "${id}" to it: ${sending.length ? `it is sent ${names(sending)}` : 'nothing is sent to it'}.`,
+      problem: `It takes "${field}" of what "${edge.source_node_id}" is sent, and no block of the gui sends "${id}" to it: ${sending.length ? `it is sent ${names(sending)}` : 'nothing is sent to it'}.`,
       fix: `Take one of what it is sent, or let the block "${id}" send to "${edge.source_node_id}".`,
     });
   }
   for (const [name, startedBy] of starts) {
-    if (startedBy !== 'page' || blocks.some((block) => block.fires === name)) continue;
+    if (startedBy !== 'gui' || blocks.some((block) => block.fires === name)) continue;
     found.push({
       where: `start point "${name}"`,
-      problem: 'It is started by the page, and nothing on the page fires it.',
+      problem: 'It is started by the gui, and nothing on the gui fires it.',
       fix: `Let a button, a box or a choice fire "${name}", or have it started by a call or by itself.`,
     });
   }
   return found;
 }
 
-/** What the page's blocks start on: a picker's file, which a bundle carries. */
+/** What the gui's blocks start on: a picker's file, which a bundle carries. */
 export function guiReferencedPaths(graph: Graph): string[] {
   return guiWidgets(graph).flatMap((widget) => widgetElement(widget.kind)?.referencedPaths(widget) ?? []);
 }
 
 /**
- * The page, for the model that designs a whole graph: how a block connects,
+ * The gui, for the model that designs a whole graph: how a block connects,
  * and every kind with what it says of itself (`WidgetRunner.graphAuthorNote`)
  * -- a kind is listed by being registered, so the prompt cannot leave one out.
  */
@@ -374,10 +374,10 @@ export function guiAuthorNote(): string {
     const note = element.graphAuthorNote();
     return `  - ${element.widgetKind}${note ? `: ${note}` : ''}`;
   });
-  return 'The page is "page": {"blocks": [...]} beside "nodes" and "edges" -- not a node, and nothing is wired to it. '
+  return 'The gui is "gui": {"blocks": [...]} beside "nodes" and "edges" -- not a node, and nothing is wired to it. '
     + 'A block is {"id", "kind", "label", "w" (1-16 columns), "h" (rows), ...its settings} and connects itself by name: '
     + '"sends_to": [start point ids] (its data goes into the package of each, under the block\'s id), '
-    + '"fires": a start point id (using it starts the graph there; the start point must have config.started_by "page"), '
+    + '"fires": a start point id (using it starts the graph there; the start point must have config.started_by "gui"), '
     + '"shows": an end point id (what arrives at that end point is shown on the block). '
     + 'A block has no code of its own: what reshapes a value before a block shows it is a code node wired in before the end point. '
     + `The kinds:\n${kinds.join('\n')}`;

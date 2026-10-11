@@ -22,7 +22,7 @@ import { cut } from '../../../deployment/gui/kit/ui/cut';
  * put into words: {Input Definition} and {Output Definition} while a node has
  * none of its own.
  *
- * Where a wire comes from a start point or ends at an end point, the page is
+ * Where a wire comes from a start point or ends at an end point, the gui is
  * part of the fact: what its blocks send a start point -- the one value an
  * input takes of it, by its field -- and what the block that shows an end
  * point wants, at the size it is drawn.
@@ -44,19 +44,19 @@ function exampleAt(start: GraphNode, field?: string): string | undefined {
 }
 
 /**
- * What the page sends start point *start*, in words, for an input that takes
+ * What the gui sends start point *start*, in words, for an input that takes
  * *field* of its package -- or the whole package, without one: each block
  * that sends to it, by its id, with what it sends -- or what a call sends
  * it, for example.
  */
-function sentWords(start: GraphNode, page: GuiWidget[], field: string | undefined): string {
-  const senders = blocksAt(page, start.id).send;
+function sentWords(start: GraphNode, gui: GuiWidget[], field: string | undefined): string {
+  const senders = blocksAt(gui, start.id).send;
   if (field) {
     const [id, ...inside] = field.split('.');
     const block = senders.find((widget) => widget.id === id);
     const example = exampleAt(start, field);
     if (!block && example) return `"${field}" of what a call sends it -- for example ${example}`;
-    if (!block) return `"${field}" of what it is sent, which no block of the page sends it`;
+    if (!block) return `"${field}" of what it is sent, which no block of the gui sends it`;
     const sent = blockCan(block).sends;
     if (!inside.length) return `what ${calledBlock(block)} sends -- ${sent?.description ?? 'its value'}`;
     // The part alone, in its own words: said with the whole object after it,
@@ -71,8 +71,8 @@ function sentWords(start: GraphNode, page: GuiWidget[], field: string | undefine
 }
 
 /** What the blocks that show end point *end* want, in words: each block, what it draws, at the size it is drawn. */
-function shownWords(end: GraphNode, page: GuiWidget[]): string[] {
-  return blocksAt(page, end.id).show.map((widget) => {
+function shownWords(end: GraphNode, gui: GuiWidget[]): string[] {
+  return blocksAt(gui, end.id).show.map((widget) => {
     const { w, h, width, height } = blockSize(widget);
     const size = `shown at about ${width} x ${height} px (${w} x ${h} cells)`;
     const text = WIDGET_BUILDERS[widget.kind]?.textShown();
@@ -102,7 +102,7 @@ export function lastRunInputs(
  * it is what turns a skeleton line from `files: list[str]` into
  * `files: list[str]  // from "Folder" (port "Files")` — provenance, which no
  * type expresses. What the input takes matters as much as the node: the blocks
- * of a page all send into one package of a start point, and an input takes one
+ * of a gui all send into one package of a start point, and an input takes one
  * field of it -- a file picked, a text typed -- so code written against the
  * wrong one reads a file name as the text.
  *
@@ -112,14 +112,14 @@ export function lastRunInputs(
  *
  * *withEmits*, for ✨: each source followed by what that node says it hands
  * on, so the model is told the wire and the declaration behind it in one line
- * -- for a start point, what *page* sends it, as the input takes it.
+ * -- for a start point, what *gui* sends it, as the input takes it.
  */
 export function inputSources(
   nodeId: string,
   nodes: GraphNode[],
   edges: Wire[],
   withEmits = false,
-  page: GuiWidget[] = [],
+  gui: GuiWidget[] = [],
 ): Record<string, string> {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const byPort: Record<string, string[]> = {};
@@ -132,9 +132,9 @@ export function inputSources(
     let said = port ? `"${source.label}" (port "${port.name}")` : `"${source.label}"`;
     if (field) said += `, as "${field}"`;
     // The port's own words first, then what the node declares of its output
-    // (`NodeGuiBuilder.describeOutput`) -- for a start point, what the page or
+    // (`NodeGuiBuilder.describeOutput`) -- for a start point, what the gui or
     // a call sends it, which says it all.
-    const sent = runnerRegistry.node(source.node_type)?.takesPackage && (page.length || exampleAt(source)) ? sentWords(source, page, field) : '';
+    const sent = runnerRegistry.node(source.node_type)?.takesPackage && (gui.length || exampleAt(source)) ? sentWords(source, gui, field) : '';
     const emits = !withEmits ? ''
       : sent || [...new Set([port?.description?.trim(), NODE_BUILDERS[source.node_type]?.describeOutput(source, edge.sourceHandle ?? undefined)].filter(Boolean))].join('; ');
     if (emits) said += `, which hands on: ${emits}`;
@@ -150,14 +150,14 @@ export function inputSources(
  * "Points")`. The other half of `inputSources`, for the panel: a port says
  * what it is connected to, so "how does this reach that" is answered where the
  * port is named rather than by squinting at the canvas -- and an end point,
- * which block of *page* shows it.
+ * which block of *gui* shows it.
  */
 export function outputTargets(
   nodeId: string,
   nodes: GraphNode[],
   edges: Wire[],
   withWants = false,
-  page: GuiWidget[] = [],
+  gui: GuiWidget[] = [],
 ): Record<string, string> {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const byPort: Record<string, string[]> = {};
@@ -171,7 +171,7 @@ export function outputTargets(
     // point, by the block that shows it (a chart: a figure).
     const wants = withWants && edge.targetHandle ? NODE_BUILDERS[target.node_type]?.wantsOn(target, edge.targetHandle) : undefined;
     if (wants) said += `, which wants ${wants}`;
-    const shown = runnerRegistry.node(target.node_type)?.isResult && edge.targetHandle !== 'path' ? shownWords(target, page) : [];
+    const shown = runnerRegistry.node(target.node_type)?.isResult && edge.targetHandle !== 'path' ? shownWords(target, gui) : [];
     if (shown.length) said += `; ${shown.join('; ')}`;
     (byPort[edge.sourceHandle ?? 'output'] ??= []).push(said);
   }

@@ -4,8 +4,8 @@
 //       graph-flow.json           the flow: the graph's name, and every wire
 //       graph-nodes.json          the nodes: each one's kind, heading, text, settings and ports
 //       graph-layout.json         where each node sits on the canvas, and its size
-//       gui.json           the page: what whoever uses the tool sees -- its blocks,
-//                           in order, each with what it connects to
+//       gui.json                  the gui: what whoever uses the tool sees -- its blocks,
+//                                 in order, each with what it connects to
 //       nodes/
 //         count/            one folder per node that keeps writing, by id
 //           input.js …      what the element keeps in files: `NodeRunner.texts`
@@ -18,8 +18,8 @@
 // is not a change to what the graph does; writing -- code, prompts -- is a file
 // of its own so it is edited, reviewed and grepped as what it is.
 //
-// **The page sits beside the graph, not in it.** It is no node: a graph has one
-// page, what a person using the tool sees, and its blocks connect themselves to
+// **The gui sits beside the graph, not in it.** It is no node: a graph has one
+// gui, what a person using the tool sees, and its blocks connect themselves to
 // the graph's start and end points by name -- so it is a file of its own, and
 // the flow does not name it.
 //
@@ -94,10 +94,10 @@ export function projectFolderOf(path: string): string | null {
 }
 
 /**
- * A page of a project's own, written by hand: served at `/` in place of the
- * built page when it holds an `index.html`, and carried by a bundle. It uses
+ * A gui of a project's own, written by hand: served at `/` in place of the
+ * built gui when it holds an `index.html`, and carried by a bundle. It uses
  * the graph only through the runtime API, by name (`backend/deployment/host/api.ts`). Not
- * `gui.json`: that is the built-in page's, its blocks.
+ * `gui.json`: that is the built-in gui's, its blocks.
  */
 export const FRONTEND_DIR = 'frontend';
 
@@ -126,17 +126,17 @@ export function nodeFolder(nodeId: string): string {
   return `${NODES_DIR}/${folderName(nodeId)}`;
 }
 
-/** The field the page's text is reported under (`TextChange`): its blocks. */
+/** The field the gui's text is reported under (`TextChange`): its blocks. */
 const GUI_FIELD = 'blocks';
 
 /** One piece of writing in a graph: whose it is, which field holds it, and where its file goes. */
 export interface ProjectText {
-  /** The node it is a node's; null for the graph's own -- its page. */
+  /** The node it is a node's; null for the graph's own -- its gui. */
   node_id: string | null;
   field: string;
   /** Relative to the project folder, with `/`. */
   path: string;
-  /** Where the field lives: the node's config, or the page. */
+  /** Where the field lives: the node's config, or the gui. */
   holder: Record<string, unknown>;
   /** See `TextFile`: a value kept as JSON, the file's stub, and what follows what the node holds. */
   json: boolean;
@@ -146,12 +146,12 @@ export interface ProjectText {
 
 /**
  * Every piece of writing *graph* can keep in files, whether or not it holds
- * any: each node's, and the page's -- which, to be read into, is given a
+ * any: each node's, and the gui's -- which, to be read into, is given a
  * place in *graph* while it has none (`withoutEmptyGui` takes it out again).
  */
 export function projectTexts(graph: Graph): ProjectText[] {
-  graph.page ??= { blocks: [] };
-  const found: ProjectText[] = [{ node_id: null, field: GUI_FIELD, path: GUI_FILE, holder: graph.page as unknown as Record<string, unknown>, json: true }];
+  graph.gui ??= { blocks: [] };
+  const found: ProjectText[] = [{ node_id: null, field: GUI_FIELD, path: GUI_FILE, holder: graph.gui as unknown as Record<string, unknown>, json: true }];
   // Each node claims its folder once. Compared without case: on the disk most
   // people use, "Count" and "count" are one folder, and whichever was written
   // last would be the only one there.
@@ -181,9 +181,9 @@ export function projectTexts(graph: Graph): ProjectText[] {
   return found;
 }
 
-/** *graph* without the page `projectTexts` gave it a place for, when nothing was put there: a page is its blocks. */
+/** *graph* without the gui `projectTexts` gave it a place for, when nothing was put there: a gui is its blocks. */
 function withoutEmptyGui(graph: Graph): Graph {
-  if (!graph.page?.blocks?.length) delete graph.page;
+  if (!graph.gui?.blocks?.length) delete graph.gui;
   return graph;
 }
 
@@ -262,8 +262,8 @@ function heldIn(content: string, text: ProjectText, path: string): { value: unkn
   } catch (error) {
     throw new NotAGraph(`${path} is not valid JSON: ${(error as Error).message}`);
   }
-  // The page's file is its list of blocks and nothing else: `{"blocks": […]}` or `null` would read as
-  // no page at all, and the next save would delete the file.
+  // The gui's file is its list of blocks and nothing else: `{"blocks": […]}` or `null` would read as
+  // no gui at all, and the next save would delete the file.
   if (text.node_id === null && !(Array.isArray(value) && value.every((block) => !!block && typeof block === 'object' && !Array.isArray(block)))) {
     throw new NotAGraph(`${path} must be a list of blocks: [ { "id": …, "kind": … }, … ].`);
   }
@@ -558,9 +558,9 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
       for (const field of textFields(node)) if (!own.has(field)) delete node.config[field];
     }
   }
-  // Each block's keys in one order, so an unchanged page saves unchanged; and
-  // a page of no blocks is no page, with no file.
-  const blocks = (copy.page?.blocks ?? []).map((block) => sorted(block));
+  // Each block's keys in one order, so an unchanged gui saves unchanged; and
+  // a gui of no blocks is no gui, with no file.
+  const blocks = (copy.gui?.blocks ?? []).map((block) => sorted(block));
   for (const text of projectTexts(copy)) {
     const value = text.node_id === null ? (blocks.length ? blocks : undefined) : text.holder[text.field];
     delete text.holder[text.field];

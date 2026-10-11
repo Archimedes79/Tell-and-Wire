@@ -6,8 +6,8 @@ import { serve, type Served } from './serve.ts';
 import { API } from './api.ts';
 
 /**
- * A page of a project's own, written by hand against the runtime API: served
- * in place of the built page -- and, in the example that has one, calling
+ * A gui of a project's own, written by hand against the runtime API: served
+ * in place of the built gui -- and, in the example that has one, calling
  * nothing but what any frontend may call.
  */
 
@@ -16,7 +16,7 @@ const served: Served[] = [];
 afterAll(async () => { for (const one of served) await one.shutdown(); });
 
 describe('a project\'s own frontend', () => {
-  it('is served at / and beside it in place of the built page, and the example\'s calls nothing but the runtime API', async () => {
+  it('is served at / and beside it in place of the built gui, and the example\'s calls nothing but the runtime API', async () => {
     // A copy of the example: a served project keeps its state beside its graph-flow.json.
     const dir = join(await mkdtemp(join(tmpdir(), 'frontend-')), 'nested_statistics');
     await cp(EXAMPLE, dir, { recursive: true });

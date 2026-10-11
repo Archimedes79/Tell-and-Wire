@@ -1,9 +1,9 @@
 // A value, as a box of text reads it.
 //
 // What arrives at a box that shows may be anything: a chart's rows wired in
-// to be read, a model's answer as an object, a summary per file. The page's
+// to be read, a model's answer as an object, a summary per file. The gui's
 // blocks show a value with these functions -- a box of text, a picker, a
-// table's cells, a tool's result without a page -- so a value reads the same
+// table's cells, a tool's result without a gui -- so a value reads the same
 // wherever it is shown.
 
 /**

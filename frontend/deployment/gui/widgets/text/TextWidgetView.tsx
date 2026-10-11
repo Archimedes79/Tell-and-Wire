@@ -7,7 +7,7 @@ import { textRole, type TextRole } from '../../../../../gui/widgets/text/role.ts
  * Prose: a heading, a paragraph, or a caption — one widget, three roles.
  *
  * The role decides size and weight, and nothing else. Every one of them starts
- * at the top of its block, because a page where some text hangs from the top
+ * at the top of its block, because a gui where some text hangs from the top
  * and other text sits on the bottom has no baseline the eye can follow -- and
  * the heading was the one hanging the other way. Air between sections comes
  * from the spacer, where it is visible and adjustable, instead of from a block

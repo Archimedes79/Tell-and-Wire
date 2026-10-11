@@ -57,7 +57,7 @@ export class ChatWidgetRunner extends WidgetRunner<ChatValue> {
 
   /**
    * Given a message, it is the one in hand, and what was said before stays:
-   * what a page or a script sends a chat. Given a whole conversation, it is
+   * what a gui or a script sends a chat. Given a whole conversation, it is
    * that conversation.
    */
   override setValue(stored: RawConfig, value: unknown): void {
@@ -93,7 +93,7 @@ export class ChatWidgetRunner extends WidgetRunner<ChatValue> {
       + 'wired to, which the chat shows. Do not add data or code nodes to hold the conversation.';
   }
 
-  /** A conversation is what using the page said: the session's, never the design's. */
+  /** A conversation is what using the gui said: the session's, never the design's. */
   override valueIsDesign(): boolean {
     return false;
   }

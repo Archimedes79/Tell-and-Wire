@@ -1,7 +1,7 @@
 // Where a graph inside a node meets the node that holds it.
 //
 // Nothing is invented for the edge of a subgraph: the start points and end
-// points that are the edge of *any* graph are its edge here too -- a page
+// points that are the edge of *any* graph are its edge here too -- a gui
 // starts the one, a call the other, and the graph above is a call. Which
 // nodes those are is the elements' own answer (`NodeRunner.boundaryRole`),
 // so this file names no node type and holds no second copy of anyone's

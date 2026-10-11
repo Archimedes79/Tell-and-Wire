@@ -12,7 +12,7 @@
 // run it, and everything a person clicks is in the browser, which they
 // never import. So a builder is the browser's build-time half, and it is the
 // only one of the three roles that a delivered tool must not contain -- see
-// `page/blocks.ts` for the third, which is neither.
+// `gui/surface/blocks.ts` for the third, which is neither.
 //
 // What a builder adds to its element is the editor's part: its panel (the
 // settings), and what the editor's shells ask of it, so no shell switches on a

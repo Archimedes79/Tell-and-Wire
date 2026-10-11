@@ -4,22 +4,22 @@ import { guiBlock, guiSends } from './gui.ts';
 import { quietRuntime } from '../backend/deployment/runtime/test/fakes.ts';
 
 /**
- * The page a graph is used through: blocks that connect themselves to the
+ * The gui a graph is used through: blocks that connect themselves to the
  * graph's start and end points by name. Nothing is wired to a block; what a
- * round the page starts is sent is made here, and what it hands back is
+ * round the gui starts is sent is made here, and what it hands back is
  * settled here.
  */
 
-/** A page for a summarizer: a file, a length, a Go button, the summary shown, a chart. */
+/** A gui for a summarizer: a file, a length, a Go button, the summary shown, a chart. */
 const tool = (): Graph => parseGraph({
   metadata: { name: 'tool' },
   nodes: [
-    { id: 'summarize', node_type: 'start', config: { started_by: 'page' } },
+    { id: 'summarize', node_type: 'start', config: { started_by: 'gui' } },
     { id: 'api', node_type: 'start', config: { started_by: 'call' } },
     { id: 'summary', node_type: 'end', config: {} },
     { id: 'plot', node_type: 'end', config: {} },
   ],
-  page: {
+  gui: {
     blocks: [
       { id: 'title', kind: 'text', value: 'Summaries' },
       { id: 'file', kind: 'input_picker', label: 'File', value: '', sends_to: ['summarize'] },
@@ -32,7 +32,7 @@ const tool = (): Graph => parseGraph({
   },
 });
 
-describe('the page, connected by name', () => {
+describe('the gui, connected by name', () => {
   it('sends a start point the data of each block that sends to it, by id, and fails by the name of a block that cannot say what it holds', async () => {
     const graph = tool();
     guiBlock(graph, 'file')!.value = 'notes.txt';

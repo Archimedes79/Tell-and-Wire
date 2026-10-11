@@ -7,7 +7,7 @@ import { serve, type Served } from './serve.ts';
 
 /**
  * The runtime API: a graph used by name, over HTTP, by any frontend -- the
- * routes a hand-written page calls, and nothing it would have to know about
+ * routes a hand-written gui calls, and nothing it would have to know about
  * the graph to call them.
  */
 
@@ -26,14 +26,14 @@ const ECHO = {
     { id: 'p', source_node_id: 'picked', source_port_id: 'data', target_node_id: 'say', target_port_id: 'pick' },
     { id: 's', source_node_id: 'say', source_port_id: 'out', target_node_id: 'said', target_port_id: 'value' },
   ],
-  page: {
+  gui: {
     blocks: [
       { id: 'pick', kind: 'select', label: 'Pick', options: 'a\nb', value: 'a', sends_to: ['picked'], fires: 'picked' },
       { id: 'shown', kind: 'text_io', mode: 'output', label: 'Shown', shows: 'said' },
     ],
   },
 };
-/** A round the dropdown starts, as the page starts it. */
+/** A round the dropdown starts, as the gui starts it. */
 const PICK_B = { event: 'picked', values: { pick: 'b' }, by: 'pick' };
 
 const served: Served[] = [];
@@ -65,7 +65,7 @@ describe('the runtime API', () => {
     expect(body).toMatchObject({
       name: 'Echo',
       description: 'Says what was picked.',
-      events: [{ name: 'picked', started_by: 'page', fired_by: ['pick'], sends: [{ name: 'pick', label: 'Pick', type: 'text' }] }],
+      events: [{ name: 'picked', started_by: 'gui', fired_by: ['pick'], sends: [{ name: 'pick', label: 'Pick', type: 'text' }] }],
       outputs: [{ name: 'said', label: 'Said' }],
     });
     expect(body).not.toHaveProperty('values');
@@ -74,22 +74,22 @@ describe('the runtime API', () => {
     expect((await get(`${url}/api/runtime/session?session=someone-else`)).status).toBe(404);
   });
 
-  it('runs a round the page starts or a script calls, keeps what the page set beside the graph, turns down what it does not offer, and forgets on reset', async () => {
+  it('runs a round the gui starts or a script calls, keeps what the gui set beside the graph, turns down what it does not offer, and forgets on reset', async () => {
     const { url, graphPath } = await tool();
     const { status, body } = await post(`${url}/api/runtime/run`, PICK_B);
     expect(status).toBe(200);
     expect(body).toMatchObject({ status: 'success', error: null, outputs: { said: 'picked b' } });
     // Kept in the session and beside the graph -- never in it.
     expect(existsSync(`${graphPath}.state.json`)).toBe(true);
-    expect(JSON.parse(await readFile(graphPath, 'utf8')).page.blocks[0].value).toBe('a');
+    expect(JSON.parse(await readFile(graphPath, 'utf8')).gui.blocks[0].value).toBe('a');
     expect((await get(`${url}/api/runtime/session`)).body).toMatchObject({
-      page: { pick: 'b', shown: 'picked b' }, shown: { shown: 'picked b' }, outputs: { said: 'picked b' }, rounds: 1,
+      gui: { pick: 'b', shown: 'picked b' }, shown: { shown: 'picked b' }, outputs: { said: 'picked b' }, rounds: 1,
     });
 
-    // A script in the page's place: a function call, sent what it sends. What the page holds is the page's.
+    // A script in the gui's place: a function call, sent what it sends. What the gui holds is the gui's.
     const call = await post(`${url}/api/runtime/run`, { event: 'picked', values: { pick: 'a' } });
     expect(call.body).toMatchObject({ status: 'success', outputs: { said: 'picked a' } });
-    expect((await get(`${url}/api/runtime/session`)).body).toMatchObject({ page: { pick: 'b' } });
+    expect((await get(`${url}/api/runtime/session`)).body).toMatchObject({ gui: { pick: 'b' } });
 
     const unknown = await post(`${url}/api/runtime/run`, { event: 'nothing' });
     expect(unknown.status).toBe(400);
@@ -100,12 +100,12 @@ describe('the runtime API', () => {
 
     const reset = await post(`${url}/api/runtime/reset`);
     expect(reset.status).toBe(200);
-    expect(reset.body).toMatchObject({ page: { pick: 'a', shown: null }, shown: {}, outputs: {}, rounds: 0 });
+    expect(reset.body).toMatchObject({ gui: { pick: 'a', shown: null }, shown: {}, outputs: {}, rounds: 0 });
     expect(existsSync(`${graphPath}.state.json`)).toBe(false);
   }, 30_000);
 
   it('answers a request from a server bound beyond this machine without browsing its disk or setting the file a picker reads', async () => {
-    const picker = { ...ECHO, page: { blocks: [{ id: 'pick', kind: 'input_picker', mode: 'file', send: 'path', sends_to: ['picked'], fires: 'picked' }] } };
+    const picker = { ...ECHO, gui: { blocks: [{ id: 'pick', kind: 'input_picker', mode: 'file', send: 'path', sends_to: ['picked'], fires: 'picked' }] } };
     const here = await tool(picker);
     const there = await tool(picker, '0.0.0.0');
     const choose = { event: 'picked', by: 'pick', values: { pick: 'notes.txt' } };

@@ -1,11 +1,11 @@
 // The colour scheme: one choice for the whole tool, from a closed set.
 //
-// A scheme is the entire palette -- page, panels, borders, text, accent, the
+// A scheme is the entire palette -- gui, panels, borders, text, accent, the
 // tint behind a node -- not an accent colour. What people mean by a colour
 // scheme is dark blue versus warm paper, and that is what these are.
 //
 // It is the GUI's scheme: every value here becomes a CSS variable on the
-// page's own container (see schemeVars) -- the page surface of the Page tab,
+// gui's own container (see schemeVars) -- the gui surface of the Gui tab,
 // the App tab, the delivered tool -- and every colour in `ui/theme.ts` is a
 // `var()` pointing at one, so a block asks for SURFACE and needs to know
 // nothing about schemes. The editor around it sets none, and keeps the
@@ -13,7 +13,7 @@
 // scheme.
 //
 // Text on a surface meets 4.5:1 in every scheme -- `text`, `muted`, `dim`,
-// `dimmer` and each `...Text` colour, on the page, the panels, a raised block
+// `dimmer` and each `...Text` colour, on the gui, the panels, a raised block
 // and a hovered row. `scheme.test.ts` checks it.
 //
 // Five: two dark, two light, one in between. Enough that the tool can look
@@ -22,7 +22,7 @@
 // rather than picked as a hue. An accent that reads on white would vanish on
 // Nacht, which is why a scheme is a palette and not a colour.
 //
-// A red one was tried and dropped: red reads as an error on a page that also
+// A red one was tried and dropped: red reads as an error on a gui that also
 // reports errors.
 //
 // Stored on `metadata.gui_scheme`: presentation of the graph as a whole, so it
@@ -37,13 +37,13 @@ interface Scheme {
   light?: boolean;
 
   // ---- surfaces -------------------------------------------------------------
-  /** Recessed: the page itself, input fields, code areas. */
+  /** Recessed: the gui itself, input fields, code areas. */
   sunken: string;
   /** Raised: panels, modals, nodes, cards. */
   surface: string;
   /** Borders, and the neutral button fill -- the same colour by design. */
   line: string;
-  /** The barely-there lift of a block off the page. */
+  /** The barely-there lift of a block off the gui. */
   raise: string;
   /** A row or button under the pointer. */
   hover: string;
@@ -100,7 +100,7 @@ export const SCHEMES: Scheme[] = [
     id: 'paper',
     label: 'Paper — light and warm',
     light: true,
-    // Warm off-white rather than #fff, and ink rather than black: a page you can
+    // Warm off-white rather than #fff, and ink rather than black: a gui you can
     // look at for an afternoon. The accent is a burnt orange, the one hue that
     // stays legible both as a 1px border and as a filled button.
     sunken: '#efece3', surface: '#faf9f5', line: '#dcd8cb',
@@ -157,12 +157,12 @@ export const SCHEMES: Scheme[] = [
 ];
 
 /**
- * Colours for telling series apart, one set per kind of page.
+ * Colours for telling series apart, one set per kind of gui.
  *
  * Not per scheme: what makes eight colours distinguishable is how they sit on a
  * dark or a light ground, and there are only those two grounds. The first of
  * the eight is always the scheme's own accent, so a one-series chart matches
- * the page it is on. A chart -- or SVG that arrives at one -- reaches them as
+ * the gui it is on. A chart -- or SVG that arrives at one -- reaches them as
  * `var(--plot-1)` … `var(--plot-8)`, which is how it keeps working when the
  * scheme is changed.
  */
@@ -179,12 +179,12 @@ export function scheme(id: string | undefined): Scheme {
 }
 
 /**
- * The scheme as CSS variables, for the container of a page: the Page tab's
+ * The scheme as CSS variables, for the container of a gui: the Gui tab's
  * surface, the App tab, a deployed tool's root.
  *
  * Variables rather than props threaded through the tree: a component asks
  * `ui/theme.ts` for SURFACE and needs to know nothing about schemes, which is
- * what lets one switch repaint every block, border and accent of the page
+ * what lets one switch repaint every block, border and accent of the gui
  * without touching a single call site.
  */
 export function schemeVars(id: string | undefined): React.CSSProperties {
@@ -220,7 +220,7 @@ export function schemeVars(id: string | undefined): React.CSSProperties {
     '--ui-node-start': s.nodes.start,
     ...Object.fromEntries(plotColours(id).map((colour, index) => [`--plot-${index + 1}`, colour])),
     // Scrollbars, form controls and the window's own backdrop follow, so a
-    // light scheme is light to the edges instead of a light page on a dark desk.
+    // light scheme is light to the edges instead of a light gui on a dark desk.
     colorScheme: s.light ? 'light' : 'dark',
   } as React.CSSProperties;
 }

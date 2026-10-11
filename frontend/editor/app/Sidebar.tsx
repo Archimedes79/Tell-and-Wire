@@ -29,7 +29,7 @@ interface SidebarProps {
 }
 
 /**
- * The palette, in the look of the Page tab's (`DesignerPalette`, `.palette-tile`):
+ * The palette, in the look of the Gui tab's (`DesignerPalette`, `.palette-tile`):
  * a slim column, a heading per group, and per kind its icon in its colour and
  * its name. Click or drag to add. The two palettes share a look and no code.
  */

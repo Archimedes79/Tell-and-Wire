@@ -21,7 +21,7 @@ const OWN: Record<WidgetKind, string[]> = {
   chat: [],
 };
 
-describe('a new block, as the palette puts it on a page', () => {
+describe('a new block, as the palette puts it on a gui', () => {
   it('holds only its own kind\'s settings', () => {
     // Every kind's settings were once spread onto every block, so a divider
     // or a chart was saved with a folder's file types and an options list.

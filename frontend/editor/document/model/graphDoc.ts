@@ -96,7 +96,7 @@ export function withNested(outer: Graph, nodeId: string, inner: Graph): Graph {
  * given, never the one ReactFlow measured: a graph must serialise the same way
  * twice running, or "unsaved" means nothing.
  */
-export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: GraphMetadata, page: GuiWidget[]): Graph {
+export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: GraphMetadata, gui: GuiWidget[]): Graph {
   const nodes: GraphNode[] = rfNodes.map((rfn) => keptNested(savedNode({
     ...rfn.data.graphNode,
     position: { x: rfn.position.x, y: rfn.position.y },
@@ -105,7 +105,7 @@ export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: Graph
     height: rfn.data.graphNode.height ?? undefined,
   })));
   const edges: GraphEdge[] = rfEdges.map(graphEdge);
-  return { metadata, nodes, edges, ...(page.length ? { page: { blocks: page } } : {}) };
+  return { metadata, nodes, edges, ...(gui.length ? { gui: { blocks: gui } } : {}) };
 }
 
 /**
@@ -121,11 +121,11 @@ function keptNested(node: GraphNode): GraphNode {
   const graph = normalizeGraph(held);
   const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
   const kept = { ...node, config: { ...node.config } };
-  element.setNestedGraph(kept as never, exported(rfNodes, rfEdges, graph.metadata, graph.page?.blocks ?? []) as never);
+  element.setNestedGraph(kept as never, exported(rfNodes, rfEdges, graph.metadata, graph.gui?.blocks ?? []) as never);
   return kept;
 }
 
-/** The page's blocks as a change of gui.json says them. */
+/** The gui's blocks as a change of gui.json says them. */
 export const guiOf = (change: TextChange): GuiWidget[] => (Array.isArray(change.value) ? change.value : []) as GuiWidget[];
 
 /** *change* taken into *node*: a file of it as it is on disk, or the graph it holds; its ports follow. */
@@ -150,7 +150,7 @@ export function lostWire(nodes: GraphNode[], edge: GraphEdge, touched: Set<strin
 /** The undo state *snapshot* with what came in from disk (*changes*) in it, as it is kept (`exported`). */
 export function withDiskChanges(snapshot: string, changes: TextChange[]): string {
   const graph = normalizeGraph(JSON.parse(snapshot) as Graph);
-  let blocks = graph.page?.blocks ?? [];
+  let blocks = graph.gui?.blocks ?? [];
   for (const change of changes) {
     if (change.node_id === null) blocks = guiOf(change);
     else {
@@ -173,13 +173,13 @@ export function normalizeGraph(graph: Graph): Graph {
     ? graph.edges.filter((edge) => nodeIds.has(edge.source_node_id) && nodeIds.has(edge.target_node_id))
     : [];
 
-  // A page is its blocks: one with none is no page.
-  const blocks = Array.isArray(graph.page?.blocks) ? graph.page.blocks : [];
+  // A gui is its blocks: one with none is no gui.
+  const blocks = Array.isArray(graph.gui?.blocks) ? graph.gui.blocks : [];
   return {
     metadata: normalizeMetadata(graph.metadata),
     nodes,
     edges,
-    ...(blocks.length ? { page: { blocks } } : {}),
+    ...(blocks.length ? { gui: { blocks } } : {}),
   };
 }
 

@@ -4,15 +4,15 @@ import { NODE_KINDS } from '../document/model/nodeKinds';
 import { guiFromGraph } from './guiFromGraph';
 
 /**
- * A first page drawn from the graph: an input for each thing a start point
+ * A first gui drawn from the graph: an input for each thing a start point
  * reads, a button that starts it, a text for each end point nobody shows --
- * and nothing for what the page already meets, or cannot start.
+ * and nothing for what the gui already meets, or cannot start.
  */
 
 const port = (id: string, extra: Partial<Port> = {}): Port => ({ id, name: id, kind: 'input', data_type: 'any', multi: false, required: false, description: '', ...extra });
 const wire = (source: string, target: string, targetHandle: string): Wire => ({ source, sourceHandle: 'data', target, targetHandle });
 
-const start = (id: string, startedBy: 'page' | 'call' | 'itself'): GraphNode => {
+const start = (id: string, startedBy: 'gui' | 'call' | 'itself'): GraphNode => {
   const made = NODE_KINDS.start.create(id);
   return { ...made, label: id, config: { ...made.config, started_by: startedBy } };
 };
@@ -26,16 +26,16 @@ const summarize = code('summarize', [
 // A node that reads the file itself takes a path, as it is.
 const copy = code('copy', [port('from', { field: 'source', data_type: 'file_path' })]);
 const answer = code('answer', [port('topic', { field: 'topic', data_type: 'text' })]);
-const nodes = [start('read', 'page'), start('api', 'call'), start('clock', 'itself'), summarize, copy, answer, { ...NODE_KINDS.end.create('result'), label: 'Summary' }];
+const nodes = [start('read', 'gui'), start('api', 'call'), start('clock', 'itself'), summarize, copy, answer, { ...NODE_KINDS.end.create('result'), label: 'Summary' }];
 const edges = [
   wire('read', 'summarize', 'text'), wire('read', 'summarize', 'name'), wire('read', 'summarize', 'length'), wire('read', 'copy', 'from'),
   wire('api', 'answer', 'topic'), wire('clock', 'answer', 'topic'),
 ];
 
-describe('a page drawn from the graph', () => {
-  it('has an input for what each start point reads and one that starts it, a text for each end point, and asks before a start point a call starts is put on the page', () => {
+describe('a gui drawn from the graph', () => {
+  it('has an input for what each start point reads and one that starts it, a text for each end point, and asks before a start point a call starts is put on the gui', () => {
     const planned = guiFromGraph(nodes, edges, []);
-    // The page's start point: a picker for the file whose parts are read, a text box for the length, a picker for the path -- each sending under the name its input takes it by -- and a button to start it; then the end point shown.
+    // The gui's start point: a picker for the file whose parts are read, a text box for the length, a picker for the path -- each sending under the name its input takes it by -- and a button to start it; then the end point shown.
     expect(planned.now.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.label, block.send, block.sends_to, block.fires, block.shows])])).toEqual([
       ['read', [
         ['file', 'input_picker', 'File', undefined, ['read'], undefined, undefined],
@@ -49,23 +49,23 @@ describe('a page drawn from the graph', () => {
         ['text_io', 'text_io', 'Summary', undefined, undefined, undefined, 'result'],
       ]],
     ]);
-    // A call starts the other: its blocks wait for the person's say. The clock's has none: the page cannot start it.
+    // A call starts the other: its blocks wait for the person's say. The clock's has none: the gui cannot start it.
     expect(planned.ifSwitched.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.sends_to, block.fires])])).toEqual([
       ['api', [['topic', 'text_io', ['api'], 'api']]],
     ]);
 
-    // Sized so that a first page needs no resizing: inputs two to a row with the button beside the last, the one output across the row, in a raised box.
+    // Sized so that a first gui needs no resizing: inputs two to a row with the button beside the last, the one output across the row, in a raised box.
     const [inputs, outputs] = planned.now.map((made) => made.blocks);
     expect(inputs.map((block) => [block.id, block.w, block.h])).toEqual([['file', 8, 1], ['length', 8, 2], ['source', 12, 1], ['button', 4, 1]]);
     expect(outputs.map((block) => [block.kind, block.w, block.tone])).toEqual([['divider', 16, 'plain'], ['text_io', 16, 'raised']]);
 
-    // What the page already meets is left as it is.
+    // What the gui already meets is left as it is.
     const drawn = planned.now.flatMap((made) => made.blocks);
     expect(guiFromGraph(nodes, edges, drawn).now).toEqual([]);
   });
 
   it('leaves a conversation the whole width and as tall as it is, not an input among the others', () => {
-    const talk = [start('talk', 'page'), code('answer', [port('message', { field: 'chat.message', data_type: 'text' })])];
+    const talk = [start('talk', 'gui'), code('answer', [port('message', { field: 'chat.message', data_type: 'text' })])];
     const [{ blocks }] = guiFromGraph(talk, [wire('talk', 'answer', 'message')], []).now;
     expect(blocks.map((block) => [block.kind, block.w, block.h])).toEqual([['chat', 16, 9]]);
   });

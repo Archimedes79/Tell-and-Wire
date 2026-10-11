@@ -13,13 +13,13 @@ const START = new StartNodeRunner();
 /** What a start point that starts itself can send, in the words the panel offers it. */
 const SENDS = [
   ['', 'Nothing', 'it only starts the round'],
-  ['folder', 'The files of a folder', 'their paths, as a folder block on a page sends them'],
-  ['file', 'One file', 'its path and what is in it, as a file block on a page sends it'],
+  ['folder', 'The files of a folder', 'their paths, as a folder block on a gui sends them'],
+  ['file', 'One file', 'its path and what is in it, as a file block on a gui sends it'],
 ] as const;
 
 /** Who starts a start point, in the words the panel offers it. */
 const STARTERS = [
-  ['page', 'The page', 'a block on it: a button, Enter in a text box, a choice made'],
+  ['gui', 'The gui', 'a block on it: a button, Enter in a text box, a choice made'],
   ['call', 'A call', 'a script, a model over MCP, or the graph above, by this start point\'s name'],
   ['itself', 'Itself', 'when the tool starts, and again on a clock'],
 ] as const;
@@ -83,7 +83,7 @@ function ExampleSent({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConf
 
 /**
  * What a start point that starts itself sends: a file or a folder it reads
- * each time it starts, as a picker block on a page sends what was chosen -- the
+ * each time it starts, as a picker block on a gui sends what was chosen -- the
  * same reading (`readChosen`), so the list shown here is the list a run makes.
  */
 function SendsFiles({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConfig'>) {
@@ -142,7 +142,7 @@ function SendsFiles({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConfi
 }
 
 export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
-  const startedBy = String(node.config.started_by ?? 'page');
+  const startedBy = String(node.config.started_by ?? 'gui');
   const every = String(node.config.every ?? '');
   // Said while it is being typed, in the runner's own words: the same function
   // reads this field when the tool runs, so what it rejects here it would

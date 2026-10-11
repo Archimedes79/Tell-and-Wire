@@ -71,7 +71,7 @@ export function untouchedInput(node: GraphNode, wired: boolean): string | undefi
  * the policy for how a port is typed by what is wired to it.
  */
 export function retypeJoined(
-  nodes: CanvasNode[], page: GuiWidget[], wire: { source: string; sourceHandle: string; target: string; targetHandle: string },
+  nodes: CanvasNode[], gui: GuiWidget[], wire: { source: string; sourceHandle: string; target: string; targetHandle: string },
 ): void {
   const nodeOf = (id: string) => nodes.find((node) => node.id === id)?.data.graphNode;
   const portOf = (id: string, side: 'inputs' | 'outputs', portId: string) => nodeOf(id)?.[side].find((port) => port.id === portId);
@@ -80,13 +80,13 @@ export function retypeJoined(
   const source = nodeOf(wire.source);
   const into = nodeOf(wire.target);
   const own = !!into && derivedNodePorts(into) === null;
-  // From a start point the page sends one block to: the input takes
+  // From a start point the gui sends one block to: the input takes
   // what that block sends, typed as it says -- a text, a folder's files
   // -- rather than the whole package; from one a call starts, the part of
   // its example the input is named after, or its one part. A port that
   // follows from its node's settings takes the part and keeps its type.
   // Its ports can say otherwise.
-  const sent = source && to && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(page, source, to) : undefined;
+  const sent = source && to && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(gui, source, to) : undefined;
   if (sent && to && !to.field) Object.assign(to, takenAs(to, sent.choice, own));
   // A wire from a port that carries file paths -- a picker, a folder --
   // ticks "Read the file at this path" on the input it ends on: the port is

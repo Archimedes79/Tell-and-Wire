@@ -2,7 +2,7 @@
   "measure": {
     "kind": "start",
     "label": "Measure",
-    "description": "Started by a call -- the page in frontend/, a script -- with the paragraph to measure, as \"paragraph\".",
+    "description": "Started by a call -- the gui in frontend/, a script -- with the paragraph to measure, as \"paragraph\".",
     "config": {
       "started_by": "call",
       "values": {

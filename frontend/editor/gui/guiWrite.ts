@@ -1,16 +1,16 @@
-// Changing the page: the one way a block is added, changed, moved or removed.
+// Changing the gui: the one way a block is added, changed, moved or removed.
 //
-// The page is the document's list of blocks, beside its nodes -- a graph has
-// one page -- and every edit on it ends here.
+// The gui is the document's list of blocks, beside its nodes -- a graph has
+// one gui -- and every edit on it ends here.
 //
-// Each edit reads the page from the store when it lands, never from what a
+// Each edit reads the gui from the store when it lands, never from what a
 // component drew. A box that grows as it is typed into changes its block twice
 // in one keystroke -- the text, then the height -- and the second change,
-// made on the page as it was drawn, put back the text from before the first:
+// made on the gui as it was drawn, put back the text from before the first:
 // the character that made the box grow was lost. A ✨ result accepted a minute
 // after it was asked for did the same to every edit made meanwhile.
 //
-// The designer's surface, its side panel, a block typed into on the Page tab,
+// The designer's surface, its side panel, a block typed into on the Gui tab,
 // and `masterExamples.test.ts`, which builds the examples the way a person
 // does, all call these functions. A block used in the running application or
 // in a delivered tool never comes here: what is set there is the session's
@@ -24,15 +24,15 @@ import { blockCan, blocksAt, endPoints, guiStartPoints } from '../document/model
 import { WIDGET_BUILDERS } from '../document/elements/registry';
 
 /**
- * The page's blocks as the store holds them now, rewritten by *edit* and
+ * The gui's blocks as the store holds them now, rewritten by *edit* and
  * stored back. Nothing, when the edit changed nothing: no undo step, and no
  * "unsaved". *coalesce* names the change, as a node's panel names its own
  * (`graphStore.commit`); *add* puts nodes into the graph in the same step.
  */
 function rewrite(edit: (widgets: GuiWidget[]) => GuiWidget[], coalesce?: string, add: GraphNode[] = []): void {
   const store = useGraphStore.getState();
-  const widgets = edit(store.page);
-  if (!add.length && JSON.stringify(widgets) === JSON.stringify(store.page)) return;
+  const widgets = edit(store.gui);
+  if (!add.length && JSON.stringify(widgets) === JSON.stringify(store.gui)) return;
   store.setGui(widgets, { coalesce, add });
 }
 
@@ -50,7 +50,7 @@ function rewrite(edit: (widgets: GuiWidget[]) => GuiWidget[], coalesce?: string,
  */
 export function patchBlock(widgetId: string, patch: Partial<GuiWidget>): void {
   const step = `block.${widgetId}.${Object.keys(patch).sort().join('+')}`;
-  const before = useGraphStore.getState().page.find((w) => w.id === widgetId);
+  const before = useGraphStore.getState().gui.find((w) => w.id === widgetId);
   rewrite((widgets) => widgets.map((w) => (w.id === widgetId ? { ...w, ...patch } : w)), step);
   if (before && patch.label !== undefined) followLabel(before, patch.label, step);
 }
@@ -77,7 +77,7 @@ function followLabel(block: GuiWidget, label: string, step: string): void {
 }
 
 /**
- * Put block *widgetId* at place *to* on the page -- or, *to* being a block's
+ * Put block *widgetId* at place *to* on the gui -- or, *to* being a block's
  * id, where that block stands now, which is what a drag onto it means.
  * Nothing, for a place that is not there.
  */
@@ -93,7 +93,7 @@ export function moveBlock(widgetId: string, to: number | string): void {
   });
 }
 
-/** Take block *widgetId* off the page. The points it connected to stay: they are the graph's. */
+/** Take block *widgetId* off the gui. The points it connected to stay: they are the graph's. */
 export function removeBlock(widgetId: string): void {
   rewrite((widgets) => widgets.filter((w) => w.id !== widgetId));
 }
@@ -121,13 +121,13 @@ function newPoint(kind: 'start' | 'end', label: string, made: GraphNode[]): Grap
 
 /**
  * *widget* connected as a new block of its kind is most often wanted, and the
- * points that takes, made in the same step: what it sends goes to the page's
+ * points that takes, made in the same step: what it sends goes to the gui's
  * start point -- the one there is, or one made for it --, a button or a chat
- * fires it, and so does any other block that can while nothing on the page
- * fires it yet: a picker alone on a page runs the graph when a file is
+ * fires it, and so does any other block that can while nothing on the gui
+ * fires it yet: a picker alone on a gui runs the graph when a file is
  * picked, with no setting to make. What it shows is an end point: one the
  * graph has that no block shows yet, or one made for it. With several start
- * points the page starts, which one is the person's to say.
+ * points the gui starts, which one is the person's to say.
  */
 function connected(widget: GuiWidget, nodes: GraphNode[], blocks: GuiWidget[]): { block: GuiWidget; add: GraphNode[] } {
   const can = blockCan(widget);
@@ -159,13 +159,13 @@ function connected(widget: GuiWidget, nodes: GraphNode[], blocks: GuiWidget[]): 
 }
 
 /**
- * Put *widget* on the page at place *at*, at the end without one -- the order
+ * Put *widget* on the gui at place *at*, at the end without one -- the order
  * is the position -- connected as a new block of its kind is most often
  * wanted (`connected`), and with the start or end point that takes, in the
  * block's own undo step: one Undo takes back the block and what came with it.
  */
 export function insertBlock(widget: GuiWidget, at?: number): void {
-  const { block, add } = connected(widget, nodesNow(), useGraphStore.getState().page);
+  const { block, add } = connected(widget, nodesNow(), useGraphStore.getState().gui);
   rewrite((widgets) => {
     const next = [...widgets];
     next.splice(at ?? next.length, 0, block);
@@ -174,14 +174,14 @@ export function insertBlock(widget: GuiWidget, at?: number): void {
 }
 
 /**
- * The blocks of a page drawn from the graph (`guiFromGraph`), added at the
+ * The blocks of a gui drawn from the graph (`guiFromGraph`), added at the
  * end in one undo step -- with the start points a call started that the person
- * put on the page, which are then started by it.
+ * put on the gui, which are then started by it.
  */
 export function addBlocks(blocks: GuiWidget[], toGui: GraphNode[] = []): void {
-  const step = 'page.from-graph';
+  const step = 'gui.from-graph';
   rewrite((widgets) => [...widgets, ...blocks], step);
-  for (const start of toGui) useGraphStore.getState().updateNode(start.id, { config: { ...start.config, started_by: 'page' } }, undefined, step);
+  for (const start of toGui) useGraphStore.getState().updateNode(start.id, { config: { ...start.config, started_by: 'gui' } }, undefined, step);
 }
 
 /**
@@ -190,7 +190,7 @@ export function addBlocks(blocks: GuiWidget[], toGui: GraphNode[] = []): void {
  * sent there, its event firing it, or the point it shows.
  */
 export function connectToNewPoint(widgetId: string, as: 'sends_to' | 'fires' | 'shows'): void {
-  const widget = useGraphStore.getState().page.find((w) => w.id === widgetId);
+  const widget = useGraphStore.getState().gui.find((w) => w.id === widgetId);
   if (!widget) return;
   const made = newPoint(as === 'shows' ? 'end' : 'start', as === 'shows' ? widget.label || 'Result' : 'Start', []);
   const patch: Partial<GuiWidget> = as === 'sends_to'

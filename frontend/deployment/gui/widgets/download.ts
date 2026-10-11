@@ -1,7 +1,7 @@
 // Saving what a block shows as a file of its own -- a text as .txt, a chart as
-// .svg, a table's rows as .csv -- wherever the page is drawn: the Page tab,
+// .svg, a table's rows as .csv -- wherever the gui is drawn: the Gui tab,
 // the App tab and the delivered tool alike. The browser hands the file over, as it
-// does for any link that says `download`; the page may be open on another
+// does for any link that says `download`; the gui may be open on another
 // machine than the graph, and nothing of the server's is asked.
 //
 // What goes into a file is made by plain functions, text in and text out, so
@@ -58,8 +58,8 @@ export function csvText(header: string[], rows: string[][]): string {
 const VARIABLE = /var\(\s*(--[\w-]+)\s*(?:,\s*((?:[^()]|\((?:[^()]|\([^()]*\))*\))*))?\)/g;
 
 /**
- * *markup*, an `<svg>` as the page drew it, as a file that stands alone. What
- * the page lent it is written into it: the scheme's colours, which it reads as
+ * *markup*, an `<svg>` as the gui drew it, as a file that stands alone. What
+ * the gui lent it is written into it: the scheme's colours, which it reads as
  * CSS variables (*resolve* answers one by name; one it cannot answer falls
  * back as CSS would), the size it was drawn at, the SVG namespace -- and the
  * colour it stood on, without which a dark scheme's light labels are light
@@ -83,7 +83,7 @@ function standaloneSvg(
   });
 }
 
-/** *svg* as it is drawn on the page, as a file (`standaloneSvg`). */
+/** *svg* as it is drawn on the gui, as a file (`standaloneSvg`). */
 export function drawnSvg(svg: SVGSVGElement): string {
   const box = svg.getBoundingClientRect();
   const style = getComputedStyle(svg);

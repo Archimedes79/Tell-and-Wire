@@ -10,7 +10,7 @@ export default function SliderWidgetView({ widget, value, onChange, onTrigger, f
   // The range and the number are read by the runner's rule, the one a run
   // emits by: a value left from before the range was narrowed would otherwise
   // stand beside the handle while the graph is handed the edge of the range.
-  // The page stores what the input reports, a string, which the rule reads as
+  // The gui stores what the input reports, a string, which the rule reads as
   // the number it is rather than snapping the handle home after every drag.
   const { min, max, step, value: current } = sliderRange({ min: widget.min, max: widget.max, step: widget.step, value });
 

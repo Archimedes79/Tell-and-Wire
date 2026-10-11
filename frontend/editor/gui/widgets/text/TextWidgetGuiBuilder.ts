@@ -3,7 +3,7 @@ import { StaticWidgetGuiBuilder } from '../StaticWidgetGuiBuilder';
 import TextInPlace from './TextInPlace';
 import { AlignLeft, Captions, Heading1 } from 'lucide-react';
 
-/** Prose on the page, rendered as markdown: a heading, a paragraph, a caption. */
+/** Prose on the gui, rendered as markdown: a heading, a paragraph, a caption. */
 export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
   readonly widgetKind = 'text';
 
@@ -23,7 +23,7 @@ export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
 
   override readonly defaultMode = 'body';
 
-  /** Typed where it stands, on the page being built. */
+  /** Typed where it stands, on the gui being built. */
   override readonly InlineEditor = TextInPlace;
 
   /**

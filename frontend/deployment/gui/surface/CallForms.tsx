@@ -5,7 +5,7 @@ import { DIMMER, FIELD, LINE, MUTED } from '../kit/ui/theme';
 
 /**
  * What *values* hold at the dotted *path* -- read here, as a frontend reads
- * it, since a delivered page loads none of the code that runs graphs.
+ * it, since a delivered gui loads none of the code that runs graphs.
  */
 const at = (values: unknown, path: string): unknown => path.split('.')
   .reduce<unknown>((inner, key) => (inner && typeof inner === 'object' ? (inner as Record<string, unknown>)[key] : undefined), values);

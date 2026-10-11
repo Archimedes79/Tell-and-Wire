@@ -17,7 +17,7 @@ import {
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 
-/** A code node and an ai node, which keep writing, beside a start point that reads a folder and an end point, which keep none -- and a page with a chart. */
+/** A code node and an ai node, which keep writing, beside a start point that reads a folder and an end point, which keep none -- and a gui with a chart. */
 function sample(): Graph {
   return parseGraph({
     metadata: { name: 'Sample', description: 'All the writing there is.' },
@@ -53,7 +53,7 @@ function sample(): Graph {
       { id: 'e2', source_node_id: 'count', source_port_id: 'total', target_node_id: 'say', target_port_id: 'total' },
       { id: 'e3', source_node_id: 'say', source_port_id: 'output', target_node_id: 'told', target_port_id: 'value' },
     ],
-    page: { blocks: [{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }] },
+    gui: { blocks: [{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }] },
   });
 }
 
@@ -86,7 +86,7 @@ describe('a project folder', () => {
     // code.js runs on its own, on the example in input.js.
     const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes/count/code.js')], { cwd: dir });
     expect(JSON.parse(stdout)).toEqual({ total: 1 });
-    // A start point has no writing of its own, and a chart is one block of the page's: no node, no folder.
+    // A start point has no writing of its own, and a chart is one block of the gui's: no node, no folder.
     expect(existsSync(join(dir, 'nodes/pick'))).toBe(false);
     expect(existsSync(join(dir, 'nodes/told'))).toBe(false);
     expect(JSON.parse(await text('gui.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
@@ -153,7 +153,7 @@ describe('a project folder', () => {
       ...edge, id: `${edge.source_node_id}.${edge.source_port_id} -> ${edge.target_node_id}.${edge.target_port_id}`,
     })));
     expect(read.metadata.name).toBe('Sample');
-    expect(read.page).toEqual(original.page);
+    expect(read.gui).toEqual(original.gui);
   });
 
   it('writes the same bytes for the same graph, so an unchanged save is no change', async () => {
@@ -223,7 +223,7 @@ describe('a project folder', () => {
     expect(problemsIn(await readProject(dir)).some((problem) => /there is no such node/.test(problem.problem))).toBe(true);
   });
 
-  it('refuses to read a page file that is no list of blocks as "no page", which a save would delete, and to save over a .json file that holds no graph', async () => {
+  it('refuses to read a gui file that is no list of blocks as "no gui", which a save would delete, and to save over a .json file that holds no graph', async () => {
     await writeProject(dir, sample());
     for (const wrong of ['{"blocks": []}', '{}', 'null', '[1]']) {
       await writeFile(join(dir, 'gui.json'), wrong);
@@ -271,7 +271,7 @@ describe('two editors on one folder', () => {
     await rm(join(dir, 'nodes/count/output.js'));
     expect(await changesOnDisk(dir)).toEqual([{ node_id: 'count', field: 'output_definition', value: '' }]);
 
-    // The page's blocks, edited in gui.json.
+    // The gui's blocks, edited in gui.json.
     await touch(join(dir, 'gui.json'), '[{ "id": "chart", "kind": "plot_window", "label": "Sales" }]\n');
     expect(await changesOnDisk(dir)).toEqual([{ node_id: null, field: 'blocks', value: [{ id: 'chart', kind: 'plot_window', label: 'Sales' }] }]);
 

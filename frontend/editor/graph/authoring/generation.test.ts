@@ -18,7 +18,7 @@ function made(type: 'code' | 'ai' | 'data', config: Record<string, unknown> = {}
 const INPUT = 'module.exports = { "input": "a" };';
 const OUTPUT = 'module.exports = { "output": 1 };';
 const answer = (result: string, description?: string) => ({ result, calls: [], ...(description === undefined ? {} : { description }) });
-const around = (node: GraphNode) => ({ nodes: [node], edges: [], metadata: { name: 'Words', description: '', gui_scheme: 'night' } as never, page: [] });
+const around = (node: GraphNode) => ({ nodes: [node], edges: [], metadata: { name: 'Words', description: '', gui_scheme: 'night' } as never, gui: [] });
 
 describe('what one press of ✨ writes', () => {
   it('is, for the body, what is missing first -- input.js where it takes something in, output.js -- so one press does the whole node; for ✨ Generate, every file again once the body is there', () => {

@@ -1,4 +1,4 @@
-// The widgets a page is built from: the mirror of `gui/widgets/roster.ts`,
+// The widgets a gui is built from: the mirror of `gui/widgets/roster.ts`,
 // and the only place that knows the whole set.
 
 import type { WidgetKind } from '../../document/graph';

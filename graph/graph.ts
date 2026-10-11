@@ -77,12 +77,12 @@ export interface GraphMetadata {
 }
 
 /**
- * The page a graph is used through: its blocks, in order, each as the file
+ * The gui a graph is used through: its blocks, in order, each as the file
  * keeps it. Not a node: a block connects itself to the graph by name -- where
  * its data goes, which start point it fires, which end point it shows
  * (`gui/gui.ts`) -- and nothing is wired to it.
  */
-export interface Page {
+export interface Gui {
   blocks: RawConfig[];
 }
 
@@ -90,8 +90,8 @@ export interface Graph {
   metadata: GraphMetadata;
   nodes: GraphNode[];
   edges: GraphEdge[];
-  /** Its page, when it has one: a graph used by a script, or held by a node, has none. */
-  page?: Page;
+  /** Its gui, when it has one: a graph used by a script, or held by a node, has none. */
+  gui?: Gui;
 }
 
 export type NodeStatus = 'success' | 'error' | 'partial' | 'skipped';
@@ -192,7 +192,7 @@ export function defaultNodeConfig(): RawConfig {
     batch_concurrency: 0,
     send_images: false,
     catch_errors: false,
-    started_by: 'page',
+    started_by: 'gui',
     on_start: true,
     every: '',
     reads: '',
@@ -218,14 +218,14 @@ export function parseGraph(raw: unknown): Graph {
   const source = raw as Record<string, unknown>;
   const nodes = Array.isArray(source.nodes) ? source.nodes : [];
   const edges = Array.isArray(source.edges) ? source.edges : [];
-  const blocks = (source.page as { blocks?: unknown } | undefined)?.blocks;
+  const blocks = (source.gui as { blocks?: unknown } | undefined)?.blocks;
 
   return {
     metadata: { ...defaultMetadata(), ...(source.metadata as object ?? {}) },
     nodes: nodes.map(parseNode),
     edges: edges.map(parseEdge),
-    // A page is its blocks: one with none is no page.
-    ...(Array.isArray(blocks) && blocks.length ? { page: { blocks: blocks as RawConfig[] } } : {}),
+    // A gui is its blocks: one with none is no gui.
+    ...(Array.isArray(blocks) && blocks.length ? { gui: { blocks: blocks as RawConfig[] } } : {}),
   };
 }
 

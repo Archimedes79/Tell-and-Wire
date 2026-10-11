@@ -5,10 +5,10 @@
 //
 //   the graph itself  -- a start point set to start when the tool starts, or on a clock
 //   a call            -- a script, a model over MCP, the graph above
-//   the page          -- a button pressed, a box submitted, a choice made
+//   the gui           -- a button pressed, a box submitted, a choice made
 //
 // Each is an event, and an event starts the graph **where its start point is
-// wired to**. That is the part worth a file of its own: a page with a
+// wired to**. That is the part worth a file of its own: a gui with a
 // "Summarize" button and a "Plot" button is two tools sharing a window -- two
 // start points -- and pressing one should not run the other's model call.
 //
@@ -85,22 +85,22 @@ function startedBy(graph: Graph, elements: Runners, who: readonly StartedBy[]): 
   });
 }
 
-/** Whether the page starts the graph when somebody uses it: a start point the page starts. */
+/** Whether the gui starts the graph when somebody uses it: a start point the gui starts. */
 export function guiStarts(graph: Graph, elements: Runners): boolean {
-  return startedBy(graph, elements, ['page']);
+  return startedBy(graph, elements, ['gui']);
 }
 
 /**
  * What starting the application runs before anybody uses it -- ▶ Run in the
  * editor, a delivered tool opened: each start point set to start when the
- * tool starts. A graph somebody else starts -- a start point the page or a
+ * tool starts. A graph somebody else starts -- a start point the gui or a
  * call starts -- waits for them; one with no start point at all runs whole
  * once, as a program runs when it is started (`null` is "everything").
  */
 export function startEvents(graph: Graph, elements: Runners): (Trigger | null)[] {
   const triggers = graphTriggers(graph, elements);
   if (triggers.length) return triggers.filter((trigger) => trigger.on_start).map((trigger) => trigger.event);
-  return startedBy(graph, elements, ['page', 'call']) ? [] : [null];
+  return startedBy(graph, elements, ['gui', 'call']) ? [] : [null];
 }
 
 /**

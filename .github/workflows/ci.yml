@@ -44,8 +44,8 @@ jobs:
         run: npm run lint
 
       # Before the tests: the bundle test asserts that a bundle carries the
-      # built page, so the page has to exist by then -- and a checkout that
-      # cannot build has no page to carry.
+      # built gui, so the gui has to exist by then -- and a checkout that
+      # cannot build has no gui to carry.
       - name: Build the editor
         run: npm run build
 

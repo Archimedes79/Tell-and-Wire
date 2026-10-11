@@ -76,7 +76,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
     // of its name, under its name -- the one part an input wired from it
     // then takes (`defaultField`).
     placedInside: (node) => ({ ...node, config: { ...node.config, started_by: 'call', values: { [node.id]: '' } } }),
-    // "Start 2" beside a "Start": the page and the App tab name start points by their labels.
+    // "Start 2" beside a "Start": the gui and the App tab name start points by their labels.
     placedAmong: (node, others) => ({ ...node, label: freeId('Start', others.filter((other) => other.node_type === node.node_type).map((other) => other.label), ' ') }),
   },
 

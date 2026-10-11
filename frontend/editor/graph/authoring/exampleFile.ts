@@ -7,7 +7,7 @@
 // (📂, a drop, ⟳), and otherwise the one the graph hands a file-reading input
 // of the node: what the last run brought there, what the node wired to it
 // holds -- a path a data node stores -- or, from a start point, the file a
-// block of the page that sends into it starts on.
+// block of the gui that sends into it starts on.
 
 import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document/graph';
 import { NODE_BUILDERS } from '../../document/elements/registry';
@@ -26,13 +26,13 @@ export function firstPath(value: unknown): string | undefined {
 
 /**
  * The file start point *start* is sent, for an input that takes *field* of
- * it: what the block of the page the field names starts on -- or, without a
+ * it: what the block of the gui the field names starts on -- or, without a
  * field, the one block that sends to it -- else the path at *field* of what a
  * call sends it, for example. Not a folder's: a list of files is no one
  * example.
  */
-function sentFile(start: GraphNode, page: GuiWidget[], field: string | undefined): string | undefined {
-  const senders = blocksAt(page, start.id).send;
+function sentFile(start: GraphNode, gui: GuiWidget[], field: string | undefined): string | undefined {
+  const senders = blocksAt(gui, start.id).send;
   const block = field ? senders.find((widget) => widget.id === field.split('.')[0]) : senders.length === 1 ? senders[0] : undefined;
   if (block) return blockCan(block).sends?.list ? undefined : firstPath(startsOn(block));
   const example = start.config.values;
@@ -45,7 +45,7 @@ function sentFile(start: GraphNode, page: GuiWidget[], field: string | undefined
  * rule a run follows (`filePorts`): the ones ticked "Read the file at this
  * path", of a kind that reads its files.
  */
-function graphFileOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, page: GuiWidget[]): string | undefined {
+function graphFileOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, gui: GuiWidget[]): string | undefined {
   const ports = filePorts(node, runnerRegistry);
   const last = lastRunInputs(node.id, result);
   for (const port of ports) {
@@ -57,17 +57,17 @@ function graphFileOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result:
       if (edge.target !== node.id || edge.targetHandle !== port || !edge.sourceHandle) continue;
       const source = nodes.find((candidate) => candidate.id === edge.source);
       const field = node.inputs.find((input) => input.id === port)?.field;
-      const path = source && (firstPath(NODE_BUILDERS[source.node_type]?.restingValue(source, edge.sourceHandle)) ?? sentFile(source, page, field));
+      const path = source && (firstPath(NODE_BUILDERS[source.node_type]?.restingValue(source, edge.sourceHandle)) ?? sentFile(source, gui, field));
       if (path) return path;
     }
   }
   return undefined;
 }
 
-/** The files ✨ Input writes from: the node's own, else the one the graph hands it -- a file picked on *page*, too. */
-export function inputFilesOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, page: GuiWidget[] = []): string[] {
+/** The files ✨ Input writes from: the node's own, else the one the graph hands it -- a file picked on *gui*, too. */
+export function inputFilesOf(node: GraphNode, nodes: GraphNode[], edges: Wire[], result: ExecutionResult | null, gui: GuiWidget[] = []): string[] {
   const own = filesOf(node, 'input');
   if (own.length) return own;
-  const graphs = graphFileOf(node, nodes, edges, result, page);
+  const graphs = graphFileOf(node, nodes, edges, result, gui);
   return graphs ? [graphs] : [];
 }

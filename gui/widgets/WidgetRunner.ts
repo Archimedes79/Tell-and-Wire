@@ -1,11 +1,11 @@
-// A widget: the element branch that sits on the page a graph is used through.
+// A widget: the element branch that sits on the gui a graph is used through.
 
 import type { DataType, RawConfig, WidgetKind } from '../../graph/graph.ts';
 import { ElementRunner } from '../../graph/nodes/ElementRunner.ts';
 import type { Runtime } from '../../graph/nodes/Runtime.ts';
 
 /**
- * What a round the page starts asks a person before it runs: a file or a
+ * What a round the gui starts asks a person before it runs: a file or a
  * folder for a picker with nothing chosen. Asked under the key it is answered
  * by -- the block's id -- so a dialog in the editor and a frontend that sends
  * answers read the same list.
@@ -20,8 +20,8 @@ export interface RuntimeRequirement {
 }
 
 /**
- * How a block sits on the page. Nothing an element ever reads to decide what
- * it does: the page draws from these, the backend only carries them.
+ * How a block sits on the gui. Nothing an element ever reads to decide what
+ * it does: the gui draws from these, the backend only carries them.
  */
 export interface WidgetPresentation {
   w: number;
@@ -55,7 +55,7 @@ export interface WidgetConnections {
  * but they are not nested: nesting would have to be undone by `parseWidget`
  * on every read anyway, since the stored file is flat, and two copies of one
  * fact are not a clearer design than one. What separates them from the
- * settings is the type, and `OWN` in `page.ts` is checked against it.
+ * settings is the type, and `OWN` in `gui.ts` is checked against it.
  */
 export interface Widget extends WidgetPresentation, WidgetConnections {
   id: string;
@@ -144,9 +144,9 @@ export abstract class WidgetRunner<C = unknown> extends ElementRunner<Widget, C>
   }
 
   /**
-   * Keep what the end point it shows handed back, for the page to show.
+   * Keep what the end point it shows handed back, for the gui to show.
    *
-   * `stored` is the block as the page holds it. Most blocks simply become the
+   * `stored` is the block as the gui holds it. Most blocks simply become the
    * value; one that holds more than the last thing it was told -- a
    * conversation -- says here what arriving means.
    */
@@ -166,15 +166,15 @@ export abstract class WidgetRunner<C = unknown> extends ElementRunner<Widget, C>
     return false;
   }
 
-  /** Last step before what an end point handed this block reaches the page: an image's path read into the picture. */
+  /** Last step before what an end point handed this block reaches the gui: an image's path read into the picture. */
   async displayValue(_widget: Widget, value: unknown, _runtime: Runtime): Promise<unknown> {
     return value;
   }
 
   /**
    * What this block needs a person to supply before the graph can run -- a
-   * picker with nothing chosen. Its page asks it under the block's own key,
-   * which is the page's to make; most blocks ask nothing.
+   * picker with nothing chosen. Its gui asks it under the block's own key,
+   * which is the gui's to make; most blocks ask nothing.
    */
   runtimeRequirements(_widget: Widget): Omit<RuntimeRequirement, 'key'>[] {
     return [];
@@ -190,7 +190,7 @@ export abstract class WidgetRunner<C = unknown> extends ElementRunner<Widget, C>
     return this.sends(widget) !== null;
   }
 
-  /** Keep a value given from outside -- a person, a page -- in *stored*, the block as the page holds it. */
+  /** Keep a value given from outside -- a person, a gui -- in *stored*, the block as the gui holds it. */
   setValue(stored: RawConfig, value: unknown): void {
     stored.value = value;
   }
@@ -213,7 +213,7 @@ export abstract class WidgetRunner<C = unknown> extends ElementRunner<Widget, C>
   /**
    * This kind's settings and what it sends, fires and shows, in a line for the
    * model that designs a whole graph -- or nothing, for a kind that has none
-   * worth saying. The page's note lists every kind with its line (`page.ts`),
+   * worth saying. The gui's note lists every kind with its line (`gui.ts`),
    * so a new kind is in the prompt by being written.
    */
   graphAuthorNote(): string | undefined {
@@ -226,10 +226,10 @@ export abstract class WidgetRunner<C = unknown> extends ElementRunner<Widget, C>
   }
 
   /**
-   * Whether what this block holds is part of the page's design -- a choice, a
-   * text, a path to start on, set while the page is built -- rather than only
+   * Whether what this block holds is part of the gui's design -- a choice, a
+   * text, a path to start on, set while the gui is built -- rather than only
    * ever what using it left: a conversation is what was said, never what a
-   * page starts with. The editor's Page tab writes the first kind into the
+   * gui starts with. The editor's Gui tab writes the first kind into the
    * design as it is set there; the second is the session's wherever it is set.
    */
   valueIsDesign(_widget: Widget): boolean {

@@ -6,7 +6,7 @@ import type { GuiWidget } from '../../../editor/document/graph';
 import { GuiSurface, type GuiModel } from './GuiSurface';
 
 /**
- * A page in use, pressed and changed as a person does: what a block now holds
+ * A gui in use, pressed and changed as a person does: what a block now holds
  * is handed on only for a block a round is given a value by, and a block that
  * starts the graph starts it by its name. A button pressed once sent its
  * press count as a value no graph takes, and the server turned the round down.
@@ -18,7 +18,7 @@ const blocks = [
   { id: 'go', kind: 'button', label: 'Go', w: 4, h: 1 },
   { id: 'pick', kind: 'select', label: 'Pick', options: 'a\nb', value: 'a', w: 4, h: 1 },
 ] as GuiWidget[];
-const page: GuiModel = {
+const gui: GuiModel = {
   name: 'Tool', description: '', blocks,
   valueOf: (block) => block.value, shownOn: () => undefined, busy: false, error: '', outputs: [],
   // As the graph's names say: the button is an event, the dropdown a value.
@@ -27,7 +27,7 @@ const page: GuiModel = {
 
 let root: Root;
 let host: HTMLElement;
-/** What the page told its host, in order. */
+/** What the gui told its host, in order. */
 const told: string[] = [];
 
 beforeEach(async () => {
@@ -37,7 +37,7 @@ beforeEach(async () => {
   root = createRoot(host);
   await act(async () => {
     root.render(createElement(GuiSurface, {
-      page,
+      gui,
       onValue: (block, value) => { told.push(`value ${block.id} ${JSON.stringify(value)}`); },
       onEvent: (block) => { told.push(`event ${block.id}`); },
     }));
@@ -49,7 +49,7 @@ afterEach(async () => {
   host.remove();
 });
 
-describe('a page in use', () => {
+describe('a gui in use', () => {
   it('starts a round by a button\'s name, with no value of it, and hands on what a block that takes a value now holds', async () => {
     await act(async () => { host.querySelector('button')!.click(); });
     const select = host.querySelector('select')!;

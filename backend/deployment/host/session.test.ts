@@ -47,7 +47,7 @@ const fake: SessionOptions['runtime'] = (report) => quietRuntime({ code: inProce
 const open = (graph: Graph, file?: string) => Session.open(graph, { runtime: fake, file });
 const wait = (ms: number) => new Promise((wake) => setTimeout(wake, ms));
 const scratch = async () => join(await mkdtemp(join(tmpdir(), 'session-')), 'state.json');
-const NOTHING = { nodes: {}, page: {} };
+const NOTHING = { nodes: {}, gui: {} };
 
 /** A counter: a data node, and a code node adding one to what it holds, around a loop. */
 function counter(add = 'function run(i) { return { next: i.n + 1 }; }'): Graph {
@@ -61,7 +61,7 @@ function counter(add = 'function run(i) { return { next: i.n + 1 }; }'): Graph {
 }
 
 /**
- * A page with a box that shows what a code node made of a dropdown's choice:
+ * A gui with a box that shows what a code node made of a dropdown's choice:
  * choosing fires the start point "picked", which is sent the choice.
  */
 function echo(say = 'function run(i) { return { out: "picked " + i.pick }; }'): Graph {
@@ -74,7 +74,7 @@ function echo(say = 'function run(i) { return { out: "picked " + i.pick }; }'): 
       ],
       [edge('p', 'picked', 'data', 'say', 'pick'), edge('s', 'say', 'out', 'said', 'value')],
     ),
-    page: {
+    gui: {
       blocks: [
         { id: 'heading', kind: 'text', value: 'Echo' },
         { id: 'pick', kind: 'select', options: 'a\nb', value: 'a', sends_to: ['picked'], fires: 'picked' },
@@ -85,7 +85,7 @@ function echo(say = 'function run(i) { return { out: "picked " + i.pick }; }'): 
 }
 
 const PICKED = { node_id: 'picked', port_id: 'data' };
-/** A round the dropdown starts, as the page starts it: by the block, with what the page set. */
+/** A round the dropdown starts, as the gui starts it: by the block, with what the gui set. */
 const picked = (session: Session, values: Record<string, unknown> = {}) => session.run(PICKED, { values, by: 'pick' });
 
 describe('state', () => {
@@ -94,13 +94,13 @@ describe('state', () => {
     const session = await open(design);
     await session.run(null);
     await session.run(null);
-    expect(session.kept()).toEqual({ nodes: { count: { total: 2, round: 2 } }, page: {} });
+    expect(session.kept()).toEqual({ nodes: { count: { total: 2, round: 2 } }, gui: {} });
     expect(design.nodes[0].config.data_value).toEqual({ total: 0 });
     expect(session.graph.nodes[0].config.data_value).toEqual({ total: 0 });
   });
 
-  it('lists what each memory node holds, by name and whole -- from its design on, with no round -- and a block of the page shows it', async () => {
-    const session = await open({ ...counter(), page: { blocks: [{ id: 'total', kind: 'text_io', mode: 'output', shows: 'count' }] } });
+  it('lists what each memory node holds, by name and whole -- from its design on, with no round -- and a block of the gui shows it', async () => {
+    const session = await open({ ...counter(), gui: { blocks: [{ id: 'total', kind: 'text_io', mode: 'output', shows: 'count' }] } });
     expect(session.view()).toMatchObject({ state: { count: { total: 0 } }, shown: { total: { total: 0 } } });
     await session.run(null);
     await session.run(null);
@@ -135,12 +135,12 @@ describe('state', () => {
     await session.reset();
     expect(existsSync(file)).toBe(false);
     expect(session.kept()).toEqual(NOTHING);
-    expect(session.view()).toMatchObject({ page: { pick: 'a', shown: null }, shown: {}, outputs: {} });
+    expect(session.view()).toMatchObject({ gui: { pick: 'a', shown: null }, shown: {}, outputs: {} });
     await picked(session);
-    expect(session.kept().page).toEqual({ shown: 'picked a' });
+    expect(session.kept().gui).toEqual({ shown: 'picked a' });
   });
 
-  it('goes on after a restart, as the same session, from state.json: the nodes\' kept values and the page\'s blocks', async () => {
+  it('goes on after a restart, as the same session, from state.json: the nodes\' kept values and the gui\'s blocks', async () => {
     const file = await scratch();
     const first = await open(counter(), file);
     await first.run(null);
@@ -154,7 +154,7 @@ describe('state', () => {
     const guiFile = await scratch();
     await picked(await open(echo(), guiFile), { pick: 'b' });
     const again = await open(echo(), guiFile);
-    expect(again.kept().page).toEqual({ pick: 'b', shown: 'picked b' });
+    expect(again.kept().gui).toEqual({ pick: 'b', shown: 'picked b' });
     expect(again.view().shown).toEqual({ shown: 'picked b' });
   });
 
@@ -176,7 +176,7 @@ describe('a design that changed', () => {
     const file = await scratch();
     const session = await open(counter(), file);
     await session.run(null);
-    // Where a node is drawn is no design: dragging one does not make a page draw itself again.
+    // Where a node is drawn is no design: dragging one does not make a gui draw itself again.
     const dragged = counter();
     dragged.nodes[1].position = { x: 400, y: 80 };
     session.hold(dragged);
@@ -207,26 +207,26 @@ describe('a design that changed', () => {
     expect(session.hold(without)).toEqual(['What "count" kept was dropped: it is no longer in the graph.']);
     expect(session.kept()).toEqual(NOTHING);
 
-    const paged = await open(echo());
-    await picked(paged, { pick: 'b' });
+    const withGui = await open(echo());
+    await picked(withGui, { pick: 'b' });
     const changed = echo();
-    changed.page!.blocks = changed.page!.blocks.filter((block) => block.id !== 'shown');
-    changed.page!.blocks[1].value = 'b';
-    expect(paged.hold(changed)).toEqual([
+    changed.gui!.blocks = changed.gui!.blocks.filter((block) => block.id !== 'shown');
+    changed.gui!.blocks[1].value = 'b';
+    expect(withGui.hold(changed)).toEqual([
       'What the block "pick" held was dropped: its design changed.',
-      'What the block "shown" held was dropped: it is no longer on the page.',
+      'What the block "shown" held was dropped: it is no longer on the gui.',
     ]);
-    expect(paged.kept().page).toEqual({});
+    expect(withGui.kept().gui).toEqual({});
   });
 });
 
-describe('a round the page starts', () => {
-  it('is sent what the page set and keeps it, and is refused for a block that does not fire the start point or a value no block takes', async () => {
+describe('a round the gui starts', () => {
+  it('is sent what the gui set and keeps it, and is refused for a block that does not fire the start point or a value no block takes', async () => {
     const session = await open(echo());
     await picked(session, { pick: 'b' });
-    expect(session.kept()).toEqual({ nodes: { picked: { values: { pick: 'b' } } }, page: { pick: 'b', shown: 'picked b' } });
+    expect(session.kept()).toEqual({ nodes: { picked: { values: { pick: 'b' } } }, gui: { pick: 'b', shown: 'picked b' } });
     expect(session.view()).toMatchObject({
-      sent: { picked: { pick: 'b' } }, page: { pick: 'b', shown: 'picked b' }, outputs: { said: 'picked b' }, shown: { shown: 'picked b' }, rounds: 1, dropped: [],
+      sent: { picked: { pick: 'b' } }, gui: { pick: 'b', shown: 'picked b' }, outputs: { said: 'picked b' }, shown: { shown: 'picked b' }, rounds: 1, dropped: [],
     });
     expect(() => session.start(PICKED, { by: 'shown' })).toThrow(NotOffered);
     expect(() => session.start(PICKED, { values: { heading: 'written over' }, by: 'pick' })).toThrow(NotOffered);
@@ -239,7 +239,7 @@ describe('a round the page starts', () => {
         [node('tell', 'start'), node('heard', 'code', {}, { in: ['m:say', 'n:name'], out: ['m', 'n'] })],
         [edge('m', 'tell', 'data', 'heard', 'm'), edge('n', 'tell', 'data', 'heard', 'n')],
       ),
-      page: {
+      gui: {
         blocks: [
           { id: 'say', kind: 'text_io', mode: 'input', value: 'hello', sends_to: ['tell'], fires: 'tell' },
           { id: 'name', kind: 'text_io', mode: 'input', value: 'Ada', sends_to: ['tell'] },
@@ -249,14 +249,14 @@ describe('a round the page starts', () => {
     const session = await open(graph);
     const result = await session.run({ node_id: 'tell', port_id: 'data' }, { by: 'say' });
     expect(result.node_results.find((r) => r.node_id === 'heard')!.outputs).toEqual({ m: 'hello', n: 'Ada' });
-    expect(session.kept().page).toEqual({ say: '' });
+    expect(session.kept().gui).toEqual({ say: '' });
   });
 
   it('asks what the blocks that send to its start point ask, and takes an answer into the block that asked', async () => {
     const go = { node_id: 'go', port_id: 'data' };
     const graph: Graph = {
       ...graphOf([node('go', 'start'), node('read', 'code', {}, { in: ['f:file'], out: ['f'] })], [edge('f', 'go', 'data', 'read', 'f')]),
-      page: { blocks: [{ id: 'file', kind: 'input_picker', label: 'File', send: 'path', sends_to: ['go'] }, { id: 'press', kind: 'button', fires: 'go' }] },
+      gui: { blocks: [{ id: 'file', kind: 'input_picker', label: 'File', send: 'path', sends_to: ['go'] }, { id: 'press', kind: 'button', fires: 'go' }] },
     };
     const session = await open(graph);
     expect(session.requirements(go)).toEqual([]);
@@ -265,12 +265,12 @@ describe('a round the page starts', () => {
     expect(session.requirements(go, { by: 'press', values: { file: '' } })).toHaveLength(1);
     const result = await session.run(go, { answers: { file: 'a.txt' }, by: 'press' });
     expect(result.node_results.find((r) => r.node_id === 'read')!.outputs).toEqual({ f: 'a.txt' });
-    expect(session.kept().page).toEqual({ file: 'a.txt' });
+    expect(session.kept().gui).toEqual({ file: 'a.txt' });
     expect(() => session.start(go, { answers: { nobody: 1 }, by: 'press' })).toThrow(NotOffered);
   });
 });
 
-describe('a chatbot is a page and a model', () => {
+describe('a chatbot is a gui and a model', () => {
   it('remembers the turn, and sends it as history with the next one', async () => {
     const chatbot: Graph = {
       ...graphOf(
@@ -281,7 +281,7 @@ describe('a chatbot is a page and a model', () => {
         ],
         [edge('h', 'send', 'data', 'ai', 'history'), edge('m', 'send', 'data', 'ai', 'message'), edge('r', 'ai', 'output', 'reply', 'value')],
       ),
-      page: { blocks: [{ id: 'chat', kind: 'chat', sends_to: ['send'], fires: 'send', shows: 'reply' }] },
+      gui: { blocks: [{ id: 'chat', kind: 'chat', sends_to: ['send'], fires: 'send', shows: 'reply' }] },
     };
     const asked: string[] = [];
     const session = await Session.open(chatbot, {
@@ -289,7 +289,7 @@ describe('a chatbot is a page and a model', () => {
     });
     const say = (message: string) => session.run({ node_id: 'send', port_id: 'data' }, { values: { chat: message }, by: 'chat' });
     await say('What is 2+2?');
-    expect(session.view().page.chat).toEqual({ messages: [{ role: 'user', text: 'What is 2+2?' }, { role: 'assistant', text: '4' }], pending: '' });
+    expect(session.view().gui.chat).toEqual({ messages: [{ role: 'user', text: 'What is 2+2?' }, { role: 'assistant', text: '4' }], pending: '' });
     await say('And plus 2?');
     expect(asked[1]).toBe('history:\nUser: What is 2+2?\n\nAssistant: 4\n\nmessage:\nAnd plus 2?');
   });
@@ -382,7 +382,7 @@ describe('a gate, round by round', () => {
           edge('show', 'summary', 'out', 'summed', 'value'),
         ],
       ),
-      page: {
+      gui: {
         blocks: [
           { id: 'read', kind: 'button', label: 'Read', fires: 'read' },
           { id: 'length', kind: 'select', options: 'short\nlong', value: length, sends_to: ['length'], fires: 'length' },
@@ -400,7 +400,7 @@ describe('a gate, round by round', () => {
     session.hold(reader('long'));
     const run = await session.run(LENGTH, { by: 'length' });
     expect(run.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', held: true, outputs: { text: 'the file' } });
-    expect(session.kept().page).toEqual({ shown: 'long: the file' });
+    expect(session.kept().gui).toEqual({ shown: 'long: the file' });
 
     const stopped = await open(reader());
     stopped.hold(reader('short', 'function run() { slow; return { text: "the file" }; }'));

@@ -1,7 +1,7 @@
-// A page drawn from the graph: the blocks it still lacks.
+// A gui drawn from the graph: the blocks it still lacks.
 //
 // A tool built as a graph has start points that read things and end points that
-// hand things back, and a page is where a person meets them -- so a first page
+// hand things back, and a gui is where a person meets them -- so a first gui
 // needs no model: an input block for each thing a start point reads, a button
 // that starts it, a text output for each end point nobody shows. What a start
 // point reads is what the nodes wired to it take of its package, each by the
@@ -9,8 +9,8 @@
 // and no block can be made for what nothing says. Each block is sent under
 // that name -- it is its id -- so the input finds what the person gave.
 //
-// A start point is started by the page or by a call, never both: one a call
-// starts is put on the page only if the person says so (`Planned.ifSwitched`),
+// A start point is started by the gui or by a call, never both: one a call
+// starts is put on the gui only if the person says so (`Planned.ifSwitched`),
 // since it then stops serving the command line.
 
 import type { DataType, GraphNode, GuiWidget, Wire } from '../document/graph';
@@ -26,7 +26,7 @@ interface Made {
   blocks: GuiWidget[];
 }
 
-/** What a page lacks: blocks to add now, and blocks for start points a call starts, which only a switch to the page serves. */
+/** What a gui lacks: blocks to add now, and blocks for start points a call starts, which only a switch to the gui serves. */
 interface Planned {
   now: Made[];
   ifSwitched: Made[];
@@ -69,7 +69,7 @@ function sending(read: Read, taken: GuiWidget[]): GuiWidget | undefined {
 }
 
 /**
- * How wide and how tall inputs and their button stand, so a first page needs no
+ * How wide and how tall inputs and their button stand, so a first gui needs no
  * resizing: inputs share a row, two to a row, a lone one has it to itself, and
  * the button sits beside the last input if there is room, else on its own row.
  * A block that is the whole width by default -- a conversation -- stays so.
@@ -135,10 +135,10 @@ function blocksForStart(start: GraphNode, nodes: GraphNode[], edges: Wire[], tak
  * across the whole row -- under a rule that sets it off from the inputs, where
  * there are some.
  */
-function outputsLaidOut(planned: Planned, page: GuiWidget[]): void {
+function outputsLaidOut(planned: Planned, gui: GuiWidget[]): void {
   const shown = planned.now.filter((made) => made.blocks.some((block) => block.shows));
-  const taken = [...page, ...planned.now.flatMap((made) => made.blocks)];
-  const inputs = page.length > 0 || planned.now.some((made) => !made.blocks.some((block) => block.shows));
+  const taken = [...gui, ...planned.now.flatMap((made) => made.blocks)];
+  const inputs = gui.length > 0 || planned.now.some((made) => !made.blocks.some((block) => block.shows));
   shown.forEach((made, index) => {
     const alone = shown.length % 2 === 1 && index === shown.length - 1;
     const laid = made.blocks.map((block) => ({ ...block, w: alone ? GUI_GRID_COLUMNS : GUI_GRID_COLUMNS / 2, h: 6, tone: 'raised' as const }));
@@ -149,25 +149,25 @@ function outputsLaidOut(planned: Planned, page: GuiWidget[]): void {
 }
 
 /**
- * What the page lacks of what *nodes* offer: for each start point nothing on
- * the page sends to or fires, its blocks; for each end point nothing shows, a
+ * What the gui lacks of what *nodes* offer: for each start point nothing on
+ * the gui sends to or fires, its blocks; for each end point nothing shows, a
  * text output. A start point set to start itself, on a clock, has none: the
- * page cannot start it. Pure: the person is asked about the ones a call
+ * gui cannot start it. Pure: the person is asked about the ones a call
  * starts before any of it is applied.
  */
-export function guiFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget[]): Planned {
+export function guiFromGraph(nodes: GraphNode[], edges: Wire[], gui: GuiWidget[]): Planned {
   const planned: Planned = { now: [], ifSwitched: [] };
-  const taken = [...page];
+  const taken = [...gui];
   for (const node of nodes) {
     const element = runnerRegistry.node(node.node_type);
     const by = element?.startedBy(node as never);
-    if (by === 'page' || by === 'call') {
-      const used = blocksAt(page, node.id);
+    if (by === 'gui' || by === 'call') {
+      const used = blocksAt(gui, node.id);
       if (used.send.length || used.fire.length) continue;
       const blocks = blocksForStart(node, nodes, edges, taken);
       taken.push(...blocks);
-      (by === 'page' ? planned.now : planned.ifSwitched).push({ point: node, blocks });
-    } else if (element?.isResult && !blocksAt(page, node.id).show.length) {
+      (by === 'gui' ? planned.now : planned.ifSwitched).push({ point: node, blocks });
+    } else if (element?.isResult && !blocksAt(gui, node.id).show.length) {
       const output = newBlock('text_io', 'output', taken);
       const blocks = [{ ...output, label: element.resultLabel(node as never), shows: node.id }];
       taken.push(...blocks);
@@ -176,6 +176,6 @@ export function guiFromGraph(nodes: GraphNode[], edges: Wire[], page: GuiWidget[
   }
   // What the person fills in comes first, what comes back after it.
   planned.now.sort((a, b) => Number(a.blocks.some((block) => block.shows)) - Number(b.blocks.some((block) => block.shows)));
-  outputsLaidOut(planned, page);
+  outputsLaidOut(planned, gui);
   return planned;
 }

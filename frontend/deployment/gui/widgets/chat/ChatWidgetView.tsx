@@ -9,7 +9,7 @@ import { chatValue, type ChatMessage, type ChatValue } from '../../../../../gui/
  * Runtime chat widget: the conversation, and the box that continues it.
  *
  * **What is typed is the block's value**, as it is for every other box on a
- * page -- `pending`, the message nobody has answered yet. So every way of
+ * gui -- `pending`, the message nobody has answered yet. So every way of
  * running -- Send, ▶ Run, the graph's clock, a button wired elsewhere -- sends
  * what is there.
  *

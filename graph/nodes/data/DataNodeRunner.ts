@@ -73,7 +73,7 @@ function roundOf(node: Pick<GraphNode, 'config'>): number {
  * a wire from it orders nothing and carries what it held when the round
  * began, so a node that reads the memory and writes it back takes its
  * `before`: the loop reads the last round and writes this one. Whoever reads
- * it from outside -- a page, a script -- reads what the last round left
+ * it from outside -- a gui, a script -- reads what the last round left
  * (`holds`), never a round half done.
  *
  * There is no code in it. Working out a new value -- a count plus one, the
@@ -132,7 +132,7 @@ export class DataNodeRunner extends NodeRunner<DataConfig> {
     node.config.data_round = (roundOf(node) + 1) as never;
   }
 
-  /** Under its id with its whole content, and each part of it -- a field, the round count -- under the id and its name: what a session lets a page or a script watch (`holds`). */
+  /** Under its id with its whole content, and each part of it -- a field, the round count -- under the id and its name: what a session lets a gui or a script watch (`holds`). */
   override offers(node: GraphNode): Offer[] {
     const label = node.label || node.id;
     return [

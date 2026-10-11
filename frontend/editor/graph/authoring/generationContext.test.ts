@@ -43,20 +43,20 @@ describe('what ✨ is told of a node\'s neighbours', () => {
     expect(said()).toMatch(/a struct of no fields yet: Ten European capitals with their population; "all" is all of them$/);
   });
 
-  it('tells a node fed by a start point what the page sends it -- the one value its input takes, by its field', () => {
+  it('tells a node fed by a start point what the gui sends it -- the one value its input takes, by its field', () => {
     const start = NODE_KINDS.start.create('go');
     const code = NODE_KINDS.code.create('worker');
     code.inputs[0] = { ...code.inputs[0], field: 'file.content' };
-    const page = [{ id: 'file', kind: 'input_picker', label: 'CSV', mode: 'file', sends_to: ['go'] } as never];
+    const gui = [{ id: 'file', kind: 'input_picker', label: 'CSV', mode: 'file', sends_to: ['go'] } as never];
     const wires = [{ source: 'go', sourceHandle: 'data', target: 'worker', targetHandle: 'input' }];
     // The part is said alone: told as the whole {"path", "content"} object too, ✨ wrote code reading `inputs.input.content`.
-    const told = inputSources('worker', [start, code], wires, true, page).input;
+    const told = inputSources('worker', [start, code], wires, true, gui).input;
     expect(told).toContain('"file.content"');
     expect(told).toContain('"content"');
     expect(told).not.toContain('"path"');
     // Without a field: the whole package, each block under its id.
     code.inputs[0] = { ...code.inputs[0], field: undefined };
-    expect(inputSources('worker', [start, code], wires, true, page).input).toContain('"file"');
+    expect(inputSources('worker', [start, code], wires, true, gui).input).toContain('"file"');
   });
 
   it('says what each wire carries and what the node at the other end wants', () => {
@@ -64,12 +64,12 @@ describe('what ✨ is told of a node\'s neighbours', () => {
     input.label = 'Notes';
     const code = NODE_KINDS.code.create('worker');
     const end = { ...NODE_KINDS.end.create('findings'), label: 'Findings' };
-    const page = [{ id: 'w1', kind: 'table', label: 'Findings', shows: 'findings' } as never];
+    const gui = [{ id: 'w1', kind: 'table', label: 'Findings', shows: 'findings' } as never];
     const edges = [
       { id: 'a', source: 'src', target: 'worker', sourceHandle: input.outputs[0].id, targetHandle: 'input' },
       { id: 'b', source: 'worker', target: 'findings', sourceHandle: 'output', targetHandle: 'value' },
     ];
-    expect(inputSources('worker', [input, code, end], edges, true, page).input).toMatch(/^"Notes" \(port "[^"]+"\), which hands on: /);
-    expect(outputTargets('worker', [input, code, end], edges, true, page).output).toContain('which wants rows: a list of objects');
+    expect(inputSources('worker', [input, code, end], edges, true, gui).input).toMatch(/^"Notes" \(port "[^"]+"\), which hands on: /);
+    expect(outputTargets('worker', [input, code, end], edges, true, gui).output).toContain('which wants rows: a list of objects');
   });
 });

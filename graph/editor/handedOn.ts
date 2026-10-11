@@ -1,5 +1,5 @@
 // What a graph carries when it leaves the person's project: to a deployed
-// tool, to the page a served tool draws, in a run the editor posts, in an
+// tool, to the gui a served tool draws, in a run the editor posts, in an
 // answer over MCP, and to a model asked to change the whole graph.
 //
 // A node keeps some things only for writing it: its history.md -- every

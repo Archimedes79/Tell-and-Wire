@@ -98,9 +98,9 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [said]);
 
-  // Editing the page means the Page tab -- at the size it will really be, next
+  // Editing the gui means the Gui tab -- at the size it will really be, next
   // to the blocks it will really sit beside -- which a start or end point the
-  // page uses offers from its own view.
+  // gui uses offers from its own view.
   const openGui = useCallback(() => setView('design'), []);
 
   // The folder the last graph was opened from or saved to -- '' before one
@@ -457,7 +457,7 @@ export default function App() {
           </div>
           {openNodeId && <NodeView key={openNodeId} nodeId={openNodeId} onClose={closeNode} onOpenGui={openGui} />}
         </div>
-        {/* The page is the top graph's: inside a node's graph there is none to
+        {/* The gui is the top graph's: inside a node's graph there is none to
             build or try, and these would act on the graph in there. */}
         {view === 'design' && <TopGraphOnly><DesignerTab /></TopGraphOnly>}
         {view === 'app' && <TopGraphOnly><ApplicationView /></TopGraphOnly>}

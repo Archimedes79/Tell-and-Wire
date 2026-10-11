@@ -96,7 +96,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
   const trying = useTryExample(node, writing.graph);
   const parts = partsOf(node);
   const isProject = useGraphStore((s) => s.isProject);
-  const page = useGraphStore((s) => s.page);
+  const gui = useGraphStore((s) => s.gui);
   const wires = useGraphStore((s) => s.rfEdges);
   const near = neighbours(node.id, wires);
   const graphNodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
@@ -198,7 +198,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
 
   const shown: Open = open.part === 'settings' || parts.includes(open.part) ? open : firstOpen(node, parts, pullsOutput);
   const active = shown.part === 'settings' ? null : at(shown.part, shown.how);
-  const used = blocksAt(page, node.id);
+  const used = blocksAt(gui, node.id);
   // A block that fires a start point and sends to it too is one block.
   const usedBy = [...new Set([...used.fire, ...used.send, ...used.show])].map((block) => block.label || block.id);
   const writes = writesFor(node, 'all').map((write) => fileOf(node, write).file);
@@ -242,8 +242,8 @@ function Opened({ node, panel, onClose, onOpenGui }: {
 
       {usedBy.length > 0 && (
         <div className="text-xs flex items-center gap-2 flex-wrap" style={{ color: DIMMER }}>
-          <span className="min-w-0">On the page: {usedBy.map((name) => `“${name}”`).join(', ')}</span>
-          <Button size="sm" onClick={onOpenGui} title="Show it on the Page tab">Edit the page</Button>
+          <span className="min-w-0">On the gui: {usedBy.map((name) => `“${name}”`).join(', ')}</span>
+          <Button size="sm" onClick={onOpenGui} title="Show it on the Gui tab">Edit the gui</Button>
         </div>
       )}
 

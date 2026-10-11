@@ -1,15 +1,15 @@
 // What the wrapper asks of a graph core, and what a core answers.
 //
 // A graph core is the one part of Tell & Wire that runs graphs: it takes the
-// graph definition -- nodes, their files, the wires; never the page -- and
+// graph definition -- nodes, their files, the wires; never the gui -- and
 // executes it in its language, asking the model with a client of its own. It
 // can live in the wrapper's process (`localCore.ts`) or be a program of its
 // own that speaks this protocol on stdin and stdout (`stdio.ts`), one JSON
-// object per line. Everything a page, a script or the editor sees goes through
+// object per line. Everything a gui, a script or the editor sees goes through
 // the wrapper (`backend/`), never to a core directly.
 //
 // What stays the wrapper's: the session -- what nodes keep between rounds, the
-// page and what its blocks hold, state.json, the clock, the queue of rounds --
+// gui and what its blocks hold, state.json, the clock, the queue of rounds --
 // and the graph definition's own rules: start points, end points, packages.
 // What is the core's: running a round, one node, a node's example; what every
 // node made last (the latch); the reuse cache, which only saves time.

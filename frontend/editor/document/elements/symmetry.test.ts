@@ -1,19 +1,19 @@
 /**
- * The runners and the page describe the same elements: file for file, name
+ * The runners and the gui describe the same elements: file for file, name
  * for name, and class hierarchy for class hierarchy.
  *
  * Every element is a folder under the same name on both sides -- nodes/<kind>/ in
  * graph/ and frontend/graph-editor/, widgets/<kind>/ in backend/gui-editor/ and
  * frontend/gui-editor/ -- and its
  * two halves are a pair of classes -- a `Runner` that runs it, a
- * `GuiBuilder` in the page that builds it -- whose inheritance mirrors, level for level:
+ * `GuiBuilder` in the gui that builds it -- whose inheritance mirrors, level for level:
  *
  *   PlotWindowWidgetRunner     → DisplayWidgetRunner     → WidgetRunner     → ElementRunner
  *   PlotWindowWidgetGuiBuilder → DisplayWidgetGuiBuilder → WidgetGuiBuilder → ElementGuiBuilder
  *
  * and the two registries list the same kinds. A new element with only one
  * half -- or a half filed, named or derived some other way -- is a failure
- * here rather than a blank panel or a missing widget on someone's page.
+ * here rather than a blank panel or a missing widget on someone's gui.
  */
 import { describe, expect, it } from 'vitest';
 import { registry } from '../../../../graph/nodes/registry.ts';

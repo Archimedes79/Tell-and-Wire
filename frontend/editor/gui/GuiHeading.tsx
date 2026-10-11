@@ -5,13 +5,13 @@ import { FIELD_ON_SURFACE, LINE, MUTED, SURFACE } from '../../deployment/gui/kit
 type ToolWords = Partial<Pick<GraphMetadata, 'name' | 'description'>>;
 
 /**
- * Above the page being built: the tool's name and what it does -- the graph's
- * own, which the delivered tool shows in its header, above the same page.
+ * Above the gui being built: the tool's name and what it does -- the graph's
+ * own, which the delivered tool shows in its header, above the same gui.
  *
- * The page had a name and an "About" of its own, on its node, beside the
+ * The gui had a name and an "About" of its own, on its node, beside the
  * graph's: two names for one tool, while the graph's description, the one a
- * recipient reads, could be set nowhere at all. A graph has one page, so the
- * page is called what the graph is called.
+ * recipient reads, could be set nowhere at all. A graph has one gui, so the
+ * gui is called what the graph is called.
  */
 export default function GuiHeading({ name, description, onChange }: {
   name: string;
@@ -29,7 +29,7 @@ export default function GuiHeading({ name, description, onChange }: {
         value={name}
         aria-label="Name of the tool"
         placeholder="Name of the tool"
-        title="What this tool is called: in the header of the page, here and for whoever gets it"
+        title="What this tool is called: in the header of the gui, here and for whoever gets it"
         onChange={(e) => onChange({ name: e.target.value })}
       />
       {/* Two lines, wrapped: a sentence that is longer scrolls in its box, and does not run out of it. */}

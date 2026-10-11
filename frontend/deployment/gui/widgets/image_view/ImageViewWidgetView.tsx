@@ -17,7 +17,7 @@ function notAPath(block: string, value: unknown): string {
  *
  * The backend hands this widget a `data:` URL (or a list of them) rather than a
  * path — the picture lives on the machine the graph ran on, which is not the one
- * showing this page, so it travels inline with the run's result. A value that
+ * showing this gui, so it travels inline with the run's result. A value that
  * failed to load arrives as a "⚠ …" string and is shown as text.
  */
 export default function ImageViewWidgetView({ widget, value, incoming }: WidgetViewProps) {

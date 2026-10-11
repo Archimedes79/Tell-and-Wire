@@ -13,7 +13,7 @@
         "port": "file",
         "name": "File",
         "type": "text",
-        "description": "The chosen manuscript's content, as the page sends it",
+        "description": "The chosen manuscript's content, as the gui sends it",
         "field": "paper.content"
       }
     ],

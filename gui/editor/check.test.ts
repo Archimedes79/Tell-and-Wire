@@ -129,11 +129,11 @@ describe('what check finds', () => {
     bare.edges = bare.edges.filter((edge) => edge.target_node_id !== 'show');
     expect(problemsIn(bare)).toEqual([expect.objectContaining({ where: 'graph', problem: expect.stringMatching(/^Nothing a person can see: there is no end point/) })]);
 
-    const paged = graph();
-    paged.page = { blocks: [{ id: 'answer', kind: 'text_io', mode: 'output', label: 'Answer', shows: 'show' }] };
-    expect(problemsIn(paged)).toEqual([]);
-    paged.page.blocks.push({ id: 'go', kind: 'button', label: 'Go', fires: 'nowhere' });
-    expect(where(paged)).toEqual([['the page, block "go"', 'It fires "nowhere", which is no start point of the graph: it starts (none).']]);
+    const guided = graph();
+    guided.gui = { blocks: [{ id: 'answer', kind: 'text_io', mode: 'output', label: 'Answer', shows: 'show' }] };
+    expect(problemsIn(guided)).toEqual([]);
+    guided.gui.blocks.push({ id: 'go', kind: 'button', label: 'Go', fires: 'nowhere' });
+    expect(where(guided)).toEqual([['the gui, block "go"', 'It fires "nowhere", which is no start point of the graph: it starts (none).']]);
   });
 
   it('in a project folder: a folder no node owns, a file nothing reads, and a project that cannot be read', async () => {

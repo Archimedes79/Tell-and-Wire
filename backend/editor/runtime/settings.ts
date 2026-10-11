@@ -7,7 +7,7 @@
 // where it came from.
 //
 // Editor-only: a deployed tool is configured through its environment, and a
-// page that could write credentials into a file nobody asked for is not a page
+// gui that could write credentials into a file nobody asked for is not a gui
 // a recipient should be handed. Hence `backend/graph-editor/`.
 
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';

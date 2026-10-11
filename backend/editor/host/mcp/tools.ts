@@ -158,9 +158,9 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         throw new BadDocument(`Node "${node.id}" in "${argument}": "config" must be an object.`);
       }
     }
-    const blocks = graph.page?.blocks ?? [];
+    const blocks = graph.gui?.blocks ?? [];
     if (blocks.some((block) => !block || typeof block !== 'object' || Array.isArray(block))) {
-      throw new BadDocument(`The page in "${argument}": every entry of page.blocks must be a block object.`);
+      throw new BadDocument(`The gui in "${argument}": every entry of gui.blocks must be a block object.`);
     }
     return graph;
   };
@@ -378,7 +378,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       }
 
       const runtime = options.runtime();
-      // A run of everything starts the page's start points on what the page holds.
+      // A run of everything starts the gui's start points on what the gui holds.
       if (!trigger) await startFromGui(graph, runtime, registry);
       const { result } = await withCore((core) => core.round({ graph, trigger }));
       return json({
@@ -390,7 +390,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
           ...(node.error ? { error: clip(node.error, ERROR_LIMIT) } : {}),
           outputs: briefAll(node.outputs),
         })),
-        // By name, as a page or any frontend reads them (`graphInterface.ts`).
+        // By name, as a gui or any frontend reads them (`graphInterface.ts`).
         outputs: briefAll(outputsOf(graph, result, registry)),
       });
     },

@@ -7,7 +7,7 @@ import { CONTEXT_LIMIT, graphContext } from './graphContext';
 
 const chart = { id: 'sizes', kind: 'plot_window', label: 'Sizes', shows: 'shown' } as GuiWidget;
 
-function graph(): { nodes: GraphNode[]; edges: Wire[]; metadata: never; page: GuiWidget[] } {
+function graph(): { nodes: GraphNode[]; edges: Wire[]; metadata: never; gui: GuiWidget[] } {
   const count = { ...NODE_KINDS.code.create('count'), label: 'Count', description: 'Counts the words of each file.\nIn detail: split on spaces.' };
   const read = { ...NODE_KINDS.data.create('read'), label: 'Read' };
   const shown = { ...NODE_KINDS.end.create('shown'), label: 'Sizes' };
@@ -19,7 +19,7 @@ function graph(): { nodes: GraphNode[]; edges: Wire[]; metadata: never; page: Gu
       { source: 'count', sourceHandle: 'output', target: 'shown', targetHandle: 'value' },
     ],
     metadata: { name: 'Word counts', description: 'How long each story is.', gui_scheme: 'night' } as never,
-    page: [chart],
+    gui: [chart],
   };
 }
 

@@ -1,7 +1,7 @@
 // How a piece of prose is set: a heading, a paragraph or a caption.
 //
-// Its own tiny module, like `text_io/role.ts`, because the page imports it too:
-// the page draws the block by it, and the designer writes into it by it.
+// Its own tiny module, like `text_io/role.ts`, because the gui imports it too:
+// the gui draws the block by it, and the designer writes into it by it.
 
 export type TextRole = 'heading' | 'body' | 'caption';
 

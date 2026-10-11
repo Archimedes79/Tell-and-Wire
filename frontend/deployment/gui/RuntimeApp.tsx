@@ -15,14 +15,14 @@ import Button from './kit/ui/Button';
 import { schemeVars } from './kit/ui/scheme';
 import { DANGER_FILL, DANGER_TEXT, DIM, SUNKEN } from './kit/ui/theme';
 
-/** Which design of which session: what a drawn page was drawn from. */
+/** Which design of which session: what a drawn gui was drawn from. */
 const designOf = (session: string, revision: number): string => `${session}#${revision}`;
 
 /**
  * The deployed graph's front-end.
  *
- * It knows the graph only as the runtime API says it: the page as it was
- * designed (`page`), what the graph offers by name (`interface`) -- which
+ * It knows the graph only as the runtime API says it: the gui as it was
+ * designed (`gui`), what the graph offers by name (`interface`) -- which
  * block fires which start point, what it hands back -- and the session, which
  * the server tells as it changes (`stream`): what each block holds and shows,
  * what each output showed, the round going or gone. A block used sets what
@@ -46,16 +46,16 @@ export default function RuntimeApp() {
   const busy = useSession(roundGoing);
 
   const load = useCallback(() => {
-    Promise.all([call('page'), call('interface')])
-      .then(([page, offered]) => setDesign({
-        name: page.name,
-        description: page.description,
-        scheme: page.scheme,
-        blocks: page.blocks as unknown as GuiWidget[],
+    Promise.all([call('gui'), call('interface')])
+      .then(([gui, offered]) => setDesign({
+        name: gui.name,
+        description: gui.description,
+        scheme: gui.scheme,
+        blocks: gui.blocks as unknown as GuiWidget[],
         ...connectionsOf(offered.events),
         outputs: offered.outputs.map(({ name, label }) => ({ name, label })),
-        startsWhole: page.starts_whole,
-        drawn: designOf(page.session, page.design_revision),
+        startsWhole: gui.starts_whole,
+        drawn: designOf(gui.session, gui.design_revision),
         events: offered.events,
       }))
       .catch((error) => setLoadError(errorText(error, 'Could not load the tool.')));
@@ -70,15 +70,15 @@ export default function RuntimeApp() {
     if (design && held && held !== design.drawn) load();
   }, [design, held, load]);
 
-  // What the page still needs before a round it starts can run -- a file
+  // What the gui still needs before a round it starts can run -- a file
   // nobody chose on a picker -- is asked for in the same window the editor
   // uses (`useRound`).
   const round = useRound();
 
-  // Opened, a tool that nothing on its page and no start point of its own starts runs
+  // Opened, a tool that nothing on its gui and no start point of its own starts runs
   // whole once, as ▶ Run starts it in the editor and a program runs when it is
   // started. Its start points that start themselves are the server's: they run on its clock
-  // whether or not a page is open.
+  // whether or not a gui is open.
   const started = useRef(false);
   const start = useRef(round.run);
   start.current = round.run;
@@ -106,7 +106,7 @@ export default function RuntimeApp() {
               className="shrink-0"
               onClick={() => { void startOver(); }}
               disabled={busy}
-              title="Forget what using this tool left behind: what was sent, what it remembers, what the page holds"
+              title="Forget what using this tool left behind: what was sent, what it remembers, what the gui holds"
             >
               ↺ Start over
             </Button>
@@ -121,7 +121,7 @@ export default function RuntimeApp() {
           </>
         )}
         note={clock?.runs_by_itself && (
-          <span className="text-xs whitespace-nowrap" style={{ color: DIM }} title="This tool runs by itself; the clock is in the server, so it keeps running with this page closed.">
+          <span className="text-xs whitespace-nowrap" style={{ color: DIM }} title="This tool runs by itself; the clock is in the server, so it keeps running with this gui closed.">
             {current && !current.done ? '⏱ running…' : clock.next_at
               ? `⏱ next ${new Date(clock.next_at).toLocaleTimeString()}`
               : finishedAt ? `⏱ ran ${new Date(finishedAt).toLocaleTimeString()}` : '⏱'}
@@ -140,7 +140,7 @@ export default function RuntimeApp() {
         )}
 
         {/* A call to each start point a call starts, as a script would make it --
-            then the page, or, when it has no blocks, what the tool does and
+            then the gui, or, when it has no blocks, what the tool does and
             what its run hands back: the editor's running application draws the same. */}
         {design && (
           <CallForms events={design.events} sent={view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />

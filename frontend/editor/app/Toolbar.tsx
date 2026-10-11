@@ -93,7 +93,7 @@ export default function Toolbar({
 
   const [deployBusy, setDeployBusy] = useState('');
   const [deployError, setDeployError] = useState('');
-  // Asking what the graph needs, then running: the delivered page's own steps.
+  // Asking what the graph needs, then running: the delivered gui's own steps.
   // The document is handed over by ▶ Run just before (`startApplication`).
   const delivered = useRound();
 
@@ -108,12 +108,12 @@ export default function Toolbar({
 
   /**
    * ▶ Run: the tool, run as whoever gets it will run it -- one button,
-   * the same on every tab (`app/application.ts`). With a page, the page opens
+   * the same on every tab (`app/application.ts`). With a gui, the gui opens
    * (the App tab) and the graph runs when it is used; without one, what starts
    * the graph starts it. While it runs the button is ■ Stop, which ends it.
    *
    * It is the document that runs: from inside a node's graph, the canvas goes
-   * back up to the top first, where the page is and where the results land.
+   * back up to the top first, where the gui is and where the results land.
    * A graph run whole at start goes through the delivered tool's own steps
    * (`useRound`), as every run does.
    */
@@ -135,7 +135,7 @@ export default function Toolbar({
       .catch((error) => setDeployError(errorText(error, 'The tool could not be started.')));
   };
   // Stopped -- by ■ Stop, or by itself, having nothing left to do -- or its
-  // page gone, it takes its tab with it.
+  // gui gone, it takes its tab with it.
   useEffect(() => {
     if (view === 'app' && !(appRunning && opensTab)) onViewChange(ranFrom.current);
   }, [appRunning, opensTab, view, onViewChange]);
@@ -317,7 +317,7 @@ export default function Toolbar({
             className="h-9 shrink-0 flex items-center gap-2"
             onClick={handleRun}
             title={opensTab
-              ? 'Run the tool: it opens as whoever gets it uses it -- its page, or a call to each start point a call starts -- and the graph runs when it is used'
+              ? 'Run the tool: it opens as whoever gets it uses it -- its gui, or a call to each start point a call starts -- and the graph runs when it is used'
               : 'Run the tool: what starts the graph starts it -- its start points that start themselves, or, with none, the whole graph once'}
           >
             <Play size={13} strokeWidth={2.5} aria-hidden="true" />
@@ -402,7 +402,7 @@ export default function Toolbar({
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg p-3 text-sm resize-y outline-none"
               style={{ minHeight: 100, background: SUNKEN, border: `1px solid ${LINE}`, color: TEXT }}
-              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a page."
+              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a gui."
               disabled={asking}
             />
             <p className="text-xs" style={{ color: DIM }}>

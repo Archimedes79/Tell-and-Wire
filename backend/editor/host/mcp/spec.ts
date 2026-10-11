@@ -29,7 +29,7 @@ export const SPECS: ToolSpec[] = [
   {
     name: 'authoring_guide',
     description: 'How to write a Tell & Wire graph document yourself: the JSON shape, where each node type keeps what it does, '
-      + 'the port names some node types derive from their settings, how a page connects to start and end points, and one complete example. Read this before writing a '
+      + 'the port names some node types derive from their settings, how a gui connects to start and end points, and one complete example. Read this before writing a '
       + 'graph by hand, then use validate_graph and save_graph. No model on this machine is needed for that route.',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
   },
@@ -85,11 +85,11 @@ export const SPECS: ToolSpec[] = [
     name: 'run_graph',
     description: 'Run a saved graph once and report what happened: the overall status, each node\'s status and error, '
       + `each node's outputs, and the graph's outputs by name, with every value cut to about ${VALUE_LIMIT} characters. `
-      + 'Runs the graph\'s code and calls its models for real. A graph is used by name, as a page or any frontend uses it: '
+      + 'Runs the graph\'s code and calls its models for real. A graph is used by name, as a gui or any frontend uses it: '
       + 'event, one of its start points, runs only what that start point is wired to. It is sent values under whatever names '
-      + 'you give them -- the names describe_graph says the graph reads of it, and for one the page starts, the names the page '
+      + 'you give them -- the names describe_graph says the graph reads of it, and for one the gui starts, the names the gui '
       + 'sends -- and hands them on in one package to the node it is wired to. Without an event the whole graph runs, the '
-      + 'page\'s start points on what the page holds, and it is sent nothing. describe_graph lists the names.',
+      + 'gui\'s start points on what the gui holds, and it is sent nothing. describe_graph lists the names.',
     parameters: {
       type: 'object',
       properties: {
@@ -104,9 +104,9 @@ export const SPECS: ToolSpec[] = [
   {
     name: 'describe_graph',
     description: 'What a saved graph offers whoever uses it, by name: its events (its start points; who starts each -- the '
-      + 'page, a call, the graph itself --; what the graph reads of the values each is sent; for one the page starts, which '
-      + 'blocks fire it and what the page sends with it) and the outputs it hands back (its end points). The names run_graph '
-      + 'takes, and a page or any frontend uses.',
+      + 'gui, a call, the graph itself --; what the graph reads of the values each is sent; for one the gui starts, which '
+      + 'blocks fire it and what the gui sends with it) and the outputs it hands back (its end points). The names run_graph '
+      + 'takes, and a gui or any frontend uses.',
     parameters: {
       type: 'object',
       properties: {

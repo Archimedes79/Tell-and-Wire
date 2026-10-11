@@ -81,7 +81,7 @@ export function historyActions(
         state.metadata = graph.metadata;
         state.rfNodes = rfNodes as never;
         state.rfEdges = rfEdges;
-        state.page = (graph.page?.blocks ?? []) as never;
+        state.gui = (graph.gui?.blocks ?? []) as never;
         // Everything that names a node of the graph that was here. Left
         // standing, each points at something that may not exist any more: a
         // result against ids that now mean other nodes, a panel on one of

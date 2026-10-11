@@ -15,7 +15,7 @@
 // started, and the next one's input definition is written from what the node
 // wired into it defines (`generationContext.inputSources`).
 //
-// Only nodes are written. A block on a page has no body: it shows or hands on
+// Only nodes are written. A block on a gui has no body: it shows or hands on
 // what it holds.
 
 import { topologicalLevels } from '../../../../graph/order.ts';
@@ -125,7 +125,7 @@ export async function* sweep(
 
 /**
  * The sources a sweep would have to guess at, before it starts: nodes, and
- * blocks of *page*.
+ * blocks of *gui*.
  *
  * A node at the head of the graph has no predecessor to describe its data, so
  * it has to have something real to read: a default file or folder, which the
@@ -133,13 +133,13 @@ export async function* sweep(
  * against nothing and the mistake is carried the whole way down. Saying so
  * before ten model calls start is cheaper than reading it in the results.
  */
-export function missingExamples(nodes: GraphNode[], edges: GraphEdge[], page: GuiWidget[] = []): { id: string; label: string }[] {
+export function missingExamples(nodes: GraphNode[], edges: GraphEdge[], gui: GuiWidget[] = []): { id: string; label: string }[] {
   const fed = new Set(edges.map((edge) => edge.target_node_id));
   // Which nodes are sources, and what describes them, is each element's answer
   // (`NodeGuiBuilder.missingExample`): a start point set to read with no path -- and a
   // block's (`WidgetGuiBuilder.missingExample`): a file picker that sends.
   return [
     ...nodes.filter((node) => NODE_BUILDERS[node.node_type]?.missingExample(node, fed.has(node.id)) ?? false),
-    ...page.filter((widget) => !!widget.sends_to?.length && (WIDGET_BUILDERS[widget.kind]?.missingExample(widget) ?? false)),
+    ...gui.filter((widget) => !!widget.sends_to?.length && (WIDGET_BUILDERS[widget.kind]?.missingExample(widget) ?? false)),
   ];
 }

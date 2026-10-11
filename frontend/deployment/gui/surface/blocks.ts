@@ -1,4 +1,4 @@
-// What a block is, to the page: the half of a widget that is delivered.
+// What a block is, to the gui: the half of a widget that is delivered.
 //
 // A widget has three roles and they belong in three places. The backend's
 // `WidgetRunner` is what it contributes to a *run* -- a picker produces its
@@ -8,7 +8,7 @@
 //
 // The third one is a `View` and not a third `…Runner`, which is a question the
 // other two names invite. A view is not the running half of anything: the
-// designer draws these same components while the page is being built, so a
+// designer draws these same components while the gui is being built, so a
 // `SelectWidgetView` is on screen in the builder and in the delivered tool
 // alike. It is *how a widget looks*, which neither of the other two names is
 // about -- `Runner` is what it does in a run, `GuiBuilder` is how it is edited.
@@ -38,7 +38,7 @@ import TableWidgetView from '../widgets/table/TableWidgetView';
 import TextWidgetView from '../widgets/text/TextWidgetView';
 import TextIoWidgetView from '../widgets/text_io/TextIoWidgetView';
 
-/** One kind of block, as the page draws it. */
+/** One kind of block, as the gui draws it. */
 interface BlockKind {
   /** The one component. The designer and the delivered tool draw this same one. */
   View: ComponentType<WidgetViewProps>;

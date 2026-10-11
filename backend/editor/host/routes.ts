@@ -112,7 +112,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
     async nodeInputs(asked) {
       const graph = parseGraph(asked);
       const runtime = nodeRuntime();
-      // What would arrive is what the page sends its start points now.
+      // What would arrive is what the gui sends its start points now.
       await startFromGui(graph, runtime, registry);
       const { inputs, upstream } = await tries().arriving({ graph, node: String(asked.node_id ?? '') });
       const failed = upstream.node_results.find((result) => result.status === 'error');
@@ -182,7 +182,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
       const graph = parseGraph(asked.graph);
       const work = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
       try {
-        // The page `--bundle` carries -- a bundle from the editor is the same
+        // The gui `--bundle` carries -- a bundle from the editor is the same
         // bundle -- and the project's own, when it has one.
         await writeBundle(graph, work, { guiDir: builtGui(), frontend: asked.path ? project.frontendOf(asked.path) : null });
         const entries = [];
@@ -200,7 +200,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): Handlers {
 
     // The document, handed to the server's session: what every round runs,
     // whoever starts it -- and what `runtime.html` opened against it shows, as
-    // any deployed page does, so nothing about the delivered side knows it is
+    // any deployed gui does, so nothing about the delivered side knows it is
     // being previewed. What runs, not how each node was written.
     async holdGraph(asked) {
       const session = await held.hold(withoutAuthoring(parseGraph(asked.graph)), { path: asked.path, session: asked.session });

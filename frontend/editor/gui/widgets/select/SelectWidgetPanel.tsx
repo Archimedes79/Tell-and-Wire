@@ -19,7 +19,7 @@ export default function SelectWidgetPanel({ widget, onUpdate }: WidgetPanelProps
         />
       </label>
       <p className="text-xs" style={{ color: DIM }}>
-        Emits whichever option is selected on the page. The first line is the default.
+        Emits whichever option is selected on the gui. The first line is the default.
       </p>
     </div>
   );

@@ -15,14 +15,14 @@ export default function ProblemsChip() {
   const rootGraph = useGraphStore((s) => s.rootGraph);
   const nodes = useGraphStore((s) => s.rfNodes);
   const edges = useGraphStore((s) => s.rfEdges);
-  const page = useGraphStore((s) => s.page);
+  const gui = useGraphStore((s) => s.gui);
   const metadata = useGraphStore((s) => s.metadata);
   const [problems, setProblems] = useState<ReturnType<typeof problemsOf>>([]);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const timer = window.setTimeout(() => setProblems(problemsOf(rootGraph())), 400);
     return () => window.clearTimeout(timer);
-  }, [rootGraph, nodes, edges, page, metadata]);
+  }, [rootGraph, nodes, edges, gui, metadata]);
 
   if (!nodes.length || !problems.length) return null;
   return (

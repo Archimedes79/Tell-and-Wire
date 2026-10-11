@@ -183,8 +183,8 @@ interface Around {
   nodes: GraphNode[];
   edges: Wire[];
   metadata: Graph['metadata'];
-  /** The page's blocks: what its start points are sent, what shows its end points. */
-  page: GuiWidget[];
+  /** The gui's blocks: what its start points are sent, what shows its end points. */
+  gui: GuiWidget[];
 }
 
 /**
@@ -206,8 +206,8 @@ export function generateRequest(
     context: graphContext(node.id, around),
     ...(write === 'input' && inputFiles.length ? { input_files: inputFiles.map((path) => ({ path })) } : {}),
     ...(write === 'output' && filesOf(node, 'output').length ? { output_files: filesOf(node, 'output').map((path) => ({ path })) } : {}),
-    input_sources: inputSources(node.id, around.nodes, around.edges, true, around.page),
-    output_targets: outputTargets(node.id, around.nodes, around.edges, true, around.page),
+    input_sources: inputSources(node.id, around.nodes, around.edges, true, around.gui),
+    output_targets: outputTargets(node.id, around.nodes, around.edges, true, around.gui),
     ...(ask?.trim() ? { ask: ask.trim() } : {}),
     ...(refine ? { refine } : {}),
   };

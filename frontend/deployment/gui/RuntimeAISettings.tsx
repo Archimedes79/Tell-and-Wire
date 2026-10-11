@@ -10,7 +10,7 @@ import { ACCENT_FILL, ACCENT_TEXT, DIM, MUTED } from './kit/ui/theme';
  *
  * Read-only, and on purpose. Whoever runs a deployed tool configures it where
  * they run it -- `ai-settings.json` beside it, or the environment -- because a
- * page that wrote credentials would put a key in a file nobody asked for. The
+ * gui that wrote credentials would put a key in a file nobody asked for. The
  * server has no route for saving them, and says why in `serve.ts`.
  */
 export default function RuntimeAISettings({ onClose }: { onClose: () => void }) {

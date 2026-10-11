@@ -5,7 +5,7 @@ import type { InlineEditorProps } from '../WidgetGuiBuilder';
 import { TEXT_ROLES } from '../../../../deployment/gui/widgets/text/TextWidgetView';
 
 /**
- * A heading or a paragraph, typed where it stands on the page being built
+ * A heading or a paragraph, typed where it stands on the gui being built
  * (`WidgetGuiBuilder.InlineEditor`).
  *
  * The box grows with what is written — rows are added as the text needs them,

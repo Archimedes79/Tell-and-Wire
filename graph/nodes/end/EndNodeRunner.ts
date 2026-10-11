@@ -21,13 +21,13 @@ export interface EndConfig {
 /**
  * Where a round ends: a named end point, and what the graph hands back --
  * everything wired into it, under its name -- and, if asked, a file or a
- * folder of it too. A page shows it by that name, a script reads it, and the
+ * folder of it too. A gui shows it by that name, a script reads it, and the
  * graph above has it on the port of the node that holds this graph.
  *
  * A passthrough, deliberately — it echoes its inputs so the run's result says
  * what arrived, rather than inventing a shape of its own. It does not *show*
- * anything either: showing is what the page is for, and a window of its own
- * would be a second place where results appear, with no relation to the page.
+ * anything either: showing is what the gui is for, and a window of its own
+ * would be a second place where results appear, with no relation to the gui.
  * Its label is its one name in the result.
  */
 export class EndNodeRunner extends NodeRunner<EndConfig> {

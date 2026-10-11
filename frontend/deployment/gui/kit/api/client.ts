@@ -1,4 +1,4 @@
-// The page's end of the wire: the routes of `backend/deployment/host/api.ts`, called by name.
+// The gui's end of the wire: the routes of `backend/deployment/host/api.ts`, called by name.
 //
 // The mirror of `serve.ts`. The server serves that table and this calls it, so
 // a route's path, method and the shapes going each way are written once, in

@@ -7,13 +7,13 @@
   "chart": {
     "kind": "code",
     "label": "What to plot",
-    "description": "Reads the CSV and says what the chart should show: bars of its first numeric column by the names in the first column, largest first.\nIt draws nothing itself -- the chart block on the page draws the figure.",
+    "description": "Reads the CSV and says what the chart should show: bars of its first numeric column by the names in the first column, largest first.\nIt draws nothing itself -- the chart block on the gui draws the figure.",
     "inputs": [
       {
         "port": "csv",
         "name": "CSV",
         "type": "text",
-        "description": "The CSV the page sends: the chosen file's content",
+        "description": "The CSV the gui sends: the chosen file's content",
         "field": "file.content"
       }
     ],

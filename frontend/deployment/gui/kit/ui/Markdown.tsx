@@ -6,7 +6,7 @@ import { ACCENT_TEXT, HOVER, LINE, MUTED, TEXT } from './theme';
  *
  * Deliberately not a library: `marked` is ~40 KB and `markdown-it` ~100 KB, and
  * every byte lands in each deploy bundle and each single-file executable. What a
- * page of this kind actually needs is a heading, a paragraph, emphasis, a link,
+ * gui of this kind actually needs is a heading, a paragraph, emphasis, a link,
  * a list and a table — that is the subset below.
  *
  * **No `dangerouslySetInnerHTML`.** The text can come from a graph the user was
@@ -51,7 +51,7 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
       const split = token.indexOf('](');
       const label = token.slice(1, split);
       const href = token.slice(split + 2, -1);
-      // rel: the page may be opened from a bundle someone else built.
+      // rel: the gui may be opened from a bundle someone else built.
       parts.push(linkable(href)
         ? <a key={key} href={href} target="_blank" rel="noreferrer noopener" style={{ color: ACCENT_TEXT }}>{label}</a>
         : label);

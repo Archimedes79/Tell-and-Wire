@@ -1,14 +1,14 @@
-// The session as a page sees it: what its start points were sent, what its
+// The session as a gui sees it: what its start points were sent, what its
 // outputs showed, the round going or gone -- as the server tells it, by name.
 //
-// One for every page that shows a graph in use -- the delivered tool, the
-// editor's App and Page tabs -- fed by the server's stream
+// One for every gui that shows a graph in use -- the delivered tool, the
+// editor's App and Gui tabs -- fed by the server's stream
 // (`GET /api/runtime/stream`): the session on connect and after every change,
-// each round as it starts, goes and ends, whoever started it -- this page,
+// each round as it starts, goes and ends, whoever started it -- this gui,
 // another tab, the clock.
 //
-// What a person set on the page and has not sent yet is kept beside it, as
-// edits, by block id. A round the page starts takes them along, and they are
+// What a person set on the gui and has not sent yet is kept beside it, as
+// edits, by block id. A round the gui starts takes them along, and they are
 // let go of once that round has run to its end and the session keeps them; a
 // round that was stopped, or could not start, leaves them where they were --
 // the message still in hand.
@@ -23,7 +23,7 @@ export interface GuiSession {
   view: SessionView | null;
   /** The round going now, or the last one -- told as it goes. */
   round: RoundSnapshot | null;
-  /** What was set on the page here and not yet kept, by block id. */
+  /** What was set on the gui here and not yet kept, by block id. */
   edits: Record<string, unknown>;
   /** What each round in flight was sent, by its id: let go of when it ends. */
   sent: Record<string, Record<string, unknown>>;
@@ -31,10 +31,10 @@ export interface GuiSession {
 
 export const useSession = create<GuiSession>(() => ({ view: null, round: null, edits: {}, sent: {} }));
 
-/** Rounds that ended before this page heard what it had sent them: a quick one beats its own answer. */
+/** Rounds that ended before this gui heard what it had sent them: a quick one beats its own answer. */
 const endedEarly = new Map<string, boolean>();
 /**
- * How many of them are remembered. Every round this page did not start ends
+ * How many of them are remembered. Every round this gui did not start ends
  * "early" too -- the clock's, another tab's -- and only the last few can still
  * be one whose start is on its way back here.
  */
@@ -103,19 +103,19 @@ export function forgetSession(): void {
   useSession.setState({ view: null, round: null, edits: {}, sent: {} });
 }
 
-/** Set block *id* of the page here: shown at once, and sent with the next round the page starts. */
+/** Set block *id* of the gui here: shown at once, and sent with the next round the gui starts. */
 export function setEdit(id: string, value: unknown): void {
   useSession.setState((state) => ({ edits: { ...state.edits, [id]: value } }));
 }
 
-/** What block *id* holds as this page shows it: what was set here, else what the session holds, else *design*. */
+/** What block *id* holds as this gui shows it: what was set here, else what the session holds, else *design*. */
 export function heldValue(state: Pick<GuiSession, 'view' | 'edits'>, id: string, design: unknown): unknown {
   if (id in state.edits) return state.edits[id];
-  if (state.view && id in state.view.page) return state.view.page[id];
+  if (state.view && id in state.view.gui) return state.view.gui[id];
   return design;
 }
 
-/** Whether a round is going: the page's, another tab's, the clock's. */
+/** Whether a round is going: the gui's, another tab's, the clock's. */
 export const roundGoing = (state: GuiSession): boolean => !!state.round && !state.round.done;
 
 /** What a round is asked with, beside its event: what it is sent, what it asked, who sends it (`RoundRequest`). */
@@ -128,7 +128,7 @@ export interface RoundAsk {
 /** How many rounds the server turned down here: each said as a round of its own. */
 let refusals = 0;
 
-/** A round the server would not start, as this page saw it: over before it began, for the server's reason -- and what it was to begin with. */
+/** A round the server would not start, as this gui saw it: over before it began, for the server's reason -- and what it was to begin with. */
 function refused(reason: string, started: RoundSnapshot['started']): RoundSnapshot {
   refusals += 1;
   return {
@@ -144,8 +144,8 @@ export function roundRefused(error: unknown, event: string | null, by?: string):
 
 /**
  * Start a round for *event* -- the whole graph for none -- asked with *ask*:
- * one the page starts is `by` the block that fired it, and sent what the
- * page set, by block id. One the server turns down -- a name the graph does
+ * one the gui starts is `by` the block that fired it, and sent what the
+ * gui set, by block id. One the server turns down -- a name the graph does
  * not offer, another session's id -- is said where every failed round is,
  * and what was set here stays in hand.
  */
@@ -167,8 +167,8 @@ export async function startRound(event: string | null, ask: RoundAsk = {}): Prom
 
 /**
  * Start over: the session forgets what using the graph left behind -- what
- * its start points were sent, what its memory holds, what the page holds --
- * and so does this page, what was set on it and not sent yet.
+ * its start points were sent, what its memory holds, what the gui holds --
+ * and so does this gui, what was set on it and not sent yet.
  */
 export async function startOver(): Promise<void> {
   useSession.setState({ edits: {}, sent: {} });

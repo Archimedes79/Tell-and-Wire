@@ -27,13 +27,13 @@ export interface GraphStore {
   metadata: GraphMetadata;
 
   /**
-   * The page the graph is used through: its blocks, in order -- none, for a
+   * The gui the graph is used through: its blocks, in order -- none, for a
    * graph without one. Beside the nodes and not among them: a block connects
    * itself to the graph's start and end points by name, and nothing is wired
-   * to it. The graph open is the one whose page this is; a graph inside a
+   * to it. The graph open is the one whose gui this is; a graph inside a
    * node has none.
    */
-  page: GuiWidget[];
+  gui: GuiWidget[];
 
   // Absolute server-side path this graph was last loaded from/saved to, or
   // null for an untitled graph -- lets "Save" write back to it directly.
@@ -98,17 +98,17 @@ export interface GraphStore {
    */
   changeGraph: (graph: Graph) => void;
   /**
-   * Change what the graph is called, what it does, its page's scheme: a
+   * Change what the graph is called, what it does, its gui's scheme: a
    * change like any other, one undo step per field typed into (`commit`).
    * The tool's name and description took none, so an Undo meant for the
    * block added before them took them too.
    */
   setMetadata: (meta: Partial<GraphMetadata>) => void;
   /**
-   * The page's blocks replaced by *blocks*, as one undo step -- named by
+   * The gui's blocks replaced by *blocks*, as one undo step -- named by
    * *coalesce*, as a node's panel names its own (`commit`) -- and, with
    * *add*, those nodes put into the graph in the same step: a block's start
-   * or end point, made with the block (`page/guiWrite.ts`).
+   * or end point, made with the block (`gui/guiWrite.ts`).
    */
   setGui: (blocks: GuiWidget[], options?: { coalesce?: string; add?: GraphNode[] }) => void;
   setCurrentFilePath: (path: string | null, isProject?: boolean) => void;
@@ -255,7 +255,7 @@ export interface GraphStore {
   takeDiskChanges: (changes: TextChange[]) => { taken: string[]; refused: string[] };
   /**
    * Hand the server's session the document: what every round runs, whoever
-   * starts it -- the App tab, the Page tab, the clock, the tool opened in a
+   * starts it -- the App tab, the Gui tab, the clock, the tool opened in a
    * window of its own. What runs, not how each node was written: a node's
    * history is up to half a megabyte, and a round reads none of it. It is
    * handed over as the document of the session it was given before: another
@@ -286,7 +286,7 @@ export const useGraphStore = create<GraphStore>()(
     rfNodes: [],
     rfEdges: [],
     metadata: defaultMetadata(),
-    page: [],
+    gui: [],
     currentFilePath: null,
     isProject: false,
     executionResult: null,
@@ -310,7 +310,7 @@ export const useGraphStore = create<GraphStore>()(
     setGui: (blocks, { coalesce, add = [] } = {}) => {
       get().commit(coalesce);
       set((state) => {
-        state.page = blocks as never;
+        state.gui = blocks as never;
         for (const node of add) state.rfNodes.push({ id: node.id, type: 'graphNode', position: node.position, data: { graphNode: node } } as never);
       });
     },
@@ -376,7 +376,7 @@ export const useGraphStore = create<GraphStore>()(
         state.metadata = normalizedGraph.metadata;
         state.rfNodes = rfNodes as never;
         state.rfEdges = rfEdges;
-        state.page = (normalizedGraph.page?.blocks ?? []) as never;
+        state.gui = (normalizedGraph.gui?.blocks ?? []) as never;
         state.executionResult = null;
         // Whoever loaded a graph without going through the file-path flow
         // (Paste JSON, ✨ Describe a graph, etc.) doesn't know its file path; the caller
@@ -407,8 +407,8 @@ export const useGraphStore = create<GraphStore>()(
     newGraph: () => get().loadGraph({ metadata: defaultMetadata(), nodes: [], edges: [] }),
 
     exportGraph: () => {
-      const { rfNodes, rfEdges, metadata, page } = get();
-      return exported(rfNodes as never, rfEdges, metadata, page as never);
+      const { rfNodes, rfEdges, metadata, gui } = get();
+      return exported(rfNodes as never, rfEdges, metadata, gui as never);
     },
 
     ...historyActions(set, get),
@@ -418,14 +418,14 @@ export const useGraphStore = create<GraphStore>()(
     ...handoffActions(set, get),
 
     isDirty: () => {
-      const { rfNodes, rfEdges, metadata, page, subgraphStack, savedSnapshot } = get();
-      const of = [rfNodes, rfEdges, metadata, page, subgraphStack, savedSnapshot];
+      const { rfNodes, rfEdges, metadata, gui, subgraphStack, savedSnapshot } = get();
+      const of = [rfNodes, rfEdges, metadata, gui, subgraphStack, savedSnapshot];
       if (dirtyAnswer?.of.every((part, at) => part === of[at])) return dirtyAnswer.dirty;
       // The whole document, not the level that happens to be open: going into
       // a node changes nothing, and a change made in there is a change.
       const root = get().rootGraph();
       // A never-saved graph counts as dirty only once it has something in it.
-      const dirty = savedSnapshot === null ? root.nodes.length > 0 || !!root.page : JSON.stringify(root) !== savedSnapshot;
+      const dirty = savedSnapshot === null ? root.nodes.length > 0 || !!root.gui : JSON.stringify(root) !== savedSnapshot;
       dirtyAnswer = { of, dirty };
       return dirty;
     },
@@ -476,7 +476,7 @@ export function useGoingRound(): RoundSnapshot | null {
 }
 
 // Every round of the session the editor's document is held in, from whichever
-// page or clock started it: the canvas and the toolbar follow it.
+// gui or clock started it: the canvas and the toolbar follow it.
 useSession.subscribe((state, before) => {
   if (state.view?.session !== before.view?.session && !isHanding() && serverHoldsAnother()) {
     useGraphStore.setState({ heldElsewhere: true });

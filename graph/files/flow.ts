@@ -11,7 +11,7 @@
 // The one file that says how a graph runs, read in one glance. What a node is
 // -- its kind, heading, text, settings and ports -- is `graph-nodes.json`'s, and a
 // graph is put together here from the two. No file system: `folder.ts` reads
-// the files, and so can a test or a page that already has their contents.
+// the files, and so can a test or a browser that already has their contents.
 
 import { defaultMetadata, parseGraph, type Graph, type GraphEdge, type GraphMetadata } from '../graph.ts';
 import { NotAGraph } from '../errors.ts';

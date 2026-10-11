@@ -19,7 +19,7 @@ interface PathFieldProps {
   id?: string;
   /** Sits on a raised surface, as a block's settings do: the surface's colour and the smaller size. */
   onSurface?: boolean;
-  /** The smaller size, on the page's own background. */
+  /** The smaller size, on the gui's own background. */
   compact?: boolean;
   mono?: boolean;
   autoFocus?: boolean;
@@ -27,10 +27,10 @@ interface PathFieldProps {
   readOnly?: boolean;
   /** Neither typed into nor browsed from, for now: see `InputPickerWidgetView`. */
   disabled?: boolean;
-  /** A path was picked in the browser -- besides `onChange`, for a page where picking is the event. */
+  /** A path was picked in the browser -- besides `onChange`, for a gui where picking is the event. */
   onPicked?: (path: string) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  /** What stands after 📂 Browse… on the same line: the page's ✕. */
+  /** What stands after 📂 Browse… on the same line: the gui's ✕. */
   children?: React.ReactNode;
 }
 
@@ -49,7 +49,7 @@ export function nameToSave(path: string): string | undefined {
  *
  * Written out once. Each place that asks for a path -- the folder a folder
  * node lists, where an end point writes, a folder picker's panel and the
- * picker on the page, what a round asks for first -- had its own copy, with its
+ * picker on the gui, what a round asks for first -- had its own copy, with its
  * own open/closed state and its own spelling of the button.
  */
 export default function PathField({
@@ -103,7 +103,7 @@ export default function PathField({
 /**
  * Which kinds of file a path field takes: what 📂 Browse… offers for a file,
  * and what a folder's listing keeps. The same setting on a start point and on
- * a picker on a page, so it is asked in the same words.
+ * a picker on a gui, so it is asked in the same words.
  */
 export function FileTypesField({ value, onChange, onSurface }: {
   value: string;

@@ -27,11 +27,11 @@ function node(id: string, type = 'code', given: Record<string, unknown> = {}, po
   };
 }
 
-/** A start point the page starts, holding what the page sent it last. */
-const start = (id: string, values: Record<string, unknown> = {}) => node(id, 'start', { started_by: 'page', values });
+/** A start point the gui starts, holding what the gui sent it last. */
+const start = (id: string, values: Record<string, unknown> = {}) => node(id, 'start', { started_by: 'gui', values });
 
 /**
- * Two buttons and a message box on a page: two tools in one window. Each
+ * Two buttons and a message box on a gui: two tools in one window. Each
  * button fires a start point of its own, and the box sends to both.
  */
 function twoTools(): Graph {
@@ -99,10 +99,10 @@ describe('a round started at a start point', () => {
 });
 
 describe('starting the application', () => {
-  it('waits for its page or for a call where a start point is started by one; runs whole once with no start point; starts only those set to start', () => {
-    const paged = graphOf([start('go'), node('a')], []);
-    expect(guiStarts(paged, registry)).toBe(true);
-    expect(startEvents(paged, registry)).toEqual([]);
+  it('waits for its gui or for a call where a start point is started by one; runs whole once with no start point; starts only those set to start', () => {
+    const guided = graphOf([start('go'), node('a')], []);
+    expect(guiStarts(guided, registry)).toBe(true);
+    expect(startEvents(guided, registry)).toEqual([]);
 
     const called = graphOf([node('api', 'start', { started_by: 'call' }), node('a')], []);
     expect(guiStarts(called, registry)).toBe(false);

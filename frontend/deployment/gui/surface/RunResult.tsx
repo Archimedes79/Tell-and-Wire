@@ -1,7 +1,7 @@
 import { LINE, SURFACE, TEXT } from '../kit/ui/theme';
 import { asText } from '../../../../gui/widgets/text_io/text.ts';
 
-/** One output of the graph as a page shows it: what it is called, and what it handed back. */
+/** One output of the graph as a gui shows it: what it is called, and what it handed back. */
 export interface ShownOutput {
   name: string;
   label: string;
@@ -9,8 +9,8 @@ export interface ShownOutput {
 }
 
 /**
- * What a tool without a page hands back: each output under its label -- the
- * graph's outputs by name, as any frontend reads them. A page is what a tool
+ * What a tool without a gui hands back: each output under its label -- the
+ * graph's outputs by name, as any frontend reads them. A gui is what a tool
  * shows; without one, this is -- each value as a box of text reads it
  * (`asText`): a record as its keys and values, not its values bare.
  */

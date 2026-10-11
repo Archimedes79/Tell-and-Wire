@@ -171,8 +171,9 @@ ${NEEDS}
 
     run.sh, run.cmd   start it${node ? '\n    node/       Node.js, which runs it, and its licence' : ''}
     VERSION     what this was built from
-    graph/      the graph's code: how a graph runs, as source
-    backend/    the editor's server, as source
+    graph/      what a graph is: its format, its node kinds, as source
+    gui/        what a gui is: its blocks, as source
+    backend/    the editor's server and the code that runs a graph, as source
     frontend/dist the editor's page, built; its licenses.txt names the
                 packages it is built from, each with its licence
     examples/   project folders to open from the editor's Open dialog
@@ -187,7 +188,9 @@ folder of its own -- that one holds a single graph and no editor.
 const files = [
   ...await walk('graph', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/')),
   'graph/package.json',
-  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')),
+  ...await walk('gui', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')),
+  'gui/package.json',
+  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/')),
   'backend/package.json',
   ...await walk('frontend/dist'),
   ...await walk('examples'),

@@ -24,12 +24,12 @@ function graphNode(overrides: Partial<GraphNode>): GraphNode {
 const port = (id: string, kind: 'input' | 'output', name = id) =>
   ({ id, name, kind, data_type: 'any' as const, multi: false, required: false, description: '' });
 
-function loadTestGraph(nodes: GraphNode[], edges: Graph['edges'] = [], page?: Graph['page']) {
+function loadTestGraph(nodes: GraphNode[], edges: Graph['edges'] = [], gui?: Graph['gui']) {
   useGraphStore.getState().loadGraph({
     metadata: { name: 'Test', description: '', gui_scheme: 'night' },
     nodes,
     edges,
-    ...(page ? { page } : {}),
+    ...(gui ? { gui } : {}),
   });
 }
 
@@ -37,7 +37,7 @@ const store = () => useGraphStore.getState();
 const nodeById = (id: string) => store().rfNodes.find((n) => n.id === id)!.data.graphNode as GraphNode;
 
 describe('graphStore.loadGraph', () => {
-  it('opens a document clean, and saves what it was given: a size, a page, a node of a type this editor does not know', () => {
+  it('opens a document clean, and saves what it was given: a size, a gui, a node of a type this editor does not know', () => {
     const note = WIDGET_BUILDERS.text.create('note', 'Note');
     const sized = graphNode({ id: 'sized', width: 340, height: 300, outputs: [port('output', 'output')] });
     // A node of a newer version: kept as it came, wires and all.
@@ -57,9 +57,9 @@ describe('graphStore.loadGraph', () => {
     expect(saved.nodes.find((n) => n.id === 'sized')).toMatchObject({ width: 340, height: 300 });
     expect(saved.nodes.find((n) => n.id === 'plain')!.width).toBeUndefined();
     expect(saved.edges).toHaveLength(1);
-    expect(saved.page).toEqual({ blocks: [note] });
+    expect(saved.gui).toEqual({ blocks: [note] });
     loadTestGraph([], [], { blocks: [] });
-    expect(store().exportGraph()).not.toHaveProperty('page');
+    expect(store().exportGraph()).not.toHaveProperty('gui');
   });
 
   it('says the wires it leaves out, to nodes that are not there', () => {

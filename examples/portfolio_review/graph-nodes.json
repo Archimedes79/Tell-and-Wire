@@ -18,7 +18,7 @@
         "port": "prompt",
         "name": "Prompt",
         "type": "text",
-        "description": "The chosen export's content, as the page sends it",
+        "description": "The chosen export's content, as the gui sends it",
         "field": "input_picker.content"
       }
     ],

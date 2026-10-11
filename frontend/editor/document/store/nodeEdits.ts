@@ -57,7 +57,7 @@ export function editActions(
       get().commit(coalesce);
       set((state) => {
         state.rfEdges.push({ ...wire, id } as never);
-        retypeJoined(state.rfNodes, state.page as GuiWidget[], wire);
+        retypeJoined(state.rfNodes, state.gui as GuiWidget[], wire);
       });
     },
 
@@ -77,8 +77,8 @@ export function editActions(
       if (!target || wire.target === wire.source || !takesNewInputs(target)) return false;
       const source = nodeOf(wire.source);
       const from = source?.outputs.find((port) => port.id === wire.sourceHandle);
-      // From a start point the page sends one block to: named after that block.
-      const sent = source && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(get().page, source) : undefined;
+      // From a start point the gui sends one block to: named after that block.
+      const sent = source && runnerRegistry.node(source.node_type)?.takesPackage ? defaultField(get().gui, source) : undefined;
       // From a node with one output, named after that node: a judge's inputs
       // were "output" and "output2", beside its own output "output".
       const one = source && source.outputs.filter((port) => port.id !== ERROR_PORT).length === 1 ? source.label : undefined;
@@ -125,7 +125,7 @@ export function editActions(
         );
         // A block connected to a point that went loses that connection with
         // it: left naming it, the block fires and shows nothing.
-        state.page = withoutPoints(state.page as GuiWidget[], nodeIds) as never;
+        state.gui = withoutPoints(state.gui as GuiWidget[], nodeIds) as never;
         // A panel open on a node that went closes with it: left pointing at
         // the id, it opened again on the next node of that id.
         if (state.editingNodeId && going.has(state.editingNodeId)) state.editingNodeId = null;

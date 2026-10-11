@@ -61,7 +61,7 @@ export default function WidgetEditor({ widget, onChange }: WidgetEditorProps) {
 
       {/* Everything that is a preference rather than a decision: how it looks,
           its exact size. Folded, because a block is finished without any of
-          it -- the page used to open on these. */}
+          it -- the gui used to open on these. */}
       <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}>
         <summary className="px-3 py-2 text-xs font-medium cursor-pointer select-none" style={{ color: MUTED }}>
           Look & size

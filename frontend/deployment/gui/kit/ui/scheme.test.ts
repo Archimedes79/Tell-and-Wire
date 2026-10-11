@@ -34,7 +34,7 @@ describe('colour schemes', () => {
       const sunken = paint(s.sunken);
       const surface = paint(s.surface);
       const grounds: Record<string, Rgb> = {
-        page: sunken, panel: surface, raised: paint(s.raise, sunken), hovered: paint(s.hover, surface), accent: paint(s.accentFill, surface),
+        gui: sunken, panel: surface, raised: paint(s.raise, sunken), hovered: paint(s.hover, surface), accent: paint(s.accentFill, surface),
       };
       const check = (what: string, text: string, ground: Rgb) => {
         const ratio = contrast(paint(text, ground), ground);

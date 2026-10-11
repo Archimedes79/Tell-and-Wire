@@ -8,7 +8,7 @@ import { Play } from 'lucide-react';
 const ELEMENT = new StartNodeRunner();
 
 /**
- * Where a run begins: a start point, named, started by the page, by a call
+ * Where a run begins: a start point, named, started by the gui, by a call
  * or by the graph itself -- what it starts is what its "data" is wired to.
  */
 export class StartNodeGuiBuilder extends NodeGuiBuilder {
@@ -18,9 +18,9 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly label = 'Start point';
 
-  readonly hint = 'Where a run begins: started by the page, by a call, or by itself -- when the tool starts, on a clock';
+  readonly hint = 'Where a run begins: started by the gui, by a call, or by itself -- when the tool starts, on a clock';
 
-  readonly example = 'e.g. The text to summarise, typed on the page';
+  readonly example = 'e.g. The text to summarise, typed on the gui';
 
   readonly color = NODE.start;
 
@@ -47,7 +47,7 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
   /** Who starts it, and what it reads, under its port: the things worth reading without opening it. */
   override canvasSummary(node: GraphNode): string | undefined {
     const { startedBy, onStart, every, reads, path } = ELEMENT.config(node as never);
-    if (startedBy === 'page') return 'started by the page';
+    if (startedBy === 'gui') return 'started by the gui';
     if (startedBy === 'call') return 'started by a call';
     const parts = [onStart ? 'at start' : '', every ? `every ${every}` : ''].filter(Boolean);
     const when = parts.length ? `by itself: ${parts.join(' · ')}` : 'never';

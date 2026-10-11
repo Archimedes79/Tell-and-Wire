@@ -51,7 +51,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
  * How the block meets the graph, by name -- nothing is wired to it: where its
  * data goes, whether using it starts a run, which end point or memory node it
  * shows. Only what the block can do is offered (`blockCan`, the runner's
- * answer), and only the points it may name: the start points the page starts,
+ * answer), and only the points it may name: the start points the gui starts,
  * the graph's end points and memory nodes. Most blocks arrive with all of it
  * set (`insertBlock` makes the points and names them); this is where it is
  * looked at, and changed.

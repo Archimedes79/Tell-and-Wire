@@ -81,7 +81,7 @@ async function load(name: string): Promise<Graph> {
   for (const node of graph.nodes) {
     if (node.node_type === 'start' && node.config.reads) node.config.path = rooted(node.config.path);
   }
-  for (const block of graph.page?.blocks ?? []) {
+  for (const block of graph.gui?.blocks ?? []) {
     if (block.kind === 'input_picker') block.value = rooted(block.value);
   }
   return graph;

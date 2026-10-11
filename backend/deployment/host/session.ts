@@ -1,7 +1,7 @@
 // The graph in use, and what using it leaves behind.
 //
 // A graph is designed in the editor and kept as a folder; it is *used* by a
-// page, a clock, a script. A session is one graph in use: the design as it
+// gui, a clock, a script. A session is one graph in use: the design as it
 // was handed over -- by the editor, or loaded by a served tool -- and its
 // state: what each node keeps between rounds (its kept values), what each made last
 // (the latch, kept by the graph core that runs the rounds), what the rounds showed. The rules it keeps them by are "State"
@@ -16,10 +16,10 @@
 // - A kept value is kept with the design value it started from, and is dropped --
 //   said, never guessed -- once its node or block is gone, or its design
 //   changed: the design wins.
-// - The page is used the same way: what its blocks hold -- typed, chosen, a
+// - The gui is used the same way: what its blocks hold -- typed, chosen, a
 //   conversation -- is kept beside the nodes' values, and what the end points
 //   handed back is settled into the blocks that show them (`gui/gui.ts`).
-//   A round the page starts is sent what its blocks hold, in one package.
+//   A round the gui starts is sent what its blocks hold, in one package.
 // - All of it is written to `state.json` after every round that commits, read
 //   back when the session opens, and deleted by a reset.
 //
@@ -62,7 +62,7 @@ interface Kept {
 /** Every node's kept values that differ from its design, by node id and name. */
 type KeptNodes = Map<string, Map<string, Kept>>;
 
-/** The page's blocks that hold what differs from their design, by block id. */
+/** The gui's blocks that hold what differs from their design, by block id. */
 type KeptBlocks = Map<string, Kept>;
 
 /** What `state.json` holds: written after every round that commits, and never part of the project. */
@@ -72,8 +72,8 @@ interface StateFile {
   graph: string;
   saved_at: string;
   nodes: Record<string, Record<string, Kept>>;
-  /** What the page's blocks hold, by block id, and what each that shows an end point shows. */
-  page: Record<string, Kept>;
+  /** What the gui's blocks hold, by block id, and what each that shows an end point shows. */
+  gui: Record<string, Kept>;
   gui_shown: Record<string, unknown>;
   held: Record<string, Held>;
   shown: ExecutionResult | null;
@@ -84,18 +84,18 @@ interface StateFile {
 /** What a round is asked with: what it is sent, what it asked before it ran, and who sends it. */
 export interface RoundAsk {
   /**
-   * What it is sent. For a round the page starts (*by* a block of it): what
-   * the page's blocks hold, by block id. For any other round of a start
+   * What it is sent. For a round the gui starts (*by* a block of it): what
+   * the gui's blocks hold, by block id. For any other round of a start
    * point: its package's values, as the sender named them. A round of the
    * whole graph is sent nothing: no start point takes it.
    */
   values?: Record<string, unknown>;
   /**
-   * What the page asked before a round it starts ran (`Session.requirements`),
+   * What the gui asked before a round it starts ran (`Session.requirements`),
    * answered under the keys it asked with: the blocks' ids.
    */
   answers?: Record<string, unknown>;
-  /** Who sends it, as the package says: a block of the page by its id, or one of `SENDERS`. A call, when left out. */
+  /** Who sends it, as the package says: a block of the gui by its id, or one of `SENDERS`. A call, when left out. */
   by?: string;
 }
 
@@ -217,13 +217,13 @@ export class Session {
 
   /**
    * What using the graph left that differs from its design: each node's
-   * values, by node id and name, and what each block of the page holds, by
+   * values, by node id and name, and what each block of the gui holds, by
    * block id. Apart, because a block and a node may share a name.
    */
-  kept(): { nodes: Record<string, Record<string, unknown>>; page: Record<string, unknown> } {
+  kept(): { nodes: Record<string, Record<string, unknown>>; gui: Record<string, unknown> } {
     return {
       nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries([...values].map(([key, kept]) => [key, kept.value]))])),
-      page: Object.fromEntries([...this.keptBlocks].map(([id, kept]) => [id, kept.value])),
+      gui: Object.fromEntries([...this.keptBlocks].map(([id, kept]) => [id, kept.value])),
     };
   }
 
@@ -252,7 +252,7 @@ export class Session {
       sent: sentOf(copy, registry),
       outputs: outputsOf(this.design, this.shown, registry),
       state,
-      page: guiState(copy),
+      gui: guiState(copy),
       // What a block shows of a memory node is what it holds now, over what the block showed before it was
       // pointed at it: no round settles a memory node into a block (`settleGui`).
       shown: { ...this.guiShown, ...shownFromState(copy, state) },
@@ -274,7 +274,7 @@ export class Session {
 
   /**
    * What a round for *trigger* asks before it runs, asked with *ask*: for one
-   * the page starts (*by* a block of it), what the blocks that send to its
+   * the gui starts (*by* a block of it), what the blocks that send to its
    * start point ask -- a picker with nothing chosen -- unless a value or an
    * answer gives it. Any other round is sent what it needs, and asks nothing.
    */
@@ -308,7 +308,7 @@ export class Session {
   hold(graph: Graph): string[] {
     this.design = graph;
     // Handed over before every round and after every edit: most often it is
-    // the same design again, which changes nothing a page drew.
+    // the same design again, which changes nothing a gui drew.
     const text = designText(graph);
     const changed = text !== this.designText;
     this.designText = text;
@@ -321,8 +321,8 @@ export class Session {
 
   /**
    * Start a round for *trigger* -- the whole graph for none -- asked with
-   * *ask*, and hand back its id at once, to watch it by. A round the page
-   * starts (`by` a block of it) is sent what the page's blocks hold, and its
+   * *ask*, and hand back its id at once, to watch it by. A round the gui
+   * starts (`by` a block of it) is sent what the gui's blocks hold, and its
    * start point what the blocks that send to it hold -- a block that does not
    * fire it, or a value for a block that takes none, is refused before
    * anything starts (`NotOffered`). Any other sender's values are the start
@@ -335,10 +335,10 @@ export class Session {
     const design = this.design;
     const asked: Sent = { trigger, values: ask.values ?? {}, answers: ask.answers ?? {}, by: ask.by ?? 'call' };
     const { values, answers, by } = asked;
-    const page = fromGui(design, trigger, by);
-    if (page) checkGuiRound(design, trigger!, by, values);
+    const gui = fromGui(design, trigger, by);
+    if (gui) checkGuiRound(design, trigger!, by, values);
     else checkSent(design, trigger, values, registry);
-    checkAnswers(design, trigger, page, answers);
+    checkAnswers(design, trigger, gui, answers);
     // How many nodes it runs, said before it is queued -- the slice its start point reaches.
     const only = trigger ? triggeredNodes(design, trigger, registry) : null;
     const total = only?.size ?? design.nodes.length;
@@ -386,7 +386,7 @@ export class Session {
    * Start what runs by itself: each start point set to start when the tool starts starts,
    * and each with an interval keeps its time (`execution/clock.ts`) -- the one
    * clock a served tool and the editor's ▶ Run keep alike, in the server, so
-   * it goes on whether or not a page is open. Its rounds are rounds like any
+   * it goes on whether or not a gui is open. Its rounds are rounds like any
    * other. Resolves once the rounds starting it have run, with whether a
    * clock goes on ticking.
    */
@@ -442,18 +442,18 @@ export class Session {
     const { trigger } = asked;
     const copy = withState(design, this.keptNodes, this.keptBlocks);
     const runtime = this.runtime(work.report);
-    // The page starts it: what its blocks hold now is kept, and the start
+    // The gui starts it: what its blocks hold now is kept, and the start
     // point is sent what the blocks that send to it hold -- read where it is
     // read, a folder's listing, a file's text. Anyone else's values are the
     // package as they come.
-    const page = fromGui(copy, trigger, asked.by);
-    const delivered = page ? sentBy(copy, trigger!.node_id).map((widget) => widget.id) : [];
-    if (page) {
+    const gui = fromGui(copy, trigger, asked.by);
+    const delivered = gui ? sentBy(copy, trigger!.node_id).map((widget) => widget.id) : [];
+    if (gui) {
       applyGuiValues(copy, { ...asked.values, ...asked.answers });
       applySent(copy, trigger, await guiSends(copy, trigger!.node_id, runtime), asked.by, registry);
     } else {
       applySent(copy, trigger, asked.values, asked.by, registry);
-      // A round of everything counts the page's events as fired too.
+      // A round of everything counts the gui's events as fired too.
       if (!trigger) await startFromGui(copy, runtime, registry);
     }
     const sentGui = guiState(copy);
@@ -470,11 +470,11 @@ export class Session {
 
     // What the end points handed back this round -- not what stood still, which
     // a conversation must not be told twice -- reaches the blocks that show
-    // them; a message the page sent with it is said, and emptied.
+    // them; a message the gui sent with it is said, and emptied.
     const fresh = { ...result, node_results: result.node_results.filter((one) => !one.held && (one.status === 'success' || one.status === 'partial')) };
     const shown = await settleGui(copy, outputsOf(copy, fresh, registry), runtime);
     clearDeliveredGui(copy, Object.fromEntries(Object.entries(sentGui).filter(([id]) => delivered.includes(id))));
-    ({ nodes: this.keptNodes, page: this.keptBlocks } = keptOf(copy, design));
+    ({ nodes: this.keptNodes, gui: this.keptBlocks } = keptOf(copy, design));
     // A design handed over while the round ran is the one that holds now.
     if (this.design !== design) this.fit(this.keptNodes, this.keptBlocks);
     this.held = ended.held;
@@ -509,11 +509,11 @@ export class Session {
   }
 
   /**
-   * Keep of *nodes* and *page* what the design still has a place for. What it
+   * Keep of *nodes* and *gui* what the design still has a place for. What it
    * has not -- a node or a block gone, a value whose design changed -- is
    * dropped, and said in `notes`.
    */
-  private fit(nodes: KeptNodes, page: KeptBlocks): void {
+  private fit(nodes: KeptNodes, gui: KeptBlocks): void {
     const notes: string[] = [];
     const byId = new Map(this.design.nodes.map((node) => [node.id, node]));
     this.keptNodes = new Map();
@@ -527,14 +527,14 @@ export class Session {
       const kept = fitting(held, designed, notes, (key) => `What "${nodeId}" kept in "${key}"`, (key) => `"${key}" is no longer there`);
       if (kept.size) this.keptNodes.set(nodeId, kept);
     }
-    this.keptBlocks = fitting(page, guiState(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the page');
+    this.keptBlocks = fitting(gui, guiState(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the gui');
     this.notes = notes;
   }
 
   /** Take back what the file kept, as far as the design still has a place for it. */
   private recall(kept: StateFile): void {
     const nodes: KeptNodes = new Map(Object.entries(kept.nodes ?? {}).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
-    this.fit(nodes, new Map(Object.entries(kept.page ?? {})));
+    this.fit(nodes, new Map(Object.entries(kept.gui ?? {})));
     this.guiShown = kept.gui_shown ?? {};
     this.held = kept.held ?? {};
     this.shown = kept.shown ?? null;
@@ -554,7 +554,7 @@ export class Session {
           graph: this.design.metadata?.name ?? '',
           saved_at: new Date().toISOString(),
           nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries(values)])),
-          page: Object.fromEntries(this.keptBlocks),
+          gui: Object.fromEntries(this.keptBlocks),
           gui_shown: this.guiShown,
           held: Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))),
           shown: this.shown,
@@ -598,13 +598,13 @@ export interface SessionHolder {
   hold(graph: Graph, handover?: Handover): Promise<Session>;
   /**
    * The session a request asks about: the one held -- unless it names
-   * another, which is not here: a 404 that sends a page back to the interface.
+   * another, which is not here: a 404 that sends a gui back to the interface.
    */
   asked(id?: string): Session;
   /**
    * Be told what happens in the session held, whichever that is: its rounds
    * and changes, and the session itself when another is held from then on --
-   * the editor handed it another document -- so a page open on the server
+   * the editor handed it another document -- so a gui open on the server
    * does not go on listening to one that is gone. Returns how to stop.
    */
   watch(listener: (event: SessionEvent) => void): () => void;
@@ -653,7 +653,7 @@ export function holderOf(session: Session | null = null, options: Omit<SessionOp
   };
 }
 
-/** Where a node is drawn on the canvas: not part of what a graph does or a page shows. */
+/** Where a node is drawn on the canvas: not part of what a graph does or a gui shows. */
 const DRAWN = new Set(['position', 'width', 'height']);
 
 /** *graph* written out without where its nodes are drawn: dragging one is no new design. */
@@ -674,11 +674,11 @@ interface Sent {
 }
 
 /**
- * Refuse *answers* to a question nobody asked: only a round the page starts
+ * Refuse *answers* to a question nobody asked: only a round the gui starts
  * asks, and only the blocks that send to its start point, by their ids.
  */
-function checkAnswers(graph: Graph, trigger: Trigger | null, page: boolean, answers: Record<string, unknown>): void {
-  const asked = page ? guiRequirements(graph, trigger!.node_id).map((question) => question.key) : [];
+function checkAnswers(graph: Graph, trigger: Trigger | null, gui: boolean, answers: Record<string, unknown>): void {
+  const asked = gui ?guiRequirements(graph, trigger!.node_id).map((question) => question.key) : [];
   const unasked = Object.keys(answers).filter((key) => !asked.includes(key));
   if (!unasked.length) return;
   throw new NotOffered(asked.length
@@ -686,7 +686,7 @@ function checkAnswers(graph: Graph, trigger: Trigger | null, page: boolean, answ
     : `Nothing asked ${names(unasked)}: this round asks nothing.`);
 }
 
-/** Whether a round for *trigger* is one the page starts: sent by one of its blocks, at a start point. */
+/** Whether a round for *trigger* is one the gui starts: sent by one of its blocks, at a start point. */
 function fromGui(graph: Graph, trigger: Trigger | null, by: string): boolean {
   if (!trigger || !guiBlock(graph, by)) return false;
   const node = graph.nodes.find((one) => one.id === trigger.node_id);
@@ -694,7 +694,7 @@ function fromGui(graph: Graph, trigger: Trigger | null, by: string): boolean {
 }
 
 /**
- * Refuse a round the page could not have started: *by* is a block that does
+ * Refuse a round the gui could not have started: *by* is a block that does
  * not fire the start point, or *values* name a block that takes none.
  */
 function checkGuiRound(graph: Graph, trigger: Trigger, by: string, values: Record<string, unknown>): void {
@@ -703,17 +703,17 @@ function checkGuiRound(graph: Graph, trigger: Trigger, by: string, values: Recor
     throw new NotOffered(`The block "${by}" does not fire "${trigger.node_id}"${firing.length ? `; it is fired by ${names(firing)}` : ''}.`);
   }
   const unknown = Object.keys(values).filter((id) => !takesGuiValue(graph, id));
-  if (unknown.length) throw new NotOffered(`No block ${names(unknown)} on the page takes a value.`);
+  if (unknown.length) throw new NotOffered(`No block ${names(unknown)} on the gui takes a value.`);
 }
 
-/** *design* with what the session keeps put back into it -- each node's values, and the page's -- on a copy: what a round starts from. */
-function withState(design: Graph, nodes: KeptNodes, page: KeptBlocks): Graph {
+/** *design* with what the session keeps put back into it -- each node's values, and the gui's -- on a copy: what a round starts from. */
+function withState(design: Graph, nodes: KeptNodes, gui: KeptBlocks): Graph {
   const copy = structuredClone(design);
   for (const node of copy.nodes) {
     const held = nodes.get(node.id);
     if (held) registry.node(node.node_type)?.setState(node, Object.fromEntries([...held].map(([key, kept]) => [key, kept.value])));
   }
-  if (page.size) setGuiState(copy, Object.fromEntries([...page].map(([id, kept]) => [id, kept.value])));
+  if (gui.size) setGuiState(copy, Object.fromEntries([...gui].map(([id, kept]) => [id, kept.value])));
   return copy;
 }
 
@@ -726,8 +726,8 @@ function differing(now: Record<string, unknown>, designed: Record<string, unknow
   return kept;
 }
 
-/** What each node of *copy*, and each block of its page, keeps that differs from what *design* says it holds. */
-function keptOf(copy: Graph, design: Graph): { nodes: KeptNodes; page: KeptBlocks } {
+/** What each node of *copy*, and each block of its gui, keeps that differs from what *design* says it holds. */
+function keptOf(copy: Graph, design: Graph): { nodes: KeptNodes; gui: KeptBlocks } {
   const designed = new Map(design.nodes.map((node) => [node.id, node]));
   const nodes: KeptNodes = new Map();
   for (const node of copy.nodes) {
@@ -737,7 +737,7 @@ function keptOf(copy: Graph, design: Graph): { nodes: KeptNodes; page: KeptBlock
     const held = differing(element.state(node), element.state(plan));
     if (held.size) nodes.set(node.id, held);
   }
-  return { nodes, page: differing(guiState(copy), guiState(design)) };
+  return { nodes, gui: differing(guiState(copy), guiState(design)) };
 }
 
 /**

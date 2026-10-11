@@ -39,7 +39,7 @@ type PlotKind = 'bars' | 'columns' | 'line' | 'donut';
  * A node produces one of these -- it is ordinary data -- and the app draws it
  * at the size the block is. That is the whole point of the shape: choosing
  * between bars and a donut is a *value*, so it can come down a wire from a
- * dropdown on the page, where writing SVG in a node could never follow.
+ * dropdown on the gui, where writing SVG in a node could never follow.
  */
 export interface Figure {
   kind: PlotKind;
@@ -49,7 +49,7 @@ export interface Figure {
 
 const KINDS: PlotKind[] = ['bars', 'columns', 'line', 'donut'];
 
-/** A series colour that survives a scheme change, with a fallback for the canvas preview, which is outside the page. */
+/** A series colour that survives a scheme change, with a fallback for the canvas preview, which is outside the gui. */
 const FALLBACK = plotColours('night');
 const colour = (index: number) => `var(--plot-${(index % 8) + 1}, ${FALLBACK[index % 8]})`;
 

@@ -42,9 +42,9 @@ export function graphOf(target: Target): Graph {
 }
 
 function around(target: Target) {
-  const { nodes, metadata, page } = graphOf(target);
+  const { nodes, metadata, gui } = graphOf(target);
   const { rfEdges, executionResult } = useGraphStore.getState();
-  return { nodes, edges: rfEdges, metadata, page: page?.blocks ?? [], executionResult };
+  return { nodes, edges: rfEdges, metadata, gui: gui?.blocks ?? [], executionResult };
 }
 
 /** What a chat would send for *write*, or what ✨ sends. */
@@ -52,7 +52,7 @@ export function requestFor(target: Target, write: Write, say?: Say) {
   const current = target.node();
   if (!current) throw new Error(ANOTHER_GRAPH);
   const { executionResult, ...rest } = around(target);
-  return generateRequest(current, write, rest, inputFilesOf(current, rest.nodes, rest.edges, executionResult, rest.page), say);
+  return generateRequest(current, write, rest, inputFilesOf(current, rest.nodes, rest.edges, executionResult, rest.gui), say);
 }
 
 /** Change the node, or say it is gone: a result is never reported written when it was not. */

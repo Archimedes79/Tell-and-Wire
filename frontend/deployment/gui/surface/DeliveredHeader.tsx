@@ -15,13 +15,13 @@ function roundStatus(round: RoundSnapshot | null): { label: string; failed: bool
 }
 
 /**
- * The bar above the delivered page: what this tool is -- the graph's name and
+ * The bar above the delivered gui: what this tool is -- the graph's name and
  * description -- and how its last run went, with a Stop while one goes.
  *
  * It has no ▶ Run. A tool runs when it is started (`startEvents`: its start points
  * that start themselves, or, with no start point at all, the whole graph once) and
- * afterwards when its page is used -- its buttons, and the blocks that say
- * they start it -- or it is called. A ▶ Run beside a page's own button was a second button for
+ * afterwards when its gui is used -- its buttons, and the blocks that say
+ * they start it -- or it is called. A ▶ Run beside a gui's own button was a second button for
  * the same press.
  *
  * Every host draws the bar: `runtime/RuntimeApp.tsx` for a tool someone was

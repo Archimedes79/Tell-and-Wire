@@ -35,8 +35,8 @@ export default function SettingsPane({ node, builder, panel }: {
   // frame of a drag, when no node had changed.
   const graphNodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
   const graphEdges = useGraphStore((s) => s.rfEdges);
-  // The page's blocks: what a start point wired here is sent, what shows an end point it feeds.
-  const page = useGraphStore((s) => s.page);
+  // The gui's blocks: what a start point wired here is sent, what shows an end point it feeds.
+  const gui = useGraphStore((s) => s.gui);
 
   const { setConfig, change: updateNode } = panel;
   const Panel = builder.Panel;
@@ -45,16 +45,16 @@ export default function SettingsPane({ node, builder, panel }: {
   // What each port is wired to, in words, shown under the port -- and for an
   // output, what the node there wants of it: what the graph says it must be.
   const wiring = {
-    inputs: inputSources(node.id, graphNodes, graphEdges, false, page),
-    outputs: outputTargets(node.id, graphNodes, graphEdges, true, page),
+    inputs: inputSources(node.id, graphNodes, graphEdges, false, gui),
+    outputs: outputTargets(node.id, graphNodes, graphEdges, true, gui),
   };
   // What an input wired from a start point can take of its package: what a
-  // block of the page sends it, or a part of what a call sends it.
+  // block of the gui sends it, or a part of what a call sends it.
   const fromStart = (port: Port) => graphEdges
     .filter((edge) => edge.target === node.id && edge.targetHandle === port.id)
     .map((edge) => graphNodes.find((candidate) => candidate.id === edge.source))
     .filter((source): source is GraphNode => !!source && runnerRegistry.node(source.node_type)?.takesPackage === true);
-  const takes = Object.fromEntries(node.inputs.map((port) => [port.id, fromStart(port).flatMap((source) => fieldChoices(page, source))]));
+  const takes = Object.fromEntries(node.inputs.map((port) => [port.id, fromStart(port).flatMap((source) => fieldChoices(gui, source))]));
   const setPorts = (ports: { inputs: Port[]; outputs: Port[] }, step?: UndoStep) => panel.change((current) => withPorts(current, ports), step);
   // Whether the ports are the person's to name, rather than following a
   // setting -- the element is what knows, so the question is asked, never

@@ -1,13 +1,13 @@
 import type { RoundSnapshot } from '../../deployment/gui/kit/api/client';
 
-/** Who sent what began a round, in words: a block of the page by its name, or one of the senders that are not a block. */
+/** Who sent what began a round, in words: a block of the gui by its name, or one of the senders that are not a block. */
 function byWords(by: string, nameOf: (id: string) => string): string {
   switch (by) {
     case 'call': return 'called';
     case 'itself': return 'by itself';
     case 'graph': return 'by the graph above';
     case 'run': return 'in a run of everything';
-    case 'page': return 'by the page';
+    case 'gui': return 'by the gui';
     default: return `from "${nameOf(by)}"`;
   }
 }

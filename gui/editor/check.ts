@@ -5,7 +5,7 @@
 // saving, the editor shows it before it loads a graph from outside, and each
 // entry says where, what, and how to fix it -- the reader may be a person or a
 // model, and both fix what they are told precisely. It reads no disk, so the
-// page can ask it; what only a project folder gets wrong is `folderCheck.ts`.
+// browser can ask it; what only a project folder gets wrong is `folderCheck.ts`.
 
 import type { Graph, GraphEdge, GraphNode } from '../../graph/graph.ts';
 import { NESTING_LIMIT, fieldOf } from '../../backend/deployment/runtime/executor.ts';
@@ -154,9 +154,9 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
     }
   }
 
-  // What a graph hands back leaves through its end points: a block on the page
+  // What a graph hands back leaves through its end points: a block on the gui
   // shows one, a script reads one, and a graph inside a node hands its answer
-  // up through them -- in there an end point *is* a port. A page that shows
+  // up through them -- in there an end point *is* a port. A gui that shows
   // what a memory node holds is something a person sees, with no end point.
   if (!graph.nodes.some((node) => registry.node(node.node_type)?.isResult) && (inside || !showsMemory(graph, registry))) {
     problems.push(inside ? {
@@ -166,7 +166,7 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
     } : {
       where: 'graph',
       problem: 'Nothing a person can see: there is no end point, so a run computes its answer and shows nobody.',
-      fix: 'End every branch in an "end" node -- an end point, what the graph hands back under its name, which a block on the page can show; config.write_mode "file" or "directory" writes it too.',
+      fix: 'End every branch in an "end" node -- an end point, what the graph hands back under its name, which a block on the gui can show; config.write_mode "file" or "directory" writes it too.',
     });
   }
   if (!inside) problems.push(...sharedResultLabels(graph), ...guiProblems(graph, registry));
@@ -283,7 +283,7 @@ function definitionProblems(node: GraphNode, where: string): Problem[] {
  * which what it is sent for example does not hold: a run of it on its own --
  * and every node written against that example -- is handed nothing there.
  * Only where there is an example: a start point that holds none says nothing
- * of what a call sends, and nothing can disagree with it. The page's own
+ * of what a call sends, and nothing can disagree with it. The gui's own
  * contract, what its blocks send, is `guiProblems`'.
  */
 function exampleMiss(graph: Graph, edge: GraphEdge): Omit<Problem, 'where'> | undefined {

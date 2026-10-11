@@ -29,8 +29,8 @@ function node(id: string, type = 'code', config: Record<string, unknown> = {}, p
   };
 }
 
-/** A start point the page starts, holding what the page sent it last. */
-const start = (id: string, values: Record<string, unknown> = {}) => node(id, 'start', { started_by: 'page', values });
+/** A start point the gui starts, holding what the gui sent it last. */
+const start = (id: string, values: Record<string, unknown> = {}) => node(id, 'start', { started_by: 'gui', values });
 
 let ran: string[] = [];
 const runtime = quietRuntime({
@@ -39,7 +39,7 @@ const runtime = quietRuntime({
 });
 
 /**
- * Read → Summarize, used through a page: the Read button fires a start point
+ * Read → Summarize, used through a gui: the Read button fires a start point
  * wired into the reader's ◆; choosing a length fires one wired into the
  * summarizer, sent the length.
  */

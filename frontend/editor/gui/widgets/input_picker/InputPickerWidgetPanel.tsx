@@ -6,7 +6,7 @@ import FolderListing from '../../../app/fields/FolderListing';
 import type { WidgetPanelProps } from '../WidgetGuiBuilder';
 
 /**
- * A file or a folder, picked on the page. A folder is its file types and its
+ * A file or a folder, picked on the gui. A folder is its file types and its
  * subfolders, then the list -- the listing a start point that reads a folder makes, drawn by
  * the same component: it is one behaviour at two levels.
  */
@@ -52,7 +52,7 @@ export default function InputPickerWidgetPanel({ widget, onUpdate }: WidgetPanel
 
   // Both modes. This sat inside the directory branch, so a picker set to one
   // file could not be told which kinds it accepts -- while the block itself
-  // used the setting either way and the page printed "Allowed: .csv"
+  // used the setting either way and the gui printed "Allowed: .csv"
   // underneath it.
   const typesField = (
     <FileTypesField value={widget.extensions ?? ''} onChange={(extensions) => onUpdate({ extensions })} onSurface />

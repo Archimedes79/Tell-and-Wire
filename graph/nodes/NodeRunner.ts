@@ -2,7 +2,7 @@
 //
 // Only a node authors anything: a body someone writes -- code, instructions --
 // with files of its own in a project folder, and a way for an AI to write it.
-// A block on a page shows or hands on what it holds, and writes nothing.
+// A block on a gui shows or hands on what it holds, and writes nothing.
 
 import type { DataType, Graph, GraphNode, NodeResult, NodeType, Port } from '../graph.ts';
 import { collectedInterface, type Schema } from '../schema.ts';
@@ -15,11 +15,11 @@ import { ElementRunner } from './ElementRunner.ts';
 import type { Runtime } from './Runtime.ts';
 
 /**
- * Who starts an event: the page -- one of its blocks, so the graph needs a
- * page --, a call from outside -- a script, a model over MCP, the graph
+ * Who starts an event: the gui -- one of its blocks, so the graph needs a
+ * gui --, a call from outside -- a script, a model over MCP, the graph
  * above --, or the graph itself, when the tool starts and on a clock.
  */
-export type StartedBy = 'page' | 'call' | 'itself';
+export type StartedBy = 'gui' | 'call' | 'itself';
 
 /** One thing a node offers whoever uses the graph from outside. */
 export interface Offer {
@@ -43,7 +43,7 @@ export interface Offer {
 
 /** What a deploy bundle must carry for this node to run elsewhere. */
 export interface DeployNeeds {
-  /** The bundle needs the page: the graph is used through it, not only from a terminal. */
+  /** The bundle needs the gui: the graph is used through it, not only from a terminal. */
   needsInterface: boolean;
   /**
    * It calls a model, so whoever receives the bundle needs a provider set up.
@@ -193,7 +193,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
    * Whether this node is where its graph meets whatever holds it: `'in'` for
    * where what the graph above hands down arrives, `'out'` for what it is
    * handed back up. A start point and an end point -- the same two ends a
-   * graph has for a page and for a call: there is one kind of way in and one
+   * graph has for a gui and for a call: there is one kind of way in and one
    * of way out.
    */
   boundaryRole(_node: GraphNode): 'in' | 'out' | null {
@@ -317,7 +317,7 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   readonly readsFileInputs: boolean = false;
 
   /**
-   * What this node offers whoever uses the graph from outside -- a page, a
+   * What this node offers whoever uses the graph from outside -- a gui, a
    * script, the graph above: an event that starts a round, or an output it
    * hands back. Each under a name a caller uses, never a port:
    * `backend/deployment/host/interface.ts` gathers them into the graph's own.
@@ -341,8 +341,8 @@ export abstract class NodeRunner<C = unknown> extends ElementRunner<GraphNode, C
   }
 
   /**
-   * Who starts this node's events: the page, a call from outside, or the
-   * graph itself -- none, for a node that starts nothing. A graph the page or
+   * Who starts this node's events: the gui, a call from outside, or the
+   * graph itself -- none, for a node that starts nothing. A graph the gui or
    * a call starts waits for them when it starts; one that starts itself does
    * not wait for anybody (`triggers.ts`, `startEvents`).
    */

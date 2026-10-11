@@ -5,12 +5,12 @@ import Button from '../../deployment/gui/kit/ui/Button';
 import { DIMMER, MUTED, SUNKEN } from '../../deployment/gui/kit/ui/theme';
 
 /**
- * A view of the page, shown only where a page can be: in the graph at the top.
+ * A view of the gui, shown only where a gui can be: in the graph at the top.
  *
- * Inside a node's graph the canvas shows that graph, but the page is not
- * there: a page put inside a subgraph is one `check` rejects and nobody sees,
- * and a colour scheme written there is read by nothing. So in there the page
- * views say where the page is, and take you back up to it.
+ * Inside a node's graph the canvas shows that graph, but the gui is not
+ * there: a gui put inside a subgraph is one `check` rejects and nobody sees,
+ * and a colour scheme written there is read by nothing. So in there the gui
+ * views say where the gui is, and take you back up to it.
  */
 export default function TopGraphOnly({ children }: { children: ReactNode }) {
   const inside = useGraphStore((s) => s.subgraphStack.length > 0);
@@ -24,11 +24,11 @@ export default function TopGraphOnly({ children }: { children: ReactNode }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-2 px-8" style={{ background: SUNKEN }}>
       <p className="text-sm" style={{ color: MUTED }}>
-        The page belongs to the graph at the top.
+        The gui belongs to the graph at the top.
       </p>
       <p className="text-xs text-center max-w-md" style={{ color: DIMMER }}>
-        You are inside a node's graph, which runs as one part of the graph above it and has no page of its own.
-        Go back up to build the page or try it.
+        You are inside a node's graph, which runs as one part of the graph above it and has no gui of its own.
+        Go back up to build the gui or try it.
       </p>
       <Button className="mt-2" disabled={running} onClick={() => closeSubgraphsTo(0)}>
         ↑ Back to the graph at the top

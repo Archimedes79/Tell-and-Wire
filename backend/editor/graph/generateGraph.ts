@@ -37,7 +37,7 @@ function said(node: unknown): string {
 /**
  * *answer* with what it left out of *current* put back: the graph's name and
  * scheme, where each node it kept stands and the size it was drawn at, and
- * the page, when the answer says nothing of it. Left out, each fell to its
+ * the gui, when the answer says nothing of it. Left out, each fell to its
  * default -- a change to one node renamed the tool and moved every node into
  * the corner.
  *
@@ -50,14 +50,14 @@ function said(node: unknown): string {
  */
 function keptFrom(current: Graph, answer: unknown, entry: string): unknown {
   if (!answer || typeof answer !== 'object') return answer;
-  const document = answer as { metadata?: object; nodes?: unknown; page?: unknown };
+  const document = answer as { metadata?: object; nodes?: unknown; gui?: unknown };
   const before = new Map(current.nodes.map((node) => [node.id, node]));
   const nodes = Array.isArray(document.nodes)
     ? document.nodes.map((node: unknown) => keptNode(node && typeof node === 'object' ? before.get(String((node as { id?: unknown }).id)) : undefined, node, entry))
     : document.nodes;
   return {
     ...document, metadata: { ...current.metadata, ...(document.metadata ?? {}) }, nodes,
-    ...(document.page === undefined && current.page ? { page: current.page } : {}),
+    ...(document.gui === undefined && current.gui ? { gui: current.gui } : {}),
   };
 }
 

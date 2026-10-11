@@ -10,8 +10,8 @@ import { ownPathProblem } from '../ownPath.ts';
 
 export interface StartConfig {
   /**
-   * Who starts it: the page -- a block's event, which makes the graph one that
-   * needs a page --, a call from outside -- a script, a model over MCP, the
+   * Who starts it: the gui -- a block's event, which makes the graph one that
+   * needs a gui --, a call from outside -- a script, a model over MCP, the
    * graph above --, or the graph itself, when the tool starts and on a clock.
    */
   startedBy: StartedBy;
@@ -20,7 +20,7 @@ export interface StartConfig {
   /** Started by itself: again this often, `45`, `30s`, `5m`, `2h`, `1d`. Empty means never. */
   every: string;
   /**
-   * Started by itself: what it sends, as a picker block on a page sends what
+   * Started by itself: what it sends, as a picker block on a gui sends what
    * was chosen -- one file (its path and content), the files of a folder, or
    * nothing. The graph is then its own sender.
    */
@@ -35,45 +35,45 @@ export interface StartConfig {
 }
 
 /**
- * Who a package says sent it when no block of the page did: the page as a
+ * Who a package says sent it when no block of the gui did: the gui as a
  * whole (a run of everything), a call, the graph itself, the graph above, or
  * a run nobody named. A block is named by its id, so no block may have one
  * of these (`guiProblems`).
  */
-export const SENDERS = ['page', 'call', 'itself', 'graph', 'run'] as const;
+export const SENDERS = ['gui', 'call', 'itself', 'graph', 'run'] as const;
 
 /** What a start point hands on: the event this round began with, if it began here, and what was sent with it. */
 export interface Package {
   /** The event, in a round this start point began -- null in any other, where `values` are what it was sent last. `by`: a block's id, or one of `SENDERS`. */
   event: { name: string; by: string } | null;
-  /** What the sender sent, as the sender named it: a page's blocks by id, a script's own names, the graph above under the start point's own. */
+  /** What the sender sent, as the sender named it: a gui's blocks by id, a script's own names, the graph above under the start point's own. */
   values: unknown;
 }
 
-const STARTED_BY: readonly StartedBy[] = ['page', 'call', 'itself'];
+const STARTED_BY: readonly StartedBy[] = ['gui', 'call', 'itself'];
 
 /**
  * Where a round begins: a named start point of the graph.
  *
  * The graph owns it -- its name, and what it runs, which is what it is wired
- * to. Whoever starts it owns what it is started with: a page sends what its
+ * to. Whoever starts it owns what it is started with: a gui sends what its
  * blocks hold, a script sends values of its own, the graph above hands down
  * the value on the wire. None of that is declared here. What arrives is one
  * package, `{event, values}`, on one port, and the first node it is wired to
  * reads out of it what it needs -- an AI node reads it whole, a code node's
- * code picks the values it wants. A field added to what a page sends changes
+ * code picks the values it wants. A field added to what a gui sends changes
  * the package, never the wiring.
  *
  * It is an event like a button's was: wired into a node's ◆, it opens it in
  * the round it began; and a round it did not begin finds it holding what it
- * was sent last, with no event -- what a clock's round reads of the page.
+ * was sent last, with no event -- what a clock's round reads of the gui.
  */
 export class StartNodeRunner extends NodeRunner<StartConfig> {
   readonly nodeType = 'start' as const;
 
   config(node: GraphNode): StartConfig {
     const c = node.config;
-    const startedBy = STARTED_BY.includes(c.started_by as StartedBy) ? c.started_by as StartedBy : 'page';
+    const startedBy = STARTED_BY.includes(c.started_by as StartedBy) ? c.started_by as StartedBy : 'gui';
     const itself = startedBy === 'itself';
     return {
       startedBy,
@@ -144,7 +144,7 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
     return this.config(node).startedBy;
   }
 
-  /** An event under its own id, and how it is started: by the page, by a call, by itself. */
+  /** An event under its own id, and how it is started: by the gui, by a call, by itself. */
   override offers(node: GraphNode): Offer[] {
     return [{
       kind: 'event', name: node.id, label: node.label || node.id, type: 'json', port: START_PORT,
@@ -199,7 +199,7 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
 
   override graphAuthorNote(): string {
     return `a named start point: where a round begins. Its id is its name; whoever uses the graph starts it by that name. `
-      + `config.started_by is "page" (a block on the page fires it: then the graph needs a page), "call" (a script, a model over MCP, or the graph above starts it) `
+      + `config.started_by is "gui" (a block on the gui fires it: then the graph needs a gui), "call" (a script, a model over MCP, or the graph above starts it) `
       + `or "itself" (config.on_start, true or false: when the tool starts; config.every, "" or "30s", "5m", "2h", "1d": again on that clock; `
       + `config.reads, "file" or "folder", with config.path: it then sends that file -- {path, content} -- or the paths of the files in that folder -- config.extensions, e.g. ".csv, .txt", `
       + `keeps only those types, config.recursive = true looks into subfolders too -- as "values" under its own id, read afresh each time it starts). `
@@ -209,9 +209,9 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
       + `"event" is null in a round this start point did not begin: "values" are then what it was sent last.`;
   }
 
-  /** A start point the page starts makes a graph one that is used through its page: a bundle carries the page. */
+  /** A start point the gui starts makes a graph one that is used through its gui: a bundle carries the gui. */
   override deployNeeds(node: GraphNode) {
-    return { needsInterface: this.config(node).startedBy === 'page', asksAi: false };
+    return { needsInterface: this.config(node).startedBy === 'gui', asksAi: false };
   }
 
   override whatRuns(): WhatRuns {
@@ -242,7 +242,7 @@ export class StartNodeRunner extends NodeRunner<StartConfig> {
       }
     }
     if (!onStart && !every) {
-      found.push({ where, problem: 'This start point never starts: it starts itself, but neither when the tool starts nor on a clock.', fix: 'Tick "when the tool starts", give it an interval, or let the page or a call start it.' });
+      found.push({ where, problem: 'This start point never starts: it starts itself, but neither when the tool starts nor on a clock.', fix: 'Tick "when the tool starts", give it an interval, or let the gui or a call start it.' });
     }
     return found;
   }

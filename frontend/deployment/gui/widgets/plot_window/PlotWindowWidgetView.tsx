@@ -8,7 +8,7 @@ import { drawnSvg, fileName, saveFile } from '../download';
  * Runtime `plot_window` widget: charts what its end point handed back -- points,
  * a figure or a string of SVG -- at the size the block really is on screen, so
  * a resize redraws it with no run. What is drawn can be saved as it is drawn,
- * an SVG file of that size in the page's colours.
+ * an SVG file of that size in the gui's colours.
  */
 export default function PlotWindowWidgetView({ widget, value, incoming }: WidgetViewProps) {
   const data = incoming !== undefined ? incoming : value;
@@ -41,7 +41,7 @@ export default function PlotWindowWidgetView({ widget, value, incoming }: Widget
     return () => observer.disconnect();
   }, []);
 
-  // A block that was hidden when it first rendered -- a page tab not yet
+  // A block that was hidden when it first rendered -- a gui tab not yet
   // shown -- has no size until it appears, and new data is the moment it
   // usually has.
   useEffect(measure, [data]);

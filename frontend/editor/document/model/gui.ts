@@ -1,9 +1,9 @@
-// The page of the document: blocks that connect themselves to the graph's
+// The gui of the document: blocks that connect themselves to the graph's
 // start and end points by name.
 //
 // What a block can do with the graph -- send its data, fire a start point,
 // show an end point -- is the runner's answer (`WidgetRunner.sends`, `event`,
-// `showsEnd`), asked of the same element a round asks, so the Page tab never
+// `showsEnd`), asked of the same element a round asks, so the Gui tab never
 // offers a connection a round then ignores and `check` names.
 
 import type { DataType, GraphNode, GuiWidget, Port } from '../graph';
@@ -22,14 +22,14 @@ export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolea
   };
 }
 
-/** Whether a person sets what this block sends, and a round the page starts is given it by the block's id -- the runner's answer. */
+/** Whether a person sets what this block sends, and a round the gui starts is given it by the block's id -- the runner's answer. */
 export function widgetTakesValue(widget: GuiWidget): boolean {
   return widgetElement(widget.kind)?.takesValue(parseWidget(widget)) ?? false;
 }
 
 /**
- * Whether what this block holds is part of the page's design, set while the
- * page is built -- not a conversation, which is only ever the session's -- the
+ * Whether what this block holds is part of the gui's design, set while the
+ * gui is built -- not a conversation, which is only ever the session's -- the
  * runner's answer (`WidgetRunner.valueIsDesign`).
  */
 export function widgetValueIsDesign(widget: GuiWidget): boolean {
@@ -54,10 +54,10 @@ export interface Point {
   memory?: boolean;
 }
 
-/** The start points a block can send to and fire: the ones the page starts. */
+/** The start points a block can send to and fire: the ones the gui starts. */
 export function guiStartPoints(nodes: GraphNode[]): Point[] {
   return nodes
-    .filter((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'page')
+    .filter((node) => runnerRegistry.node(node.node_type)?.startedBy(node as never) === 'gui')
     .map((node) => ({ id: node.id, label: node.label || node.id }));
 }
 
@@ -79,14 +79,14 @@ export function memoryPoints(nodes: GraphNode[]): Point[] {
 /** Whether what a block shows, *name*, is one of *named* -- or a part of one: a memory's field is its id, a dot and the field's name. */
 const showsOf = (named: Set<string>, name: string | null | undefined): boolean => !!name && (named.has(name) || named.has(name.split('.')[0]));
 
-/** The blocks of *blocks* that name one of the points *ids*: what the page loses with them. */
+/** The blocks of *blocks* that name one of the points *ids*: what the gui loses with them. */
 function connectedTo(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
   const named = new Set(ids);
   return blocks.filter((block) => (block.fires && named.has(block.fires)) || showsOf(named, block.shows)
     || (block.sends_to ?? []).some((id) => named.has(id)));
 }
 
-/** *blocks* with every connection to one of the points *ids* taken off: what is left of the page once they are gone. */
+/** *blocks* with every connection to one of the points *ids* taken off: what is left of the gui once they are gone. */
 export function withoutPoints(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
   const named = new Set(ids);
   return blocks.map((block) => {
@@ -147,7 +147,7 @@ function exampleChoices(start: GraphNode): FieldChoice[] {
  * example.
  */
 export function fieldChoices(blocks: GuiWidget[], start: GraphNode): FieldChoice[] {
-  const paged = blocksAt(blocks, start.id).send.flatMap((block) => {
+  const fromBlocks = blocksAt(blocks, start.id).send.flatMap((block) => {
     const name = block.label || block.id;
     const sent = blockCan(block).sends!;
     return [
@@ -155,8 +155,8 @@ export function fieldChoices(blocks: GuiWidget[], start: GraphNode): FieldChoice
       ...Object.entries(sent.keys ?? {}).map(([key, part]) => ({ value: `${block.id}.${key}`, label: `${name} · ${key}`, type: part.type })),
     ];
   });
-  const named = new Set(paged.map((choice) => choice.value));
-  return [...paged, ...exampleChoices(start).filter((choice) => !named.has(choice.value))];
+  const named = new Set(fromBlocks.map((choice) => choice.value));
+  return [...fromBlocks, ...exampleChoices(start).filter((choice) => !named.has(choice.value))];
 }
 
 /**
@@ -203,7 +203,7 @@ export function defaultField(blocks: GuiWidget[], start: GraphNode, port?: Port)
   return choice ? { choice, name: choice.label } : undefined;
 }
 
-/** The blocks of *blocks* that fire, send to and show the point *id* -- or a part of it: what that point's card says of the page. */
+/** The blocks of *blocks* that fire, send to and show the point *id* -- or a part of it: what that point's card says of the gui. */
 export function blocksAt(blocks: GuiWidget[], id: string): { fire: GuiWidget[]; send: GuiWidget[]; show: GuiWidget[] } {
   const named = new Set([id]);
   return {

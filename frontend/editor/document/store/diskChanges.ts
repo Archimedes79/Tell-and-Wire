@@ -7,7 +7,7 @@ import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
 import { endCoalescing } from './history';
 import type { GraphStore } from './graphStore';
 
-/** The store's action that takes code, prompts, the page and nested graphs that changed on disk. */
+/** The store's action that takes code, prompts, the gui and nested graphs that changed on disk. */
 export function diskActions(
   set: (recipe: (state: GraphStore) => void) => void,
   get: () => GraphStore,
@@ -23,13 +23,13 @@ export function diskActions(
       // on disk and said out loud instead.
       const refused = changes.filter((change) => change.field === NESTED_GRAPH_FIELD && !wasClean && nodeOf(change.node_id))
         .map((change) => change.node_id!);
-      // What is taken: a change to a node that is here, or to the page, which
+      // What is taken: a change to a node that is here, or to the gui, which
       // changes it. The step was taken first, and was an empty one -- Redo
       // thrown away -- when every change was refused, for a node gone, or what
       // the node held.
       const taken = changes.filter((change) => {
-        // The page's own text, gui.json: its blocks. Only at the top: a graph inside a node has none.
-        if (change.node_id === null) return !get().subgraphStack.length && JSON.stringify(get().page) !== JSON.stringify(change.value ?? []);
+        // The gui's own text, gui.json: its blocks. Only at the top: a graph inside a node has none.
+        if (change.node_id === null) return !get().subgraphStack.length && JSON.stringify(get().gui) !== JSON.stringify(change.value ?? []);
         const node = nodeOf(change.node_id);
         if (!node) return false;
         if (change.field === NESTED_GRAPH_FIELD) return wasClean;
@@ -41,7 +41,7 @@ export function diskActions(
       endCoalescing();
       set((state) => {
         for (const change of taken) {
-          if (change.node_id === null) state.page = guiOf(change) as never;
+          if (change.node_id === null) state.gui = guiOf(change) as never;
           else takeIn(state.rfNodes.find((n) => n.id === change.node_id)!.data.graphNode, change);
         }
         const touched = new Set(taken.flatMap((change) => change.node_id ?? []));
@@ -53,8 +53,8 @@ export function diskActions(
         if (!wasClean && state.savedSnapshot !== null) state.savedSnapshot = withDiskChanges(state.savedSnapshot, taken);
       });
       if (wasClean) get().markSaved();
-      // Said by what changed: a node by its id, the page as "page".
-      return { taken: [...new Set(taken.map((change) => change.node_id ?? 'page'))], refused };
+      // Said by what changed: a node by its id, the gui as "gui".
+      return { taken: [...new Set(taken.map((change) => change.node_id ?? 'gui'))], refused };
     },
   };
 }

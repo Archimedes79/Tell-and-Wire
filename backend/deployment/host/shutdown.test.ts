@@ -18,7 +18,7 @@ const post = (url: string, body: unknown) => fetch(url, {
 });
 
 describe('shutting a server down', () => {
-  it('ends the round a page started, refuses new work meanwhile, and closes', async () => {
+  it('ends the round a gui started, refuses new work meanwhile, and closes', async () => {
     const graphPath = join(await mkdtemp(join(tmpdir(), 'shutdown-')), 'graph.json');
     await writeFile(graphPath, JSON.stringify({
       metadata: { name: 'slow' },
@@ -31,7 +31,7 @@ describe('shutting a server down', () => {
 
     const began = Date.now();
     const stopping = shutdown();
-    // While the round winds down: a page may still look, nothing may start.
+    // While the round winds down: a gui may still look, nothing may start.
     const refused = await post(`${url}/api/runtime/rounds`, {});
     expect(refused.status).toBe(503);
     const seen = await (await fetch(`${url}/api/runtime/rounds/${round_id}`)).json() as { cancelled: boolean };

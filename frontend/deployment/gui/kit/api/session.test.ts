@@ -27,9 +27,9 @@ vi.stubGlobal('EventSource', FakeStream);
 const { setEdit, startRound, useSession, watchSession } = await import('./session');
 const told = (type: 'session' | 'round', data: unknown) => streams[streams.length - 1].listeners[type]({ data: JSON.stringify(data) } as MessageEvent<string>);
 
-/** The session as the server tells it, *page* what each block holds. */
-const view = (page: Record<string, unknown>, session = 's1'): SessionView => ({
-  session, sent: {}, page, shown: {}, kept: { nodes: {}, page: {} }, outputs: {}, state: {}, rounds: 0, finished_at: null, round: null, dropped: [], design_revision: 0,
+/** The session as the server tells it, *gui* what each block holds. */
+const view = (gui: Record<string, unknown>, session = 's1'): SessionView => ({
+  session, sent: {}, gui, shown: {}, kept: { nodes: {}, gui: {} }, outputs: {}, state: {}, rounds: 0, finished_at: null, round: null, dropped: [], design_revision: 0,
   clock: { running: false, runs_by_itself: false, ticks: false, next_at: null, problem: null },
 });
 const round = (id: string, over: Partial<RoundSnapshot> = {}): RoundSnapshot => ({
@@ -42,7 +42,7 @@ beforeEach(() => {
   watchSession();
 });
 
-describe('what was set here on a page', () => {
+describe('what was set here on a gui', () => {
   const edits = () => useSession.getState().edits;
 
   it('goes with a round, and is let go of once the round has run to its end -- not when it was stopped, and not what was typed since', async () => {

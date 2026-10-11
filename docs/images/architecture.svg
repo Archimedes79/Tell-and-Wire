@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="700" viewBox="0 0 680 700" role="img" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+<title>Tell &amp; Wire: the editor designs a project, the deployment keeps one in use and executes it</title>
+<desc>Top to bottom: the editor's frontend, the editor's backend, the project files, the deployment's backend and the deployment's frontend. A dashed vertical line keeps graph and gui apart in every band; a line in the deployment's graph column separates definition from execution. Teal boxes ship in a package, grey dashed boxes are only the editor.</desc>
+<style>
+  :root { --ink: #1f2937; --soft: #6b7280; --line: #9ca3af; --ship-fill: #ccebe5; --ship-edge: #0f766e; --ship-ink: #064e3b; --edit-fill: #f3f4f6; --edit-edge: #6b7280; --file-fill: #ffffff; }
+  @media (prefers-color-scheme: dark) { :root { --ink: #e5e7eb; --soft: #9ca3af; --line: #6b7280; --ship-fill: #134e4a; --ship-edge: #5eead4; --ship-ink: #ccfbf1; --edit-fill: #1f2937; --edit-edge: #9ca3af; --file-fill: #111827; } }
+  .t { font-size: 14px; font-weight: 600; fill: var(--ink); }
+  .s { font-size: 12px; fill: var(--soft); }
+  .ship { fill: var(--ship-fill); stroke: var(--ship-edge); stroke-width: 0.5; }
+  .ship-t { font-size: 14px; font-weight: 600; fill: var(--ship-ink); }
+  .ship-s { font-size: 12px; fill: var(--ship-ink); }
+  .edit { fill: var(--edit-fill); stroke: var(--edit-edge); stroke-width: 0.5; stroke-dasharray: 4 3; }
+  .file { fill: var(--file-fill); stroke: var(--line); stroke-width: 0.5; }
+  .arr { stroke: var(--soft); stroke-width: 1.5; fill: none; }
+  .rule { stroke: var(--line); stroke-width: 0.5; stroke-dasharray: 3 3; }
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<text class="t" x="16" y="18">Graph</text>
+<text class="t" x="484" y="18">Gui</text>
+
+<text class="s" x="16" y="40">frontend/editor</text>
+<rect class="edit" x="16" y="46" width="220" height="44" rx="8"/>
+<text class="t" x="126" y="62" text-anchor="middle" dominant-baseline="central">graph</text>
+<text class="s" x="126" y="80" text-anchor="middle" dominant-baseline="central">canvas, node view, Try</text>
+<rect class="edit" x="484" y="46" width="180" height="44" rx="8"/>
+<text class="t" x="574" y="62" text-anchor="middle" dominant-baseline="central">gui</text>
+<text class="s" x="574" y="80" text-anchor="middle" dominant-baseline="central">designer</text>
+<rect class="edit" x="16" y="98" width="648" height="40" rx="8"/>
+<text class="t" x="28" y="118" dominant-baseline="central">document, app</text>
+<text class="s" x="150" y="118" dominant-baseline="central">the open project, menus, toolbar, tabs; used by both</text>
+
+<line class="arr" x1="240" y1="140" x2="240" y2="172" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="s" x="248" y="160">design API</text>
+<text class="s" x="16" y="166">backend/editor</text>
+<rect class="edit" x="16" y="174" width="104" height="44" rx="8"/>
+<text class="t" x="68" y="190" text-anchor="middle" dominant-baseline="central">project</text>
+<text class="s" x="68" y="208" text-anchor="middle" dominant-baseline="central">writes, packs</text>
+<rect class="edit" x="128" y="174" width="104" height="44" rx="8"/>
+<text class="t" x="180" y="190" text-anchor="middle" dominant-baseline="central">graph</text>
+<text class="s" x="180" y="208" text-anchor="middle" dominant-baseline="central">AI writes nodes</text>
+<rect class="edit" x="240" y="174" width="104" height="44" rx="8"/>
+<text class="t" x="292" y="190" text-anchor="middle" dominant-baseline="central">runtime</text>
+<text class="s" x="292" y="208" text-anchor="middle" dominant-baseline="central">model, tool servers</text>
+<rect class="edit" x="352" y="174" width="104" height="44" rx="8"/>
+<text class="t" x="404" y="190" text-anchor="middle" dominant-baseline="central">host</text>
+<text class="s" x="404" y="208" text-anchor="middle" dominant-baseline="central">design routes, MCP</text>
+<rect class="file" x="484" y="174" width="180" height="44" rx="8" stroke-dasharray="4 3"/>
+<text class="t" x="574" y="190" text-anchor="middle" dominant-baseline="central">no Node part</text>
+<text class="s" x="574" y="208" text-anchor="middle" dominant-baseline="central">designed in the browser</text>
+<line class="rule" x1="8" y1="232" x2="672" y2="232"/>
+
+<text class="s" x="16" y="256">project files, one folder</text>
+<line class="arr" x1="68" y1="220" x2="68" y2="266" marker-end="url(#a)"/>
+<text class="s" x="76" y="244">writes</text>
+<rect class="file" x="16" y="268" width="440" height="50" rx="8"/>
+<text class="t" x="236" y="286" text-anchor="middle" dominant-baseline="central">graph-flow.json · graph-nodes.json · graph-layout.json</text>
+<text class="s" x="236" y="306" text-anchor="middle" dominant-baseline="central">and a folder per node: input, output, code, prompt, history</text>
+<rect class="file" x="484" y="268" width="180" height="50" rx="8"/>
+<text class="t" x="574" y="286" text-anchor="middle" dominant-baseline="central">gui.json</text>
+<text class="s" x="574" y="306" text-anchor="middle" dominant-baseline="central">the surface settings</text>
+<line class="rule" x1="8" y1="330" x2="672" y2="330"/>
+
+<line class="arr" x1="340" y1="320" x2="340" y2="404" marker-end="url(#a)"/>
+<text class="s" x="348" y="352">reads</text>
+<text class="s" x="16" y="398">backend/deployment</text>
+<rect class="ship" x="16" y="406" width="648" height="40" rx="8"/>
+<text class="ship-t" x="28" y="426" dominant-baseline="central">project</text>
+<text class="ship-s" x="100" y="426" dominant-baseline="central">reads the folder: graph and gui files, state, a frontend of its own</text>
+
+<rect class="ship" x="16" y="456" width="440" height="44" rx="8"/>
+<text class="ship-t" x="236" y="472" text-anchor="middle" dominant-baseline="central">graph</text>
+<text class="ship-s" x="236" y="490" text-anchor="middle" dominant-baseline="central">definition (graph/): format, node kinds, rules</text>
+<line class="rule" x1="16" y1="510" x2="462" y2="510"/>
+<rect class="ship" x="16" y="520" width="210" height="44" rx="8"/>
+<text class="ship-t" x="121" y="536" text-anchor="middle" dominant-baseline="central">runtime</text>
+<text class="ship-s" x="121" y="554" text-anchor="middle" dominant-baseline="central">execution, one language</text>
+<rect class="ship" x="236" y="520" width="220" height="44" rx="8"/>
+<text class="ship-t" x="346" y="536" text-anchor="middle" dominant-baseline="central">host</text>
+<text class="ship-s" x="346" y="554" text-anchor="middle" dominant-baseline="central">graph in use, server, routes</text>
+<rect class="ship" x="484" y="456" width="180" height="108" rx="8"/>
+<text class="ship-t" x="574" y="478" text-anchor="middle" dominant-baseline="central">gui</text>
+<text class="ship-s" x="574" y="504" text-anchor="middle" dominant-baseline="central">definition (gui/) and</text>
+<text class="ship-s" x="574" y="522" text-anchor="middle" dominant-baseline="central">blocks that hold, send,</text>
+<text class="ship-s" x="574" y="540" text-anchor="middle" dominant-baseline="central">show; optional</text>
+
+<path class="arr" d="M346 566 V588 H574 V604" marker-end="url(#a)"/>
+<text class="s" x="460" y="582" text-anchor="middle">runtime API</text>
+<text class="s" x="16" y="596">frontend/deployment</text>
+<rect class="file" x="16" y="604" width="440" height="44" rx="8" stroke-dasharray="4 3"/>
+<text class="t" x="236" y="620" text-anchor="middle" dominant-baseline="central">no frontend of its own</text>
+<text class="s" x="236" y="638" text-anchor="middle" dominant-baseline="central">the graph is used by name</text>
+<rect class="ship" x="484" y="604" width="180" height="44" rx="8"/>
+<text class="ship-t" x="574" y="620" text-anchor="middle" dominant-baseline="central">gui</text>
+<text class="ship-s" x="574" y="638" text-anchor="middle" dominant-baseline="central">or your own HTML page</text>
+
+<line class="rule" x1="472" y1="46" x2="472" y2="92"/>
+<line class="rule" x1="472" y1="174" x2="472" y2="220"/>
+<line class="rule" x1="472" y1="268" x2="472" y2="320"/>
+<line class="rule" x1="472" y1="456" x2="472" y2="566"/>
+<line class="rule" x1="472" y1="604" x2="472" y2="650"/>
+
+<rect class="ship" x="16" y="676" width="12" height="12" rx="3"/>
+<text class="s" x="36" y="682" dominant-baseline="central">ships in a package</text>
+<rect class="edit" x="190" y="676" width="12" height="12" rx="3"/>
+<text class="s" x="210" y="682" dominant-baseline="central">only the editor</text>
+</svg>

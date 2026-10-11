@@ -24,7 +24,7 @@ const BUILD_INPUTS = [
   'frontend/tsconfig.json', 'frontend/tsconfig.node.json', 'frontend/vite.config.ts', 'frontend/tailwind.config.js', 'frontend/postcss.config.js',
 ];
 /** The folders the page's code is in: its own, and the graph's and the backend's, which it imports from. */
-const SOURCES = ['frontend/app', 'frontend/graph-editor', 'frontend/gui-editor', 'graph', 'backend'];
+const SOURCES = ['frontend/editor', 'frontend/deployment', 'graph', 'gui', 'backend'];
 
 try {
   if (Number(process.versions.node.split('.')[0]) < 24) {

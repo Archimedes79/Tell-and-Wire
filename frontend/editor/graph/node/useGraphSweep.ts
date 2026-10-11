@@ -54,7 +54,7 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
   const nodesOf = () => live().rfNodes.map((item) => item.data.graphNode);
   const dslEdges = (): GraphEdge[] => live().rfEdges.map(graphEdge);
 
-  const missing = missingExamples(nodesOf(), dslEdges(), live().page);
+  const missing = missingExamples(nodesOf(), dslEdges(), live().gui);
   if (missing.length) {
     say(`❌ ${missing.map((n) => n.label || n.id).join(', ')}: give it a file or folder to read by default. `
       + 'Without one, the first node is written against nothing and every node after it inherits the guess.');

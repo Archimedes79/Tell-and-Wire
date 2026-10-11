@@ -3,7 +3,7 @@
  *
  * Names are in the first column; the first column that is numbers all the way
  * down is what gets plotted, largest first. Nothing is drawn here: this says
- * *what* to plot, and the chart block on the page draws it.
+ * *what* to plot, and the chart block on the gui draws it.
  *
  * @typedef {Object} Inputs
  * @property {string} csv  the content of the chosen file
