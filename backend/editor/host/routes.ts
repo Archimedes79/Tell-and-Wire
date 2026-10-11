@@ -38,6 +38,7 @@ import { keptRound, writeKeptRound, TESTS_DIR } from '../project/keptRounds.ts';
 import * as gen from '../graph/generate.ts';
 import { generateGraph } from '../graph/generateGraph.ts';
 import { zip } from '../project/deploy/zip.ts';
+import { windowsRoutes } from '../windows/routes.ts';
 
 /**
  * @param held the session this server holds, and how a graph is handed to it
@@ -95,6 +96,9 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
   }
 
   return {
+    // The notebook: a tool made of windows (`docs/notebook.md`).
+    ...windowsRoutes({ watched, ai: () => nodeRuntime().ai, target: () => aiSetting(process.cwd(), process.env, 'write') }),
+
     runNode: async (asked) => (await tries().node({ graph: parseGraph(asked), node: String(asked.node_id ?? ''), inputs: asked.inputs ?? {} })).result,
 
     testNode: (asked) => tries().example({ graph: parseGraph(asked), node: String(asked.node_id ?? '') }),

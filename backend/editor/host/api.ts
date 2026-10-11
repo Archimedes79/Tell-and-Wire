@@ -6,6 +6,7 @@
 
 import type { Graph, GraphNode, NodeResult } from '../../../graph/graph.ts';
 import type { TextChange } from '../../../graph/files/changes.ts';
+import type { Windows } from '../../../gui/editor/windows/windows.ts';
 import type { AICall } from '../../../graph/editor/history.ts';
 import type { ExampleRun } from '../../deployment/runtime/examples.ts';
 import { local, route, type InSession } from '../../deployment/host/api.ts';
@@ -227,6 +228,16 @@ export interface GraphFile {
   project: boolean;
 }
 
+/**
+ * A project made of windows, as Open and Save return it: the graph on disk, the windows it was made from (none for
+ * a project that was not), and whether the graph is still what they made.
+ */
+export interface WindowsFile extends GraphFile {
+  windows: Windows | null;
+  /** The graph was changed since the windows made it, by something else: saving the windows would write over that. */
+  stale: boolean;
+}
+
 /** One request to a model, as it happened (`graph/editor/history.ts`, which writes it into history.md). */
 export type { AICall };
 
@@ -267,6 +278,18 @@ export const EDITOR_API = {
    * when *replace* says so: refused otherwise (409, `Failure.taken`).
    */
   saveGraph: route<{ path: string; graph: Graph; replace?: boolean }, GraphFile>('POST', '/api/graphs/file/save'),
+
+  /** The notebook: a project folder, with the windows it was made from. */
+  openWindows: route<{ path: string }, WindowsFile>('POST', '/api/windows/load'),
+
+  /**
+   * The windows saved as a project folder: the graph, the schedule and the gui they make, and the windows beside them.
+   * One that is already there is written over only when *replace* says so (409, `Failure.taken`).
+   */
+  saveWindows: route<{ path: string; windows: Windows; replace?: boolean }, WindowsFile>('POST', '/api/windows/save'),
+
+  /** Windows from a description -- or, given the windows there are, those changed as it says. Nothing is written. */
+  describeWindows: route<{ description: string; windows?: Windows } & Watched, { windows: Windows; explanation: string }>('POST', '/api/windows/describe'),
 
   /**
    * Project folders with this name under where the editor runs: for a folder
