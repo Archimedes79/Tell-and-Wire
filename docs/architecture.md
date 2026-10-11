@@ -134,16 +134,15 @@ input_picker, text_io, select, slider, button, chat, plot_window, table, image_v
 3. **Run.** The core gets a working copy: the design, with what nodes keep and what the round was
    sent put in. `backend/deployment/runtime/localCore.ts` runs `executeGraph`
    (`backend/deployment/runtime/executor.ts`): it orders nodes in levels (`graph/order.ts`), where
-   a loop may only pass through a data node (the wires from a passive output are left out:
-   `passiveWires`); runs what the start point is wired to, what follows and what those need
+   a loop may only pass through a data node (a wire from it to a node that runs before it is a read, left out:
+   `readingWires`); runs what the start point is wired to, what follows and what those need
    (`graph/triggers.ts`; a data node holds its value, so what writes it is not needed); per node,
    hands each input its `field` of the package, skips a node with nothing to do, reads files on
    `file_path` inputs (`graph/fileInputs.ts`) and runs once or per item (`graph/batching.ts`).
    A wired ◆ gate opens only for the round's start point or a `true`; a node that stands still keeps
    what it made last (`latch.ts`); unchanged context upstream is reused (`reuse.ts`). The runner of
    the kind does the node's own work.
-4. **Settled.** Data nodes keep what arrived, field by field (`settleMemory`), and count the round
-   (`endRound`). The session hands each end point's value to the blocks that show it (the gui's
+4. **Settled.** Data nodes keep what arrived, field by field (`settleMemory`). The session hands each end point's value to the blocks that show it (the gui's
    hooks). A round that ran to its end commits and writes `state.json`.
 
 ## State
@@ -153,7 +152,7 @@ the editor or a served tool, and what using it leaves behind. The rules are held
 `backend/deployment/host/session.test.ts`.
 
 1. **What state is.** Each node's kept values, as its definition says (`NodeDefinition.state`): a
-   start point's `values`, a data node's fields and its `round`. The gui's: what each block holds,
+   start point's `values`, a data node's fields. The gui's: what each block holds,
    by id (a value set, a conversation, what an end point handed back). Beside them: what every node
    made last (the latch, held by the graph core), what the gui shows, how many rounds ran. Not
    state: the reuse cache, a round in flight.
@@ -209,8 +208,9 @@ my_tool/
 - **The schedule** (`graph/schedule.ts`) is a table: rows of text, one id or `.` for an empty cell each,
   `"table": ["start read .", ". clean summarize"]`. Its columns are the steps and time runs to the right;
   nodes in one column have no wire between them, so they may run in parallel or in any order, and the
-  engine takes them top to bottom. One rule holds it: every wire but one that leaves a memory (`passiveWires`)
-  ends in a later column than it starts. A table that breaks it refuses the run and is a `check` problem,
+  engine takes them top to bottom. One rule holds it: every wire ends in a later column than it starts, but one that leaves a memory (a
+  data node), which may end in an earlier one: it reads what the memory held when the round began
+  (`readingWires`). The column decides which a wire of a memory is. A table that breaks it refuses the run and is a `check` problem,
   naming the wire. `size` keeps the size of the cards a person resized (`{ "id": { "width", "height" } }`), and a
   wire's `via` the cells it is drawn through, named as a spreadsheet does (`C2`: third column, second row): how
   it is drawn, nothing a run does. Where a card is drawn follows from the table and the sizes, and is stored
@@ -366,7 +366,7 @@ TW_CORE="node backend/cli/main.ts core" node backend/cli/main.ts --editor fronte
   every round, a value the host stores and does not read; what a round left is committed only when
   it ran to its end;
 - say in `nodes` each node's state as its kind keeps it: a start point's `values`, a data node's
-  fields by their names and its `round` (`NodeDefinition.state`);
+  fields by their names (`NodeDefinition.state`);
 - run a round with `given` as a kept round: those nodes are handed their outputs instead of running,
   and nothing of it stands for the next round (no latch, no reuse);
 - end when stdin ends, stopping what still goes; say an error as a sentence.

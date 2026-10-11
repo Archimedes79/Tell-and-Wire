@@ -88,8 +88,6 @@ export type NodeConfig = {
   data_value?: unknown;
   /** A data node: what its fields look like once rounds have filled them -- what is wired to it is written against it -- and `example.json` keeps. The fields themselves where there is none. */
   data_example?: unknown;
-  /** A data node: the rounds it has been through. Counted by a session, never part of the design. */
-  data_round?: number;
   extensions: string;
   /** Tool servers an ai node may call, one per line: a URL, or a name this machine configured. */
   mcp_servers?: string;

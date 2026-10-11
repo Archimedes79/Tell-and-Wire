@@ -71,7 +71,7 @@ export function endPoints(nodes: GraphNode[]): Point[] {
   });
 }
 
-/** The memory nodes a block can show, and each part of what they hold -- a field, the round count: what each holds, by name, whether or not a round has run. */
+/** The memory nodes a block can show, and each part of what they hold -- a field: what each holds, by name, whether or not a round has run. */
 export function memoryPoints(nodes: GraphNode[]): Point[] {
   return nodes.flatMap((node) => (registry.node(node.node_type)?.offers(node as never) ?? [])
     .filter((offer) => offer.kind === 'state')

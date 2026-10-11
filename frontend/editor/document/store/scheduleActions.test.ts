@@ -4,7 +4,10 @@ import { NEW } from './scheduleActions';
 import type { Graph, GraphNode } from '../graph';
 import { baseNodeConfig } from '../model/baseNodeConfig';
 import { gridOf } from '../model/scheduleLayout';
-import { tableLines } from '../../../../graph/schedule.ts';
+import { derivedNodePorts } from '../model/ports';
+import { placesOf, tableLines } from '../../../../graph/schedule.ts';
+import { readingWires } from '../../../../graph/order.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 
 const node = (id: string, type: GraphNode['node_type'] = 'code'): GraphNode => ({
   id, node_type: type, label: id, description: '', position: { x: 0, y: 0 },
@@ -12,10 +15,21 @@ const node = (id: string, type: GraphNode['node_type'] = 'code'): GraphNode => (
   outputs: [{ id: 'out', name: 'out', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }],
   config: baseNodeConfig(),
 });
+/** A data node holding the field n: its ports follow it. */
+const memory = (id: string): GraphNode => {
+  const held = node(id, 'data');
+  held.config = { ...held.config, data_value: { n: 0 } } as never;
+  return { ...held, ...derivedNodePorts(held) };
+};
 const wire = (from: string, to: string) => ({ id: `${from}.out -> ${to}.in`, source_node_id: from, source_port_id: 'out', target_node_id: to, target_port_id: 'in' });
 const store = () => useGraphStore.getState();
 const rows = () => tableLines(store().table);
 const at = (id: string) => store().rfNodes.find((n) => n.id === id)!.position;
+/** The wires that read a memory as it was when the round began, as the editor would save the graph. */
+const reads = () => {
+  const saved = store().exportGraph();
+  return [...readingWires(saved.nodes, saved.edges, registry, placesOf(saved))];
+};
 const via = (id: string) => store().exportGraph().edges.find((edge) => edge.id === id)?.via;
 
 /** a, then b and d beside each other, then c: a -> b -> c and a -> d -> c. */
@@ -90,5 +104,49 @@ describe('the schedule in the store', () => {
     expect(via(edge)).toEqual(['B2']);
     store().routeWire(edge, null);
     expect(via(edge)).toBeUndefined();
+  });
+
+  it('lets where a card stands decide what a wire from a memory carries: before the memory it reads it as the round began, after it what it holds then', () => {
+    const edges = [
+      { id: 'm.n -> add.in', source_node_id: 'm', source_port_id: 'n', target_node_id: 'add', target_port_id: 'in' },
+      { id: 'add.out -> m.n', source_node_id: 'add', source_port_id: 'out', target_node_id: 'm', target_port_id: 'n' },
+    ];
+    store().loadGraph({ metadata: { name: 'T', description: '', gui_scheme: 'night' }, nodes: [node('add'), memory('m')], edges } as Graph);
+    // The loop closes by the wire back to what writes the memory, which stands before it.
+    expect(rows()).toEqual(['add m']);
+    expect(reads()).toEqual(['m.n -> add.in']);
+    // A wire to a card left of the memory is a read too, and moves nothing.
+    const peek = store().addNode('code', { kind: 'gap', k: 0, r: 0 });
+    store().connect({ source: 'm', sourceHandle: 'n', target: peek, targetHandle: 'in' });
+    expect(rows()).toEqual([`${peek} add m`]);
+    expect(reads()).toEqual(['m.n -> add.in', `m.n -> ${peek}.in`]);
+    // Thinning out puts the two that only read side by side -- and both stay before the memory, reading it as the round began.
+    expect(store().thinOut()).toBe('Thinned out: 3 columns, 1 rows became 2 columns, 2 rows.');
+    expect(reads()).toEqual(['m.n -> add.in', `m.n -> ${peek}.in`]);
+    store().undo();
+    expect(rows()).toEqual([`${peek} add m`]);
+    // The card that only reads may be pulled right of the memory: the same wire then carries what the memory holds after the round's writes.
+    const grid = gridOf(store().table, new Map(), { row: true });
+    store().commit();
+    store().aimCard(peek, { x: grid.cols[2].right + 500, y: grid.rows[0].centre });
+    store().dropCard(peek);
+    expect(rows()).toEqual(['add m ' + peek]);
+    expect(reads()).toEqual(['m.n -> add.in']);
+    // Not into the memory's own column, which is neither before it nor after it: pulled to the nearest cell that is.
+    store().aimCard(peek, { x: grid.cols[1].centre, y: grid.rows[0].centre });
+    expect(store().aim?.target).not.toMatchObject({ kind: 'cell', c: 1 });
+    store().clearAim();
+    // And back before it: the wire reads the memory again.
+    store().commit();
+    store().aimCard(peek, { x: grid.cols[0].left - 300, y: grid.rows[0].centre });
+    store().dropCard(peek);
+    expect(rows()).toEqual([`${peek} add m`]);
+    expect(reads()).toEqual(['m.n -> add.in', `m.n -> ${peek}.in`]);
+    store().aimCard(peek, { x: grid.cols[2].right + 500, y: grid.rows[0].centre });
+    store().dropCard(peek);
+    // The card that writes it may not: it stays before it.
+    store().aimCard('add', { x: grid.cols[2].right + 500, y: grid.rows[0].centre });
+    store().dropCard('add');
+    expect(rows()).toEqual(['add m ' + peek]);
   });
 });

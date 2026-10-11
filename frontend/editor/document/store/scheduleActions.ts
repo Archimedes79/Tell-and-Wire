@@ -20,7 +20,18 @@ type RFNode = Node<RFNodeData>;
 export const NEW = '_new';
 
 export const nodesOf = (s: Pick<GraphStore, 'rfNodes'>): GraphNode[] => s.rfNodes.map((node) => node.data.graphNode);
-const edgesOf = (s: Pick<GraphStore, 'rfEdges'>): GraphEdge[] => s.rfEdges.map((edge) => graphEdge(edge));
+export const edgesOf = (s: Pick<GraphStore, 'rfEdges'>): GraphEdge[] => s.rfEdges.map((edge) => graphEdge(edge));
+
+/**
+ * What limits where a card may be put: the wires that must end in a later column, and -- apart from those -- the wires out of
+ * a memory, which a card may have on either side of it (left: it reads what the memory held as the round began; right: what it holds then).
+ */
+function limits(s: Pick<GraphStore, 'rfEdges' | 'table'>, nodes: GraphNode[]): [[string, string][], [string, string][]] {
+  const memories = new Set(nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
+  const edges = edgesOf(s);
+  const ordered = orderedWires(nodes, edges, registry, columnsOf(s.table));
+  return [ordered.filter(([from]) => !memories.has(from)), edges.filter((edge) => memories.has(edge.source_node_id)).map((edge) => [edge.source_node_id, edge.target_node_id])];
+}
 
 /** Where the cards stand for *table*: each one's top left. */
 export function placed(table: Table, nodes: GraphNode[], opening?: Opening): Map<string, { x: number; y: number }> {
@@ -70,7 +81,7 @@ export function scheduleActions(
     aimCard: (id, centre) => {
       const s = get();
       const nodes = nodesOf(s);
-      const reach = id === NEW ? ANYWHERE : reachOf(s.table, id, orderedWires(nodes, edgesOf(s), registry));
+      const reach = id === NEW ? ANYWHERE : reachOf(s.table, id, ...limits(s, nodes));
       const was = s.aim?.id === id ? s.aim.opens : null;
       const next = aim(s.table, sizesOf(nodes), reach, id === NEW ? null : id, centre, was);
       if (s.aim?.id === id && s.aim.opens === next.opens && JSON.stringify(s.aim.target) === JSON.stringify(next.target)) return;

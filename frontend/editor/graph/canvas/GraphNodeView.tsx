@@ -64,12 +64,9 @@ function PortDot({ port, type, side, top, lit, fires }: {
 }) {
   const colour = lit ? ACCENT : MUTED;
   // A list is a ring: it takes, or hands on, several values.
-  // A passive output is a dashed ring: what a wire from it reads, it reads as the round began, and it orders nothing.
   const dot: React.CSSProperties = fires
     ? { background: EVENT, border: `2px solid ${SURFACE}`, borderRadius: 2, transform: 'rotate(45deg)' }
-    : port.passive
-      ? { background: 'transparent', border: `2px dashed ${colour}`, borderRadius: '50%' }
-      : { background: port.multi ? SURFACE : colour, border: `2px solid ${port.multi ? colour : SURFACE}`, borderRadius: '50%' };
+    : { background: port.multi ? SURFACE : colour, border: `2px solid ${port.multi ? colour : SURFACE}`, borderRadius: '50%' };
   const title = fires
     ? `${port.description || port.name} — a run begins here, at whatever this is wired to.`
     : `${port.description || port.name}${port.multi ? ' (a list)' : ''}`;
@@ -123,16 +120,13 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
 
   const builder = NODE_BUILDERS[graphNode.node_type];
   const lit = selected;
-  // An output most never wire (a data node's `round`, `all`, `before`) is drawn while it is wired or the card is the one selected.
-  const wiredOut = useGraphStore((s) => s.rfEdges.filter((edge) => edge.source === id).map((edge) => edge.sourceHandle).join('|'));
-  const outputs = graphNode.outputs.filter((port) => selected || !builder?.quietOutput(graphNode, port.id) || wiredOut.split('|').includes(port.id));
 
   // ReactFlow finds a wire's ends by the handles it measured when the card was
   // drawn: a port renamed on a card that kept its size was a handle it did not
   // know, and the wire, still in the graph, was not drawn. Measured again when
   // the ports change.
   const updateNodeInternals = useUpdateNodeInternals();
-  const handles = `${graphNode.inputs.map((port) => port.id).join(',')}|${outputs.map((port) => port.id).join(',')}`;
+  const handles = `${graphNode.inputs.map((port) => port.id).join(',')}|${graphNode.outputs.map((port) => port.id).join(',')}`;
   const measuredHandles = useRef(handles);
   useEffect(() => {
     if (measuredHandles.current === handles) return;
@@ -163,7 +157,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   // Under the card, each value by the port it stands at -- named, when there is more than one to tell apart.
   const shown = previews
     ? [...graphNode.inputs.map((port) => [port, previews.inputs[port.id]] as const),
-      ...outputs.map((port) => [port, previews.outputs[port.id]] as const)].filter(([, preview]) => preview)
+      ...graphNode.outputs.map((port) => [port, previews.outputs[port.id]] as const)].filter(([, preview]) => preview)
     : [];
 
   // A file dropped on a node fills what the element says (`dropPort`): a
@@ -203,7 +197,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const takesWire = !!drop;
 
   const failedDrop = statusTone('error');
-  const rows = Math.max(graphNode.inputs.length, outputs.length);
+  const rows = Math.max(graphNode.inputs.length, graphNode.outputs.length);
   const hasFoot = !!connected || summary !== undefined || shown.length > 0 || !!failure || takesWire || !!dropFailed;
 
   return (
@@ -280,7 +274,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
           {Array.from({ length: rows }, (_, index) => (
             <div key={index} className="flex items-center justify-between gap-3 px-3.5 text-xs" style={{ height: ROW, color: MUTED }}>
               <span className="min-w-0 truncate">{graphNode.inputs[index] && portName(graphNode.inputs[index])}</span>
-              <span className="min-w-0 truncate text-right">{outputs[index] && portName(outputs[index])}</span>
+              <span className="min-w-0 truncate text-right">{graphNode.outputs[index] && portName(graphNode.outputs[index])}</span>
             </div>
           ))}
         </div>
@@ -348,7 +342,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       {graphNode.inputs.map((port, index) => (
         <PortDot key={`in:${port.id}`} port={port} type="target" side="left" top={dotTop(index)} lit={lit} />
       ))}
-      {outputs.map((port, index) => (
+      {graphNode.outputs.map((port, index) => (
         <PortDot key={`out:${port.id}`} port={port} type="source" side="right" top={dotTop(index)} lit={lit} fires={events.has(port.id)} />
       ))}
     </div>

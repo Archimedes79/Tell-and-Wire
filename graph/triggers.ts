@@ -44,7 +44,8 @@
 
 import type { Graph, GraphEdge } from './graph.ts';
 import type { Kinds, StartedBy } from './nodes/NodeDefinition.ts';
-import { passiveWires, walk } from './order.ts';
+import { readingWires, walk } from './order.ts';
+import { placesOf } from './schedule.ts';
 
 /** The input every node has and nobody declares: the ◆, a gate. What arrives opens it or does not, and is never handed on. */
 export const RUN_PORT = '__run';
@@ -149,8 +150,8 @@ const leaves = (edge: GraphEdge, trigger: Trigger): boolean =>
  *
  * A memory holds its value, so what runs on it does not wait for what writes
  * it -- a data node that keeps the model's last answer is not something the
- * model waits for (`unneeded`). A passive wire carries no event: what only
- * reads a node is not for the event that reaches it.
+ * model waits for (`unneeded`). A wire that reads a memory as it was when the
+ * round began carries no event: what only reads a node is not for the event that reaches it.
  */
 export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Kinds): Set<string> | null {
   const downstream = firedNodes(graph, trigger, registry);
@@ -170,7 +171,7 @@ export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Kinds):
  * always runs fresh.
  */
 export function firedNodes(graph: Graph, trigger: Trigger, registry: Kinds): Set<string> | null {
-  const reads = passiveWires(graph.nodes, graph.edges, registry);
+  const reads = readingWires(graph.nodes, graph.edges, registry, placesOf(graph));
   const live = graph.edges.filter((edge) => !reads.has(edge.id));
   const fired = live.filter((edge) => leaves(edge, trigger));
   if (!fired.length) return null;
@@ -180,13 +181,13 @@ export function firedNodes(graph: Graph, trigger: Trigger, registry: Kinds): Set
 /**
  * The wires a slice does not follow upstream: those into a node that
  * remembers, which holds its value and needs nothing of what writes it, and
- * the passive ones. A round started somewhere else only shows
+ * the ones that read a memory. A round started somewhere else only shows
  * what the memory holds; it does not run what writes it.
  */
 function unneeded(graph: Graph, registry: Kinds): Set<string> {
   const remembering = new Set(graph.nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
   return new Set([
-    ...passiveWires(graph.nodes, graph.edges, registry),
+    ...readingWires(graph.nodes, graph.edges, registry, placesOf(graph)),
     ...graph.edges.filter((e) => remembering.has(e.target_node_id) && e.target_port_id !== RUN_PORT).map((e) => e.id),
   ]);
 }

@@ -2,10 +2,11 @@
 //
 // Kahn's algorithm over the wires gives levels: nothing in a level feeds
 // anything else in it. A graph with a loop -- a counter: a data node, and a
-// code node adding one to it -- is not a mistake, it is how a tool remembers:
-// the node that reads the memory takes its passive output, the wire from which
-// is left out of the order (`passiveWires`), so what remains is acyclic. A
-// loop without one is an error, said by name, and how to close it.
+// code node adding one to it -- is not a mistake, it is how a tool remembers.
+// A wire out of a data node to a node that runs BEFORE it reads what the node
+// held when the round began (`readingWires`): that node runs first and fills
+// the data node, so what is left of the wires is acyclic. A loop that no data
+// node closes is an error, said by name, and how to close it.
 
 import type { GraphEdge, GraphNode } from './graph.ts';
 import type { Kinds } from './nodes/NodeDefinition.ts';
@@ -39,21 +40,82 @@ export function nodeName(node: GraphNode): string {
   return `${node.node_type} node ${node.label && node.label !== node.id ? `"${node.label}" (${node.id})` : `"${node.id}"`}`;
 }
 
+/** Who runs before whom: the one, then the other. */
+export type Pairs = [string, string][];
+
 /**
- * Kahn's algorithm over *edges* but those in *skip*: the nodes in levels, each
- * level waiting only for earlier ones, and the nodes it could not place, which
- * sit in a loop or below one. The graph's own node order holds inside a level,
- * so a run is reproducible.
+ * Ids of the wires that read a data node as it was when the round began,
+ * rather than as the round fills it: a wire out of a data node to a node that
+ * runs before it. A read takes no part in the order the way a wire does -- its
+ * reader runs first, and the data node after it, which is how a loop closes --
+ * and carries no event: what only reads a memory is not for the event that
+ * reaches it.
+ *
+ * Which runs before which is the schedule's, where there is one (*columns*, the
+ * column each node stands in): a wire to a node in an earlier column is a read,
+ * one to a node in a later or the same column carries what the data node holds
+ * after what arrives has filled it. Without a schedule, or for a node it does
+ * not place, the wire that closes a loop is the read: one into a node that the
+ * data node is written through. A data node reading itself is a read.
  */
-function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { levels: string[][]; stuck: Set<string> } {
+export function readingWires(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): Set<string> {
+  const ids = new Set(nodes.map((node) => node.id));
+  const memories = new Set(nodes.filter((node) => registry.node(node.node_type)?.isMemory === true).map((node) => node.id));
+  const reads = new Set<string>();
+  for (const edge of edges) {
+    const { source_node_id: from, target_node_id: to } = edge;
+    if (!memories.has(from) || !ids.has(to)) continue;
+    const at = columns?.get(from);
+    const goes = columns?.get(to);
+    if (from === to || (at !== undefined && goes !== undefined ? goes < at : walk([to], edges.filter((other) => other !== edge), true).has(from))) reads.add(edge.id);
+  }
+  return reads;
+}
+
+/**
+ * Who runs before whom, a pair for each wire between two nodes: the source,
+ * then the target. A read comes the other way round -- its reader runs before
+ * the data node is filled, which is why it holds what it held. A node that
+ * wires into itself waits for itself, which is a loop; a data node that reads
+ * itself waits for nothing.
+ */
+export function runsBefore(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): Pairs {
+  const ids = new Set(nodes.map((node) => node.id));
+  const reads = readingWires(nodes, edges, registry, columns);
+  return edges
+    .filter((edge) => ids.has(edge.source_node_id) && ids.has(edge.target_node_id) && !(reads.has(edge.id) && edge.source_node_id === edge.target_node_id))
+    .map((edge): [string, string] => (reads.has(edge.id) ? [edge.target_node_id, edge.source_node_id] : [edge.source_node_id, edge.target_node_id]));
+}
+
+/** *from* and every node that has to come after it, along *pairs*. */
+function after(from: Iterable<string>, pairs: Pairs): Set<string> {
+  const seen = new Set(from);
+  const queue = [...seen];
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const [one, other] of pairs) {
+      if (one !== id || seen.has(other)) continue;
+      seen.add(other);
+      queue.push(other);
+    }
+  }
+  return seen;
+}
+
+/**
+ * Kahn's algorithm over *pairs*: the nodes in levels, each level waiting only
+ * for earlier ones, and the nodes it could not place, which sit in a loop or
+ * below one. The graph's own node order holds inside a level, so a run is
+ * reproducible.
+ */
+function levelsOf(nodes: GraphNode[], pairs: Pairs): { levels: string[][]; stuck: Set<string> } {
   const ids = new Set(nodes.map((n) => n.id));
   const inDegree = new Map([...ids].map((id) => [id, 0]));
   const successors = new Map<string, string[]>();
 
-  for (const e of edges) {
-    if (skip.has(e.id) || !ids.has(e.source_node_id) || !ids.has(e.target_node_id)) continue;
-    inDegree.set(e.target_node_id, (inDegree.get(e.target_node_id) ?? 0) + 1);
-    successors.set(e.source_node_id, [...(successors.get(e.source_node_id) ?? []), e.target_node_id]);
+  for (const [first, then] of pairs) {
+    inDegree.set(then, (inDegree.get(then) ?? 0) + 1);
+    successors.set(first, [...(successors.get(first) ?? []), then]);
   }
 
   const levels: string[][] = [];
@@ -75,46 +137,26 @@ function levelsOf(nodes: GraphNode[], edges: GraphEdge[], skip: Set<string>): { 
   return { levels, stuck };
 }
 
-/**
- * Ids of the wires that come from a passive output (`Port.passive`): they
- * take no part in the order, and carry what the node held when the round
- * began. That is how a loop through a memory is closed -- the node that reads
- * it takes its `before` -- while the wires into the memory are in the order
- * like any other, so it fills, and then forwards what it holds.
- */
-export function passiveWires(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): Set<string> {
-  const passive = new Map<string, Set<string>>();
-  for (const node of nodes) {
-    const outputs = registry.node(node.node_type)?.derivedPorts(node, registry)?.outputs ?? node.outputs;
-    const ids = outputs.filter((port) => port.passive).map((port) => port.id);
-    if (ids.length) passive.set(node.id, new Set(ids));
-  }
-  return new Set(edges.filter((e) => passive.get(e.source_node_id)?.has(e.source_port_id)).map((e) => e.id));
-}
-
 /** Of the *stuck* nodes, those the wires go round through, not the ones that merely hang below a loop. */
-function inLoop(nodes: GraphNode[], edges: GraphEdge[], reads: Set<string>, stuck: Set<string>): GraphNode[] {
-  const live = edges.filter((e) => !reads.has(e.id));
-  return nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
+function inLoop(nodes: GraphNode[], pairs: Pairs, stuck: Set<string>): GraphNode[] {
+  return nodes.filter((n) => stuck.has(n.id) && pairs.some(([first, then]) => first === n.id && after([then], pairs).has(n.id)));
 }
 
-/** The nodes in a loop that no memory closes: none in a graph that can be ordered. */
-export function loopNodes(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): GraphNode[] {
-  const reads = passiveWires(nodes, edges, registry);
-  return inLoop(nodes, edges, reads, levelsOf(nodes, edges, reads).stuck);
+/** The nodes in a loop that no data node closes: none in a graph that can be ordered. */
+export function loopNodes(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): GraphNode[] {
+  const pairs = runsBefore(nodes, edges, registry, columns);
+  return inLoop(nodes, pairs, levelsOf(nodes, pairs).stuck);
 }
 
-/** Execution stages: everything in a stage waits only for earlier stages. A loop that no memory closes is an error. */
-export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): string[][] {
-  const reads = passiveWires(nodes, edges, registry);
-  const { levels, stuck } = levelsOf(nodes, edges, reads);
+/** Execution stages: everything in a stage waits only for earlier stages. A loop that no data node closes is an error. */
+export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): string[][] {
+  const pairs = runsBefore(nodes, edges, registry, columns);
+  const { levels, stuck } = levelsOf(nodes, pairs);
   if (stuck.size) {
-    const round = inLoop(nodes, edges, reads, stuck);
-    const memory = round.find((n) => registry.node(n.node_type)?.isMemory);
+    const round = inLoop(nodes, pairs, stuck);
     throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
-      + (memory
-        ? `The node that reads ${nodeName(memory)} in the loop must take its "before" output, which waits for nothing.`
-        : 'A loop is only allowed through a data node: write the value into one, and read it back from its "before" output.'));
+      + 'A loop is only allowed through a data node: write the value into one, and wire it back to the node that reads it, '
+      + 'which runs before it -- that wire carries what the data node held when the round began.');
   }
   return levels;
 }

@@ -1,5 +1,5 @@
 import type { GraphNode } from '../../../document/graph';
-import { DataNodeDefinition, ALL_FIELDS, BEFORE, ROUND, hasField } from '../../../../../graph/nodes/data/DataNodeDefinition.ts';
+import { DataNodeDefinition, hasField } from '../../../../../graph/nodes/data/DataNodeDefinition.ts';
 import { derivedNodePorts } from '../../../document/model/ports';
 import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
@@ -44,11 +44,6 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
   // are its fields (`DataNodeDefinition.derivedPorts`), so there are none to edit, and
   // its one file, data.json, is edited in its file's pane and written by its chat.
 
-  /** Its fields are what is wired: `round`, `all` and `before` stand behind them until they are wired, or the card is the one selected. */
-  override quietOutput(_node: GraphNode, port: string): boolean {
-    return port === ALL_FIELDS || port === ROUND || port === BEFORE;
-  }
-
   /** A file dropped on it on the canvas is its fields from now on: what the file says, an object -- or one field, "value". */
   override dropPort(): 'text' {
     return 'text';
@@ -61,7 +56,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
   }
 
   /**
-   * What a wire from it carries -- one field, or all of them (*port*) -- what
+   * What a wire from it carries -- one field (*port*), or the struct -- what
    * its text says, and the start of what it holds filled (`example.json`), as
    * JSON: what the nodes wired to it are told it hands on. The value itself,
    * since its keys are in it: told only "ten capitals", ✨ Input wrote
@@ -75,10 +70,8 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
       const json = JSON.stringify(value) ?? '';
       return json.length > HELD_SHOWN ? `${json.slice(0, HELD_SHOWN)}… (${json.length - HELD_SHOWN} more characters)` : json;
     };
-    if (port === ROUND) return `the number of the round, from 1: how many rounds the struct has been through, the one it is in included${details ? ` -- of a struct: ${details}` : ''}`;
-    if (port === BEFORE) return `every field of a struct as it was when the round began, with the round number, as one object: how a loop reads it -- the input's "field" names the one it wants${details ? ` -- ${details}` : ''} -- as rounds fill it, it holds: ${start({ ...example, [ROUND]: 1 })}`;
     if (port !== undefined && hasField(fields, port)) return `the field "${port}" of a struct${details ? `: ${details}` : ''} -- as rounds fill it, it holds: ${start(valueOf(node, port))}`;
-    const said = `a struct of ${names.length ? `the fields ${names.map((name) => `"${name}"`).join(', ')}` : 'no fields yet'}${details ? `: ${details}` : ''}; "${ALL_FIELDS}" is all of them`;
+    const said = `a struct of ${names.length ? `the fields ${names.map((name) => `"${name}"`).join(', ')}` : 'no fields yet'}${details ? `: ${details}` : ''}`;
     return names.length ? `${said} -- as rounds fill it, it holds: ${start(example)}` : said;
   }
 
@@ -95,8 +88,7 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
    * Nothing, for an empty field -- or a port that is none of its fields.
    */
   override restingValue(node: GraphNode, port: string): unknown {
-    const { example } = DATA.config(node as never);
-    const value = port === ALL_FIELDS || port === BEFORE ? { ...example, [ROUND]: 1 } : port === ROUND ? 1 : valueOf(node, port);
+    const value = valueOf(node, port);
     return value === '' || value === null ? undefined : value;
   }
 

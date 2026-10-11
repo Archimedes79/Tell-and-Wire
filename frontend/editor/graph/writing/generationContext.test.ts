@@ -1,6 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
+import { derivedNodePorts } from '../../document/model/ports';
+import type { GraphNode } from '../../document/graph';
 import { inputSources, outputTargets } from './generationContext';
+
+/** A data node holding *value*: its ports follow the fields, and a new one has none. */
+const dataWith = (id: string, value: Record<string, unknown>): GraphNode => {
+  const node = NODE_KINDS.data.create(id);
+  node.config.data_value = value as never;
+  return { ...node, ...derivedNodePorts(node) };
+};
 
 const edge = (source: string, target: string, targetHandle = 'input', sourceHandle = 'output') => ({ source, target, sourceHandle, targetHandle });
 
@@ -27,20 +36,20 @@ describe('what ✨ is told of a node\'s neighbours', () => {
     expect(stored).toContain('the field "total" it stores');
   });
 
-  it('tells what a data node holds, the start of it as JSON: its keys are what the node after it reads', () => {
+  it('tells what a field of a data node holds, the start of it as JSON', () => {
     const capitals = NODE_KINDS.data.create('capitals');
     capitals.label = 'Capitals';
     capitals.description = 'Ten European capitals with their population';
     capitals.config.data_value = { capitals: [{ capital: 'Paris', country: 'France', population: 2102650 }, { capital: 'Rome', country: 'Italy', population: 2749031 }] };
     const sorter = NODE_KINDS.code.create('sorter');
-    const said = () => inputSources('sorter', [capitals, sorter], [edge('capitals', 'sorter', 'input', 'all')], true).input;
-    expect(said()).toContain('a struct of the fields "capitals": Ten European capitals with their population; "all" is all of them -- as rounds fill it, it holds: '
-      + '{"capitals":[{"capital":"Paris","country":"France","population":2102650},{"capital":"Rome","country":"Italy","population":2749031}]}');
+    const said = () => inputSources('sorter', [capitals, sorter], [edge('capitals', 'sorter', 'input', 'capitals')], true).input;
+    expect(said()).toContain('the field "capitals" of a struct: Ten European capitals with their population -- as rounds fill it, it holds: '
+      + '[{"capital":"Paris","country":"France","population":2102650},{"capital":"Rome","country":"Italy","population":2749031}]');
     // A long one is cut, saying how much was left out; one that holds nothing says only what it is.
     capitals.config.data_value = { capitals: Array.from({ length: 100 }, (_, n) => ({ capital: `City ${n}`, population: n })) };
-    expect(said()).toMatch(/it holds: \{"capitals":\[\{"capital":"City 0","population":0\},[^]{500,}… \(\d+ more characters\)$/);
+    expect(said()).toMatch(/it holds: \[\{"capital":"City 0","population":0\},[^]{500,}… \(\d+ more characters\)$/);
     capitals.config.data_value = {};
-    expect(said()).toMatch(/a struct of no fields yet: Ten European capitals with their population; "all" is all of them$/);
+    expect(said()).toMatch(/a struct of no fields yet: Ten European capitals with their population$/);
   });
 
   it('tells a node fed by a start point what the gui sends it -- the one value its input takes, by its field', () => {
@@ -60,7 +69,7 @@ describe('what ✨ is told of a node\'s neighbours', () => {
   });
 
   it('says what each wire carries and what the node at the other end wants', () => {
-    const input = NODE_KINDS.data.create('src');
+    const input = dataWith('src', { notes: '' });
     input.label = 'Notes';
     const code = NODE_KINDS.code.create('worker');
     const end = { ...NODE_KINDS.end.create('findings'), label: 'Findings' };

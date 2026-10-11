@@ -74,7 +74,7 @@ export interface SessionView {
   outputs: Record<string, unknown>;
   /**
    * What each memory node holds, by its name -- its whole content: every field
-   * and the round count -- and each part of it by the name and the part
+   * -- and each part of it by the name and the part
    * (`counter.clicks`): what the last round that ran to its end left, from
    * the design's values on, never a round half done. Watched without a round:
    * a block of the gui can show it, a script read it.
@@ -90,8 +90,8 @@ export interface SessionView {
   shown: Record<string, unknown>;
   /**
    * What using the graph left that differs from its design -- what Start over
-   * forgets: each node's values by node id and name (a data node's fields and
-   * round count, what a start point was sent), and what each block of the gui
+   * forgets: each node's values by node id and name (a data node's fields,
+   * what a start point was sent), and what each block of the gui
    * holds, by id.
    */
   kept: { nodes: Record<string, Record<string, unknown>>; gui: Record<string, unknown> };

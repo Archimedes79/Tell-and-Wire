@@ -15,7 +15,7 @@ const problems = (n: GraphNode) => designs.node(n.node_type)!.problems(n, regist
 describe('what only a kind can say about a node', () => {
   it('names a data field a port cannot be, a data file that is no object, a path that leaves the folder, and a body that asks a model', () => {
     const data = (value: unknown, more: Record<string, unknown> = {}) => node('data', { data_value: value, ...more });
-    expect(problems(data({ all: 1, 'two words': 2, __run: 3, round: 4, before: 5, fine: 6 }))).toHaveLength(5);
+    expect(problems(data({ 'two words': 2, __run: 3, all: 4, round: 5, before: 6, fine: 7 }))).toHaveLength(2);
     expect(problems(data('hello'))).toHaveLength(1);
     expect(problems(data({}, { data_example: [1] }))).toHaveLength(1);
     expect(problems(data(null))).toEqual([]);

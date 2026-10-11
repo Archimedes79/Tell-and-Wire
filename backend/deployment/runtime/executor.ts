@@ -11,11 +11,11 @@
 // **Memory.** A tool remembers in a data node, which fills from what arrives
 // and then forwards what it holds, in the same round. A graph with a loop — a
 // counter: a data node, and a code node adding one to it — is not a mistake, it
-// is how a tool remembers. The node that reads the memory takes its passive
-// output (`Port.passive`): the wire from it is left out of the ordering, so
-// what remains is acyclic, and carries what the node held when the round
-// began; what arrives is kept when the round ends. A loop without one is an
-// error (`order.ts`).
+// is how a tool remembers. The node that reads the memory runs before it, and
+// the wire it reads by (`readingWires`: from the data node to a node that runs
+// first) is left out of the ordering, so what remains is acyclic, and carries
+// what the data node held when the round began; what arrives is kept when the
+// round ends. A loop without a data node is an error (`order.ts`).
 //
 // **Collection.** A node's inputs are whatever its upstream neighbours put on
 // the wires. A port fed by several edges collects a list; a port whose single
@@ -33,8 +33,8 @@ import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from '../../../graph/batching.ts';
 import { Unread, filePorts, readPorts } from '../../../graph/fileInputs.ts';
 import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
-import { passiveWires, nodeName, topologicalLevels } from '../../../graph/order.ts';
-import { parseTable, scheduleProblems, stepsOf } from '../../../graph/schedule.ts';
+import { readingWires, nodeName, topologicalLevels } from '../../../graph/order.ts';
+import { parseTable, placesOf, scheduleProblems, stepsOf } from '../../../graph/schedule.ts';
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from '../../../graph/schema.ts';
@@ -159,9 +159,11 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const { nodes, edges } = graph;
   const byId = new Map(nodes.map((n) => [n.id, n]));
 
-  const reads = passiveWires(nodes, edges, registry);
+  // Which wires read a memory as it was when the round began: where the schedule puts the nodes says, else which wire closes a loop.
+  const places = placesOf(graph);
+  const reads = readingWires(nodes, edges, registry, places);
   // Asked even when the schedule decides: a loop no memory closes is said by name, as it is without one.
-  const wired = topologicalLevels(nodes, edges, registry);
+  const wired = topologicalLevels(nodes, edges, registry, places);
   const misplaced = scheduleProblems(graph, registry);
   if (misplaced.length) throw new Error(unrunnable(misplaced));
   const levels = graph.schedule ? stepsOf(parseTable(graph.schedule)) : wired;
@@ -389,9 +391,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // What stood still is not news: a reply held from the last round must not be
   // added to the conversation a second time, nor handed back as this round's result.
   for (const nodeId of held) outputs.delete(nodeId);
-  const took = settleMemory(graph, outputs, results, registry, caught);
-  // One round more, for whatever counts them and took part: stopped halfway, it is none.
-  if (!signal?.aborted) for (const node of nodes) if (took.has(node.id)) registry.node(node.node_type)?.endRound(node);
+  settleMemory(graph, outputs, results, registry, caught);
 
   const status: ExecutionResult['status'] = signal?.aborted
     ? 'cancelled'
@@ -812,7 +812,7 @@ async function runNode(
  * on: what each was handed -- the same as it filled from, a port that takes
  * one value of what arrives (`Port.field`) by that value -- and nothing for one
  * that did not run: a gate that stayed shut, or a writer that failed before it,
- * leaves it as it was. Says which ones took part.
+ * leaves it as it was.
  *
  * That copy is the whole of it: a session keeps it (`backend/deployment/host/session.ts`), and
  * nobody works the same thing out a second time.
@@ -826,19 +826,16 @@ function settleMemory(
   results: NodeResult[],
   registry: Kinds,
   caught: Set<string>,
-): Set<string> {
+): void {
   const took = new Set(results.filter((r) => (r.status === 'success' || r.status === 'partial') && !r.held).map((r) => r.node_id));
-  const settled = new Set<string>();
   for (const target of graph.nodes) {
     const element = registry.node(target.node_type);
     if (!element?.isMemory || !took.has(target.id)) continue;
-    settled.add(target.id);
     // What a node that caught its failure put on its ports is "nothing arrived", not a value to keep: a counter would go 6, null, 1.
     const arrived = collectInputs(target.id, graph.edges, outputs, target.inputs,
       (e) => e.source_port_id in (outputs.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
     for (const [port, value] of Object.entries(arrived)) if (value !== undefined) element.settleMemory(target, port, value);
   }
-  return settled;
 }
 
 /**

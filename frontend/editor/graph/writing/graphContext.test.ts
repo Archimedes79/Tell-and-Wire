@@ -1,15 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import type { GraphNode, GuiWidget, Wire } from '../../document/graph';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
+import { derivedNodePorts } from '../../document/model/ports';
 import { CONTEXT_LIMIT, graphContext } from './graphContext';
 
 /** {Context}: the graph around a node, as every ✨ of it is told. */
+
+/** A data node holding *value*: its ports follow the fields, and a new one has none. */
+const dataWith = (id: string, value: Record<string, unknown>): GraphNode => {
+  const node = NODE_KINDS.data.create(id);
+  node.config.data_value = value as never;
+  return { ...node, ...derivedNodePorts(node) };
+};
 
 const chart = { id: 'sizes', kind: 'plot_window', label: 'Sizes', shows: 'shown' } as GuiWidget;
 
 function graph(): { nodes: GraphNode[]; edges: Wire[]; metadata: never; gui: GuiWidget[] } {
   const count = { ...NODE_KINDS.code.create('count'), label: 'Count', description: 'Counts the words of each file.\nIn detail: split on spaces.' };
-  const read = { ...NODE_KINDS.data.create('read'), label: 'Read' };
+  const read = { ...dataWith('read', { text: '' }), label: 'Read' };
   const shown = { ...NODE_KINDS.end.create('shown'), label: 'Sizes' };
   return {
     // Listed out of order: they are said in the order they run.

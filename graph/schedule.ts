@@ -6,8 +6,9 @@
 // engine takes it top to bottom. Rows say nothing of the order: they only say
 // where a card stands. One rule holds it all together: an input is processed
 // before its output, so every wire ends in a later column than it starts.
-// The wires that leave a memory (`passiveWires`) are no part of the order, and
-// are how a loop goes back.
+// Except one: a wire out of a memory (a data node) may end in an earlier column.
+// It reads what the memory held when the round began (`readingWires`), and is
+// how a loop goes back; one to a later column carries what the memory then holds.
 //
 // Stored as lines of text, one per row, ids separated by blanks and `.` for an
 // empty cell (`graph-schedule.json`), so a change shows in a diff as it looks on
@@ -16,7 +17,7 @@
 
 import type { Graph, GraphEdge, GraphNode } from './graph.ts';
 import type { Kinds } from './nodes/NodeDefinition.ts';
-import { loopNodes, passiveWires, topologicalLevels } from './order.ts';
+import { loopNodes, readingWires, runsBefore, topologicalLevels } from './order.ts';
 import type { Problem } from './wiring.ts';
 
 /** Rows of cells; every row as long as the longest. */
@@ -76,12 +77,21 @@ export function columnsOf(table: Table): Map<string, number> {
   return columns;
 }
 
-/** Who must run before whom: source and target of every wire that takes part in the order. */
-export function orderedWires(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): [string, string][] {
-  const passive = passiveWires(nodes, edges, registry);
+/** The column each node of *graph* stands in, where it has a schedule. */
+export function placesOf(graph: Pick<Graph, 'schedule'>): ReadonlyMap<string, number> | undefined {
+  return graph.schedule ? columnsOf(parseTable(graph.schedule)) : undefined;
+}
+
+/**
+ * Who must run before whom: source and target of every wire that ends in a
+ * later column than it starts. The wires that read a memory are not among them
+ * (`readingWires`): they go back, and say nothing of who may stand where.
+ */
+export function orderedWires(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): [string, string][] {
+  const reads = readingWires(nodes, edges, registry, columns);
   const ids = new Set(nodes.map((node) => node.id));
   return edges
-    .filter((edge) => !passive.has(edge.id) && ids.has(edge.source_node_id) && ids.has(edge.target_node_id) && edge.source_node_id !== edge.target_node_id)
+    .filter((edge) => !reads.has(edge.id) && ids.has(edge.source_node_id) && ids.has(edge.target_node_id) && edge.source_node_id !== edge.target_node_id)
     .map((edge) => [edge.source_node_id, edge.target_node_id]);
 }
 
@@ -101,9 +111,9 @@ export function scheduleProblems(graph: Graph, registry: Kinds): Problem[] {
     if (!column.has(id)) problems.push({ where: `node "${id}"`, problem: 'The schedule does not place it.', fix: 'Add it to the table, or leave the schedule out to have one made from the wires.' });
   }
   // No order of columns holds a loop that no memory closes: that is said as the loop (`check`), not again for each wire of it.
-  const round = new Set(loopNodes(graph.nodes, graph.edges, registry).map((node) => node.id));
+  const round = new Set(loopNodes(graph.nodes, graph.edges, registry, column).map((node) => node.id));
   const seen = new Set<string>();
-  for (const [from, to] of orderedWires(graph.nodes, graph.edges, registry)) {
+  for (const [from, to] of orderedWires(graph.nodes, graph.edges, registry, column)) {
     const a = column.get(from);
     const b = column.get(to);
     if (a === undefined || b === undefined || b > a || seen.has(`${from}\n${to}`) || (round.has(from) && round.has(to))) continue;
@@ -118,9 +128,9 @@ export function scheduleProblems(graph: Graph, registry: Kinds): Problem[] {
 }
 
 /** The levels of the wires, or -- for a loop no memory closes, which is an error said elsewhere -- one node to a column. */
-function levelsOf(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): string[][] {
+function levelsOf(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns?: ReadonlyMap<string, number>): string[][] {
   try {
-    return topologicalLevels(nodes, edges, registry);
+    return topologicalLevels(nodes, edges, registry, columns);
   } catch {
     return nodes.map((node) => [node.id]);
   }
@@ -137,10 +147,12 @@ export function thinTable(nodes: GraphNode[], edges: GraphEdge[], registry: Kind
   const was = new Map<string, number>();
   if (previous) previous.forEach((row, r) => row.forEach((id) => { if (id !== null && !was.has(id)) was.set(id, r); }));
   const before = (id: string): number => was.get(id) ?? nodes.findIndex((node) => node.id === id);
+  // Where they stand says which wires read a memory: they stay reads, the reader before the memory.
+  const standing = previous && columnsOf(previous);
   const feeding = new Map<string, string[]>();
-  for (const [from, to] of orderedWires(nodes, edges, registry)) feeding.set(to, [...(feeding.get(to) ?? []), from]);
+  for (const [from, to] of orderedWires(nodes, edges, registry, standing)) feeding.set(to, [...(feeding.get(to) ?? []), from]);
   const row = new Map<string, number>();
-  const columns = levelsOf(nodes, edges, registry).map((level) => {
+  const columns = levelsOf(nodes, edges, registry, standing).map((level) => {
     const want = (id: string): number => {
       const rows = (feeding.get(id) ?? []).flatMap((from) => row.get(from) ?? []);
       return rows.length ? rows.reduce((sum, one) => sum + one, 0) / rows.length : before(id);
@@ -156,16 +168,18 @@ export function thinTable(nodes: GraphNode[], edges: GraphEdge[], registry: Kind
 /**
  * *table* with every node after what feeds it, moved right by as little as that
  * takes, and nodes it does not place put in the first column. A node that has to
- * move keeps its row, or the next free one.
+ * move keeps its row, or the next free one. A wire that reads a memory stays one:
+ * what it reads stays before the memory, which moves right with it. *columns*:
+ * where the nodes stood, which says which wires those are.
  */
-function forward(table: Table, nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): Table {
+function forward(table: Table, nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, columns: ReadonlyMap<string, number>): Table {
   let order: string[];
   try {
-    order = topologicalLevels(nodes, edges, registry).flat();
+    order = topologicalLevels(nodes, edges, registry, columns).flat();
   } catch {
     return table;
   }
-  const wires = orderedWires(nodes, edges, registry);
+  const wires = runsBefore(nodes, edges, registry, columns);
   const column = new Map<string, number>();
   const row = new Map<string, number>();
   table.forEach((cells, r) => cells.forEach((id, c) => { if (id !== null) { column.set(id, c); row.set(id, r); } }));
@@ -193,7 +207,8 @@ function forward(table: Table, nodes: GraphNode[], edges: GraphEdge[], registry:
 /**
  * The table a graph stands in: *lines* made to hold for it with the least change
  * -- a node that is gone leaves, one it does not place comes in at the left, and
- * every node moves right of what feeds it -- or, with none, the thin one.
+ * every node moves right of what feeds it, unless it reads a memory -- or, with
+ * none, the thin one.
  */
 export function tableFor(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds, lines?: readonly string[]): Table {
   if (!lines) return thinTable(nodes, edges, registry);
@@ -205,8 +220,10 @@ export function tableFor(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds
     return id;
   }));
   const width = Math.max(1, ...table.map((row) => row.length));
+  // Taken before a node it does not place comes in: that one has no column to say what its wires are.
+  const standing = columnsOf(table);
   for (const node of nodes) if (!placed.has(node.id)) table.push([node.id, ...new Array<null>(width - 1).fill(null)]);
-  return compact(forward(table, nodes, edges, registry));
+  return compact(forward(table, nodes, edges, registry, standing));
 }
 
 /** The name of the cell in column *column*, row *row* (both counted from 0), as a spreadsheet says it: `C2`. */

@@ -16,7 +16,7 @@ import { NODE_BUILDERS } from '../../document/elements/registry';
 import { definitionExample, definitionsIn, typedefProperties } from '../../../../graph/files/definition.ts';
 import { typeOfValue, type PulledPort } from '../../../../graph/editor/pull.ts';
 import { filePorts } from '../../../../graph/fileInputs.ts';
-import { passiveWires } from '../../../../graph/order.ts';
+import { readingWires } from '../../../../graph/order.ts';
 import { graphEdge } from '../../document/model/wires';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import { ERROR_PORT, fieldOf } from '../../../../graph/wiring.ts';
@@ -32,9 +32,9 @@ export const pullable = (node: GraphNode, edges: Wire[]): boolean =>
 
 /** The nodes before *node* that ask a model when they run: a pull runs them, and it is said so. */
 export function modelsBefore(node: GraphNode, nodes: GraphNode[], edges: Wire[]): GraphNode[] {
-  // A passive wire brings what a memory held, not what runs before.
+  // A wire that reads a memory brings what it held, not what runs before.
   const saved = edges.map((edge, at) => graphEdge(edge, at));
-  const reads = passiveWires(nodes, saved, registry);
+  const reads = readingWires(nodes, saved, registry);
   const cut = new Set(edges.filter((_, at) => reads.has(saved[at].id)));
   const seen = new Set([node.id]);
   const asking: GraphNode[] = [];
@@ -98,7 +98,7 @@ export function pulledPorts(node: GraphNode, nodes: GraphNode[], edges: Wire[], 
     const stated = definitionExample(said);
     // What a memory holds, filled (`example.json`): a run only shows how it starts.
     const held = source ? NODE_BUILDERS[source.node_type]?.restingValue(source, out) : undefined;
-    // An input that takes one field of it is shown that field: how a loop reads a memory's `before`.
+    // An input that takes one field of it is shown that field: how a loop reads a memory's field.
     const own = held !== undefined && port.field ? fieldOf(held, port.field) : held;
     const stands = ('example' in stated ? stated.example[out] : undefined) ?? own;
     const reading = reads.has(port.id);

@@ -102,5 +102,5 @@ What it feeds:
 Context:
 {Context}
 
-Task: write the fields this node holds, as one JSON object: each field's name and its starting value -- the content the text says it holds, written out, else empty, as before any round -- and then the same fields as rounds would have filled them, one realistic value each. Shape both as what feeds it and the nodes it feeds want it. The node counts its rounds by itself: no field for that.`,
+Task: write the fields this node holds, as one JSON object: each field's name and its starting value -- the content the text says it holds, written out, else empty, as before any round -- and then the same fields as rounds would have filled them, one realistic value each. Shape both as what feeds it and the nodes it feeds want it.`,
 };

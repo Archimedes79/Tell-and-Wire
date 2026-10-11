@@ -125,7 +125,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
   data: {
     create(id) {
       // Its ports follow the fields it holds -- asked of its definition rather than
-      // listed again here: with none yet, it has `all` and nothing else.
+      // listed again here: with none yet, it has no ports.
       const node: GraphNode = {
         id,
         node_type: 'data',

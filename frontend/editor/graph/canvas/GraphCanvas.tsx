@@ -27,10 +27,12 @@ import RoutedEdge from './RoutedEdge';
 import ScheduleLayer from './ScheduleLayer';
 import ThinOut from './ThinOut';
 import { useGlide } from './useGlide';
-import { NEW, nodesOf } from '../../document/store/scheduleActions';
+import { NEW, edgesOf, nodesOf } from '../../document/store/scheduleActions';
 import { sizesOf } from '../../document/model/graphDoc';
 import { CARD, gridOf, topLeft } from '../../document/model/scheduleLayout';
 import { cellName, columnsOf, parseCell } from '../../../../graph/schedule.ts';
+import { readingWires } from '../../../../graph/order.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
 import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
@@ -74,8 +76,6 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   // The nodes whose wires are drawn in the accent, as one string: it changes
   // when the selection does, not on every frame of a drag.
   const lit = useGraphStore((s) => s.rfNodes.filter((n) => n.selected).map((n) => n.id).join('\n'));
-  // The passive outputs of the nodes, as one string too: a wire from one is drawn dotted.
-  const passive = useGraphStore((s) => s.rfNodes.flatMap((n) => n.data.graphNode.outputs.filter((port) => port.passive).map((port) => `${n.id}\n${port.id}`)).join('\u0000'));
   // Where the wires are drawn through: the centres of the cells a route names -- and, for the wire
   // being pulled, the cell it would go through. Followed through the columns that slide over.
   const table = useGraphStore((s) => s.table);
@@ -84,9 +84,11 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   const sized = useGraphStore((s) => s.rfNodes.map((n) => `${n.id}:${n.data.graphNode.width ?? ''}x${n.data.graphNode.height ?? ''}`).join('|'));
   const edges = useMemo(() => {
     const selected = new Set(lit.split('\n'));
-    const reads = new Set(passive ? passive.split('\u0000') : []);
-    const grid = gridOf(table, sizesOf(nodesOf(useGraphStore.getState())), { column: opens, row: !!pulling });
+    const state = useGraphStore.getState();
     const column = columnsOf(table);
+    // A wire from a memory to a card in an earlier column reads what it held when the round began: drawn dotted.
+    const reads = readingWires(nodesOf(state), edgesOf(state), registry, column);
+    const grid = gridOf(table, sizesOf(nodesOf(state)), { column: opens, row: !!pulling });
     return rfEdges.map((edge) => {
       const named = pulling?.edge === edge.id ? (pulling.cell ? [cellName(pulling.cell.column, pulling.cell.row)] : []) : (edge.data?.via as string[] | undefined) ?? [];
       const points = named.flatMap((name) => {
@@ -101,7 +103,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
     });
     // `sized` stands for the sizes the grid is worked out from.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rfEdges, lit, passive, table, opens, pulling, sized]);
+  }, [rfEdges, lit, table, opens, pulling, sized]);
 
   // A card in the hand is drawn pulled toward the cell it would land on; the others glide to where the table puts them.
   const aim = useGraphStore((s) => s.aim);

@@ -1,0 +1,49 @@
+{
+  "start": {
+    "kind": "start",
+    "label": "Start",
+    "description": "Count up: pressed by the button, counts one more."
+  },
+  "code": {
+    "kind": "code",
+    "label": "Add one",
+    "description": "Adds one. It reads the count as it was when the round began, and writes the new count back.",
+    "inputs": [
+      {
+        "port": "the_count",
+        "name": "The count",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Output",
+        "type": "any"
+      }
+    ]
+  },
+  "data": {
+    "kind": "data",
+    "label": "The count",
+    "description": "The count: how many times the tool was started. It starts empty, at 0."
+  },
+  "end": {
+    "kind": "end",
+    "label": "Result",
+    "description": "How many times the tool was started.",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ]
+  }
+}

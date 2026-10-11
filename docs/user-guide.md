@@ -31,7 +31,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 | **Start point** | Where a run begins. Started by the gui (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. Started by itself, it can also read for the graph, as a file or folder block on a gui does: one file (its path and content) or the paths of the files in a folder, filtered by file types, optionally with subfolders. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
 | **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
-| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object), `round` (the number of the round, from 1) and `before` (every field as it was when the round began: its one passive output, which a loop reads); the card shows the fields, and `all`, `round` and `before` when they are wired or the card is the one selected. It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A gui block can show a field or the round, with no run. |
+| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node. It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node: a wire from it to a card in an earlier column reads what it held when the round began. A gui block can show a field, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
@@ -174,22 +174,25 @@ Two things save the most time. Wire a node to what feeds it before **Pull input*
 example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
 
 **A data node is a struct.** Its **Fields** file, `data.json`, is an object: each key is a field,
-with its starting value. Each field is an input and an output of the node under its name;
-`all` carries every field as one object, and `round` is the number of the round, from 1. The node fills,
-then forwards: what arrives on a field replaces it, and the struct as it is then goes on to whatever the
-node feeds, in the same round. A field keeps its value when nothing arrives.
+with its starting value. Each field is an input and an output of the node under its name. The node fills, then forwards: what arrives on a field
+replaces it, and the struct as it is then goes on to whatever the node feeds, in the same round. A field
+keeps its value when nothing arrives.
 
-A field's output is **active**: a node wired from it runs after the node is filled, and sees the new value.
-`before` is the one **passive** output (a ring on the card, a dotted wire): every field as it was when the
-round began, as one object. A wire from it orders nothing and carries no event, so it can read the memory
-in a loop: a node that adds one to a count takes `count` from `before` (the input's *field*) and writes the
-new value into the field. Wired from the field's output instead, it would wait for the node it fills --
-that is a cycle, and `check` says so. A gui, or a script, reads what the last round left, never a round
-half done. The node holds no code: working out a new value is a code node, and the button that makes it
-happen is wired to that code node, not to the memory. What the struct holds can
-be read without a run: a block of the gui can show a field (`count`, or the node's name and
-a dot and the field) or the round, and the session answers by name. The **Example** file is
-what a node before it is shaped as.
+**Where a wire goes decides what it carries.** A wire from the node to a card in a *later* column carries
+what the node holds then, after what arrives has filled it. A wire to a card in an *earlier* column -- left of
+the node on the schedule -- reads what the node held when the round began: it is drawn dotted, orders nothing
+and carries no event. That is how a loop reads its memory: a node that adds one to a count stands before the
+data node and writes the new value into the field; the field's output goes back to that node (the input's
+*field* can name a key of it), and that wire is the read. Drag the card across the data node and the same wire
+carries the current value instead. A wire to a card in the same column is a `check` problem, as is any wire
+that does not end in a later column, and a loop with no data node in it is a cycle, which `check` says too.
+Without a schedule the wire that closes a loop is the read. A gui, or a script, reads what the last round
+left, never a round half done. The node holds no code: working out a new value is a code node, and the button
+that makes it happen is wired to that code node, not to the memory. What the struct holds can be read without
+a run: a block of the gui can show a field (`count`, or the node's name and a dot and the field), and the
+session answers by name. The **Example** file is what a node before it is shaped as: the fields start empty in
+`data.json`, and the example shows how they look once rounds have filled them.
+[examples/counter](../examples/counter/) is the smallest tool built this way.
 
 ## 4. Wiring in more detail
 

@@ -36,7 +36,7 @@
 //   host only stores -- and commit what a round left only when it ran to
 //   its end.
 // - Say in `nodes` each node's state, keyed as its kind keeps it: a start
-//   point `values`, a data node each field by its name and its `round`
+//   point `values`, a data node each field by its name
 //   (`NodeDefinition.state`).
 // - Run a round with `given` as a kept round: those nodes are handed their
 //   outputs instead of running, and nothing of it stands for the next round --

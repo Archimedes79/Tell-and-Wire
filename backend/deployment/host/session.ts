@@ -50,7 +50,7 @@ import { chosenCore } from '../runtime/stdio.ts';
 import type { GraphCore } from '../runtime/protocol.ts';
 import type { RoundSnapshot, SessionView } from './api.ts';
 
-/** One value a node keeps: what it holds now, and what its design held when that was kept. A data node keeps each field, and its round count, as one. */
+/** One value a node keeps: what it holds now, and what its design held when that was kept. A data node keeps each field as one. */
 interface Kept {
   value: unknown;
   default: unknown;

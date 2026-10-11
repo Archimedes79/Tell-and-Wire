@@ -148,9 +148,11 @@ docker run -p 127.0.0.1:8000:8000 -v ./data:/app/data ghcr.io/archimedes79/tell-
 
 ## Examples
 
-[`examples/`](examples/) holds seven tools, each a folder; open one with **File → Open…**. The
+[`examples/`](examples/) holds eight tools, each a folder; open one with **File → Open…**. The
 simplest are population_plotter (choose a CSV, see a chart; no model), folder_summaries
-(a summary of each file in a folder) and chat (a chat block and an AI node).
+(a summary of each file in a folder) and chat (a chat block and an AI node). counter
+remembers in a data node: a button counts up, no model, and the wire back to the node that adds one
+reads the count as it was when the round began.
 file_summarizer starts one run from a picker, a dropdown and a button. nested_statistics
 shows a subgraph, a hand-written gui and a kept test. paper_review_panel and
 portfolio_review are teams of AI reviewers.

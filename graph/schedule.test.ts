@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import type { Graph, GraphEdge, GraphNode } from './graph.ts';
 import { registry } from './nodes/registry.ts';
-import { parseTable, scheduleProblems, stepsOf, tableFor, tableLines, thinTable } from './schedule.ts';
+import { loopNodes, readingWires } from './order.ts';
+import { columnsOf, parseTable, scheduleProblems, stepsOf, tableFor, tableLines, thinTable } from './schedule.ts';
 
 function node(id: string, type = 'code', config: Record<string, unknown> = {}): GraphNode {
   return { id, node_type: type as GraphNode['node_type'], label: id, description: '', position: { x: 0, y: 0 }, inputs: [], outputs: [], config };
@@ -14,7 +15,7 @@ const nodes = [node('start', 'start'), node('a'), node('b'), node('c'), node('m'
 const edges = [
   wire('1', 'start', 'out', 'a', 'in'), wire('2', 'start', 'out', 'b', 'in'),
   wire('3', 'a', 'out', 'c', 'x'), wire('4', 'b', 'out', 'c', 'y'),
-  wire('read', 'm', 'before', 'c', 'z'), wire('write', 'c', 'out', 'm', 'value'),
+  wire('read', 'm', 'value', 'c', 'z'), wire('write', 'c', 'out', 'm', 'value'),
 ];
 const graph = (schedule: string[]): Graph => ({ metadata: { name: '', description: '', gui_scheme: 'night' }, nodes, edges, schedule });
 
@@ -38,10 +39,27 @@ describe('the schedule', () => {
     expect(scheduleProblems(graph(['start c a m', '.     b . .']), registry).map((problem) => problem.where))
       .toEqual(['the wire from "a" to "c"', 'the wire from "b" to "c"']);
     expect(scheduleProblems(graph(['start a b c', 'ghost . . m']), registry).map((problem) => problem.problem))
-      .toEqual(['It places "ghost", and there is no such node.', 'The schedule puts "m" in the same column as "c", and a wire runs from one to the other.']);
+      .toEqual(['It places "ghost", and there is no such node.']);
     // A wire that closes a loop no memory closes has no later column to end in: the loop is the problem, said by `check`.
     const circle = { ...graph(['start a c m', '.     b . .']), edges: [...edges, wire('back', 'c', 'out', 'a', 'in')] };
     expect(scheduleProblems(circle, registry)).toEqual([]);
+  });
+
+  it('lets where a memory stands say what its wires carry: to a card before it, what it held when the round began, else what it holds then', () => {
+    const reads = (...rows: string[]) => [...readingWires(nodes, edges, registry, columnsOf(parseTable(rows)))];
+    // c stands before m: the wire back to it is a read, and holds.
+    expect(reads('start a c m', '.     b . .')).toEqual(['read']);
+    // Without a schedule the wire that closes the loop is the read.
+    expect([...readingWires(nodes, edges, registry)]).toEqual(['read']);
+    // m before c, or beside it: the same wire carries what m holds then -- and with c writing m, that is a loop no memory closes: said as the loop.
+    for (const rows of [['start a m c', '.     b . .'], ['start a b c', '.     . . m']]) {
+      expect(reads(...rows)).toEqual([]);
+      expect(loopNodes(nodes, edges, registry, columnsOf(parseTable(rows))).map((one) => one.id)).toEqual(['c', 'm']);
+      expect(scheduleProblems(graph(rows), registry)).toEqual([]);
+    }
+    // Kept right of what it reads, where a card moves: c may not be pulled right of m, nor m left of c.
+    expect(tableLines(tableFor(nodes, edges, registry, ['start a b c m']))).toEqual(['start a b c m']);
+    expect(tableLines(thinTable(nodes, edges, registry, [['start', 'a', 'c', 'm'], [null, 'b', null, null]]))).toEqual(['start a c m', '.     b . .']);
   });
 
   it('is made to hold for a graph that moved on: gone nodes leave, new ones come in at the left, and each node moves right of what feeds it, by as little as that takes', () => {

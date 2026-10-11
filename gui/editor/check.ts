@@ -10,6 +10,7 @@
 
 import { isStruct, type Graph, type GraphEdge, type GraphNode } from '../../graph/graph.ts';
 import { loopNodes } from '../../graph/order.ts';
+import { placesOf } from '../../graph/schedule.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
 import { widgetElement } from '../gui.ts';
 import { fieldSender, guiProblems, showsMemory } from './gui.ts';
@@ -125,13 +126,13 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
   // With two nodes sharing an id the ordering cannot be trusted either way, and
   // the duplicate is the thing to fix first.
   if (new Set(graph.nodes.map((node) => node.id)).size === graph.nodes.length) {
-    const loop = loopNodes(graph.nodes, graph.edges, registry);
+    const loop = loopNodes(graph.nodes, graph.edges, registry, placesOf(graph));
     if (loop.length) {
       problems.push({
         where: `${inside}nodes ${names(loop.map((node) => node.id))}`,
         problem: 'These nodes feed each other in a circle, so none of them can run first.',
-        fix: 'A loop is only allowed through a data node: write the value into one, and let the node that reads it take its "before" output. '
-          + 'Or remove one of the edges.',
+        fix: 'A loop is only allowed through a data node: write the value into one, and wire it back to the node that reads it, which runs before it -- '
+          + 'that wire carries what the data node held when the round began. Or remove one of the edges.',
       });
     }
   }
@@ -208,7 +209,7 @@ function nestedProblems(graph: Graph, node: GraphNode, where: string, depth: num
   const unwired = node.inputs.filter((port) => port.field && !wired.has(port.id)).map((port): Problem => ({
     where,
     problem: `Its input "${port.id}" takes "${port.field}" of what arrives, and nothing is wired to it.`,
-    fix: `Wire a node to it -- a memory's "before", a start point's "data" -- and name in "field" a key of what arrives there, never a node.`,
+    fix: `Wire a node to it -- a memory's field, a start point's "data" -- and name in "field" a key of what arrives there, never a node.`,
   }));
   const own = [...(designs.node(node.node_type)?.problems(node, registry, where, wired) ?? []), ...unwired];
   const held = element.nestedGraph(node);

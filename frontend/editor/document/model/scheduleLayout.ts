@@ -7,7 +7,7 @@
 // A card stands on the centre of its cell.
 
 import type { Table } from '../../../../graph/schedule.ts';
-import type { Reach, Target } from '../../../../graph/editor/scheduleEdit.ts';
+import { allows, type Reach, type Target } from '../../../../graph/editor/scheduleEdit.ts';
 
 /** What a card is taken to measure: what most come to, and so what the cell is centred on. */
 export const CARD = { width: 240, height: 110 };
@@ -118,7 +118,7 @@ export function aim(table: Table, sizes: ReadonlyMap<string, Size>, reach: Reach
   let best: Aim['target'] = null;
   let far = Infinity;
   for (let c = 0; c < columns; c++) {
-    if (!(reach.lo < c && c < reach.hi)) continue;
+    if (!allows(reach, c)) continue;
     for (let r = 0; r < base.rows.length; r++) {
       const there = table[r]?.[c];
       if (there && there !== self) continue;
@@ -134,7 +134,7 @@ export function isOpen(table: Table, reach: Reach, self: string | null, opened: 
   if (opened !== null && c === opened) return true;
   const was = opened !== null && c > opened ? c - 1 : c;
   const there = table[r]?.[was];
-  return reach.lo < was && was < reach.hi && (!there || there === self);
+  return allows(reach, was) && (!there || there === self);
 }
 
 /**

@@ -129,7 +129,7 @@ describe('a project folder', () => {
     const again = await readProject(held);
     expect(again.nodes.map((node) => node.config.data_value)).toEqual([{ count: 2, names: ['Ada'] }, { text: 'Line one.\nLine two.' }]);
     // ... they follow the fields again when it is read, with that choice kept.
-    expect(again.nodes[1].outputs.map((one) => one.id)).toEqual(['text', 'round', 'all', 'before']);
+    expect(again.nodes[1].outputs.map((one) => one.id)).toEqual(['text']);
     expect(again.nodes[0].inputs.map((one) => [one.id, one.data_type, one.field])).toEqual([['count', 'any', 'chat.message'], ['names', 'any', undefined]]);
   });
 

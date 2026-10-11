@@ -2,19 +2,19 @@ import { NodeDesign, type WhatRuns } from '../NodeDesign.ts';
 import { isStruct, type GraphNode } from '../../../graph.ts';
 import type { Problem } from '../../../wiring.ts';
 import type { Generation } from '../../generation.ts';
-import { ALL_FIELDS, BEFORE, RESERVED, ROUND, hasField, type DataNodeDefinition } from '../../../nodes/data/DataNodeDefinition.ts';
+import { RESERVED, hasField, type DataNodeDefinition } from '../../../nodes/data/DataNodeDefinition.ts';
 
 export class DataNodeDesign extends NodeDesign<DataNodeDefinition> {
   override graphAuthorNote(): string {
     return 'a struct kept between rounds: config.data_value is an object, and each of its keys is a field with a JSON value -- a count, a list, a text -- as it starts; '
       + 'config.data_example is the same struct as it looks filled, after some rounds, which what is wired to it is written against. '
       + 'A field keeps its value until something arrives on its input, which replaces it: the node fills, then forwards the struct as it is then, in the same round. '
-      + 'In a loop -- a node reads a field and writes it back -- the node takes the field from the passive output "before" (every field as it was when the round began, one object: the input\'s "field" names the one it wants), and writes the new value into the field\'s input; a wire from "before" orders nothing. A wire from a field\'s output waits for the node to be filled, so it cannot be part of a loop. '
+      + 'In a loop -- a node reads a field and writes it back -- wire the field\'s output to an input of that node and the node\'s output to the field\'s input: the wire that closes the loop carries what the field held when the round began (the node runs first, and fills the data node), and orders nothing. A wire from a field to a node that is in no loop with it carries what it holds after the round\'s writes. '
       + 'Its ports are DERIVED from the fields, not taken from this document: each field is an input and an output under its name, '
-      + `one more output "${ROUND}" counts the rounds from 1, "${ALL_FIELDS}" carries every field and the count as one object, and "${BEFORE}" is the passive one -- for a field "count": input "count"; outputs "count", "${ROUND}", "${ALL_FIELDS}" and "${BEFORE}". `
+      + 'for a field "count": input "count", output "count". '
       + 'Its description says in words what it holds: the nodes wired to it are generated against that and its fields. '
-      + 'It has no code: working out a new value (a count plus one) is a code node that reads the field through "before" and writes the field\'s input: '
-      + 'an edge from "before" to an input of the code node, whose "field" names a key of it -- a field of the memory, such as "count", never a node\'s id -- and an edge from the code node\'s output to the field\'s input. '
+      + 'It has no code: working out a new value (a count plus one) is a code node that reads the field and writes the field\'s input: '
+      + 'an edge from the field\'s output to an input of the code node, and an edge from the code node\'s output to the field\'s input. '
       + 'The start point or button that makes it happen is wired to that code node\'s ◆, not to the memory; what shows the new value is wired from the field\'s output.';
   }
 
@@ -24,10 +24,10 @@ export class DataNodeDesign extends NodeDesign<DataNodeDefinition> {
   }
 
   override whatRuns(): WhatRuns {
-    return this.graphRuns('Fills its fields from what arrives on them and hands each on -- a field nothing arrived on, what it kept -- with the round count, and all of them together as "all"; what arrived is kept for the next round.');
+    return this.graphRuns('Fills its fields from what arrives on them and hands each on -- a field nothing arrived on, what it kept; what arrived is kept for the next round.');
   }
 
-  /** It holds one object; a field is a port, named with letters, digits and underscores -- not a name of the node's own: `all`, `round`, the gate's. */
+  /** It holds one object; a field is a port, named with letters, digits and underscores -- not the name of the gate every node has. */
   override problems(node: GraphNode, _kinds: unknown, where: string): Problem[] {
     const held = node.config.data_value;
     if (held !== undefined && held !== null && !isStruct(held)) {

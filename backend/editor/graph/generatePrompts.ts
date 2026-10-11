@@ -11,7 +11,6 @@ import type { Language } from '../../../graph/editor/generation.ts';
 import { textOutput, type Definitions } from '../../../graph/files/definition.ts';
 import { names } from '../../../graph/wiring.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
-import { ALL_FIELDS, BEFORE, ROUND } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { Graph } from '../../../graph/graph.ts';
 import { withoutWriting } from '../../../graph/editor/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
@@ -184,10 +183,9 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
         '- the second, the same fields as rounds would have filled them: one realistic value for each, shaped as what arrives on it and what the nodes it feeds want it.',
         'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores. '
         + 'A collection of things is ONE field holding a list -- ingredients are the field "ingredients" with a list of them -- not a field for each thing in it. '
-        + 'There are "all", which carries every field, "round", which counts the rounds from 1, and "before", which carries every field as it was when the round began, already: add none of them. '
         + 'What arrives on a field replaces its value, and what reads the node gets the struct as it is then, so give a field the shape of what arrives on it.');
       // A field is a port: one renamed or left out loses its wires.
-      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS && id !== ROUND && id !== BEFORE && id !== RUN_PORT);
+      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== RUN_PORT);
       if (kept.length) lines.push(`Keep ${names(kept)}: ${kept.length > 1 ? 'they are' : 'it is'} wired to other nodes by ${kept.length > 1 ? 'those names' : 'that name'}.`);
       break;
     }

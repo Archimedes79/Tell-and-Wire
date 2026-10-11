@@ -12,13 +12,14 @@ import { ACCENT, DIMMER, EVENT } from '../../../deployment/gui/kit/ui/theme';
  * delivers nothing, so it stays dashed and amber whatever is selected: drawn
  * like data, it would ask what the node does with the `true` it carries.
  *
- * A wire from a passive output (*passive*, as `node\nport`) is dotted: it
- * hands on what the node held when the round began, and orders nothing.
+ * A wire that reads a memory (*reads*, by id: from a data node to a card
+ * before it) is dotted: it hands on what the node held when the round began,
+ * and orders nothing.
  */
-export function drawnWire(edge: Edge, selected: ReadonlySet<string>, passive: ReadonlySet<string> = new Set()): Edge {
+export function drawnWire(edge: Edge, selected: ReadonlySet<string>, reads: ReadonlySet<string> = new Set()): Edge {
   const lit = !!edge.selected || selected.has(edge.source) || selected.has(edge.target);
   const signal = edge.targetHandle === RUN_PORT;
-  const reads = passive.has(`${edge.source}\n${edge.sourceHandle}`);
+  const reading = reads.has(edge.id);
   return {
     ...edge,
     // Over the grey ones where they cross, and under every card: a card is
@@ -29,7 +30,7 @@ export function drawnWire(edge: Edge, selected: ReadonlySet<string>, passive: Re
     style: {
       stroke: signal ? EVENT : lit ? ACCENT : DIMMER,
       strokeWidth: lit ? 2.5 : 2,
-      ...(signal ? { strokeDasharray: '6 4' } : reads ? { strokeDasharray: '2 5', strokeLinecap: 'round' as const } : {}),
+      ...(signal ? { strokeDasharray: '6 4' } : reading ? { strokeDasharray: '2 5', strokeLinecap: 'round' as const } : {}),
     },
   };
 }

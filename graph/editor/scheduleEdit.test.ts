@@ -10,6 +10,9 @@ describe('changing a schedule', () => {
     const wires: [string, string][] = [['a', 'b'], ['b', 'c'], ['e', 'd'], ['c', 'd']];
     expect(reachOf(table, 'b', wires)).toEqual({ lo: 0, hi: 2 });
     expect(reachOf(table, 'a', wires)).toEqual({ lo: -1, hi: 1 });
+    // A memory's wires bound nothing but its own column: a card it is wired to may stand either side of it, and the memory either side of that card.
+    expect(reachOf(table, 'b', [], [['c', 'b']])).toEqual({ lo: -1, hi: Infinity, apart: [2] });
+    expect(reachOf(table, 'c', [], [['c', 'b'], ['c', 'e']])).toEqual({ lo: -1, hi: Infinity, apart: [1] });
     // Into a free cell: the column it left closes when it was alone there.
     expect(tableLines(put(table, 'c', { kind: 'cell', c: 2, r: 1 }).table)).toEqual(['a b . d', '. e c .']);
     // Into a column of its own, opened before column 1: the others after it slide over.

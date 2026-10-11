@@ -3,6 +3,8 @@
 // A card goes into a cell, or into the gap between two columns, where a column of its
 // own opens for it. Which of them are open follows from one rule: a card stands in a
 // later column than every card that feeds it, and in an earlier one than every card it feeds.
+// A memory's wires are the card's own choice, left of the memory or right of it -- each says
+// what it carries by where it stands -- and bound it by nothing but the memory's own column.
 // A change moves cells, and so it says where each cell went: the wires drawn through cells go with them.
 
 import { cellName, columnsOf, parseCell, type Table } from '../schedule.ts';
@@ -10,17 +12,27 @@ import { cellName, columnsOf, parseCell, type Table } from '../schedule.ts';
 /** Where a card is put: into the cell of column *c*, row *r*; or into row *r* of a new column opened before column *k*. */
 export type Target = { kind: 'cell'; c: number; r: number } | { kind: 'gap'; k: number; r: number };
 
-/** Which columns a card may stand in: a cell in column c when lo < c < hi, and a new column before k when lo < k <= hi. */
+/**
+ * Which columns a card may stand in: a cell in column c when lo < c < hi, and a new column before k when lo < k <= hi --
+ * but no cell of a column in *apart*, where a memory it is wired to stands, or one that is wired to it.
+ */
 export interface Reach {
   lo: number;
   hi: number;
+  apart?: readonly number[];
 }
+
+/** Whether a cell of column *c* is one *reach* allows. */
+export const allows = (reach: Reach, c: number): boolean => reach.lo < c && c < reach.hi && !reach.apart?.includes(c);
 
 /** No limits: a card nothing is wired to. */
 export const ANYWHERE: Reach = { lo: -1, hi: Infinity };
 
-/** The columns *id* may stand in, given the wires that take part in the order (`orderedWires`). */
-export function reachOf(table: Table, id: string, wires: readonly (readonly [string, string])[]): Reach {
+/**
+ * The columns *id* may stand in, given the wires that take part in the order (`orderedWires`, a memory's left out)
+ * and the wires out of a memory (*memory*: the memory, then what it is wired to).
+ */
+export function reachOf(table: Table, id: string, wires: readonly (readonly [string, string])[], memory: readonly (readonly [string, string])[] = []): Reach {
   const column = columnsOf(table);
   let lo = -1;
   let hi = Infinity;
@@ -28,7 +40,11 @@ export function reachOf(table: Table, id: string, wires: readonly (readonly [str
     if (to === id && from !== id && column.has(from)) lo = Math.max(lo, column.get(from)!);
     if (from === id && to !== id && column.has(to)) hi = Math.min(hi, column.get(to)!);
   }
-  return { lo, hi };
+  const apart = [...new Set(memory.flatMap(([from, to]) => {
+    const other = from === id ? to : to === id ? from : null;
+    return other !== null && other !== id && column.has(other) ? [column.get(other)!] : [];
+  }))];
+  return apart.length ? { lo, hi, apart } : { lo, hi };
 }
 
 /** A table changed, and where its cells went: a column or row that is gone has no new place. */

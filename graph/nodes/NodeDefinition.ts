@@ -219,15 +219,12 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
 
   /**
    * This node keeps what is delivered to it between rounds: it fills from what
-   * arrives and forwards what it then holds, in the same round. Its passive
-   * output (`Port.passive`) carries what it held when the round began, and a
-   * wire from it is left out of the ordering (`passiveWires`), so a loop can
-   * close. What arrived is kept when the round is over.
+   * arrives and forwards what it then holds, in the same round. A wire from it
+   * to a node that runs before it carries what it held when the round began
+   * (`readingWires`), so a loop can close. What arrived is kept when the round
+   * is over.
    */
   readonly isMemory: boolean = false;
-
-  /** A round ran to its end: a node that counts rounds counts this one. Nothing, for most. */
-  endRound(_node: GraphNode): void {}
 
   /**
    * The output ports of this node that can start a round: a start point's.
@@ -374,7 +371,7 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   /**
    * What this node keeps between rounds, value by value, each under a name of
    * its own: what using the graph changes about it, as against how it was
-   * designed -- a data node's fields and its round count, what a start point
+   * designed -- a data node's fields, what a start point
    * was sent. A session reads it after a round and puts it back before the
    * next (`setState`), on a copy, so that using a graph never changes its
    * design (`backend/deployment/host/session.ts`); a value whose design changed is
