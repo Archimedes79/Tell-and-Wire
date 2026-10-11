@@ -7,7 +7,7 @@ and which pages it covers.
 
 It is a separate program with its own folder and packages (see [../README.md](../README.md)).
 It comes with the download; a deployed tool does not carry it. A graph can only *name* it: what
-starts it, and the folders it may read, are written in `ai-settings.json` on your machine.
+starts it, and the folders it may read, are written in this machine's settings file (`~/.tell-and-wire/settings.json`, or the file `TW_SETTINGS` names).
 
 When a person picks a file on a page, the editor already hands it to a node as text (a Word
 file as Markdown) or as the file itself (a PDF). This server is for when the *model* decides
@@ -22,7 +22,7 @@ want, a size and a page limit. Adding installs its packages the first time (Node
 and npm unless the download already has them) and starts it once to see that it starts.
 **Edit config** changes the folders later.
 
-By hand, in a copy of the repository: `cd mcp/documents && npm ci`, then in `ai-settings.json`
+By hand, in a copy of the repository: `cd mcp/documents && npm ci`, then in that settings file
 (`TW_DOCS_ROOTS` names the folders, separated by `;` on Windows and `:` elsewhere; without a
 folder the server does not start):
 

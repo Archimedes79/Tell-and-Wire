@@ -48,6 +48,13 @@ async function printed(argv: string[]): Promise<{ code: number; out: string; err
 describe('--host', () => {
   it('does not offer the editor beyond this machine unless told that nobody else can reach its port', async () => {
     await expect(printed(['--editor', 'frontend/dist', '--host', '0.0.0.0'])).rejects.toThrow(/TW_EDITOR_ON_NETWORK/);
+    // Only the 1 the documents name opens it: "0" or "false" in the variable is not a yes.
+    vi.stubEnv('TW_EDITOR_ON_NETWORK', '0');
+    try {
+      await expect(printed(['--editor', 'frontend/dist', '--host', '0.0.0.0'])).rejects.toThrow(/TW_EDITOR_ON_NETWORK/);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
 

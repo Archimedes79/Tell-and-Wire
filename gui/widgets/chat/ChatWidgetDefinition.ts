@@ -1,6 +1,7 @@
 import { WidgetDefinition, partsSaid, type Sent, type Widget } from '../WidgetDefinition.ts';
 import type { RawConfig } from '../../../graph/graph.ts';
 import { chatValue, type ChatMessage, type ChatValue } from './value.ts';
+import { asText } from '../text_io/text.ts';
 
 /** What a chat sends as it sends: the message, and what was said before it. */
 const CHAT_PARTS: NonNullable<Sent['keys']> = {
@@ -71,7 +72,8 @@ export class ChatWidgetDefinition extends WidgetDefinition<ChatValue> {
   /** The reply closes the turn: question and answer go into the transcript together. */
   override settle(stored: RawConfig, value: unknown): void {
     const { messages, pending } = chatValue(stored.value);
-    const reply = Array.isArray(value) ? value.map(String).join('\n\n') : String(value ?? '');
+    // As a box shows it: `String()` of a record is "[object Object]", and that went into the transcript the model reads next.
+    const reply = asText(value);
     if (!reply.trim()) return;
     stored.value = {
       messages: [
