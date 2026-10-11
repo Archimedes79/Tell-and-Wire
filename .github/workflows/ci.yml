@@ -163,7 +163,7 @@ jobs:
   # On a vX.Y.Z tag only: a release is a thing people link to, so it gets a
   # version rather than moving under them.
   package:
-    needs: [test, launcher, package-test]
+    needs: [test, windows, launcher, package-test]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -229,7 +229,7 @@ jobs:
   # definition on its way and finishes the job, so the two are never apart for
   # longer than one run takes.
   latest:
-    needs: [test, launcher, package-test]
+    needs: [test, windows, launcher, package-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -281,7 +281,7 @@ jobs:
   # this run just tested. Skipped for a pull request: nobody should be able to
   # publish an image by opening one.
   publish:
-    needs: [test, launcher, package-test]
+    needs: [test, windows, launcher, package-test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
