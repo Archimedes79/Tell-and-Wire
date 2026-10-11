@@ -261,7 +261,9 @@ export default function GraphCanvas({ active }: { active: boolean }) {
       const nodeType = event.dataTransfer.getData('application/nodeType') as NodeType;
       if (!nodeType) return;
 
-      // Where it was held over: the cell it was pulled to, a column of its own between two columns.
+      // Where it is let go: the cell it is pulled to, a column of its own between two columns. Aimed once more
+      // here -- a drop need not follow a drag-over at the same spot, and a node would land where it was last held.
+      useGraphStore.getState().aimCard(NEW, rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY }));
       const held = useGraphStore.getState().aim;
       const at = held?.id === NEW && held.target
         ? held.target

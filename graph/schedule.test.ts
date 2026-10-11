@@ -39,6 +39,9 @@ describe('the schedule', () => {
       .toEqual(['the wire from "a" to "c"', 'the wire from "b" to "c"']);
     expect(scheduleProblems(graph(['start a b c', 'ghost . . m']), registry).map((problem) => problem.problem))
       .toEqual(['It places "ghost", and there is no such node.', 'The schedule puts "m" in the same column as "c", and a wire runs from one to the other.']);
+    // A wire that closes a loop no memory closes has no later column to end in: the loop is the problem, said by `check`.
+    const circle = { ...graph(['start a c m', '.     b . .']), edges: [...edges, wire('back', 'c', 'out', 'a', 'in')] };
+    expect(scheduleProblems(circle, registry)).toEqual([]);
   });
 
   it('is made to hold for a graph that moved on: gone nodes leave, new ones come in at the left, and each node moves right of what feeds it, by as little as that takes', () => {

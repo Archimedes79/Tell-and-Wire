@@ -16,7 +16,7 @@
 
 import type { Graph, GraphEdge, GraphNode } from './graph.ts';
 import type { Kinds } from './nodes/NodeDefinition.ts';
-import { passiveWires, topologicalLevels } from './order.ts';
+import { loopNodes, passiveWires, topologicalLevels } from './order.ts';
 import type { Problem } from './wiring.ts';
 
 /** Rows of cells; every row as long as the longest. */
@@ -100,11 +100,13 @@ export function scheduleProblems(graph: Graph, registry: Kinds): Problem[] {
   for (const id of ids) {
     if (!column.has(id)) problems.push({ where: `node "${id}"`, problem: 'The schedule does not place it.', fix: 'Add it to the table, or leave the schedule out to have one made from the wires.' });
   }
+  // No order of columns holds a loop that no memory closes: that is said as the loop (`check`), not again for each wire of it.
+  const round = new Set(loopNodes(graph.nodes, graph.edges, registry).map((node) => node.id));
   const seen = new Set<string>();
   for (const [from, to] of orderedWires(graph.nodes, graph.edges, registry)) {
     const a = column.get(from);
     const b = column.get(to);
-    if (a === undefined || b === undefined || b > a || seen.has(`${from}\n${to}`)) continue;
+    if (a === undefined || b === undefined || b > a || seen.has(`${from}\n${to}`) || (round.has(from) && round.has(to))) continue;
     seen.add(`${from}\n${to}`);
     problems.push({
       where: `the wire from "${from}" to "${to}"`,
