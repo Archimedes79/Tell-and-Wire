@@ -31,7 +31,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 | **Start point** | Where a run begins. Started by the gui (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. Started by itself, it can also read for the graph, as a file or folder block on a gui does: one file (its path and content) or the paths of the files in a folder, filtered by file types, optionally with subfolders. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
 | **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
-| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object), `round` (the number of the round, from 1) and `before` (every field as it was when the round began: its one passive output, which a loop reads). It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A gui block can show a field or the round, with no run. |
+| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object), `round` (the number of the round, from 1) and `before` (every field as it was when the round began: its one passive output, which a loop reads); the card shows the fields, and `all`, `round` and `before` when they are wired or the card is the one selected. It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A gui block can show a field or the round, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
@@ -340,6 +340,7 @@ home folder.
 
 ## When something does not work
 
+- **A run stopped and the gui shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
 - **✨ does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way

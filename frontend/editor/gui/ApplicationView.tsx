@@ -40,7 +40,7 @@ const holdDocument = () => useGraphStore.getState().holdDocument();
  * it is called: for a start point a call starts, this tab is the caller
  * (`CallForms`), as a script or a frontend would be.
  */
-export default function ApplicationView() {
+export default function ApplicationView({ onShowNode }: { onShowNode: (nodeId: string) => void }) {
   const metadata = useGraphStore((s) => s.metadata);
   const nodes = useGraphStore((s) => s.rfNodes);
   const wires = useGraphStore((s) => s.rfEdges);
@@ -169,6 +169,14 @@ export default function ApplicationView() {
           <span className="text-xs shrink-0" style={{ color: DIMMER }}>{keeping.said}</span>
         )}
       </div>
+
+      {/* Where the chain gave out, said where it is seen -- not only on hover -- with the way to the node. */}
+      {explained?.stopped && (
+        <div className="px-8 py-1.5 flex items-center gap-3 text-xs" style={{ borderBottom: `1px solid ${LINE}`, color: DANGER_TEXT }}>
+          <span className="min-w-0">⚠ The run stopped at “{nameOf(explained.stopped.node)}”: {explained.stopped.why}</span>
+          <Button size="sm" className="shrink-0" onClick={() => onShowNode(explained.stopped!.node)}>Show it</Button>
+        </div>
+      )}
 
       <KeptFold kept={view?.kept} nameOf={nameOf} busy={busy} onStartOver={() => { void startOver(); }} />
 

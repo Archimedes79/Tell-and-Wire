@@ -5,6 +5,7 @@ import type { Edge, Node } from 'reactflow';
 import type { GraphEdge, GraphNode, GuiWidget, Wire } from '../graph';
 import { wireOf } from '../../../../graph/files/flow.ts';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
+import { WRITE_PATH_PORT } from '../../../../graph/nodes/end/EndNodeDefinition.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { derivedNodePorts } from './ports';
@@ -47,6 +48,19 @@ type CanvasNode = Node<{ graphNode: GraphNode }>;
 /** Whether a wire dropped on *node* becomes a new input of it: a code or AI node, whose inputs are its own to name. */
 export function takesNewInputs(node: GraphNode): boolean {
   return derivedNodePorts(node) === null && registry.node(node.node_type)?.readsFileInputs === true;
+}
+
+/**
+ * Where a wire dropped on the card of *node* -- not on one of its dots -- goes: `'new'` for a
+ * new input of its own (a code or AI node, `takesNewInputs`), else the id of the first input a
+ * person names nothing of -- an end point's `value`, not the `path` it writes by -- and
+ * nothing, for a node whose inputs follow from its settings (a data node's fields, which a
+ * wire dropped carelessly would overwrite).
+ */
+export function dropOnto(node: GraphNode): 'new' | string | undefined {
+  if (takesNewInputs(node)) return 'new';
+  if (derivedNodePorts(node) !== null) return undefined;
+  return node.inputs.find((port) => port.id !== WRITE_PATH_PORT)?.id;
 }
 
 /**

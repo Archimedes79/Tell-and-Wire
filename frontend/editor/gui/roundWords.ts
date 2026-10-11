@@ -17,9 +17,12 @@ function byWords(by: string, nameOf: (id: string) => string): string {
  * nodes ran, stood still with what they made before, had nothing to do, or
  * failed -- and, for each that did not run, why, in the run's own words.
  * Nodes and blocks are called by *nameOf*: the label a person gave them.
- * Nothing before the round has ended.
+ * *stopped* is where the chain gave out: the first node, in the order the round ran, that failed or had
+ * nothing to do -- those after it only had nothing to do because of it. Nothing before the round has ended.
  */
-export function roundExplained(round: RoundSnapshot | null, nameOf: (nodeId: string) => string = (id) => id): { line: string; why: string[] } | null {
+export function roundExplained(
+  round: RoundSnapshot | null, nameOf: (nodeId: string) => string = (id) => id,
+): { line: string; why: string[]; stopped?: { node: string; why: string } } | null {
   if (!round?.done || !round.result) return null;
   const began = round.started ? `"${nameOf(round.started.event)}", ${byWords(round.started.by, nameOf)}` : 'the whole graph';
   const results = round.result.node_results;
@@ -32,5 +35,9 @@ export function roundExplained(round: RoundSnapshot | null, nameOf: (nodeId: str
   const why = results
     .filter((one) => one.status !== 'success' && one.status !== 'partial')
     .map((one) => `${nameOf(one.node_id)}: ${one.error || one.messages?.[0] || one.status}`);
-  return { line: `Last run: ${began} -- ${parts.join(', ')}`, why };
+  const first = results.find((one) => (one.status === 'error' || one.status === 'skipped') && !one.held);
+  // An error often begins with the node's name, which the line says already.
+  const said = first ? first.error || first.messages?.[0] || 'it did not run' : '';
+  const stopped = first ? { node: first.node_id, why: said.startsWith(`${nameOf(first.node_id)}: `) ? said.slice(nameOf(first.node_id).length + 2) : said } : undefined;
+  return { line: `Last run: ${began} -- ${parts.join(', ')}`, why, ...(stopped ? { stopped } : {}) };
 }

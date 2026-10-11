@@ -10,6 +10,7 @@ import type { PromptKind } from '../../../graph/editor/prompts.ts';
 import type { Language } from '../../../graph/editor/generation.ts';
 import { textOutput, type Definitions } from '../../../graph/files/definition.ts';
 import { names } from '../../../graph/wiring.ts';
+import { RUN_PORT } from '../../../graph/triggers.ts';
 import { ALL_FIELDS, BEFORE, ROUND } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { Graph } from '../../../graph/graph.ts';
 import { withoutWriting } from '../../../graph/editor/handedOn.ts';
@@ -26,8 +27,9 @@ export const SYSTEMS: Record<Exclude<PromptKind, 'code'>, string> = {
   prompt: 'You are an expert prompt engineer. You write the instructions one node of a graph tool gives a model every time '
     + 'it runs: concise, effective, and about the task. Output the instructions in one ```md block, and nothing the request does not ask for.',
   data: 'You write the fields one node of a graph tool holds between rounds, as JSON: first one object with a key for each field and its '
-    + 'starting value -- empty, as before any round -- then the same fields as rounds would have filled them: realistic, shaped as what '
-    + 'feeds it and the nodes it feeds want them. Output each object in a ```json block of its own, and nothing the request does not ask for.',
+    + 'starting value -- the content the text says it holds, written out, else empty, as before any round -- then the same fields as rounds would have filled them: realistic, shaped as what '
+    + 'feeds it and the nodes it feeds want them. A list the text names is one field holding a list, not a field for each thing in it. '
+    + 'Output each object in a ```json block of its own, and nothing the request does not ask for.',
 };
 
 /**
@@ -170,19 +172,22 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
         text === undefined
           ? 'The answer is parsed as a JSON object keyed as the output definition\'s example is, and each key handed on its own output: ask for that JSON object and nothing else -- not the file around the example.'
           : `The answer is plain text, handed on as it is on "${text}": ask for the text itself${output ? ', as the output definition describes it -- not JSON, and not the file' : ''}.`);
-      if (inputs.length) lines.push(`Say in the instructions how to answer an input that is missing or empty. ${EMPTY_INPUT}`);
+      if (inputs.length) lines.push(`Say in the instructions how to answer an input that is missing or empty -- only then: what arrives is the question, and a text that arrived is never missing, whatever it says; do not ask for it again. ${EMPTY_INPUT}`);
       break;
     }
     case 'data': {
       const after = restating ? ' -- then the node\'s text restated as asked above, and nothing else' : ', and nothing else';
       lines.push(`Answer with two \`\`\`json blocks, each one JSON object with a key for each field -- its name -- as ${PLAIN_JSON}${after}:`,
-        '- the first, the fields as the node starts: each with its starting value -- empty, as it is before any round: null, 0, "", [] or {}, whichever fits what it holds;',
+        '- the first, the fields as the node starts: each with its starting value. Where the text says what the node holds -- a list of things, a table, a setting -- that content IS the starting value: '
+        + 'write it out, inventing realistic values where the text only describes them ("a list of baking ingredients" gives {"ingredients": ["flour", "sugar", "eggs", "butter", ...]}, a dozen or more real ones). '
+        + 'Where it only collects what arrives over rounds -- a count, a history, the latest result -- it starts empty, as before any round: null, 0, "", [] or {}, whichever fits what it holds;',
         '- the second, the same fields as rounds would have filled them: one realistic value for each, shaped as what arrives on it and what the nodes it feeds want it.',
         'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores. '
+        + 'A collection of things is ONE field holding a list -- ingredients are the field "ingredients" with a list of them -- not a field for each thing in it. '
         + 'There are "all", which carries every field, "round", which counts the rounds from 1, and "before", which carries every field as it was when the round began, already: add none of them. '
         + 'What arrives on a field replaces its value, and what reads the node gets the struct as it is then, so give a field the shape of what arrives on it.');
       // A field is a port: one renamed or left out loses its wires.
-      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS && id !== ROUND && id !== BEFORE);
+      const kept = [...new Set([...wired, ...fed])].filter((id) => id !== ALL_FIELDS && id !== ROUND && id !== BEFORE && id !== RUN_PORT);
       if (kept.length) lines.push(`Keep ${names(kept)}: ${kept.length > 1 ? 'they are' : 'it is'} wired to other nodes by ${kept.length > 1 ? 'those names' : 'that name'}.`);
       break;
     }

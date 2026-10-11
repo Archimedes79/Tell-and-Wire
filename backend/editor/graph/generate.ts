@@ -31,6 +31,8 @@
 // what was sent, and keeps it in the node's history.md.
 
 import type { AiRequest, AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
+import { isStruct } from '../../../graph/graph.ts';
+import { RESERVED, hasField } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { designs } from '../../../graph/editor/nodes/registry.ts';
 import { PLAIN_ASK } from '../../deployment/runtime/nodes/ai/ask.ts';
@@ -574,6 +576,17 @@ function filledIn(block: string | undefined): string | undefined {
   }
 }
 
+/** A data node's fields as written, less any a field of its may not be called (`RESERVED`): the text as it was when it holds none. */
+function withoutReserved(json: string): string {
+  try {
+    const fields = JSON.parse(json) as Record<string, unknown>;
+    if (!isStruct(fields) || !Object.keys(fields).some((name) => hasField(RESERVED, name))) return json;
+    return JSON.stringify(Object.fromEntries(Object.entries(fields).filter(([name]) => !hasField(RESERVED, name))), null, 2);
+  } catch {
+    return json;
+  }
+}
+
 /** An ai node's instructions or a data node's data: asked for once, and not tried. */
 async function writeText(job: Job, kind: Exclude<PromptKind, 'code'>): Promise<GenerateResponse> {
   const { request: { refine }, node, spec, shape, prompt, ai, calls, deps } = job;
@@ -585,7 +598,7 @@ async function writeText(job: Job, kind: Exclude<PromptKind, 'code'>): Promise<G
     : bodyChange(refine, body, what, kind === 'prompt' ? output : undefined);
   const reply = await ai.complete({ prompt: prompt(evidence, asked), system: SYSTEMS[kind], ...deps.target });
   const { description, rest } = descriptionIn(reply);
-  const text = fileIn(rest);
+  let text = fileIn(rest);
   if (shape.json) {
     try {
       JSON.parse(text);
@@ -593,7 +606,10 @@ async function writeText(job: Job, kind: Exclude<PromptKind, 'code'>): Promise<G
       throw new Error(`The data the model wrote is not JSON (${(error as Error).message}). It began: "${clip(text, 160)}".`);
     }
   }
-  const example = kind === 'data' ? filledIn(codeBlocks(rest)[1]) : undefined;
+  // A field is called what the node's own ports are -- "__run", the gate it is wired to a start point by -- by a model that read the wire as one: not a field.
+  if (kind === 'data') text = withoutReserved(text);
+  const written = kind === 'data' ? filledIn(codeBlocks(rest)[1]) : undefined;
+  const example = written && withoutReserved(written);
   return { result: text, probe: notProbed(), calls, ...(example ? { example } : {}), ...restated(job, description), ...withOutput(asked ? outputIn(rest, shape) : undefined) };
 }
 

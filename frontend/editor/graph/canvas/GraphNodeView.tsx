@@ -4,7 +4,7 @@ import { Handle, Position, NodeProps, useStore, useUpdateNodeInternals } from 'r
 import type { RFNodeData } from '../../document/store/nodeData';
 import type { GraphNode, GuiWidget, NodeResult, Port } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
-import { takesNewInputs } from '../../document/model/wires';
+import { dropOnto } from '../../document/model/wires';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { errorLine, portPreviews } from '../../document/elements/resultPreview';
 import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
@@ -123,13 +123,16 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
 
   const builder = NODE_BUILDERS[graphNode.node_type];
   const lit = selected;
+  // An output most never wire (a data node's `round`, `all`, `before`) is drawn while it is wired or the card is the one selected.
+  const wiredOut = useGraphStore((s) => s.rfEdges.filter((edge) => edge.source === id).map((edge) => edge.sourceHandle).join('|'));
+  const outputs = graphNode.outputs.filter((port) => selected || !builder?.quietOutput(graphNode, port.id) || wiredOut.split('|').includes(port.id));
 
   // ReactFlow finds a wire's ends by the handles it measured when the card was
   // drawn: a port renamed on a card that kept its size was a handle it did not
   // know, and the wire, still in the graph, was not drawn. Measured again when
   // the ports change.
   const updateNodeInternals = useUpdateNodeInternals();
-  const handles = `${graphNode.inputs.map((port) => port.id).join(',')}|${graphNode.outputs.map((port) => port.id).join(',')}`;
+  const handles = `${graphNode.inputs.map((port) => port.id).join(',')}|${outputs.map((port) => port.id).join(',')}`;
   const measuredHandles = useRef(handles);
   useEffect(() => {
     if (measuredHandles.current === handles) return;
@@ -160,7 +163,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   // Under the card, each value by the port it stands at -- named, when there is more than one to tell apart.
   const shown = previews
     ? [...graphNode.inputs.map((port) => [port, previews.inputs[port.id]] as const),
-      ...graphNode.outputs.map((port) => [port, previews.outputs[port.id]] as const)].filter(([, preview]) => preview)
+      ...outputs.map((port) => [port, previews.outputs[port.id]] as const)].filter(([, preview]) => preview)
     : [];
 
   // A file dropped on a node fills what the element says (`dropPort`): a
@@ -196,10 +199,11 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   // card makes a new input (`connectToNewInput`), the card says so -- nothing
   // else told that a code or AI node takes one there and other nodes do not.
   const wireComing = useStore((s) => s.connectionHandleType === 'source' && !!s.connectionNodeId && s.connectionNodeId !== id);
-  const takesWire = wireComing && takesNewInputs(graphNode);
+  const drop = wireComing ? dropOnto(graphNode) : undefined;
+  const takesWire = !!drop;
 
   const failedDrop = statusTone('error');
-  const rows = Math.max(graphNode.inputs.length, graphNode.outputs.length);
+  const rows = Math.max(graphNode.inputs.length, outputs.length);
   const hasFoot = !!connected || summary !== undefined || shown.length > 0 || !!failure || takesWire || !!dropFailed;
 
   return (
@@ -273,7 +277,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
           {Array.from({ length: rows }, (_, index) => (
             <div key={index} className="flex items-center justify-between gap-3 px-3.5 text-xs" style={{ height: ROW, color: MUTED }}>
               <span className="min-w-0 truncate">{graphNode.inputs[index] && portName(graphNode.inputs[index])}</span>
-              <span className="min-w-0 truncate text-right">{graphNode.outputs[index] && portName(graphNode.outputs[index])}</span>
+              <span className="min-w-0 truncate text-right">{outputs[index] && portName(outputs[index])}</span>
             </div>
           ))}
         </div>
@@ -309,7 +313,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
           {failure}
           {takesWire && (
             <div className="rounded px-1 py-0.5 text-xs" style={{ background: HOVER, color: ACCENT }}>
-              Drop the wire here for a new input
+              {drop === 'new' ? 'Drop the wire here for a new input' : `Drop the wire here to connect it to ${portName(graphNode.inputs.find((port) => port.id === drop) ?? graphNode.inputs[0])}`}
             </div>
           )}
           {/* A file dropped here that could not become its example, and why --
@@ -325,7 +329,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       {graphNode.inputs.map((port, index) => (
         <PortDot key={`in:${port.id}`} port={port} type="target" side="left" top={dotTop(index)} lit={lit} />
       ))}
-      {graphNode.outputs.map((port, index) => (
+      {outputs.map((port, index) => (
         <PortDot key={`out:${port.id}`} port={port} type="source" side="right" top={dotTop(index)} lit={lit} fires={events.has(port.id)} />
       ))}
     </div>

@@ -82,6 +82,14 @@ describe('✨ writes a node\'s files', () => {
     expect(reply.result).not.toContain('<description>');
   }, 30_000);
 
+  it('writes a data node\'s fields as the text says, a list as one field, and drops one called as the node\'s own port is -- the gate it is wired to a start point by', async () => {
+    const ai = scripted(['```json\n{"__run": null, "ingredients": ["flour", "eggs"]}\n```\n\n```json\n{"__run": null, "ingredients": ["flour"]}\n```']);
+    const reply = await generate({ node: node('data', {}, { inputs: ['ingredients'], outputs: ['ingredients'] }) }, deps(ai));
+    expect(JSON.parse(reply.result)).toEqual({ ingredients: ['flour', 'eggs'] });
+    expect(JSON.parse(reply.example!)).toEqual({ ingredients: ['flour'] });
+    expect(ai.asked[0].prompt).toContain('that content IS the starting value');
+  });
+
   it('writes a definition with what was said to its chat, and changes the one there is as said, whole', async () => {
     const wider = 'module.exports = { "lines": 2, "words": 4 };';
     const ai = scripted([js(OUTPUT), js(wider)]);

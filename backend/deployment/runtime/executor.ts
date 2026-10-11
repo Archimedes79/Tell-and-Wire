@@ -495,7 +495,8 @@ function nothingToDo(
 
   for (const port of node.inputs) {
     if (port.required && wired.has(port.id) && isNothing(inputs[port.id])) {
-      return `Nothing arrived on "${port.name || port.id}", which this node needs -- so it had nothing to do.`;
+      const named = port.field ? ` It takes "${port.field}" of what is wired to it, and what arrived has nothing under that name.` : '';
+      return `Nothing arrived on "${port.name || port.id}", which this node needs -- so it had nothing to do.${named}`;
     }
   }
   if (element.needsInput(node) && wired.size && [...wired].every((id) => isNothing(inputs[id]))) {

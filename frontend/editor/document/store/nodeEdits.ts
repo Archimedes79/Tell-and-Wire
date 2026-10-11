@@ -9,7 +9,7 @@ import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { freeId, slugOf } from '../model/ids';
 import { makeRoom } from '../model/placement';
-import { followRenames, graphEdge, pruneDangling, retypeJoined, takesNewInputs, untouchedInput } from '../model/wires';
+import { dropOnto, followRenames, graphEdge, pruneDangling, retypeJoined, untouchedInput } from '../model/wires';
 import { wireOf } from '../../../../graph/files/flow.ts';
 import type { GraphStore } from './graphStore';
 
@@ -74,7 +74,13 @@ export function editActions(
     connectToNewInput: (wire, coalesce) => {
       const nodeOf = (id: string) => get().rfNodes.find((node: RFNode) => node.id === id)?.data.graphNode as GraphNode | undefined;
       const target = nodeOf(wire.target);
-      if (!target || wire.target === wire.source || !takesNewInputs(target)) return false;
+      if (!target || wire.target === wire.source) return false;
+      const onto = dropOnto(target);
+      if (!onto) return false;
+      if (onto !== 'new') {
+        get().connect({ ...wire, targetHandle: onto }, coalesce);
+        return true;
+      }
       const source = nodeOf(wire.source);
       const from = source?.outputs.find((port) => port.id === wire.sourceHandle);
       // From a start point the gui sends one block to: named after that block.
