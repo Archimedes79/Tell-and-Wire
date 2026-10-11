@@ -23,7 +23,7 @@ const port = (id: string, kind: 'input' | 'output') =>
 /** A data node holding a text in a field called "text": what a graph starts from when nobody sends it anything. */
 const textData = (id: string, value = 'hello') => ({
   id, node_type: 'data', label: id, description: 'A greeting to hand on.', position: { x: 0, y: 0 },
-  inputs: [], outputs: [port('text', 'output'), port('all', 'output')], config: { data_value: { text: value } },
+  inputs: [], outputs: [port('text', 'output')], config: { data_value: { text: value } },
 });
 
 const code = (id: string, body = 'function run(inputs) { return { out: inputs.in }; }') => ({

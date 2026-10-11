@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -80,7 +80,8 @@ describe('a graph core as a program of its own', () => {
     output.on('data', (chunk: Buffer) => { for (const line of chunk.toString().split('\n').filter(Boolean)) answers.push(JSON.parse(line) as CoreAnswer); });
     input.write(`${JSON.stringify({ id: 1, op: 'round', graph: counting, trigger: { node_id: 'go', port_id: 'data' } })}\n`);
     input.write(`${JSON.stringify({ id: 2, op: 'nonsense' })}\n`);
-    await new Promise((settle) => { setTimeout(settle, 200); });
+    // Until both are answered, not for as long as a fast machine takes.
+    await vi.waitFor(() => expect([1, 2].every((id) => answers.some((one) => one.id === id && ('reply' in one || 'error' in one)))).toBe(true), { timeout: 10_000 });
     input.end();
     await served;
     expect(answers.find((one) => one.id === 1 && 'event' in one)).toEqual({ id: 1, event: { type: 'plan', total: 3 } });

@@ -88,4 +88,29 @@ describe('a bundle', () => {
       await rm(source, { recursive: true, force: true });
     }
   });
+
+  it('carries the built gui of a tool that has one -- the page, what it loads, the licences it links -- into web/, and serves it', async () => {
+    const built = await mkdtemp(join(tmpdir(), 'tell-and-wire-built-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+    try {
+      await mkdir(join(built, 'assets'));
+      await writeFile(join(built, 'gui.html'), '<script src="/assets/app.js"></script><a href="licenses.txt">Licences</a>');
+      await writeFile(join(built, 'assets', 'app.js'), 'x');
+      await writeFile(join(built, 'licenses.txt'), 'MIT');
+      await writeFile(join(built, 'unlinked.txt'), 'nobody asks for this');
+      const graph = parseGraph({
+        metadata: { name: 'Gui' },
+        nodes: [{ id: 'result', node_type: 'end', label: 'result', position: { x: 0, y: 0 }, inputs: [], outputs: [], config: {} }],
+        edges: [],
+        gui: { blocks: [{ id: 'pick', kind: 'text', label: 'Text' }] },
+      });
+      const written = await writeBundle(graph, dir, { guiDir: built });
+      expect(written).toEqual(expect.arrayContaining(['web/gui.html', 'web/assets/app.js', 'web/licenses.txt']));
+      expect(written).not.toContain('web/unlinked.txt');
+      expect(await readFile(join(dir, 'run.sh'), 'utf8')).toContain('--serve');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+      await rm(built, { recursive: true, force: true });
+    }
+  });
 });

@@ -41,7 +41,8 @@ state.json
 # The downloadable package, built by scripts/package.mjs.
 tell-and-wire*.zip
 
-# What an example's end point writes when a test runs one from a workspace folder.
+# What an example's end point writes when one is run from the repository or from a workspace folder.
+/output/
 /backend/output/
 
 # What tests leave in backend/ when they are stopped halfway: scratch files, hidden so that no scan of the sources looks into them.

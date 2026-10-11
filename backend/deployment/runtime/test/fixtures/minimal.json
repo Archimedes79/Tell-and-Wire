@@ -38,15 +38,6 @@
           "multi": false,
           "required": false,
           "description": "\"greeting\", as it holds now"
-        },
-        {
-          "id": "all",
-          "name": "All",
-          "kind": "output",
-          "data_type": "json",
-          "multi": false,
-          "required": false,
-          "description": "Every field, as one object"
         }
       ],
       "config": {
