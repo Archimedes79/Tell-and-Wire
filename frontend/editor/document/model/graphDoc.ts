@@ -81,15 +81,14 @@ function normalizeGraphNode(rawNode: Partial<GraphNode>): GraphNode {
  * here, and this is the moment that becomes true.
  */
 export function withNested(outer: Graph, nodeId: string, inner: Graph): Graph {
-  return {
-    ...outer,
-    nodes: outer.nodes.map((node) => {
-      if (node.id !== nodeId) return node;
-      const held = { ...node, config: { ...node.config } };
-      registry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
-      return { ...held, ...(derivedNodePorts(held) ?? {}) };
-    }),
-  };
+  const nodes = outer.nodes.map((node) => {
+    if (node.id !== nodeId) return node;
+    const held = { ...node, config: { ...node.config } };
+    registry.node(held.node_type)?.setNestedGraph(held as never, inner as never);
+    return { ...held, ...(derivedNodePorts(held) ?? {}) };
+  });
+  // An end point taken out in there is a port gone out here, and a wire left on it is one nobody can see to delete.
+  return { ...outer, nodes, edges: outer.edges.filter((edge) => !lostWire(nodes, edge, new Set([nodeId]))) };
 }
 
 /**

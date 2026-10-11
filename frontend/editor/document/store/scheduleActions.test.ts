@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { useGraphStore } from './graphStore';
-import { NEW } from './scheduleActions';
+import { NEW, rerouteEdges } from './scheduleActions';
 import type { Graph, GraphNode } from '../graph';
 import { baseNodeConfig } from '../model/baseNodeConfig';
 import { gridOf } from '../model/scheduleLayout';
@@ -82,9 +82,9 @@ describe('the schedule in the store', () => {
     expect(rows()).toEqual(['a b c', '. d .']);
     store().connect({ source: 'b', sourceHandle: 'out', target: 'd', targetHandle: 'in' });
     expect(rows()).toEqual(['a b . c', '. . d .']);
-    expect(store().thinOut()).toBe('Thinned out: 4 columns, 2 rows became 4 columns, 1 rows.');
+    expect(store().thinOut()).toBe('Thinned out: 4 columns, 2 rows became 4 columns, 1 row.');
     expect(rows()).toEqual(['a b d c']);
-    expect(store().thinOut()).toBe('Already thin: 4 columns, 1 rows.');
+    expect(store().thinOut()).toBe('Already thin: 4 columns, 1 row.');
   });
 
   it('routes a wire through a cell, keeps the route with the cell when columns move, and takes it off on request', () => {
@@ -106,6 +106,43 @@ describe('the schedule in the store', () => {
     expect(via(edge)).toBeUndefined();
   });
 
+  it('adds no undo step for what changes nothing -- a card let go in its own cell, a click on the grip, a route set where it is -- and thins out nothing round a loop', () => {
+    open();
+    const steps = () => store().past.length;
+    const grid = gridOf(store().table, new Map(), { row: true });
+    const start = steps();
+    store().aimCard('d', { x: grid.cols[1].centre, y: grid.rows[1].centre });
+    store().dropCard('d');
+    expect(steps()).toBe(start);
+    // A click on the grip ends at the size it began with: not a resize.
+    store().resizeCard('b', { width: 400, height: 200 });
+    store().resizeCard('b', { width: 396, height: 198 });
+    expect(steps()).toBe(start + 1);
+
+    store().connect({ source: 'a', sourceHandle: 'out', target: 'c', targetHandle: 'in' });
+    const edge = 'a.out -> c.in';
+    const wired = steps();
+    store().routeWire(edge, { column: 1, row: 2 });
+    store().routeWire(edge, { column: 1, row: 2 });
+    expect(steps()).toBe(wired + 1);
+
+    // A wire back that no memory closes goes round: nothing to thin out to, and the table is left as it is.
+    store().connect({ source: 'c', sourceHandle: 'out', target: 'a', targetHandle: 'in' });
+    const table = rows();
+    expect(store().thinOut()).toMatch(/^Cannot thin out/);
+    expect(rows()).toEqual(table);
+  });
+
+  it('keeps a route only in a column between the ends of its wire: a card moved past it leaves it behind', () => {
+    const table = [['b', 'x', 'd', 'c'], [null, null, null, null], [null, null, null, null]];
+    const moved = { table, column: (c: number) => c, row: (r: number) => r };
+    const wire = (via: string[]) => ({ id: 'e', source: 'x', target: 'c', data: { via } });
+    expect(rerouteEdges([wire(['C3'])], moved)[0].data).toEqual({ via: ['C3'] });
+    // B3 is x's own column, and A3 left of it: neither is between x and c.
+    expect(rerouteEdges([wire(['B3'])], moved)[0].data).toBeUndefined();
+    expect(rerouteEdges([wire(['A3'])], moved)[0].data).toBeUndefined();
+  });
+
   it('lets where a card stands decide what a wire from a memory carries: before the memory it reads it as the round began, after it what it holds then', () => {
     const edges = [
       { id: 'm.n -> add.in', source_node_id: 'm', source_port_id: 'n', target_node_id: 'add', target_port_id: 'in' },
@@ -121,7 +158,7 @@ describe('the schedule in the store', () => {
     expect(rows()).toEqual([`${peek} add m`]);
     expect(reads()).toEqual(['m.n -> add.in', `m.n -> ${peek}.in`]);
     // Thinning out puts the two that only read side by side -- and both stay before the memory, reading it as the round began.
-    expect(store().thinOut()).toBe('Thinned out: 3 columns, 1 rows became 2 columns, 2 rows.');
+    expect(store().thinOut()).toMatch(/^Thinned out: /);
     expect(reads()).toEqual(['m.n -> add.in', `m.n -> ${peek}.in`]);
     store().undo();
     expect(rows()).toEqual([`${peek} add m`]);

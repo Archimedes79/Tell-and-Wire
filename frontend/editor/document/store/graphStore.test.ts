@@ -186,6 +186,24 @@ describe('a graph inside a node', () => {
     store().redo();
     expect(held()).toHaveLength(2);
   });
+
+  it('takes the wires of a port it no longer has with it when the end point behind it is deleted in there', () => {
+    const inner = { metadata: { name: 'Inner', description: '', gui_scheme: 'night' }, nodes: [graphNode({ id: 'result', node_type: 'end', label: 'Result' })], edges: [] };
+    loadTestGraph([
+      graphNode({ id: 'part', node_type: 'subgraph', label: 'Part', config: { ...baseNodeConfig(), subgraph: inner } }),
+      graphNode({ id: 'after', node_type: 'code', inputs: [port('in', 'input')] }),
+    ]);
+    store().connect({ source: 'part', sourceHandle: nodeById('part').outputs[0].id, target: 'after', targetHandle: 'in' });
+    expect(store().rfEdges).toHaveLength(1);
+
+    store().openSubgraph('part');
+    store().deleteNodes(['result']);
+    // Still inside, what Save and Run take is the whole document.
+    expect(store().rootGraph().edges).toEqual([]);
+    store().closeSubgraph();
+    expect(nodeById('part').outputs).toEqual([]);
+    expect(store().rfEdges).toEqual([]);
+  });
 });
 
 describe('graphStore.connect', () => {

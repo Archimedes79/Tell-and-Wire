@@ -5,6 +5,7 @@ import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { derivedNodePorts } from '../../document/model/ports';
 import { neighbours } from '../../document/model/wires';
+import { columnsOf } from '../../../../graph/schedule.ts';
 import { blocksAt } from '../../document/model/gui';
 import { headingFromText, isNumberedHeading } from '../../document/model/heading';
 import type { GraphNode } from '../../document/graph';
@@ -97,6 +98,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
   const isProject = useGraphStore((s) => s.isProject);
   const gui = useGraphStore((s) => s.gui);
   const wires = useGraphStore((s) => s.rfEdges);
+  const table = useGraphStore((s) => s.table);
   const near = neighbours(node.id, wires);
   const graphNodes = useGraphNodes();
   const labels = Object.fromEntries(graphNodes.map((item) => [item.id, item.label || item.id]));
@@ -160,7 +162,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
   };
 
   // The input is pulled, not chatted: what feeds it says what it is.
-  const asking = modelsBefore(node, graphNodes, wires).map((one) => labels[one.id]);
+  const asking = modelsBefore(node, graphNodes, wires, columnsOf(table)).map((one) => labels[one.id]);
   const pulls: RowAction = pullable(node, wires)
     ? {
       id: 'pull',

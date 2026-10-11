@@ -265,7 +265,7 @@ export interface GraphStore {
    * node change, so a flag would mark a freshly opened graph dirty and train
    * the user to click through the confirmations that exist to protect them.
    * Selection is not part of the exported graph, so this cannot fire on it;
-   * moving a node, which is a real change, does. Asked again of the same
+   * putting a card in another cell, which is a real change, does. Asked again of the same
    * document, it answers what it answered (`dirtyAnswer`).
    */
   isDirty: () => boolean;
@@ -472,8 +472,10 @@ export const useGraphStore = create<GraphStore>()(
 
     isDirty: () => {
       const { rfNodes, rfEdges, metadata, gui, table, subgraphStack, savedSnapshot } = get();
-      const of = [rfNodes, rfEdges, metadata, gui, table, subgraphStack, savedSnapshot];
-      if (dirtyAnswer?.of.every((part, at) => part === of[at])) return dirtyAnswer.dirty;
+      // The nodes as written, not as drawn: where a card stands follows the table, and a drag moves cards every frame -- each
+      // of which would serialise the whole document again for an answer that cannot have changed.
+      const of = [rfEdges, metadata, gui, table, subgraphStack, savedSnapshot, ...rfNodes.map((node) => node.data.graphNode)];
+      if (dirtyAnswer && dirtyAnswer.of.length === of.length && dirtyAnswer.of.every((part, at) => part === of[at])) return dirtyAnswer.dirty;
       // The whole document, not the level that happens to be open: going into
       // a node changes nothing, and a change made in there is a change.
       const root = get().rootGraph();
@@ -495,7 +497,10 @@ export const useGraphStore = create<GraphStore>()(
       flushPanels();
       const root = get().rootGraph();
       const graph = name ? { ...root, metadata: { ...root.metadata, name } } : root;
+      const opened = get().opened;
       const result = await call('saveGraph', { path, graph, replace: replace || path === get().currentFilePath });
+      // Another document was opened while the write was on its way: what was written is the old one's, and says nothing of this one.
+      if (get().opened !== opened) return { path: result.path };
       set((state) => {
         // The name is the tool's -- the graph at the top -- whichever level the canvas shows.
         if (name) {

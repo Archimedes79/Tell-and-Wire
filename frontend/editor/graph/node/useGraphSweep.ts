@@ -12,6 +12,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { GraphEdge, GraphNode } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
 import { graphEdge } from '../../document/model/wires';
+import { columnsOf } from '../../../../graph/schedule.ts';
 import { generationGuard, isWritten, bodyOf, writesFor, type Write } from '../writing/generation';
 import { isWriting, writingSaid } from '../writing/useGenerate';
 import { missingExamples, sweep, type SweepUnit } from '../writing/graphSweep';
@@ -86,7 +87,7 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
   let written = 0;
   const held: string[] = [];
   try {
-    for await (const step of sweep(nodesOf(), dslEdges(), { unitFor, stopped: () => stopped() || !stillOpen() })) {
+    for await (const step of sweep(nodesOf(), dslEdges(), { unitFor, stopped: () => stopped() || !stillOpen(), columns: columnsOf(live().table) })) {
       if (step.status === 'failed') {
         say(`⚠️ Stopped at ${step.label}: ${step.message}`);
         return;

@@ -143,6 +143,9 @@ export function editActions(
         // A panel open on a node that went closes with it: left pointing at
         // the id, it opened again on the next node of that id.
         if (state.editingNodeId && going.has(state.editingNodeId)) state.editingNodeId = null;
+        // What a round made of a node that is gone is not shown on the next node of that id.
+        const shown = state.executionResult;
+        if (shown) state.executionResult = { ...shown, node_results: shown.node_results.filter((one) => !going.has(one.node_id)) } as never;
       });
     },
   };

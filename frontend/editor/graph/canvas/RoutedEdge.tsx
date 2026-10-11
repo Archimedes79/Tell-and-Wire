@@ -83,8 +83,9 @@ export default function RoutedEdge(props: EdgeProps<Route>) {
 
 /**
  * What the pointer going down on wire *edge* does: pulls it toward the cells it may go through, until the button is
- * let go (it is routed there) or Escape is pressed (it stays). From its dot at once (*after* 0); from the wire
- * itself once the pointer has moved *after* pixels -- until then it is a click, and selects the wire.
+ * let go (it is routed there) or Escape is pressed, the pointer is taken from us, or the window loses the focus (it stays).
+ * It is a pull once the pointer has moved *after* pixels -- until then it is a click, and selects the wire (or, on the dot,
+ * does nothing: a click or the first click of a double-click is no route).
  */
 function usePull(edge: string, after: number): (event: React.PointerEvent) => void {
   const { screenToFlowPosition } = useReactFlow();
@@ -100,16 +101,21 @@ function usePull(edge: string, after: number): (event: React.PointerEvent) => vo
       pulled = true;
       useGraphStore.getState().pullWire(edge, at(e));
     };
-    const end = (apply: boolean) => (): void => {
+    const stop = (apply: boolean): void => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', cancel);
+      window.removeEventListener('blur', cancel);
       window.removeEventListener('keydown', key);
       if (pulled) useGraphStore.getState().endPull(apply);
     };
-    const up = end(true);
-    const key = (e: KeyboardEvent): void => { if (e.key === 'Escape') end(false)(); };
+    const up = (): void => stop(true);
+    const cancel = (): void => stop(false);
+    const key = (e: KeyboardEvent): void => { if (e.key === 'Escape') stop(false); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cancel);
+    window.addEventListener('blur', cancel);
     window.addEventListener('keydown', key);
     if (after === 0) move(event);
   };
@@ -117,7 +123,8 @@ function usePull(edge: string, after: number): (event: React.PointerEvent) => vo
 
 /** The dot on a wire that is pulled. */
 function Handle({ edge, x, y, shown, routed, onOver }: { edge: string; x: number; y: number; shown: boolean; routed: boolean; onOver: (on: boolean) => void }) {
-  const pull = usePull(edge, 0);
+  // A few pixels before it is a pull: a click on the dot, or the first click of the double-click that straightens, routes nothing.
+  const pull = usePull(edge, 3);
   return (
     <div
       className="nodrag nopan"
