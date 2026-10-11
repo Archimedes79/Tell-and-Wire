@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuiWidget } from './kit/guiWidget';
 import LiveGui from './surface/LiveGui';
+import LiveWindows, { useWindowFire } from '../windows/LiveWindows';
+import { isWindows } from '../windows/windowsInUse';
 import { useRound } from './surface/useRound';
 import CallForms from './surface/CallForms';
 import type { InterfaceEntry } from '../../../graph/interface.ts';
@@ -14,6 +16,9 @@ import { errorText } from './kit/api/errorText';
 import Button from './kit/ui/Button';
 import { schemeVars } from './kit/ui/scheme';
 import { DANGER_FILL, DANGER_TEXT, DIM, SUNKEN } from './kit/ui/theme';
+
+/** The blocks of a tool whose design is not loaded yet. */
+const NO_BLOCKS = { blocks: [] as GuiWidget[] };
 
 /** Which design of which session: what a drawn gui was drawn from. */
 const designOf = (session: string, revision: number): string => `${session}#${revision}`;
@@ -91,6 +96,8 @@ export default function GuiApp() {
   const clock = view?.clock;
   const finishedAt = view?.finished_at;
   const fire = useCallback((block: GuiWidget) => { if (design) void start.current(design.fires[block.id], block.id); }, [design]);
+  // A tool made of windows runs the one used, and the ones before it that are not current, in order.
+  const fireWindow = useWindowFire(design ?? NO_BLOCKS, round);
 
   return (
     // A deployed tool looks like the thing that was designed, scheme included.
@@ -145,9 +152,9 @@ export default function GuiApp() {
         {design && (
           <CallForms events={design.events} sent={view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />
         )}
-        {design && (
-          <LiveGui design={design} onEvent={fire} />
-        )}
+        {design && (isWindows(design.blocks)
+          ? <LiveWindows design={design} onEvent={fireWindow} />
+          : <LiveGui design={design} onEvent={fire} />)}
         <RequirementsDialog
           requirements={round.requirements}
           onSubmit={round.submit}

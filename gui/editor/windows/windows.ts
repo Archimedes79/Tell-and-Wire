@@ -34,6 +34,7 @@ import { port } from '../../../graph/nodes/port.ts';
 import { tableLines } from '../../../graph/schedule.ts';
 import { RUN_PORT, START_PORT } from '../../../graph/triggers.ts';
 import type { Problem } from '../../../graph/wiring.ts';
+import { afterRun as orderAfterRun, currentWindows as orderCurrent, runOrder as orderRun, type Done, type Linked } from '../../windows/order.ts';
 
 /** What can go into a window. `from` takes what another window made. */
 export type InKind = 'file' | 'folder' | 'text' | 'number' | 'choice' | 'from';
@@ -352,74 +353,24 @@ export function windowContext(doc: Windows, id: string): string {
 
 // ---- which windows to run, and in what order -------------------------------
 //
-// A round of a window runs the window and, for what it takes from another, the
-// other's last answer -- not the other window as it stands now. A window that
-// never ran has no answer, so a round of the one after it brings back nothing
-// and says success; a window whose input was changed and not run again hands
-// on the answer to the input it had. So whoever runs a window runs first the
-// ones before it that are not current, one round each, in order
-// (`backend/deployment/host/session.ts` holds the reason: a round is sent the
-// blocks of the start point it begins at, and no other's).
+// The rule is shared with the page a deployed tool serves, so it lives in `gui/windows/order.ts`; here it is
+// asked of a document of windows.
 
-/** What a person has done to the windows since they last ran: which ran at all, and which had an input changed after. */
-export interface Done {
-  ran: ReadonlySet<string>;
-  changed: ReadonlySet<string>;
-}
+export type { Done } from '../../windows/order.ts';
 
-/** The windows whose last answer is still the answer to what is on the page: ran, nothing changed since, and so for every window they take from. */
-export function currentWindows(doc: Windows, done: Done): Set<string> {
-  const current = new Map<string, boolean>();
-  const check = (id: string): boolean => {
-    if (!current.has(id)) {
-      current.set(id, false); // a window waiting for itself is never current
-      current.set(id, done.ran.has(id) && !done.changed.has(id) && upstream(doc, id).map(check).every(Boolean));
-    }
-    return current.get(id)!;
-  };
-  doc.windows.forEach((window) => check(window.id));
-  return new Set([...current].filter(([, is]) => is).map(([id]) => id));
-}
+/** The windows of *doc* as the order sees them: each with the windows it takes from. */
+const linked = (doc: Windows): Linked[] => doc.windows.map((window) => ({ id: window.id, after: upstream(doc, window.id) }));
 
-/**
- * The windows to run, in the order to run them, so that *id* answers to what
- * is on the page: the ones before it that are not current, each followed by
- * everything that takes from it on the way, and *id* last.
- */
-export function runOrder(doc: Windows, id: string, done: Done): string[] {
-  const current = currentWindows(doc, done);
-  const order: string[] = [];
-  const seen = new Set<string>();
-  const visit = (one: string): boolean => {
-    if (seen.has(one)) return order.includes(one);
-    seen.add(one);
-    // Every window before it is visited, however the earlier ones came out.
-    const behind = upstream(doc, one).map(visit);
-    const runs = one === id || !current.has(one) || behind.some(Boolean);
-    if (runs) order.push(one);
-    return runs;
-  };
-  visit(id);
-  return order;
-}
+/** The windows whose last answer is still the answer to what is on the page. */
+export const currentWindows = (doc: Windows, done: Done): Set<string> => orderCurrent(linked(doc), done);
 
-/** *done* after the person changed an input of window *id*: it no longer answers to what is on the page, and nothing that takes from it does. */
-export function afterEdit(done: Done, id: string): Done {
-  return { ran: done.ran, changed: new Set([...done.changed, id]) };
-}
+/** The windows to run, in the order to run them, so that *id* answers to what is on the page. */
+export const runOrder = (doc: Windows, id: string, done: Done): string[] => orderRun(linked(doc), id, done);
 
-/** *done* after window *id* ran: it is current again, and everything that takes from it has not yet seen its new answer. */
-export function afterRun(doc: Windows, done: Done, id: string): Done {
-  const changed = new Set(done.changed);
-  changed.delete(id);
-  const behind = [id];
-  for (const one of behind) {
-    for (const window of doc.windows) {
-      if (upstream(doc, window.id).includes(one) && !behind.includes(window.id)) { behind.push(window.id); changed.add(window.id); }
-    }
-  }
-  return { ran: new Set([...done.ran, id]), changed };
-}
+export { afterEdit } from '../../windows/order.ts';
+
+/** *done* after window *id* ran. */
+export const afterRun = (doc: Windows, done: Done, id: string): Done => orderAfterRun(linked(doc), done, id);
 
 // ---- windows to a graph and a gui ------------------------------------------
 
@@ -463,7 +414,7 @@ function endNode(window: Window, one: WindowOut, y: number): GraphNode {
 }
 
 /** The blocks of one window, in the order they are drawn: heading, inputs, Run and the first sentence, outputs. */
-function blocksOf(window: Window): RawConfig[] {
+function blocksOf(doc: Windows, window: Window): RawConfig[] {
   const on = { group: window.id };
   const trigger = window.trigger ?? {};
   const fires = trigger.onChange ? { fires: window.id } : {};
@@ -495,7 +446,7 @@ function blocksOf(window: Window): RawConfig[] {
   const button = trigger.button !== false;
   const run = button ? Math.min(window.span, Math.max(2, Math.round(window.span / 4))) : 0;
   return [
-    { ...on, id: `${window.id}_title`, kind: 'text', mode: 'heading', label: '', w: window.span, h: 1, tone: 'plain', value: window.title, span: window.span },
+    { ...on, id: `${window.id}_title`, kind: 'text', mode: 'heading', label: '', w: window.span, h: 1, tone: 'plain', value: window.title, span: window.span, after: upstream(doc, window.id) },
     ...lay(window.inputs, window.inputs.map((one) => inPiece(window, one)), taking),
     ...(button ? [{ ...on, id: `${window.id}_run`, kind: 'button', label: trigger.label?.trim() || 'Run', w: run, h: 1, tone: 'plain', fires: window.id }] : []),
     { ...on, id: `${window.id}_sentence`, kind: 'text', mode: 'caption', label: '', w: window.span - run, h: 1, tone: 'plain', value: window.steps[0]?.sentence ?? '' },
@@ -603,7 +554,7 @@ export function windowsToGraph(doc: Windows, before?: Graph): Graph {
     metadata: { name: doc.name, description: doc.description, gui_scheme: doc.scheme ?? 'night' },
     nodes,
     edges,
-    gui: { blocks: doc.windows.flatMap(blocksOf) },
+    gui: { blocks: doc.windows.flatMap((window) => blocksOf(doc, window)) },
   };
   graph.schedule = windowsSchedule(doc, edges);
   if (before) keepWriting(graph, before);

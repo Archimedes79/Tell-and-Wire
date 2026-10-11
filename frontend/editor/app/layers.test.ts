@@ -53,6 +53,7 @@ const AREAS: [string, number, ...string[]][] = [
   ['dialogs', 4, 'deployment/gui/kit/dialogs/', 'editor/app/dialogs/'],
   ['deployed widgets', 4.2, 'deployment/gui/widgets/'],
   ['surface', 4.5, 'deployment/gui/surface/'],
+  ['windows', 4.6, 'deployment/windows/'],
   ...ELEMENTS.map((path): [string, number, string] => [path, 5, path]),
   ['gui', 6, 'editor/gui/'],
   ['canvas', 6, 'editor/graph/canvas/'],

@@ -127,12 +127,13 @@ describe('deployment boundary', () => {
    * (`host/api.ts`), and the shapes of a few values its views read -- a chat's
    * conversation, a dropdown's choice, a slider's range. Which blocks start a
    * round and which are given a value are the graph's events and values, which
-   * the runtime API tells the gui by name.
+   * the runtime API tells the gui by name. And the order a page of windows is run in
+   * (`gui/windows`), which the editor's model of a window shares with the page.
    */
   it('loads of graph/, gui/ and backend/ only the contract and the shapes of the values its views read', () => {
     const loaded = [...reachable].filter((path) => /^(graph|gui|backend)\//.test(path));
     expect(loaded).toContain('backend/deployment/host/api.ts');
-    const more = loaded.filter((path) => !/^(backend\/deployment\/host\/api\.ts|gui\/widgets\/[a-z_]+\/[a-z][A-Za-z]*\.ts)$/.test(path));
+    const more = loaded.filter((path) => !/^(backend\/deployment\/host\/api\.ts|gui\/widgets\/[a-z_]+\/[a-z][A-Za-z]*\.ts|gui\/windows\/[a-z]+\.ts)$/.test(path));
     expect(more.map(chain)).toEqual([]);
   });
 });
