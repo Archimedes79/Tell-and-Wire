@@ -454,7 +454,7 @@ folder. A package carries:
 - the project folder (without `history.md` or the files ✨ was given);
 - the code by an allow-list of folders, `graph/`, `gui/`, `backend/cli/` and `backend/deployment/`,
   without tests, fixtures and anything in a folder named `editor`;
-- `web/` with the built `runtime.html`, what it references and `licenses.txt` (when the graph has a
+- `web/` with the built `gui.html`, what it references and `licenses.txt` (when the graph has a
   gui and `npm run build` ran);
 - the files the graph starts on, those from outside the project in `data/` (one that is missing or
   over 50 MB stops the package; a settings file is never carried, whatever folder holds it);

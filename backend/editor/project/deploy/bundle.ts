@@ -19,7 +19,7 @@ import { guiBlocks } from '../../../../gui/gui.ts';
 import { guiReferencedPaths } from '../../../../gui/editor/gui.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { designs } from '../../../../graph/editor/nodes/registry.ts';
-import { withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../../graph/editor/handedOn.ts';
 import { FRONTEND_DIR } from '../../../deployment/project/folder.ts';
 import { writeProject } from '../write.ts';
 import { SETTINGS_FILENAME, candidatePaths } from '../../../deployment/runtime/ai/settings.ts';
@@ -230,18 +230,18 @@ async function sourceFiles(dir: string): Promise<string[]> {
 /**
  * The built gui a deployed tool serves, and only the files it references.
  *
- * Parsed out of `runtime.html` rather than listed: the editor's own chunks live
+ * Parsed out of `gui.html` rather than listed: the editor's own chunks live
  * in the same folder, and a bundle that copied everything would ship the
  * editor to someone who was handed a finished tool.
  */
 async function guiFiles(guiDir: string): Promise<string[]> {
-  const html = join(guiDir, 'runtime.html');
+  const html = join(guiDir, 'gui.html');
   if (!existsSync(html)) return [];
   const source = await readFile(html, 'utf8');
   const referenced = [...source.matchAll(/(?:src|href)="\/?([^"]+)"/g)]
     .map((match) => match[1])
     .filter((path) => !path.startsWith('http'));
-  return ['runtime.html', ...new Set(referenced)].filter((path) => existsSync(join(guiDir, path)));
+  return ['gui.html', ...new Set(referenced)].filter((path) => existsSync(join(guiDir, path)));
 }
 
 /**
@@ -284,9 +284,9 @@ export async function writeBundle(
   };
 
   // The project folder, first, into the empty bundle -- what runs, not how each
-  // node was written (`withoutAuthoring`), and the files it starts on where
+  // node was written (`withoutWriting`), and the files it starts on where
   // they now are.
-  await writeProject(target, withoutAuthoring(moved(graph, data)));
+  await writeProject(target, withoutWriting(moved(graph, data)));
   written.push(...await filesIn(target));
 
   for (const file of (await Promise.all(CARRIED.map((folder) => sourceFiles(join(ROOT, folder))))).flat()) {

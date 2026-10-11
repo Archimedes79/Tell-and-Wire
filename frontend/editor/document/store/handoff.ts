@@ -5,7 +5,7 @@ import type { ExecutionResult } from '../graph';
 import { call, type RoundSnapshot } from '../../api/client';
 import { useSession, watchSession } from '../../../deployment/gui/kit/api/session';
 import { mergeResults } from '../../../../graph/graph.ts';
-import { withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../../graph/editor/handedOn.ts';
 import type { GraphStore } from './graphStore';
 import { flushPanels } from './flushPanels';
 
@@ -53,7 +53,7 @@ export function handoffActions(
       handing = true;
       let session: string;
       try {
-        ({ session } = await call('holdGraph', { graph: withoutAuthoring(rootGraph()), path: currentFilePath, session: heldSession }));
+        ({ session } = await call('holdGraph', { graph: withoutWriting(rootGraph()), path: currentFilePath, session: heldSession }));
       } finally {
         handing = false;
       }

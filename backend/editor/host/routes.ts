@@ -15,7 +15,7 @@ import { join, resolve } from 'node:path';
 import { parseGraph } from '../../../graph/graph.ts';
 import { chosenCore } from '../../deployment/runtime/stdio.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
-import { withoutAuthoring } from '../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../graph/editor/handedOn.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { startFromGui } from '../../../gui/gui.ts';
 import { CannotBundle, filesIn, writeBundle } from '../project/deploy/bundle.ts';
@@ -201,11 +201,11 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
     },
 
     // The document, handed to the server's session: what every round runs,
-    // whoever starts it -- and what `runtime.html` opened against it shows, as
+    // whoever starts it -- and what `gui.html` opened against it shows, as
     // any deployed gui does, so nothing about the delivered side knows it is
     // being previewed. What runs, not how each node was written.
     async holdGraph(asked) {
-      const session = await held.hold(withoutAuthoring(parseGraph(asked.graph)), { path: asked.path, session: asked.session });
+      const session = await held.hold(withoutWriting(parseGraph(asked.graph)), { path: asked.path, session: asked.session });
       return { session: session.id, dropped: session.dropped };
     },
 

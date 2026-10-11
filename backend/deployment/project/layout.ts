@@ -29,5 +29,5 @@ export const WEB_DIR = 'web';
  */
 export function builtGui(): string | undefined {
   const dist = join(installFolder(), 'frontend', 'dist');
-  return existsSync(join(dist, 'runtime.html')) ? dist : undefined;
+  return existsSync(join(dist, 'gui.html')) ? dist : undefined;
 }

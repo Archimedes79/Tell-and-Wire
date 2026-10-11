@@ -20,7 +20,7 @@ const args = process.argv.slice(2);
 
 /** What the page is built from, besides the source folders. */
 const BUILD_INPUTS = [
-  'package.json', 'package-lock.json', 'frontend/package.json', 'frontend/index.html', 'frontend/runtime.html',
+  'package.json', 'package-lock.json', 'frontend/package.json', 'frontend/index.html', 'frontend/gui.html',
   'frontend/tsconfig.json', 'frontend/tsconfig.node.json', 'frontend/vite.config.ts', 'frontend/tailwind.config.js', 'frontend/postcss.config.js',
 ];
 /** The folders the page's code is in: its own, and those of graph/, gui/ and backend/, which it imports from. */

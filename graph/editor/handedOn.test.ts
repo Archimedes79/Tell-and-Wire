@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseGraph } from '../graph.ts';
-import { AUTHORING_KEYS, withoutAuthoring } from './handedOn.ts';
+import { WRITING_KEYS, withoutWriting } from './handedOn.ts';
 
 /** What a graph carries when it is handed on: what runs, and not how each node was written. */
 
@@ -26,10 +26,10 @@ const graph = () => parseGraph({
 describe('a graph handed on', () => {
   it('carries no history and no files ✨ was given -- in the graphs its nodes hold too -- and what runs, whole', () => {
     const original = graph();
-    const handed = withoutAuthoring(original);
+    const handed = withoutWriting(original);
     const inner = (handed.nodes[1].config.subgraph as { nodes: { config: Record<string, unknown> }[] }).nodes[0].config;
     for (const config of [handed.nodes[0].config as Record<string, unknown>, inner]) {
-      for (const key of AUTHORING_KEYS) expect(config, key).not.toHaveProperty(key);
+      for (const key of WRITING_KEYS) expect(config, key).not.toHaveProperty(key);
       expect(config.code).toBe(written.code);
     }
     // A copy: the project keeps its record.

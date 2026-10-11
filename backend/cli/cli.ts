@@ -227,7 +227,7 @@ async function runServer(options: CliOptions): Promise<number> {
   const hasGraph = options.graphNamed || (!options.editor && existsSync(resolve(options.graphPath)));
   // Beside the project -- a bundle is one -- or beside a single graph file.
   const carried = resolve(projectFolderOf(options.graphPath) ?? dirname(resolve(options.graphPath)), WEB_DIR);
-  const guiDir = !hasGraph ? undefined : existsSync(join(carried, 'runtime.html')) ? carried : builtGui();
+  const guiDir = !hasGraph ? undefined : existsSync(join(carried, 'gui.html')) ? carried : builtGui();
   // The editor is loaded here and nowhere else: a package that does not carry it serves none.
   const editor = options.editor ? (await import('../editor/host/routes.ts')).editorPart(resolve(options.editor)) : undefined;
 

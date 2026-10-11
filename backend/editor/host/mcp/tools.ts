@@ -23,7 +23,7 @@ import { startFromGui } from '../../../../gui/gui.ts';
 import { message } from '../../../deployment/host/http.ts';
 import { clip } from '../../graph/brief.ts';
 import { generateGraph } from '../../graph/generateGraph.ts';
-import { AUTHORING_KEYS, withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
+import { WRITING_KEYS, withoutWriting } from '../../../../graph/editor/handedOn.ts';
 import {
   FileChanged, LAYOUT_FILE, NODES_DIR, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, type Guard,
@@ -72,7 +72,7 @@ const json = (value: unknown): string => JSON.stringify(value, null, 2);
 
 /**
  * *graph* with what it says nothing of put back from *kept*, the graph it is to
- * replace: each node's history and the files ✨ was given (`AUTHORING_KEYS`), by node
+ * replace: each node's history and the files ✨ was given (`WRITING_KEYS`), by node
  * id, in the graphs nodes hold too. A document written by a model has none of them, and
  * a save would delete them.
  */
@@ -83,7 +83,7 @@ function withAuthoringOf(graph: Graph, kept: Graph): Graph {
     const was = before.get(node.id);
     if (!was) continue;
     const config = node.config as Record<string, unknown>;
-    for (const key of AUTHORING_KEYS) if (config[key] === undefined && was.config[key] !== undefined) config[key] = was.config[key];
+    for (const key of WRITING_KEYS) if (config[key] === undefined && was.config[key] !== undefined) config[key] = was.config[key];
     const element = registry.node(node.node_type);
     const inside = element?.nestedGraph(node);
     const wasInside = registry.node(was.node_type)?.nestedGraph(was);
@@ -94,7 +94,7 @@ function withAuthoringOf(graph: Graph, kept: Graph): Graph {
 
 /**
  * What the project in *folder* keeps only for writing it -- each node's history and the
- * files ✨ was given (`AUTHORING_KEYS`) -- in the graphs nodes hold too. Read without being
+ * files ✨ was given (`WRITING_KEYS`) -- in the graphs nodes hold too. Read without being
  * *read*: `loadProject` records every file as seen, and a save would then find nothing
  * changed since.
  */
@@ -102,7 +102,7 @@ async function authoringOf(folder: string, guard: Guard): Promise<Graph> {
   const { graph } = await readStructure(folder, guard);
   for (const text of projectTexts(graph)) {
     const path = join(folder, text.path);
-    if (!text.node_id || !(AUTHORING_KEYS as readonly string[]).includes(text.field) || !existsSync(path)) continue;
+    if (!text.node_id || !(WRITING_KEYS as readonly string[]).includes(text.field) || !existsSync(path)) continue;
     await guard(path);
     // As `readProject` reads a text with no footer: one newline was added on the way out.
     text.holder[text.field] = (await readFile(path, 'utf8')).replace(/\r\n/g, '\n').replace(/\n$/, '');
@@ -284,7 +284,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
         Object.assign(report, { problems: problemsIn(graph) });
       }
       // How each node was written stays in the project it is saved to: the caller is handed what runs.
-      return json({ ...report, explanation: generated.explanation, graph: withoutAuthoring(graph) });
+      return json({ ...report, explanation: generated.explanation, graph: withoutWriting(graph) });
     },
 
     async validate_graph(args) {

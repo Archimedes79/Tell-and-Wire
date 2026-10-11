@@ -27,7 +27,7 @@ const holdDocument = () => useGraphStore.getState().holdDocument();
  * The application, running (▶ Run, `document/application.ts`): its gui, as the
  * deployed tool draws it -- the same component, not a rendition.
  *
- * `GuiSurface` is what `deployment/gui/RuntimeApp.tsx` renders when a bundle is
+ * `GuiSurface` is what `deployment/gui/GuiApp.tsx` renders when a bundle is
  * opened on someone else's machine, under the same `DeliveredHeader`, and
  * each round goes through the same `useRound` against the same session. So
  * what is seen here is what they get: a block unreadable, mis-sized or
@@ -90,7 +90,7 @@ export default function ApplicationView() {
 
   /**
    * The tool as it is delivered, in a window of its own: the document is
-   * handed to the server and `runtime.html` is opened against it -- the same
+   * handed to the server and `gui.html` is opened against it -- the same
    * page, the same entry point and the same routes a bundle serves, with no
    * editor in the window, and the same session as this tab.
    */
@@ -100,7 +100,7 @@ export default function ApplicationView() {
       await holdDocument();
       // Named, so pressing it again reloads the tool's own window instead of
       // leaving a trail of them.
-      const opened = window.open('runtime.html', 'tell-and-wire-tool');
+      const opened = window.open('gui.html', 'tell-and-wire-tool');
       setOpening(opened ? '' : 'The browser blocked the window. Allow pop-ups for this page.');
     } catch (error) {
       setOpening(errorText(error, 'The tool could not be opened.'));

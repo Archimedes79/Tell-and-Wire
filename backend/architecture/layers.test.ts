@@ -35,14 +35,14 @@ const SOURCES = ['graph', 'gui', 'backend', 'frontend'].flatMap((dir) => walk(jo
 const KNOWN = new Set(walk(ROOT).map(rel));
 
 interface Import { from: string; to: string; dynamic: boolean }
-const IMPORT = /(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?[^'";]*?\s*from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
+const IMPORT = /(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?[^'";]*?\s*from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|(?:^|\n)\s*import\s*['"]([^'"]+)['"]/g;
 
 const IMPORTS: Import[] = [];
 const BUILTINS: { from: string; to: string }[] = [];
 for (const from of SOURCES) {
   const text = readFileSync(join(ROOT, from), 'utf8');
   for (const match of text.matchAll(IMPORT)) {
-    const spec = match[1] ?? match[2];
+    const spec = match[1] ?? match[2] ?? match[3];
     if (spec.startsWith('node:')) { BUILTINS.push({ from, to: spec }); continue; }
     if (!spec.startsWith('.')) continue;
     const base = rel(resolve(ROOT, dirname(from), spec));

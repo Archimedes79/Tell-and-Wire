@@ -110,7 +110,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
       ? await startFolder()
       : (projectFolderOf(options.graphPath) ?? dirname(resolve(options.graphPath)))),
     // `held` goes in so the editor can hand this server the graph it is
-    // editing and then open `runtime.html` against it: the delivered gui, in
+    // editing and then open `gui.html` against it: the delivered gui, in
     // its own window, served by the same route a bundle serves.
     ...options.editor?.handlers(held),
   };
@@ -164,7 +164,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
     if (options.editor) return servePage(response, path, options.editor.dist, 'index.html');
     // A gui of the project's own, written by hand against the runtime API, wins over the built one.
     if (frontend) return servePage(response, path, frontend, 'index.html');
-    if (options.guiDir) return servePage(response, path, options.guiDir, 'runtime.html');
+    if (options.guiDir) return servePage(response, path, options.guiDir, 'gui.html');
     return sendJson(response, 404, { detail: 'No gui.' });
   }
 

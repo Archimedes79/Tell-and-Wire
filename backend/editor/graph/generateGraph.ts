@@ -9,7 +9,7 @@ import type { AiService } from '../../../graph/nodes/Runtime.ts';
 import { message } from '../../deployment/host/http.ts';
 import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import { AUTHORING_KEYS } from '../../../graph/editor/handedOn.ts';
+import { WRITING_KEYS } from '../../../graph/editor/handedOn.ts';
 import { exchangeEntry, withExchange } from '../../../graph/editor/history.ts';
 import { GRAPH_SYSTEM } from './graphPrompt.ts';
 import { changePrompt } from './generatePrompts.ts';
@@ -27,7 +27,7 @@ function said(node: unknown): string {
   try {
     const [parsed] = parseGraph({ nodes: [node], edges: [] }).nodes;
     const config = { ...parsed.config } as Record<string, unknown>;
-    for (const key of AUTHORING_KEYS) delete config[key];
+    for (const key of WRITING_KEYS) delete config[key];
     return canonical([parsed.node_type, parsed.label, parsed.description, parsed.inputs, parsed.outputs, config]);
   } catch {
     // Not a node the route could read either: said once, where the document is parsed.
@@ -42,7 +42,7 @@ function said(node: unknown): string {
  * default -- a change to one node renamed the tool and moved every node into
  * the corner.
  *
- * And what only writing a node needs (`AUTHORING_KEYS`, its history above all)
+ * And what only writing a node needs (`WRITING_KEYS`, its history above all)
  * is the project's, never the answer's: the model was not shown it, so each
  * node kept has its own back -- in the graphs nodes hold too -- and what the
  * answer says there is dropped. A node the change touched -- new, or different
@@ -67,10 +67,10 @@ function keptNode(was: GraphNode | undefined, given: unknown, entry: string): un
   if (!given || typeof given !== 'object') return given;
   const node = { ...given } as Record<string, unknown> & GraphNode;
   const config = { ...(node.config && typeof node.config === 'object' ? node.config : {}) } as Record<string, unknown>;
-  for (const key of AUTHORING_KEYS) delete config[key];
+  for (const key of WRITING_KEYS) delete config[key];
   if (was) {
     for (const key of ['position', 'width', 'height'] as const) if (node[key] === undefined) (node as Record<string, unknown>)[key] = was[key];
-    for (const key of AUTHORING_KEYS) if (was.config[key] !== undefined) config[key] = was.config[key];
+    for (const key of WRITING_KEYS) if (was.config[key] !== undefined) config[key] = was.config[key];
   }
   node.config = config as GraphNode['config'];
   const element = registry.node(String(node.node_type));

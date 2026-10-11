@@ -23,7 +23,7 @@ function roundStatus(round: RoundSnapshot | null): { label: string; failed: bool
  * afterwards when its gui is used -- its buttons, and the blocks that say
  * they start it -- or it is called.
  *
- * Every host draws the bar: `deployment/gui/RuntimeApp.tsx` for a tool someone
+ * Every host draws the bar: `deployment/gui/GuiApp.tsx` for a tool someone
  * was handed, and the editor's running application (`ApplicationView`).
  */
 export default function DeliveredHeader({ name, description, round, tools, note }: {

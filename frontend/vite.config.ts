@@ -10,7 +10,7 @@ import os from 'os'
  * licence text. Most of them (MIT, ISC, BSD) are given on condition that their
  * notice goes with every copy, and a minified build keeps hardly any of it.
  * Each page links the file (`rel="license"`), which is also how a deploy
- * bundle, carrying what `runtime.html` references, comes to carry it.
+ * bundle, carrying what `gui.html` references, comes to carry it.
  */
 function licenses(): Plugin {
   const folderOf = (name: string): string =>
@@ -66,13 +66,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       // Two entry points, one bundle of shared chunks: index.html is the
-      // editor, runtime.html is what a deployed graph serves (see
-      // deployment/gui/RuntimeApp.tsx). They share every widget component, which
+      // editor, gui.html is what a deployed graph serves (see
+      // deployment/gui/GuiApp.tsx). They share every widget component, which
       // is the point -- a deployed tool renders through the same code the
       // designer previewed.
       input: {
         index: path.resolve(__dirname, 'index.html'),
-        runtime: path.resolve(__dirname, 'runtime.html'),
+        gui: path.resolve(__dirname, 'gui.html'),
       },
     },
   },

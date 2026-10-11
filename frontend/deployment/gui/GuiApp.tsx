@@ -7,7 +7,7 @@ import type { InterfaceEntry } from '../../../graph/interface.ts';
 import { connectionsOf, type GuiDesign } from './surface/guiInUse';
 import RequirementsDialog from './kit/dialogs/RequirementsDialog';
 import DeliveredHeader from './surface/DeliveredHeader';
-import RuntimeAISettings from './RuntimeAISettings';
+import GuiAISettings from './GuiAISettings';
 import { call } from './kit/api/client';
 import { roundGoing, startOver, useSession, watchSession } from './kit/api/session';
 import { errorText } from './kit/api/errorText';
@@ -35,9 +35,9 @@ const designOf = (session: string, revision: number): string => `${session}#${re
  * each widget's `View` -- so a deployed tool cannot look or behave
  * differently from what was designed.
  *
- * Served by the bundle's `backend/deployment/host/serve.ts` at `runtime.html`.
+ * Served by the bundle's `backend/deployment/host/serve.ts` at `gui.html`.
  */
-export default function RuntimeApp() {
+export default function GuiApp() {
   const [design, setDesign] = useState<(GuiDesign & { scheme: string; startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
   const [loadError, setLoadError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -155,7 +155,7 @@ export default function RuntimeApp() {
         />
       </div>
 
-      {showSettings && <RuntimeAISettings onClose={() => setShowSettings(false)} />}
+      {showSettings && <GuiAISettings onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 /**
  * The deployment boundary, asserted on the import graph.
  *
- * A deployed tool is built from `runtime.html` → `deployment/gui/main.tsx`.
+ * A deployed tool is built from `gui.html` → `deployment/gui/main.tsx`.
  * Whatever that entry point can reach, transitively, is in the bundle a
  * recipient downloads; whatever it cannot reach is not there at all. That is
  * why the editing affordances are not switched off with a flag: a flag that is
@@ -106,7 +106,7 @@ describe('deployment boundary', () => {
     // A check on the walker itself: without it, the assertions below could pass
     // because nothing was found rather than because nothing is wrong.
     expect(BY_PATH.has('deployment/gui/main.tsx')).toBe(true);
-    expect(reachable.has('deployment/gui/RuntimeApp.tsx')).toBe(true);
+    expect(reachable.has('deployment/gui/GuiApp.tsx')).toBe(true);
     expect(reachable.has('deployment/gui/surface/GuiSurface.tsx')).toBe(true);
     expect(reachable.size).toBeGreaterThan(10);
     expect(reachable.has('deployment/gui/surface/blocks.ts')).toBe(true);

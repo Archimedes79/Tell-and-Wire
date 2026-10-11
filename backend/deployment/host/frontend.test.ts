@@ -23,7 +23,7 @@ describe('a project\'s own frontend', () => {
     await cp(EXAMPLE, dir, { recursive: true });
     await writeFile(join(dir, 'frontend', 'style.css'), 'body { color: red }');
     const guiDir = await mkdtemp(join(tmpdir(), 'built-'));
-    await writeFile(join(guiDir, 'runtime.html'), '<title>built</title>');
+    await writeFile(join(guiDir, 'gui.html'), '<title>built</title>');
     const one = await serve({ graphPath: dir, guiDir, port: 0, gui: guiPart });
     served.push(one);
     expect(await (await fetch(`${one.url}/`)).text()).toContain('<title>Nested statistics</title>');

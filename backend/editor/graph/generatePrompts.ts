@@ -12,7 +12,7 @@ import { textOutput, type Definitions } from '../../../graph/files/definition.ts
 import { names } from '../../../graph/wiring.ts';
 import { ALL_FIELDS, BEFORE, ROUND } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { Graph } from '../../../graph/graph.ts';
-import { withoutAuthoring } from '../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../graph/editor/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
 import type { Refine } from '../host/api.ts';
 
@@ -304,12 +304,12 @@ export const OUTGROWN = 'if the change needs other outputs, the Output chat chan
  * model writes, and the whole document back. Asked for a patch, a model makes
  * up a format of its own; asked for the document it knows, it keeps what it
  * was shown. Shown what runs, not how each node was written
- * (`withoutAuthoring`): a node's history is up to half a megabyte of earlier
+ * (`withoutWriting`): a node's history is up to half a megabyte of earlier
  * prompts, and none of it is the model's to change.
  */
 export function changePrompt(current: Graph, description: string): string {
   return [
-    `This is the graph as it is now:\n\`\`\`json\n${JSON.stringify(withoutAuthoring(current), null, 2)}\n\`\`\``,
+    `This is the graph as it is now:\n\`\`\`json\n${JSON.stringify(withoutWriting(current), null, 2)}\n\`\`\``,
     `Change it as follows:\n${description}`,
     'Answer with the whole graph after the change, as one complete document of the same shape. Keep every '
       + 'node\'s id, and keep everything the change does not touch -- nodes, wires, positions, labels, settings, '

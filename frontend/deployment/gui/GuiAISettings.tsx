@@ -13,7 +13,7 @@ import { ACCENT_FILL, ACCENT_TEXT, DIM, MUTED } from './kit/ui/theme';
  * gui that wrote credentials would put a key in a file nobody asked for. The
  * server has no route for saving them, and says why in `serve.ts`.
  */
-export default function RuntimeAISettings({ onClose }: { onClose: () => void }) {
+export default function GuiAISettings({ onClose }: { onClose: () => void }) {
   const [settings, setSettings] = useState<ToolAiSettings | null>(null);
   const [error, setError] = useState('');
 

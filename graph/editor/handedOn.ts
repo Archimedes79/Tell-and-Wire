@@ -15,17 +15,17 @@ import type { Graph } from '../graph.ts';
 import { registry } from '../nodes/registry.ts';
 
 /** A node's settings that only writing it needs. */
-export const AUTHORING_KEYS = ['history', 'input_files', 'output_files'] as const;
+export const WRITING_KEYS = ['history', 'input_files', 'output_files'] as const;
 
-/** A copy of *graph* without what only writing it needs (`AUTHORING_KEYS`), in the graphs its nodes hold too. */
-export function withoutAuthoring(graph: Graph): Graph {
+/** A copy of *graph* without what only writing it needs (`WRITING_KEYS`), in the graphs its nodes hold too. */
+export function withoutWriting(graph: Graph): Graph {
   const copy = JSON.parse(JSON.stringify(graph)) as Graph;
   for (const node of copy.nodes) {
     const config = node.config as Record<string, unknown>;
-    for (const key of AUTHORING_KEYS) delete config[key];
+    for (const key of WRITING_KEYS) delete config[key];
     const element = registry.node(node.node_type);
     const inside = element?.nestedGraph(node);
-    if (inside) element!.setNestedGraph(node, withoutAuthoring(inside));
+    if (inside) element!.setNestedGraph(node, withoutWriting(inside));
   }
   return copy;
 }
