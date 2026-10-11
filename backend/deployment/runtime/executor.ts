@@ -190,13 +190,13 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   };
 
   const outputs = new Map<string, Record<string, unknown>>();
+  // What each memory node was handed when it ran: what it is filled from, however its source has changed since (a memory read from a later card).
+  const handed = new Map<string, Record<string, unknown>>();
   // A memory a wire reads round a loop has not run when that wire is read: it hands on what it held when the round began.
   for (const id of new Set(edges.filter((e) => reads.has(e.id)).map((e) => e.source_node_id))) {
     const node = byId.get(id)!;
     outputs.set(id, await runners.node(node.node_type)!.execute(node, {}, runtime));
   }
-  // What those were handed, kept apart from what they hand on once they have run: a wire that reads them is settled from this.
-  const asHeld = new Map(outputs);
   // Nodes whose outputs this round are the ones they were left holding: not
   // run, so not settled into memory again and not a reason for anything to run.
   const held = new Set<string>();
@@ -305,6 +305,11 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       // What a node that remembers is not handed: the nulls of a source that failed and caught it -- "nothing arrived", not a value to keep.
       const inputs = collectInputs(nodeId, edges, outputs, node.inputs,
         (e) => !(element.isMemory && caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
+      // What it keeps is what arrived on wires whose source made something for the port, as it arrived now.
+      if (element.isMemory) {
+        handed.set(nodeId, collectInputs(nodeId, edges, outputs, node.inputs,
+          (e) => e.source_port_id in (outputs.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT)));
+      }
 
       // The ◆ is a gate. Wired, it must be opened by this round: by the event
       // the round began with, or by a `true` some node computed in it. Shut,
@@ -394,7 +399,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // What stood still is not news: a reply held from the last round must not be
   // added to the conversation a second time, nor handed back as this round's result.
   for (const nodeId of held) outputs.delete(nodeId);
-  settleMemory(graph, outputs, results, registry, caught, reads, asHeld);
+  settleMemory(graph, handed, results, registry);
 
   const status: ExecutionResult['status'] = signal?.aborted
     ? 'cancelled'
@@ -821,31 +826,21 @@ async function runNode(
  * nobody works the same thing out a second time.
  *
  * Per port, as the round delivers: a port fed by several wires keeps the list
- * of what arrived on them, not whichever wire came last. A wire that reads a
- * memory brings what it held when the round began (*asHeld*), not what it
- * holds now: otherwise a register that keeps the value before would keep the
- * value it was just filled with.
+ * of what arrived on them, not whichever wire came last.
  */
 function settleMemory(
   graph: Graph,
-  outputs: Map<string, Record<string, unknown>>,
+  handed: Map<string, Record<string, unknown>>,
   results: NodeResult[],
   registry: Kinds,
-  caught: Set<string>,
-  reads: Set<string>,
-  asHeld: Map<string, Record<string, unknown>>,
 ): void {
   const took = new Set(results.filter((r) => (r.status === 'success' || r.status === 'partial') && !r.held).map((r) => r.node_id));
   for (const target of graph.nodes) {
     const element = registry.node(target.node_type);
     if (!element?.isMemory || !took.has(target.id)) continue;
-    const seen = new Map(outputs);
-    for (const edge of graph.edges) {
-      if (edge.target_node_id === target.id && reads.has(edge.id) && outputs.has(edge.source_node_id)) seen.set(edge.source_node_id, asHeld.get(edge.source_node_id)!);
-    }
-    // What a node that caught its failure put on its ports is "nothing arrived", not a value to keep: a counter would go 6, null, 1.
-    const arrived = collectInputs(target.id, graph.edges, seen, target.inputs,
-      (e) => e.source_port_id in (seen.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
+    // As handed to it when it ran, not worked out again from what every node made by the end: a source that ran later had made something else by then.
+    // (What a node that caught its failure put on its ports was left out then: "nothing arrived", not a value to keep.)
+    const arrived = handed.get(target.id) ?? {};
     for (const [port, value] of Object.entries(arrived)) if (value !== undefined) element.settleMemory(target, port, value);
   }
 }
