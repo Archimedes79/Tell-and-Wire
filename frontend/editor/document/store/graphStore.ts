@@ -493,9 +493,13 @@ export const useGraphStore = create<GraphStore>()(
     save: async (path = get().currentFilePath ?? undefined, { replace = false, name } = {}) => {
       if (!path) throw new Error('This graph has no file yet: use Save As.');
       flushPanels();
+      // The document this write is of: another one may be open by the time the server answers.
+      const opened = get().opened;
       const root = get().rootGraph();
       const graph = name ? { ...root, metadata: { ...root.metadata, name } } : root;
       const result = await call('saveGraph', { path, graph, replace: replace || path === get().currentFilePath });
+      // A late answer is no business of a document opened since: it is not saved to this path, and not named.
+      if (get().opened !== opened) return { path: result.path };
       set((state) => {
         // The name is the tool's -- the graph at the top -- whichever level the canvas shows.
         if (name) {

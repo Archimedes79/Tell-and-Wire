@@ -1,8 +1,10 @@
 // Going into the graph a node holds, and out again: the frames of the levels
 // the canvas is inside, each with the undo history of its own level.
 
-import type { Graph } from '../graph';
+import type { Edge } from 'reactflow';
+import type { Graph, GraphNode } from '../graph';
 import { withNested } from '../model/graphDoc';
+import { pruneDangling } from '../model/wires';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { HISTORY_LIMIT } from './history';
 import { flushPanels } from './flushPanels';
@@ -60,6 +62,9 @@ export function subgraphActions(
         // to this node. Without it the first Ctrl+Z after coming out would
         // restore the graph as it was before going in -- an hour of work, one
         // keystroke, and nothing to say it was about to happen.
+        // The node's ports follow the graph it holds: a wire to one that is gone goes with it, as it does when a node's ports change by hand.
+        const holder = state.rfNodes.find((item) => item.id === frame.nodeId)?.data.graphNode as GraphNode | undefined;
+        if (holder) state.rfEdges = pruneDangling(state.rfEdges as Edge[], holder);
         state.past = changed ? [...frame.past, before].slice(-HISTORY_LIMIT) : frame.past;
         state.future = changed ? [] : frame.future;
         state.document += 1;

@@ -45,6 +45,17 @@ describe('saving the document', () => {
     expect(store().isDirty()).toBe(false);
   });
 
+  it('leaves a document opened meanwhile alone: the answer to a write is of the document that was written', async () => {
+    store().addNode('code', { x: 0, y: 0 });
+    const saving = store().save('old_tool', { name: 'old_tool' });
+    store().newGraph();
+    writes[0].finish();
+    expect(await saving).toEqual({ path: '/abs/old_tool' });
+    expect(store().currentFilePath).toBeNull();
+    expect(store().metadata.name).toBe(defaultName);
+    expect(store().isDirty()).toBe(false);
+  });
+
   it('marks nothing saved, and renames nothing, when the write fails or is refused', async () => {
     // A Save as refused because a project is already there left the graph called by the new name all the same.
     store().addNode('code', { x: 0, y: 0 });
