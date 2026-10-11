@@ -32,6 +32,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import { mergeResults, type ExecutionResult, type Graph } from '../../../graph/graph.ts';
 import { triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
 import { NotOffered, applySent, checkSent, interfaceOf, memoryState, outputsOf, sentOf, stateOf } from '../../../graph/interface.ts';
@@ -194,7 +195,7 @@ export class Session {
     const session = new Session(typeof kept?.session === 'string' ? kept.session : randomUUID(), graph, options);
     if (kept) session.recall(kept);
     await session.core.open(session.held);
-    if (unreadable) session.notes = [`${file} could not be read: this session starts with nothing kept.`];
+    if (unreadable) session.notes = [`${basename(file!)} could not be read: this session starts with nothing kept.`];
     return session;
   }
 

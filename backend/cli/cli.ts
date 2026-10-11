@@ -240,7 +240,7 @@ async function runServer(options: CliOptions): Promise<number> {
   // whoever reaches it, asking nobody who they are: beyond this machine that is
   // said out loud, not left to a flag typed in passing. A container opts in
   // (its loopback is its own); a tool the editor is not serving needs no opt-in.
-  if (options.editor && options.host && !isLoopbackHost(options.host) && !process.env.TW_EDITOR_ON_NETWORK) {
+  if (options.editor && options.host && !isLoopbackHost(options.host) && process.env.TW_EDITOR_ON_NETWORK !== '1') {
     throw new Error(
       `The editor runs code, writes files and keeps keys for whoever reaches it, so it is not offered on ${options.host}.`
       + ' If this port cannot be reached by anyone else (a container published on 127.0.0.1), set TW_EDITOR_ON_NETWORK=1.',

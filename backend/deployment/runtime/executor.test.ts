@@ -7,6 +7,7 @@ import { runners } from './nodes/registry.ts';
 import { type Runtime } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { edge, graphOf, node as nodeWith, quietRuntime } from './test/fakes.ts';
+import { derivePorts } from '../project/folder.ts';
 
 function node(id: string, type = 'code', config: Record<string, unknown> = {}): GraphNode {
   return {
@@ -275,5 +276,23 @@ describe('a schedule', () => {
     expect(await ran({ ...graphOf([a, b], []), schedule: ['b', 'a'] })).toEqual(['b', 'a']);
     const wired = { ...graphOf([a, b], [edge('e', 'a', 'out', 'b', 'in')]), schedule: ['b a'] };
     await expect(executeGraph(wired, { runtime: nowhere, registry })).rejects.toThrow(/schedule puts "b" before "a"/);
+  });
+});
+
+describe('a memory that reads a memory', () => {
+  it('keeps what it was handed, not what the memory it read has made since: the one before it in the table is read as it was when the round began', async () => {
+    const step = node('c', 'code', { code: 'x' });
+    step.outputs = [{ id: 'out', name: 'out', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }];
+    const cur = node('cur', 'data', { data_value: { v: 5 } });
+    const prev = node('prev', 'data', { data_value: { v: 0 } });
+    // c writes cur; prev, in the column before cur, reads it.
+    const graph = { ...graphOf([step, cur, prev], [edge('w1', 'c', 'out', 'cur', 'v'), edge('w2', 'cur', 'v', 'prev', 'v')]), schedule: ['c cur', 'prev .'] };
+    derivePorts(graph);
+    const runtime = { ...nowhere, code: { run: async () => ({ out: 7 }) } };
+    const result = await executeGraph(graph, { runtime, registry });
+    expect(result.status).toBe('success');
+    expect(result.node_results.find((one) => one.node_id === 'prev')!.inputs).toEqual({ v: 5 });
+    expect(cur.config.data_value).toEqual({ v: 7 });
+    expect(prev.config.data_value).toEqual({ v: 5 });
   });
 });

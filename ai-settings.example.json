@@ -10,17 +10,7 @@
     "google": "PUT-YOUR-AI-STUDIO-KEY-HERE"
   },
 
-  "mcp_servers": {
-    "files": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "PUT-A-FOLDER-THE-MODEL-MAY-TOUCH-HERE"]
-    },
-    "remote-example": {
-      "url": "https://example.com/mcp",
-      "headers": { "Authorization": "Bearer PUT-A-TOKEN-HERE" }
-    }
-  },
-  "_mcp_servers": "Tool (MCP) servers an AI node may use, keyed by the name a graph refers to them by. An entry is what an MCP server's README gives you for Claude Desktop's \"mcpServers\" -- {command, args, env, cwd} -- or {url, headers} for a server reached over HTTP. A graph can only *name* a server: the command line lives here, on your machine, so opening someone else's graph can never start a program you did not choose. A graph may also give an http(s) URL directly; that gets no headers from this file. The servers that come with Tell & Wire (mcp/) are added from an AI node's settings, which writes their entry here. Delete the two examples if you use neither.",
+  "_mcp_servers": "Tool (MCP) servers are not set here: a project may ship an ai-settings.json, and a command in it would be a program started by opening a graph. They live in this machine's settings file (~/.tell-and-wire/settings.json, or the file TW_SETTINGS names), where an AI node's Add MCP server writes the ones that come with Tell & Wire (mcp/). See mcp/README.md.",
 
   "_writing_ai": "Optional: a second model for writing -- the \u2728 buttons and the bar under the canvas. Left out, the AI above writes too. Example: \"writing_ai\": {\"provider\": \"google\", \"model\": \"gemini-pro-latest\"}",
 

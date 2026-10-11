@@ -4,6 +4,7 @@ import { useGraphStore } from './graphStore';
 import { NODE_KINDS } from '../model/nodeKinds';
 import { nodePanel } from '../../graph/node/nodePanel';
 import { enterGraphOf } from '../../graph/nodes/subgraph/SubgraphNodePanel';
+import { registry } from '../../../../graph/nodes/registry.ts';
 
 // Held here, beside the store it goes in and out of, because the rule is its
 // own: what a node's panel still holds is written into the graph the panel
@@ -33,5 +34,22 @@ describe('going into a node\'s graph from its panel', () => {
     for (const kept of [...part.inputs, ...part.outputs]) {
       expect(Object.getOwnPropertySymbols(kept)).toEqual([]);
     }
+  });
+
+  it('takes the wires of a port that went with the graph it held: closing a node whose end point was deleted leaves none to it', () => {
+    const inner = { metadata: { name: 'In', description: '', gui_scheme: 'night' }, nodes: [NODE_KINDS.start.create('s'), NODE_KINDS.end.create('e')], edges: [] };
+    const part = NODE_KINDS.subgraph.create('part');
+    registry.node('subgraph')!.setNestedGraph(part as never, inner as never);
+    store().loadGraph({ metadata: { name: 'Outer', description: '', gui_scheme: 'night' }, nodes: [part, NODE_KINDS.code.create('after')], edges: [] });
+    const out = stored('part')!.outputs[0];
+    store().connect({ source: 'part', sourceHandle: out.id, target: 'after', targetHandle: 'in' });
+    expect(store().rfEdges).toHaveLength(1);
+
+    store().openSubgraph('part');
+    store().deleteNodes([out.id]);
+    store().closeSubgraph();
+    expect(stored('part')!.outputs).toEqual([]);
+    expect(store().rfEdges).toEqual([]);
+    expect(store().exportGraph().edges).toEqual([]);
   });
 });

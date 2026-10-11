@@ -60,7 +60,12 @@ export function zip(entries: ZipEntry[]): Buffer {
   let offset = 0;
 
   for (const entry of entries) {
-    const name = Buffer.from(entry.path.replace(/\\/g, '/'), 'utf8');
+    const path = entry.path.replace(/\\/g, '/');
+    // A name that climbs out of the folder it is unpacked into is not an entry: whoever unzips it may not sanitise it.
+    if (path.split('/').includes('..') || path.startsWith('/') || /^[A-Za-z]:/.test(path)) {
+      throw new Error(`"${entry.path}" would be unpacked outside the folder the archive is opened in.`);
+    }
+    const name = Buffer.from(path, 'utf8');
     const packed = deflateRawSync(entry.content);
     const crc = crc32(entry.content);
     const common = Buffer.concat([

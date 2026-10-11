@@ -45,17 +45,15 @@ describe('saving the document', () => {
     expect(store().isDirty()).toBe(false);
   });
 
-  it('tells nothing of itself to the document that was opened while it was on its way', async () => {
+  it('leaves a document opened meanwhile alone: the answer to a write is of the document that was written', async () => {
     store().addNode('code', { x: 0, y: 0 });
-    const saving = store().save('graph', { name: 'graph' });
+    const saving = store().save('old_tool', { name: 'old_tool' });
     store().newGraph();
-    store().addNode('end', { x: 0, y: 0 });
     writes[0].finish();
-    expect(await saving).toEqual({ path: '/abs/graph' });
-    // The new document is nobody's file yet and is not saved: Ctrl+S would have written over the other one.
+    expect(await saving).toEqual({ path: '/abs/old_tool' });
     expect(store().currentFilePath).toBeNull();
     expect(store().metadata.name).toBe(defaultName);
-    expect(store().isDirty()).toBe(true);
+    expect(store().isDirty()).toBe(false);
   });
 
   it('marks nothing saved, and renames nothing, when the write fails or is refused', async () => {

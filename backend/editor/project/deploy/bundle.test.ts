@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { link, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -83,6 +83,19 @@ describe('a bundle', () => {
       });
       await writeBundle(graph, dir, { dataFrom: source });
       expect(await readdir(join(dir, 'data'))).toEqual(['a.csv']);
+
+      // Nor under another name: the machine's settings file may be named anything, and a link to it is still it.
+      await writeFile(join(source, 'data', 'machine.json'), '{"api_keys":{"openai":"sk-live-NOT-IN-A-BUNDLE"}}');
+      await link(join(source, 'data', 'machine.json'), join(source, 'data', 'copy.txt'));
+      process.env.TW_SETTINGS = join(source, 'data', 'machine.json');
+      const again = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+      try {
+        await writeBundle(graph, again, { dataFrom: source });
+        expect(await readdir(join(again, 'data'))).toEqual(['a.csv']);
+      } finally {
+        delete process.env.TW_SETTINGS;
+        await rm(again, { recursive: true, force: true });
+      }
     } finally {
       await rm(dir, { recursive: true, force: true });
       await rm(source, { recursive: true, force: true });

@@ -6,7 +6,7 @@ heading or a paragraph, each saying which section it is in.
 
 It is a separate program with its own folder and packages (see [../README.md](../README.md)).
 It comes with the download; a deployed tool does not carry it. A graph can only *name* it: what
-starts it is written in `ai-settings.json` on your machine.
+starts it is written in this machine's settings file (`~/.tell-and-wire/settings.json`, or the file `TW_SETTINGS` names).
 
 ## Use it
 
@@ -16,7 +16,7 @@ already has them), starts the server once to see that it starts, and puts `web` 
 **Edit config** shows its settings page: how long it waits, the largest page, and the two
 switches below.
 
-By hand, in a copy of the repository: `cd mcp/web && npm ci`, then in `ai-settings.json`
+By hand, in a copy of the repository: `cd mcp/web && npm ci`, then in that settings file
 
 ```json
 {

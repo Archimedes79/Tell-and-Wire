@@ -7,7 +7,7 @@
 // server's settings are set (`frontend/editor/graph/nodes/ai/ToolServerDialogs.tsx`); the editor
 // itself knows nothing of what a setting is.
 //
-// Setting one up writes an entry into the machine's `ai-settings.json`, the
+// Setting one up writes an entry into the machine's settings file (`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`), the
 // same entry a person would write by hand: a command, its arguments, its
 // folder, its environment. A graph still only *names* the server (see
 // `backend/deployment/runtime/ai/mcp.ts`); this is the one place a command line is written for it,
@@ -142,7 +142,7 @@ async function installed(folder: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// The entry in ai-settings.json
+// The entry in the machine's settings file
 // ---------------------------------------------------------------------------
 
 const same = (a: string, b: string): boolean => (process.platform === 'win32' ? resolve(a).toLowerCase() === resolve(b).toLowerCase() : resolve(a) === resolve(b));
@@ -206,7 +206,7 @@ export async function save(
   const one = await server(name, root);
   const listed = configuredMcpServers(env);
   if (Object.prototype.hasOwnProperty.call(listed, name) && !isOurs(listed[name], one.folder)) {
-    throw new Refusal(409, `ai-settings.json already has a tool server called "${name}" that is not this one. Edit it there, or take its entry out first.`);
+    throw new Refusal(409, `The machine's settings file already has a tool server called "${name}" that is not this one. Edit it there, or take its entry out first.`);
   }
 
   const held: Record<string, string> = {};
