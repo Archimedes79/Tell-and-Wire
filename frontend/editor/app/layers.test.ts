@@ -59,9 +59,10 @@ const AREAS: [string, number, ...string[]][] = [
   ['canvas', 6, 'editor/graph/canvas/'],
   ['node', 6, 'editor/graph/node/'],
   ['the app', 7, 'editor/app/', 'editor/document/'],
+  ['notebook', 7.5, 'editor/windows/'],
   ['App', 8, 'editor/app/App.tsx'],
   ['deployed app', 8, 'deployment/gui/'],
-  ['main', 9, 'editor/app/main.tsx'],
+  ['main', 9, 'editor/app/main.tsx', 'editor/windows/main.tsx'],
 ];
 const SIBLINGS = new Set(ELEMENTS.flatMap((from) => ELEMENTS.map((to) => `${from}>${to}`)));
 

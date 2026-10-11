@@ -73,6 +73,7 @@ export default defineConfig({
       input: {
         index: path.resolve(__dirname, 'index.html'),
         gui: path.resolve(__dirname, 'gui.html'),
+        notebook: path.resolve(__dirname, 'notebook.html'),
       },
     },
   },

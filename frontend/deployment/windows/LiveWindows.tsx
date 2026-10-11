@@ -15,11 +15,12 @@ const designValues = (blocks: readonly GuiWidget[]) => new Map(blocks.map((block
  * and where each window stands (ready, running, done, out of date). Like `LiveGui`, it listens to the
  * session for itself.
  */
-const LiveWindows = memo(function LiveWindows({ design, onEvent, cell, decorate }: {
+const LiveWindows = memo(function LiveWindows({ design, onEvent, cell, decorate, only }: {
   design: GuiDesign;
   onEvent: (block: GuiWidget) => void;
   cell?: number;
   decorate?: Decoration;
+  only?: string;
 }) {
   const view = useSession((s) => s.view);
   const edits = useSession((s) => s.edits);
@@ -47,6 +48,7 @@ const LiveWindows = memo(function LiveWindows({ design, onEvent, cell, decorate 
       states={states}
       cell={cell}
       decorate={decorate}
+      only={only}
     />
   );
 });

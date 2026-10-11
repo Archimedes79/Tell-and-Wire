@@ -200,7 +200,7 @@ export const resultsOf = (step: Step): string[] => (step.results?.length ? step.
 export const stepNode = (window: Window, step: Step): string => `${window.id}_${idOf(step.name)}`;
 /** The id of the end point of output *one*, which is also its block. */
 export const outEnd = (window: Window, one: WindowOut): string => `${window.id}_out_${idOf(one.name)}`;
-const inBlock = (window: Window, one: WindowIn): string => `${window.id}_in_${idOf(one.name)}`;
+export const inBlock = (window: Window, one: WindowIn): string => `${window.id}_in_${idOf(one.name)}`;
 
 /** The port a result leaves its node by: `output` while an ai node makes only the one, as its answer does. */
 const resultPort = (step: Step, result: string): string => (step.how === 'ai' ? 'output' : idOf(result));

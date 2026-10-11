@@ -32,7 +32,7 @@ export interface Decoration {
  * It knows no editor. An editor draws chrome on it through *decorate*, and says a size for the cell
  * when it has less room than a page (*cell*); without one the cell is the page's own.
  */
-export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell, decorate }: {
+export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell, decorate, only }: {
   gui: GuiModel;
   onValue: (block: GuiWidget, value: unknown) => void;
   onEvent: (block: GuiWidget) => void;
@@ -41,11 +41,15 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
   /** A cell of this many pixels, in place of one a sixteenth of the page. */
   cell?: number;
   decorate?: Decoration;
+  /** Draw only the window of this id, on a page as wide as it is: an editor that opens one beside its cells. */
+  only?: string;
 }) {
   const measured = useContainerCell();
   const cell = fixedCell ?? measured.cell;
   const narrow = fixedCell === undefined && measured.narrow;
-  const windows = pageWindows(gui.blocks);
+  const windows = pageWindows(gui.blocks).filter((window) => only === undefined || window.id === only);
+  // A page of one window is as many cells wide as the window is, so it is as large as the cell lets it be.
+  const columns = only !== undefined && windows[0] ? windows[0].span : GUI_GRID_COLUMNS;
 
   const keep = (block: GuiWidget, value: unknown) => {
     if (value !== undefined && gui.takes(block)) onValue(block, value);
@@ -57,7 +61,7 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
 
   const page: React.CSSProperties = fixedCell === undefined
     ? gridStyle(cell, narrow)
-    : { ...gridStyle(cell), width: GUI_GRID_COLUMNS * cell + (GUI_GRID_COLUMNS - 1) * GUI_GAP, maxWidth: 'none', margin: 0 };
+    : { ...gridStyle(cell), gridTemplateColumns: `repeat(${columns}, 1fr)`, width: columns * cell + (columns - 1) * GUI_GAP, maxWidth: 'none', margin: 0 };
 
   return (
     <div className="flex-1 overflow-auto px-8 py-6">
@@ -71,7 +75,7 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
               data-window={window.id}
               aria-label={window.title}
               style={{
-                gridColumn: `span ${narrow ? GUI_GRID_COLUMNS : window.span}`,
+                gridColumn: `span ${narrow ? columns : window.span}`,
                 position: 'relative', boxSizing: 'border-box', minWidth: 0,
                 padding: 12, borderRadius: 16, border: `1px solid ${LINE}`, background: SURFACE,
                 ...extra?.style,
