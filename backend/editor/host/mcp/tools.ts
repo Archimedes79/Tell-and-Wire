@@ -30,6 +30,7 @@ import {
 import { saveGraph as saveToDisk } from '../../project/write.ts';
 import { problemsIn } from '../../../../gui/editor/check.ts';
 import { completeGui } from '../../../../gui/editor/complete.ts';
+import { tableFor, tableLines } from '../../../../graph/schedule.ts';
 import { folderProblems } from '../../project/folderCheck.ts';
 import { BadDocument, Refused, SKIPPED_FOLDERS, confinement, scrubber } from './confine.ts';
 import { ERROR_LIMIT, MAX_DESCRIPTION_CHARS, MAX_GRAPH_BYTES, SPECS, VALUE_LIMIT, graphGuide } from './spec.ts';
@@ -276,6 +277,8 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
 
       const graph = graphFrom(generated.graph, 'the generated document');
       completeGui(graph, registry);
+      // The table the project had (`keptFrom`) is made to hold for the nodes the answer has: one it added comes in at the left, one it removed leaves.
+      if (graph.schedule) graph.schedule = tableLines(tableFor(graph.nodes, graph.edges, registry, graph.schedule));
       const report: Record<string, unknown> = { model: `${target.provider} / ${target.model}` };
       if (args.save_as !== undefined) {
         const { saved, problems } = await saveGraph(args.save_as, 'save_as', graph);
