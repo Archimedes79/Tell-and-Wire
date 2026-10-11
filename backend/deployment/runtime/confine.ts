@@ -12,7 +12,7 @@
 // The folder is the working directory: a deployed tool and the MCP server run
 // in their project folder, and the editor in the folder it was started in.
 
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { candidatePaths } from './ai/settings.ts';
 import { ownPathProblem } from '../../../graph/nodes/ownPath.ts';
@@ -36,6 +36,23 @@ function real(path: string): string {
   return join(realpathSync(head), rest);
 }
 
+/**
+ * Whether *a* and *b* are one file, however each is spelled. The names alone
+ * do not say: on Windows `ai-settings.json.` and a short name open the same file,
+ * and on a disk that ignores case so does `AI-Settings.json`; a hard link is
+ * the same file under another name. A file that is not there is only its name.
+ */
+function sameFile(a: string, b: string): boolean {
+  if (relative(a, b) === '') return true;
+  try {
+    const one = statSync(a, { bigint: true });
+    const other = statSync(b, { bigint: true });
+    return one.ino !== 0n && one.ino === other.ino && one.dev === other.dev;
+  } catch {
+    return false;
+  }
+}
+
 /** *path* resolved below the working directory, or an error saying why a graph may not name it. */
 export function inProject(path: string): string {
   const problem = ownPathProblem(path);
@@ -55,7 +72,7 @@ export function confineEverything(on = true): void {
 /** *path*, if a file service may touch it at all; else an error. */
 export function reachable(path: string): string {
   const here = real(path);
-  if (candidatePaths().some((key) => relative(real(key), here) === '')) throw new Error("A file that holds keys or a command to start (the settings) is not for a graph to touch.");
+  if (candidatePaths().some((key) => sameFile(real(key), here))) throw new Error("A file that holds keys or a command to start (the settings) is not for a graph to touch.");
   if (everything && !inside(real('.'), here)) throw new Error(`"${path}" is outside the folder this tool runs in, which a tool served beyond this machine may not touch.`);
   return path;
 }

@@ -62,7 +62,7 @@ export class Latch {
     const byId = new Map(graph.nodes.map((candidate) => [candidate.id, candidate]));
     const made = [...upstreamOf(graph, [node.id], new Set())].sort().map((id) => {
       const from = byId.get(id);
-      return from ? [from.id, from.node_type, keepsItsOwn(from) ? null : from.config, from.inputs, from.outputs] : [id];
+      return from ? [from.id, from.node_type, from.label, from.description, keepsItsOwn(from) ? null : from.config, from.inputs, from.outputs] : [id];
     });
     const key = createHash('sha256').update(JSON.stringify([graphKey(graph), node.id, made])).digest('hex');
     // Asked for far more often than kept: what nothing was kept under is let go -- before this one is added, which nothing is kept under yet.

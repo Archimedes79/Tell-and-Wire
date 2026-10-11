@@ -10,7 +10,6 @@
 
 import { isStruct, type Graph, type GraphEdge, type GraphNode } from '../../graph/graph.ts';
 import { loopNodes } from '../../graph/order.ts';
-import { placesOf } from '../../graph/schedule.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
 import { widgetElement } from '../gui.ts';
 import { fieldSender, guiProblems, showsMemory } from './gui.ts';
@@ -126,7 +125,8 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
   // With two nodes sharing an id the ordering cannot be trusted either way, and
   // the duplicate is the thing to fix first.
   if (new Set(graph.nodes.map((node) => node.id)).size === graph.nodes.length) {
-    const loop = loopNodes(graph.nodes, graph.edges, registry, placesOf(graph));
+    // As wired, not as the table stands: a loop a data node closes but the table puts the wrong way round is the table's, said for the wire that stands wrong.
+    const loop = loopNodes(graph.nodes, graph.edges, registry);
     if (loop.length) {
       problems.push({
         where: `${inside}nodes ${names(loop.map((node) => node.id))}`,

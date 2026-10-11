@@ -79,13 +79,18 @@ const PORTS_TRIED = 10;
 
 /** *values* with *value* put at the dotted *name*: `file.content` inside `file`. */
 function put(values: Record<string, unknown>, name: string, value: string): void {
+  // Own keys only, defined rather than assigned: `__proto__.x=1` would otherwise reach the object every object shares.
+  const own = (into: Record<string, unknown>, key: string, held: unknown): void => {
+    Object.defineProperty(into, key, { value: held, enumerable: true, writable: true, configurable: true });
+  };
   const keys = name.split('.');
   let inner = values;
   for (const key of keys.slice(0, -1)) {
-    if (!inner[key] || typeof inner[key] !== 'object') inner[key] = {};
+    const held = Object.prototype.hasOwnProperty.call(inner, key) ? inner[key] : undefined;
+    if (!held || typeof held !== 'object') own(inner, key, {});
     inner = inner[key] as Record<string, unknown>;
   }
-  inner[keys[keys.length - 1]] = value;
+  own(inner, keys[keys.length - 1], value);
 }
 
 export function parseArgs(argv: string[]): CliOptions {

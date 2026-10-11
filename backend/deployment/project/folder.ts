@@ -300,7 +300,7 @@ const folderKeys = new Map<string, string>();
  * link, a short name), and without case where the disk has none (Windows) --
  * `C:\x` and `c:\x` are one project.
  */
-function keyOf(path: string): string {
+export function keyOf(path: string): string {
   const folder = dirname(path);
   let real = folderKeys.get(folder);
   if (real === undefined) {
@@ -483,8 +483,7 @@ export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
   if (folder) return readProject(folder, guard);
   if (!existsSync(full)) throw new NotFound(`Nothing at ${full}`);
   if (statSync(full).isDirectory()) {
-    const older = existsSync(join(full, 'flow.json')) ? ` It has a flow.json: that is the format of an older version. Rename flow.json, nodes.json and page.json to ${FLOW_FILE}, ${NODES_FILE} and ${GUI_FILE}, and drop layout.json: the nodes are placed from their wires until there is a ${SCHEDULE_FILE}.` : '';
-    throw new NotAGraph(`${full} is a folder without a ${FLOW_FILE}: not a project.${older}`);
+    throw new NotAGraph(`${full} is a folder without a ${FLOW_FILE}: not a project.`);
   }
   await guard?.(full);
   return asGraph(await readJson(full, 'graph'), full);

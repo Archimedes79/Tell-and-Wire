@@ -13,6 +13,9 @@ describe('parseArgs', () => {
     expect(options.values).toEqual({ a: '1', file: { content: 'a,b', path: 'a.csv' }, q: 'x=y' });
     expect(options.event).toBe('go');
     expect(() => parseArgs(['g.json', '--ai-force'])).toThrow(/Unknown option "--ai-force"/);
+    // A name is a key of the values, not a way into the prototype every object shares.
+    parseArgs(['g.json', '--value', '__proto__.polluted=1', '--value', 'constructor.prototype.polluted=1']);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 
   it('does not take the next option for the value of --editor, --host, --bundle or --mcp-root', () => {

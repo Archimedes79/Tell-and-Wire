@@ -139,7 +139,7 @@ export async function readKeptRounds(folder: string): Promise<{ name: string; ro
     const name = file.slice(0, -'.json'.length);
     try {
       const read = JSON.parse(await readFile(join(dir, file), 'utf8')) as KeptRound;
-      if (!read || typeof read !== 'object' || typeof read.given !== 'object' || typeof read.outputs !== 'object') {
+      if (!read || typeof read !== 'object' || !read.given || typeof read.given !== 'object' || !read.outputs || typeof read.outputs !== 'object') {
         return { name, round: null, problem: 'It is not a kept round: it needs "event", "given" and "outputs".' };
       }
       return { name, round: { ...read, event: read.event ?? null } };

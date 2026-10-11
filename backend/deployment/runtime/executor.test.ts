@@ -38,7 +38,7 @@ describe('a loop', () => {
     // while the node waits for the step, which is a cycle, said with the way out.
     expect([...readingWires([store, step], loop, registry, new Map([['step', 0], ['store', 1]]))]).toEqual(['read']);
     expect(() => topologicalLevels([store, step], loop, registry, new Map([['store', 0], ['step', 1]])))
-      .toThrow(/cycle through data node "store", code node "step".*runs before it/);
+      .toThrow(/cycle through data node "store", code node "step".*the schedule stands the node that reads it after it/);
     const graph = graphOf([store, step], loop);
     const runtime = { ...nowhere, code: { run: async (_body: string, inputs: Record<string, unknown>) => ({ output: `${String(inputs.input)}+` }) } };
     const first = await executeGraph(graph, { runtime, registry });
@@ -76,8 +76,23 @@ describe('a loop', () => {
     for (const one of [no, writer]) one.outputs = step.outputs;
     const shut = graphOf([no, writer, shy], [edge('when', 'no', 'output', 'shy', '__run'), edge('put2', 'writer', 'output', 'shy', 'value')]);
     const says = { ...nowhere, code: { run: async (body: string) => ({ output: body === 'no' ? false : 'written' }) } };
-    await executeGraph(shut, { runtime: says, registry });
+    const shutRound = await executeGraph(shut, { runtime: says, registry });
     expect(shy.config.data_value).toEqual({ value: 'old' });
+    // It stands on what it holds, not on nothing: whatever reads it still gets the content.
+    expect(shutRound.node_results.find((result) => result.node_id === 'shy')).toMatchObject({ status: 'skipped', outputs: { value: 'old' } });
+
+    // A register that keeps the value before: it reads its own field as the round began, so what it settles is the old count, not the one just filled.
+    const register = node('register', 'data', { data_value: { count: 0, prev: 0 } });
+    const bump = node('bump', 'code', { code: 'bump', language: 'js' });
+    bump.inputs = step.inputs;
+    bump.outputs = step.outputs;
+    const counting = graphOf([bump, register], [
+      edge('now', 'register', 'count', 'bump', 'input'), edge('up', 'bump', 'output', 'register', 'count'), edge('before', 'register', 'count', 'register', 'prev'),
+    ]);
+    const adds = { ...nowhere, code: { run: async (_body: string, inputs: Record<string, unknown>) => ({ output: Number(inputs.input) + 1 }) } };
+    await executeGraph(counting, { runtime: adds, registry });
+    await executeGraph(counting, { runtime: adds, registry });
+    expect(register.config.data_value).toEqual({ count: 2, prev: 1 });
 
     // A port that takes one value of what arrives takes that value, as the node fills from it and as it is kept.
     const picky = node('picky', 'data', { data_value: { value: 'old' } });

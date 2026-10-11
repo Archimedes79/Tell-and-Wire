@@ -163,9 +163,15 @@ describe('reusing context', () => {
     await executeGraph(modelThenShape('goodbye'), { runtime: counting, registry, trigger: choose, reuse });
     expect(asked).toBe(2);
 
+    // The words of a node are part of what it was asked: another description is another question.
+    const reworded = modelThenShape('goodbye');
+    reworded.nodes.find((one) => one.id === 'model')!.description = 'answer in French';
+    await executeGraph(reworded, { runtime: counting, registry, trigger: choose, reuse });
+    expect(asked).toBe(3);
+
     // A whole-graph run asks again, and so does a round with nowhere to keep results.
     await executeGraph(modelThenShape('goodbye'), { runtime: counting, registry, reuse });
     await executeGraph(modelThenShape('goodbye'), { runtime: counting, registry, trigger: choose });
-    expect(asked).toBe(4);
+    expect(asked).toBe(5);
   });
 });

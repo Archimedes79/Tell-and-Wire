@@ -154,9 +154,13 @@ export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], regist
   const { levels, stuck } = levelsOf(nodes, pairs);
   if (stuck.size) {
     const round = inLoop(nodes, pairs, stuck);
+    const closed = columns && round.some((one) => registry.node(one.node_type)?.isMemory === true);
     throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
-      + 'A loop is only allowed through a data node: write the value into one, and wire it back to the node that reads it, '
-      + 'which runs before it -- that wire carries what the data node held when the round began.');
+      + (closed
+        ? 'A data node is in it, but the schedule stands the node that reads it after it: put that node in a column before the data node, '
+          + 'and the wire back carries what the data node held when the round began.'
+        : 'A loop is only allowed through a data node: write the value into one, and wire it back to the node that reads it, '
+          + 'which runs before it -- that wire carries what the data node held when the round began.'));
   }
   return levels;
 }

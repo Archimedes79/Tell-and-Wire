@@ -195,6 +195,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
     const node = byId.get(id)!;
     outputs.set(id, await runners.node(node.node_type)!.execute(node, {}, runtime));
   }
+  // What those were handed, kept apart from what they hand on once they have run: a wire that reads them is settled from this.
+  const asHeld = new Map(outputs);
   // Nodes whose outputs this round are the ones they were left holding: not
   // run, so not settled into memory again and not a reason for anything to run.
   const held = new Set<string>();
@@ -310,7 +312,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
       // for a node fed only by nodes that stood still: nothing new reached it.
       const shut = standsStill(nodeId);
       if (shut) {
-        const kept = options.latch?.get(latchKey(node));
+        // A memory stands on what it holds now, which a design edit may have changed since the latch last saw it; any other node on what it last made.
+        const kept = element.isMemory ? outputs.get(nodeId) ?? await runner.execute(node, {}, runtime) : options.latch?.get(latchKey(node));
         if (kept) {
           held.add(nodeId);
           outputs.set(nodeId, kept);
@@ -391,7 +394,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   // What stood still is not news: a reply held from the last round must not be
   // added to the conversation a second time, nor handed back as this round's result.
   for (const nodeId of held) outputs.delete(nodeId);
-  settleMemory(graph, outputs, results, registry, caught);
+  settleMemory(graph, outputs, results, registry, caught, reads, asHeld);
 
   const status: ExecutionResult['status'] = signal?.aborted
     ? 'cancelled'
@@ -818,7 +821,10 @@ async function runNode(
  * nobody works the same thing out a second time.
  *
  * Per port, as the round delivers: a port fed by several wires keeps the list
- * of what arrived on them, not whichever wire came last.
+ * of what arrived on them, not whichever wire came last. A wire that reads a
+ * memory brings what it held when the round began (*asHeld*), not what it
+ * holds now: otherwise a register that keeps the value before would keep the
+ * value it was just filled with.
  */
 function settleMemory(
   graph: Graph,
@@ -826,14 +832,20 @@ function settleMemory(
   results: NodeResult[],
   registry: Kinds,
   caught: Set<string>,
+  reads: Set<string>,
+  asHeld: Map<string, Record<string, unknown>>,
 ): void {
   const took = new Set(results.filter((r) => (r.status === 'success' || r.status === 'partial') && !r.held).map((r) => r.node_id));
   for (const target of graph.nodes) {
     const element = registry.node(target.node_type);
     if (!element?.isMemory || !took.has(target.id)) continue;
+    const seen = new Map(outputs);
+    for (const edge of graph.edges) {
+      if (edge.target_node_id === target.id && reads.has(edge.id) && outputs.has(edge.source_node_id)) seen.set(edge.source_node_id, asHeld.get(edge.source_node_id)!);
+    }
     // What a node that caught its failure put on its ports is "nothing arrived", not a value to keep: a counter would go 6, null, 1.
-    const arrived = collectInputs(target.id, graph.edges, outputs, target.inputs,
-      (e) => e.source_port_id in (outputs.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
+    const arrived = collectInputs(target.id, graph.edges, seen, target.inputs,
+      (e) => e.source_port_id in (seen.get(e.source_node_id) ?? {}) && !(caught.has(e.source_node_id) && e.source_port_id !== ERROR_PORT));
     for (const [port, value] of Object.entries(arrived)) if (value !== undefined) element.settleMemory(target, port, value);
   }
 }
