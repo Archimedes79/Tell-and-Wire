@@ -74,9 +74,12 @@ class Round {
     }
   }
 
-  halt(): void {
+  /** Stop the round. One that has ended is left as it ended: it is not marked cancelled, and was not stopped. */
+  halt(): boolean {
+    if (this.finishedAt !== null) return false;
     this.cancelled = true;
     this.stop.abort();
+    return true;
   }
 
   snapshot(): Omit<RoundSnapshot, 'outputs'> {
@@ -134,7 +137,7 @@ export class Rounds {
     const id = `round-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     const round = new Round(id, total, started);
     this.kept.set(id, round);
-    const halt = (): void => round.halt();
+    const halt = (): void => { round.halt(); };
     if (signal?.aborted) halt();
     signal?.addEventListener('abort', halt, { once: true });
 
@@ -181,9 +184,7 @@ export class Rounds {
   /** Stop a round: the round is told, not just whoever was watching it. */
   stop(id: string): boolean {
     const round = this.kept.get(id);
-    if (!round) return false;
-    round.halt();
-    return true;
+    return round ? round.halt() : false;
   }
 
   /**
