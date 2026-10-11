@@ -26,8 +26,9 @@ The tiers and the rules between them are `docs/architecture.md`; every new file 
 | The order to run windows in; which are current | `gui/windows/` | Neutral and **shipped**: the deployed page needs it. The same code as in the model, moved here. |
 | Reading and writing `graph-windows.json`; a window from a sentence | `backend/editor/windows/` | Editor only. Two routes to read and write, one to describe. |
 | The page with framed windows, and running them in order | `frontend/deployment/windows/` | Shipped. Draws the gui's blocks through the existing `GuiBlock`; knows no editor. |
-| The notebook editor: start, page, split view, cells | `frontend/editor/windows/` | Editor only. Reaches the host through the editor's API client. |
-| Its page | `frontend/notebook.html` | A second entry of the same build, served from the same folder. |
+| The notebook editor: start, page, split view, cells | `frontend/editor/windows/` | Editor only. Reaches the host through the editor's API client. Built. |
+| Its edits | `gui/editor/windows/edit.ts` | Pure functions from windows to windows; the editor's buttons are one line each. |
+| Its page | `frontend/notebook.html` | A second entry of the same build, served from the same folder; the graph editor's toolbar links it. |
 
 ## The files of a project
 
@@ -62,30 +63,45 @@ blocks hold now, and so is everything it takes from.
 
 ## The editor
 
-1. **Start.** One sentence ("What should the tool do?") or open a folder or an example. A sentence makes
-   a page with its first window, cells filled in; the model is told the room, the scheme and what each
-   output wants (`windowContext`).
-2. **Page.** Windows as people will use them. *Edit* on a window opens it.
-3. **Split view.** Left: the interface, drawn by the same code as the deployed page, at the cell size of
-   the product. Right: the cells. Numbers tie an element to its cell; hover or focus on one lights the
-   other; a click chooses both and opens its size (width as a share, height in rows).
-4. **Cells.** Add and remove Rein, Tun, Raus; many outputs, each with its own kind, size and the result it
-   shows. The trigger is a cell of its own: a button (its words), a change of an input, or both.
-5. **Scheme.** One of the five of the gui, shown on the page; it is the gui's `gui_scheme` and is part of
-   what a model is told.
-6. **Run.** Windows are run in the order above, through the host's runtime API, in a session the editor
-   hands the compiled graph to (`holdGraph`).
+Open it from the graph editor's **Notebook** button, or at `/notebook.html` of the same server. It is
+themed by the tool's own colour scheme, so the page looks like what is delivered.
+
+1. **Start.** One sentence ("What should the tool do?") makes the page, with its cells filled in; the model
+   is told the room, the scheme and what each output wants (`windowContext`). Or start with one window
+   to fill in, or open a project.
+2. **Page.** The windows as people will use them, live: run one and the ones it takes from run first when
+   they are not current. **Edit** opens a window; a window with something wrong says "⚠ n to fix". A line
+   above the page asks the model for a change to the whole page; **+ New window** adds one.
+3. **Split view.** Left: the interface, drawn by the code of the delivered page, as large as the pane
+   lets the whole window be (**Fit**) or at the size a tool draws it (**Real size**). Right: the cells, in
+   four groups. Each interface element has a number and so has its cell; pointing at one lights the other,
+   and the number on an element jumps to its cell. The divider is in the middle.
+4. **Cells.** *In*: text, file, folder, number, choice, or "from window" (what another window shows), each
+   with its width as a share of the window and its own settings. *Starts when*: a button (its words), a
+   change of an input, or both. *Do*: a sentence done by a model, or code (a small program, seeded so it
+   runs as it is), each result named; "@Name" in a sentence points at an input or an earlier result and a
+   click on a chip writes it. *Out*: text, list, table, chart or image, each with its size (S, M, L or rows),
+   width and the result it shows. Add, remove and move any of them; a rename follows into the sentences.
+5. **Scheme, undo, save.** One of the five schemes; undo and redo (a sentence typed is one step); **Save** and
+   **Save as** write the project folder and ask before writing over one; **Open** reads one back. When the
+   graph in a project was changed outside the notebook, a banner says so and nothing is overwritten unasked.
+6. **What the AI is told** about the open window is shown below its interface.
+
+What a window cannot say yet: a chat (a block of its own), a cell that runs several models side by side
+(`paper_review_panel` is a window with one cell for each reviewer, read top to bottom), a start by itself
+(when the tool starts, every few minutes).
 
 ## Steps
 
-1. Model, compile, order, words (done; moved and extended as below).
+1. Model, compile, order, words. *Done.*
 2. Shipped order (`gui/windows`) and the deployed page (`frontend/deployment/windows`), one line in
-   `GuiApp` choosing it when blocks carry `group`.
-3. Files and routes (`backend/editor/windows`), tested through a session.
-4. The notebook editor, page by page: start, page, split view, cells, scheme, run.
-5. Describe a window with a model (stubbed in tests).
-6. Usability: rebuild `file_summarizer`, `folder_summaries`, `population_plotter` and the chat with the
-   mouse, count the clicks, remove what is not needed (CLAUDE.md, step 4).
+   `GuiApp`. *Done.*
+3. Files and routes (`backend/editor/windows`), tested through a session. *Done.*
+4. The notebook editor (`frontend/editor/windows`): start, page, split view, cells, scheme, undo, run, open and
+   save. *Done;* its edits are pure functions (`gui/editor/windows/edit.ts`) and tested as such.
+5. Describe a window with a model. *Done* (stubbed in tests; the DSL names code cells and their shape).
+6. Usability: examples rebuilt with the mouse (population plotter by hand in eight steps; a sentence makes the
+   summarizer and its follow-on window in one), what was found and changed is in the history of this branch.
 
 ## Seams (existing files that get a line)
 

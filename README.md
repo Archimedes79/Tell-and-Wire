@@ -34,6 +34,11 @@ example) and `code.js` or `prompt.md`. **Pull input** reads `input.js` off the g
 chat for each file changes it as you say. Every file is plain text in the tool's folder, so
 you can read it, change it and diff it.
 
+**Notebook** is the other way to build the same tool: a page of windows. A window is a short list of cells --
+what goes in, what starts it, what is done in a sentence, what comes out -- and it never grows when a result
+arrives. Say what the tool should do and the windows are made; open one to see its interface beside its
+cells. It saves the same project folder, so the graph editor opens it ([docs/notebook.md](docs/notebook.md)).
+
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
 start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
@@ -160,6 +165,7 @@ portfolio_review are teams of AI reviewers.
 ## Documentation
 
 - [docs/user-guide.md](docs/user-guide.md): how to build a tool, step by step.
+- [docs/notebook.md](docs/notebook.md): the notebook, a tool said as a page of windows.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
   between them, the tool's folder format, the host's APIs and the core protocol, what a package
   carries, and how to extend Tell & Wire.

@@ -60,7 +60,8 @@ they run in the browser and in Node.
 | `backend/cli/` | The composition root: `main.ts` and `cli.ts` start a run or a server and put the parts together. |
 | `backend/architecture/` | Tests of the structure itself. |
 | `frontend/deployment/gui/` | What a deployed tool's browser loads: `kit/` (API client, look, dialogs), `surface/` (the gui drawn), `widgets/` (the block views). |
-| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client). |
+| `frontend/deployment/windows/` | The page of framed windows a tool made of them shows, and running them in order; knows no editor. |
+| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client), `windows/` (the notebook: a page of its own, `notebook.html`). |
 | `mcp/` | Optional tool servers, each a package of its own. |
 | `examples/`, `scripts/`, `docs/` | Projects that tests and CI run; the launchers, packaging and licence check; these documents. |
 
@@ -78,7 +79,7 @@ program without the editor's folders.
 | In `backend/`, a module imports only from below: project, then runtime and gui, then host, then cli; the editor's modules above the deployment's. Modules of one rank do not import each other. The wire's files (`host/api.ts`) rank with nothing. | `layers.test.ts` |
 | `frontend/` reaches `backend/` only through the wire's files. | `layers.test.ts` |
 | A deployed tool's browser loads nothing of an `editor` folder, no panel, and of `graph/`, `gui/` and `backend/` only the wire and the shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
-| The editor's page imports only downward through its layers: `ui`, `layout` · graph types · `model`, `api` · editor `api` · `store`, `views` · `dialogs` · deployed `widgets`, `surface` · the elements · `gui`, `canvas`, `node` · the app · `App` · `main`. | `frontend/editor/app/layers.test.ts` |
+| The editor's page imports only downward through its layers: `ui`, `layout` · graph types · `model`, `api` · editor `api` · `store`, `views` · `dialogs` · deployed `widgets`, `surface` · the elements · `gui`, `canvas`, `node` · the app · the notebook · `App` · `main`. | `frontend/editor/app/layers.test.ts` |
 | A deployed tool answers only the routes of the tables it is composed of; an editor route is a 404. | `backend/deployment/host/serve.test.ts` |
 | A package runs from a folder of its own, carries `MANIFEST.json` listing exactly its files, and nothing of the editor. | `backend/editor/project/deploy/bundle.test.ts` |
 | Every kind of node and block has all its faces, under the same name, and the registries list the same kinds. | `frontend/editor/document/elements/symmetry.test.ts` |

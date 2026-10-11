@@ -360,6 +360,16 @@ inside `--mcp-root`; it never opens `ai-settings.json` and filters keys out of w
 returns. A graph it runs runs for real, so point the root at a folder of tools, not at your
 home folder.
 
+## 12. The notebook
+
+The **Notebook** button of the toolbar opens a page of windows in a window of its own: the same tools, said as
+cells. Type what the tool should do and press **✨ Make the windows**, or start with one window and fill it in.
+**Edit** on a window shows its interface on the left and its cells on the right; pointing at an element or a
+cell lights the other. In a sentence, `@Name` takes an input or an earlier result: click its chip to write it.
+A cell can be code instead of a model's. **Save as…** writes the project folder this guide describes, and the
+graph editor opens it; the other way round, a project made in the graph editor does not open in the notebook.
+Details in [notebook.md](notebook.md).
+
 ## When something does not work
 
 - **A run stopped and the gui shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
