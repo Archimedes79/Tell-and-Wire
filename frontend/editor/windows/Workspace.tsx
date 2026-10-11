@@ -16,6 +16,7 @@ import {
 import CellList, { numbering, type Hot } from './CellList';
 import { useNotebook } from './notebookStore';
 import { useNotebookRun } from './useNotebookRun';
+import RoundLine from './RoundLine';
 
 /** The largest a cell is drawn when a window is fitted to its pane: more than a tool's own, to be read at a glance. */
 const FIT_CELL = 84;
@@ -27,6 +28,7 @@ export default function Workspace({ doc }: { doc: Windows }) {
   const window = doc.windows.find((one) => one.id === selected);
   return (
     <>
+      <RoundLine doc={doc} />
       {window
         ? <SplitView doc={doc} window={window} run={run} />
         : <PageView doc={doc} run={run} />}

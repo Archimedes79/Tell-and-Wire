@@ -61,8 +61,12 @@ function roundOver(previous: string | null): Promise<RoundSnapshot | null> {
   });
 }
 
-/** Whether a round ended well: it ran to its end and its graph said success. */
-export const succeeded = (round: RoundSnapshot): boolean => !round.cancelled && !round.error && round.result?.status === 'success';
+/**
+ * Whether a round ended well: it ran to its end, its graph said success, and no node of it had nothing to do -- an input left
+ * empty is a window that did nothing, and the window after it would only be handed that.
+ */
+export const succeeded = (round: RoundSnapshot): boolean => !round.cancelled && !round.error && round.result?.status === 'success'
+  && !round.result.node_results.some((one) => one.status === 'skipped' && !one.held);
 
 /**
  * Run window *id* and, before it, every window it needs that is not current.

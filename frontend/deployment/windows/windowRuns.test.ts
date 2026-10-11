@@ -3,7 +3,7 @@ import type { RoundSnapshot } from '../gui/kit/api/client';
 import { useSession } from '../gui/kit/api/session';
 import { windowsToGraph, type Windows } from '../../../gui/editor/windows/windows.ts';
 import { afterRun, afterEdit, type Done } from '../../../gui/windows/order.ts';
-import { forgetRuns, runWindows, useWindowRuns } from './windowRuns';
+import { forgetRuns, runWindows, succeeded, useWindowRuns } from './windowRuns';
 import { isCurrent, isWindows, pageWindows, planFor, recorded, type RunOf } from './windowsInUse';
 
 /**
@@ -124,6 +124,12 @@ describe('running a window', () => {
     expect(await runWindows({ windows, id: 'english', held, run })).toEqual([]);
     expect(started).toEqual(['summarize']);
     expect(useWindowRuns.getState().runs).toEqual({});
+  });
+
+  it('counts a round in which a node had nothing to do as not run: the window after it would only be handed that', async () => {
+    const idle = { node_id: 'summarize_summary', status: 'skipped' as const, inputs: {}, outputs: {}, error: null };
+    expect(succeeded(snapshot('a', { result: { status: 'success', node_results: [idle], outputs: {} } }))).toBe(false);
+    expect(succeeded(snapshot('b', { result: { status: 'success', node_results: [{ ...idle, held: true }], outputs: {} } }))).toBe(true);
   });
 
   it('stops where a question is waiting, and where no round began', async () => {
