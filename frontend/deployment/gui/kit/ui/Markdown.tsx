@@ -71,7 +71,8 @@ function cells(line: string): string[] {
 }
 
 function Markdown({ source }: { source: string }): React.ReactElement {
-  const lines = (source ?? '').split('\n');
+  // Every line ending a text may have, as one: a heading ending in a carriage return matched no rule, and the loop below never moved on.
+  const lines = (source ?? '').split(/\r\n|[\r\u2028\u2029\n]/);
   const blocks: React.ReactNode[] = [];
   let index = 0;
 
@@ -153,6 +154,8 @@ function Markdown({ source }: { source: string }): React.ReactElement {
       paragraph.push(lines[index]);
       index += 1;
     }
+    // A line no rule above took is a line of its own, however it begins: the loop must always move on.
+    if (!paragraph.length) { paragraph.push(lines[index]); index += 1; }
     blocks.push(
       <p key={`p${index}`} style={{ margin: '2px 0', color: TEXT, lineHeight: 1.5 }}>
         {inline(paragraph.join(' '), `p${index}`)}
