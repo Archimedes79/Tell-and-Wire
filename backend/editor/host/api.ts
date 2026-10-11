@@ -207,6 +207,8 @@ export interface ProviderStatus {
   local: Record<string, { reachable: boolean; models: string[] }>;
   /** What the one AI setting resolves to right now: what every call that names no model of its own goes to. */
   target: Target;
+  /** Why that cannot answer yet -- a server not running, a key or a model not there -- as a sentence for whoever puts it right; empty when nothing is in the way. */
+  problem: string;
 }
 
 /** A graph file on disk, as Open (and so Reload) and Save return it. */

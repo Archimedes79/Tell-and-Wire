@@ -13,10 +13,10 @@
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import {
-  aiSetting, LOCAL_PROVIDERS, parseSettingsFile, probeLocal, readSettingsFile, settingsPath, type SettingsFile,
+  aiSetting, configuredSettings, LOCAL_PROVIDERS, parseSettingsFile, probeLocal, readSettingsFile, settingsPath, type SettingsFile,
 } from '../../deployment/runtime/ai/settings.ts';
 import { Refusal } from '../../deployment/host/http.ts';
-import { CREDENTIALS, DEFAULT_SETTINGS, ENDPOINT_ENV } from '../../deployment/runtime/ai/providers.ts';
+import { CREDENTIALS, DEFAULT_SETTINGS, ENDPOINT_ENV, needsKey } from '../../deployment/runtime/ai/providers.ts';
 import type { ProviderStatus, SettingsPatch, SettingsStatus, Target } from '../host/api.ts';
 import { messageOf } from '../../../graph/errors.ts';
 
@@ -136,22 +136,47 @@ export async function save(patch: SettingsPatch, cwd = process.cwd(), env: Env =
  * only whether one is there: this goes to a terminal and into scrollback.
  */
 export async function setupLines(cwd = process.cwd(), env: Env = process.env): Promise<string[]> {
-  const { local, target } = await providerStatus(cwd, env);
-  const configured = status(cwd, env);
+  const { target, problem } = await providerStatus(cwd, env);
+  return [`AI (✨, ▶ Try, runs): ${target.provider}/${target.model || '(no model)'}${problem ? ` -- ${problem}` : ''}`];
+}
 
-  const trouble = (chosen: Target): string => {
-    if ((LOCAL_PROVIDERS as readonly string[]).includes(chosen.provider)) {
-      return local[chosen.provider]?.reachable
-        ? ''
-        : ` -- not answering at ${configured.endpoints[chosen.provider] || DEFAULT_SETTINGS.endpoints[chosen.provider]}`;
+/** What a person calls each provider, in a sentence. */
+const NAMES: Record<string, string> = {
+  ollama: 'Ollama', lmstudio: 'LM Studio', openai: 'OpenAI', anthropic: 'Anthropic', google: 'Google Gemini',
+  github_copilot: 'GitHub Models', openai_compatible: 'The OpenAI-compatible server',
+};
+
+/** A model as a server lists it: Ollama's "llama3:latest" is what "llama3" asks for. */
+const bare = (model: string): string => model.replace(/:latest$/, '');
+
+/**
+ * Why *target* cannot answer yet, in one sentence that says what to do -- or
+ * nothing. A machine with nothing configured resolves to Ollama whether or not
+ * it runs, and "Now: ollama / llama3" reads as ready until the first call
+ * fails with a word nobody can use: this is asked before that.
+ */
+function troubleWith(target: Target, local: ProviderStatus['local'], cwd: string, env: Env): string {
+  const { provider, model } = target;
+  const name = NAMES[provider] ?? provider;
+  const probed = local[provider];
+  if (probed) {
+    const address = configuredSettings(env, cwd).endpoints?.[provider] ?? DEFAULT_SETTINGS.endpoints[provider];
+    if (!probed.reachable) return `${name} is not running at ${address}. Start it, or choose another AI in ⚙ Settings (Google Gemini has a free tier).`;
+    const pull = provider === 'ollama' ? ` In a terminal: ollama pull ${model || 'llama3'}` : ' Load one in it';
+    if (!probed.models.length) return `${name} is running but has no model yet.${pull}.`;
+    if (model && !probed.models.map(bare).includes(bare(model))) {
+      return `${name} does not have "${model}". ${pull.trim()}, or name one it has in ⚙ Settings: ${probed.models.join(', ')}.`;
     }
-    const wanted = CREDENTIALS[chosen.provider];
-    return wanted && !configured.credentials[chosen.provider]?.configured
-      ? ` -- no ${chosen.provider} API key (⚙ Settings, or ${wanted.env})`
-      : '';
-  };
-
-  return [`AI (✨, ▶ Try, runs): ${target.provider}/${target.model || '(no model)'}${trouble(target)}`];
+    return '';
+  }
+  if (!model) return `No model is named for ${name} yet: name one in ⚙ Settings.`;
+  if (provider === 'openai_compatible' && !configuredSettings(env, cwd).endpoints?.[provider]) {
+    return 'No address for the OpenAI-compatible server yet: paste one in ⚙ Settings.';
+  }
+  if (needsKey(provider) && !status(cwd, env).credentials[provider]?.configured) {
+    return `No ${name} key yet: paste one in ⚙ Settings${provider === 'google' ? ' (a free one: aistudio.google.com/apikey)' : ''}.`;
+  }
+  return '';
 }
 
 /** Which providers are usable right now, and what the one AI setting resolves to. */
@@ -161,5 +186,6 @@ export async function providerStatus(cwd = process.cwd(), env: Env = process.env
     const models = await probeLocal(provider, { refresh: true, cwd, env });
     local[provider] = { reachable: models !== null, models: models ?? [] };
   }));
-  return { local, target: await aiSetting(cwd, env) };
+  const target = await aiSetting(cwd, env);
+  return { local, target, problem: troubleWith(target, local, cwd, env) };
 }

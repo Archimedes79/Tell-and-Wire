@@ -19,6 +19,17 @@ const KEY_HINTS: Record<string, string> = {
 
 const label = (id: string): string => AI_PROVIDER_LABELS[id as AIProvider] ?? id;
 
+/** Where an AI comes from and what it takes, said under the provider that is chosen: the first question of someone who has none yet. */
+const PROVIDER_HELP: Partial<Record<AIProvider, string>> = {
+  ollama: 'Free, on your computer: install Ollama (ollama.com), then run `ollama pull llama3` in a terminal.',
+  lmstudio: 'Free, on your computer: load a model in LM Studio and start its local server.',
+  google: 'Free tier: get a key at aistudio.google.com/apikey and paste it under Keys.',
+  github_copilot: 'Free tier: a GitHub token with the models:read scope, pasted under Keys.',
+  openai: 'Paid: paste a key under Keys.',
+  anthropic: 'Paid: paste a key under Keys.',
+  openai_compatible: 'Any server that speaks the OpenAI API: its address under Server addresses.',
+};
+
 /**
  * The AI the tool asks and what it needs to ask it, as one form with one Save:
  * the provider and model that ✨, ▶ Try and every run call wherever a node
@@ -57,6 +68,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
     }).catch((error) => setProblem(errorText(error, 'Could not read the AI settings file.')));
   }, []);
 
+  const first = provider === 'default' ? probe?.target.provider : provider;
   const typedKeys = Object.fromEntries(Object.entries(keys).map(([id, key]) => [id, key.trim()]).filter(([, key]) => key));
   const changed = saved !== null && (
     provider !== (saved.ai.provider || 'default') || model !== saved.ai.model
@@ -106,7 +118,10 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             onModelChange={setModel}
             defaultLabel={() => 'Not set (a local model that is running, else Ollama)'}
           />
+          {PROVIDER_HELP[provider] && <p className="text-xs mt-2" style={{ color: DIM }}>{PROVIDER_HELP[provider]}</p>}
           <p className="text-xs mt-3" style={{ color: DIM }}>Now: <strong style={{ color: TEXT }}>{nowText(probe)}</strong></p>
+          {/* What is wrong with the AI as it is saved, not with a choice not saved yet. */}
+          {probe?.problem && provider === (saved?.ai.provider || 'default') && <p className="text-xs mt-1" style={{ color: DANGER_TEXT }} role="status">{probe.problem}</p>}
           {saved && saved.ai.environment.length > 0 && (
             <div className="text-xs rounded-lg px-3 py-2 mt-3" style={{ background: ACCENT_FILL, color: ACCENT_TEXT }}>
               {saved.ai.environment.map((variable, i) => <span key={variable}>{i > 0 && ' and '}<code>{variable}</code></span>)}{' '}
@@ -120,7 +135,8 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             <section>
               <h3 className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Keys</h3>
               <div className="space-y-2">
-                {Object.keys(saved.credentials).map((id) => {
+                {/* The key of the AI chosen comes first: it is the one that is needed. */}
+                {Object.keys(saved.credentials).sort((a, b) => Number(b === first) - Number(a === first)).map((id) => {
                   const state = saved.credentials[id];
                   const going = removing.includes(id);
                   return (

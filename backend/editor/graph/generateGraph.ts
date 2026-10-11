@@ -113,7 +113,11 @@ export async function generateGraph(
     graph = JSON.parse(candidate);
   } catch {
     // Said to whoever asked: what went wrong most often, and what to do. The transcript keeps the rest.
-    throw new GenerationFailed('The model\'s answer was not a whole graph -- it may have been cut off. Try again, or ask for less at once.', calls);
+    throw new GenerationFailed(
+      `The answer of ${deps.target.provider} / ${deps.target.model} was not a whole graph -- it may have been cut off, or the model is too small to write one. `
+      + 'Try again, ask for less at once, or choose a larger model in ⚙ Settings (Google Gemini has a free tier).',
+      calls,
+    );
   }
   return {
     graph: current ? keptFrom(current, graph, exchangeEntry(`Change of the graph: ${description}`, calls, new Date())) : graph,

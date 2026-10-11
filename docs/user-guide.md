@@ -342,8 +342,12 @@ home folder.
 
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
-- **✨ does nothing or fails.** Check **⚙ Settings**: its AI section says *Now: provider / model*.
-  A missing key or a local server that is not running ends here.
+- **✨ does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
+  before anything is asked: a local server that is not running, a model it has not pulled, a key
+  not yet pasted. Settings says *Now: provider / model* and, under the provider chosen, where
+  to get it; its key comes first. A wrong key, a model name nobody knows and a free tier's
+  limit come back with what to do. A small local model may be too small to write a whole graph:
+  it says so, and a larger one in Settings (Gemini has a free tier) writes it.
 - **Using the gui starts nothing.** No block fires the start point: switch **Starts a run**
   on for the block that should. `check` names this too.
 - **The gui stays empty.** The block shows an end point nothing is wired into, or a wire

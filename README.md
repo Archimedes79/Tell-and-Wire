@@ -108,7 +108,9 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
 | OpenAI-compatible (`openai_compatible`) | depends | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` |
 
 With nothing set, Tell & Wire uses a local model server that is running (Ollama or
-LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
+LM Studio), else Ollama, and the editor says at once if that is not running. For Gemini, use
+the `-latest` model names; dated names are retired. Ollama is asked for a context window as large
+as the request (4096 to 32768 tokens), since it cuts a longer prompt silently at its own default.
 
 A small local model slips now and then: an empty answer, broken JSON, a key left out. Tell & Wire
 asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see

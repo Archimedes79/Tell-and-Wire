@@ -452,7 +452,7 @@ export default function App() {
             <Sidebar onAddNode={handleAddNode} />
             <div className="flex flex-col flex-1 min-w-0">
               <GraphCanvas active={view === 'graph' && !openNodeId} />
-              <ChangeBar />
+              <ChangeBar onOpenSettings={() => setShowSettings(true)} />
             </div>
           </div>
           {openNodeId && <NodeView key={openNodeId} nodeId={openNodeId} onClose={closeNode} onOpenGui={openGui} />}

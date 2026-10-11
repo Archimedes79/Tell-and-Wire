@@ -110,7 +110,7 @@ const OPENAI_STYLE: Record<string, OpenAIStyle> = {
   openai: {
     endpoint: 'openai',
     credentialRequired: true,
-    missingCredential: `No OpenAI API key configured (${CREDENTIALS.openai.env}).`,
+    missingCredential: `No OpenAI API key yet: paste one in ⚙ Settings (or set ${CREDENTIALS.openai.env}).`,
   },
   // A local LM Studio needs no credential at all.
   lmstudio: { endpoint: 'lmstudio' },
@@ -123,12 +123,12 @@ const OPENAI_STYLE: Record<string, OpenAIStyle> = {
     endpoint: 'google',
     credentialRequired: true,
     missingCredential:
-      `No Google API key configured (${CREDENTIALS.google.env}). A free one: https://aistudio.google.com/apikey`,
+      `No Google API key yet: paste one in ⚙ Settings (or set ${CREDENTIALS.google.env}). A free one: https://aistudio.google.com/apikey`,
   },
   github_copilot: {
     endpoint: 'github_copilot',
     credentialRequired: true,
-    missingCredential: `No ${CREDENTIALS.github_copilot.env} configured.`,
+    missingCredential: `No GitHub Models token yet: paste one in ⚙ Settings (or set ${CREDENTIALS.github_copilot.env}).`,
   },
 };
 
@@ -188,6 +188,35 @@ export class TimedOutError extends Error {
 /** Worth another attempt: rate limits, and the 5xx family that means "not you". */
 const RETRYABLE_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 
+/** Whether a provider needs a key before it answers at all: the ones whose slot of `CREDENTIALS` is not optional. */
+export function needsKey(provider: string): boolean {
+  return provider === 'anthropic' || !!OPENAI_STYLE[provider]?.credentialRequired;
+}
+
+/**
+ * Nobody answered: the server is not running, the address is wrong, or there
+ * is no network. Said so, with what to do -- Node's own word for it is "fetch
+ * failed". A dropped connection is retried, a refusal is not: nothing is
+ * listening, and asking again in a second changes nothing.
+ */
+class UnreachableError extends Error {
+  readonly transient: boolean;
+
+  constructor(url: string, code: string) {
+    super(`Could not reach ${new URL(url).host}. Is the server running, and its address right? Start it, or choose another AI in ⚙ Settings.`);
+    this.name = 'UnreachableError';
+    this.transient = !['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH'].includes(code);
+  }
+}
+
+/** What to do about a provider's answer, after its own sentence says what happened -- not where to put it right. */
+function remedy(status: number, said: string): string {
+  if (status === 401 || status === 403 || /api key|credential/i.test(said)) return ' Check the key in ⚙ Settings.';
+  if (status === 404) return ' Check the model name and the server address in ⚙ Settings (Gemini: gemini-flash-latest or gemini-flash-lite-latest); with Ollama, a model must be pulled first (ollama pull <name>).';
+  if (status === 429) return ' The limit of this plan is reached for now (free tiers allow only a few calls a minute): wait a minute, or choose another model in ⚙ Settings.';
+  return '';
+}
+
 class HttpError extends Error {
   // A plain field, not a parameter property. Node runs this code by stripping
   // types, and a `readonly` in a constructor's parameter list is one of the few
@@ -209,7 +238,7 @@ function isRetryable(error: unknown): boolean {
   if (error instanceof HttpError) return RETRYABLE_STATUS.has(error.status);
   // A dropped connection: the request never got an answer, so asking again is
   // the reasonable thing rather than a guess.
-  return error instanceof TypeError;
+  return error instanceof UnreachableError && error.transient;
 }
 
 async function post(
@@ -240,7 +269,9 @@ async function post(
     if (!response.ok) {
       // The provider's own message, not just the code: "model not found" and
       // "quota exceeded" are both 400 and need different things done about them.
-      throw new HttpError(response.status, `${response.status}: ${detail(text)}`);
+      const said = detail(text);
+      const next = remedy(response.status, said);
+      throw new HttpError(response.status, `${response.status}: ${said}${next && !/[.!?]\s*$/.test(said) ? '.' : ''}${next}`);
     }
     return JSON.parse(text) as Record<string, unknown>;
   } catch (error) {
@@ -248,6 +279,7 @@ async function post(
     // connection, and a dropped connection is retried.
     if (stop?.aborted) throw new StoppedError();
     if (late) throw new TimedOutError(timeoutMs);
+    if (error instanceof TypeError) throw new UnreachableError(url, String((error as { cause?: { code?: unknown } }).cause?.code ?? ''));
     throw error;
   } finally {
     stop?.removeEventListener('abort', onStop);
@@ -572,7 +604,7 @@ function openAiStyle(
 
 function anthropic(request: AiRequest, settings: ProviderSettings): Conversation {
   const key = settings.apiKeys.anthropic ?? '';
-  if (!key) throw new Error('No Anthropic API key configured (ANTHROPIC_API_KEY).');
+  if (!key) throw new Error('No Anthropic API key yet: paste one in ⚙ Settings (or set ANTHROPIC_API_KEY).');
 
   // Files first, then the words, as Anthropic asks; an empty text block is refused.
   const content = request.files?.length
@@ -646,6 +678,24 @@ function anthropic(request: AiRequest, settings: ProviderSettings): Conversation
   };
 }
 
+/**
+ * The context window Ollama is asked for: what is sent and what may come back,
+ * rounded up to a power of two, 4096 to 32768. Left unsaid, Ollama keeps its own
+ * (2048 or 4096 tokens) and cuts a longer prompt from its start without a word --
+ * where the instructions are -- so a model asked to write a whole graph answered
+ * what it was never told. Pictures are not counted: they are not text.
+ */
+function contextFor(history: unknown[], answer: number): number {
+  const sent = history.reduce<number>((sum, message) => {
+    const content = (message as { content?: unknown }).content;
+    return sum + (typeof content === 'string' ? content.length : 0);
+  }, 0);
+  const needed = Math.ceil(sent / 3) + answer;
+  let window = 4096;
+  while (window < needed && window < 32768) window *= 2;
+  return window;
+}
+
 function ollama(request: AiRequest, settings: ProviderSettings): Conversation {
   if (request.files?.some(isPdf)) {
     throw new Error('Ollama reads pictures, not PDFs: send the PDFs of this node to a provider that reads them.');
@@ -664,7 +714,7 @@ function ollama(request: AiRequest, settings: ProviderSettings): Conversation {
       const body = await post(`${settings.endpoints.ollama}/api/chat`, {
         model: request.model,
         stream: false,
-        ...(request.temperature === undefined ? {} : { options: sampling(request) }),
+        options: { ...sampling(request), num_ctx: contextFor(history, settings.maxTokens) },
         messages: history,
         // Ollama has no `tool_choice`, and does not mind a history of calls to
         // tools it is no longer shown. So `final` simply stops showing them.
