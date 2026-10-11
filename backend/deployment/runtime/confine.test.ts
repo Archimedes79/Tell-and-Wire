@@ -36,13 +36,13 @@ describe('which files a graph may reach', () => {
     try {
       await expect(nodeFiles.read(settings)).rejects.toThrow(/holds keys/);
       await expect(nodeFiles.write(settings, '{}')).rejects.toThrow(/holds keys/);
-      // The file, not its spelling: another name for the same file is the same file.
+      expect(await nodeFiles.list(outside)).toEqual([other.replace(/\\/g, '/')]);
+      expect(await nodeFiles.read(other)).toBe('x');
+      // The same file under another name is the same file: a hard link is no way round it.
       const alias = join(outside, 'alias.txt');
       linkSync(settings, alias);
       await expect(nodeFiles.read(alias)).rejects.toThrow(/holds keys/);
-      rmSync(alias);
-      expect(await nodeFiles.list(outside)).toEqual([other.replace(/\\/g, '/')]);
-      expect(await nodeFiles.read(other)).toBe('x');
+      await expect(nodeFiles.write(alias, '{}')).rejects.toThrow(/holds keys/);
       confineEverything();
       await expect(nodeFiles.read(other)).rejects.toThrow(/served beyond/);
     } finally {

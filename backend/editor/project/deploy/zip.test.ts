@@ -63,4 +63,10 @@ describe('a zip written by hand', () => {
       { path: 'backend/cli/main.ts', madeBy: 0, mode: 0 },
     ]);
   });
+
+  it('refuses a name that would be unpacked outside the folder, however it climbs', () => {
+    for (const path of ['../x', 'data\\..\\..\\x', '/etc/x', 'C:/x', 'a/../../x']) {
+      expect(() => zip([{ path, content: Buffer.from('x') }]), path).toThrow(/outside the folder/);
+    }
+  });
 });
