@@ -90,7 +90,7 @@ interface Waiting {
 }
 
 /** A core program that is gone: it ended, or could not start. The next request starts it again. */
-export class CoreGone extends Error {}
+class CoreGone extends Error {}
 
 /** One running core program: its process, the requests it owes an answer, and its `hello`. */
 interface Running {

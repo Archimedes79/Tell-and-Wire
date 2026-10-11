@@ -25,8 +25,7 @@
 // for those inputs stays, as a stub: which part of a package one takes
 // (`field`), and that it takes a list (`list`).
 
-import type { DataType, GraphNode, Port, PortKind } from '../graph.ts';
-import { withoutDefaults } from '../graph.ts';
+import { isStruct, withoutDefaults, type DataType, type GraphNode, type Port, type PortKind } from '../graph.ts';
 import { NotAGraph } from '../errors.ts';
 
 export const NODES_FILE = 'graph-nodes.json';
@@ -102,22 +101,19 @@ export function describeNodes(nodes: GraphNode[], derived: ReadonlySet<string>):
   }));
 }
 
-const isObject = (value: unknown): boolean => !!value && typeof value === 'object' && !Array.isArray(value);
-
 /**
  * The nodes the list *raw* describes, as a graph document lists them. *path*
  * names the file in a message about what is wrong with it.
  */
 export function nodesFrom(raw: unknown, path: string): Record<string, unknown>[] {
-  if (!isObject(raw)) {
+  if (!isStruct(raw)) {
     throw new NotAGraph(`${path} is not a list of nodes: it must say each node by its id, { "count": { "kind": "code", … } }.`);
   }
-  return Object.entries(raw as Record<string, unknown>).map(([id, entry]) => {
+  return Object.entries(raw).map(([id, node]) => {
     const where = `${path}: node "${id}"`;
-    if (!isObject(entry)) throw new NotAGraph(`${where} must be an object with its "kind".`);
-    const node = entry as Record<string, unknown>;
+    if (!isStruct(node)) throw new NotAGraph(`${where} must be an object with its "kind".`);
     if (typeof node.kind !== 'string' || !node.kind) throw new NotAGraph(`${where} needs a "kind": what sort of node it is.`);
-    if (node.config !== undefined && !isObject(node.config)) throw new NotAGraph(`${where}: "config" must be an object.`);
+    if (node.config !== undefined && !isStruct(node.config)) throw new NotAGraph(`${where}: "config" must be an object.`);
     const ports = (value: unknown, kind: PortKind): Port[] => {
       if (value === undefined) return [];
       if (!Array.isArray(value)) throw new NotAGraph(`${where}: "${kind}s" must be a list of ports.`);

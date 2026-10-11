@@ -7,15 +7,14 @@
 
 import { deflateRawSync } from 'node:zlib';
 
-export interface ZipEntry {
+interface ZipEntry {
   path: string;
   content: Buffer;
   /**
-   * Unix permissions, e.g. 0o755. Omitted, the entry is written the way it
-   * always was -- as made on MS-DOS, no permissions -- and every unzip tool
-   * extracts it as a plain, non-executable file. Given, the entry says it was
-   * made on Unix and carries the mode, which is what makes a `run.sh` runnable
-   * straight out of the archive.
+   * Unix permissions, e.g. 0o755. Omitted, the entry is made on MS-DOS, with no
+   * permissions, and every unzip tool extracts it as a plain, non-executable
+   * file. Given, the entry says it was made on Unix and carries the mode, which
+   * is what makes a `run.sh` runnable straight out of the archive.
    */
   mode?: number;
 }
@@ -54,8 +53,8 @@ function u16(n: number): Buffer { const b = Buffer.alloc(2); b.writeUInt16LE(n);
 function u32(n: number): Buffer { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0); return b; }
 
 /** The archive holding *entries*, each deflated, in the order given. */
-export function zip(entries: ZipEntry[], now = new Date()): Buffer {
-  const { date, time } = dosDateTime(now);
+export function zip(entries: ZipEntry[]): Buffer {
+  const { date, time } = dosDateTime(new Date());
   const locals: Buffer[] = [];
   const central: Buffer[] = [];
   let offset = 0;

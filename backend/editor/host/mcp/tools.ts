@@ -8,7 +8,9 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import type { AiService, Runtime, ToolSpec } from '../../../../graph/nodes/Runtime.ts';
 import { parseGraph, type Graph } from '../../../../graph/graph.ts';
-import { names } from '../../../../graph/wiring.ts';
+import { names, type Problem } from '../../../../graph/wiring.ts';
+import { FLOW_FILE } from '../../../../graph/files/flow.ts';
+import { NODES_FILE } from '../../../../graph/files/nodesFile.ts';
 import { everyGraphIn } from '../../../deployment/runtime/examples.ts';
 import { localCore } from '../../../deployment/runtime/localCore.ts';
 import type { GraphCore } from '../../../deployment/runtime/protocol.ts';
@@ -23,23 +25,21 @@ import { clip } from '../../graph/brief.ts';
 import { generateGraph } from '../../graph/generateGraph.ts';
 import { AUTHORING_KEYS, withoutAuthoring } from '../../../../graph/editor/handedOn.ts';
 import {
-  FLOW_FILE, FileChanged, LAYOUT_FILE, NODES_DIR, NODES_FILE, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
+  FileChanged, LAYOUT_FILE, NODES_DIR, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, type Guard,
 } from '../../../deployment/project/folder.ts';
 import { saveGraph as saveToDisk } from '../../project/write.ts';
-import { problemsIn, type Problem } from '../../../../gui/editor/check.ts';
+import { problemsIn } from '../../../../gui/editor/check.ts';
 import { folderProblems } from '../../project/folderCheck.ts';
 import { BadDocument, Refused, SKIPPED_FOLDERS, confinement, scrubber } from './confine.ts';
 import { ERROR_LIMIT, MAX_DESCRIPTION_CHARS, MAX_GRAPH_BYTES, SPECS, VALUE_LIMIT, authoringGuide } from './spec.ts';
-
-export type { Problem };
 
 const LIST_DEPTH = 4;
 const LIST_LIMIT = 200;
 /** How many `.json` files a listing opens before it stops looking. */
 const LIST_EXAMINED = 1_000;
 
-export interface GraphToolsOptions {
+interface GraphToolsOptions {
   /** The one folder the tools may touch. */
   root: string;
   /** The model `generate_graph` asks. */
@@ -392,7 +392,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
           ...(node.error ? { error: clip(node.error, ERROR_LIMIT) } : {}),
           outputs: briefAll(node.outputs),
         })),
-        // By name, as a gui or any frontend reads them (`graphInterface.ts`).
+        // By name, as a gui or any frontend reads them (`graph/interface.ts`).
         outputs: briefAll(outputsOf(graph, result, registry)),
       });
     },

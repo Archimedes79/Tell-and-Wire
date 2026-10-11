@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
-import { useShallow } from 'zustand/react/shallow';
-import { useGraphStore } from '../../document/store/graphStore';
+import { useGraphNodes, useGraphStore } from '../../document/store/graphStore';
 import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { derivedNodePorts } from '../../document/model/ports';
@@ -99,7 +98,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
   const gui = useGraphStore((s) => s.gui);
   const wires = useGraphStore((s) => s.rfEdges);
   const near = neighbours(node.id, wires);
-  const graphNodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
+  const graphNodes = useGraphNodes();
   const labels = Object.fromEntries(graphNodes.map((item) => [item.id, item.label || item.id]));
   // Where every output goes into a memory, the output is pulled too: the field says what it wants.
   const pullsOutput = pullableOutput(node, graphNodes, wires);

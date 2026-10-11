@@ -1,7 +1,7 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../document/graph';
 import { StartNodeDefinition } from '../../../../../graph/nodes/start/StartNodeDefinition.ts';
-import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
+import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Play } from 'lucide-react';
 
@@ -20,12 +20,8 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly example = 'e.g. The text to summarise, typed on the gui';
 
-  readonly color = NODE.start;
-
-  /** Its icon, on its card and in the palette. */
   readonly icon = Play;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
   readonly ink = INK.start;
 
   override readonly paletteGroup = 'Input';

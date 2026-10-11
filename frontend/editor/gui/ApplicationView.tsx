@@ -24,10 +24,10 @@ import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../deployment/gui/k
 const holdDocument = () => useGraphStore.getState().holdDocument();
 
 /**
- * The application, running (▶ Run, `app/application.ts`): its gui, as the
+ * The application, running (▶ Run, `document/application.ts`): its gui, as the
  * deployed tool draws it -- the same component, not a rendition.
  *
- * `GuiSurface` is what `runtime/RuntimeApp.tsx` renders when a bundle is
+ * `GuiSurface` is what `deployment/gui/RuntimeApp.tsx` renders when a bundle is
  * opened on someone else's machine, under the same `DeliveredHeader`, and
  * each round goes through the same `useRound` against the same session. So
  * what is seen here is what they get: a block unreadable, mis-sized or

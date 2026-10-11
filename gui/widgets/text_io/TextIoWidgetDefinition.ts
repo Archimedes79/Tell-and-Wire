@@ -2,7 +2,7 @@ import { WidgetDefinition, type Sent, type Widget } from '../WidgetDefinition.ts
 import type { RawConfig } from '../../../graph/graph.ts';
 import { textIoRole, type TextIoRole } from './role.ts';
 
-export interface TextIoConfig {
+interface TextIoConfig {
   value: string;
   role: TextIoRole;
 }

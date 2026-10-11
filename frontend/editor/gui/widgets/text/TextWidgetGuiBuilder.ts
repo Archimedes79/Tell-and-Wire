@@ -7,8 +7,6 @@ import { AlignLeft, Captions, Heading1 } from 'lucide-react';
 export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
   readonly widgetKind = 'text';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Text';
 
   paletteEntries() {
@@ -25,16 +23,6 @@ export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
 
   /** Typed where it stands, on the gui being built. */
   override readonly InlineEditor = TextInPlace;
-
-  /**
-   * One row, whatever it is: a heading, a caption, a line or two of a
-   * paragraph -- it starts where every other widget starts, with no air above
-   * it, and grows as it is written (`TextInPlace`). Three rows for a paragraph
-   * stood a tall empty box under its one line.
-   */
-  protected override defaultSpan() {
-    return { w: 16, h: 1 };
-  }
 
   /** Its words, none yet. */
   protected override initialSettings() {

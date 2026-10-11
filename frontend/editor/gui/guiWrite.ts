@@ -14,7 +14,7 @@
 // and `masterExamples.test.ts`, which builds the examples the way a person
 // does, all call these functions. A block used in the running application or
 // in a delivered tool never comes here: what is set there is the session's
-// (`api/session.ts`).
+// (`deployment/gui/kit/api/session.ts`).
 import type { GraphNode, GuiWidget } from '../document/graph';
 import { useGraphStore } from '../document/store/graphStore';
 import { placement } from '../document/model/placement';
@@ -41,9 +41,8 @@ function rewrite(edit: (widgets: GuiWidget[]) => GuiWidget[], coalesce?: string,
  *
  * One undo step with the change of the same fields of the same block just
  * before it: what is typed into a block, a slider drawn along, a block's edge
- * dragged -- each written as it is made, and each was a step of its own. Fifty
- * characters typed into a chat pushed everything before them out of Undo.
- * Named without ": ", so it is never taken for a node panel's change.
+ * dragged -- each is written as it is made. Named without ": ", so it is never
+ * taken for a node panel's change.
  *
  * A new label is the end point's too, where it is still called after the
  * block (`followLabel`), in the same step.
@@ -114,7 +113,7 @@ function newPoint(kind: 'start' | 'end', label: string, made: GraphNode[]): Grap
   const taken = [...placed.map((node) => node.id), ...made.map((node) => node.id)];
   const id = freeId(kind === 'start' ? 'start' : slugOf(label) || 'result', taken);
   const at = placement(placed);
-  // Named apart from the points of its kind there are: a second start point was "Start" beside "Start".
+  // Named apart from the points of its kind there are: "Start 2" beside "Start".
   const named = [...placed.map((node) => node.data.graphNode as GraphNode), ...made].filter((node) => node.node_type === kind).map((node) => node.label);
   return { ...NODE_KINDS[kind].create(id), label: freeId(label, named, ' '), position: { x: at.x, y: at.y + made.length * 140 } };
 }

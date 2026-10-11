@@ -5,7 +5,7 @@ import { roundRefused, startRound, useSession, type RoundAsk } from '../kit/api/
 /**
  * Starting a round the way every gui starts one.
  *
- * Three hosts draw a gui in use -- `runtime/RuntimeApp.tsx` for a tool
+ * Three hosts draw a gui in use -- `deployment/gui/RuntimeApp.tsx` for a tool
  * someone was handed, the editor's running application, and the editor's Gui
  * tab, whose blocks are live -- and ▶ Run starts the rounds of a graph without
  * a gui the same way again. A round from any of them has the same two steps:

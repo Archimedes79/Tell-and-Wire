@@ -70,12 +70,6 @@ export class Lifecycle {
   }
 }
 
-/** Anything that can say "you are being asked to stop": `process`, or a test's emitter. */
-interface SignalSource {
-  on(signal: string, listener: () => void): unknown;
-  off(signal: string, listener: () => void): unknown;
-}
-
 /** Ctrl+C, a supervisor or `docker stop`, a closed terminal, and Ctrl+Break on Windows. */
 const STOP_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK'];
 
@@ -83,29 +77,23 @@ const STOP_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK'];
  * Wait for a stop signal, shut down, and resolve to the exit code.
  *
  * Zero for a stop that was asked for and went through; one when something
- * would not stop. A second signal while stopping means "now": *force* is
- * called, which for a process is `process.exit`.
+ * would not stop. A second signal while stopping means "now": `process.exit`.
  */
-export function untilStopped(
-  shutdown: () => Promise<string[]>,
-  options: { signals?: SignalSource; force?: (code: number) => void; log?: (line: string) => void } = {},
-): Promise<number> {
-  const signals = options.signals ?? process;
-  const force = options.force ?? ((code: number) => process.exit(code));
-  const log = options.log ?? ((line: string) => { process.stderr.write(`${line}\n`); });
+export function untilStopped(shutdown: () => Promise<string[]>): Promise<number> {
+  const log = (line: string): void => { process.stderr.write(`${line}\n`); };
 
   return new Promise((resolve) => {
     let asked = false;
     const onSignal = (): void => {
-      if (asked) return force(130);
+      if (asked) return process.exit(130);
       asked = true;
       log('Stopping: ending runs in flight. Again to stop at once.');
       void shutdown().then((stuck) => {
-        for (const signal of STOP_SIGNALS) signals.off(signal, onSignal);
+        for (const signal of STOP_SIGNALS) process.off(signal, onSignal);
         if (stuck.length) log(`Did not stop in time: ${stuck.join(', ')}.`);
         resolve(stuck.length ? 1 : 0);
       });
     };
-    for (const signal of STOP_SIGNALS) signals.on(signal, onSignal);
+    for (const signal of STOP_SIGNALS) process.on(signal, onSignal);
   });
 }

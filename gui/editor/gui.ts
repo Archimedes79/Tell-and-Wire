@@ -1,8 +1,9 @@
 // What only the editor asks of the gui: whether it is sound, what to tell the
-// model that writes one, what a bundle carries. A package carries none of it;
+// model that writes one, what a package carries. A package carries none of it;
 // what a run asks is in `gui/gui.ts`.
 
 import type { Graph } from '../../graph/graph.ts';
+import { offered } from '../../graph/interface.ts';
 import type { Kinds } from '../../graph/nodes/NodeDefinition.ts';
 import { names, type Problem } from '../../graph/wiring.ts';
 import { SENDERS } from '../../graph/nodes/start/StartNodeDefinition.ts';
@@ -21,20 +22,14 @@ export function fieldSender(graph: Graph, name: string, field: string): Widget |
   return sentBy(graph, name).find((widget) => widget.id === id);
 }
 
-/** The graph's start points, end points and memory nodes, by name, as its nodes offer them: what a block may name. */
+/** The graph's start points (and who starts each), end points and memory nodes, by name, as its nodes offer them: what a block may name. */
 function points(graph: Graph, registry: Kinds): { starts: Map<string, string>; ends: Set<string>; states: Set<string> } {
-  const starts = new Map<string, string>();
-  const ends = new Set<string>();
-  const states = new Set<string>();
-  for (const node of graph.nodes) {
-    const element = registry.node(node.node_type);
-    for (const offer of element?.offers(node) ?? []) {
-      if (offer.kind === 'event') starts.set(offer.name, offer.startedBy ?? 'gui');
-      if (offer.kind === 'output') ends.add(offer.name);
-      if (offer.kind === 'state') states.add(offer.name);
-    }
-  }
-  return { starts, ends, states };
+  const { event, output, state } = offered(graph, registry);
+  return {
+    starts: new Map([...event].map(([name, { offer }]): [string, string] => [name, offer.startedBy ?? 'gui'])),
+    ends: new Set(output.keys()),
+    states: new Set(state.keys()),
+  };
 }
 
 /** Whether a block of the gui shows a memory node: what a person sees of the graph where it has no end point. */
@@ -52,14 +47,14 @@ export function showsMemory(graph: Graph, registry: Kinds): boolean {
  * the gui cannot start it. And a node that takes a value of what such a
  * start point is sent that no block sends it: it never arrives.
  */
-export function guiProblems(graph: Graph, registry: Kinds, where = 'the gui'): Problem[] {
+export function guiProblems(graph: Graph, registry: Kinds): Problem[] {
   const found: Problem[] = [];
   const blocks = guiWidgets(graph);
   if (!blocks.length) return found;
   const { starts, ends, states } = points(graph, registry);
   const seen = new Set<string>();
   for (const block of blocks) {
-    const at = `${where}, block "${block.id || block.kind}"`;
+    const at = `the gui, block "${block.id || block.kind}"`;
     if (!block.id) {
       found.push({ where: at, problem: `A "${block.kind}" block has no id.`, fix: 'Give every block an id: it is the name its data is sent under.' });
     } else if (seen.has(block.id)) {
@@ -142,7 +137,7 @@ export function guiProblems(graph: Graph, registry: Kinds, where = 'the gui'): P
   return found;
 }
 
-/** What the gui's blocks start on: a picker's file, which a bundle carries. */
+/** What the gui's blocks start on: a picker's file, which a package carries. */
 export function guiReferencedPaths(graph: Graph): string[] {
   return guiWidgets(graph).flatMap((widget) => widgetDesign(widget.kind)?.referencedPaths(widget) ?? []);
 }

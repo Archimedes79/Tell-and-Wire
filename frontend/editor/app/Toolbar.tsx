@@ -18,16 +18,14 @@ import GraphProblems from './GraphProblems';
 import ViewTabs, { type EditorView } from './ViewTabs';
 import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from '../document/application';
 import FileMenu, { fileActions } from './FileMenu';
-import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
+import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS, SURFACE } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * How long a node may go without producing anything before the toolbar says so.
  *
  * A local model thinking for twenty seconds is normal and needs no commentary;
  * one silent for a minute is the case where the only question a user has is
- * "is this still alive or do I reload the page?". Comfortably under
- * AI_STREAM_IDLE_TIMEOUT (120s), so the notice appears well before the request
- * would be given up on.
+ * "is this still alive or do I reload the page?".
  */
 const STALLED_AFTER_SECONDS = 45;
 
@@ -108,7 +106,7 @@ export default function Toolbar({
 
   /**
    * ▶ Run: the tool, run as whoever gets it will run it -- one button,
-   * the same on every tab (`app/application.ts`). With a gui, the gui opens
+   * the same on every tab (`document/application.ts`). With a gui, the gui opens
    * (the App tab) and the graph runs when it is used; without one, what starts
    * the graph starts it. While it runs the button is ■ Stop, which ends it.
    *
@@ -205,9 +203,7 @@ export default function Toolbar({
         <span className="shrink-0 whitespace-nowrap text-base font-bold" style={{ color: ACCENT_TEXT }}>Tell & Wire</span>
 
         {/* The tool's name; where it is saved is its tooltip and the File menu's first line.
-            Inside a node's graph the trail names where you are, the top graph
-            first: a name field there showed "Untitled tool" beside a trail
-            saying "Statistics", and nobody could tell whose name it was. */}
+            Inside a node's graph the trail names where you are, the top graph first. */}
         {!inside && (
           <input
             className="bg-transparent border-none outline-none text-sm w-44 min-w-[5rem] flex-shrink"
@@ -348,9 +344,7 @@ export default function Toolbar({
         />
       </header>
 
-      {/* What ✨ Generate all says, whole, under the header: in it, at 1024
-          pixels, "Nothing to generate. 3 left alone: …" was 77 pixels wide
-          and the rest only a tooltip. */}
+      {/* What ✨ Generate all says, whole, under the header: in the bar it is cut to the room there is. */}
       {sweep.message && (
         <div className="flex items-start gap-3 px-3 xl:px-5 py-1.5 text-xs flex-shrink-0" role="status"
           style={{ background: SURFACE, borderBottom: `1px solid ${LINE}`, color: MUTED }}>
@@ -401,7 +395,7 @@ export default function Toolbar({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg p-3 text-sm resize-y outline-none"
-              style={{ minHeight: 100, background: SUNKEN, border: `1px solid ${LINE}`, color: TEXT }}
+              style={{ ...FIELD, minHeight: 100 }}
               placeholder="e.g. Read a text file, summarize it with AI, and show the result on a gui."
               disabled={asking}
             />

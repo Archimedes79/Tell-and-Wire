@@ -4,7 +4,7 @@
 // called, how it starts, and the environment variables it reads -- each with a
 // line on what it means. That list is also the whole of what it may be given.
 // If the folder has a `settings.html` the editor shows that page where the
-// server's settings are set (`frontend/.../ToolServerDialogs.tsx`); the editor
+// server's settings are set (`frontend/editor/graph/nodes/ai/ToolServerDialogs.tsx`); the editor
 // itself knows nothing of what a setting is.
 //
 // Setting one up writes an entry into the machine's `ai-settings.json`, the

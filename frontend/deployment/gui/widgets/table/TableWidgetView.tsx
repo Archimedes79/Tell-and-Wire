@@ -12,12 +12,9 @@ import { DIMMER, LINE, MUTED, SUNKEN, TEXT } from '../../kit/ui/theme';
 export const TABLE_TEXT = 12;
 
 /**
- * Rows, as a table. Display-only, like the plot: one input port, no output.
- *
- * Accepts the two shapes data actually arrives in — a list of objects sharing
- * their keys (keys become the header) or a list of lists whose first row is the
- * header. Anything else is shown as text rather than silently rendered empty,
- * because "my table is blank" is the least helpful failure there is.
+ * The header and rows of *value*, in the two shapes data actually arrives in —
+ * a list of objects sharing their keys (keys become the header) or a list of
+ * lists whose first row is the header. Anything else is null.
  */
 function toRows(value: unknown): { header: string[]; rows: string[][] } | null {
   let data = value;
@@ -53,6 +50,11 @@ function toRows(value: unknown): { header: string[]; rows: string[][] } | null {
   return null;
 }
 
+/**
+ * Rows, as a table. Display-only, like the plot. What `toRows` cannot read is
+ * shown as text rather than silently rendered empty, because "my table is
+ * blank" is the least helpful failure there is.
+ */
 export default function TableWidgetView({ widget, value, incoming }: WidgetViewProps) {
   const data = incoming !== undefined ? incoming : value;
   const table = toRows(data);

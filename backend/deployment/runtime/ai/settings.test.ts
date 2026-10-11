@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { aiSetting, configuredMcpServers, configuredSettings, fromFile } from './settings.ts';
+import { aiSetting, configuredMcpServers, configuredSettings } from './settings.ts';
 
 /**
  * A key belongs in a file, not in a terminal on every run — and not in the
@@ -34,7 +34,7 @@ describe('ai-settings.json', () => {
       }),
       async (dir) => {
         expect(await aiSetting(dir, {})).toEqual({ provider: 'google', model: 'gemini-2.5-flash' });
-        expect(fromFile(dir, {}).apiKeys).toEqual({ google: 'k' });
+        expect(configuredSettings({}, dir).apiKeys).toEqual({ google: 'k' });
 
         // One command can differ without an edit, and the key from the file survives.
         const env = { TW_AI_MODEL: 'gemini-2.5-pro' };

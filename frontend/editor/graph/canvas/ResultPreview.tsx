@@ -8,7 +8,7 @@ import { statusTone } from '../../document/store/executionStatus';
  * card, under its block's row: a line, a count and its first row, a sketch, or
  * a thumbnail -- never more than a small picture high, so a run does not push
  * the graph apart. What the value *is* was decided
- * before this (`frontend/editor/document/elements/resultPreview.ts`, and the element that reads it);
+ * before this (`document/elements/resultPreview.ts`);
  * this only draws it, in the colours of the run that made it (`statusTone`):
  * green, or amber where it lost items. Faded when the node stood still this
  * run, and what stands is what it made before.

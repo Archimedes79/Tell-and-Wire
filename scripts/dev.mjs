@@ -13,7 +13,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const shell = process.platform === 'win32';
 
 const children = [
-  spawn('node', [join(root, 'backend', 'app', 'main.ts'), '--editor', join(root, 'frontend', 'dist'), '--port', '8000'], {
+  spawn('node', [join(root, 'backend', 'cli', 'main.ts'), '--editor', join(root, 'frontend', 'dist'), '--port', '8000'], {
     cwd: root, stdio: 'inherit', env: { ...process.env, TW_NO_BROWSER: '1' },
   }),
   spawn('npm', ['run', 'dev', '--workspace', 'frontend'], { cwd: root, stdio: 'inherit', shell }),

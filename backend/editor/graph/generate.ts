@@ -33,6 +33,7 @@
 import type { AiRequest, AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
 import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { designs } from '../../../graph/editor/nodes/registry.ts';
+import { message } from '../../deployment/host/http.ts';
 import { PLAIN_ASK } from '../../deployment/runtime/nodes/ai/ask.ts';
 import { runBody } from '../../deployment/runtime/nodes/body.ts';
 import type { Generation } from '../../../graph/editor/generation.ts';
@@ -88,7 +89,7 @@ export function recording(ai: AiService, calls: AICall[]): AiService {
         entry.reply_chars = reply.length;
         return reply;
       } catch (error) {
-        entry.error = error instanceof Error ? error.message : String(error);
+        entry.error = message(error);
         throw error;
       } finally {
         entry.seconds = Math.round((Date.now() - started) / 10) / 100;
@@ -119,13 +120,9 @@ export function firstBlock(text: string): { code: string; after: string } | unde
   return block ? { code: block[2].trim(), after: plain.slice(block.index + block[0].length).trim() } : undefined;
 }
 
-export function firstCodeBlock(text: string): string {
-  return firstBlock(text)?.code ?? '';
-}
-
 /** The file a model wrote, out of its answer: its first fenced block, or the whole answer where it wrote none. */
 function fileIn(reply: string): string {
-  return firstCodeBlock(reply) || reply.trim();
+  return firstBlock(reply)?.code || reply.trim();
 }
 
 /** Every fenced block of an answer, in order, each closed at the start of a line (`FENCED`). */
@@ -178,7 +175,7 @@ async function probe(
     if (stop.signal.aborted) {
       return { result: null, error: `The function did not finish within ${PROBE_TIMEOUT_MS / 1000}s on its example.` };
     }
-    return { result: null, error: (error instanceof Error ? error.message : String(error)).trim() };
+    return { result: null, error: message(error).trim() };
   } finally {
     clearTimeout(clock);
   }
@@ -515,11 +512,13 @@ async function writeDefinition({ request, shape, prompt, ai, calls, deps }: Job,
   return { result: text, probe: faults.length ? { status: 'failed', error: '', problems: faults } : notProbed(), calls };
 }
 
-/** What the node's body holds now, as text: fields as JSON. */
-function bodyOf(node: GraphNode, spec: Generation): string {
-  const held = node.config[spec.fields.body];
+/** A setting as text: a text as it is, fields as JSON, nothing as ''. */
+function textOf(held: unknown): string {
   return typeof held === 'string' ? held : held === undefined || held === null ? '' : JSON.stringify(held, null, 2);
 }
+
+/** What the node's body holds now, as text. */
+const bodyOf = (node: GraphNode, spec: Generation): string => textOf(node.config[spec.fields.body]);
 
 /**
  * What may come back besides the body (`OutputAsked`): the output.js a change
@@ -561,8 +560,7 @@ async function writeCode(job: Job): Promise<GenerateResponse> {
 
 /** What the node's second file holds now, as text: a data node's example of its fields as rounds fill them. */
 function exampleText(node: GraphNode, spec: Generation): string {
-  const held = spec.fields.example ? node.config[spec.fields.example] : undefined;
-  return typeof held === 'string' ? held : held === undefined || held === null ? '' : JSON.stringify(held, null, 2);
+  return textOf(spec.fields.example ? node.config[spec.fields.example] : undefined);
 }
 
 /** The struct as rounds fill it, out of a data answer's second block: one JSON object -- or nothing, and the node then shows its start. */
@@ -609,7 +607,7 @@ function failed(error: unknown, calls: AICall[]): GenerateResponse {
   }
   if (error instanceof GenerationRefused) throw error;
   // The failing generation is the one whose transcript is worth reading.
-  throw new GenerationFailed(error instanceof Error ? error.message : String(error), calls);
+  throw new GenerationFailed(message(error), calls);
 }
 
 /** Write one of a node's files, whatever kind of node it is: its input definition, its output definition, or its body. */

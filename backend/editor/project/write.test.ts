@@ -89,7 +89,6 @@ describe('a project folder', () => {
     expect(existsSync(join(dir, 'nodes/pick'))).toBe(false);
     expect(existsSync(join(dir, 'nodes/told'))).toBe(false);
     expect(JSON.parse(await text('gui.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
-    expect(existsSync(join(dir, 'nodes/page'))).toBe(false);
 
     // The flow says no more than who is wired to whom; what a node is, is the list's.
     expect(JSON.parse(await text('graph-flow.json'))).toEqual({

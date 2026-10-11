@@ -100,8 +100,8 @@ export async function askModel(
   };
 
   // A failed call is not caught here: `catch_errors` is read by the executor,
-  // which turns a throw into this node's `error` port for every element
-  // alike. One mechanism, not one per element.
+  // which turns a throw into this node's `error` port for every kind of
+  // node alike. One mechanism, not one per kind.
   if (!settings.toolServers.length) return runtime.ai.complete(request);
 
   // Tools live for one question and no longer: a server started for it is

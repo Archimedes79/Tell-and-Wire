@@ -1,10 +1,10 @@
 // The JavaScript graph core, in the host's own process: the executor and
-// the elements, behind the protocol (`protocol.ts`). The same core is a
+// the runners, behind the protocol (`protocol.ts`). The same core is a
 // program of its own with `node backend/cli/main.ts core` (`stdio.ts`).
 //
 // What it keeps between rounds is what makes it one per session: what every
-// node made last (`execution/latch.ts`), which is meaning -- a node whose ◆
-// stays shut hands it on -- and the reuse cache (`execution/reuse.ts`), which
+// node made last (`latch.ts`), which is meaning -- a node whose ◆
+// stays shut hands it on -- and the reuse cache (`reuse.ts`), which
 // only saves time.
 
 import type { Graph, GraphNode } from '../../../graph/graph.ts';

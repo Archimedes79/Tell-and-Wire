@@ -9,7 +9,7 @@
 // else of the graph is set from outside. A gui's blocks are not among the
 // names: they connect themselves to them (`gui/interface.ts` adds which fire
 // what). A graph inside a node meets the graph above it the same way
-// (`subgraph/boundary.ts`).
+// (`nodes/subgraph/boundary.ts`).
 //
 // Not to be mistaken for `schema.ts`, which is the shape of what one node
 // hands on. This is the graph's own: what goes into all of it, and what comes
@@ -61,7 +61,7 @@ interface Offered {
 }
 
 /** Every offer of *graph*, by kind and name: a node's id, which no other node has (`wiring.ts` refuses a second) -- and for a part of what a node holds, the id and the part. */
-function offered(graph: Graph, kinds: Kinds): Record<OfferKind, Map<string, Offered>> {
+export function offered(graph: Graph, kinds: Kinds): Record<OfferKind, Map<string, Offered>> {
   const found: Record<OfferKind, Map<string, Offered>> = { event: new Map(), output: new Map(), state: new Map() };
   for (const node of graph.nodes) {
     for (const offer of kinds.node(node.node_type)?.offers(node) ?? []) {
@@ -118,7 +118,7 @@ export function eventOf(graph: Graph, name: string | null | undefined, kinds: Ki
 }
 
 /** The start point *trigger* fires, when it fires one: the node that takes what the round was sent as one package. */
-export function packageTaker(graph: Graph, trigger: Trigger | null, kinds: Kinds): GraphNode | null {
+function packageTaker(graph: Graph, trigger: Trigger | null, kinds: Kinds): GraphNode | null {
   const node = trigger ? graph.nodes.find((one) => one.id === trigger.node_id) : undefined;
   return node && kinds.node(node.node_type)?.takesPackage ? node : null;
 }

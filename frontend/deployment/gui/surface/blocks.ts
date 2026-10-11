@@ -14,9 +14,9 @@
 // alike. It is *how a widget looks*.
 //
 // Only this one is delivered, so only this one may be reachable from
-// `runtime/main.tsx`. The builders' roster next door carries the panel and the
+// `deployment/gui/main.tsx`. The builders' roster carries the panel and the
 // generation contract, which a tool handed to someone must not hold:
-// `runtime/boundary.test.ts` asserts it is out of reach.
+// `deployment/gui/boundary.test.ts` asserts it is out of reach.
 
 import type { ComponentType } from 'react';
 import type { WidgetKind } from '../../../../graph/graph.ts';
@@ -62,9 +62,8 @@ export const BLOCKS: Record<WidgetKind, BlockKind> = {
   spacer: { View: SpacerWidgetView },
   input_picker: { View: InputPickerWidgetView, labelsControl: true },
   // The box a person types into holds what they typed, which is what a run
-  // sends; the reply is shown above it from what arrived. Handed the reply as
-  // its value, the box showed one text and ▶ Run sent another. A box that
-  // only shows is what arrived.
+  // sends; the reply is shown above it from what arrived. A box that only
+  // shows is what arrived.
   text_io: {
     View: TextIoWidgetView,
     labelsControl: true,

@@ -10,10 +10,9 @@
 import type { Graph } from '../../../graph/graph.ts';
 import { NotOffered, applySent, type GraphInterface } from '../../../graph/interface.ts';
 import { interfaceWithGui } from '../../../gui/interface.ts';
-import { startEvents } from '../../../graph/triggers.ts';
+import { startEvents, type Trigger } from '../../../graph/triggers.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
-import type { Trigger } from '../../../graph/triggers.ts';
 import { names } from '../../../graph/wiring.ts';
 import {
   applyGuiValues, clearDeliveredGui, firedBy, guiBlock, guiBlocks, guiRequirements, guiSends, guiState, pathBlocks, sentBy, setGuiState, settleGui,
@@ -22,7 +21,7 @@ import {
 import type { RuntimeRequirement } from '../../../gui/widgets/WidgetDefinition.ts';
 
 /** A round with a gui around it: how it began, and how it ends. */
-export interface GuiRound {
+interface GuiRound {
   /** A block of the gui started it, and its start point has been sent what the blocks hold: nothing else is sent. */
   sent: boolean;
   /** What the end points handed back reaches the blocks that show them; what was sent with the round is emptied. Returns what each block shows now. */
@@ -105,7 +104,7 @@ export const guiHooks: GuiHooks = {
 };
 
 /** The gui as it was designed, and no more of the graph: its blocks are what it draws, by the names they are called by. */
-export function guiView(session: { id: string; graph: Graph; designRevision: number }) {
+function guiView(session: { id: string; graph: Graph; designRevision: number }) {
   const { graph } = session;
   return {
     session: session.id,

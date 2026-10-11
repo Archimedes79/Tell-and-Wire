@@ -82,9 +82,9 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
 
   // A new ai or code node runs once, on what arrives -- a list whole -- and
   // hands on one value: single ports and the default `batch_mode`, which is
-  // `withPerItem(node, false)` (`perItem.test.ts` holds them to it). Run once
-  // per item, a node would split what it was handed (a sort sorts one item per call). "Run once per item"
-  // is one tick away, asked when a list arrives (`RunOncePerItem`).
+  // `withPerItem(node, false)` (`writing/perItem.ts`). Run once per item, a
+  // node would split what it was handed (a sort sorts one item per call).
+  // "Run once per item" is one tick away, asked when a list arrives (`RunOncePerItem`).
   ai: {
     create: (id) => ({
       id,
@@ -98,9 +98,7 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
       // then gets its place.
       inputs: [
         // `any`, not `text`: nobody has said what this carries yet, and that is the
-        // difference that decides whether a wired file is read (`execution/fileInputs.ts`).
-        // Created `text`, an AI node wired to a folder picker was handed the file
-        // *names* -- the box ticked, the rule looking at a word nobody had said.
+        // difference that decides whether a wired file is read (`graph/fileInputs.ts`).
         { id: 'prompt', name: 'Prompt', kind: 'input', data_type: 'any', multi: false, required: false, description: 'What to ask.' },
       ],
       outputs: [{ id: 'output', name: 'Output', kind: 'output', data_type: 'text', multi: false, required: false, description: 'The answer.' }],

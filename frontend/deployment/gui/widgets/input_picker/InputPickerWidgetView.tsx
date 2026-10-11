@@ -5,9 +5,9 @@ import Button from '../../kit/ui/Button';
 import { DIMMER, MUTED } from '../../kit/ui/theme';
 
 /**
- * Runtime input_picker widget: unified file or directory picker.
+ * A file or folder picker.
  *
- * 📂 Browse… browses the machine the graph runs on. Not a native
+ * 📂 Browse… browses the machine the tool runs on. Not a native
  * `<input type="file">`: a browser exposes a chosen file's name, never its
  * location, so it cannot produce a path the server resolves.
  */

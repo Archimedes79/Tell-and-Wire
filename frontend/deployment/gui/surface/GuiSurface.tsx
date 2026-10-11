@@ -13,13 +13,13 @@ import RunResult, { type ShownOutput } from './RunResult';
  * **This module is the deployment boundary.** It holds what a *user* of the
  * finished tool sees and nothing else — no selection, no drag handle, no resize
  * corner. The designer's chrome lives in `DesignerSurface.tsx`, which imports
- * from here and which the runtime entry point cannot reach.
+ * from here and which the deployed tool's entry point cannot reach.
  *
  * Editing affordances behind an `editing` flag would still ship: a flag that
- * is false at runtime leaves dead code in the bundle, not absent code, and a
- * base class the runtime extends ships them because the subclass references the
+ * is false at run time leaves dead code in the bundle, not absent code, and a
+ * base class the tool extends ships them because the subclass references the
  * base. Only the import graph decides what ends up in a bundle, so the boundary
- * is a module boundary — `runtime/boundary.test.ts` asserts that it stays one.
+ * is a module boundary — `deployment/gui/boundary.test.ts` asserts that it stays one.
  *
  * It knows no graph and no store: whoever draws it hands it the gui as
  * designed and what is in use -- the delivered tool from the runtime API, the
@@ -157,9 +157,7 @@ export function GuiBlock({
       style={{
         ...blockStyle(placement, waiting, narrow),
         ...toneStyle(widget.tone as Tone, look),
-        // The same horizontal padding either way: a heading that started left
-        // of the box beneath it broke the one thing a document must get
-        // right, which is a single left margin.
+        // The same horizontal padding either way: a document has a single left margin.
         padding: bare ? '2px 12px' : '8px 12px',
         ...style,
       }}
@@ -185,12 +183,10 @@ export function GuiBlock({
 
 /**
  * What a tool shows when its gui has no blocks: what it does, how to start
- * it, and what its run handed back -- each output under its name. A gui is
- * its blocks; one whose last block was removed has nothing to draw, and drew
- * an empty rectangle where the run's result belongs.
+ * it, and what its run handed back -- each output under its name.
  */
 function WithoutGui({ gui }: { gui: GuiModel }) {
-  // A graph of nothing is not ready to run: it said it was, run or not.
+  // A graph of nothing is not ready to run.
   if (gui.empty) {
     return (
       <div className="m-6 max-w-2xl">
@@ -217,8 +213,7 @@ function WithoutGui({ gui }: { gui: GuiModel }) {
 /**
  * Why the last round failed, in the round's own words -- which can be several
  * lines long, and belong above the gui rather than squeezed into the header
- * beside its "❌ Failed". Part of what the gui shows, so every host draws it:
- * the editor's running application once said only "❌ Failed".
+ * beside its "❌ Failed". Part of what the gui shows, so every host draws it.
  */
 function RunError({ error }: { error: string }) {
   if (!error) return null;

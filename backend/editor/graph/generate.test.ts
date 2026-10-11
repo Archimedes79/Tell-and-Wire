@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { AiRequest, AiService, CodeService } from '../../../graph/nodes/Runtime.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { parseGraph, type GraphNode } from '../../../graph/graph.ts';
-import { GenerationFailed, GenerationRefused, firstCodeBlock, generate } from './generate.ts';
+import { GenerationFailed, GenerationRefused, firstBlock, generate } from './generate.ts';
 import { generateGraph } from './generateGraph.ts';
 import { nodeCode } from '../../deployment/runtime/services.ts';
 import type { GenerateRequest } from '../host/api.ts';
@@ -118,15 +118,15 @@ describe('✨ writes a node\'s files', () => {
 describe('the code in a model\'s answer', () => {
   const fence = '```';
   it('is found behind any info string and Windows line ends, and does not end at a fence written inside it', () => {
-    expect(firstCodeBlock(`Here:\n${fence}javascript \nfunction run() {}\n${fence}\nDone.`)).toBe('function run() {}');
-    expect(firstCodeBlock(`${fence}js title="code.js"\r\nfunction run() {}\r\n${fence}`)).toBe('function run() {}');
+    expect(firstBlock(`Here:\n${fence}javascript \nfunction run() {}\n${fence}\nDone.`)?.code).toBe('function run() {}');
+    expect(firstBlock(`${fence}js title="code.js"\r\nfunction run() {}\r\n${fence}`)?.code).toBe('function run() {}');
 
     const code = 'function run() {\n  return { md: "' + fence + 'json\\n{}\\n' + fence + '" };\n}';
-    expect(firstCodeBlock(`${fence}js\n${code}\n${fence}`)).toBe(code);
+    expect(firstBlock(`${fence}js\n${code}\n${fence}`)?.code).toBe(code);
 
     // Instructions fenced with four hold an example fenced with three.
     const instructions = `Answer with the figure, like this:\n${fence}json\n{ "kind": "bars" }\n${fence}\nNothing else.`;
-    expect(firstCodeBlock(`${fence}\`md\n${instructions}\n${fence}\`\nDone.`)).toBe(instructions);
+    expect(firstBlock(`${fence}\`md\n${instructions}\n${fence}\`\nDone.`)?.code).toBe(instructions);
   });
 });
 

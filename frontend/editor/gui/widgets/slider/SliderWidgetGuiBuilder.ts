@@ -5,8 +5,6 @@ import { SlidersHorizontal } from 'lucide-react';
 export class SliderWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'slider';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Slider';
 
   paletteEntries() {

@@ -41,7 +41,7 @@ describe('colour schemes', () => {
         if (ratio < 4.5) failures.push(`${s.id}: ${what} ${ratio.toFixed(2)}`);
       };
       for (const [ground, rgb] of Object.entries(grounds)) {
-        for (const name of ['text', 'muted', 'dim', 'dimmer', 'accentText', 'dangerText', 'successText', 'warningText', 'infoText', 'purpleText'] as const) {
+        for (const name of ['text', 'muted', 'dim', 'dimmer', 'accentText', 'dangerText', 'successText', 'warningText', 'purpleText'] as const) {
           check(`${name} on ${ground}`, s[name], rgb);
         }
       }

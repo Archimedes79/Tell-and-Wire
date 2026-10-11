@@ -1,7 +1,7 @@
 import { WidgetDefinition, type Sent, type Widget } from '../WidgetDefinition.ts';
 import { selectChoice, selectOptions } from './choice.ts';
 
-export interface SelectConfig {
+interface SelectConfig {
   value: string;
   options: string[];
 }

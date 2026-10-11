@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../document/graph';
-import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
+import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Flag } from 'lucide-react';
 
@@ -25,12 +25,8 @@ export class EndNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly example = 'e.g. One row per country, with its population';
 
-  readonly color = NODE.end;
-
-  /** Its icon, on its card and in the palette. */
   readonly icon = Flag;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
   readonly ink = INK.end;
 
   override readonly paletteGroup = 'Output';

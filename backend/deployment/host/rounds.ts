@@ -18,6 +18,7 @@
 import type { ExecutionResult } from '../../../graph/graph.ts';
 import type { CoreEvent } from '../runtime/protocol.ts';
 import type { RoundSnapshot, RoundStart } from './api.ts';
+import { message } from './http.ts';
 
 /** How long a finished round can still be looked at. A long session must not accumulate them. */
 const KEEP_MS = 300_000;
@@ -100,7 +101,7 @@ class Round {
  * Told when a round changed: *moment* when it was asked for, began or ended --
  * a change a watcher must see -- and not when it only went a step further.
  */
-export type RoundChanged = (id: string, moment: boolean) => void;
+type RoundChanged = (id: string, moment: boolean) => void;
 
 export class Rounds {
   /** Settles once every round asked for so far has ended: what the next one waits for. */
@@ -154,7 +155,7 @@ export class Rounds {
     // the ones ahead of it, which a round stopped while it waited did not end.
     this.ahead = before.then(() => outcome).then(() => {}, () => {});
     round.ended = outcome
-      .then((result) => { round.result = result; }, (error: unknown) => { round.error = error instanceof Error ? error.message : String(error); })
+      .then((result) => { round.result = result; }, (error: unknown) => { round.error = message(error); })
       .finally(() => {
         round.finishedAt = Date.now();
         signal?.removeEventListener('abort', halt);

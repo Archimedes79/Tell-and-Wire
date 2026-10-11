@@ -1,6 +1,6 @@
 // What is wrong with a project folder, and the `check` command's answer.
 //
-// What a graph gets wrong is `check.ts`'s, which reads no disk -- so the
+// What a graph gets wrong is `gui/editor/check.ts`'s, which reads no disk -- so the
 // editor asks it too, of a graph before it is loaded. What only a folder can
 // get wrong, and reading one to check it, is here.
 
@@ -11,8 +11,10 @@ import { join } from 'node:path';
 import type { Graph } from '../../../graph/graph.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 import { names, type Problem } from '../../../graph/wiring.ts';
+import { FLOW_FILE } from '../../../graph/files/flow.ts';
+import { NODES_FILE } from '../../../graph/files/nodesFile.ts';
 import {
-  FLOW_FILE, LAYOUT_FILE, NODES_DIR, NODES_FILE, isProjectFolder, loadGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  LAYOUT_FILE, NODES_DIR, isProjectFolder, loadGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readStructure,
 } from '../../deployment/project/folder.ts';
 import { problemsIn } from '../../../gui/editor/check.ts';

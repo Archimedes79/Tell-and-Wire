@@ -23,8 +23,7 @@ const OWN: Record<WidgetKind, string[]> = {
 
 describe('a new block, as the palette puts it on a gui', () => {
   it('holds only its own kind\'s settings', () => {
-    // Every kind's settings were once spread onto every block, so a divider
-    // or a chart was saved with a folder's file types and an options list.
+    // A divider or a chart carries no folder's file types and no options list.
     for (const [kind, builder] of Object.entries(WIDGET_BUILDERS) as [WidgetKind, (typeof WIDGET_BUILDERS)[WidgetKind]][]) {
       const extra = Object.keys(builder.create('block', 'Block')).filter((key) => !COMMON.includes(key) && !OWN[kind].includes(key));
       expect(extra, kind).toEqual([]);

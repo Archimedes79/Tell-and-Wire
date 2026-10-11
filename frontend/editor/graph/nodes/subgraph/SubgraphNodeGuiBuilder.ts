@@ -2,7 +2,7 @@ import { lazy } from 'react';
 import type { GraphNode } from '../../../document/graph';
 import { SubgraphNodeDefinition } from '../../../../../graph/nodes/subgraph/SubgraphNodeDefinition.ts';
 import { registry } from '../../../../../graph/nodes/registry.ts';
-import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
+import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Boxes } from 'lucide-react';
 
@@ -25,12 +25,8 @@ export class SubgraphNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly example = 'e.g. Take a paper, and give back a one-paragraph summary and a verdict';
 
-  readonly color = NODE.subgraph;
-
-  /** Its icon, on its card and in the palette. */
   readonly icon = Boxes;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
   readonly ink = INK.subgraph;
 
   // A graph of its own, one node wide from out here: the way a graph grows

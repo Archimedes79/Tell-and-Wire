@@ -2,8 +2,8 @@
 //
 // A design is the editor's face of a node: how an AI writes its body, what a
 // person writing a graph must know of its settings, what is wrong with it that
-// only its kind can say, what a bundle must carry for it, what runs when it
-// runs. `check`, `test`, a bundle being made and the editor ask it; a run never
+// only its kind can say, what a package must carry for it, what runs when it
+// runs. `check`, `test`, a package being made and the editor ask it; a run never
 // does. It is not shipped: a tool carries the node's definition
 // (`graph/nodes/`) and runner (`backend/deployment/runtime/nodes/`), and
 // nothing outside an `editor` folder imports this.
@@ -16,12 +16,12 @@ import type { Kinds, NodeDefinition } from '../../nodes/NodeDefinition.ts';
 import type { Problem } from '../../wiring.ts';
 import type { Generation } from '../generation.ts';
 
-/** What a deploy bundle must carry for this node to run elsewhere. */
+/** What a package must carry for this node to run elsewhere. */
 export interface DeployNeeds {
-  /** The bundle needs the gui: the graph is used through it, not only from a terminal. */
+  /** The package needs the gui: the graph is used through it, not only from a terminal. */
   needsInterface: boolean;
   /**
-   * It calls a model, so whoever receives the bundle needs a provider set up.
+   * It calls a model, so whoever receives the package needs a provider set up.
    *
    * Asked of the node rather than looked for by node type. A node that
    * holds a graph answers for itself; what is *inside* it is followed by
@@ -51,7 +51,7 @@ export interface Designs {
   node(type: string): NodeDesign | undefined;
 }
 
-export class NodeDesign<K extends NodeDefinition = NodeDefinition> {
+export abstract class NodeDesign<K extends NodeDefinition = NodeDefinition> {
   protected readonly kind: K;
 
   constructor(kind: K) {
@@ -68,7 +68,7 @@ export class NodeDesign<K extends NodeDefinition = NodeDefinition> {
   }
 
   /**
-   * What a bundle must carry for this node to run somewhere else.
+   * What a package must carry for this node to run somewhere else.
    *
    * Every body may ask a model (`backend/deployment/runtime/nodes/body.ts`), so every body is looked at, and any
    * mention counts -- `node.llm(`, `{ llm }`, `const ask = node.llm`: a README
@@ -99,10 +99,7 @@ export class NodeDesign<K extends NodeDefinition = NodeDefinition> {
    * it does. Every kind says it, so every node's folder and panel can -- the
    * executing class is otherwise nowhere a person building a graph looks.
    */
-  whatRuns(_node: GraphNode): WhatRuns {
-    // Every kind says more than this.
-    return this.graphRuns('');
-  }
+  abstract whatRuns(node: GraphNode): WhatRuns;
 
   /**
    * This kind's runner, its `execute`, named by where the folders put it.
@@ -136,11 +133,9 @@ export class NodeDesign<K extends NodeDefinition = NodeDefinition> {
    * Running this node asks a model: its examples are skipped by an offline
    * `test`.
    *
-   * The same question `deployNeeds` answers for a bundle, so it is asked once
-   * and read twice. Held apart, they disagreed: `deployNeeds` looks at the
-   * body and sees `node.llm(`, this was a constant and said no -- so a bundle
-   * told its recipient to configure a provider while `test --offline` ran that
-   * same body into a model that was never there.
+   * The same question `deployNeeds` answers for a package, so it is asked once
+   * and read twice: a package that tells its recipient to configure a provider
+   * and an offline `test` that skips the example must agree.
    */
   asksModel(node: GraphNode): boolean {
     return this.deployNeeds(node).asksAi;
@@ -150,7 +145,7 @@ export class NodeDesign<K extends NodeDefinition = NodeDefinition> {
    * Files and folders this node names as its own defaults: the CSV a picker
    * starts on, the folder a start point reads.
    *
-   * A bundle carries them. A tool handed to someone with its default file left
+   * A package carries them. A tool handed to someone with its default file left
    * behind opens on an error, and the person it was handed to has no way to
    * know which file on someone else's machine it wanted.
    */

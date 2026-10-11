@@ -18,7 +18,7 @@
 //
 // There is no other form, and no "just this once" parameter to add one.
 //
-// Like `core/node.ts`, this file knows an operating system exists: it starts
+// Like `../services.ts`, this file knows an operating system exists: it starts
 // processes. It is reached only from there, so everything above it still runs in a
 // browser tab, where `runtime.tools` is simply absent.
 
@@ -68,12 +68,9 @@ interface RpcMessage {
  * do not validate -- and the model should get to read it and try again. A
  * transport that died is not: nothing the model says next will bring it back.
  */
-export class McpRpcError extends Error {
-  readonly code: number;
-
-  constructor(code: number, message: string) {
+class McpRpcError extends Error {
+  constructor(message: string) {
     super(message);
-    this.code = code;
     this.name = 'McpRpcError';
   }
 }
@@ -91,7 +88,7 @@ interface Transport {
 
 function unwrap(message: RpcMessage): unknown {
   if (message.error) {
-    throw new McpRpcError(message.error.code ?? 0, message.error.message ?? 'the server reported an error');
+    throw new McpRpcError(message.error.message ?? 'the server reported an error');
   }
   return message.result;
 }
@@ -559,8 +556,8 @@ const safeName = (name: string): string => name.replace(/[^A-Za-z0-9_-]/g, '_').
  * genuinely takes longer -- a crawl, a build -- is why the knob exists, and 0
  * takes the clock off entirely. Stop ends the call either way.
  */
-function envCallTimeout(env: Record<string, string | undefined> = process.env): number | undefined {
-  const given = env.TW_MCP_TIMEOUT_MS;
+function envCallTimeout(): number | undefined {
+  const given = process.env.TW_MCP_TIMEOUT_MS;
   const ms = Number(given);
   return given && Number.isFinite(ms) && ms >= 0 ? ms : undefined;
 }

@@ -4,10 +4,9 @@
 // carries and what the editor asks; the runners (`backend/deployment/runtime/nodes/`)
 // and the designs (`graph/editor/nodes/`) are listed beside it, each by its
 // own registry. The blocks of a gui are not nodes: the gui asks them
-// (`gui/gui.ts`), and `widgets/roster.ts` there is their list.
+// (`gui/gui.ts`), and `gui/widgets/roster.ts` is their list.
 
 import type { NodeDefinition } from './NodeDefinition.ts';
-import type { NodeType } from '../graph.ts';
 import { AiNodeDefinition } from './ai/AiNodeDefinition.ts';
 import { CodeNodeDefinition } from './code/CodeNodeDefinition.ts';
 import { DataNodeDefinition } from './data/DataNodeDefinition.ts';
@@ -31,7 +30,7 @@ const NODES_BY_TYPE = new Map<string, NodeDefinition>(
 
 /** The registry the executor asks. An unknown type is a missing kind, not a crash. */
 export const registry = {
-  node(type: NodeType | string): NodeDefinition | undefined {
+  node(type: string): NodeDefinition | undefined {
     return NODES_BY_TYPE.get(type);
   },
   nodeTypes(): string[] {

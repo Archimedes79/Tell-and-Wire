@@ -3,7 +3,7 @@ import type { Graph } from '../document/graph';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
 import GraphProblems from './GraphProblems';
-import { DANGER_TEXT, LINE, MUTED, SUNKEN, TEXT } from '../../deployment/gui/kit/ui/theme';
+import { DANGER_TEXT, FIELD, MUTED } from '../../deployment/gui/kit/ui/theme';
 
 /** *raw* as a graph: JSON with nodes and edges. Otherwise it says what is wrong. */
 export function parseGraphJson(raw: string): Graph {
@@ -86,7 +86,7 @@ export default function JsonDialog({ graph, onLoad, onClose }: {
           value={value}
           onChange={(e) => { setValue(e.target.value); setProblem(''); setCopied(''); }}
           className="w-full rounded-lg p-4 text-sm font-mono resize-y outline-none"
-          style={{ minHeight: 320, background: SUNKEN, border: `1px solid ${LINE}`, color: TEXT }}
+          style={{ ...FIELD, minHeight: 320 }}
           spellCheck={false}
         />
         {problem && <div className="text-xs" style={{ color: DANGER_TEXT }}>{problem}</div>}

@@ -13,7 +13,7 @@ function notAPath(block: string, value: unknown): string {
 }
 
 /**
- * Runtime image_view widget: display-only.
+ * An image: display-only.
  *
  * The backend hands this widget a `data:` URL (or a list of them) rather than a
  * path — the picture lives on the machine the graph ran on, which is not the one

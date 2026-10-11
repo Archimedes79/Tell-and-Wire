@@ -9,7 +9,7 @@ const CHAT_PARTS: NonNullable<Sent['keys']> = {
 };
 
 /** The conversation as a model reads it: one turn per paragraph, who said it in front. */
-export function transcript(messages: ChatMessage[]): string {
+function transcript(messages: ChatMessage[]): string {
   return messages
     .map((message) => `${message.role === 'assistant' ? 'Assistant' : 'User'}: ${message.text}`)
     .join('\n\n');

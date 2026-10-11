@@ -37,14 +37,14 @@
 // booleans, wired to other nodes' ◆, is a filter and a router -- there is no
 // node type for either.
 //
-// A node whose gate stays shut keeps what it made last (`latch.ts`), and a run
-// no event started -- ▶ Run, the command line -- counts every event as having
-// happened, which is what "run everything" means.
+// A node whose gate stays shut keeps what it made last
+// (`backend/deployment/runtime/latch.ts`), and a run no event started -- ▶ Run,
+// the command line -- counts every event as having happened, which is what
+// "run everything" means.
 
-import type { Graph } from './graph.ts';
-import type { Kinds } from './nodes/NodeDefinition.ts';
+import type { Graph, GraphEdge } from './graph.ts';
+import type { Kinds, StartedBy } from './nodes/NodeDefinition.ts';
 import { passiveWires, walk } from './order.ts';
-import type { StartedBy } from './nodes/NodeDefinition.ts';
 
 /** The input every node has and nobody declares: the ◆, a gate. What arrives opens it or does not, and is never handed on. */
 export const RUN_PORT = '__run';
@@ -140,6 +140,10 @@ export function after(ms: number, then: () => void, keepsAlive = true): () => vo
   return () => clearTimeout(timer);
 }
 
+/** Whether *edge* leaves the start point *trigger* names, by its port when it names one. */
+const leaves = (edge: GraphEdge, trigger: Trigger): boolean =>
+  edge.source_node_id === trigger.node_id && (!trigger.port_id || edge.source_port_id === trigger.port_id);
+
 /**
  * The nodes one event runs, or null for "all of them".
  *
@@ -152,8 +156,7 @@ export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Kinds):
   const downstream = firedNodes(graph, trigger, registry);
   if (!downstream) return null;
   // The ◆ of a node the event is wired to is opened by the event itself.
-  const opened = new Set(graph.edges.filter((edge) => edge.source_node_id === trigger.node_id
-    && (!trigger.port_id || edge.source_port_id === trigger.port_id)).map((edge) => edge.target_node_id));
+  const opened = new Set(graph.edges.filter((edge) => leaves(edge, trigger)).map((edge) => edge.target_node_id));
   const needed = neededFor(graph, downstream, registry, opened);
   needed.add(trigger.node_id);
   return needed;
@@ -169,8 +172,7 @@ export function triggeredNodes(graph: Graph, trigger: Trigger, registry: Kinds):
 export function firedNodes(graph: Graph, trigger: Trigger, registry: Kinds): Set<string> | null {
   const reads = passiveWires(graph.nodes, graph.edges, registry);
   const live = graph.edges.filter((edge) => !reads.has(edge.id));
-  const fired = live.filter((edge) => edge.source_node_id === trigger.node_id
-    && (!trigger.port_id || edge.source_port_id === trigger.port_id));
+  const fired = live.filter((edge) => leaves(edge, trigger));
   if (!fired.length) return null;
   return walk(fired.map((edge) => edge.target_node_id), live, true);
 }

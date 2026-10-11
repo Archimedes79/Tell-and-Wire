@@ -1,7 +1,7 @@
 import type { GraphNode } from '../../../document/graph';
 import { DataNodeDefinition, ALL_FIELDS, BEFORE, ROUND, hasField } from '../../../../../graph/nodes/data/DataNodeDefinition.ts';
 import { derivedNodePorts } from '../../../document/model/ports';
-import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
+import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Database } from 'lucide-react';
 
@@ -33,12 +33,8 @@ export class DataNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly example = 'e.g. The three latest summaries, newest first, and how many summaries it has seen';
 
-  readonly color = NODE.data;
-
-  /** Its icon, on its card and in the palette. */
   readonly icon = Database;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
   readonly ink = INK.data;
 
   override readonly paletteGroup = 'Processing';

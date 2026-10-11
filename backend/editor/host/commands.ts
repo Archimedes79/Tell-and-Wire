@@ -49,7 +49,7 @@ export async function makeBundle(graphPath: string, target: string): Promise<num
 
 /** Be an MCP server until the client hangs up. */
 export async function runMcp(root: string | undefined): Promise<number> {
-  await runMcpServer({ root });
+  await runMcpServer(root);
   return 0;
 }
 

@@ -2,7 +2,7 @@ import type { WidgetViewProps } from '../WidgetView';
 import { FIELD } from '../../kit/ui/theme';
 import { selectChoice, selectOptions } from '../../../../../gui/widgets/select/choice.ts';
 
-/** Runtime select widget: a dropdown over the block's own option list, standing where a run reads it. */
+/** A dropdown over the block's own option list, standing where a run reads it. */
 export default function SelectWidgetView({ widget, value, onTrigger, fires, busy, controlId }: WidgetViewProps) {
   const options = selectOptions(widget.options);
   const current = selectChoice(options, value);

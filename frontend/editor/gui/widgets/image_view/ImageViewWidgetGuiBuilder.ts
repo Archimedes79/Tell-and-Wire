@@ -4,8 +4,6 @@ import { ImageIcon } from 'lucide-react';
 export class ImageViewWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   readonly widgetKind = 'image_view';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Image';
 
   paletteEntries() {

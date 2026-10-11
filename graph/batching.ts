@@ -115,9 +115,9 @@ export function mergeBatchOutputs(
  *
  * A body that returns keys matching none of them, on a node with exactly one
  * output, meant the whole object — `return {"count": 3}` from a node whose port
- * is called `output`. Wrapping it is what everyone expects; dropping it is what
- * happened before anyone wrote this down. With several ports there is no honest
- * guess, so the value passes through and the mismatch shows up downstream.
+ * is called `output` — and it is wrapped under that port. With several ports
+ * there is no honest guess, so the value passes through and the mismatch shows
+ * up downstream.
  *
  * The error port a node grows when it catches its failures is not one of them:
  * the executor fills it, and a body's answer never goes there.

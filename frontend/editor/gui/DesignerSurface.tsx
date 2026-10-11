@@ -29,8 +29,8 @@ import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../deploy
  *    of them; nobody has to know that to get two things side by side. A block
  *    is moved by its grip.
  *
- * None of it is reachable from the runtime entry point, which is the whole
- * point of the split (see the note at the top of GuiSurface.tsx).
+ * None of it is reachable from the deployed tool's entry point, which is the
+ * whole point of the split (see the note at the top of GuiSurface.tsx).
  *
  * The blocks stay **live** while you design: you can type into a field and
  * press ▶ and watch the same blocks fill, because designing and using are the
@@ -321,11 +321,10 @@ function BlockToolbar({ width, onWidth, onRemove }: {
 }) {
   const gap = <span style={{ width: 1, alignSelf: 'stretch', background: LINE, margin: '2px 3px' }} />;
 
-  // Kept inside the gui: over a block narrower than the toolbar at the
-  // gui's left edge it reached past it, under the palette, and at 1024
-  // pixels its width buttons could not be pressed. Moved right by as much as
-  // it would stand out, measured anew whenever the gui is drawn -- the block
-  // may have moved -- before anything is painted.
+  // Kept inside the gui: over a block narrower than the toolbar at the gui's
+  // left edge it would reach past it, under the palette. Moved right by as
+  // much as it would stand out, measured anew whenever the gui is drawn -- the
+  // block may have moved -- before anything is painted.
   const bar = React.useRef<HTMLDivElement>(null);
   React.useLayoutEffect(() => {
     const element = bar.current;

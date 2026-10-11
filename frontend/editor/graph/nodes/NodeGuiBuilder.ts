@@ -54,13 +54,10 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   /** What a person might write in the node's text: the placeholder of "What it does". */
   abstract readonly example: string;
 
-  /** The node's tint on the canvas: its `NODE` colour (`app/ui/theme.ts`). */
-  abstract readonly color: string;
-
   /** Its icon, on its card and in the palette: with `ink`, what tells one kind from another at a glance. */
   abstract readonly icon: LucideIcon;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`, `app/ui/theme.ts`). */
+  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`, `deployment/gui/kit/ui/theme.ts`). */
   abstract readonly ink: string;
 
   /**

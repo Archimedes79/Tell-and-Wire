@@ -8,7 +8,7 @@
 //                                 in order, each with what it connects to
 //       nodes/
 //         count/            one folder per node that keeps writing, by id
-//           input.js …      what the element keeps in files: `NodeDefinition.texts`
+//           input.js …      what the node keeps in files: `NodeDefinition.texts`
 //
 // **Each fact in one place.** The flow says which node feeds which, and nothing
 // about any node. The list says what each node is, and nothing about its
@@ -129,7 +129,7 @@ export function nodeFolder(nodeId: string): string {
 const GUI_FIELD = 'blocks';
 
 /** One piece of writing in a graph: whose it is, which field holds it, and where its file goes. */
-export interface ProjectText {
+interface ProjectText {
   /** The node it is a node's; null for the graph's own -- its gui. */
   node_id: string | null;
   field: string;
@@ -192,7 +192,7 @@ export function textFields(node: GraphNode): Set<string> {
 }
 
 /** One node that holds a graph, and the folder that graph is kept in. */
-export interface NestedGraph {
+interface NestedGraph {
   node: GraphNode;
   /** Relative to the project folder, with `/`. */
   folder: string;
@@ -274,7 +274,7 @@ export function heldIn(content: string, text: ProjectText, path: string): { valu
  * nothing -- a data node nobody has given a field yet -- and taken for it, it
  * came back null.
  */
-export function isBlank(value: unknown): boolean {
+function isBlank(value: unknown): boolean {
   return value === undefined || value === null || (typeof value === 'string' && !value.trim());
 }
 

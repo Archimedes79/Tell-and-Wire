@@ -2,7 +2,7 @@ import { lazy } from 'react';
 import type { GraphNode } from '../../../document/graph';
 import { definitionsIn } from '../../../../../graph/files/definition.ts';
 import { withFile } from '../../../document/model/givenFiles';
-import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
+import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Bot } from 'lucide-react';
 
@@ -15,12 +15,8 @@ export class AiNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly example = 'e.g. Summarise the text in three bullet points, in the language it is written in';
 
-  readonly color = NODE.ai;
-
-  /** Its icon, on its card and in the palette. */
   readonly icon = Bot;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
   readonly ink = INK.ai;
 
   override readonly paletteGroup = 'Processing';

@@ -3,7 +3,7 @@ import type { GraphNode } from '../../../document/graph';
 import { ERROR_PORT } from '../../../../../graph/wiring.ts';
 import { definitionsIn } from '../../../../../graph/files/definition.ts';
 import { withFile } from '../../../document/model/givenFiles';
-import { INK, NODE } from '../../../../deployment/gui/kit/ui/theme';
+import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Code2 } from 'lucide-react';
 
@@ -16,12 +16,8 @@ export class CodeNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly example = 'e.g. Count the words in the text and return the number';
 
-  readonly color = NODE.code;
-
-  /** Its icon, on its card and in the palette. */
   readonly icon = Code2;
 
-  /** Its colour as ink on a surface: the icon on its card, the chip in the palette (`INK`). */
   readonly ink = INK.code;
 
   override readonly paletteGroup = 'Processing';

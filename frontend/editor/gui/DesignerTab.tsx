@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import type { GraphNode, GuiWidget, WidgetKind } from '../document/graph';
-import { useGraphStore } from '../document/store/graphStore';
+import { useGraphNodes, useGraphStore } from '../document/store/graphStore';
 import DesignerSurface from './DesignerSurface';
 import DesignerPalette, { newBlock, type PaletteEntry } from './DesignerPalette';
 import { useRound } from '../../deployment/gui/surface/useRound';
@@ -48,7 +47,7 @@ export default function DesignerTab() {
 
   // What the graph's start and end points still lack on the gui, and the
   // question of the ones a call starts.
-  const nodes = useGraphStore(useShallow((s) => s.rfNodes.map((node) => node.data.graphNode as GraphNode)));
+  const nodes = useGraphNodes();
   const edges = useGraphStore((s) => s.rfEdges);
   const lacking = guiFromGraph(nodes, edges, widgets);
   const dialogs = useDialogs();

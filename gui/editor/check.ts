@@ -5,10 +5,11 @@
 // saving, the editor shows it before it loads a graph from outside, and each
 // entry says where, what, and how to fix it -- the reader may be a person or a
 // model, and both fix what they are told precisely. It reads no disk, so the
-// browser can ask it; what only a project folder gets wrong is `folderCheck.ts`.
+// browser can ask it; what only a project folder gets wrong is
+// `backend/editor/project/folderCheck.ts`.
 
-import type { Graph, GraphEdge, GraphNode } from '../../graph/graph.ts';
-import { passiveWires, topologicalLevels } from '../../graph/order.ts';
+import { isStruct, type Graph, type GraphEdge, type GraphNode } from '../../graph/graph.ts';
+import { loopNodes } from '../../graph/order.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
 import { widgetElement } from '../gui.ts';
 import { fieldSender, guiProblems, showsMemory } from './gui.ts';
@@ -21,22 +22,6 @@ import { definitionExample } from '../../graph/files/definition.ts';
 import { unsavableIds } from '../../graph/files/flow.ts';
 
 export { type Problem } from '../../graph/wiring.ts';
-
-/** The nodes a cycle is made of: whatever is left once everything with a free end is taken away. */
-function knot(graph: Graph, reads: Set<string>): string[] {
-  const left = new Set(graph.nodes.map((node) => node.id));
-  for (let changed = true; changed;) {
-    changed = false;
-    const live = graph.edges.filter((edge) => !reads.has(edge.id)
-      && left.has(edge.source_node_id) && left.has(edge.target_node_id));
-    for (const id of [...left]) {
-      if (live.some((edge) => edge.target_node_id === id) && live.some((edge) => edge.source_node_id === id)) continue;
-      left.delete(id);
-      changed = true;
-    }
-  }
-  return [...left];
-}
 
 /**
  * Everything that would make *graph* parse, open, and then not work.
@@ -142,12 +127,10 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
   // With two nodes sharing an id the ordering cannot be trusted either way, and
   // the duplicate is the thing to fix first.
   if (new Set(graph.nodes.map((node) => node.id)).size === graph.nodes.length) {
-    const reads = passiveWires(graph.nodes, graph.edges, registry);
-    try {
-      topologicalLevels(graph.nodes, graph.edges, registry);
-    } catch {
+    const loop = loopNodes(graph.nodes, graph.edges, registry);
+    if (loop.length) {
       problems.push({
-        where: `${inside}nodes ${names(knot(graph, reads))}`,
+        where: `${inside}nodes ${names(loop.map((node) => node.id))}`,
         problem: 'These nodes feed each other in a circle, so none of them can run first.',
         fix: 'A loop is only allowed through a data node: write the value into one, and let the node that reads it take its "before" output. '
           + 'Or remove one of the edges.',
@@ -291,7 +274,7 @@ function exampleMiss(graph: Graph, edge: GraphEdge): Omit<Problem, 'where'> | un
   const start = graph.nodes.find((node) => node.id === edge.source_node_id);
   if (!start || registry.node(start.node_type)?.startedBy(start) !== 'call') return undefined;
   const example = start.config.values;
-  if (!example || typeof example !== 'object' || Array.isArray(example) || !Object.keys(example).length) return undefined;
+  if (!isStruct(example) || !Object.keys(example).length) return undefined;
   const field = graph.nodes.find((node) => node.id === edge.target_node_id)?.inputs.find((port) => port.id === edge.target_port_id)?.field;
   if (!field || fieldOf(example, field) !== undefined) return undefined;
   return {

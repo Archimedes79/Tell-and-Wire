@@ -14,7 +14,7 @@ import { nodeCode } from './services.ts';
  *
  * The network is deliberately absent from these tests: Node has no flag for
  * it, so there is nothing here to assert and nothing to protect. See
- * `SANDBOX` in `node.ts`.
+ * `sandbox` in `services.ts`.
  */
 
 describe('a code body', () => {

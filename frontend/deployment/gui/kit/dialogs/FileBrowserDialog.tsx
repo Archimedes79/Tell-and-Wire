@@ -39,15 +39,12 @@ const sameFolder = (a: string, b: string): boolean => {
 };
 
 /**
- * A file/directory picker that browses the machine the GRAPH runs on.
+ * A file/directory picker that browses the machine the tool runs on.
  *
- * The obvious implementation — `<input type="file">` — cannot work here: a
- * browser deliberately never reveals a chosen file's location, only its name,
- * while the server resolves real absolute paths. The native dialog
- * therefore produced a name that failed later with a file-not-found from
- * whatever the working directory happened to be. This walks the server's
- * filesystem over `/api/files/browse` instead, so what it returns is a path the
- * server can actually open.
+ * Not `<input type="file">`: a browser never reveals a chosen file's location,
+ * only its name, while the server resolves real absolute paths. This walks the
+ * server's filesystem over `/api/files/browse` instead, so what it returns is
+ * a path the server can actually open.
  */
 export default function FileBrowserDialog({
   mode, title, initialPath, extensions, defaultName, projects, onPick, onClose,
@@ -60,9 +57,7 @@ export default function FileBrowserDialog({
   const [inProject, setInProject] = useState(false);
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
-  // `save` only: the folder in the path box is not there yet. "Save here"
-  // makes it, so it is said as that -- in red, "Directory not found" read as
-  // a folder that could not be saved to.
+  // `save` only: the folder in the path box is not there yet. "Save here" makes it, so it is said as that.
   const [toBeMade, setToBeMade] = useState(false);
   // It reads its first folder as it opens: until then it is loading, not a folder with nothing in it.
   const [loading, setLoading] = useState(true);
@@ -150,8 +145,7 @@ export default function FileBrowserDialog({
     return dir.endsWith(sep) ? `${dir}${name}` : `${dir}${sep}${name}`;
   };
 
-  // Opened inside a project with nothing selected, the project shown is what
-  // is chosen: "Select" stood there disabled, and said nothing of why.
+  // Opened inside a project with nothing selected, the project shown is what is chosen.
   const openShown = mode === 'file' && !!projects && inProject && !selected;
   const confirmLabel = mode === 'directory' ? 'Use this folder' : mode === 'save' ? 'Save here' : openShown ? 'Open this tool' : 'Select';
   const canConfirm =
@@ -162,7 +156,7 @@ export default function FileBrowserDialog({
       : mode === 'directory' ? `Use ${path}` : mode === 'save' ? `Save as ${fileName.trim()} in ${path}` : `Choose ${selected}`;
 
   // Its Enter keys are its own and go no further: opened from "Before
-  // running…", an Enter typed here to open a folder also started the run.
+  // running…", an Enter typed here must not start the run too.
   const confirm = () => {
     if (mode === 'directory') return pick(path);
     if (mode === 'save') return pick(join(path, fileName.trim()));
@@ -191,11 +185,7 @@ export default function FileBrowserDialog({
     >
       <div className="flex flex-col gap-2 p-5">
         <div className="flex items-center gap-2">
-          {/* Worded, not just an arrow. A bare ↑ next to a path field reads as
-              part of the field's decoration, and it was reported as a picker
-              with no way back up the tree -- in the deployed tool it *was*
-              one, because the server sent no parent and the button was drawn
-              permanently disabled. */}
+          {/* Worded, not just an arrow: a bare ↑ next to a path field reads as part of the field's decoration. */}
           <Button
             className="shrink-0"
             disabled={!parent}
@@ -251,10 +241,9 @@ export default function FileBrowserDialog({
                 key={entry.path}
                 className="w-full text-left px-3 py-1.5 text-sm font-mono flex items-center gap-2"
                 style={{ background: isSelected ? LINE : 'transparent', color: entry.is_dir ? ACCENT_TEXT : TEXT }}
-                // One click selects, a double-click opens -- a folder too. A folder
-                // that opened on the first click put a different row under the
-                // pointer for the second, and a double-click on "examples" opened
-                // whichever project had slid into its place.
+                // One click selects, a double-click opens -- a folder too: a folder
+                // that opened on the first click would put another row under the
+                // pointer for the second.
                 onClick={() => {
                   setSelected(entry.path);
                   if (mode === 'save' && choosable) setFileName(entry.name);

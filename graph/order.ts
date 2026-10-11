@@ -92,14 +92,24 @@ export function passiveWires(nodes: GraphNode[], edges: GraphEdge[], registry: K
   return new Set(edges.filter((e) => passive.get(e.source_node_id)?.has(e.source_port_id)).map((e) => e.id));
 }
 
+/** Of the *stuck* nodes, those the wires go round through, not the ones that merely hang below a loop. */
+function inLoop(nodes: GraphNode[], edges: GraphEdge[], reads: Set<string>, stuck: Set<string>): GraphNode[] {
+  const live = edges.filter((e) => !reads.has(e.id));
+  return nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
+}
+
+/** The nodes in a loop that no memory closes: none in a graph that can be ordered. */
+export function loopNodes(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): GraphNode[] {
+  const reads = passiveWires(nodes, edges, registry);
+  return inLoop(nodes, edges, reads, levelsOf(nodes, edges, reads).stuck);
+}
+
 /** Execution stages: everything in a stage waits only for earlier stages. A loop that no memory closes is an error. */
 export function topologicalLevels(nodes: GraphNode[], edges: GraphEdge[], registry: Kinds): string[][] {
   const reads = passiveWires(nodes, edges, registry);
   const { levels, stuck } = levelsOf(nodes, edges, reads);
   if (stuck.size) {
-    // The nodes the wires go round through, not the ones that merely hang below.
-    const live = edges.filter((e) => !reads.has(e.id));
-    const round = nodes.filter((n) => stuck.has(n.id) && live.some((e) => e.source_node_id === n.id && walk([e.target_node_id], live, true).has(n.id)));
+    const round = inLoop(nodes, edges, reads, stuck);
     const memory = round.find((n) => registry.node(n.node_type)?.isMemory);
     throw new Error(`The wires go round in a cycle through ${round.map(nodeName).join(', ')}, so none of them can run first. `
       + (memory

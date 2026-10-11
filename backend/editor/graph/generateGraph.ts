@@ -6,6 +6,7 @@
 // graph it was sent (`keptFrom`).
 
 import type { AiService } from '../../../graph/nodes/Runtime.ts';
+import { message } from '../../deployment/host/http.ts';
 import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { AUTHORING_KEYS } from '../../../graph/editor/handedOn.ts';
@@ -101,7 +102,7 @@ export async function generateGraph(
   try {
     raw = await ai.complete({ prompt, system: GRAPH_SYSTEM, ...deps.target });
   } catch (error) {
-    throw new GenerationFailed(error instanceof Error ? error.message : String(error), calls);
+    throw new GenerationFailed(message(error), calls);
   }
   // Read as every other answer is: a code node's body in the document may
   // write "```" into a string, and the block does not end there.
@@ -111,7 +112,7 @@ export async function generateGraph(
   try {
     graph = JSON.parse(candidate);
   } catch {
-    // Said to whoever asked at the bar: what went wrong most often, and what to do. The transcript keeps the rest.
+    // Said to whoever asked: what went wrong most often, and what to do. The transcript keeps the rest.
     throw new GenerationFailed('The model\'s answer was not a whole graph -- it may have been cut off. Try again, or ask for less at once.', calls);
   }
   return {

@@ -6,7 +6,7 @@
 // node *does* when it runs is its runner (`backend/deployment/runtime/nodes/`),
 // what only building asks is its design (`graph/editor/nodes/`).
 //
-// Only a node authors anything: a body someone writes -- code, instructions --
+// Only a node has writing: a body someone writes -- code, instructions --
 // with files of its own in a project folder, and a way for an AI to write it.
 // A block on a gui shows or hands on what it holds, and writes nothing.
 
@@ -125,11 +125,23 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
+   * Whether a failure here becomes an `error` output instead of ending the run.
+   *
+   * Off unless someone asks for it: a graph that has not been given somewhere
+   * to put a failure should stop at one, loudly. Carried out by the executor,
+   * one level up, so every kind gets the same behaviour without a copy of
+   * it -- the same division as batching and reading file inputs.
+   */
+  catchesErrors(node: GraphNode): boolean {
+    return node.config.catch_errors === true;
+  }
+
+  /**
    * The graph this node holds, or null for a node that holds none.
    *
    * The one question asked about hierarchy, and it is asked of the element so
    * that nothing else has to know which node type holds a graph. The project
-   * folder recurses on it, `check` descends on it, a bundle follows it, and the
+   * folder recurses on it, `check` descends on it, a package follows it, and the
    * editor opens what it returns. A node that answers with a graph is a node
    * whose folder is a project folder of its own.
    */

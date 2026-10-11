@@ -6,12 +6,8 @@ type ToolWords = Partial<Pick<GraphMetadata, 'name' | 'description'>>;
 
 /**
  * Above the gui being built: the tool's name and what it does -- the graph's
- * own, which the delivered tool shows in its header, above the same gui.
- *
- * The gui had a name and an "About" of its own, on its node, beside the
- * graph's: two names for one tool, while the graph's description, the one a
- * recipient reads, could be set nowhere at all. A graph has one gui, so the
- * gui is called what the graph is called.
+ * own, which the delivered tool shows in its header, above the same gui. A
+ * graph has one gui, so the gui is called what the graph is called.
  */
 export default function GuiHeading({ name, description, onChange }: {
   name: string;

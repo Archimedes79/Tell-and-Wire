@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { useShallow } from 'zustand/react/shallow';
-import type { GraphNode, GuiWidget } from '../document/graph';
+import type { GuiWidget } from '../document/graph';
 import { WIDGET_BUILDERS } from '../document/elements/registry';
-import { useGraphStore } from '../document/store/graphStore';
+import { useGraphNodes } from '../document/store/graphStore';
 import { blockCan, endPoints, memoryPoints, guiStartPoints, type Point } from '../document/model/gui';
 import { connectToNewPoint } from './guiWrite';
 import Chip from '../../deployment/gui/kit/ui/Chip';
@@ -60,7 +59,7 @@ export default function OnTheGraph({ widget, onChange }: {
   widget: GuiWidget;
   onChange: (patch: Partial<GuiWidget>) => void;
 }) {
-  const nodes = useGraphStore(useShallow((s) => s.rfNodes.map((node) => node.data.graphNode as GraphNode)));
+  const nodes = useGraphNodes();
   const can = blockCan(widget);
   if (!can.sends && !can.fires && !can.shows) return null;
 

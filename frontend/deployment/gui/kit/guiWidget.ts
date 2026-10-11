@@ -11,7 +11,7 @@ import type { WidgetKind } from '../../../../graph/graph.ts';
  * Beyond who it is, how it is drawn and how it connects, a block holds only
  * its own kind's settings, so they are optional here: a divider has no
  * options, and a block written by hand, by ✨ or over MCP leaves out what it
- * does not set. Read one the way its runner does -- `recursive` missing means
+ * does not set. Read one the way its definition does -- `recursive` missing means
  * only the folder itself.
  */
 export type GuiWidget = {

@@ -30,7 +30,7 @@ import {
  * Every text goes to its file and out of its node's settings in `graph-nodes.json`; a text that is empty
  * has no file, and one that was emptied loses it. Files a node no longer has
  * -- it was deleted, or became another kind -- are removed, but only files with the
- * names elements write: whatever else a person put in the folder stays.
+ * names the node kinds write: whatever else a person put in the folder stays.
  *
  * Refuses, before writing anything, when a file it would change was changed
  * by someone else since it was last read.

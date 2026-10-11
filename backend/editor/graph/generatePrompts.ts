@@ -2,8 +2,8 @@
 // a whole graph: the prose around what the node and the graph hold.
 //
 // Its own file because it is prose, and prose has to be readable to be corrected.
-// The standard prompts (`graph/files/prompts.ts`) and their variables (`brief.ts`)
-// are elsewhere; what is here is what the backend adds -- who the model is told it is,
+// The standard prompts (`graph/editor/prompts.ts`) and their variables (`brief.ts`)
+// are elsewhere; what is here is what the editor adds -- who the model is told it is,
 // how to answer, and what a change or a repair is shown.
 
 import type { PromptKind } from '../../../graph/editor/prompts.ts';
@@ -53,7 +53,7 @@ export interface Shape {
   /** A list arrives one item at a time. */
   perItem: boolean;
   definitions: Definitions | undefined;
-  /** The body is kept as JSON, the element says (`TextFile.json`): a data node's fields. */
+  /** The body is kept as JSON, the node kind says (`TextFile.json`): a data node's fields. */
   json: boolean;
   /** For a body of code, the language the node declares it is written in. */
   language?: Language;
@@ -97,9 +97,8 @@ const EMPTY_INPUT = 'Handle an input that is missing or empty as well as a full 
   + 'a chart gets a figure with no points and a title saying what to choose, a text says what it waits for.';
 
 /**
- * The frame after the prompt: the file's format and how to answer. The
- * backend's own. *restating*: a change was asked, and
- * the node's text comes back restated after the block (`RESTATE`) -- which a
+ * The frame after the prompt: the file's format and how to answer. *restating*:
+ * a change was asked, and the node's text comes back restated after the block (`RESTATE`) -- which a
  * frame that said "and nothing else" would forbid; *asked*: an output.js may
  * come back after the body too (`OutputAsked`).
  */

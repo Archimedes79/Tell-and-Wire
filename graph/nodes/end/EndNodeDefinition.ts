@@ -7,7 +7,7 @@ import type { GraphNode, NodeResult, Port } from '../../graph.ts';
  */
 export const WRITE_PATH_PORT = 'path';
 
-export interface EndConfig {
+interface EndConfig {
   /** Where to write, when writing at all -- unless a path arrives on its `path` input. */
   path: string;
   mode: 'none' | 'file' | 'directory';

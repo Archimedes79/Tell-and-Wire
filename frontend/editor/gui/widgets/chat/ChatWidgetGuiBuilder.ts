@@ -16,8 +16,6 @@ export class ChatWidgetGuiBuilder extends WidgetGuiBuilder {
   override readonly firesHint =
     'Sending a message starts a run at that start point, with the conversation so far.';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Chat';
 
   paletteEntries() {

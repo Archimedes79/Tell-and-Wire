@@ -2,8 +2,8 @@
 //
 // A Model Context Protocol server over stdio: Claude Code, Claude Desktop or any
 // other MCP client can have a graph designed, check one, save it and run it.
-// `ai/mcp.ts` is the other direction -- a graph's model calling out to somebody's
-// tools. This is somebody's model calling in.
+// `backend/deployment/runtime/ai/mcp.ts` is the other direction -- a graph's model
+// calling out to somebody's tools. This is somebody's model calling in.
 //
 // **One folder, one door.** Everything the outside can reach is the nine tools,
 // and everything they can reach is one folder. Four files in `mcp/`, so each can be
@@ -19,9 +19,9 @@
 // `backend/cli/cli.ts` calls for `--mcp`, and nothing else does.
 //
 // No SDK, for the reason the client has none: Tell & Wire has no runtime
-// dependencies. It lives under `backend/editor/` because it is authoring, and
-// authoring is what a bundle does not carry -- `backend/editor/project/deploy/bundle.ts` skips that
-// folder, which is why `cli.ts` reaches this file with a dynamic import.
+// dependencies. It lives under `backend/editor/` because it is the editor's, and a
+// package does not carry an `editor` folder (`backend/editor/project/deploy/bundle.ts`), which
+// is why `cli.ts` reaches this file with a dynamic import.
 
 import { existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -33,10 +33,7 @@ import { chosenCore } from '../../deployment/runtime/stdio.ts';
 import { createGraphTools } from './mcp/tools.ts';
 import { serveStdio } from './mcp/transport.ts';
 
-export { createGraphTools, type GraphTools, type GraphToolsOptions, type Problem, type ToolResult } from './mcp/tools.ts';
-export { serveStdio, type StdioStreams } from './mcp/transport.ts';
-
-/** Every string on this machine that a result must not contain. Read fresh each time: keys change while a server runs. */
+/** Every string on this machine that a result must not contain (`scrubber` skips the short ones). Read fresh each time: keys change while a server runs. */
 function machineSecrets(): string[] {
   const found: string[] = Object.values(configuredSettings().apiKeys ?? {});
   for (const [name, value] of Object.entries(process.env)) {
@@ -48,7 +45,7 @@ function machineSecrets(): string[] {
       for (const [name, value] of Object.entries(server.env ?? {})) if (SECRET_NAME.test(name)) found.push(value);
     }
   }
-  return found.filter((value) => typeof value === 'string' && value.length >= 8);
+  return found;
 }
 
 /**
@@ -59,8 +56,8 @@ function machineSecrets(): string[] {
  * a relative path inside a graph -- `data/sales.csv` on a file picker -- means
  * the same thing here as the path arguments do.
  */
-export async function runMcpServer(options: { root?: string } = {}): Promise<void> {
-  const root = resolve(options.root ?? process.cwd());
+export async function runMcpServer(folder?: string): Promise<void> {
+  const root = resolve(folder ?? process.cwd());
   if (!existsSync(root) || !statSync(root).isDirectory()) {
     throw new Error(`--mcp-root: ${root} is not a folder.`);
   }

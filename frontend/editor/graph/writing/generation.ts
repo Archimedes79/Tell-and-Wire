@@ -24,6 +24,7 @@ import { graphContext } from './graphContext';
 import { runsPerItem } from './perItem';
 import { filesOf } from '../../document/model/givenFiles';
 import { derivedNodePorts } from '../../document/model/ports';
+import { typedAs } from '../../document/model/gui';
 
 /** What one ✨ writes: a node's input definition, its output definition, or its body. */
 export type Write = 'input' | 'output' | 'body';
@@ -220,15 +221,6 @@ export async function previewGeneration(request: GenerateRequest): Promise<AICal
   return response.calls ?? [];
 }
 
-/** A value's port type, as an output definition's example shows it. */
-function typeOf(value: unknown): Port['data_type'] {
-  if (typeof value === 'string') return 'text';
-  if (typeof value === 'number') return 'number';
-  if (typeof value === 'boolean') return 'boolean';
-  if (Array.isArray(value)) return 'list';
-  return value && typeof value === 'object' ? 'json' : 'any';
-}
-
 /**
  * *node*'s outputs as an output definition names them: its example's keys are
  * the outputs. A port already there keeps what it is; a new one is typed by
@@ -240,7 +232,7 @@ export function outputsFrom(node: GraphNode, definition: string): Port[] {
   if (!('example' in read)) return node.outputs;
   const perItem = runsPerItem(node);
   const ports: Port[] = Object.entries(read.example).map(([id, value]) => node.outputs.find((port) => port.id === id) ?? {
-    id, name: id, kind: 'output', data_type: typeOf(value), multi: perItem, required: false, description: '',
+    id, name: id, kind: 'output', data_type: Array.isArray(value) ? 'list' : typedAs(value).type, multi: perItem, required: false, description: '',
   });
   const error = node.outputs.find((port) => port.id === ERROR_PORT);
   return error ? [...ports, error] : ports;

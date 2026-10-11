@@ -1,4 +1,8 @@
-// A widget's build-time half, in the browser: the mirror of `gui/widgets/WidgetDefinition.ts`.
+// How a person edits a block, in the browser: the mirror of `gui/widgets/WidgetDefinition.ts`.
+//
+// Editor only. What a deployed tool draws a block with is not a member here but a module of its own,
+// `deployment/gui/surface/blocks.ts`: that keeps this class out of the tool, not merely uncalled in
+// it (`deployment/gui/boundary.test.ts`).
 
 import type { ComponentType } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -37,19 +41,7 @@ export interface InlineEditorProps {
 }
 
 export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProps> {
-  // ── What it is ────────────────────────────────────────────────────────────
-
   abstract readonly widgetKind: WidgetKind;
-
-  // ── Run time ──────────────────────────────────────────────────────────────
-  // Nothing, on purpose. What a deployed tool draws a block with is not a
-  // member here at all: it is `gui/surface/blocks.ts`, a module of its own, which is
-  // what keeps this class out of the bundle a recipient downloads rather than
-  // merely uncalled in it.
-
-  // ── Build time ────────────────────────────────────────────────────────────
-  // The editor: the palette, a new element, its panel. Nothing else, and now
-  // nothing a tool can reach (`runtime/boundary.test.ts`).
 
   /** What the palette and the properties header call it. */
   abstract readonly label: string;
@@ -86,7 +78,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
 
   /**
    * How the block draws the text of what arrives, in words for the node wired
-   * into the end point it shows (`writing/generationContext.ts`), so that node can write a title that
+   * into the end point it shows (`graph/writing/generationContext.ts`), so that node can write a title that
    * fits or a summary that is read in the room there is. The text of a box on
    * the gui by default; a kind that draws its own says so from the constant
    * its view draws with, and one that draws none says nothing.
@@ -114,11 +106,10 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
 
   /**
    * A new widget of this kind called *id*, as the palette puts it on a gui:
-   * the counterpart of `NODE_KINDS[type].create` (document/nodeKinds.ts). The
-   * id is its caller's to give -- the palette's is its kind, numbered where it
-   * is taken (`newBlock`); one made up here was only ever written over. No
-   * position -- the order of the list is the position, so a new widget simply
-   * goes last.
+   * the counterpart of `NODE_KINDS[type].create` (`document/model/nodeKinds.ts`).
+   * The id is its caller's to give -- the palette's is its kind, numbered where
+   * it is taken (`newBlock`). No position -- the order of the list is the
+   * position, so a new widget simply goes last.
    *
    * What every block has, and then what this kind keeps (`initialSettings`). A block
    * carries no setting its kind's definition does not read.

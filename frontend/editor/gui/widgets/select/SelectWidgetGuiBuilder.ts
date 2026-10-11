@@ -5,8 +5,6 @@ import { ChevronsUpDown } from 'lucide-react';
 export class SelectWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'select';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Dropdown';
 
   paletteEntries() {

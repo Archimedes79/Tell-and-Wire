@@ -15,7 +15,7 @@ import { guiPart } from '../gui/hooks.ts';
  *
  * The shapes are not this server's to choose: `api.ts` declares them for both
  * ends, and a snapshot missing `done` looks to the gui exactly like a run that
- * never finishes -- which is how it first behaved.
+ * never finishes.
  *
  * The other rules are what is *absent* and who may ask. A deployed tool must
  * not offer code generation or graph editing; those routes are not "not

@@ -1,13 +1,10 @@
 // The two files that start something from the folder they sit in: run.sh and run.cmd.
 //
 // Two things hand a folder to someone else -- the downloadable package
-// (scripts/package.mjs) and every deploy bundle (bundle.ts) -- and each had
-// written its own pair: a few bare lines that assumed Node was installed, new
-// enough, and started from the right folder. None of that is true on a stranger's
-// machine often enough to matter, and on Windows a double-clicked script that
-// fails closes its window before anyone can read why, so "it does not start"
-// was the whole of the report. The launcher repository's own start.cmd had
-// learned all of this; the copies handed to other people had not.
+// (scripts/package.mjs) and every deploy bundle (bundle.ts) -- and both write
+// this pair. A launcher cannot assume Node is installed, new enough, or that it
+// is started from its own folder; and on Windows a double-clicked script that
+// fails closes its window before anyone can read why.
 
 /**
  * The oldest Node Tell & Wire runs on. It runs its TypeScript unbuilt, which is
@@ -19,14 +16,13 @@ export const NODE_MAJOR = 24;
 /** Where to send someone whose Node is missing or too old. */
 const GET_NODE = 'https://nodejs.org';
 
-export interface LauncherOptions {
+interface LauncherOptions {
   /** What follows `node`, with forward slashes: `backend/cli/main.ts --editor frontend/dist`. */
   command: string;
   /**
    * Hand `--port $PORT` on when PORT is set. Left unset, nothing is passed and
-   * the server takes the first free port from 8000 -- which is the behaviour
-   * that matters, because a launcher that always passed 8000 turned "something
-   * else is already on 8000" into a crash.
+   * the server takes the first free port from 8000: "something else is already
+   * on 8000" is then no crash.
    */
   portFromEnv?: boolean;
 }

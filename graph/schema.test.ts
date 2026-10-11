@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { inferSchema, merge, mismatches } from './schema.ts';
+import { inferSchema, mismatches } from './schema.ts';
 import { executeGraph } from '../backend/deployment/runtime/executor.ts';
 import { registry } from './nodes/registry.ts';
 import { parseGraph } from './graph.ts';
@@ -28,7 +28,7 @@ describe('an interface inferred from a run', () => {
       type: 'array',
       items: { type: 'object', properties: { a: { type: 'number' }, b: { type: 'string' } }, required: ['a'] },
     });
-    expect(merge({ type: 'string' }, { type: 'integer' })).toEqual({ type: ['integer', 'string'] });
+    expect(inferSchema(['x', 1])).toEqual({ type: 'array', items: { type: ['integer', 'string'] } });
     expect(inferSchema([])).toEqual({ type: 'array' });
     expect(inferSchema([1, null, 2])).toEqual({ type: 'array', items: { type: 'integer' } });
 

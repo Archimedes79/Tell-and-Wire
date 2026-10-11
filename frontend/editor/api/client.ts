@@ -10,7 +10,7 @@ import type { RequestOf, ResponseOf } from '../../../backend/deployment/host/api
 import type { FormatGraph, Graph } from '../document/graph';
 
 export { ApiError } from '../../deployment/gui/kit/api/client';
-export type { BrowseEntry, BrowsePage, GuiView, Requirement, RoundSnapshot, SessionView, ToolAiSettings } from '../../deployment/gui/kit/api/client';
+export type { RoundSnapshot, SessionView } from '../../deployment/gui/kit/api/client';
 export type {
   AICall, GenerateRequest, GenerateResponse, McpSaved, McpServerView, McpServersView, ProbeReport, ProviderStatus, SettingsPatch, SettingsStatus,
 } from '../../../backend/editor/host/api.ts';

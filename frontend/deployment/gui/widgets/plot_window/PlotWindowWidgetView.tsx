@@ -5,7 +5,7 @@ import SaveButton from '../SaveButton';
 import { drawnSvg, fileName, saveFile } from '../download';
 
 /**
- * Runtime `plot_window` widget: charts what its end point handed back -- points,
+ * A chart: draws what its end point handed back -- points,
  * a figure or a string of SVG -- at the size the block really is on screen, so
  * a resize redraws it with no run. What is drawn can be saved as it is drawn,
  * an SVG file of that size in the gui's colours.
@@ -16,13 +16,10 @@ export default function PlotWindowWidgetView({ widget, value, incoming }: Widget
   const [size, setSize] = useState({ width: 320, height: 180 });
 
   /**
-   * Measure before the first paint, and again whenever the box changes.
-   *
-   * A ResizeObserver alone reported 188x90 for a block several hundred pixels
-   * wide -- it had observed the element before the page laid out and nothing
-   * resized afterwards to correct it. The chart then decided it had no room
-   * for axes and drew none. `getBoundingClientRect` in a layout effect reads
-   * the size that is actually on screen.
+   * Measure before the first paint, and again whenever the box changes: a
+   * ResizeObserver alone can report a size from before the page laid out.
+   * `getBoundingClientRect` in a layout effect reads the size that is actually
+   * on screen.
    */
   const measure = () => {
     const el = containerRef.current;

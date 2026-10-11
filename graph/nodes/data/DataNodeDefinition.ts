@@ -1,9 +1,9 @@
 import { NodeDefinition, type Offer, type TextFile } from '../NodeDefinition.ts';
 import { port } from '../port.ts';
-import type { GraphNode } from '../../graph.ts';
+import { isStruct, type GraphNode } from '../../graph.ts';
 import { RUN_PORT } from '../../triggers.ts';
 
-export interface DataConfig {
+interface DataConfig {
   /** What it holds between rounds: each field, by its name. */
   fields: Record<string, unknown>;
   /** The struct as it looks once rounds have filled it, to write against: the fields as they start where no example is written. */
@@ -21,14 +21,16 @@ export const ROUND = 'round';
 /** The passive output: every field and the round number as they were when the round began -- what a loop reads. */
 export const BEFORE = 'before';
 
-/** What no field may be called: each is a port of the node's own. */
-const RESERVED: readonly string[] = [ALL_FIELDS, ROUND, BEFORE, RUN_PORT];
+/** What no field may be called, and what each is instead: a port of the node's own. */
+export const RESERVED: Readonly<Record<string, string>> = {
+  [ALL_FIELDS]: 'the output that carries every field',
+  [ROUND]: 'the output that counts the rounds',
+  [BEFORE]: 'the passive output that carries every field as it was',
+  [RUN_PORT]: 'the name of the gate every node has',
+};
 
 /** Whether *fields* has a field called *name* of its own: an object also has `constructor`, `toString` and the like, and a port named so is no field. */
 export const hasField = (fields: object, name: string): boolean => Object.prototype.hasOwnProperty.call(fields, name);
-
-/** Whether *held* is what `data_value` is: an object, each key a field. */
-export const isStruct = (held: unknown): held is Record<string, unknown> => !!held && typeof held === 'object' && !Array.isArray(held);
 
 /** What *node* holds, as a struct: `data_value` is an object, and each key is a field. Anything else is a struct of no field (`DataNodeDesign.problems`). */
 function fieldsOf(node: Pick<GraphNode, 'config'>): Record<string, unknown> {
@@ -37,7 +39,7 @@ function fieldsOf(node: Pick<GraphNode, 'config'>): Record<string, unknown> {
 }
 
 /** The names of its fields: each is an input and an output. */
-export const namesOf = (node: Pick<GraphNode, 'config'>): string[] => Object.keys(fieldsOf(node)).filter((name) => !RESERVED.includes(name));
+export const namesOf = (node: Pick<GraphNode, 'config'>): string[] => Object.keys(fieldsOf(node)).filter((name) => !hasField(RESERVED, name));
 
 /** What the struct looks like filled, as written in example.json -- the fields as they start while nothing is. */
 function exampleOf(node: Pick<GraphNode, 'config'>): Record<string, unknown> {
@@ -112,7 +114,7 @@ export class DataNodeDefinition extends NodeDefinition<DataConfig> {
   /** What arrived on a field is what it holds from now on. What arrives on a port that is no field is nobody's. */
   override settleMemory(node: GraphNode, portId: string, value: unknown): void {
     const held = fieldsOf(node);
-    if (hasField(held, portId) && !RESERVED.includes(portId)) node.config.data_value = { ...held, [portId]: value } as never;
+    if (hasField(held, portId) && !hasField(RESERVED, portId)) node.config.data_value = { ...held, [portId]: value } as never;
   }
 
   /** One more round behind it. */

@@ -1,10 +1,9 @@
 // The editor's view of the machine's files: finding projects and dropped
 // files, and handing a node's file to the editor the person works in.
 //
-// Editor-only, on purpose: none of it belongs in a bundle, which is why
-// `backend/editor/project/deploy/bundle.ts` leaves this folder out.
-// Browsing is not here: a deployed tool needs a file picker that can be
-// navigated too, so it is `backend/deployment/host/browse.ts`, which a bundle carries.
+// Editor-only, on purpose: none of it belongs in a package, which carries no
+// `editor` folder. Browsing is not here: a deployed tool needs a file picker that
+// can be navigated too, so it is `backend/deployment/host/browse.ts`, which a package carries.
 
 import { existsSync, type Dirent } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
@@ -24,15 +23,15 @@ const SKIPPED = new Set(['node_modules', 'dist', 'build']);
 const FOLDERS_BELOW = 3;
 
 /**
- * What is in *root* and the folders below it, as far down as `fileSearch`
- * says: each entry is handed to *take*, and the paths it takes are the answer.
- * A folder it takes is not looked into.
+ * What is in the folder the editor was started in and the folders below it, as
+ * far down as `fileSearch` says: each entry is handed to *take*, and the paths it
+ * takes are the answer. A folder it takes is not looked into.
  *
  * For what is dropped onto the editor: a browser hands a page the name of a
  * file or folder, never where it is, and what someone drops is almost always
  * in the folder the editor was started in.
  */
-async function walkUnder(root: string, take: (path: string, entry: Dirent) => boolean | Promise<boolean>): Promise<string[]> {
+async function walkUnder(take: (path: string, entry: Dirent) => boolean | Promise<boolean>): Promise<string[]> {
   const found: string[] = [];
   const walk = async (directory: string, below: number): Promise<void> => {
     let entries;
@@ -48,33 +47,33 @@ async function walkUnder(root: string, take: (path: string, entry: Dirent) => bo
       else if (entry.isDirectory() && below < FOLDERS_BELOW) await walk(path, below + 1);
     }
   };
-  await walk(root, 0);
+  await walk(process.cwd(), 0);
   return found;
 }
 
-/** Project folders named *name* under *root* (`walkUnder`): for a folder dropped onto the editor. */
-export async function findProjects(name: string, root = process.cwd()): Promise<string[]> {
+/** Project folders named *name* under where the editor runs (`walkUnder`): for a folder dropped onto the editor. */
+export async function findProjects(name: string): Promise<string[]> {
+  const root = process.cwd();
   if (basename(root) === name && isProjectFolder(root)) return [root];
-  return walkUnder(root, (path, entry) => entry.isDirectory() && entry.name === name && isProjectFolder(path));
+  return walkUnder((path, entry) => entry.isDirectory() && entry.name === name && isProjectFolder(path));
 }
 
 /**
- * Files named *name*, of *size* bytes, under *root* (`walkUnder`): for a file
+ * Files named *name*, of *size* bytes, under where the editor runs (`walkUnder`): for a file
  * dropped onto a node, or onto its example -- a node that reads the file at a
  * path needs the path. The size tells two of one name apart.
  */
-export async function findFiles(name: string, size: number, root = process.cwd()): Promise<string[]> {
-  return walkUnder(root, async (path, entry) => !entry.isDirectory() && entry.name === name
+export async function findFiles(name: string, size: number): Promise<string[]> {
+  return walkUnder(async (path, entry) => !entry.isDirectory() && entry.name === name
     && (await stat(path).catch(() => null))?.size === size);
 }
 
 /**
  * Where a search for what was dropped looks (`walkUnder`), in words: what a
- * drop that found nothing says. It said "under the folder the editor was
- * started in" of a search that goes three folders down and passes some over.
+ * drop that found nothing says.
  */
-export function fileSearch(root = process.cwd()): string {
-  return `${root} and ${FOLDERS_BELOW} levels of folders below it, leaving out ${[...SKIPPED].join(', ')} and every name that begins with a dot`;
+export function fileSearch(): string {
+  return `${process.cwd()} and ${FOLDERS_BELOW} levels of folders below it, leaving out ${[...SKIPPED].join(', ')} and every name that begins with a dot`;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,7 +96,8 @@ const OPENABLE = new Set(NODES.flatMap((element) => element.texts({ config: {} }
  * outside every sandbox. Notepad is on every Windows; a Mac opens its default
  * text editor with `open -t`; elsewhere the desktop's opener decides.
  */
-function textEditorFor(path: string, system: string = platform()): { command: string; args: string[] } {
+function textEditorFor(path: string): { command: string; args: string[] } {
+  const system = platform();
   if (system === 'win32') return { command: 'notepad.exe', args: [path] };
   if (system === 'darwin') return { command: 'open', args: ['-t', path] };
   return { command: 'xdg-open', args: [path] };

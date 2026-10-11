@@ -45,7 +45,7 @@ export interface RoundSnapshot {
   idle_seconds: number | null;
   error: string | null;
   result: ExecutionResult | null;
-  /** What it handed back by name, once it has ended: the graph's outputs (`graphInterface.ts`). */
+  /** What it handed back by name, once it has ended: the graph's outputs (`graph/interface.ts`). */
   outputs: Record<string, unknown> | null;
   /**
    * What began it: the start point it fired, and who sent it -- a block of the
@@ -109,7 +109,7 @@ export interface SessionView {
 }
 
 /** The clock a session keeps: whether it runs, whether it ticks, and when the next round is due. */
-export interface ClockView {
+interface ClockView {
   running: boolean;
   /** Something starts it by itself: a start point starts when the tool starts, or keeps time. */
   runs_by_itself: boolean;
@@ -139,7 +139,7 @@ export interface GuiView {
 }
 
 /** What the graph offers whoever uses it, by name -- and which session that is. */
-export interface InterfaceView extends GraphInterface {
+interface InterfaceView extends GraphInterface {
   session: string;
   name: string;
   description: string;
@@ -150,7 +150,7 @@ export interface InterfaceView extends GraphInterface {
  * graph -- and the values it is given. A start point takes the values as its
  * package, under the sender's names.
  */
-export interface RoundRequest {
+interface RoundRequest {
   /** The session asked about; this server's, when left out. */
   session?: string;
   event?: string | null;
@@ -168,7 +168,7 @@ export interface RoundRequest {
 }
 
 /** What a round handed back, once it ended: what `runRound` answers. */
-export interface RoundOutcome {
+interface RoundOutcome {
   session: string;
   round_id: string;
   status: ExecutionResult['status'];
@@ -211,10 +211,10 @@ export interface Failure { detail: string; [more: string]: unknown }
 // The routes
 // ---------------------------------------------------------------------------
 
-export type Method = 'GET' | 'POST';
+type Method = 'GET' | 'POST';
 
 /** A route as the server and the client read it: how it is asked, and where. */
-export interface AnyRoute {
+interface AnyRoute {
   method: Method;
   /** `:name` segments are path parameters, handed over as `name`. */
   path: string;
@@ -232,7 +232,7 @@ export interface AnyRoute {
  * The two type parameters exist only for the compiler; at run time a route is
  * its method and path.
  */
-export interface Route<Req, Res> extends AnyRoute {
+interface Route<Req, Res> extends AnyRoute {
   /** Phantom: carries the types, never set. */
   readonly types?: { request: Req; response: Res };
 }

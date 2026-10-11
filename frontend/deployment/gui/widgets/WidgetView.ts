@@ -7,10 +7,9 @@ import type { GuiWidget } from '../kit/guiWidget';
  * holds -- the user's edit, or its stored value -- and is what it sends.
  * `incoming` is what the end point it shows handed back last.
  *
- * Collapsing them into one prop is what made a chat window unusable: the read
- * pane and the write pane both showed `value`, so typing a reply overwrote the
- * answer the user was reading, one character at a time. Widgets that only
- * display (`plot_window`, a read-only text_io) still just take
+ * As one prop, a chat's read pane and write pane would both show `value`, and
+ * typing a reply would overwrite the answer the user is reading. Widgets that
+ * only display (`plot_window`, a read-only text_io) just take
  * `incoming ?? value`; only the ones that do both need the distinction.
  */
 export interface WidgetViewProps {

@@ -50,10 +50,7 @@ export default function InputPickerWidgetPanel({ widget, onUpdate }: WidgetPanel
     </div>
   );
 
-  // Both modes. This sat inside the directory branch, so a picker set to one
-  // file could not be told which kinds it accepts -- while the block itself
-  // used the setting either way and the gui printed "Allowed: .csv"
-  // underneath it.
+  // Both modes: the block uses the setting for a file as for a folder.
   const typesField = (
     <FileTypesField value={widget.extensions ?? ''} onChange={(extensions) => onUpdate({ extensions })} onSurface />
   );

@@ -37,7 +37,7 @@ interface PathFieldProps {
 /**
  * The name a file to be saved starts with in the browser: the one in the box.
  * The browser opens in that file's folder, and choosing another folder must
- * not lose the name, which it did.
+ * not lose the name.
  */
 export function nameToSave(path: string): string | undefined {
   return path.split(/[\\/]/).pop() || undefined;
@@ -47,10 +47,9 @@ export function nameToSave(path: string): string | undefined {
  * A path, typed or picked: the box, 📂 Browse… beside it, and the file
  * browser it opens, which puts what is picked into the box.
  *
- * Written out once. Each place that asks for a path -- the folder a folder
- * node lists, where an end point writes, a folder picker's panel and the
- * picker on the gui, what a round asks for first -- had its own copy, with its
- * own open/closed state and its own spelling of the button.
+ * Written out once, for every place that asks for a path: the folder a start
+ * point reads, where an end point writes, a picker's panel and the picker on
+ * the gui, what a round asks for first.
  */
 export default function PathField({
   value, onChange, mode, extensions, placeholder, ariaLabel, id,

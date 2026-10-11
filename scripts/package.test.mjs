@@ -1,10 +1,10 @@
 // What someone who downloads the zip gets, tried the way they try it:
 // `node --test scripts/package.test.mjs`, after `npm run build`.
 //
-// Not a unit test. v0.2.0's zip was intact and still "did not start": its
-// run.cmd assumed Node was there and new enough, and its run.sh came out of the
-// archive without an executable bit. None of that shows without unzipping it
-// and double-clicking, so this does exactly that, on Linux and on Windows.
+// Not a unit test. A zip can be intact and still "not start": a run.cmd that
+// assumes Node is there and new enough, a run.sh that comes out of the archive
+// without an executable bit. None of that shows without unzipping it and
+// double-clicking, so this does exactly that, on Linux and on Windows.
 
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';

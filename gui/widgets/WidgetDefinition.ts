@@ -93,7 +93,7 @@ export function partsSaid(keys: NonNullable<Sent['keys']>): string {
 }
 
 /** What a person does to a block that fires a start point, as the package names it. */
-export type BlockEvent = 'press' | 'enter' | 'change' | 'send';
+type BlockEvent = 'press' | 'enter' | 'change' | 'send';
 
 export abstract class WidgetDefinition<C = unknown> extends ElementDefinition<Widget, C> {
   // ── What it is ────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ export abstract class WidgetDefinition<C = unknown> extends ElementDefinition<Wi
     return false;
   }
 
-  // ── Run time ──────────────────────────────────────────────────────────────
+  // ── In a round ────────────────────────────────────────────────────────────
   // What a round asks of it: what it sends, and what arriving means.
 
   /**

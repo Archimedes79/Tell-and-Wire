@@ -45,7 +45,7 @@ export function candidatePaths(
     // Beside the bundle, which is the deployed equivalent of a config file:
     // a recipient drops one next to `run.sh` and never sets a variable.
     join(installFolder(), FILENAME),
-    join(homedir(), '.tell-and-wire', 'settings.json'),
+    machineSettingsPath(env),
   ])];
 }
 
@@ -109,7 +109,7 @@ export function readSettingsFile(path: string): SettingsFile {
 }
 
 /** The settings file in use, as provider settings, or nothing. */
-export function fromFile(
+function fromFile(
   cwd = process.cwd(),
   env: Record<string, string | undefined> = process.env,
 ): Partial<ProviderSettings> {

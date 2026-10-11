@@ -7,8 +7,7 @@ import { DIMMER, LINE, SURFACE } from '../../deployment/gui/kit/ui/theme';
 /**
  * What the palette offers: each kind under the heading it says it goes under
  * (`paletteGroup`), headings and kinds in the order of *builders* -- and
- * not a kind that says none. A table of kinds here was one
- * more place a new kind had to be written into.
+ * not a kind that says none.
  */
 function paletteGroups(builders: NodeGuiBuilder[]): { label: string; types: NodeType[] }[] {
   const groups: { label: string; types: NodeType[] }[] = [];

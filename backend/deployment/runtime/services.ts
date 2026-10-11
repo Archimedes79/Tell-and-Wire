@@ -1,9 +1,9 @@
-// The graph's code on a machine with a filesystem: Node today, Deno unchanged.
+// The runtime's services on a machine with a filesystem: Node today, Deno unchanged.
 //
-// This is the only file in graph/ that knows an operating system exists.
-// Everything above it takes a `Runtime` and therefore also runs in a browser
-// tab, or in a test with three fakes, without knowing the difference — which is
-// the whole reason the services are passed in rather than imported.
+// This is the file that gives a `Runtime` its files, its bodies, its model and its tool
+// servers. Everything that takes a `Runtime` knows no operating system, and therefore also
+// runs in a test with three fakes, without knowing the difference — which is the whole
+// reason the services are passed in rather than imported.
 
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync, readdirSync, realpathSync } from 'node:fs';
@@ -123,7 +123,7 @@ function bodyTimeoutMs(): number {
 }
 
 /**
- * Running an authored body.
+ * Running a written body.
  *
  * A separate process, not `eval`: a body that loops forever, exits, or writes
  * to stdout costs a subprocess rather than the run. It is handed plain JSON on

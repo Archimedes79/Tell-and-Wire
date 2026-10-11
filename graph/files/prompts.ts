@@ -13,7 +13,7 @@
 import { textOutput } from './definition.ts';
 
 /** What a prompt may name, and what each is filled with: what the node and the graph hold. */
-export const VARIABLES = {
+const VARIABLES = {
   'Node Description': 'Its heading, id and kind as "# <heading> (ID <id>, <kind> node)", then its text',
   'Input Definition': 'input.js as it is, where it is written -- then each input as wired: its type, where it comes from, what arrives there',
   'Output Definition': 'output.js as it is, where it is written -- then each output as wired: where it goes, what the node there wants',
@@ -44,9 +44,8 @@ export function nodeDescription(node: { id: string; label: string; description: 
 }
 
 /**
- * Said with every output definition a model answers: an example said a
- * portfolio had "a health score of 72 out of 100" and too much in AAPL, MSFT
- * and NVDA, and the report on a portfolio holding none of them said the same.
+ * Said with every output definition a model answers: a model copies figures,
+ * names and claims from an example that is only there to show the form.
  */
 const FORM_ONLY = 'Its example shows the form only: take no figure, name or claim from it -- each comes from the input.';
 
@@ -71,8 +70,8 @@ export function standardRunPrompt(definition: string): string {
  * *definition* with how to answer it said first: what {Output Definition}
  * is filled with in a prompt.md of the node's own. Such a prompt names the
  * definition -- "Output format: {Output Definition}" -- without saying how to
- * answer it, and a model shown output.js and nothing else answered with the
- * file: `module.exports = { "output": "\\documentclass..." }` for a LaTeX text.
+ * answer it, and a model shown output.js and nothing else answers with the
+ * file itself.
  */
 export function answeredAs(definition: string): string {
   return textOutput(definition) !== undefined

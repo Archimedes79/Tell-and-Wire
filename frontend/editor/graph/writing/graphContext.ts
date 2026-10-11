@@ -11,24 +11,20 @@
 // it is cut to a budget, so a large graph leaves a small model room to answer.
 
 import type { Graph, GraphNode, GuiWidget, Wire } from '../../document/graph';
-import { topologicalLevels } from '../../../../graph/order.ts';
-import { registry } from '../../../../graph/nodes/registry.ts';
 import { blockSize } from '../../../deployment/gui/kit/layout';
 import { firstLine } from '../../document/model/heading';
 import { graphEdge } from '../../document/model/wires';
 import { scheme } from '../../../deployment/gui/kit/ui/scheme';
 import { calledBlock } from './generationContext';
+import { generationOrder } from './graphSweep';
 
 /** How much of the graph ✨ is told, in characters. */
 export const CONTEXT_LIMIT = 3000;
 
 /** The nodes in the order they run -- or as they stand, where the graph has no order (a circle a run refuses). */
 function runOrder(nodes: GraphNode[], edges: Wire[]): GraphNode[] {
-  const saved = edges.map((edge, at) => graphEdge(edge, at));
   try {
-    const byId = new Map(nodes.map((node) => [node.id, node]));
-    const order = topologicalLevels(nodes, saved, registry).flat();
-    return order.map((id) => byId.get(id)).filter((node): node is GraphNode => !!node);
+    return generationOrder(nodes, edges.map((edge, at) => graphEdge(edge, at)));
   } catch {
     return nodes;
   }

@@ -13,7 +13,7 @@
 // node nobody has written anything for still works: its description is the
 // question, and what arrived is what it is asked about.
 
-export interface AssembledPrompt {
+interface AssembledPrompt {
   system: string;
   user: string;
 }

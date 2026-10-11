@@ -21,11 +21,10 @@ function roundStatus(round: RoundSnapshot | null): { label: string; failed: bool
  * It has no ▶ Run. A tool runs when it is started (`startEvents`: its start points
  * that start themselves, or, with no start point at all, the whole graph once) and
  * afterwards when its gui is used -- its buttons, and the blocks that say
- * they start it -- or it is called. A ▶ Run beside a gui's own button was a second button for
- * the same press.
+ * they start it -- or it is called.
  *
- * Every host draws the bar: `runtime/RuntimeApp.tsx` for a tool someone was
- * handed, and the editor's running application (`ApplicationView`).
+ * Every host draws the bar: `deployment/gui/RuntimeApp.tsx` for a tool someone
+ * was handed, and the editor's running application (`ApplicationView`).
  */
 export default function DeliveredHeader({ name, description, round, tools, note }: {
   name: string;

@@ -8,7 +8,7 @@ const FILE_PARTS: NonNullable<Sent['keys']> = {
   content: { type: 'text', description: 'what is in it -- a document read as its text' },
 };
 
-export interface PickerConfig {
+interface PickerConfig {
   /** The chosen path. */
   path: string;
   directory: boolean;

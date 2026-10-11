@@ -81,8 +81,8 @@ function collectInputs(
   return collected;
 }
 
-export interface RunOptions {
-  /** Wired file paths are read into text for elements that asked. */
+interface RunOptions {
+  /** The services a run touches the world with: files, bodies, the model, tool servers. */
   runtime: Runtime;
   /** What each kind of node is. */
   registry: Kinds;
@@ -131,7 +131,7 @@ export interface RunOptions {
  * it already is. No event, no slice of the graph, nothing held or reused: it
  * is one node, asked directly.
  */
-export type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'runners' | 'signal' | 'depth'>;
+type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'runners' | 'signal' | 'depth'>;
 
 /**
  * Run the graph once.
@@ -247,7 +247,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
 
   // Answered before anything is asked. Put in before the levels rather than
   // inside them, because a node whose result is already known has nothing the
-  // loop does to it: no element to find, no upstream failure to inherit, no
+  // loop does to it: no definition to find, no upstream failure to inherit, no
   // "nothing to do" to decide, and nothing to report as started.
   const given = new Set<string>();
   for (const [nodeId, produced] of Object.entries(options.given ?? {})) {
@@ -330,7 +330,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
 
       try {
         // What the run reports having received is what came off the wires --
-        // the paths, not the megabytes behind them. Only the element sees the
+        // the paths, not the megabytes behind them. Only the runner sees the
         // contents.
         const arrived = await readInputs(element, node, inputs, runtime, registry);
         // An event is a moment: a package handed back from an earlier round
@@ -403,7 +403,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
  * The runtime of a run that can be stopped.
  *
  * The signal is put on every model call and handed to every body here, once,
- * so no element has to know that stopping exists -- the same place the graph's
+ * so no kind of node has to know that stopping exists -- the same place the graph's
  * AI default is applied, for the same reason.
  */
 function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
@@ -473,7 +473,7 @@ function isNothing(value: unknown): boolean {
  * Why this node has nothing to do this round, or '' when it has.
  *
  * Two ways to have nothing to do. A port marked required is wired and brought
- * nothing. Or the element is one that works *on* its inputs (`needsInput`: an
+ * nothing. Or the node is one that works *on* its inputs (`needsInput`: an
  * ai node) and every wire into it came up empty -- ▶ Run on a chat nobody has
  * typed into, a summarizer before a file is chosen.
  *
@@ -622,7 +622,7 @@ function ranTo(
  * What a node that threw comes to. One that catches its own failures turns
  * one into data instead of ending the run: the message goes on its `error`
  * port, its other ports carry null, and whatever that port feeds gets to
- * react -- asked of the element, so one mechanism covers every kind. Still
+ * react -- asked of its definition, so one mechanism covers every kind. Still
  * `partial`, never `success`: a node whose outputs are nulls nobody explains
  * is how a broken run comes to look like a clean one.
  */
@@ -663,7 +663,7 @@ export async function runNodeAlone(
 }
 
 /**
- * What the element is given: the wired values, with the file on each input
+ * What the runner is given: the wired values, with the file on each input
  * that says "read the file at this path" read into its content.
  *
  * Run once per item, a list it runs over is read an item's file at a time, as

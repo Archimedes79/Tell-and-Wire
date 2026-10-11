@@ -79,7 +79,7 @@ interface StateFile {
 }
 
 /** What a round is asked with: what it is sent, what it asked before it ran, and who sends it. */
-export interface RoundAsk {
+interface RoundAsk {
   /**
    * What it is sent. For a round the gui starts (*by* a block of it): what
    * the gui's blocks hold, by block id. For any other round of a start
@@ -97,7 +97,7 @@ export interface RoundAsk {
 }
 
 /** What a watcher of a session is told: a round as it starts, goes and ends, or the session after a change. */
-export type SessionEvent =
+type SessionEvent =
   | { type: 'round'; round: RoundSnapshot }
   | { type: 'session'; session: SessionView };
 
@@ -108,7 +108,7 @@ export interface SessionOptions {
   runtime?: (report: (event: ProgressEvent) => void) => Runtime;
   /**
    * What runs its rounds: the graph core `TW_CORE` names, else the
-   * JavaScript core in this process with *runtime* (`core/stdio.ts`).
+   * JavaScript core in this process with *runtime* (`../runtime/stdio.ts`).
    */
   core?: () => GraphCore;
   /** The gui of the graph, if it has one: what its blocks hold, and what a round a block starts does (`../gui/hooks.ts`). */
@@ -395,21 +395,16 @@ export class Session {
     return this.rounds.stop(id);
   }
 
-  /** Stop every round going or waiting, and wait for each to end: see `Rounds.stopAll`. */
-  stopAll(): Promise<number> {
-    return this.rounds.stopAll();
-  }
-
-  /** Stop every round and let the graph core go: a core of its own process ends. */
+  /** Stop every round going or waiting and wait for each to end (`Rounds.stopAll`), and let the graph core go: a core of its own process ends. */
   async close(): Promise<void> {
     await this.stopApplication();
-    await this.stopAll();
+    await this.rounds.stopAll();
     await this.core.close();
   }
 
   /**
    * Start what runs by itself: each start point set to start when the tool starts starts,
-   * and each with an interval keeps its time (`execution/clock.ts`) -- the one
+   * and each with an interval keeps its time (`../runtime/clock.ts`) -- the one
    * clock a served tool and the editor's ▶ Run keep alike, in the server, so
    * it goes on whether or not a gui is open. Its rounds are rounds like any
    * other. Resolves once the rounds starting it have run, with whether a
@@ -587,7 +582,7 @@ export class Session {
 }
 
 /** How a graph is handed over: from which file, and as the document of which session. */
-export interface Handover {
+interface Handover {
   /** Where the graph is kept, if anywhere: its session keeps its state beside it (`stateFileOf`). */
   path?: string | null;
   /**

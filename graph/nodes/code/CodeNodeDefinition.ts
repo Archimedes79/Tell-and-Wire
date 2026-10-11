@@ -65,7 +65,7 @@ const CODE_TEXTS: readonly TextFile[] = [
  *
  * The body is `run(inputs) -> outputs`, both plain JSON objects keyed by port
  * id. JavaScript, and only JavaScript: it is the one language a recipient
- * already has once they can run the graph, so a bundle asks for Node and nothing
+ * already has once they can run the graph, so a package asks for Node and nothing
  * else — no interpreter to find, no packages to install, no second sandbox.
  * Everything that is JavaScript about writing and trying a body is its
  * language (`graph/editor/nodes/code/javascript.ts`): a node for another

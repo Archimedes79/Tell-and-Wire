@@ -13,7 +13,7 @@
 // graph is put together here from the two. No file system: `folder.ts` reads
 // the files, and so can a test or a browser that already has their contents.
 
-import { defaultMetadata, parseGraph, type Graph, type GraphEdge, type GraphMetadata } from '../graph.ts';
+import { defaultMetadata, isStruct, parseGraph, type Graph, type GraphEdge, type GraphMetadata } from '../graph.ts';
 import { NotAGraph } from '../errors.ts';
 import type { Problem } from '../wiring.ts';
 import { nodesFrom, sorted } from './nodesFile.ts';
@@ -116,8 +116,8 @@ export function flowOf(graph: Graph): Record<string, unknown> {
  * with them.
  */
 export function graphFrom(flow: unknown, list: unknown, flowPath: string, nodesPath: string): Graph {
-  if (!flow || typeof flow !== 'object' || Array.isArray(flow)) throw new NotAGraph(`${flowPath} is not a flow: expected an object with "name" and "wires".`);
-  const { wires = [], ...metadata } = flow as Record<string, unknown>;
+  if (!isStruct(flow)) throw new NotAGraph(`${flowPath} is not a flow: expected an object with "name" and "wires".`);
+  const { wires = [], ...metadata } = flow;
   if (!Array.isArray(wires)) throw new NotAGraph(`${flowPath}: "wires" must be a list, one "node.port -> node.port" each.`);
   const nodes = nodesFrom(list, nodesPath);
 

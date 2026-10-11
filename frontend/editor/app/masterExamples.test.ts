@@ -172,7 +172,7 @@ function shapeOf(graph: Graph) {
       .map((port) => `${node.node_type}.${port.id} takes ${part(port.field!)} as ${port.data_type}${port.multi ? ' list' : ''}`)).sort(),
     // Which inputs a node will not run without, once they are wired: its ports' "needed".
     needed: graph.nodes.flatMap((node) => node.inputs.filter((port) => port.required).map((port) => `${node.node_type}.${port.id}`)).sort(),
-    // How each node that authors a body takes a list: what "Run once per item" sets, as a run reads it.
+    // How each node that has a body written for it takes a list: what "Run once per item" sets, as a run reads it.
     lists: graph.nodes.filter((node) => node.node_type === 'code' || node.node_type === 'ai')
       .map((node) => `${node.node_type} ${registry.node(node.node_type)!.batchMode(node as never)}: ${node.inputs.filter((port) => port.multi).map((port) => port.id).join(', ') || 'none fan out'}`).sort(),
   };

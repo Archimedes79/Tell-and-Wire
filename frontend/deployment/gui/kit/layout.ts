@@ -32,10 +32,9 @@ export const GUI_MAX_CELL = 56;
  * The gap between blocks, in pixels. One value, everywhere.
  *
  * Equal in both directions on purpose: the cell is square, and a row gap that
- * differed from the column gap would quietly make a 4x4 block non-square. A
- * document needs more air than a dashboard, hence 14 rather than the 8 this
- * started at -- and where a *section* should end, that is what the `spacer`
- * block is for, not a bigger uniform gap.
+ * differed from the column gap would quietly make a 4x4 block non-square.
+ * Where a *section* should end, the `spacer` block is for that, not a bigger
+ * uniform gap.
  */
 export const GUI_GAP = 14;
 
@@ -97,9 +96,8 @@ export function resolveWidgetLayout(widgets: GuiWidget[]): WidgetPlacement[] {
  * gaps between them -- and the cells it spans. The gui never needs the sum,
  * since the browser's grid does it; a node wired into the end point the
  * block shows does, to write what it sends for the room there is
- * (`writing/generationContext.ts`). On a
- * narrower gui every cell shrinks alike (`cellSize`), so this is the most the
- * block gets.
+ * (`editor/graph/writing/generationContext.ts`). On a narrower gui every cell
+ * shrinks alike (`cellSize`), so this is the most the block gets.
  */
 export function blockSize(widget: GuiWidget): { w: number; h: number; width: number; height: number } {
   const [{ w, h }] = resolveWidgetLayout([widget]);
@@ -121,8 +119,8 @@ export const BOX_TEXT = { fontSize: 14, lineHeight: '20px' } as const;
  * The side of one square cell for a container of *containerWidth* pixels.
  *
  * Below the capped width the cells shrink with the container, so the same gui
- * looks identical in the editor panel, the runtime window and a deployed
- * bundle — only smaller.
+ * looks identical in the editor's Gui tab, its App tab and a deployed tool —
+ * only smaller.
  */
 export function cellSize(containerWidth: number): number {
   const usable = Math.max(0, Math.min(containerWidth, GUI_MAX_WIDTH));
@@ -130,7 +128,7 @@ export function cellSize(containerWidth: number): number {
   return Math.max(8, Math.min(GUI_MAX_CELL, cell));
 }
 
-/** The grid style shared by the designer and the runtime window. */
+/** The grid style shared by the designer and the deployed gui. */
 export function gridStyle(cell: number, narrow = false): React.CSSProperties {
   return {
     display: 'grid',

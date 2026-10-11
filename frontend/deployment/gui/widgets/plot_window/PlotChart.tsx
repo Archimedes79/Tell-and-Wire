@@ -6,8 +6,7 @@ import { plotColours } from '../../kit/ui/scheme';
  * The room a chart leaves around its plot, in the block's own pixels -- a
  * floor, since the room a value axis needs depends on how long its numbers
  * are (`chartMargins`). A chart is drawn at the size the block is: there is no
- * drawing space of its own scaled into the block, which made a label's size a
- * function of how big the block had been dragged.
+ * drawing space of its own scaled into the block.
  */
 const MARGIN = { left: 46, right: 14, top: 16, bottom: 30 };
 
@@ -81,8 +80,7 @@ function toPoints(value: unknown): PlotPoint[] | null {
  * What a chart was handed, as a figure.
  *
  * Three shapes are accepted and they are not alternatives so much as a ladder.
- * A bare list of points is the old shape and still the shortest thing that
- * works. A `{kind, title, points}` object is the same list with the two
+ * A bare list of points is the shortest thing that works. A `{kind, title, points}` object is the same list with the two
  * decisions a caller usually also has -- and with no points, its title alone:
  * what a node says before there is anything to plot ("Choose a CSV file to
  * plot."). Neither is SVG: a body that draws its own is caught before this,
@@ -119,8 +117,7 @@ export function toFigure(data: unknown): Figure | null {
 
 /**
  * What to say about a value that arrived and is no figure: rows whose number
- * is not called "value", a record, a lone number. The chart said "Waiting for
- * data" -- as if nothing had come -- while the canvas counted the rows.
+ * is not called "value", a record, a lone number.
  */
 function notAFigure(value: unknown): string {
   const seen = JSON.stringify(value) ?? String(value);
@@ -239,10 +236,7 @@ export function drawsSomething(data: unknown): boolean {
 /**
  * A chart, dependency-free, drawn from a figure at the size the block is.
  *
- * It draws its own axes: a value scale and the category names. Without them
- * the bars were a block of colour that happened to have the right proportions
- * -- correct, and unreadable, which reads to whoever ran the graph as nothing
- * having happened.
+ * It draws its own axes: a value scale and the category names.
  *
  * Every coordinate below is a screen pixel. There is no inner coordinate space
  * scaled into the block, so a label's size does not depend on how big the

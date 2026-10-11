@@ -16,11 +16,9 @@ const VIEW_TABS: { id: EditorView; label: string; hint: string }[] = [
  *
  * They are not separate documents: the gui is the graph's own, its blocks
  * connected to the graph's start and end points by name -- a button that
- * fires one is a run that begins there. The Gui tab exists because
- * designing a gui through a keyhole, inside a node's dialog, was what it
- * replaced.
+ * fires one is a run that begins there.
  *
- * The third is there while the tool runs (▶ Run, `app/application.ts`):
+ * The third is there while the tool runs (▶ Run, `document/application.ts`):
  * its gui, the component a deployed tool runs -- to go back to from the graph,
  * whose cards light up as the gui is used. Stopped, it goes.
  */

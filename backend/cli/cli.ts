@@ -27,11 +27,11 @@ import { chosenCore } from '../deployment/runtime/stdio.ts';
 import type { GraphCore } from '../deployment/runtime/protocol.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { nodeRuntime } from '../deployment/runtime/services.ts';
-import { installFolder } from '../deployment/project/layout.ts';
 import { memoryState, sendFromOutside } from '../../graph/interface.ts';
 import { startFromGui } from '../../gui/gui.ts';
 import { guiPart } from '../deployment/gui/hooks.ts';
-import { WEB_DIR, builtGui } from '../deployment/project/layout.ts';
+import { WEB_DIR, builtGui, installFolder } from '../deployment/project/layout.ts';
+import { message } from '../deployment/host/http.ts';
 import { isLoopbackHost, portTaken, serve } from '../deployment/host/serve.ts';
 import { untilStopped } from '../deployment/host/lifecycle.ts';
 import { dirname, join, resolve } from 'node:path';
@@ -39,7 +39,7 @@ import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { after, graphTriggers, parseInterval, type Trigger } from '../../graph/triggers.ts';
 
-export interface CliOptions {
+interface CliOptions {
   graphPath: string;
   /** Whether the graph was named, rather than taken to be the project in this folder, the way a bundle is laid out. */
   graphNamed: boolean;
@@ -63,7 +63,7 @@ export interface CliOptions {
   serve?: boolean;
   /** Serve the built editor from this folder. */
   editor?: string;
-  /** Bind address. Loopback unless said otherwise; `local` routes (`api.ts`) are off for any other. */
+  /** Bind address. Loopback unless said otherwise; the `local` routes of the host's `api.ts` are off for any other. */
   host?: string;
   port?: number;
   /** Be an MCP server on stdio instead of running anything: see `backend/editor/host/mcpServer.ts`. */
@@ -197,7 +197,7 @@ async function runEvery(graph: Graph, trigger: Trigger | null, options: CliOptio
       await new Promise<void>((wake) => { after(seconds * 1000, wake); });
     }
     code = await runOnce(graph, trigger, options, core).catch((error: unknown) => {
-      process.stderr.write(`\nThis run failed: ${error instanceof Error ? error.message : String(error)}\n`);
+      process.stderr.write(`\nThis run failed: ${message(error)}\n`);
       return 1;
     });
   }
@@ -219,18 +219,17 @@ async function runEvery(graph: Graph, trigger: Trigger | null, options: CliOptio
  * to know about, let alone read a Node stack trace about.
  */
 async function runServer(options: CliOptions): Promise<number> {
-  // No graph file is a legitimate way to run this: the editor hands the server
-  // the document being edited (holdGraph), and serves one only when it is named --
-  // started in a folder that happened to hold a graph.json, it shipped that
-  // one and kept its clock. A bundle is the other case, and there the graph is
-  // right here. A graph that was named and is not there is a mistake to say,
-  // not an empty server: `serve` says it, where it reads the graph.
+  // The editor serves no graph of its own: the document being edited is handed
+  // to the server (holdGraph), so a folder that happens to hold a graph.json is
+  // not served unless it is named. A bundle is the other case, and there the
+  // graph is right here. A graph that was named and is not there is a mistake to
+  // say, not an empty server: `serve` says it, where it reads the graph.
   const hasGraph = options.graphNamed || (!options.editor && existsSync(resolve(options.graphPath)));
   // Beside the project -- a bundle is one -- or beside a single graph file.
   const carried = resolve(projectFolderOf(options.graphPath) ?? dirname(resolve(options.graphPath)), WEB_DIR);
   const guiDir = !hasGraph ? undefined : existsSync(join(carried, 'runtime.html')) ? carried : builtGui();
   // The editor is loaded here and nowhere else: a package that does not carry it serves none.
-  const editor = options.editor ? (await editorRoutes()).editorPart(resolve(options.editor)) : undefined;
+  const editor = options.editor ? (await import('../editor/host/routes.ts')).editorPart(resolve(options.editor)) : undefined;
 
   // The editor opens, saves and runs code at any path, and keeps the keys, for
   // whoever reaches it, asking nobody who they are: beyond this machine that is
@@ -323,7 +322,7 @@ async function open(url: string): Promise<void> {
 }
 
 /**
- * Be a graph core until stdin ends: the protocol of `core/protocol.ts` on
+ * Be a graph core until stdin ends: the protocol of `backend/deployment/runtime/protocol.ts` on
  * stdin and stdout, for a host that runs its graphs in a process of their
  * own (`TW_CORE`). stdout is the protocol's from the first line, so
  * whatever would print to it goes to stderr.
@@ -385,9 +384,4 @@ async function editorCommands(): Promise<typeof import('../editor/host/commands.
     if ((error as { code?: string })?.code !== 'ERR_MODULE_NOT_FOUND') throw error;
     throw new Error('This copy of Tell & Wire has no editor: check, test, run-node, --keep, --bundle and --mcp are the editor\'s, and a package does not carry it.');
   }
-}
-
-/** The editor\'s routes, loaded when the editor is served. */
-async function editorRoutes(): Promise<typeof import('../editor/host/routes.ts')> {
-  return import('../editor/host/routes.ts');
 }

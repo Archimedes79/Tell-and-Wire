@@ -7,13 +7,12 @@ import { EVENT, LINE, MUTED, RAISE, TEXT } from './theme';
  * point it shows. `onRemove` gives it a ✕. `event` is the colour of a point the
  * gui meets the graph at (the amber of the ◆), `neutral` anything else.
  */
-export default function Chip({ children, onRemove, removeLabel = 'Remove', tone = 'neutral', title }: {
+export default function Chip({ children, onRemove, removeLabel = 'Remove', tone = 'neutral' }: {
   children: ReactNode;
   onRemove?: () => void;
   /** What the ✕ says it does, where several chips stand together: "Stop sending to Summarize". */
   removeLabel?: string;
   tone?: 'neutral' | 'event';
-  title?: string;
 }) {
   const event = tone === 'event';
   return (
@@ -26,7 +25,6 @@ export default function Chip({ children, onRemove, removeLabel = 'Remove', tone 
         background: event ? `color-mix(in srgb, ${EVENT} 14%, transparent)` : RAISE,
         border: `1px solid ${event ? `color-mix(in srgb, ${EVENT} 40%, transparent)` : LINE}`,
       }}
-      title={title}
     >
       <span className="truncate">{children}</span>
       {onRemove && (

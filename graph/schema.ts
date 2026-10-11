@@ -59,7 +59,7 @@ export function inferSchema(value: unknown, depth = 0): Schema {
  * the other side's word standing: one empty cell in a column of numbers does
  * not make the column "anything".
  */
-export function merge(a: Schema, b: Schema): Schema {
+function merge(a: Schema, b: Schema): Schema {
   if (!a.type) return b;
   if (!b.type) return a;
   if (JSON.stringify(a) === JSON.stringify(b)) return a;
@@ -139,7 +139,7 @@ export function mismatches(value: unknown, schema: Schema, path: string[] = [], 
   const actual = typeOf(value);
   const allowed = [schema.type].flat();
   // A number is a number: an example that happened to hold 120 does not
-  // promise whole numbers, and 135.5 shares of a fund broke the check for it.
+  // promise whole numbers.
   const numeric = (type: string): string => (type === 'integer' ? 'number' : type);
   const fits = allowed.map(numeric).includes(numeric(actual));
   if (!fits) {

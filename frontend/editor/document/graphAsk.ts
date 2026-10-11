@@ -6,7 +6,22 @@ import { useCallback, useRef, useState } from 'react';
 import type { Graph } from './graph';
 import { ApiError, call, watchGeneration, type AICall } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
-import { lastAsked } from './lastAsked';
+
+/**
+ * Numbered requests of which only the last is still wanted: `ask` hands out
+ * what tells a request whether it still is, and `cancel` makes none of them.
+ */
+function lastAsked(): { ask: () => () => boolean; cancel: () => void } {
+  let last = 0;
+  return {
+    ask: () => {
+      last += 1;
+      const mine = last;
+      return () => mine === last;
+    },
+    cancel: () => { last += 1; },
+  };
+}
 
 /** Where a request stands. *sent*: the graph it was asked about, to tell whether it changed since. */
 export type GraphAsk =

@@ -21,9 +21,7 @@ interface ToolbarButtonProps {
  * the bar -- ▶ Run is drawn by the toolbar itself.
  *
  * Its words show from 1280 pixels on; narrower, it is its icon, and the words
- * are its tooltip and what a screen reader says. With them at 1024 the bar was
- * 1470 pixels wide, and the whole page slid sideways under it. The file
- * actions went into one menu, which left room for the words at 1280.
+ * are its tooltip and what a screen reader says.
  */
 export default function ToolbarButton({
   icon: Icon, label, title, onClick, disabled, framed,

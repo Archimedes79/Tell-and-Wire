@@ -8,7 +8,7 @@ import { edge, quietRuntime } from '../../test/fakes.ts';
 /**
  * A graph inside a node, run by the executor that runs every graph.
  *
- * Every test here goes through `executeGraph`, never through the element on
+ * Every test here goes through `executeGraph`, never through the runner on
  * its own: the point of the design is that the outer run and the inner run are
  * the same code, and a test that called `execute` directly would be testing
  * something no run does.

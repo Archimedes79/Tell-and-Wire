@@ -85,25 +85,10 @@ export const WARNING_FILL = `color-mix(in srgb, ${WARNING} 10%, transparent)`;
 export const DANGER_SOFT = 'var(--ui-danger, #f87171)';
 
 /**
- * One tint per kind of node, so the canvas reads at a glance: the pill on its
- * card, its swatch in the palette, the tag of a block's panel. The editor is
- * always Night, so these are the literals; keep them equal to Night's `nodes`.
- */
-export const NODE = {
-  ai: 'var(--ui-node-ai, #2d1b4e)',
-  code: 'var(--ui-node-code, #1a3a2a)',
-  data: 'var(--ui-node-data, #183b3b)',
-  end: 'var(--ui-node-end, #3a2000)',
-  subgraph: 'var(--ui-node-subgraph, #2a2a4a)',
-  start: 'var(--ui-node-start, #4a3a12)',
-} as const;
-
-/**
  * One ink per kind of node, to draw its icon in: on its card, in its palette
- * chip. `NODE` is the dark fill a tag sits on; this is the same kind in a
- * colour that reads on the editor's own surfaces. Literals, because the editor
- * is Night under every scheme. A start and an end point are the amber of an
- * event: where a run begins and ends is one colour, on the canvas and the gui.
+ * chip. Literals, because the editor is Night under every scheme. A start and
+ * an end point are the amber of an event: where a run begins and ends is one
+ * colour, on the canvas and the gui.
  */
 export const INK = {
   ai: '#cdaef2',

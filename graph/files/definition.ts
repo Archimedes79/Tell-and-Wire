@@ -22,7 +22,7 @@
 // output definition's keys are the outputs (✨ Output sets them from it).
 
 import { inferSchema, mismatches, type Schema } from '../schema.ts';
-import type { GraphNode } from '../graph.ts';
+import { isStruct, type GraphNode } from '../graph.ts';
 import type { TextFile } from '../nodes/NodeDefinition.ts';
 
 /** A node's two definitions as it holds them, each '' while it has none. */
@@ -143,14 +143,14 @@ export function definitionExample(text: string): DefinitionExample {
         + 'write it with double-quoted keys and strings, no comments and no trailing commas',
     };
   }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isStruct(value)) {
     return { problem: 'its example after module.exports is not an object keyed by port, like { "input": … }' };
   }
-  return { example: value as Record<string, unknown> };
+  return { example: value };
 }
 
 /** One property of a definition's JSDoc: what it is called, its type as written, and what the comment says of it. */
-export interface TypedefProperty { id: string; type: string; description: string }
+interface TypedefProperty { id: string; type: string; description: string }
 
 /**
  * The properties the JSDoc gives *type*: each `@property {…} <id> <what it
@@ -229,7 +229,7 @@ export function unreadableOutput(text: string): string | undefined {
  * definition *text*, as sentences naming the place: a key it names that is
  * missing, a value of another shape. Empty when they fit, or there is no
  * definition. One that cannot be read fits nothing, and says why
- * (`unreadableOutput`): held to a file nobody could read, a try said "✓ fits".
+ * (`unreadableOutput`).
  */
 export function misfits(outputs: Record<string, unknown>, text: string): string[] {
   const unreadable = unreadableOutput(text);

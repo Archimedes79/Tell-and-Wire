@@ -62,7 +62,7 @@ export function exchangeLabel(part: string, said?: string, how: { fix?: boolean;
 }
 
 /** One exchange of a part, as its chat lists it. */
-export interface PartExchange {
+interface PartExchange {
   /** Local date and time: "2026-10-09 14:05". */
   at: string;
   /** The words said to the chat; '' for a part written from the node's text, or a repair. */
@@ -97,12 +97,12 @@ export function exchangeEntry(which: string, calls: AICall[], at: Date): string 
 
 /**
  * *history* with *entry* appended, and as many of the oldest entries dropped
- * as it takes to stay within *limit* characters -- never the new one.
+ * as it takes to stay within `HISTORY_LIMIT` characters -- never the new one.
  */
-export function withExchange(history: string, entry: string, limit = HISTORY_LIMIT): string {
+export function withExchange(history: string, entry: string): string {
   const before = history.replace(/\s+$/, '');
   let text = before ? `${before}\n\n${entry}` : entry;
-  while (text.length > limit) {
+  while (text.length > HISTORY_LIMIT) {
     // Where the next entry after the first begins: everything before it goes.
     const next = ENTRY.exec(text.slice(1));
     const at = next ? next.index + 1 : -1;

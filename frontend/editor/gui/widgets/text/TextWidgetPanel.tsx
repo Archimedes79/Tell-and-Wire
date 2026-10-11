@@ -4,20 +4,11 @@ import { textRole } from '../../../../../gui/widgets/text/role.ts';
 
 /**
  * Prose. The role -- heading, body, caption -- comes from the palette entry you
- * picked and is not offered again here.
+ * picked and is not offered again here: turning a heading into body text would
+ * undo the choice that put it on the gui.
  *
- * A heading and a paragraph were two widget kinds for a moment; they hold the
- * same string, contribute the same ports (none) and are typed into the same
- * box. What differs is formatting, so it is a `mode`, the same field
- * `input_picker` and `text_io` already use for their own variants. That made
- * a "role" dropdown possible, and possible is not the same as sensible:
- * offering to turn a heading into body text is offering to undo the choice
- * that put it on the gui, one panel away from the palette that makes it
- * properly.
- *
- * There is no text box here either, any more. The words are typed on the gui,
- * where they stand (`TextInPlace`); a second box holding the same sentence, in a
- * panel beside it, was two places to edit one thing.
+ * There is no text box here either. The words are typed on the gui, where they
+ * stand (`TextInPlace`): a second box would be two places to edit one thing.
  */
 export default function TextWidgetPanel({ widget }: WidgetPanelProps) {
   const heading = textRole(widget.mode) === 'heading';

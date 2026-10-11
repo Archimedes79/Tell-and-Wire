@@ -4,7 +4,7 @@
 // stores, which ports it contributes -- and answers whatever the graph asks of
 // it while it is read and run. Two branches share this base: `NodeDefinition`
 // for a node, `WidgetDefinition` for a block on a gui. What they share is
-// little: settings of their own, and whether a failure is caught.
+// little: settings of their own.
 //
 // An element has more faces than this one, and the folder says which is which:
 //
@@ -29,8 +29,7 @@
 import type { RawConfig } from '../graph.ts';
 
 /**
- * What a node and a block share: settings of their own, and whether a failure
- * becomes an `error` output.
+ * What a node and a block share: settings of their own.
  *
  * `S` is what this element is attached to — a node or a block — and `C` is the
  * settings it owns.
@@ -42,17 +41,5 @@ export abstract class ElementDefinition<S extends { id: string; config: RawConfi
    */
   config(_subject: S): C {
     return {} as C;
-  }
-
-  /**
-   * Whether a failure here becomes an `error` output instead of ending the run.
-   *
-   * Off unless someone asks for it: a graph that has not been given somewhere
-   * to put a failure should stop at one, loudly. Carried out by the executor,
-   * one level up, so every element gets the same behaviour without a copy of
-   * it -- the same division as batching and reading file inputs.
-   */
-  catchesErrors(subject: S): boolean {
-    return subject.config.catch_errors === true;
   }
 }

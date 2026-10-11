@@ -15,7 +15,7 @@ import {
 } from '../../../../../backend/deployment/host/api.ts';
 
 export type {
-  BrowseEntry, BrowsePage, GuiView, Requirement, RoundSnapshot, SessionView, ToolAiSettings,
+  BrowseEntry, BrowsePage, Requirement, RoundSnapshot, SessionView, ToolAiSettings,
 } from '../../../../../backend/deployment/host/api.ts';
 
 /** A call the server answered with an error. `message` is its `detail`; `body` the rest of what it said. */

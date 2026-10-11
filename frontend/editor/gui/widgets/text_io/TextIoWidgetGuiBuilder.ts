@@ -6,8 +6,6 @@ import { ArrowLeftRight, FileText, TextCursorInput } from 'lucide-react';
 export class TextIoWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'text_io';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Text box';
 
   paletteEntries() {

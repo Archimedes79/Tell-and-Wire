@@ -1,9 +1,8 @@
 import { NodeDesign, type WhatRuns } from '../NodeDesign.ts';
-import type { GraphNode } from '../../../graph.ts';
+import { isStruct, type GraphNode } from '../../../graph.ts';
 import type { Problem } from '../../../wiring.ts';
-import { RUN_PORT } from '../../../triggers.ts';
 import type { Generation } from '../../generation.ts';
-import { ALL_FIELDS, BEFORE, ROUND, isStruct, type DataNodeDefinition } from '../../../nodes/data/DataNodeDefinition.ts';
+import { ALL_FIELDS, BEFORE, RESERVED, ROUND, hasField, type DataNodeDefinition } from '../../../nodes/data/DataNodeDefinition.ts';
 
 export class DataNodeDesign extends NodeDesign<DataNodeDefinition> {
   override graphAuthorNote(): string {
@@ -39,10 +38,7 @@ export class DataNodeDesign extends NodeDesign<DataNodeDefinition> {
       return [{ where, problem: 'example.json is not one JSON object: it is the struct as it looks filled.', fix: 'Write it as one object with the fields of data.json.' }];
     }
     return Object.keys(this.kind.config(node).fields).flatMap((name): Problem[] => {
-      if (name === ALL_FIELDS) return [{ where, problem: 'A field is called "all", which is the output that carries every field.', fix: 'Rename it in data.json.' }];
-      if (name === ROUND) return [{ where, problem: 'A field is called "round", which is the output that counts the rounds.', fix: 'Rename it in data.json.' }];
-      if (name === BEFORE) return [{ where, problem: 'A field is called "before", which is the passive output that carries every field as it was.', fix: 'Rename it in data.json.' }];
-      if (name === RUN_PORT) return [{ where, problem: `A field is called "${RUN_PORT}", which is the name of the gate every node has.`, fix: 'Rename it in data.json.' }];
+      if (hasField(RESERVED, name)) return [{ where, problem: `A field is called "${name}", which is ${RESERVED[name]}.`, fix: 'Rename it in data.json.' }];
       if (/^\w+$/.test(name)) return [];
       return [{ where, problem: `A field is called "${name}": a field is a port, named with letters, digits and underscores.`, fix: 'Rename it in data.json.' }];
     });

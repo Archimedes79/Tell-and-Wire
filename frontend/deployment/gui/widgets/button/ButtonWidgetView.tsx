@@ -2,7 +2,7 @@ import type { WidgetViewProps } from '../WidgetView';
 import Button from '../../kit/ui/Button';
 
 /**
- * Runtime button widget: a press fires the start point the button names.
+ * A button: a press fires the start point the button names.
  *
  * A press is an event and nothing else: it holds no value a round could be
  * sent (`WidgetDefinition.takesValue`). Which button it was, the round's

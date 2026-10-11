@@ -55,7 +55,7 @@ export interface Exchange {
   loopback: boolean;
 }
 
-export type Handler<R> =
+type Handler<R> =
   (request: RequestOf<R>, exchange: Exchange) =>
     Promise<ResponseOf<R> | Download | EventStream> | ResponseOf<R> | Download | EventStream;
 
@@ -189,8 +189,8 @@ export function hostnameOf(name: string): string | null {
  * Said outright, because nothing else tells a name someone chose from the
  * name of a page that pointed its own site at this address.
  */
-export function namesFor(host: string, env: Record<string, string | undefined> = process.env): Set<string> {
-  const listed = (env.TW_ALLOWED_HOSTS ?? '').split(',').map((name) => name.trim()).filter(Boolean);
+export function namesFor(host: string): Set<string> {
+  const listed = (process.env.TW_ALLOWED_HOSTS ?? '').split(',').map((name) => name.trim()).filter(Boolean);
   return new Set([host, ...listed].map(hostnameOf).filter((name): name is string => name !== null));
 }
 

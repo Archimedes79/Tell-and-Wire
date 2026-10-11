@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import type { GraphNode, Port } from '../../document/graph';
-import { useGraphStore } from '../../document/store/graphStore';
+import { useGraphNodes, useGraphStore } from '../../document/store/graphStore';
 import { derivedNodePorts } from '../../document/model/ports';
 import { fieldChoices, takenAs } from '../../document/model/gui';
 import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
@@ -30,10 +29,7 @@ export default function SettingsPane({ node, builder, panel }: {
   builder: NodeGuiBuilder;
   panel: ReturnType<typeof useNodePanel>;
 }) {
-  // The nodes as their contents, compared one by one: a fresh list every time
-  // the store changed drew the pane anew on every tick of a run and every
-  // frame of a drag, when no node had changed.
-  const graphNodes = useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
+  const graphNodes = useGraphNodes();
   const graphEdges = useGraphStore((s) => s.rfEdges);
   // The gui's blocks: what a start point wired here is sent, what shows an end point it feeds.
   const gui = useGraphStore((s) => s.gui);

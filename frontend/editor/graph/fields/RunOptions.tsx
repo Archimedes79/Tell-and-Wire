@@ -35,7 +35,7 @@ export function CatchFailures({ node, setConfig, subject }: Props) {
 }
 
 /**
- * What a node that authors a body has besides: how many items of a list run
+ * What a node that has a body written for it has besides: how many items of a list run
  * at once. What comes in is not among these: whether a file is read is asked
  * of each input in its ports, and whether a list is taken item by item by "Run
  * once per item".

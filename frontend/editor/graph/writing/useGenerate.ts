@@ -122,12 +122,10 @@ export async function runGenerate<T>(nodeId: string, options: GenerateOptions<T>
   }
 }
 
-/** What node *nodeId*'s ✨ is doing, for a view that draws it; `run` writes, `stop` stops waiting. */
+/** What node *nodeId*'s ✨ is doing, for a view that draws it; `stop` stops waiting. */
 export function useGenerate(nodeId: string) {
   const key = useGraphStore((s) => keyOf(s.document, nodeId));
   const now = useWriting((s) => s[key]) ?? IDLE;
-
-  const run = useCallback(<T,>(options: GenerateOptions<T>) => runGenerate(nodeId, options), [nodeId]);
 
   /**
    * Stop waiting for the generation in flight, as the bar's Stop does a change
@@ -137,5 +135,5 @@ export function useGenerate(nodeId: string) {
    */
   const stop = useCallback(() => inFlight.get(key)?.abort(), [key]);
 
-  return { ...now, run, stop };
+  return { ...now, stop };
 }

@@ -35,7 +35,7 @@ function variants(): GraphNode[] {
   return nodes;
 }
 
-describe('NodeGuiBuilder.saved', () => {
+describe('savedNode', () => {
   it('writes a lean node a run sees exactly as the full one: every node type, in every mode', () => {
     for (const node of variants()) {
       expect(answers(savedNode(node)), `${node.node_type} (${node.config.write_mode})`).toEqual(answers(node));

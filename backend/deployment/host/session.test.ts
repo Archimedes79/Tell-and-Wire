@@ -3,10 +3,10 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Graph, GraphNode } from '../../../graph/graph.ts';
+import type { Graph } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
-import { edge, graphOf, quietRuntime } from '../runtime/test/fakes.ts';
+import { edge, graphOf, node, quietRuntime } from '../runtime/test/fakes.ts';
 import { Session, holderOf, type SessionOptions } from './session.ts';
 import { guiHooks } from '../gui/hooks.ts';
 import { NotOffered } from '../../../graph/interface.ts';
@@ -22,21 +22,6 @@ import { writeBundle } from '../../editor/project/deploy/bundle.ts';
  * Bodies run in this process, not the sandbox: what is tested is what a round
  * keeps, not how a body is run.
  */
-
-/** A port, by name; `name:field` takes that one value of what arrives (`Port.field`). */
-function port(spec: string, kind: 'input' | 'output') {
-  const [name, field] = spec.split(':');
-  return { id: name, name, kind, data_type: 'any' as const, multi: false, required: false, description: '', ...(field ? { field } : {}) };
-}
-
-function node(id: string, type = 'code', config: Record<string, unknown> = {}, ports: { in?: string[]; out?: string[] } = {}): GraphNode {
-  return {
-    id, node_type: type as GraphNode['node_type'], label: id, description: '', position: { x: 0, y: 0 },
-    config: type === 'code' ? { code: 'function run(inputs) { return inputs; }', ...config } : config,
-    inputs: (ports.in ?? []).map((name) => port(name, 'input')),
-    outputs: (ports.out ?? []).map((name) => port(name, 'output')),
-  };
-}
 
 const inProcess: Runtime['code'] = {
   run: async (body, inputs, signal) => {
@@ -362,7 +347,7 @@ describe('the application a session runs', () => {
 });
 
 /**
- * The ◆ through a session: the rounds of `execution/gates.test.ts`, each a
+ * The ◆ through a session: the rounds of `../runtime/gates.test.ts`, each a
  * round of one session rather than a run handed one latch. A round's latch is
  * committed when it ends; these hold that a gate behaves as it did.
  */

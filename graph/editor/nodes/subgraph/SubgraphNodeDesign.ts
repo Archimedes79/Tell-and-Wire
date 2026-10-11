@@ -1,7 +1,7 @@
 import { NodeDesign, type Designs, type WhatRuns } from '../NodeDesign.ts';
 import type { GraphNode } from '../../../graph.ts';
 import type { Kinds } from '../../../nodes/NodeDefinition.ts';
-import type { Problem } from '../../../wiring.ts';
+import { names, type Problem } from '../../../wiring.ts';
 import { boundaryInputs, boundaryOutputs, carried } from '../../../nodes/subgraph/boundary.ts';
 import type { SubgraphNodeDefinition } from '../../../nodes/subgraph/SubgraphNodeDefinition.ts';
 
@@ -84,7 +84,7 @@ export class SubgraphNodeDesign extends NodeDesign<SubgraphNodeDefinition> {
         where: `${inside}node "${boundary.id}"`,
         problem: `An end point inside a graph is one port of the node above, carrying one value; this one has ${values.length}.`,
         fix: values.length
-          ? `It carries ${values.map((p) => `"${p.id}"`).join(', ')}. Leave it one, and give the others their own end point.`
+          ? `It carries ${names(values.map((p) => p.id))}. Leave it one, and give the others their own end point.`
           : 'Give it an input to carry, or delete it.',
       });
     }

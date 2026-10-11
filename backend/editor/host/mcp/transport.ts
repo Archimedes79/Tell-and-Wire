@@ -14,7 +14,7 @@ const MAX_LINE_CHARS = 2 * MAX_GRAPH_BYTES;
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER_INFO = { name: 'tell-and-wire', version: '1.0.0' };
 
-export interface StdioStreams {
+interface StdioStreams {
   input: NodeJS.ReadableStream;
   output: NodeJS.WritableStream;
   /** Where anything that is not protocol goes. Never `output`. */

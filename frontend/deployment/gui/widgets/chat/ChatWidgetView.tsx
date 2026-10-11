@@ -6,15 +6,15 @@ import { ACCENT_FILL, DIMMER, FIELD, LINE, MUTED, SUNKEN, TEXT } from '../../kit
 import { chatValue, type ChatMessage, type ChatValue } from '../../../../../gui/widgets/chat/value.ts';
 
 /**
- * Runtime chat widget: the conversation, and the box that continues it.
+ * A chat: the conversation, and the box that continues it.
  *
  * **What is typed is the block's value**, as it is for every other box on a
  * gui -- `pending`, the message nobody has answered yet. So every way of
  * running -- Send, ▶ Run, the graph's clock, a button wired elsewhere -- sends
  * what is there.
  *
- * The turn is written into the transcript when the answer arrives (the
- * backend's `ChatWidgetDefinition.settle`), which also empties `pending`. A run that
+ * The turn is written into the transcript when the answer arrives
+ * (`ChatWidgetDefinition.settle`), which also empties `pending`. A run that
  * fails leaves it, so the message is still in the box to send again.
  */
 export default function ChatWidgetView({ value, onChange, onTrigger, busy, controlId }: WidgetViewProps) {
@@ -42,7 +42,7 @@ export default function ChatWidgetView({ value, onChange, onTrigger, busy, contr
         className="rounded-2xl px-3 py-2 text-sm max-w-[85%] min-w-0"
         style={message.role === 'user'
           ? { background: ACCENT_FILL, color: TEXT, borderBottomRightRadius: 4 }
-          : { background: SUNKEN, color: TEXT, border: `1px solid ${LINE}`, borderBottomLeftRadius: 4 }}
+          : { ...FIELD, borderBottomLeftRadius: 4 }}
       >
         {message.role === 'user'
           ? <span className="whitespace-pre-wrap">{message.text}</span>

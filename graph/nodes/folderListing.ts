@@ -30,7 +30,7 @@ export function listFolder(
 }
 
 /** What a start point or a picker block is set to read. */
-export interface Chosen {
+interface Chosen {
   path: string;
   /** A folder, listed; otherwise one file. */
   directory: boolean;

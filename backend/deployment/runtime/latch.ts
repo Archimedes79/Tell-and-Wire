@@ -36,7 +36,7 @@ import { Lru } from './lru.ts';
 /** How many nodes' outputs are held. A long editor session opens many graphs. */
 const LIMIT = 512;
 
-/** A graph's name and shape -- which nodes of which types, wired how -- as one key. What rounds of one graph queue by, too. */
+/** A graph's name and shape -- which nodes of which types, wired how -- as one key. */
 function graphKey(graph: Graph): string {
   const shape = [
     graph.metadata?.name ?? '',

@@ -114,7 +114,7 @@ export interface FieldChoice {
 }
 
 /** How a port would be typed to take *value*: a text, a number, a structure -- and whether it is a list of them. */
-function typedAs(value: unknown): { type: DataType; list?: boolean } {
+export function typedAs(value: unknown): { type: DataType; list?: boolean } {
   if (Array.isArray(value)) return { type: typedAs(value.find((item) => item !== null && item !== undefined)).type, list: true };
   if (typeof value === 'string') return { type: 'text' };
   if (typeof value === 'number') return { type: 'number' };

@@ -1,5 +1,5 @@
 // What only building the gui asks of a widget: what to tell a neighbour, the
-// model that writes a graph, a bundle. A package carries none of it, so it
+// model that writes a graph, a package. A package carries none of it, so it
 // lives under `editor`; a kind that has something to say of its own overrides
 // a member in `<kind>/<Kind>WidgetDesign.ts`, the rest answer as here.
 
@@ -35,7 +35,7 @@ export class WidgetDesign<D extends WidgetDefinition = WidgetDefinition> {
     return undefined;
   }
 
-  /** Files and folders this block names as its own defaults, which a bundle carries: what a picker starts on. */
+  /** Files and folders this block names as its own defaults, which a package carries: what a picker starts on. */
   referencedPaths(_widget: Widget): string[] {
     return [];
   }

@@ -59,7 +59,7 @@ describe('a zip written by hand', () => {
     ]);
     expect(centralRecords(archive)).toEqual([
       { path: 'run.sh', madeBy: 3, mode: 0o100755 },
-      // Untouched: an entry without a mode is written exactly as before.
+      // Without a mode, an entry is made on MS-DOS: no permissions.
       { path: 'backend/cli/main.ts', madeBy: 0, mode: 0 },
     ]);
   });

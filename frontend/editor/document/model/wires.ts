@@ -14,8 +14,8 @@ import { NODE_KINDS } from './nodeKinds';
 /**
  * *wire* as a saved `GraphEdge`: the ends named for the file. A handle the
  * canvas left out is the port a node has when it has one -- `output` and
- * `input`, as a saved graph has always read it -- so what the authoring rules
- * ask of the wiring is what a run, reading the saved file, will find. A wire
+ * `input`, as a saved graph reads it -- so what the design's rules ask of the
+ * wiring is what a run, reading the saved file, will find. A wire
  * without an id is given one by its place, *at*.
  *
  * Written once, here, so every place a wire becomes a saved edge -- exporting
@@ -96,7 +96,7 @@ export function retypeJoined(
   // the wire already did. Only on a node that reads its files
   // (`readsFileInputs`), not on one whose ports follow from its settings, and
   // only a port with nobody's word on it: a port typed `text` said what it
-  // wants, and a run reads it the same way (`execution/fileInputs.ts`).
+  // wants, and a run reads it the same way (`graph/fileInputs.ts`).
   const reads = !!into && registry.node(into.node_type)?.readsFileInputs === true && derivedNodePorts(into) === null;
   if (reads && from?.data_type === 'file_path' && to && to.data_type === 'any') {
     to.data_type = 'file_path';

@@ -13,6 +13,7 @@
 // answer (`backend/editor/graph/generate.ts`).
 
 import type { Variable } from '../files/prompts.ts';
+import type { GenerationKind } from './generation.ts';
 
 /** What every chat sends with what the person says, by the variable that carries it (`STANDARD_PROMPTS`). */
 export const SENT_WITH = {
@@ -27,7 +28,7 @@ export const SENT_WITH = {
  * body -- code, an ai node's prompt, a data node's data -- each with a
  * standard prompt of its own.
  */
-export type PromptKind = 'input' | 'output' | 'code' | 'prompt' | 'data';
+export type PromptKind = 'input' | 'output' | GenerationKind;
 
 const DESCRIBED = 'This is the user\'s node description:\n{Node Description}';
 

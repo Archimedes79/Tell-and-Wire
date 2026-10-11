@@ -1,5 +1,5 @@
 import { NodeDesign, type DeployNeeds, type WhatRuns } from '../NodeDesign.ts';
-import type { GraphNode } from '../../../graph.ts';
+import { isStruct, type GraphNode } from '../../../graph.ts';
 import type { Kinds } from '../../../nodes/NodeDefinition.ts';
 import { names, type Problem } from '../../../wiring.ts';
 import { RUN_PORT, START_PORT, parseInterval } from '../../../triggers.ts';
@@ -19,7 +19,7 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
       + `"event" is null in a round this start point did not begin: "values" are then what it was sent last.`;
   }
 
-  /** A start point the gui starts makes a graph one that is used through its gui: a bundle carries the gui. */
+  /** A start point the gui starts makes a graph one that is used through its gui: a package carries the gui. */
   override deployNeeds(node: GraphNode): DeployNeeds {
     return { needsInterface: this.kind.config(node).startedBy === 'gui', asksAi: false };
   }
@@ -28,7 +28,7 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
     return this.graphRuns('Hands on one package: the event, when this round began here, and the values it was sent -- the last ones, in a round it did not begin -- or, set to read a file or a folder, what is there now.');
   }
 
-  /** What it reads, named by its path: a bundle carries it, so the tool opens on it elsewhere. */
+  /** What it reads, named by its path: a package carries it, so the tool opens on it elsewhere. */
   override referencedPaths(node: GraphNode): string[] {
     const { reads, path } = this.kind.config(node);
     return reads && path ? [path] : [];
@@ -66,7 +66,7 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
    */
   override handedDownProblems(node: GraphNode, where: string): Problem[] {
     const { startedBy, values } = this.kind.config(node);
-    if (startedBy !== 'call' || !values || typeof values !== 'object' || Array.isArray(values)) return [];
+    if (startedBy !== 'call' || !isStruct(values)) return [];
     const keys = Object.keys(values);
     if (!keys.length || keys.includes(node.id)) return [];
     return [{

@@ -2,13 +2,12 @@ import { ACCENT, LINE, ON_ACCENT, TEXT } from './theme';
 
 /**
  * An on/off switch. Say what it switches in `label` (read aloud, and its
- * tooltip when `title` is not given): a switch has no words of its own.
+ * tooltip): a switch has no words of its own.
  */
-export default function Toggle({ on, onChange, label, title }: {
+export default function Toggle({ on, onChange, label }: {
   on: boolean;
   onChange: (on: boolean) => void;
   label: string;
-  title?: string;
 }) {
   return (
     <button
@@ -16,7 +15,7 @@ export default function Toggle({ on, onChange, label, title }: {
       role="switch"
       aria-checked={on}
       aria-label={label}
-      title={title ?? label}
+      title={label}
       onClick={() => onChange(!on)}
       className="relative shrink-0 rounded-full"
       style={{ width: 34, height: 20, background: on ? ACCENT : LINE }}

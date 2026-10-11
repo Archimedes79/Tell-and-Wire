@@ -9,11 +9,12 @@
 // ends, and exiting in the middle of that aborts Node on Windows
 // (`UV_HANDLE_CLOSING`) -- a successful run reported as a crash. The process
 // ends by itself once they are closed.
+import { message } from '../deployment/host/http.ts';
 import { main } from './cli.ts';
 
 main(process.argv.slice(2))
   .then((code) => { process.exitCode = code; })
   .catch((error: unknown) => {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.stderr.write(`${message(error)}\n`);
     process.exitCode = 1;
   });

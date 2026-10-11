@@ -10,8 +10,6 @@ export class ButtonWidgetGuiBuilder extends WidgetGuiBuilder {
   override readonly firesHint =
     'Pressing it starts a run at that start point: what it is wired to runs, and what follows from it — not the whole graph.';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Button';
 
   paletteEntries() {

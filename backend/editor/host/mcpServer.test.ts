@@ -7,7 +7,9 @@ import { join, resolve } from 'node:path';
 import type { AiService, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { mcpToolService } from '../../deployment/runtime/ai/mcp.ts';
 import { forgetSeen } from '../../deployment/project/folder.ts';
-import { createGraphTools, serveStdio, type GraphTools, type Problem } from './mcpServer.ts';
+import type { Problem } from '../../../graph/wiring.ts';
+import { createGraphTools, type GraphTools } from './mcp/tools.ts';
+import { serveStdio } from './mcp/transport.ts';
 
 const MAIN = resolve(__dirname, '..', '..', 'cli', 'main.ts');
 

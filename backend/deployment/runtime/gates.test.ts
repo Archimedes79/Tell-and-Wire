@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import type { Graph, GraphNode } from '../../../graph/graph.ts';
+import type { Graph } from '../../../graph/graph.ts';
 import { executeGraph } from './executor.ts';
-import { edge, graphOf, quietRuntime } from './test/fakes.ts';
+import { edge, graphOf, node, quietRuntime } from './test/fakes.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
 import { Latch } from './latch.ts';
@@ -13,21 +13,6 @@ import { Latch } from './latch.ts';
  * The bodies run for real (in this process, not the sandbox): what is tested
  * is which nodes run and what reaches them, and a router has to compute.
  */
-
-/** A port, by name; `name:field` takes that one value of what arrives (`Port.field`). */
-function port(spec: string, kind: 'input' | 'output') {
-  const [name, field] = spec.split(':');
-  return { id: name, name, kind, data_type: 'any' as const, multi: false, required: false, description: '', ...(field ? { field } : {}) };
-}
-
-function node(id: string, type = 'code', config: Record<string, unknown> = {}, ports: { in?: string[]; out?: string[] } = {}): GraphNode {
-  return {
-    id, node_type: type as GraphNode['node_type'], label: id, description: '', position: { x: 0, y: 0 },
-    config: type === 'code' ? { code: 'function run(inputs) { return inputs; }', ...config } : config,
-    inputs: (ports.in ?? []).map((name) => port(name, 'input')),
-    outputs: (ports.out ?? []).map((name) => port(name, 'output')),
-  };
-}
 
 /** A start point the gui starts, holding what the gui sent it last. */
 const start = (id: string, values: Record<string, unknown> = {}) => node(id, 'start', { started_by: 'gui', values });

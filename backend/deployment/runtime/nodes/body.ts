@@ -9,20 +9,20 @@
 // - `node` holds `node.llm(...)`, a question put to the process that holds
 //   the graph. Every body may ask, and its process is handed no key: not in
 //   its environment, and not in the settings file, which it may not read
-//   (`core/node.ts`).
-// - It runs in a process of its own (`core/node.ts`: no child processes, no
-//   addons, no workers; it reads the working directory and writes the temp
+//   (`../services.ts`).
+// - It runs in a process of its own (`../services.ts`: no child processes, no
+//   addons, no workers; it reads the working directory and writes its own
 //   folder only, and ends after `TW_BODY_TIMEOUT_MS`), and what it returns is
-//   the element's output.
+//   the node's output.
 //
-// The element decides *when* its body runs and what happens to a failure; this
+// The runner decides *when* its body runs and what happens to a failure; this
 // is the only place that decides *how*.
 
 import type { Runtime } from '../../../../graph/nodes/Runtime.ts';
 import type { AskSettings } from '../../../../graph/nodes/ai/AiNodeDefinition.ts';
 import { PLAIN_ASK, llmCall } from './ai/ask.ts';
 
-export interface BodyGiven {
+interface BodyGiven {
   /** What `node.llm` falls back on for whatever a call does not say. The one AI setting, if nothing is given. */
   ask?: AskSettings;
   /**

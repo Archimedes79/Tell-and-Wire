@@ -85,7 +85,7 @@ export default function App() {
 
   // What the header says of saving and opening, kept with the graph it was
   // said of: another one opened or started (`document` moved on) leaves it
-  // unsaid. "✅ Saved to …\capitals-table" stood over three graphs opened after it.
+  // unsaid.
   // A *problem* stays said while the graph is unsaved -- which a save that failed leaves it.
   const [said, setSaid] = useState({ text: '', problem: false, document: 0 });
   const say = useCallback((text: string, problem = false) => setSaid({ text, problem, document: useGraphStore.getState().document }), []);

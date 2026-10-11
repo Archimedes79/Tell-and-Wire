@@ -41,8 +41,7 @@ function hearsEscape(panel: Element | null, page: Pick<Document, 'querySelectorA
  * a fix to focus handling reaches every dialog in the app at the same time.
  *
  * It is capped at 90vh and scrolls its body: a dialog taller than the window
- * hides its own footer, so Save and Done cannot be reached and the ✕ has gone
- * off the top -- the settings dialog was 1109 pixels in a 720 pixel window.
+ * would hide its own footer, so Save and Done could not be reached.
  */
 export default function Modal({
   title,

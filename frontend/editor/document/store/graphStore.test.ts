@@ -69,10 +69,10 @@ describe('graphStore.loadGraph', () => {
   });
 
   /**
-   * A graph written by hand, by the MCP server or by a model leaves keys out, and the
-   * a run reads each missing one some way. Opening such a graph and saving it must not
-   * change what it does: the editor used to fill a missing key with what a *new* node
-   * starts with. (`elements/savedConfig.test.ts` holds a saved node to the full one; this
+   * A graph written by hand, by the MCP server or by a model leaves keys out, and a
+   * run reads each missing one some way. Opening such a graph and saving it must not
+   * change what it does: a missing key is not filled with what a *new* node starts
+   * with. (`elements/savedConfig.test.ts` holds a saved node to the full one; this
    * holds a loaded node to the file it was loaded from.)
    */
   it('leaves a key the file leaves out as it was: every node type, opened and saved, runs as the file said', () => {

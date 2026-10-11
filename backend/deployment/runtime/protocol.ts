@@ -47,7 +47,7 @@ import type { ExecutionResult, Graph, NodeResult } from '../../../graph/graph.ts
 import type { ProgressEvent } from '../../../graph/nodes/Runtime.ts';
 import type { Trigger } from '../../../graph/triggers.ts';
 import type { Held } from './latch.ts';
-import type { ExampleRun } from './examples.ts';
+import type { ExampleRun, Tested } from './examples.ts';
 
 /** The protocol's version: a core that speaks another is refused at `hello`. */
 export const PROTOCOL = 1;
@@ -65,7 +65,7 @@ export interface CoreHello {
 }
 
 /** A round of a graph. */
-export interface RoundAsked {
+interface RoundAsked {
   /**
    * The graph as the round starts from it: what nodes keep put back into
    * them, what the round was sent put into the start points it reaches
@@ -90,34 +90,28 @@ export interface RoundEnded {
 }
 
 /** One node by itself: on *inputs*, or -- without -- on what the nodes feeding it produce. */
-export interface NodeAsked {
+interface NodeAsked {
   graph: Graph;
   node: string;
   inputs?: Record<string, unknown>;
 }
 
 /** One node on the example its definitions hold, held to them. */
-export interface ExampleAsked {
+interface ExampleAsked {
   graph: Graph;
   node: string;
   offline?: boolean;
 }
 
 /** Every node's example, at every depth -- or only the nodes with the id *only*. */
-export interface TestAsked {
+interface TestAsked {
   graph: Graph;
   offline?: boolean;
   only?: string;
 }
 
-/** What `test` replies: each node it tried, with the way down to it (`outer ▸ `). */
-export interface Tested {
-  tested: number;
-  results: { inside: string; nodeId: string; result: ExampleRun }[];
-}
-
 /** What would arrive at one node, were the graph run up to it now. */
-export interface ArrivingAsked {
+interface ArrivingAsked {
   graph: Graph;
   node: string;
 }

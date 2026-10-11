@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { useShallow } from 'zustand/react/shallow';
 import type { Node, Edge } from 'reactflow';
 import type { Graph, GraphNode, GraphMetadata, ExecutionResult, GuiWidget, NodeType } from '../graph';
 import type { RFNodeData } from './nodeData';
@@ -466,6 +467,14 @@ export const useGraphStore = create<GraphStore>()(
  */
 export function goingRound(): RoundSnapshot | null {
   return goingIn(useGraphStore.getState().heldElsewhere);
+}
+
+/**
+ * The nodes of the open graph, compared one by one: a fresh list on every change of the store would
+ * draw its reader anew on every tick of a run and every frame of a drag, when no node had changed.
+ */
+export function useGraphNodes(): GraphNode[] {
+  return useGraphStore(useShallow((s) => s.rfNodes.map((item) => item.data.graphNode)));
 }
 
 /** `goingRound`, drawn anew as it starts, goes on and ends. */

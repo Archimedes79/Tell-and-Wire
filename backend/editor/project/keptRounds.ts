@@ -25,12 +25,13 @@ import { designs } from '../../../graph/editor/nodes/registry.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { eventOf, outputsOf } from '../../../graph/interface.ts';
 import { folderName } from '../../../graph/files/names.ts';
+import { message } from '../../deployment/host/http.ts';
 
 /** Where a project keeps its rounds: `tests/<name>.json`, beside `graph-flow.json`. */
 export const TESTS_DIR = 'tests';
 
 /** A round, kept: what began it, what was handed in, and what it handed back. */
-export interface KeptRound {
+interface KeptRound {
   /** The start point it began at, by name -- none: a round of the whole graph. */
   event: string | null;
   /** Who sent what began it: a block of the gui by its id, or one of `SENDERS`. Said, for whoever reads the file. */
@@ -48,7 +49,7 @@ export interface KeptRound {
 }
 
 /** How a kept round did when it was run again. */
-export interface ReplayedRound {
+interface ReplayedRound {
   /** `pass`: it handed back what it did; `fail`: it handed back otherwise; `error`: it could not be run. */
   status: 'pass' | 'fail' | 'error';
   details: string[];
@@ -109,7 +110,7 @@ export async function replayRound(graph: Graph, kept: KeptRound, options: { core
     }
     ({ result } = await options.core.round({ graph: start, trigger, given: kept.given, offline: true }));
   } catch (error) {
-    return { status: 'error', details: [error instanceof Error ? error.message : String(error)], outputs: {} };
+    return { status: 'error', details: [message(error)], outputs: {} };
   }
   const outputs = outputsOf(graph, result, options.registry);
   if (result.status === 'error' || result.status === 'cancelled') {
@@ -143,13 +144,13 @@ export async function readKeptRounds(folder: string): Promise<{ name: string; ro
       }
       return { name, round: { ...read, event: read.event ?? null } };
     } catch (error) {
-      return { name, round: null, problem: `It cannot be read: ${error instanceof Error ? error.message : String(error)}` };
+      return { name, round: null, problem: `It cannot be read: ${message(error)}` };
     }
   }));
 }
 
 /** How one kept round did when it was run again, by its name. */
-export interface ReplayedKept {
+interface ReplayedKept {
   name: string;
   status: ReplayedRound['status'];
   details: string[];

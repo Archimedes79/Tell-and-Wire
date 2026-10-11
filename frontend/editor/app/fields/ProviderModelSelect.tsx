@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import type { AIProvider } from '../../document/graph';
 import { call, type ProviderStatus } from '../../api/client';
-import { LINE, MUTED, SUNKEN, TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
 import { lent } from '../../../../graph/nodes/Runtime.ts';
 
 // The provider dropdown's labels, once.
@@ -19,13 +19,10 @@ export const AI_PROVIDER_LABELS: Record<AIProvider, string> = {
 };
 
 /**
- * What each provider costs to use, shown in the picker.
- *
- * The tool is usable for nothing -- a local model, or a hosted free tier -- and
- * that was invisible: the list read as seven equivalent choices, so the one
- * question a newcomer actually has ("which of these will bill me?") had no
- * answer on screen. Deliberately no numbers: free-tier limits change, and a
- * stale figure in a dropdown is worse than none.
+ * What each provider costs to use, shown in the picker: the tool is usable for
+ * nothing -- a local model, or a hosted free tier --, and the one question a
+ * newcomer has is "which of these will bill me?". Deliberately no numbers:
+ * free-tier limits change, and a stale figure in a dropdown is worse than none.
  */
 const AI_PROVIDER_COST: Record<AIProvider, string> = {
   default: '',
@@ -140,10 +137,9 @@ export default function ProviderModelSelect({
   const { servedModels, placeholder } = modelHints(provider, status, { lendsFromSetting });
 
   const boxClass = 'w-full rounded-lg px-3 py-2 text-sm';
-  const style = { background: SUNKEN, color: TEXT, border: `1px solid ${LINE}` };
 
   const providerSelect = (
-    <select id={`${id}-provider`} className={boxClass} style={style} value={provider} onChange={(e) => onProviderChange(e.target.value as AIProvider)}>
+    <select id={`${id}-provider`} className={boxClass} style={FIELD} value={provider} onChange={(e) => onProviderChange(e.target.value as AIProvider)}>
       {options.map(([value, label]) => (
         <option key={value} value={value}>{label}</option>
       ))}
@@ -154,7 +150,7 @@ export default function ProviderModelSelect({
       <input
         id={`${id}-model`}
         className={boxClass}
-        style={style}
+        style={FIELD}
         value={model}
         onChange={(e) => onModelChange(e.target.value)}
         placeholder={placeholder}

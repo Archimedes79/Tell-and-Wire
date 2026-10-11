@@ -15,7 +15,7 @@ describe('the graph prompt', () => {
     const byId = new Map(graph.nodes.map((n) => [n.id, n]));
     for (const edge of graph.edges) {
       const source = byId.get(edge.source_node_id)!;
-      // A derived-port element ignores what the document declares, so its real ports are the ones to check against.
+      // A kind with derived ports ignores what the document declares, so its real ports are the ones to check against.
       const derived = registry.node(source.node_type)!.derivedPorts(source, registry);
       const emitted = (derived ?? { outputs: source.outputs }).outputs.map((p) => p.id);
       expect(emitted, `${source.id} must really emit ${edge.source_port_id}`).toContain(edge.source_port_id);

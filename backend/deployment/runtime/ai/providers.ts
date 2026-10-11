@@ -85,16 +85,16 @@ export const CREDENTIALS: Record<string, { key: string; env: string }> = {
 export const SECRET_NAME = /KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH/i;
 
 /**
- * *env* as a process this one starts is handed it -- a code body, a tool
+ * This process's environment, for a process it starts -- a code body, a tool
  * server -- without a provider's credential (`CREDENTIALS`) or anything else
  * named like one. This process asks models, so its environment may hold their
  * keys, and what it starts would read them there: a body, one a model wrote or
  * one in a folder somebody handed over, which is what `node.llm` exists to
  * spare it. The rest stays: Node needs PATH, SYSTEMROOT and TEMP to start at all.
  */
-export function withoutKeys(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+export function withoutKeys(): NodeJS.ProcessEnv {
   const credentials = new Set(Object.values(CREDENTIALS).map((credential) => credential.env.toUpperCase()));
-  return Object.fromEntries(Object.entries(env).filter(([name]) => !credentials.has(name.toUpperCase()) && !SECRET_NAME.test(name)));
+  return Object.fromEntries(Object.entries(process.env).filter(([name]) => !credentials.has(name.toUpperCase()) && !SECRET_NAME.test(name)));
 }
 
 /** A provider that speaks the OpenAI chat-completions API. Its credential slot, if any, is in `CREDENTIALS`. */
@@ -155,7 +155,7 @@ export class EmptyCompletionError extends Error {
  * Its own type because it must not be retried: the same request with the same
  * budget ends the same way, only slower.
  */
-export class OutOfBudgetError extends Error {
+class OutOfBudgetError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'OutOfBudgetError';
@@ -163,7 +163,7 @@ export class OutOfBudgetError extends Error {
 }
 
 /** The run was stopped by the person running it. Never retried: they meant it. */
-export class StoppedError extends Error {
+class StoppedError extends Error {
   constructor() {
     super('Stopped.');
     this.name = 'StoppedError';
@@ -188,12 +188,12 @@ export class TimedOutError extends Error {
 /** Worth another attempt: rate limits, and the 5xx family that means "not you". */
 const RETRYABLE_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 
-export class HttpError extends Error {
+class HttpError extends Error {
   // A plain field, not a parameter property. Node runs this code by stripping
   // types, and a `readonly` in a constructor's parameter list is one of the few
-  // things it cannot strip — it would have to emit an assignment. A bundle must
-  // need no build step, so graph/ stays inside what stripping allows;
-  // `strippable.test.ts` holds all of graph/ and backend/ to that.
+  // things it cannot strip — it would have to emit an assignment. A package must
+  // need no build step, so this stays inside what stripping allows;
+  // `strippable.test.ts` holds all of graph/, gui/ and backend/ to that.
   readonly status: number;
 
   constructor(status: number, message: string) {

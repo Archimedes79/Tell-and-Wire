@@ -17,7 +17,7 @@ export type { TextChange, ExampleRun };
 // ---------------------------------------------------------------------------
 
 /** The graph the editor is editing, handed to the server's session (`Handover`). */
-export interface HeldGraph {
+interface HeldGraph {
   graph: Graph;
   /** Where it is kept, if anywhere: its session keeps its state beside it. */
   path?: string | null;
@@ -29,12 +29,12 @@ export interface HeldGraph {
 export interface Target { provider: string; model: string }
 
 /** Lets the page watch a generation's transcript while it runs. */
-export interface Watched { progress_id?: string }
+interface Watched { progress_id?: string }
 
 /**
  * One node's writing to do, as its ✨ asks it: its input definition
  * (input.js), its output definition (output.js), or its body -- code, an ai
- * node's prompt, a data node's data. The node's element decides the rest.
+ * node's prompt, a data node's data. The node's design decides the rest.
  */
 export interface GenerateRequest {
   /**
@@ -219,9 +219,6 @@ export interface GraphFile {
 
 /** One request to a model, as it happened (`graph/editor/history.ts`, which writes it into history.md). */
 export type { AICall };
-
-/** A failed call's body, as the editor's routes make it: a failed generation carries its transcript too; a save refused because a graph is there already says so (`taken`) and, sent again with `replace`, replaces that graph. */
-export interface EditorFailure { detail: string; calls?: AICall[]; taken?: boolean }
 
 // ---------------------------------------------------------------------------
 // The routes

@@ -6,8 +6,6 @@ import { FolderOpen } from 'lucide-react';
 export class InputPickerWidgetGuiBuilder extends WidgetGuiBuilder {
   readonly widgetKind = 'input_picker';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'File or folder';
 
   paletteEntries() {
@@ -35,11 +33,7 @@ export class InputPickerWidgetGuiBuilder extends WidgetGuiBuilder {
     return !String(widget.value ?? '').trim();
   }
 
-  /**
-   * Room for its caption and its path box beside 📂: at 6 wide the designer at
-   * 1024 pixels -- cells of 13 pixels there -- drew the path box 18 pixels
-   * wide. One row high: a row is as tall as what is in it needs.
-   */
+  /** Room for its caption and its path box beside 📂. One row high: a row is as tall as what is in it needs. */
   protected override defaultSpan() {
     return { w: 8, h: 1 };
   }

@@ -5,8 +5,6 @@ import { Table } from 'lucide-react';
 export class TableWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   readonly widgetKind = 'table';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Table';
 
   paletteEntries() {

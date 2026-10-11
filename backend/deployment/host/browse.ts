@@ -50,7 +50,8 @@ async function filesystemRoots(): Promise<string[]> {
  * in -- unless that is the program's own (it holds `backend/cli/main.ts` or a
  * launcher), where nothing a person works on is -- then their home.
  */
-export async function startFolder(started = process.cwd()): Promise<string> {
+export async function startFolder(): Promise<string> {
+  const started = process.cwd();
   const program = await Promise.all(['backend/cli/main.ts', 'run.cmd', 'run.sh'].map((file) => exists(join(started, file))));
   return program.includes(true) ? homedir() : started;
 }

@@ -22,7 +22,7 @@ export interface AskSettings {
   toolServers: string[];
 }
 
-export interface AiConfig extends AskSettings {
+interface AiConfig extends AskSettings {
   /**
    * The output the answer goes out on as it came, as text: "output" without
    * an output definition, its one output where it names one that holds text.

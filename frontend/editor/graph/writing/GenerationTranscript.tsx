@@ -35,11 +35,9 @@ export function GenerationReport(
 /**
  * What the ✨ button actually sent, and what came back.
  *
- * Generation was a black box: press it, wait, receive text or an error. When
- * the error is "the model may still be loading, or the request exceeded its
- * context window", there is no way to tell which -- and no way to see that the
- * prompt had grown to forty thousand characters because an example file was
- * attached three nodes ago.
+ * Without it generation is a black box: press it, wait, receive text or an
+ * error -- and no way to see that the prompt had grown to forty thousand
+ * characters because an example file was attached three nodes ago.
  *
  * Collapsed to one line by default, because the answer is what you wanted and
  * the transcript is what you want *when the answer is wrong*. Open, it is the

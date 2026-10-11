@@ -9,9 +9,9 @@
 // carries Node and no npm, so a server that were left to install itself
 // could not.
 //
-// Tests are left out; nothing else is. The editor's own server routes stay in,
-// because this package *is* the editor, unlike a deploy bundle, which is one
-// graph and drops them.
+// Tests are left out; nothing else is. The `editor` folders stay in, because
+// this package *is* the editor, unlike a deploy bundle, which is one graph and
+// drops them.
 
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -92,17 +92,14 @@ async function toolServers() {
 // The same launchers every deploy bundle gets (backend/editor/project/deploy/launchers.ts):
 // they check for Node before it is needed, start from their own folder, and
 // keep a Windows window open long enough to read a failure. No port is passed
-// unless PORT is set, so the server takes the first free one from 8000 --
-// the version before always passed 8000, and died on a machine that already
-// had an editor running there.
+// unless PORT is set, so the server takes the first free one from 8000.
 const LAUNCHER = { command: 'backend/cli/main.ts --editor frontend/dist', portFromEnv: true };
 
 /**
  * What this zip was built from, in a file beside the README.
  *
- * A downloaded folder otherwise has no way to say how old it is, and "is this
- * the current code?" was a question nobody could answer from the outside. CI
- * names the build (a tag, or `latest`); a local build asks git.
+ * Without it a downloaded folder cannot say how old it is. CI names the build
+ * (a tag, or `latest`); a local build asks git.
  */
 function version() {
   const git = (...args) => {

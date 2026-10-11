@@ -4,7 +4,7 @@ import SaveButton from '../SaveButton';
 import { fileName, saveFile } from '../download';
 import { asText } from '../../../../../gui/widgets/text_io/text.ts';
 import { textIoRole } from '../../../../../gui/widgets/text_io/role.ts';
-import { DIMMER, FIELD, LINE, SUNKEN, TEXT } from '../../kit/ui/theme';
+import { DIMMER, FIELD, LINE } from '../../kit/ui/theme';
 import { BOX_TEXT } from '../../kit/layout';
 
 /**
@@ -56,7 +56,8 @@ function useFollow(text: string) {
   return { ref, onScroll };
 }
 
-/** Runtime text_io widget.
+/**
+ * A text box.
  * - "input": text area the user types in (drives graph via output port)
  * - "output": read-only display of incoming value
  * - "both": shows incoming value above, user text area below
@@ -136,7 +137,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
           ref={follow.ref}
           onScroll={follow.onScroll}
           className="absolute inset-0 rounded-lg px-2 py-1.5 overflow-auto whitespace-pre-wrap"
-          style={{ ...BOX_TEXT, background: SUNKEN, color: TEXT, border: `1px solid ${LINE}` }}
+          style={{ ...BOX_TEXT, ...FIELD }}
         >
           {incomingText || <span style={{ color: DIMMER }}>Incoming value appears here…</span>}
         </div>

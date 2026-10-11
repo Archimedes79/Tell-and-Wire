@@ -5,7 +5,7 @@
 // line -- is theirs and is not held to this.
 //
 // Only the spelling here, so that `check` can say it and a browser can run it;
-// links and the real folder are `core/confine.ts`'s.
+// links and the real folder are `backend/deployment/runtime/confine.ts`'s.
 
 /** Why *path*, as a graph file writes it, is refused -- or null: it is relative and stays below its folder. */
 export function ownPathProblem(path: string): string | null {

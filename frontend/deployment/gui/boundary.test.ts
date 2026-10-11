@@ -5,12 +5,9 @@ import { describe, it, expect } from 'vitest';
  *
  * A deployed tool is built from `runtime.html` → `deployment/gui/main.tsx`.
  * Whatever that entry point can reach, transitively, is in the bundle a
- * recipient downloads; whatever it cannot reach is not there at all. That
- * distinction is why the editing affordances moved out of the gui component
- * instead of being switched off with a flag: a flag that is false at run time
- * leaves the code in the bundle, and the deployed tool really was shipping the
- * palette, the drag grip and the properties panel inside a chunk it loaded and
- * never used.
+ * recipient downloads; whatever it cannot reach is not there at all. That is
+ * why the editing affordances are not switched off with a flag: a flag that is
+ * false at run time leaves the code in the bundle.
  *
  * So the rule is checked where it is actually decided -- in the imports,
  * rather than in a naming convention or a review habit. The walk starts from

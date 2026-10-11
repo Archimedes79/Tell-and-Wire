@@ -1,9 +1,9 @@
-// The server: a built page, and the routes of `api.ts`.
+// The server: the built gui or editor, and the routes of `api.ts`.
 //
 // One server for every use. Every host answers `API` -- the graph it holds, a way
 // to run it, the file picker -- and is composed with what else it has: a gui
 // (its hooks into the session, and the route that tells what it was designed
-// as), the editor (its page, and the routes only it has). The command line
+// as), the editor (its built app, and the routes only it has). The command line
 // does the composing (`backend/cli`); this file imports neither, so a package
 // without the editor cannot answer an editor route even by mistake.
 //
@@ -35,7 +35,7 @@ import type { GuiHooks, GuiPart } from '../gui/hooks.ts';
 import { Lifecycle } from './lifecycle.ts';
 import { frontendOf, loadGraph, projectFolderOf, stateFileOf } from '../project/folder.ts';
 
-export interface ServeOptions {
+interface ServeOptions {
   /**
    * The graph this server ships, for a deployed tool.
    *
@@ -165,7 +165,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
     // A gui of the project's own, written by hand against the runtime API, wins over the built one.
     if (frontend) return servePage(response, path, frontend, 'index.html');
     if (options.guiDir) return servePage(response, path, options.guiDir, 'runtime.html');
-    return sendJson(response, 404, { detail: 'No page.' });
+    return sendJson(response, 404, { detail: 'No gui.' });
   }
 
   const server = createServer((request, response) => {

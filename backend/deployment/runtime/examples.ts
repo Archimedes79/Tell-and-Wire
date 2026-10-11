@@ -94,8 +94,11 @@ export function everyGraphIn(graph: Graph, registry: Kinds, inside = ''): { grap
   ];
 }
 
-/** One node's example run, and the node, with the way down to it. */
-interface TestedExample { inside: string; nodeId: string; result: ExampleRun }
+/** What `testGraph` finds: each node it tried, with the way down to it (`outer ▸ `). */
+export interface Tested {
+  tested: number;
+  results: { inside: string; nodeId: string; result: ExampleRun }[];
+}
 
 /**
  * Run the example of every code and ai node -- or only of the nodes with the
@@ -108,8 +111,8 @@ interface TestedExample { inside: string; nodeId: string; result: ExampleRun }
 export async function testGraph(
   graph: Graph,
   options: { runtime: () => Runtime; registry: Kinds; offline?: boolean; only?: string; signal?: AbortSignal },
-): Promise<{ tested: number; results: TestedExample[] }> {
-  const results: TestedExample[] = [];
+): Promise<Tested> {
+  const results: Tested['results'] = [];
   for (const { graph: level, inside } of everyGraphIn(graph, options.registry)) {
     const nodes = level.nodes.filter((node) => (options.only
       ? node.id === options.only

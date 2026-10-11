@@ -22,8 +22,7 @@ import { DIMMER, LINE, SURFACE } from '../../deployment/gui/kit/ui/theme';
  * behind them.
  *
  * What most guis are made of is on top; what a few guis need is under "More",
- * folded. Seventeen entries in a column was a list to read before starting,
- * and seven of them were ways to draw a line or leave a gap.
+ * folded.
  */
 export interface PaletteEntry extends KindEntry {
   kind: WidgetKind;

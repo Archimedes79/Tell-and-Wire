@@ -3,7 +3,7 @@ import type { GraphNode } from '../../graph.ts';
 import { port } from '../port.ts';
 import { START_PORT } from '../../triggers.ts';
 
-export interface StartConfig {
+interface StartConfig {
   /**
    * Who starts it: the gui -- a block's event, which makes the graph one that
    * needs a gui --, a call from outside -- a script, a model over MCP, the

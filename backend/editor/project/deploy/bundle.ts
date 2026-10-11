@@ -3,13 +3,11 @@
 // A bundle is the tool as its project folder -- graph-flow.json, graph-nodes.json, its gui
 // in gui.json, a folder per node with writing, as it was built -- the code that runs it, and one
 // command. One format: what a recipient opens is what the editor opens. Nothing is
-// generated: the files of graph/ and backend/ are copied verbatim, so what a recipient runs is
-// what was tested here, byte for byte. Code generation would produce a second
-// implementation that is right on the day it is written and drifts from that
-// afternoon on — the reason the older bundles vendor the code that runs them too.
+// generated: the code is copied verbatim, so what a recipient runs is what was tested here, byte
+// for byte.
 //
 // What a recipient needs installed: Node. That is the whole list -- every
-// authored body is JavaScript, so the interpreter that runs the graph runs
+// written body is JavaScript, so the interpreter that runs the graph runs
 // them too.
 
 import { chmod, copyFile, cp, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
@@ -28,7 +26,7 @@ import { SETTINGS_FILENAME, candidatePaths } from '../../../deployment/runtime/a
 import { WEB_DIR, installFolder } from '../../../deployment/project/layout.ts';
 import { NODE_MAJOR, runCmd, runSh, zipMode } from './launchers.ts';
 
-/** The checkout's root: a bundle copies `graph/`, `gui/` and `backend/` from it, at the same paths. This file sits in `backend/editor/project/deploy/`. */
+/** The checkout's root: a bundle copies the folders of `CARRIED` from it, at the same paths. This file sits in `backend/editor/project/deploy/`. */
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 /**
@@ -37,14 +35,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
  * Two things, and both are about the recipient rather than the graph: every
  * body is JavaScript, so no interpreter and no packages travel with it.
  */
-export interface BundleNeeds {
+interface BundleNeeds {
   /** The graph has an interface, so a bundle without a gui is only half of it. */
   interface: boolean;
   /** It asks a model, so the recipient needs a provider configured. */
   ai: boolean;
 }
 
-export function bundleNeeds(graph: Graph, top = true): BundleNeeds {
+function bundleNeeds(graph: Graph, top = true): BundleNeeds {
   // A gui with blocks is the gui a person uses the tool through; a start
   // point the gui starts says the same of a graph whose gui is still to come.
   const needs: BundleNeeds = { interface: guiBlocks(graph).length > 0, ai: false };
@@ -171,7 +169,7 @@ async function dataFiles(graph: Graph, from: string): Promise<Carried[]> {
 /**
  * *graph* told where the files it starts on are in the bundle: every setting
  * that names one it carried somewhere else names the new place. By value, not
- * by field -- which setting holds a path is each element's business, and a
+ * by field -- which setting holds a path is each node kind's business, and a
  * path is the whole of the setting that holds it.
  */
 function moved(graph: Graph, carried: Carried[]): Graph {
@@ -213,7 +211,7 @@ const CARRIED = ['graph', 'gui', 'backend/cli', 'backend/deployment'];
 const LEFT_BEHIND = new Set(['editor', 'test', 'node_modules']);
 
 /** The file that says what a package is and lists what is in it. */
-export const MANIFEST = 'MANIFEST.json';
+const MANIFEST = 'MANIFEST.json';
 
 /** Every source file of *dir* a package carries, so the copy is complete without a list per file. */
 async function sourceFiles(dir: string): Promise<string[]> {
@@ -233,7 +231,7 @@ async function sourceFiles(dir: string): Promise<string[]> {
  * The built gui a deployed tool serves, and only the files it references.
  *
  * Parsed out of `runtime.html` rather than listed: the editor's own chunks live
- * in the same folder, and a bundle that copied everything would ship the graph
+ * in the same folder, and a bundle that copied everything would ship the
  * editor to someone who was handed a finished tool.
  */
 async function guiFiles(guiDir: string): Promise<string[]> {
@@ -278,6 +276,12 @@ export async function writeBundle(
     await writeFile(path, content, 'utf8');
     written.push(relativePath);
   };
+  const copy = async (from: string, relativePath: string): Promise<void> => {
+    const path = resolve(target, relativePath);
+    await mkdir(dirname(path), { recursive: true });
+    await copyFile(from, path);
+    written.push(relativePath);
+  };
 
   // The project folder, first, into the empty bundle -- what runs, not how each
   // node was written (`withoutAuthoring`), and the files it starts on where
@@ -286,16 +290,11 @@ export async function writeBundle(
   written.push(...await filesIn(target));
 
   for (const file of (await Promise.all(CARRIED.map((folder) => sourceFiles(join(ROOT, folder))))).flat()) {
-    const relativePath = relative(ROOT, file).replace(/\\/g, '/');
-    const path = resolve(target, relativePath);
-    await mkdir(dirname(path), { recursive: true });
-    await copyFile(file, path);
-    written.push(relativePath);
+    await copy(file, relative(ROOT, file).replace(/\\/g, '/'));
   }
   // And the terms it comes under: whoever is handed any part of the code is
   // handed those with it (LICENSE, "Notices").
-  await copyFile(join(installFolder(), 'LICENSE'), resolve(target, 'LICENSE'));
-  written.push('LICENSE');
+  await copy(join(installFolder(), 'LICENSE'), 'LICENSE');
 
   // The gui, if this graph has one and a build is at hand. A bundle without
   // it still runs -- once, on the terminal, the gui's start points sent what
@@ -303,11 +302,7 @@ export async function writeBundle(
   let servesGui = false;
   if (needs.interface && options.guiDir) {
     for (const file of await guiFiles(options.guiDir)) {
-      const relativePath = join(WEB_DIR, file).replace(/\\/g, '/');
-      const path = resolve(target, relativePath);
-      await mkdir(dirname(path), { recursive: true });
-      await copyFile(join(options.guiDir, file), path);
-      written.push(relativePath);
+      await copy(join(options.guiDir, file), join(WEB_DIR, file).replace(/\\/g, '/'));
       servesGui = true;
     }
   }
@@ -346,7 +341,7 @@ export async function writeBundle(
   return written;
 }
 
-function readme(name: string, needs: BundleNeeds, servesGui = false, data: Carried[] = []): string {
+function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carried[]): string {
   const lines = [
     `# ${name}`,
     '',
@@ -431,11 +426,11 @@ function readme(name: string, needs: BundleNeeds, servesGui = false, data: Carri
     '', '## Licence', '',
     ...(servesGui
       ? [
-        'The code in graph/ and backend/ and the gui in web/ come under the terms in LICENSE,',
+        'The code in graph/, gui/ and backend/ and the gui in web/ come under the terms in LICENSE,',
         'except the packages the gui is built from: web/licenses.txt names each,',
         'with its own licence.',
       ]
-      : ['The code in graph/ and backend/ comes under the terms in LICENSE.']),
+      : ['The code in graph/, gui/ and backend/ comes under the terms in LICENSE.']),
     'The tool itself -- graph-flow.json, graph-nodes.json, gui.json and nodes/ -- belongs to whoever built it.',
   );
 

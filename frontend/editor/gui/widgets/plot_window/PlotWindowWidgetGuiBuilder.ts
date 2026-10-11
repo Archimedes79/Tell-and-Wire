@@ -5,8 +5,6 @@ import { BarChart3 } from 'lucide-react';
 export class PlotWindowWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   readonly widgetKind = 'plot_window';
 
-  // ── Build time ────────────────────────────────────────────────────────────
-
   readonly label = 'Chart';
 
   paletteEntries() {

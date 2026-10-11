@@ -5,7 +5,7 @@ import { sliderRange } from '../../../../../gui/widgets/slider/range.ts';
 /** The keys that move a range input. Tabbing onto one is not using it. */
 const MOVES = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
 
-/** Runtime slider widget: a range input with its current number shown beside it. */
+/** A slider: a range input with its current number shown beside it. */
 export default function SliderWidgetView({ widget, value, onChange, onTrigger, fires, busy, controlId }: WidgetViewProps) {
   // The range and the number are read by the definition's rule, the one a run
   // emits by: a value left from before the range was narrowed would otherwise

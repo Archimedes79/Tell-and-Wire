@@ -48,6 +48,9 @@ export interface Port {
 /** An element's stored settings. Its own element narrows this; nothing else may. */
 export type RawConfig = Record<string, unknown>;
 
+/** Whether *value* is an object with keys: not empty-handed (`null`), not a list. */
+export const isStruct = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+
 export interface GraphNode {
   id: string;
   node_type: NodeType;
@@ -82,7 +85,7 @@ export interface GraphMetadata {
  * its data goes, which start point it fires, which end point it shows
  * (`gui/gui.ts`) -- and nothing is wired to it.
  */
-export interface Gui {
+interface Gui {
   blocks: RawConfig[];
 }
 
@@ -94,11 +97,9 @@ export interface Graph {
   gui?: Gui;
 }
 
-export type NodeStatus = 'success' | 'error' | 'partial' | 'skipped';
-
 export interface NodeResult {
   node_id: string;
-  status: NodeStatus;
+  status: 'success' | 'error' | 'partial' | 'skipped';
   /** What came off the wires: paths rather than file contents, raw rather than reshaped. */
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
@@ -109,7 +110,7 @@ export interface NodeResult {
    * reached it -- and `outputs` is what it was left holding from an earlier one.
    */
   held?: boolean;
-  /** It ran only as context, nothing it depends on had changed, and `outputs` is what it made last time (`execution/reuse.ts`). */
+  /** It ran only as context, nothing it depends on had changed, and `outputs` is what it made last time (`backend/deployment/runtime/reuse.ts`). */
   reused?: boolean;
 }
 
@@ -145,7 +146,7 @@ export function mergeResults(previous: ExecutionResult, fresh: ExecutionResult):
  * it. A fresh object each call, so no two graphs share one.
  *
  * Which AI a graph calls is not among them: that is the machine's one AI
- * setting (`ai/settings.ts`), or a node's own pin.
+ * setting (`backend/deployment/runtime/ai/settings.ts`), or a node's own pin.
  */
 export function defaultMetadata(): GraphMetadata {
   return {

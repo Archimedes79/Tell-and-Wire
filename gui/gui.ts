@@ -12,17 +12,17 @@
 // by whoever uses the graph: the session (`backend/deployment/host/session.ts`), as it keeps each
 // node's.
 
-import type { Graph, RawConfig, WidgetKind } from '../graph/graph.ts';
+import type { Graph, RawConfig } from '../graph/graph.ts';
 import type { Runtime } from '../graph/nodes/Runtime.ts';
 import type { Kinds } from '../graph/nodes/NodeDefinition.ts';
 import type { RuntimeRequirement, Widget, WidgetConnections, WidgetDefinition, WidgetPresentation } from './widgets/WidgetDefinition.ts';
 import { WIDGETS } from './widgets/roster.ts';
 
-const BY_KIND = new Map(WIDGETS.map((element) => [element.widgetKind, element as WidgetDefinition<unknown>]));
+const BY_KIND = new Map<string, WidgetDefinition<unknown>>(WIDGETS.map((element) => [element.widgetKind, element as WidgetDefinition<unknown>]));
 
 /** The definition of a block of *kind*, or none for a kind nobody knows. */
-export function widgetElement(kind: WidgetKind | string): WidgetDefinition<unknown> | undefined {
-  return BY_KIND.get(kind as WidgetKind);
+export function widgetElement(kind: string): WidgetDefinition<unknown> | undefined {
+  return BY_KIND.get(kind);
 }
 
 /** Who a block is. Typed against `Widget`, so a misspelt name here does not compile. */
