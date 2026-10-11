@@ -3,7 +3,7 @@
 // Pure, so the editor's buttons are a line each and what they do is tested without a page. Nothing here
 // changes its argument: an edit returns the document it made, which is what makes undo a list of them.
 
-import { idOf, type InKind, type OutKind, type Step, type Window, type WindowIn, type WindowOut, type Windows, SIZES } from './windows.ts';
+import { idOf, resultsOf, taken, type InKind, type OutKind, type Step, type Window, type WindowIn, type WindowOut, type Windows, SIZES } from './windows.ts';
 
 /** A name that is not in *taken*: *base*, else *base 2*, *base 3* ... (ids are made of names, so alike means the same). */
 export function freshName(base: string, taken: readonly string[]): string {
@@ -76,11 +76,31 @@ export const addInput = (doc: Windows, id: string, kind: InKind): Windows => inW
   return { ...window, inputs: [...window.inputs, made] };
 });
 
+/** What a new code cell starts with: it runs as it is, handing on what it was given, so a change to it is a change to something that works. */
+export function seedCode(window: Window, at: number): string {
+  const step = window.steps[at];
+  const ids = taken(window, at).map((one) => idOf(one.name) + (one.part === 'path' ? '_path' : ''));
+  return `function run(inputs) {
+  // inputs: ${ids.join(', ') || 'none'}
+  return { ${idOf(resultsOf(step)[0])}: Object.values(inputs).join('\n') };
+}
+`;
+}
+
 export const addStep = (doc: Windows, id: string, how: Step['how'] = 'ai'): Windows => inWindow(doc, id, (window) => {
   const last = window.steps[window.steps.length - 1];
   const name = freshName(how === 'ai' ? 'Step' : 'Code', namesIn(window));
   const sentence = last ? `Continue with @${last.name}` : (window.inputs[0] ? `Do something with @${window.inputs[0].name}` : 'Say what should be done');
-  return { ...window, steps: [...window.steps, { name, sentence, how, ...(how === 'code' ? { code: '' } : {}) }] };
+  const made = { ...window, steps: [...window.steps, { name, sentence, how } as Step] };
+  return how === 'code' ? { ...made, steps: made.steps.map((step, at) => (at === made.steps.length - 1 ? { ...step, code: seedCode(made, at) } : step)) } : made;
+});
+
+/** A cell given to a model or to code. Code is seeded where there is none, and kept when it is switched away from and back. */
+export const setHow = (doc: Windows, id: string, at: number, how: Step['how']): Windows => inWindow(doc, id, (window) => {
+  const step = window.steps[at];
+  if (!step || step.how === how) return window;
+  const code = how === 'code' ? (step.code?.trim() ? step.code : seedCode(window, at)) : step.code;
+  return { ...window, steps: window.steps.map((one, place) => (place === at ? { ...one, how, ...(code ? { code } : {}) } : one)) };
 });
 
 export const addOutput = (doc: Windows, id: string, kind: OutKind): Windows => inWindow(doc, id, (window) => {

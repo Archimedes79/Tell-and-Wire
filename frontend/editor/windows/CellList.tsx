@@ -1,6 +1,6 @@
 import { useRef, type CSSProperties, type ReactNode } from 'react';
 import {
-  addInput, addOutput, addStep, kindOfOutput, moveCell, patchInput, patchOutput, patchStep, patchWindow, removeCell, renameInput, renameStep,
+  addInput, addOutput, addStep, kindOfOutput, moveCell, patchInput, patchOutput, patchStep, patchWindow, removeCell, renameInput, renameStep, setHow,
   type CellRef,
 } from '../../../gui/editor/windows/edit.ts';
 import {
@@ -83,11 +83,14 @@ export default function CellList({ doc, window, hot, onHot, onChange }: {
               onName={(name) => onChange((d) => renameStep(d, id, at, name), `step-name-${at}`)}
               onSentence={(sentence) => onChange((d) => patchStep(d, id, at, { sentence }), `step-${at}`)}
               onEach={(each) => onChange((d) => patchStep(d, id, at, { each }))}
+              onHow={(how) => onChange((d) => setHow(d, id, at, how))}
+              onCode={(code) => onChange((d) => patchStep(d, id, at, { code }), `code-${at}`)}
             />
           </Row>
         ))}
         <Adds>
           <Button size="sm" variant="quiet" onClick={() => onChange((d) => addStep(d, id))}>+ Step</Button>
+          <Button size="sm" variant="quiet" onClick={() => onChange((d) => addStep(d, id, 'code'))} title="A small program does this one: for counting, parsing a table, making a figure">+ Code step</Button>
         </Adds>
       </Section>
 
@@ -345,13 +348,15 @@ function TriggerCell({ window, hot, onHot, onChange }: {
   );
 }
 
-function StepCell({ window, at, hasFolder, onName, onSentence, onEach }: {
+function StepCell({ window, at, hasFolder, onName, onSentence, onEach, onHow, onCode }: {
   window: Window;
   at: number;
   hasFolder: boolean;
   onName: (name: string) => void;
   onSentence: (sentence: string) => void;
   onEach: (each: boolean) => void;
+  onHow: (how: 'ai' | 'code') => void;
+  onCode: (code: string) => void;
 }) {
   const step = window.steps[at];
   const area = useRef<HTMLTextAreaElement>(null);
@@ -372,10 +377,15 @@ function StepCell({ window, at, hasFolder, onName, onSentence, onEach }: {
   };
   return (
     <>
-      <Labelled label="Result it makes">
-        <input aria-label="Step name" value={step.name} onChange={(event) => onName(event.target.value)} style={field} />
-      </Labelled>
-      <Labelled label="What should be done">
+      <div className="flex gap-2 items-end">
+        <div className="flex-1 min-w-0">
+          <Labelled label="Result it makes">
+            <input aria-label="Step name" value={step.name} onChange={(event) => onName(event.target.value)} style={field} />
+          </Labelled>
+        </div>
+        <Seg label="Done by" value={step.how} options={[['A model', 'ai'], ['Code', 'code']]} onPick={onHow} />
+      </div>
+      <Labelled label={step.how === 'code' ? 'What it does (for whoever reads this page)' : 'What should be done'}>
         <textarea
           ref={area} aria-label="Sentence" rows={3} value={step.sentence} style={{ ...field, resize: 'vertical', lineHeight: 1.4 }}
           onChange={(event) => onSentence(event.target.value)}
@@ -396,6 +406,14 @@ function StepCell({ window, at, hasFolder, onName, onSentence, onEach }: {
           </button>
         ))}
       </div>
+      {step.how === 'code' && (
+        <Labelled label="The code: function run(inputs) { … } returns an object keyed by the result">
+          <textarea
+            aria-label="Code" rows={7} spellCheck={false} value={step.code ?? ''} onChange={(event) => onCode(event.target.value)}
+            style={{ ...field, resize: 'vertical', fontFamily: 'ui-monospace, Consolas, monospace', fontSize: 12, lineHeight: 1.45, whiteSpace: 'pre' }}
+          />
+        </Labelled>
+      )}
       {hasFolder && (
         <label className="flex items-center gap-2 text-xs" style={{ color: MUTED }}>
           <input type="checkbox" checked={step.each === true} onChange={(event) => onEach(event.target.checked)} />
@@ -434,7 +452,7 @@ function OutputCell({ window, one, results, onPatch, onKind }: {
           label="Size" value={(['S', 'M', 'L'] as const).find((size) => sizes[size] === one.rows)}
           options={[['S', 'S'], ['M', 'M'], ['L', 'L']]} onPick={(size) => onPatch({ rows: sizes[size] })}
         />
-        <Stepper label="Rows" value={one.rows} max={16} onChange={(rows) => onPatch({ rows })} />
+        <Stepper label="Rows" value={one.rows} max={9} onChange={(rows) => onPatch({ rows })} />
         <Seg label="Width" value={one.width ?? 1} options={SHARES} onPick={(width) => onPatch({ width })} />
       </div>
     </>

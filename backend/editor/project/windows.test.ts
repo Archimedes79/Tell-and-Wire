@@ -65,7 +65,7 @@ const EXAMPLES: Record<string, Windows> = {
   file_summarizer: one('summarize', 'Summarize',
     [{ name: 'File', kind: 'file', extensions: '.txt,.md' }, { name: 'Length', kind: 'choice', options: ['One sentence', 'Three sentences'] }],
     [
-      { name: 'Read file', sentence: 'Read @File and @File.path: hand the text on, and say in one line what the file is.', how: 'code', results: ['Text', 'Info'] },
+      { name: 'Read file', sentence: 'Read @File and @File.path: hand the text on, and say in one line what the file is.', how: 'code', code: 'function run(inputs) { return {}; }', results: ['Text', 'Info'] },
       { name: 'Summarize', sentence: 'Summarize @Text in @Length.', how: 'ai' },
     ],
     [
@@ -77,12 +77,12 @@ const EXAMPLES: Record<string, Windows> = {
     [{ name: 'Summaries', kind: 'list', rows: 5, of: 'Each file' }]),
   population_plotter: one('draw', 'Draw',
     [{ name: 'File', kind: 'file', extensions: '.csv' }],
-    [{ name: 'What to plot', sentence: 'Read @File and say what the chart should show.', how: 'code', results: ['Figure'] }],
+    [{ name: 'What to plot', sentence: 'Read @File and say what the chart should show.', how: 'code', code: 'function run(inputs) { return {}; }', results: ['Figure'] }],
     [{ name: 'Chart', kind: 'chart', rows: 5, of: 'Figure' }]),
   paper_review_panel: one('review', 'Review',
     [{ name: 'Paper', kind: 'file' }],
     [
-      { name: 'Read manuscript', sentence: 'Read @Paper and hand its text on.', how: 'code', results: ['Text'] },
+      { name: 'Read manuscript', sentence: 'Read @Paper and hand its text on.', how: 'code', code: 'function run(inputs) { return {}; }', results: ['Text'] },
       ...REVIEWERS.map(([name, result]) => ({ name, sentence: `Review @Text as the ${name} reviewer.`, how: 'ai' as const, results: [result] })),
       { name: 'Judge', sentence: 'Weigh @Scientific, @Adversarial, @Claims, @References and @Figures into one ranked list.', how: 'ai' },
     ],

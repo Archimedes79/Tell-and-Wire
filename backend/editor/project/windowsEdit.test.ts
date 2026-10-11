@@ -79,3 +79,35 @@ describe('editing windows', () => {
     expect(freshName('Result', ['result'])).toBe('Result 2');
   });
 });
+
+describe('a cell done by code', () => {
+  it('starts with code that runs as it is, keeps what was written when switched to a model and back, and is a problem while it is empty', async () => {
+    const { Session } = await import('../../deployment/host/session.ts');
+    const { guiHooks } = await import('../../deployment/gui/hooks.ts');
+    const { quietRuntime } = await import('../../deployment/runtime/test/fakes.ts');
+    const { setHow, seedCode, patchStep } = await import('../../../gui/editor/windows/edit.ts');
+
+    let doc = addStep(page(), 'summarize', 'code');
+    const step = doc.windows[0].steps[1];
+    expect(step.how).toBe('code');
+    expect(step.code).toBe(seedCode(doc.windows[0], 1));
+    expect(windowProblems(doc)).toEqual([]);
+
+    // Run: the new cell takes what comes right before it (the first cell's answer) and hands it on.
+    const runtime = () => quietRuntime({
+      ai: { complete: async () => 'a plain answer' },
+      code: { run: async (body, inputs) => ({ code: String(Object.values(inputs).join('|')), body }) },
+    });
+    const made = windowsToGraph(doc);
+    expect(problemsIn(made)).toEqual([]);
+    const session = await Session.open(made, { runtime, gui: guiHooks });
+    const result = await session.run({ node_id: 'summarize', port_id: 'data' }, { by: 'summarize_run' });
+    expect(result.status).toBe('success');
+
+    // Kept across a switch, and a switch to a model does not erase it.
+    doc = patchStep(doc, 'summarize', 1, { code: 'function run(inputs) { return { code: 1 }; }' });
+    doc = setHow(setHow(doc, 'summarize', 1, 'ai'), 'summarize', 1, 'code');
+    expect(doc.windows[0].steps[1].code).toBe('function run(inputs) { return { code: 1 }; }');
+    expect(windowProblems(patchStep(doc, 'summarize', 1, { code: '  ' })).map((one) => one.problem)).toEqual(['The cell "Code" is code and holds none yet.']);
+  });
+});

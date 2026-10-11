@@ -253,7 +253,7 @@ function sourceOf(doc: Windows, window: Window, at: number, mention: Mention): S
 }
 
 /** The mentions step *at* takes: the ones its sentence makes, else everything before it. */
-function taken(window: Window, at: number): Mention[] {
+export function taken(window: Window, at: number): Mention[] {
   const said = mentions(window.steps[at].sentence);
   if (said.length) return said;
   return at === 0 ? window.inputs.map((one) => ({ name: one.name })) : resultsOf(window.steps[at - 1]).map((name) => ({ name }));
@@ -303,6 +303,7 @@ export function windowProblems(doc: Windows): Problem[] {
     }
     window.steps.forEach((step, at) => {
       if (!step.sentence.trim()) say(`The cell "${step.name}" says nothing about what should be done.`, 'Write a sentence.');
+      if (step.how === 'code' && !(step.code ?? '').trim()) say(`The cell "${step.name}" is code and holds none yet.`, 'Write function run(inputs) { ... } in it, or let a model do the step.');
       if (step.how === 'ai' && resultsOf(step).length > 1) say(`The cell "${step.name}" is a model's and hands on several results.`, 'Give a model one result; split the work, or let code make several.');
       if (step.each && !taken(window, at).some((one) => window.inputs.find((input) => idOf(input.name) === idOf(one.name))?.kind === 'folder')) say(`The cell "${step.name}" runs for each file but takes no folder.`, 'Mention a folder that goes in, or turn "for each file" off.');
       for (const mentioned of mentions(step.sentence)) {
