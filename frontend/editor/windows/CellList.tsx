@@ -8,6 +8,7 @@ import {
   type InKind, type OutKind, type Window, type WindowIn, type WindowOut, type Windows,
 } from '../../../gui/editor/windows/windows.ts';
 import Button from '../../deployment/gui/kit/ui/Button';
+import PathField from '../../deployment/gui/kit/dialogs/PathField';
 import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DANGER_TEXT, DIMMER, FIELD, LINE, MUTED, ON_ACCENT, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /** What a hovered cell or element is called, to light up its other half: a block id, or the window's `_run`. */
@@ -274,9 +275,18 @@ function InputCell({ window, one, others, onName, onPatch }: {
         </div>
       )}
       {(one.kind === 'file' || one.kind === 'folder') && (
-        <Labelled label="Only these file types, e.g. .txt, .md (blank: any)">
-          <input aria-label="File types" value={one.extensions ?? ''} style={field} onChange={(event) => onPatch({ extensions: event.target.value }, 'extensions')} />
-        </Labelled>
+        <>
+          <Labelled label="Only these file types, e.g. .txt, .md (blank: any)">
+            <input aria-label="File types" value={one.extensions ?? ''} style={field} onChange={(event) => onPatch({ extensions: event.target.value }, 'extensions')} />
+          </Labelled>
+          <Labelled label={`Starts at this ${one.kind === 'file' ? 'file' : 'folder'} (blank: none)`}>
+            <PathField
+              onSurface compact ariaLabel="Starts at"
+              mode={one.kind === 'file' ? 'file' : 'directory'} extensions={one.extensions}
+              value={String(one.value ?? '')} onChange={(path) => onPatch({ value: path }, 'start-path')}
+            />
+          </Labelled>
+        </>
       )}
       {one.kind === 'text' && (
         <Labelled label="Starts with">
