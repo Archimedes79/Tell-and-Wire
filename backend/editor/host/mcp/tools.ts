@@ -24,7 +24,7 @@ import { clip } from '../../graph/brief.ts';
 import { generateGraph } from '../../graph/generateGraph.ts';
 import { WRITING_KEYS, withoutWriting } from '../../../../graph/editor/handedOn.ts';
 import {
-  FileChanged, LAYOUT_FILE, NODES_DIR, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
+  FileChanged, SCHEDULE_FILE, NODES_DIR, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, type Guard,
 } from '../../../deployment/project/folder.ts';
 import { saveGraph as saveToDisk } from '../../project/write.ts';
@@ -433,7 +433,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
           if (!entry.isFile() || extname(entry.name).toLowerCase() !== '.json') continue;
           // A project's own parts: its graph-flow.json stands for all of them. What a
           // session of a graph keeps beside it is no graph either.
-          if ([NODES_FILE, LAYOUT_FILE, GUI_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
+          if ([NODES_FILE, SCHEDULE_FILE, GUI_FILE, STATE_FILE].includes(entry.name) || entry.name.endsWith(`.${STATE_FILE}`)) continue;
           try {
             // The same door as every other read, so the same files stay shut.
             await confine(full, 'path');

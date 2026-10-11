@@ -106,7 +106,7 @@ describe('a project folder', () => {
     });
     expect(JSON.stringify(listed.count)).not.toContain('pick');
     expect(existsSync(join(dir, 'nodes/count/node.json'))).toBe(false);
-    expect(JSON.parse(await text('graph-layout.json')).count).toEqual({ x: 300, y: 20, width: 360, height: 180 });
+    expect(JSON.parse(await text('graph-schedule.json'))).toEqual({ table: ['pick count say told'], size: { count: { width: 360, height: 180 } } });
 
     const data = (id: string, fields: Record<string, unknown>, inputs: unknown[] = []) => ({ id, node_type: 'data', label: id, inputs, outputs: [], config: { data_value: fields } });
     const held = join(dir, 'held');
@@ -137,7 +137,7 @@ describe('a project folder', () => {
     const original = sample();
     await writeProject(dir, original);
     const read = await readProject(dir);
-    original.nodes[1].position.x = 300; // stored rounded
+    for (const node of original.nodes) node.position = { x: 0, y: 0 }; // where a card is drawn follows from the schedule: not stored
     // A node whose ports follow from its settings has them as they follow; a setting at its default is not written, and reads back as missing.
     for (const node of original.nodes) {
       Object.assign(node, registry.node(node.node_type)?.derivedPorts(node, registry) ?? {});
@@ -152,11 +152,12 @@ describe('a project folder', () => {
     })));
     expect(read.metadata.name).toBe('Sample');
     expect(read.gui).toEqual(original.gui);
+    expect(read.schedule).toEqual(['pick count say told']);
   });
 
   it('writes the same bytes for the same graph, so an unchanged save is no change', async () => {
     await writeProject(dir, sample());
-    const files = ['graph-flow.json', 'graph-nodes.json', 'graph-layout.json', 'gui.json'];
+    const files = ['graph-flow.json', 'graph-nodes.json', 'graph-schedule.json', 'gui.json'];
     const first = await Promise.all(files.map(text));
     await writeProject(dir, await readProject(dir));
     expect(await Promise.all(files.map(text))).toEqual(first);
@@ -318,7 +319,7 @@ describe('a graph inside a node', () => {
 
     const inner = (await readProject(dir)).nodes[0].config.subgraph as Graph;
     expect(inner.nodes[0].config.code).toContain('i.text.slice');
-    expect(inner.nodes[0].position).toEqual({ x: 5, y: 5 });
+    expect(inner.schedule).toEqual(['shorten']);
     expect(isProjectFolder(join(dir, 'nodes/part'))).toBe(true);
     expect((await loadGraph(join(dir, 'nodes/part'))).nodes.map((node) => node.id)).toEqual(['shorten']);
 

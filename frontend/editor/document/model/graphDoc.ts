@@ -10,11 +10,13 @@ import type { TextChange } from '../../../../backend/editor/host/api.ts';
 import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
 import { defaultMetadata as formatDefaults } from '../../../../graph/graph.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
+import { tableFor, tableLines, type Table } from '../../../../graph/schedule.ts';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import { derivedNodePorts } from './ports';
 import { NODE_KINDS, savedNode } from './nodeKinds';
 import { baseNodeConfig } from './baseNodeConfig';
 import { graphEdge } from './wires';
+import { gridOf, topLeft, type Size } from './scheduleLayout';
 
 /** A node on the canvas: ReactFlow's, carrying the graph node (`store/nodeData.ts`). */
 type CanvasNode = Node<{ graphNode: GraphNode }>;
@@ -96,7 +98,7 @@ export function withNested(outer: Graph, nodeId: string, inner: Graph): Graph {
  * given, never the one ReactFlow measured: a graph must serialise the same way
  * twice running, or "unsaved" means nothing.
  */
-export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: GraphMetadata, gui: GuiWidget[]): Graph {
+export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: GraphMetadata, gui: GuiWidget[], table: Table): Graph {
   const nodes: GraphNode[] = rfNodes.map((rfn) => keptNested(savedNode({
     ...rfn.data.graphNode,
     position: { x: rfn.position.x, y: rfn.position.y },
@@ -105,7 +107,7 @@ export function exported(rfNodes: CanvasNode[], rfEdges: Edge[], metadata: Graph
     height: rfn.data.graphNode.height ?? undefined,
   })));
   const edges: GraphEdge[] = rfEdges.map(graphEdge);
-  return { metadata, nodes, edges, ...(gui.length ? { gui: { blocks: gui } } : {}) };
+  return { metadata, nodes, edges, ...(table.length ? { schedule: tableLines(table) } : {}), ...(gui.length ? { gui: { blocks: gui } } : {}) };
 }
 
 /**
@@ -119,9 +121,9 @@ function keptNested(node: GraphNode): GraphNode {
   const held = element?.nestedGraph(node as never) as Graph | null | undefined;
   if (!element || !held) return node;
   const graph = normalizeGraph(held);
-  const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
+  const { rfNodes, rfEdges, table } = buildReactFlowGraph(graph);
   const kept = { ...node, config: { ...node.config } };
-  element.setNestedGraph(kept as never, exported(rfNodes, rfEdges, graph.metadata, graph.gui?.blocks ?? []) as never);
+  element.setNestedGraph(kept as never, exported(rfNodes, rfEdges, graph.metadata, graph.gui?.blocks ?? [], table) as never);
   return kept;
 }
 
@@ -160,8 +162,8 @@ export function withDiskChanges(snapshot: string, changes: TextChange[]): string
   }
   const touched = new Set(changes.flatMap((change) => change.node_id ?? []));
   graph.edges = graph.edges.filter((edge) => !lostWire(graph.nodes, edge, touched));
-  const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
-  return JSON.stringify(exported(rfNodes, rfEdges, graph.metadata, blocks));
+  const { rfNodes, rfEdges, table } = buildReactFlowGraph(graph);
+  return JSON.stringify(exported(rfNodes, rfEdges, graph.metadata, blocks, table));
 }
 
 export function normalizeGraph(graph: Graph): Graph {
@@ -179,6 +181,7 @@ export function normalizeGraph(graph: Graph): Graph {
     metadata: normalizeMetadata(graph.metadata),
     nodes,
     edges,
+    ...(graph.schedule?.length ? { schedule: graph.schedule } : {}),
     ...(blocks.length ? { gui: { blocks } } : {}),
   };
 }
@@ -186,7 +189,12 @@ export function normalizeGraph(graph: Graph): Graph {
 /** The format's defaults (`defaultMetadata` in `graph/graph.ts`), in the editor's typed view of them. */
 export const defaultMetadata = (): GraphMetadata => formatDefaults() as GraphMetadata;
 
-/** The size a file gave a node, if it gave one, as ReactFlow lays it out: nothing in the editor resizes a node. */
+/** The sizes people gave cards: both sides, or none. */
+export function sizesOf(nodes: GraphNode[]): Map<string, Size> {
+  return new Map(nodes.flatMap((node) => (typeof node.width === 'number' && typeof node.height === 'number' ? [[node.id, { width: node.width, height: node.height }] as const] : [])));
+}
+
+/** The size a node was given, if it was given one, as ReactFlow lays it out. */
 function sizeStyle(node: GraphNode): { style: { width: number; height: number } } | Record<string, never> {
   return typeof node.width === 'number' && typeof node.height === 'number'
     ? { style: { width: node.width, height: node.height } }
@@ -199,10 +207,15 @@ function sizeStyle(node: GraphNode): { style: { width: number; height: number } 
  * loading a file -- they were the same twenty lines twice.
  */
 export function buildReactFlowGraph(graph: Graph) {
+  // Where a card stands follows from the schedule and the sizes: the position a file or a model
+  // gave it is not asked.
+  const table = tableFor(graph.nodes, graph.edges, registry, graph.schedule);
+  const sizes = sizesOf(graph.nodes);
+  const grid = gridOf(table, sizes);
   const rfNodes: CanvasNode[] = graph.nodes.map((gn) => ({
     id: gn.id,
     type: 'graphNode',
-    position: { x: gn.position.x, y: gn.position.y },
+    position: topLeft(grid.centres.get(gn.id) ?? { x: 0, y: 0 }, sizes.get(gn.id)),
     // A size goes in `style`, which is what ReactFlow *renders* from.
     // `width`/`height` on a node are its measurement: ReactFlow fills them in once the node is drawn and
     // overwrites whatever was put there. Setting the size there therefore did
@@ -221,7 +234,8 @@ export function buildReactFlowGraph(graph: Graph) {
     sourceHandle: ge.source_port_id,
     target: ge.target_node_id,
     targetHandle: ge.target_port_id,
+    ...(ge.via?.length ? { data: { via: ge.via } } : {}),
   }));
 
-  return { rfNodes, rfEdges };
+  return { rfNodes, rfEdges, table };
 }

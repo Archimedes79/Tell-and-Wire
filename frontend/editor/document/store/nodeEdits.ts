@@ -8,7 +8,8 @@ import { NODE_KINDS } from '../model/nodeKinds';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { freeId, slugOf } from '../model/ids';
-import { makeRoom } from '../model/placement';
+import { put, without } from '../../../../graph/editor/scheduleEdit.ts';
+import { moveCards, nodesOf, placed, rerouteEdges } from './scheduleActions';
 import { followRenames, graphEdge, pruneDangling, retypeJoined, takesNewInputs, untouchedInput } from '../model/wires';
 import { wireOf } from '../../../../graph/files/flow.ts';
 import type { GraphStore } from './graphStore';
@@ -21,28 +22,26 @@ export function editActions(
   get: () => GraphStore,
 ): Pick<GraphStore, 'addNode' | 'connect' | 'addNodeFrom' | 'connectToNewInput' | 'updateNode' | 'deleteNodes'> {
   return {
-    addNode: (nodeType, position, fill, step) => {
+    addNode: (nodeType, at, fill, step) => {
       get().commit(step);
       const kind = NODE_KINDS[nodeType];
       const id = freeId(kind.idBase ?? nodeType, get().rfNodes.map((existing) => existing.id));
       // Inside a graph a node holds, a node may start otherwise (`placedInside`).
       const made = get().subgraphStack.length ? kind.placedInside?.(kind.create(id)) ?? kind.create(id) : kind.create(id);
       const defaults = kind.placedAmong?.(made, get().rfNodes.map((existing: RFNode) => existing.data.graphNode)) ?? made;
-      const rfNode: Node<RFNodeData> = {
-        id,
-        type: 'graphNode',
-        position,
-        data: { graphNode: fill ? fill(defaults) : defaults },
-      };
-      const aside = new Map(makeRoom(get().rfNodes, position).map((move) => [move.id, move.x]));
+      const graphNode = fill ? fill(defaults) : defaults;
+      // Into the table: where it was dropped, else the cell nearest to the point it was given. The columns
+      // after it move over, as a card is only ever in a column of its own or in a cell nothing else holds.
+      const moved = put(get().table, id, 'kind' in at ? at : get().targetFor(at));
+      const nodes = [...nodesOf(get()), graphNode];
       set((state) => {
         // The one marked, as its panel is the one open: the node selected before stayed lit beside it.
-        for (const node of state.rfNodes) {
-          if (node.selected) node.selected = false;
-          const x = aside.get(node.id);
-          if (x !== undefined) node.position = { ...node.position, x };
-        }
-        state.rfNodes.push({ ...rfNode, selected: true } as never);
+        for (const node of state.rfNodes) if (node.selected) node.selected = false;
+        state.rfNodes.push({ id, type: 'graphNode', position: { x: 0, y: 0 }, data: { graphNode }, selected: true } as never);
+        state.aim = null;
+        state.table = moved.table;
+        state.rfEdges = rerouteEdges(state.rfEdges, moved);
+        moveCards(state, placed(moved.table, nodes));
       });
       return id;
     },
@@ -59,12 +58,14 @@ export function editActions(
         state.rfEdges.push({ ...wire, id } as never);
         retypeJoined(state.rfNodes, state.gui as GuiWidget[], wire);
       });
+      // A wire back to a card on its left or beside it moves that card, and what it feeds, to the right.
+      get().refit();
     },
 
-    addNodeFrom: (nodeType, position, from) => {
+    addNodeFrom: (nodeType, at, from) => {
       // The node and its wire are one change: undone, both go.
       const step = `add ${nodeType} from ${from.source}.${from.sourceHandle}`;
-      const id = get().addNode(nodeType, position, undefined, step);
+      const id = get().addNode(nodeType, at, undefined, step);
       if (get().connectToNewInput({ ...from, target: id }, step)) return id;
       const first = (get().rfNodes.find((node: RFNode) => node.id === id)?.data.graphNode as GraphNode | undefined)?.inputs[0];
       if (first) get().connect({ ...from, target: id, targetHandle: first.id }, step);
@@ -112,17 +113,24 @@ export function editActions(
           if (updates.inputs || updates.outputs) state.rfEdges = pruneDangling(state.rfEdges as Edge[], updated);
         }
       });
+      // What a node holds can change which of its wires go back (a memory's), and so the order.
+      if (updates.inputs || updates.outputs || updates.config) get().refit();
     },
 
     deleteNodes: (nodeIds, wireIds = []) => {
       const going = new Set(nodeIds);
       const cut = new Set(wireIds);
       get().commit();
+      // The cards that are left close up over the gap.
+      const moved = without(get().table, going);
+      const staying = nodesOf(get()).filter((node) => !going.has(node.id));
       set((state) => {
         state.rfNodes = state.rfNodes.filter((n: RFNode) => !going.has(n.id));
-        state.rfEdges = state.rfEdges.filter(
+        state.rfEdges = rerouteEdges(state.rfEdges.filter(
           (e: Edge) => !cut.has(e.id) && !going.has(e.source) && !going.has(e.target)
-        );
+        ), moved);
+        state.table = moved.table;
+        moveCards(state, placed(moved.table, staying));
         // A block connected to a point that went loses that connection with
         // it: left naming it, the block fires and shows nothing.
         state.gui = withoutPoints(state.gui as GuiWidget[], nodeIds) as never;

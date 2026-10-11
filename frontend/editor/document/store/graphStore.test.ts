@@ -53,7 +53,10 @@ describe('graphStore.loadGraph', () => {
     expect(store().isDirty()).toBe(false);
 
     const saved = store().exportGraph();
-    expect(saved.nodes.find((n) => n.id === 'later')).toEqual(later);
+    // Where it stands is the schedule's to say: the position a file gave is not kept.
+    const { position: _given, ...kept } = later;
+    expect(saved.nodes.find((n) => n.id === 'later')).toMatchObject(kept);
+    expect(saved.schedule).toBeDefined();
     expect(saved.nodes.find((n) => n.id === 'sized')).toMatchObject({ width: 340, height: 300 });
     expect(saved.nodes.find((n) => n.id === 'plain')!.width).toBeUndefined();
     expect(saved.edges).toHaveLength(1);

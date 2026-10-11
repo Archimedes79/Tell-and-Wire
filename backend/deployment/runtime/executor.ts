@@ -4,7 +4,9 @@
 //
 // **Order.** Kahn's algorithm over the edges gives levels: nothing in a level
 // feeds anything else in it. The nodes run one after another, level by level
-// and in the graph's own node order inside one, so a run is reproducible.
+// and in the graph's own node order inside one, so a run is reproducible. A
+// graph with a schedule (`schedule.ts`) runs in the steps of its table instead,
+// each from top to bottom: the same rule, with the order chosen by a person.
 //
 // **Memory.** A tool remembers in a data node, which fills from what arrives
 // and then forwards what it holds, in the same round. A graph with a loop — a
@@ -32,6 +34,7 @@ import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from '../../.
 import { Unread, filePorts, readPorts } from '../../../graph/fileInputs.ts';
 import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
 import { passiveWires, nodeName, topologicalLevels } from '../../../graph/order.ts';
+import { parseTable, scheduleProblems, stepsOf } from '../../../graph/schedule.ts';
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from '../../../graph/schema.ts';
@@ -157,7 +160,11 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
   const byId = new Map(nodes.map((n) => [n.id, n]));
 
   const reads = passiveWires(nodes, edges, registry);
-  const levels = topologicalLevels(nodes, edges, registry);
+  // Asked even when the schedule decides: a loop no memory closes is said by name, as it is without one.
+  const wired = topologicalLevels(nodes, edges, registry);
+  const misplaced = scheduleProblems(graph, registry);
+  if (misplaced.length) throw new Error(unrunnable(misplaced));
+  const levels = graph.schedule ? stepsOf(parseTable(graph.schedule)) : wired;
   const only = options.only ?? (options.trigger ? triggeredNodes(graph, options.trigger, registry) : null);
   // Context, as opposed to what this run is for: only in a run that is not
   // the whole graph, never the node that fired, never what it fired, and

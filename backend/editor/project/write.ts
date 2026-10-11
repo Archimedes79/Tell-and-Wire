@@ -14,9 +14,10 @@ import { registry } from '../../../graph/nodes/registry.ts';
 import { designs } from '../../../graph/editor/nodes/registry.ts';
 import { describeNodes, NODES_FILE, sorted } from '../../../graph/files/nodesFile.ts';
 import { FLOW_FILE, flowOf } from '../../../graph/files/flow.ts';
+import { tableFor, tableLines } from '../../../graph/schedule.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 import {
-  ABSENT, FileChanged, LAYOUT_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  ABSENT, FileChanged, SCHEDULE_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readProject, readStructure, remember, seen, signature, textFields, toFile, withoutEmptyGui, type Guard,
 } from '../../deployment/project/folder.ts';
 
@@ -98,21 +99,21 @@ function planProject(folder: string, copy: Graph, root = folder): Plan[] {
     files.set(join(folder, text.path), fileFor(value, text));
   }
 
-  const layout: Record<string, Record<string, number>> = {};
+  // The table every node stands in -- made from the wires when the graph has none --
+  // and the size of the cards a person resized. Where a card is drawn follows from them.
+  const size: Record<string, Record<string, number>> = {};
   for (const node of copy.nodes) {
-    layout[node.id] = {
-      x: Math.round(node.position?.x ?? 0),
-      y: Math.round(node.position?.y ?? 0),
-      ...(node.width ? { width: Math.round(node.width) } : {}),
-      ...(node.height ? { height: Math.round(node.height) } : {}),
-    };
+    if (node.width || node.height) {
+      size[node.id] = { ...(node.width ? { width: Math.round(node.width) } : {}), ...(node.height ? { height: Math.round(node.height) } : {}) };
+    }
   }
+  const schedule = { table: tableLines(tableFor(copy.nodes, copy.edges, registry, copy.schedule)), ...(Object.keys(size).length ? { size } : {}) };
   // Files like the rest, so one changed outside -- another writer added a node
   // and its folder -- refuses the save instead of being written over, and the
   // new node's files tidied away. The list last: the writing is out of the settings by now.
   files.set(join(folder, FLOW_FILE), toFile(flow, true));
   files.set(join(folder, NODES_FILE), toFile(describeNodes(copy.nodes, derived), true));
-  files.set(join(folder, LAYOUT_FILE), toFile(layout, true));
+  files.set(join(folder, SCHEDULE_FILE), toFile(schedule, true));
 
   // Deepest first, so a level is only written once everything it holds is.
   return [...deeper, { folder, files, untouched }];
@@ -358,7 +359,7 @@ async function changedUnder(folder: string): Promise<boolean> {
 
   const { graph, files } = await readStructure(folder);
   for (const path of files.keys()) await look(path);
-  await look(join(folder, LAYOUT_FILE));
+  await look(join(folder, SCHEDULE_FILE));
   for (const text of projectTexts(graph)) await look(join(folder, text.path));
   for (const nested of nestedGraphs(graph)) {
     const inside = join(folder, nested.folder);

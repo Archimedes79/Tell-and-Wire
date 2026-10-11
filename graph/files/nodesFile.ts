@@ -13,7 +13,7 @@
 //
 // By id, in the order the graph lists them. A node's kind, its heading and its
 // text, its settings and its ports: all it is, and nothing about its
-// neighbours -- that is `graph-flow.json` --, nor where it sits -- `graph-layout.json` --,
+// neighbours -- that is `graph-flow.json` --, nor where it sits -- `graph-schedule.json` --,
 // nor its writing -- code and prompts, files in its own folder. Every node has
 // an entry, at least `{ "kind": … }`; the rest may be left out.
 //

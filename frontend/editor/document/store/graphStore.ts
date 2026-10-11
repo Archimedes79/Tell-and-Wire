@@ -15,6 +15,10 @@ import { flushPanels } from './flushPanels';
 import { subgraphActions } from './subgraphs';
 import { diskActions } from './diskActions';
 import { editActions } from './nodeEdits';
+import { scheduleActions } from './scheduleActions';
+import type { Table } from '../../../../graph/schedule.ts';
+import type { Reach, Target } from '../../../../graph/editor/scheduleEdit.ts';
+import type { Aim } from '../model/scheduleLayout';
 import { goingIn, handoffActions, isHanding, serverHoldsAnother } from './handoff';
 import type { TextChange } from '../../../../backend/editor/host/api.ts';
 import { wireOf } from '../../../../graph/files/flow.ts';
@@ -23,6 +27,17 @@ export interface GraphStore {
   // ReactFlow state
   rfNodes: Node<RFNodeData>[];
   rfEdges: Edge[];
+
+  /**
+   * The schedule: the table of cells the nodes stand in, whose columns are the steps they run in
+   * (`graph/schedule.ts`). Where the cards are drawn follows from it and from the sizes they were
+   * given; moving one is changing the table.
+   */
+  table: Table;
+  /** A card in the hand -- one on the canvas, or one brought from the palette (`NEW`) -- and where it would land. */
+  aim: ({ id: string; reach: Reach } & Aim) | null;
+  /** A wire pulled by its handle, and the cell it would be drawn through. */
+  pulling: { edge: string; cell: { column: number; row: number } | null } | null;
 
   // Graph metadata
   metadata: GraphMetadata;
@@ -117,16 +132,18 @@ export interface GraphStore {
    * Add a node and return its id, so a caller can immediately fill it in --
    * or, with *fill*, as it is made, in the same undo step: a block and the
    * start point it makes are one change. *step* names the undo step (`commit`),
-   * so what the caller does next under the same name is part of it.
+   * so what the caller does next under the same name is part of it. *at* says where it
+   * goes in the table (a `Target`), or is a point of the canvas, taken as the top left of the
+   * card: the cell nearest to it, in a column of its own when it is between two.
    */
-  addNode: (nodeType: NodeType, position: { x: number; y: number }, fill?: (node: GraphNode) => GraphNode, step?: string) => string;
+  addNode: (nodeType: NodeType, at: Target | { x: number; y: number }, fill?: (node: GraphNode) => GraphNode, step?: string) => string;
   /**
    * Add a node where a wire was let go on empty canvas, and wire it to what
    * the wire came from: on a new input where the node's inputs are its own to
    * name (a code or AI node), else on its first. One undo step, the node and
    * its wire. A node with no input takes no wire, and is only added.
    */
-  addNodeFrom: (nodeType: NodeType, position: { x: number; y: number }, from: { source: string; sourceHandle: string }) => string;
+  addNodeFrom: (nodeType: NodeType, at: Target | { x: number; y: number }, from: { source: string; sourceHandle: string }) => string;
   /**
    * `renamed` maps a port's old id to its new one, per side, so the wires
    * follow the rename instead of being pruned as "a port that vanished" --
@@ -161,6 +178,30 @@ export interface GraphStore {
   deleteNodes: (nodeIds: string[], wireIds?: string[]) => void;
   setRFNodes: (nodes: Node<RFNodeData>[]) => void;
   setRFEdges: (edges: Edge[]) => void;
+
+  /** Make the table hold for the wires and nodes there are now: a node that is not placed comes in at the left, and every node moves right of what feeds it. */
+  refit: () => void;
+  /**
+   * Hold a card whose centre is at *centre* (in canvas coordinates): which cell, or which new column between two,
+   * it would be pulled to. While it is held over the space between two columns, the columns after it slide over.
+   */
+  aimCard: (id: string, centre: { x: number; y: number }) => void;
+  /** The card in the hand let go with nothing to land on: everything back where the table says. */
+  clearAim: () => void;
+  /** The card *id* let go: put where it was aimed at, as one change of the table. */
+  dropCard: (id: string) => void;
+  /** Where a card brought to the point *point* of the canvas would go. */
+  targetFor: (point: { x: number; y: number }) => Target;
+  /** Every card to the earliest column its wires allow, and the empty rows closed. Says what it came to. */
+  thinOut: () => string;
+  /** The card *id* made *size*, snapped to the dots: the columns and rows after it move over. */
+  resizeCard: (id: string, size: { width: number; height: number }) => void;
+  /** The wire *edgeId* drawn through *cell* (or the straight way, with none): one undo step. */
+  routeWire: (edgeId: string, cell: { column: number; row: number } | null) => void;
+  /** The wire *edgeId* pulled to *centre* (canvas coordinates): the free cell it would be drawn through. */
+  pullWire: (edgeId: string, centre: { x: number; y: number }) => void;
+  /** The pull ended: with *apply*, the wire takes the route. */
+  endPull: (apply: boolean) => void;
   setEditingNode: (nodeId: string | null) => void;
   /** What the canvas shows the rounds made: none, before anything ran. */
   setExecutionResult: (result: ExecutionResult | null) => void;
@@ -286,6 +327,9 @@ export const useGraphStore = create<GraphStore>()(
   immer((set, get) => ({
     rfNodes: [],
     rfEdges: [],
+    table: [],
+    aim: null,
+    pulling: null,
     metadata: defaultMetadata(),
     gui: [],
     currentFilePath: null,
@@ -314,6 +358,8 @@ export const useGraphStore = create<GraphStore>()(
         state.gui = blocks as never;
         for (const node of add) state.rfNodes.push({ id: node.id, type: 'graphNode', position: node.position, data: { graphNode: node } } as never);
       });
+      // A start point a block makes stands at the left, where a run begins.
+      if (add.length) get().refit();
     },
 
     setCurrentFilePath: (path, isProject = false) =>
@@ -365,7 +411,7 @@ export const useGraphStore = create<GraphStore>()(
 
     loadGraph: (graph, { unsaved = false } = {}) => {
       const normalizedGraph = normalizeGraph(graph);
-      const { rfNodes, rfEdges } = buildReactFlowGraph(normalizedGraph);
+      const { rfNodes, rfEdges, table } = buildReactFlowGraph(normalizedGraph);
       // What it was given and cannot hold, said by whoever loads it: a wire to a node that is not there.
       const kept = new Set(normalizedGraph.edges);
       const dropped = (Array.isArray(graph.edges) ? graph.edges : []).filter((edge) => !kept.has(edge)).map(wireOf);
@@ -377,6 +423,9 @@ export const useGraphStore = create<GraphStore>()(
         state.metadata = normalizedGraph.metadata;
         state.rfNodes = rfNodes as never;
         state.rfEdges = rfEdges;
+        state.table = table;
+        state.aim = null;
+        state.pulling = null;
         state.gui = (normalizedGraph.gui?.blocks ?? []) as never;
         state.executionResult = null;
         // Whoever loaded a graph without going through the file-path flow
@@ -408,19 +457,20 @@ export const useGraphStore = create<GraphStore>()(
     newGraph: () => get().loadGraph({ metadata: defaultMetadata(), nodes: [], edges: [] }),
 
     exportGraph: () => {
-      const { rfNodes, rfEdges, metadata, gui } = get();
-      return exported(rfNodes as never, rfEdges, metadata, gui as never);
+      const { rfNodes, rfEdges, metadata, gui, table } = get();
+      return exported(rfNodes as never, rfEdges, metadata, gui as never, table);
     },
 
     ...historyActions(set, get),
     ...editActions(set, get),
+    ...scheduleActions(set, get),
     ...subgraphActions(set, get),
     ...diskActions(set, get),
     ...handoffActions(set, get),
 
     isDirty: () => {
-      const { rfNodes, rfEdges, metadata, gui, subgraphStack, savedSnapshot } = get();
-      const of = [rfNodes, rfEdges, metadata, gui, subgraphStack, savedSnapshot];
+      const { rfNodes, rfEdges, metadata, gui, table, subgraphStack, savedSnapshot } = get();
+      const of = [rfNodes, rfEdges, metadata, gui, table, subgraphStack, savedSnapshot];
       if (dirtyAnswer?.of.every((part, at) => part === of[at])) return dirtyAnswer.dirty;
       // The whole document, not the level that happens to be open: going into
       // a node changes nothing, and a change made in there is a change.

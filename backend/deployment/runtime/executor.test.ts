@@ -237,3 +237,16 @@ describe('one node tried by itself', () => {
     expect(ran).not.toContain('target');
   });
 });
+
+describe('a schedule', () => {
+  it('sets the order of what stands beside each other, and refuses to run when a wire contradicts it', async () => {
+    const [a, b] = [node('a', 'code', { code: 'x', language: 'js' }), node('b', 'code', { code: 'x', language: 'js' })];
+    const ran = async (graph: Graph): Promise<string[]> => (await executeGraph(graph, { runtime: nowhere, registry })).node_results.map((one) => one.node_id);
+    expect(await ran(graphOf([a, b], []))).toEqual(['a', 'b']);
+    expect(await ran({ ...graphOf([a, b], []), schedule: ['b a'] })).toEqual(['b', 'a']);
+    // Beside each other: top to bottom.
+    expect(await ran({ ...graphOf([a, b], []), schedule: ['b', 'a'] })).toEqual(['b', 'a']);
+    const wired = { ...graphOf([a, b], [edge('e', 'a', 'out', 'b', 'in')]), schedule: ['b a'] };
+    await expect(executeGraph(wired, { runtime: nowhere, registry })).rejects.toThrow(/schedule puts "b" before "a"/);
+  });
+});

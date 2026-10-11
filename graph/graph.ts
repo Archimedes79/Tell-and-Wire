@@ -70,6 +70,12 @@ export interface GraphEdge {
   source_port_id: string;
   target_node_id: string;
   target_port_id: string;
+  /**
+   * The cells of the schedule the wire is drawn through, from its source to its target, named
+   * as a spreadsheet names them (`C2`: third column, second row; `schedule.ts`). None: it takes
+   * the straight way. Only how it is drawn: no part of what a run does.
+   */
+  via?: string[];
 }
 
 /** A graph's own settings. Any other key a file carries here is nobody's to read, and is kept as it was written. */
@@ -93,6 +99,13 @@ export interface Graph {
   metadata: GraphMetadata;
   nodes: GraphNode[];
   edges: GraphEdge[];
+  /**
+   * Its schedule, when it has one: the rows of a table of cells, each an id or
+   * `.` (`schedule.ts`). It says the order the nodes run in and where they
+   * stand; a graph without one runs in the order of its wires and is laid out
+   * from them. Where a node is drawn (`position`) follows from it.
+   */
+  schedule?: string[];
   /** Its gui, when it has one: a graph used by a script, or held by a node, has none. */
   gui?: Gui;
 }
@@ -225,6 +238,7 @@ export function parseGraph(raw: unknown): Graph {
     metadata: { ...defaultMetadata(), ...(source.metadata as object ?? {}) },
     nodes: nodes.map(parseNode),
     edges: edges.map(parseEdge),
+    ...(Array.isArray(source.schedule) && source.schedule.length ? { schedule: source.schedule.map(String) } : {}),
     // A gui is its blocks: one with none is no gui.
     ...(Array.isArray(blocks) && blocks.length ? { gui: { blocks: blocks as RawConfig[] } } : {}),
   };

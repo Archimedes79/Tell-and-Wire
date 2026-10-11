@@ -28,6 +28,7 @@ export function graphEdge(wire: Wire & { id?: string }, at = 0): GraphEdge {
     source_port_id: wire.sourceHandle || 'output',
     target_node_id: wire.target,
     target_port_id: wire.targetHandle || 'input',
+    ...(wire.data?.via?.length ? { via: wire.data.via } : {}),
   };
 }
 

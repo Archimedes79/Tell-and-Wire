@@ -17,7 +17,6 @@
 // (`deployment/gui/kit/api/session.ts`).
 import type { GraphNode, GuiWidget } from '../document/graph';
 import { useGraphStore } from '../document/store/graphStore';
-import { placement } from '../document/model/placement';
 import { NODE_KINDS } from '../document/model/nodeKinds';
 import { freeId, slugOf } from '../document/model/ids';
 import { blockCan, blocksAt, endPoints, guiStartPoints } from '../document/model/gui';
@@ -103,8 +102,8 @@ function nodesNow(): GraphNode[] {
 }
 
 /**
- * A new start or end point, called *label*, placed beside what is on the
- * canvas -- below *made*, the points made with it in the same step. A start
+ * A new start or end point, called *label*; where it stands is the schedule's to say
+ * (`refit`), and a point nothing is wired to stands at the left. A start
  * point is called "start", "start_2", as whoever starts it calls it; an end
  * point what it hands back is called.
  */
@@ -112,10 +111,9 @@ function newPoint(kind: 'start' | 'end', label: string, made: GraphNode[]): Grap
   const placed = useGraphStore.getState().rfNodes;
   const taken = [...placed.map((node) => node.id), ...made.map((node) => node.id)];
   const id = freeId(kind === 'start' ? 'start' : slugOf(label) || 'result', taken);
-  const at = placement(placed);
   // Named apart from the points of its kind there are: "Start 2" beside "Start".
   const named = [...placed.map((node) => node.data.graphNode as GraphNode), ...made].filter((node) => node.node_type === kind).map((node) => node.label);
-  return { ...NODE_KINDS[kind].create(id), label: freeId(label, named, ' '), position: { x: at.x, y: at.y + made.length * 140 } };
+  return { ...NODE_KINDS[kind].create(id), label: freeId(label, named, ' '), position: { x: 0, y: 0 } };
 }
 
 /**

@@ -3,7 +3,8 @@
 //     my_tool/
 //       graph-flow.json           the flow: the graph's name, and every wire
 //       graph-nodes.json          the nodes: each one's kind, heading, text, settings and ports
-//       graph-layout.json         where each node sits on the canvas, and its size
+//       graph-schedule.json       the order the nodes run in and where they stand: a table
+//                                 of cells, and the size of the cards a person resized
 //       gui.json                  the gui: what whoever uses the tool sees -- its blocks,
 //                                 in order, each with what it connects to
 //       nodes/
@@ -14,9 +15,10 @@
 // about any node. The list says what each node is, and nothing about its
 // neighbours: a node that needs to know what arrives follows the wire and reads
 // the other node's ports there. Together they are the graph; the engine needs
-// no more, but for the writing. Positions are split off so that moving a node
-// is not a change to what the graph does; writing -- code, prompts -- is a file
-// of its own so it is edited, reviewed and grepped as what it is.
+// no more, but for the writing. The schedule is split off so that the order of
+// running, which is a person's to choose, is not mixed with what the nodes are
+// (`graph/schedule.ts`); writing -- code, prompts -- is a file of its own so it
+// is edited, reviewed and grepped as what it is.
 //
 // **The gui sits beside the graph, not in it.** It is no node: a graph has one
 // gui, what a person using the tool sees, and its blocks connect themselves to
@@ -45,7 +47,7 @@ import { FLOW_FILE, graphFrom } from '../../../graph/files/flow.ts';
 import { folderName } from '../../../graph/files/names.ts';
 import { NotAGraph, NotFound } from '../../../graph/errors.ts';
 
-export const LAYOUT_FILE = 'graph-layout.json';
+export const SCHEDULE_FILE = 'graph-schedule.json';
 export const GUI_FILE = 'gui.json';
 export const NODES_DIR = 'nodes';
 
@@ -378,20 +380,22 @@ function asGraph(raw: unknown, path: string): Graph {
   }
 }
 
-/** Where each node sits: from `graph-layout.json` when there is one, in a row when it says nothing. */
-function applyLayout(graph: Graph, layout: unknown): void {
-  if (!layout || typeof layout !== 'object') return;
-  const placed = layout as Record<string, { x?: number; y?: number; width?: number | null; height?: number | null }>;
-  graph.nodes.forEach((node, index) => {
-    const at = placed[node.id];
-    if (!at) {
-      node.position = { x: 80 + index * 360, y: 120 };
-      return;
-    }
-    node.position = { x: Number(at.x ?? 0), y: Number(at.y ?? 0) };
-    if (at.width != null) node.width = Number(at.width);
-    if (at.height != null) node.height = Number(at.height);
-  });
+/**
+ * The schedule `graph-schedule.json` says, and the size it gave to cards. With
+ * no file the graph has no schedule, and runs in the order of its wires.
+ */
+function applySchedule(graph: Graph, file: unknown, path: string): void {
+  if (!file || typeof file !== 'object') return;
+  const { table, size } = file as { table?: unknown; size?: Record<string, { width?: number; height?: number }> };
+  if (table !== undefined && (!Array.isArray(table) || table.some((line) => typeof line !== 'string'))) {
+    throw new NotAGraph(`${path} is not a schedule: "table" is a list of lines, one per row.`);
+  }
+  if (Array.isArray(table) && table.length) graph.schedule = table as string[];
+  for (const node of graph.nodes) {
+    const given = size?.[node.id];
+    if (given?.width != null) node.width = Number(given.width);
+    if (given?.height != null) node.height = Number(given.height);
+  }
 }
 
 /** A JSON file that may be missing: `undefined` then. */
@@ -440,10 +444,9 @@ export function derivePorts(graph: Graph): Set<string> {
 /** A project folder, with every piece of writing read in from its file. */
 export async function readProject(folder: string, guard?: Guard): Promise<Graph> {
   const { graph, files } = await readStructure(folder, guard);
-  const layoutPath = join(folder, LAYOUT_FILE);
-  files.set(layoutPath, await signature(layoutPath));
-  // Without one, every node is put in a row rather than on top of each other.
-  applyLayout(graph, await readIfThere(layoutPath, 'layout', guard) ?? {});
+  const schedulePath = join(folder, SCHEDULE_FILE);
+  files.set(schedulePath, await signature(schedulePath));
+  applySchedule(graph, await readIfThere(schedulePath, 'schedule', guard), schedulePath);
   // Remembered like any other file: a save must not overwrite a node's
   // settings or ports that someone changed since.
   for (const [path, signed] of files) seen.set(path, signed);
@@ -480,7 +483,7 @@ export async function loadGraph(path: string, guard?: Guard): Promise<Graph> {
   if (folder) return readProject(folder, guard);
   if (!existsSync(full)) throw new NotFound(`Nothing at ${full}`);
   if (statSync(full).isDirectory()) {
-    const older = existsSync(join(full, 'flow.json')) ? ` It has a flow.json: that is the format of an older version. Rename flow.json, nodes.json, layout.json and page.json to ${FLOW_FILE}, ${NODES_FILE}, ${LAYOUT_FILE} and ${GUI_FILE}.` : '';
+    const older = existsSync(join(full, 'flow.json')) ? ` It has a flow.json: that is the format of an older version. Rename flow.json, nodes.json and page.json to ${FLOW_FILE}, ${NODES_FILE} and ${GUI_FILE}, and drop layout.json: the nodes are placed from their wires until there is a ${SCHEDULE_FILE}.` : '';
     throw new NotAGraph(`${full} is a folder without a ${FLOW_FILE}: not a project.${older}`);
   }
   await guard?.(full);

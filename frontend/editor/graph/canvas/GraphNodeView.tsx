@@ -1,13 +1,13 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Handle, Position, NodeProps, useStore, useUpdateNodeInternals } from 'reactflow';
+import { Handle, NodeResizeControl, Position, NodeProps, useStore, useUpdateNodeInternals } from 'reactflow';
 import type { RFNodeData } from '../../document/store/nodeData';
 import type { GraphNode, GuiWidget, NodeResult, Port } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
 import { takesNewInputs } from '../../document/model/wires';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { errorLine, portPreviews } from '../../document/elements/resultPreview';
-import { ACCENT, ACCENT_GLOW, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
 import { blocksAt } from '../../document/model/gui';
@@ -213,7 +213,10 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         border: `1px ${fileOver || takesWire ? 'dashed' : 'solid'} ${lit || fileOver || takesWire ? ACCENT : LINE}`,
         // The accent, doubled to two pixels without moving anything, and its glow.
         boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : undefined,
-        minWidth: 200, maxWidth: 260,
+        // As wide as its contents come to, between these -- unless it was made a size (`resizeCard`): then it is that.
+        ...(typeof graphNode.width === 'number' && typeof graphNode.height === 'number'
+          ? { width: '100%', height: '100%' }
+          : { minWidth: 200, maxWidth: 260 }),
       }}
     >
       {/* The run port: every node has it and no node declares it. A start
@@ -320,6 +323,22 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
             </div>
           )}
         </div>
+      )}
+
+      {/* A card chosen can be made bigger: the columns and rows after it move over (`resizeCard`). */}
+      {selected && (
+        <NodeResizeControl
+          position="bottom-right"
+          minWidth={200}
+          minHeight={60}
+          onResizeEnd={(_, size) => useGraphStore.getState().resizeCard(id, { width: size.width, height: size.height })}
+          style={{ background: 'transparent', border: 'none', width: 22, height: 22 }}
+        >
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style={{ position: 'absolute', right: 4, bottom: 4, fill: 'none', stroke: ACCENT_TEXT, strokeWidth: 1.8, strokeLinecap: 'round', cursor: 'nwse-resize' }}>
+            <title>Drag to resize</title>
+            <path d="M18 8L8 18M18 13L13 18" />
+          </svg>
+        </NodeResizeControl>
       )}
 
       {graphNode.inputs.map((port, index) => (

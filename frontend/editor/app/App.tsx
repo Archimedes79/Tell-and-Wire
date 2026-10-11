@@ -305,7 +305,8 @@ export default function App() {
   // -- a double-click opens it. The canvas brings it into sight (`viewDue`).
   const handleAddNode = useCallback(
     (nodeType: NodeType) => {
-      addNode(nodeType, placement(useGraphStore.getState().rfNodes));
+      const { table, rfNodes } = useGraphStore.getState();
+      addNode(nodeType, placement(table, rfNodes));
     },
     [addNode]
   );

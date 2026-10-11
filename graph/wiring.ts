@@ -14,6 +14,7 @@
 import type { Graph, GraphNode, Port } from './graph.ts';
 import type { Kinds } from './nodes/NodeDefinition.ts';
 import { port } from './nodes/port.ts';
+import { routeProblems, scheduleProblems } from './schedule.ts';
 import { RUN_PORT } from './triggers.ts';
 
 /** One thing to fix: where it is, what it is, and what to do about it. */
@@ -145,6 +146,7 @@ export function wiringProblems(graph: Graph, registry: Kinds): Problem[] {
       });
     }
   }
+  problems.push(...scheduleProblems(graph, registry), ...routeProblems(graph));
   return problems;
 }
 

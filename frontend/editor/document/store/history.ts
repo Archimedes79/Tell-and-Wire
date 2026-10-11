@@ -74,13 +74,16 @@ export function historyActions(
      */
     applyGraphSnapshot: (json, keepEditing = false) => {
       const graph = normalizeGraph(JSON.parse(json) as Graph);
-      const { rfNodes, rfEdges } = buildReactFlowGraph(graph);
+      const { rfNodes, rfEdges, table } = buildReactFlowGraph(graph);
       // Whatever came next is not a continuation of what was typed before.
       endCoalescing();
       set((state) => {
         state.metadata = graph.metadata;
         state.rfNodes = rfNodes as never;
         state.rfEdges = rfEdges;
+        state.table = table;
+        state.aim = null;
+        state.pulling = null;
         state.gui = (graph.gui?.blocks ?? []) as never;
         // Everything that names a node of the graph that was here. Left
         // standing, each points at something that may not exist any more: a

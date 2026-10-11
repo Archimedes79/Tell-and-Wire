@@ -25,7 +25,7 @@ export type { DataType, FormatGraph, ExecutionResult, GraphEdge, GuiWidget, Node
  * loose shape a ReactFlow edge satisfies, handles possibly null. Not the saved
  * `GraphEdge`, whose fields are named for the file.
  */
-export type Wire = { source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null };
+export type Wire = { source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null; data?: { via?: string[] } };
 
 export type AIProvider =
   'default' | 'ollama' | 'openai' | 'openai_compatible' | 'anthropic' | 'lmstudio' | 'google' | 'github_copilot';
@@ -37,6 +37,8 @@ export interface Graph {
   metadata: GraphMetadata;
   nodes: GraphNode[];
   edges: GraphEdge[];
+  /** The schedule: the rows of its table of cells (`graph/schedule.ts`). */
+  schedule?: string[];
   /** The gui the graph is used through: its blocks, which connect themselves to its start and end points by name. None, for a graph without one. */
   gui?: Gui;
 }

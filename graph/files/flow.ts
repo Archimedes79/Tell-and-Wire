@@ -4,9 +4,13 @@
 //       "name": "Population plotter",
 //       "wires": [
 //         "pick.data -> chart.request",
-//         "chart.figure -> plot.value"
+//         "chart.figure -> plot.value via C2"
 //       ]
 //     }
+//
+// A wire that is drawn round the cards says the cells it goes through after "via", named as
+// a spreadsheet names them -- a column by letter, a row by number -- in the table of
+// `graph-schedule.json`. How it is drawn, and nothing a run does.
 //
 // The one file that says how a graph runs, read in one glance. What a node is
 // -- its kind, heading, text, settings and ports -- is `graph-nodes.json`'s, and a
@@ -17,17 +21,25 @@ import { defaultMetadata, isStruct, parseGraph, type Graph, type GraphEdge, type
 import { NotAGraph } from '../errors.ts';
 import type { Problem } from '../wiring.ts';
 import { nodesFrom, sorted } from './nodesFile.ts';
+import { parseCell } from '../schedule.ts';
 import { folderName } from './names.ts';
 
 export const FLOW_FILE = 'graph-flow.json';
 
-/** A wire, as the flow writes it: `from.port -> to.port`. It is also the edge's id. */
+/** A wire, as the flow writes it: `from.port -> to.port`. It is also the edge's id -- the route is not part of it. */
 export function wireOf(edge: GraphEdge): string {
   return `${edge.source_node_id}.${edge.source_port_id} -> ${edge.target_node_id}.${edge.target_port_id}`;
 }
 
+/** A wire with its route, as a line of the flow: `from.port -> to.port via C2 D1`. */
+export function wireLine(edge: GraphEdge): string {
+  return edge.via?.length ? `${wireOf(edge)} via ${edge.via.join(' ')}` : wireOf(edge);
+}
+
 function edgeOf(wire: unknown, path: string): GraphEdge {
-  const text = String(wire);
+  const [text, route] = String(wire).split(/\s+via\s+/);
+  const via = route === undefined ? [] : route.trim().split(/\s+/);
+  if (via.some((cell) => !parseCell(cell))) throw new NotAGraph(`${path}: "${String(wire)}" goes via something that is not a cell. Name cells as a spreadsheet does: C2.`);
   const sides = text.split('->').map((side) => side.trim());
   const end = (side: string | undefined): [string, string] | null => {
     const dot = side ? side.indexOf('.') : -1;
@@ -39,7 +51,7 @@ function edgeOf(wire: unknown, path: string): GraphEdge {
     throw new NotAGraph(`${path}: "${text}" is not a wire. Write it as "node.port -> node.port".`);
   }
   const edge = { id: '', source_node_id: from[0], source_port_id: from[1], target_node_id: to[0], target_port_id: to[1] };
-  return { ...edge, id: wireOf(edge) };
+  return { ...edge, id: wireOf(edge), ...(via.length ? { via } : {}) };
 }
 
 /** The graph's settings, with every one still at its default left out: the flow says what is particular. */
@@ -60,6 +72,7 @@ function unwritable(name: string): string {
   if (!name.trim()) return 'is empty';
   if (name !== name.trim()) return 'starts or ends with a space';
   if (name.includes('->')) return 'has "->" in it, which is what a wire is written with';
+  if (/\svia\s/.test(name)) return 'has " via " in it, which is what the route of a wire is written with';
   return '';
 }
 
@@ -104,7 +117,7 @@ export function flowOf(graph: Graph): Record<string, unknown> {
   if (unsavable) throw new NotAGraph(`${unsavable.where}: ${unsavable.problem} ${unsavable.fix}`);
   return {
     ...particular(graph.metadata),
-    wires: graph.edges.map(wireOf),
+    wires: graph.edges.map(wireLine),
   };
 }
 

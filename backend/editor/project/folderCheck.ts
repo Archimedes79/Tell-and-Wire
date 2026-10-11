@@ -14,7 +14,7 @@ import { names, type Problem } from '../../../graph/wiring.ts';
 import { FLOW_FILE } from '../../../graph/files/flow.ts';
 import { NODES_FILE } from '../../../graph/files/nodesFile.ts';
 import {
-  LAYOUT_FILE, NODES_DIR, isProjectFolder, loadGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  SCHEDULE_FILE, NODES_DIR, isProjectFolder, loadGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readStructure,
 } from '../../deployment/project/folder.ts';
 import { problemsIn } from '../../../gui/editor/check.ts';
@@ -44,13 +44,13 @@ export async function folderProblems(folder: string): Promise<Problem[]> {
   }
 
   // A node that holds a graph holds a project folder: its own graph-flow.json,
-  // graph-nodes.json and graph-layout.json belong there, and what is under them is that
+  // graph-nodes.json and graph-schedule.json belong there, and what is under them is that
   // project's, looked at below by the same function.
   const nested = new Set<string>();
   for (const { folder: dir } of nestedGraphs(graph)) {
     nested.add(dir);
     // Every node's folder is in `expected` already, from the loop above.
-    for (const name of [FLOW_FILE, NODES_FILE, LAYOUT_FILE]) expected.get(dir)!.add(name);
+    for (const name of [FLOW_FILE, NODES_FILE, SCHEDULE_FILE]) expected.get(dir)!.add(name);
   }
 
   const walk = async (relative: string): Promise<void> => {

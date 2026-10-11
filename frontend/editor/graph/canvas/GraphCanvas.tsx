@@ -11,6 +11,7 @@ import ReactFlow, {
   EdgeChange,
   BackgroundVariant,
   ReactFlowInstance,
+  Panel,
   getNodesBounds,
   getViewportForBounds,
   useStore,
@@ -22,6 +23,14 @@ import { NODE_BUILDERS } from '../../document/elements/registry';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
 import QuickPick from '../../../deployment/gui/kit/ui/QuickPick';
 import GraphNodeView from './GraphNodeView';
+import RoutedEdge from './RoutedEdge';
+import ScheduleLayer from './ScheduleLayer';
+import ThinOut from './ThinOut';
+import { useGlide } from './useGlide';
+import { NEW, nodesOf } from '../../document/store/scheduleActions';
+import { sizesOf } from '../../document/model/graphDoc';
+import { CARD, gridOf, topLeft } from '../../document/model/scheduleLayout';
+import { cellName, parseCell } from '../../../../graph/schedule.ts';
 import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
@@ -30,6 +39,7 @@ import { LINE, MUTED, PANEL, SUNKEN, SURFACE } from '../../../deployment/gui/kit
 import { scheme } from '../../../deployment/gui/kit/ui/scheme';
 
 const nodeTypes = { graphNode: GraphNodeView };
+const edgeTypes = { routed: RoutedEdge };
 
 /**
  * What a wire let go on empty canvas can lead to: each kind the palette offers
@@ -66,11 +76,43 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   const lit = useGraphStore((s) => s.rfNodes.filter((n) => n.selected).map((n) => n.id).join('\n'));
   // The passive outputs of the nodes, as one string too: a wire from one is drawn dotted.
   const passive = useGraphStore((s) => s.rfNodes.flatMap((n) => n.data.graphNode.outputs.filter((port) => port.passive).map((port) => `${n.id}\n${port.id}`)).join('\u0000'));
+  // Where the wires are drawn through: the centres of the cells a route names -- and, for the wire
+  // being pulled, the cell it would go through. Followed through the columns that slide over.
+  const table = useGraphStore((s) => s.table);
+  const opens = useGraphStore((s) => s.aim?.opens ?? null);
+  const pulling = useGraphStore((s) => s.pulling);
+  const sized = useGraphStore((s) => s.rfNodes.map((n) => `${n.id}:${n.data.graphNode.width ?? ''}x${n.data.graphNode.height ?? ''}`).join('|'));
   const edges = useMemo(() => {
     const selected = new Set(lit.split('\n'));
     const reads = new Set(passive ? passive.split('\u0000') : []);
-    return rfEdges.map((edge) => drawnWire(edge, selected, reads));
-  }, [rfEdges, lit, passive]);
+    const grid = gridOf(table, sizesOf(nodesOf(useGraphStore.getState())), { column: opens, row: !!pulling });
+    return rfEdges.map((edge) => {
+      const named = pulling?.edge === edge.id ? (pulling.cell ? [cellName(pulling.cell.column, pulling.cell.row)] : []) : (edge.data?.via as string[] | undefined) ?? [];
+      const points = named.flatMap((name) => {
+        const cell = parseCell(name);
+        const column = cell && grid.cols[opens !== null && cell.column >= opens ? cell.column + 1 : cell.column];
+        const row = cell && grid.rows[cell.row];
+        return column && row ? [{ x: column.centre, y: row.centre }] : [];
+      });
+      return { ...drawnWire(edge, selected, reads), type: 'routed', data: { points, lit: selected.has(edge.source) || selected.has(edge.target) } };
+    });
+    // `sized` stands for the sizes the grid is worked out from.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rfEdges, lit, passive, table, opens, pulling, sized]);
+
+  // A card in the hand is drawn pulled toward the cell it would land on; the others glide to where the table puts them.
+  const aim = useGraphStore((s) => s.aim);
+  const documentId = useGraphStore((s) => s.document);
+  const hand = useMemo(() => {
+    if (!aim?.target || aim.id === NEW) return null;
+    const sizes = sizesOf(nodesOf(useGraphStore.getState()));
+    const grid = gridOf(table, sizes, { column: aim.opens, row: true });
+    const column = grid.cols[aim.target.column];
+    const row = grid.rows[aim.target.r];
+    return column && row ? { id: aim.id, ...topLeft({ x: column.centre, y: row.centre }, sizes.get(aim.id)) } : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aim, table, sized]);
+  const shown = useGlide(rfNodes, documentId, hand);
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [rfInstance, setRfInstance] = React.useState<ReactFlowInstance | null>(null);
@@ -195,14 +237,13 @@ export default function GraphCanvas({ active }: { active: boolean }) {
       const nodeType = event.dataTransfer.getData('application/nodeType') as NodeType;
       if (!nodeType) return;
 
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = rfInstance.project({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      });
-
+      // Where it was held over: the cell it was pulled to, a column of its own between two columns.
+      const held = useGraphStore.getState().aim;
+      const at = held?.id === NEW && held.target
+        ? held.target
+        : rfInstance.screenToFlowPosition({ x: event.clientX - CARD.width / 2, y: event.clientY - CARD.height / 2 });
       // Chosen, as a palette click adds one.
-      useGraphStore.getState().addNode(nodeType, position);
+      useGraphStore.getState().addNode(nodeType, at);
     },
     [rfInstance]
   );
@@ -210,6 +251,14 @@ export default function GraphCanvas({ active }: { active: boolean }) {
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
+    // A node from the palette is held like a card: the cell it would land on lights up.
+    if (rfInstance && event.dataTransfer.types.includes('application/nodetype')) {
+      useGraphStore.getState().aimCard(NEW, rfInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY }));
+    }
+  }, [rfInstance]);
+
+  const onDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) useGraphStore.getState().clearAim();
   }, []);
 
   return (
@@ -234,13 +283,27 @@ export default function GraphCanvas({ active }: { active: boolean }) {
       }}
     >
       <ReactFlow
-        nodes={rfNodes}
+        nodes={shown}
         edges={edges}
+        edgeTypes={edgeTypes}
         // A drag reports a position change per frame, so its undo step comes
         // from onNodeDragStart instead. Nothing is removed through here: the
-        // canvas's Delete is its own (`deleteKeyCode` below).
-        onNodesChange={(changes: NodeChange[]) => setRFNodes(applyNodeChanges(changes, rfNodes) as typeof rfNodes)}
+        // canvas's Delete is its own (`deleteKeyCode` below). Applied to the
+        // nodes as they are now, not as the last drawing had them: the cards
+        // that slide over while one is held are moved meanwhile.
+        onNodesChange={(changes: NodeChange[]) => setRFNodes(applyNodeChanges(changes, useGraphStore.getState().rfNodes) as typeof rfNodes)}
         onNodeDragStart={() => commit()}
+        // Held, a card is pulled toward the cell it would land on, and the space between two columns opens a column for it;
+        // let go, it is put there as one change of the table. Dragged along with others it only springs back.
+        onNodeDrag={(_, node, dragged) => {
+          if (dragged.length > 1) return;
+          const size = sizesOf(nodesOf(useGraphStore.getState())).get(node.id) ?? { width: CARD.width, height: CARD.height };
+          useGraphStore.getState().aimCard(node.id, { x: node.position.x + size.width / 2, y: node.position.y + size.height / 2 });
+        }}
+        onNodeDragStop={(_, node, dragged) => {
+          if (dragged.length > 1) useGraphStore.getState().clearAim();
+          else useGraphStore.getState().dropCard(node.id);
+        }}
         // A drag begins once the node moves, not when the button goes down:
         // at ReactFlow's 0 every click on a node began one, and so was an
         // undo step -- Redo thrown away, and the next Ctrl+Z undoing nothing.
@@ -268,6 +331,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
         onInit={setRfInstance}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
         // ReactFlow's Delete took a node's wires before it asked about the
         // node, one undo step each: the wrapper above handles the key instead.
         deleteKeyCode={null}
@@ -282,6 +346,10 @@ export default function GraphCanvas({ active }: { active: boolean }) {
           size={1.2}
           color={LINE}
         />
+        <ScheduleLayer />
+        <Panel position="top-right">
+          <ThinOut />
+        </Panel>
         <Controls
           style={PANEL}
         />
