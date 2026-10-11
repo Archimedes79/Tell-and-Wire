@@ -23,7 +23,7 @@ export function fieldSender(graph: Graph, name: string, field: string): Widget |
 }
 
 /** The graph's start points (and who starts each), end points and memory nodes, by name, as its nodes offer them: what a block may name. */
-function points(graph: Graph, registry: Kinds): { starts: Map<string, string>; ends: Set<string>; states: Set<string> } {
+export function points(graph: Graph, registry: Kinds): { starts: Map<string, string>; ends: Set<string>; states: Set<string> } {
   const { event, output, state } = offered(graph, registry);
   return {
     starts: new Map([...event].map(([name, { offer }]): [string, string] => [name, offer.startedBy ?? 'gui'])),
