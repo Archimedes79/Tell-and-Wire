@@ -319,6 +319,9 @@ export default function GraphCanvas({ active }: { active: boolean }) {
         nodes={shown}
         edges={edges}
         edgeTypes={edgeTypes}
+        // The canvas stays mounted, hidden, while a node or the GUI is open: it has no size then, which
+        // React Flow warns of (004) at every visit -- known and meant, so not said; anything else is.
+        onError={(code, message) => { if (code !== '004') console.warn(message); }}
         // A drag reports a position change per frame, so its undo step comes
         // from dropCard instead, when it changes the table. Nothing is removed through here: the
         // canvas's Delete is its own (`deleteKeyCode` below). Applied to the
