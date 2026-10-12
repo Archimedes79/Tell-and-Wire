@@ -128,8 +128,10 @@ describe('running a window', () => {
 
   it('counts a round in which a node had nothing to do as not run: the window after it would only be handed that', async () => {
     const idle = { node_id: 'summarize_summary', status: 'skipped' as const, inputs: {}, outputs: {}, error: null };
-    expect(succeeded(snapshot('a', { result: { status: 'success', node_results: [idle], outputs: {} } }))).toBe(false);
-    expect(succeeded(snapshot('b', { result: { status: 'success', node_results: [{ ...idle, held: true }], outputs: {} } }))).toBe(true);
+    expect(succeeded(snapshot('a', { result: { status: 'success', node_results: [idle], outputs: {} } }), 'summarize')).toBe(false);
+    expect(succeeded(snapshot('b', { result: { status: 'success', node_results: [{ ...idle, held: true }], outputs: {} } }), 'summarize')).toBe(true);
+    // Another window's node idle in the same round is not this window's doing.
+    expect(succeeded(snapshot('c', { result: { status: 'success', node_results: [idle], outputs: {} } }), 'english')).toBe(true);
   });
 
   it('stops where a question is waiting, and where no round began', async () => {

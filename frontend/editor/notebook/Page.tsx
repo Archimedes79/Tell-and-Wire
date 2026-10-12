@@ -17,8 +17,8 @@ const KIND_WORDS: [BlockKind, string][] = [['p', 'Text'], ['h1', 'Heading 1'], [
 const ADD_WORDS: [BlockKind, string][] = [...KIND_WORDS, ['window', 'Window']];
 
 /** A box of text as tall as its text. */
-function Text({ block, onChange, onKeyDown }: {
-  block: PageBlock;
+function Text({ part, onChange, onKeyDown }: {
+  part: PageBlock;
   onChange: (text: string) => void;
   onKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }) {
@@ -28,21 +28,21 @@ function Text({ block, onChange, onKeyDown }: {
     if (!node) return;
     node.style.height = 'auto';
     node.style.height = `${node.scrollHeight}px`;
-  }, [block.text, block.kind]);
+  }, [part.text, part.kind]);
   return (
     <textarea
-      ref={box} rows={1} className={`nb-text ${block.kind}`} value={block.text ?? ''} placeholder={PLACEHOLDER[block.kind]} spellCheck
-      aria-label={KIND_WORDS.find(([kind]) => kind === block.kind)?.[1] ?? 'Text'}
+      ref={box} rows={1} className={`nb-text ${part.kind}`} value={part.text ?? ''} placeholder={PLACEHOLDER[part.kind]} spellCheck
+      aria-label={KIND_WORDS.find(([kind]) => kind === part.kind)?.[1] ?? 'Text'}
       onChange={(event) => onChange(event.target.value)} onKeyDown={onKeyDown}
     />
   );
 }
 
 /** The place between two blocks where another is put. */
-function AddRow({ onAdd }: { onAdd: (kind: BlockKind) => void }) {
+function AddRow({ onAdd, where }: { onAdd: (kind: BlockKind) => void; where: 'above' | 'below' }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={`nb-add${open ? ' open' : ''}`} onMouseLeave={() => setOpen(false)}>
+    <div className={`nb-add ${where}${open ? ' open' : ''}`} onMouseLeave={() => setOpen(false)}>
       <button type="button" className="plus" aria-label="Add a block here" aria-expanded={open} onClick={() => setOpen(!open)}>+</button>
       {open && (
         <div className="menu" role="menu">
@@ -75,7 +75,7 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   if (!writing) {
     return (
       <div className="nb-sheet nb-read">
-        <div className="nb-flow">{page.map((block) => <Block key={block.id} block={block} index={0} doc={doc} writing={false} />)}</div>
+        <div className="nb-flow">{page.map((part) => <Block key={part.id} part={part} index={0} doc={doc} writing={false} />)}</div>
       </div>
     );
   }
@@ -103,30 +103,30 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
     edit((one) => addBlock(one, kind, at));
   };
 
-  const type = (block: PageBlock, text: string): void => {
+  const type = (part: PageBlock, text: string): void => {
     // Markdown as it is typed: a heading or a bullet begins a line.
-    const made = block.kind === 'p' ? /^(#{1,2}) (.*)$/s.exec(text) ?? /^([-*]) (.*)$/s.exec(text) : null;
+    const made = part.kind === 'p' ? /^(#{1,2}) (.*)$/s.exec(text) ?? /^([-*]) (.*)$/s.exec(text) : null;
     if (made) {
       const kind: BlockKind = made[1] === '#' ? 'h1' : made[1] === '##' ? 'h2' : 'ul';
-      focus.current = { id: block.id, end: true };
-      edit((one) => patchBlock(setKind(one, block.id, kind), block.id, { text: made[2] }));
+      focus.current = { id: part.id, end: true };
+      edit((one) => patchBlock(setKind(one, part.id, kind), part.id, { text: made[2] }));
       return;
     }
-    edit((one) => patchBlock(one, block.id, { text }), `text-${block.id}`);
+    edit((one) => patchBlock(one, part.id, { text }), `text-${part.id}`);
   };
 
-  const keys = (block: PageBlock, index: number) => (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+  const keys = (part: PageBlock, index: number) => (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     const box = event.currentTarget;
-    const text = block.text ?? '';
+    const text = part.text ?? '';
     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
-      if (block.kind === 'ul') {
+      if (part.kind === 'ul') {
         const lines = text.split('\n');
         const line = text.slice(0, box.selectionStart).split('\n').length - 1;
         // An empty last item ends the list, as it does in every editor.
         if (lines[line] === '' && line === lines.length - 1) {
           event.preventDefault();
           focus.current = { id: freshBlockId(page), end: true };
-          edit((one) => addBlock(patchBlock(one, block.id, { text: lines.slice(0, -1).join('\n') }), 'p', index + 1));
+          edit((one) => addBlock(patchBlock(one, part.id, { text: lines.slice(0, -1).join('\n') }), 'p', index + 1));
         }
         return;
       }
@@ -136,7 +136,7 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
       event.preventDefault();
       const before = page[index - 1];
       if (before && before.kind !== 'window') focus.current = { id: before.id, end: true };
-      edit((one) => removeBlock(one, block.id));
+      edit((one) => removeBlock(one, part.id));
     } else if (event.key === 'ArrowUp' && box.selectionStart === 0 && box.selectionEnd === 0) {
       neighbour(box, -1);
     } else if (event.key === 'ArrowDown' && box.selectionStart === text.length) {
@@ -147,11 +147,10 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   return (
     <div className="nb-sheet">
       <div className="nb-flow">
-        <AddRow onAdd={(kind) => add(kind, 0)} />
-        {page.map((block, index) => (
+        {page.map((part, index) => (
           <Block
-            key={block.id} block={block} index={index} doc={doc} writing
-            last={index === page.length - 1} onType={(text) => type(block, text)} onKeys={keys(block, index)} onAdd={(kind) => add(kind, index + 1)}
+            key={part.id} part={part} index={index} doc={doc} writing
+            last={index === page.length - 1} onType={(text) => type(part, text)} onKeys={keys(part, index)} onAdd={(kind) => add(kind, index + 1)} onAddAbove={(kind) => add(kind, index)}
           />
         ))}
       </div>
@@ -169,8 +168,8 @@ function neighbour(from: HTMLTextAreaElement, by: -1 | 1): void {
   next.setSelectionRange(at, at);
 }
 
-function Block({ block, index, doc, writing, last, onType, onKeys, onAdd }: {
-  block: PageBlock;
+function Block({ part, index, doc, writing, last, onType, onKeys, onAdd, onAddAbove }: {
+  part: PageBlock;
   index: number;
   doc: Windows;
   writing: boolean;
@@ -178,45 +177,45 @@ function Block({ block, index, doc, writing, last, onType, onKeys, onAdd }: {
   onType?: (text: string) => void;
   onKeys?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onAdd?: (kind: BlockKind) => void;
+  onAddAbove?: (kind: BlockKind) => void;
 }) {
   const { edit } = useNotebook.getState();
-  const window = block.kind === 'window' ? doc.windows.find((one) => one.id === block.window) : undefined;
+  const window = part.kind === 'window' ? doc.windows.find((one) => one.id === part.window) : undefined;
 
   if (!writing) {
-    if (block.kind === 'window') return window ? <div className="nb-block win" style={sizeOf(window.span)}><WindowBox window={window} writing={false} /></div> : null;
-    if (block.kind === 'space') return <div className="nb-block"><div className="nb-space" /></div>;
-    const text = block.text ?? '';
+    if (part.kind === 'window') return window ? <div className="nb-part win" style={sizeOf(window.span)}><WindowBox window={window} writing={false} /></div> : null;
+    if (part.kind === 'space') return <div className="nb-part"><div className="nb-space" /></div>;
+    const text = part.text ?? '';
     return (
-      <div className="nb-block">
-        {block.kind === 'h1' ? <h1>{text}</h1> : block.kind === 'h2' ? <h2>{text}</h2>
-          : block.kind === 'ul' ? <ul>{text.split('\n').filter(Boolean).map((line, at) => <li key={at}>{line}</li>)}</ul> : <p>{text}</p>}
+      <div className="nb-part">
+        {part.kind === 'h1' ? <h1>{text}</h1> : part.kind === 'h2' ? <h2>{text}</h2>
+          : part.kind === 'ul' ? <ul>{text.split('\n').filter(Boolean).map((line, at) => <li key={at}>{line}</li>)}</ul> : <p>{text}</p>}
       </div>
     );
   }
 
   const bar = (
     <div className="nb-tools" role="toolbar" aria-label="Block">
-      {block.kind !== 'window' && (
-        <select aria-label="Kind of block" value={block.kind} onChange={(event) => edit((one) => setKind(one, block.id, event.target.value as BlockKind))}>
+      {part.kind !== 'window' && (
+        <select aria-label="Kind of block" value={part.kind} onChange={(event) => edit((one) => setKind(one, part.id, event.target.value as BlockKind))}>
           {KIND_WORDS.map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}
         </select>
       )}
-      <button aria-label="Move up" title="Move up" disabled={index === 0} onClick={() => edit((one) => moveBlock(one, block.id, -1))}>▲</button>
-      <button aria-label="Move down" title="Move down" disabled={last} onClick={() => edit((one) => moveBlock(one, block.id, 1))}>▼</button>
-      <button aria-label={window ? 'Remove window' : 'Remove block'} title={window ? 'Remove this window' : 'Remove'} onClick={() => edit((one) => (window ? removeWindow(one, window.id) : removeBlock(one, block.id)))}>✕</button>
+      <button aria-label="Move up" title="Move up" disabled={index === 0} onClick={() => edit((one) => moveBlock(one, part.id, -1))}>▲</button>
+      <button aria-label="Move down" title="Move down" disabled={last} onClick={() => edit((one) => moveBlock(one, part.id, 1))}>▼</button>
+      <button aria-label={window ? 'Remove window' : 'Remove block'} title={window ? 'Remove this window' : 'Remove'} onClick={() => edit((one) => (window ? removeWindow(one, window.id) : removeBlock(one, part.id)))}>✕</button>
     </div>
   );
 
   return (
-    <>
-      <div className={`nb-block${window ? ' win' : ''}`} data-block={block.id} style={window ? sizeOf(window.span) : undefined}>
+      <div className={`nb-block${window ? ' win' : ''}`} data-block={part.id} style={window ? sizeOf(window.span) : undefined}>
+        {index === 0 && <AddRow where="above" onAdd={onAddAbove!} />}
         {bar}
         {window && <WindowBox window={window} writing />}
-        {block.kind === 'space' && <div className="nb-space" aria-label="Gap" />}
-        {block.kind !== 'window' && block.kind !== 'space' && <Text block={block} onChange={onType!} onKeyDown={onKeys!} />}
+        {part.kind === 'space' && <div className="nb-space" aria-label="Gap" />}
+        {part.kind !== 'window' && part.kind !== 'space' && <Text part={part} onChange={onType!} onKeyDown={onKeys!} />}
+        <AddRow where="below" onAdd={onAdd!} />
       </div>
-      <AddRow onAdd={onAdd!} />
-    </>
   );
 }
 

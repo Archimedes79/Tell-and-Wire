@@ -62,11 +62,12 @@ function roundOver(previous: string | null): Promise<RoundSnapshot | null> {
 }
 
 /**
- * Whether a round ended well: it ran to its end, its graph said success, and no node of it had nothing to do -- an input left
- * empty is a window that did nothing, and the window after it would only be handed that.
+ * Whether a round of window *id* ended well: it ran to its end, its graph said success, and no node of the window had nothing
+ * to do -- an input left empty is a window that did nothing, and the window after it would only be handed that. The nodes of the
+ * other windows are in the round too, standing idle, and are not its business: a node is the window's by its id (`<window>_...`).
  */
-export const succeeded = (round: RoundSnapshot): boolean => !round.cancelled && !round.error && round.result?.status === 'success'
-  && !round.result.node_results.some((one) => one.status === 'skipped' && !one.held);
+export const succeeded = (round: RoundSnapshot, id: string): boolean => !round.cancelled && !round.error && round.result?.status === 'success'
+  && !round.result.node_results.some((one) => one.status === 'skipped' && !one.held && (one.node_id === id || one.node_id.startsWith(`${id}_`)));
 
 /**
  * Run window *id* and, before it, every window it needs that is not current.
@@ -100,7 +101,7 @@ export async function runWindows(args: {
       await new Promise((tick) => setTimeout(tick, 0));
       if (asking?.()) break;
       const ended = await roundOver(before);
-      if (!ended || !succeeded(ended)) break;
+      if (!ended || !succeeded(ended, window.id)) break;
       useWindowRuns.setState((state) => ({ runs: recorded(state.runs, window, (blockId) => used[blockId]) }));
       done.push(window.id);
       useWindowRuns.setState({ going: plan.slice(done.length) });

@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+
 // A chart, drawn here: bars, columns, a line or a donut from `{ kind, title, points: [{ label, value }] }` -- or SVG a step
 // wrote, shown as a picture (so nothing in it runs).
 
@@ -37,23 +39,36 @@ function figureOf(data: unknown): Figure | null {
 }
 
 export default function Chart({ data }: { data: unknown }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 400, h: 200 });
+  // Drawn at the size of the box it is in, in its pixels, so a wide box gets a wide chart.
+  useLayoutEffect(() => {
+    const node = box.current;
+    if (!node) return;
+    const measure = () => setSize({ w: Math.max(160, node.clientWidth), h: Math.max(80, node.clientHeight) });
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const watch = new ResizeObserver(measure);
+    watch.observe(node);
+    return () => watch.disconnect();
+  }, []);
   if (typeof data === 'string' && data.trim().startsWith('<svg')) return <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(data)}`} style={{ maxWidth: '100%', maxHeight: '100%', margin: 'auto' }} />;
   const figure = figureOf(data);
   if (!figure) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>This is not something a chart can draw.</div>;
   if (!figure.points.length) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>{figure.title || 'Nothing to plot.'}</div>;
-  return <svg viewBox="0 0 400 260" preserveAspectRatio="xMidYMid meet" role="img" aria-label={figure.title || 'chart'}>{drawn(figure)}</svg>;
+  return <div ref={box} style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex' }}><svg width={size.w} height={size.h} viewBox={`0 0 ${size.w} ${size.h}`} role="img" aria-label={figure.title || 'chart'}>{drawn(figure, size.w, size.h)}</svg></div>;
 }
 
-function drawn(figure: Figure) {
+function drawn(figure: Figure, W: number, H: number) {
   const { points } = figure;
   const top = figure.title ? 28 : 8;
-  const title = figure.title && <text x="200" y="17" textAnchor="middle" fontSize="13" fontWeight="600" fill="#151a23">{figure.title}</text>;
+  const title = figure.title && <text x={W / 2} y="17" textAnchor="middle" fontSize="13" fontWeight="600" fill="#151a23">{figure.title}</text>;
   const max = Math.max(...points.map((one) => one.value), 0) || 1;
 
   if (figure.kind === 'donut') {
     const total = points.reduce((sum, one) => sum + Math.abs(one.value), 0) || 1;
     let angle = -Math.PI / 2;
-    const cx = 110, cy = top + 105, outer = 92, inner = 54;
+    const outer = Math.max(24, Math.min(H - top - 8, W * 0.5) / 2), inner = outer * 0.58, cx = outer + 12, cy = top + 4 + outer;
     return (
       <>
         {title}
@@ -66,7 +81,7 @@ function drawn(figure: Figure) {
           return <path key={at} d={d} fill={COLOURS[at % COLOURS.length]} />;
         })}
         {points.slice(0, 12).map((one, at) => (
-          <g key={at} transform={`translate(230 ${top + 6 + at * 17})`}>
+          <g key={at} transform={`translate(${cx + outer + 24} ${top + 12 + at * 17})`}>
             <rect width="10" height="10" y="-9" rx="2" fill={COLOURS[at % COLOURS.length]} />
             <text x="16" fontSize="11" fill="#151a23">{one.label.slice(0, 18)} · {short(one.value)}</text>
           </g>
@@ -77,14 +92,14 @@ function drawn(figure: Figure) {
 
   if (figure.kind === 'bars') {
     const shownPoints = points.slice(0, 24);
-    const height = (260 - top - 6) / shownPoints.length;
-    const left = 92;
+    const height = (H - top - 6) / shownPoints.length;
+    const left = Math.min(130, Math.max(70, W * 0.22));
     return (
       <>
         {title}
         {shownPoints.map((one, at) => {
           const y = top + at * height;
-          const width = Math.max(0, one.value / max) * (400 - left - 44);
+          const width = Math.max(0, one.value / max) * (W - left - 52);
           return (
             <g key={at}>
               <text x={left - 6} y={y + height / 2 + 4} textAnchor="end" fontSize={Math.min(11, height * 0.8)} fill="#566070">{one.label.slice(0, 16)}</text>
@@ -99,7 +114,7 @@ function drawn(figure: Figure) {
 
   // columns and line
   const shownPoints = points.slice(0, 40);
-  const left = 40, bottom = 232, width = 400 - left - 10, span = bottom - top;
+  const left = 44, bottom = H - 26, width = W - left - 12, span = bottom - top;
   const low = Math.min(0, ...shownPoints.map((one) => one.value));
   const range = max - low || 1;
   const y = (value: number) => bottom - ((value - low) / range) * span;
@@ -107,7 +122,7 @@ function drawn(figure: Figure) {
   return (
     <>
       {title}
-      <line x1={left} y1={bottom} x2={400 - 10} y2={bottom} stroke="#c7cdd8" />
+      <line x1={left} y1={bottom} x2={W - 12} y2={bottom} stroke="#c7cdd8" />
       <line x1={left} y1={top} x2={left} y2={bottom} stroke="#c7cdd8" />
       <text x={left - 4} y={top + 4} textAnchor="end" fontSize="10" fill="#566070">{short(max)}</text>
       <text x={left - 4} y={bottom} textAnchor="end" fontSize="10" fill="#566070">{short(low)}</text>

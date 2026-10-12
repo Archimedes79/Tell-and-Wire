@@ -116,7 +116,7 @@ export default function Cells({ doc, window }: { doc: Windows; window: Window })
             const key = inBlock(window, one);
             return (
               <InputRow
-                key={at} cellKey={key} window={window} one={one} others={others} lit={hot === key} first={at === 0} last={at === lastOf('inputs')} point={pointAt}
+                key={at} cellKey={key} one={one} others={others} lit={hot === key} first={at === 0} last={at === lastOf('inputs')} point={pointAt}
                 onName={(name) => edit((d) => renameInput(d, id, at, name), `in-name-${at}`)}
                 onPatch={(patch, name) => edit((d) => patchInput(d, id, at, patch), name && `${name}-${at}`)}
                 onUp={() => move({ list: 'inputs', at }, -1)} onDown={() => move({ list: 'inputs', at }, 1)} onRemove={() => remove({ list: 'inputs', at })}
@@ -215,8 +215,8 @@ function PathSetting({ kind, value, extensions, onChange }: { kind: 'file' | 'fo
   );
 }
 
-function InputRow({ cellKey, window, one, others, lit, first, last, point, onName, onPatch, onUp, onDown, onRemove }: {
-  cellKey: string; window: Window; one: WindowIn; others: Window[]; lit: boolean; first: boolean; last: boolean;
+function InputRow({ cellKey, one, others, lit, first, last, point, onName, onPatch, onUp, onDown, onRemove }: {
+  cellKey: string; one: WindowIn; others: Window[]; lit: boolean; first: boolean; last: boolean;
   point: (key: string | null) => void;
   onName: (name: string) => void; onPatch: (patch: Partial<WindowIn>, name?: string) => void;
   onUp: () => void; onDown: () => void; onRemove: () => void;
@@ -273,7 +273,6 @@ function InputRow({ cellKey, window, one, others, lit, first, last, point, onNam
       <Seg label="Width" value={one.width ?? 1} options={SHARES} onPick={(width) => onPatch({ width })} />
       {one.kind === 'text' && <Stepper label="Rows" value={one.rows ?? 2} onChange={(rows) => onPatch({ rows })} />}
       <Tools first={first} last={last} onUp={onUp} onDown={onDown} onRemove={onRemove} />
-      <span className="nb-note" style={{ flexBasis: '100%' }}>{window.span} cells wide window</span>
     </div>
   );
 }
@@ -315,7 +314,7 @@ function StepCell({ window, at, status, takes, bad, available, hasFolder, first,
           Done by
           <div className="nb-mini" role="group" aria-label="Done by">
             <button type="button" aria-pressed={step.how === 'ai'} onClick={() => onHow('ai')}>A model</button>
-            <button type="button" aria-pressed={step.how === 'code'} onClick={() => onHow('code')}>Code</button>
+            <button type="button" aria-pressed={step.how === 'code'} onClick={() => { setOpen(true); onHow('code'); }}>Code</button>
           </div>
         </span>
       </div>

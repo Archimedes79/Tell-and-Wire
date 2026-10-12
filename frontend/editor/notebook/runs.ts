@@ -42,9 +42,10 @@ async function hold(): Promise<void> {
 }
 
 /** How a round came out, and why it did not come to anything. */
-function outcomeOf(round: RoundSnapshot): { outcome: Outcome; message: string } {
+function outcomeOf(round: RoundSnapshot, id: string): { outcome: Outcome; message: string } {
   if (round.cancelled) return { outcome: 'stopped', message: '' };
-  const nodes = round.result?.node_results ?? [];
+  // The other windows' nodes are in the round too, and stand idle: only the window's own count.
+  const nodes = (round.result?.node_results ?? []).filter((node) => node.node_id === id || node.node_id.startsWith(`${id}_`));
   const failed = nodes.find((node) => node.status === 'error');
   if (round.error || round.result?.status === 'error' || failed) {
     return { outcome: 'failed', message: round.error || round.result?.error || failed?.error || 'It failed.' };
@@ -76,7 +77,7 @@ async function runOne(id: string): Promise<boolean> {
     await sleep(POLL_MS);
   }
   current = null;
-  const { outcome, message } = outcomeOf(round);
+  const { outcome, message } = outcomeOf(round, id);
   const view = await call('session', { session });
   const shown: Record<string, unknown> = {};
   for (const out of window.outputs) shown[outEnd(window, out)] = view.shown[outEnd(window, out)];
