@@ -6,7 +6,7 @@ import { indentWithTab, redo } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { ACCENT, LINE, SUNKEN, SURFACE, TEXT, HOVER } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, LINE, SURFACE, TEXT, HOVER } from '../../../deployment/gui/kit/ui/theme';
 import { scheme } from '../../../deployment/gui/kit/ui/scheme';
 import { useEditorScheme } from '../../document/store/editorScheme';
 import type { CodeLanguage } from './CodeField';
@@ -26,7 +26,8 @@ function lookFor(light: boolean) {
   // The scheme's own first: of two extensions that style the same thing, the earlier wins.
   return [
     EditorView.theme({
-      '&': { backgroundColor: SUNKEN, color: TEXT },
+      // A file is a card on the pane, like the rows beside it: the surface, with the frame below.
+      '&': { backgroundColor: SURFACE, color: TEXT },
       '.cm-gutters': { backgroundColor: SURFACE, color: 'var(--ui-dim)', border: 'none' },
       '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: HOVER },
       '.cm-cursor': { borderLeftColor: TEXT },

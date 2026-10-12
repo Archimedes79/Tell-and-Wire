@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SCHEMES } from './scheme';
+import { DEFAULT_SCHEME, SCHEMES, scheme } from './scheme';
+import { defaultMetadata } from '../../../../../graph/graph.ts';
 
 type Rgb = [number, number, number];
 
@@ -87,5 +88,22 @@ describe('colour schemes', () => {
     const grounds = SCHEMES.map((s) => [s.sunken, s.surface].join('/'));
     expect(new Set(grounds).size).toBe(SCHEMES.length);
     expect(SCHEMES.map((s) => s.id)).toEqual(['night', 'paper', 'white', 'graphite']);
+  });
+
+  it('keep White as designed: the values of docs/modern-white.md, so a change to them is meant', () => {
+    expect(scheme('white')).toMatchObject({
+      sunken: '#f4f5f7', surface: '#ffffff', line: '#d8dbe0',
+      text: '#1a1d23', muted: '#4a515c', dim: '#585e6a', dimmer: '#63676f',
+      accent: '#2563eb', accentText: '#1d4ed8', accentFill: 'rgba(37,99,235,0.08)', onAccent: '#ffffff',
+      success: '#15803d', danger: '#b42318', warning: '#b45309', event: '#b45309',
+      ink: { ai: '#6d28d9', code: '#0f766e', data: '#be185d', end: '#b45309', subgraph: '#475569', start: '#b45309' },
+    });
+  });
+
+  it('start in White: a tool that names none, and the default of the format, agree', () => {
+    expect(DEFAULT_SCHEME).toBe('white');
+    expect(scheme(undefined).id).toBe(DEFAULT_SCHEME);
+    expect(scheme('no-such-scheme').id).toBe(DEFAULT_SCHEME);
+    expect(defaultMetadata().gui_scheme).toBe(DEFAULT_SCHEME);
   });
 });

@@ -18,7 +18,7 @@ import { guiStarts } from '../../../graph/triggers.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
-import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../deployment/gui/kit/ui/theme';
+import { DANGER_TEXT, DIMMER, LINE, MUTED, SURFACE } from '../../deployment/gui/kit/ui/theme';
 
 /** Hand the server the document, so what runs is what is being edited. */
 const holdDocument = () => useGraphStore.getState().holdDocument();
@@ -120,7 +120,7 @@ export default function ApplicationView({ onShowNode }: { onShowNode: (nodeId: s
   const fire = useCallback((block: GuiWidget) => { void latest.current.run(design.fires[block.id], block.id); }, [design]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ ...schemeVars(metadata.gui_scheme), background: SUNKEN }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ ...schemeVars(metadata.gui_scheme), background: SURFACE }}>
       <DeliveredHeader
         name={metadata.name}
         description={metadata.description}

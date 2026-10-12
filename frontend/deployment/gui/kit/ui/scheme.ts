@@ -32,6 +32,13 @@
 
 export type SchemeId = 'night' | 'paper' | 'white' | 'graphite';
 
+/**
+ * The scheme of whoever, or whatever, names none: the editor of a person who has not chosen, and a
+ * tool whose file says nothing. `defaultMetadata` in `graph/graph.ts` repeats the id, as that
+ * package imports nothing of the frontend; `scheme.test.ts` keeps the two equal.
+ */
+export const DEFAULT_SCHEME: SchemeId = 'white';
+
 /** What a graph saved with a scheme that is no longer offered shows in: the nearest. */
 const LEGACY: Record<string, SchemeId> = { office: 'white', anthracite: 'graphite' };
 
@@ -180,7 +187,7 @@ export function plotColours(id: string | undefined): string[] {
 
 export function scheme(id: string | undefined): Scheme {
   const named = LEGACY[id ?? ''] ?? id;
-  return SCHEMES.find((s) => s.id === named) ?? SCHEMES[0];
+  return SCHEMES.find((s) => s.id === named) ?? SCHEMES.find((s) => s.id === DEFAULT_SCHEME) ?? SCHEMES[0];
 }
 
 /**

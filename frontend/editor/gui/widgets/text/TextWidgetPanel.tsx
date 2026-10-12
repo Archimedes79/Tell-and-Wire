@@ -27,7 +27,7 @@ export default function TextWidgetPanel({ widget, onUpdate }: WidgetPanelProps) 
           <Button
             key={style.role}
             size="sm"
-            variant={role === style.role ? 'primary' : 'secondary'}
+            variant={role === style.role ? 'tint' : 'secondary'}
             aria-pressed={role === style.role}
             title={style.title}
             onClick={() => onUpdate({ mode: style.role })}

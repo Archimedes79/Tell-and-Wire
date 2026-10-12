@@ -387,7 +387,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
         <Background
           variant={BackgroundVariant.Dots}
           gap={22}
-          size={1.2}
+          size={1.6}
           color={LINE}
         />
         <ScheduleLayer />

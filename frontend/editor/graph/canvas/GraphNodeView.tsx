@@ -241,7 +241,15 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       )}
 
       <div className="flex items-center gap-2 px-3.5 min-w-0" style={{ height: HEADER }}>
-        {Icon && <Icon size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" style={{ color: builder.ink }} />}
+        {Icon && (
+          // The kind: its icon in its ink, on a tile of the same ink at a seventh.
+          <span
+            className="shrink-0 flex items-center justify-center"
+            style={{ width: 24, height: 24, borderRadius: 7, background: `color-mix(in srgb, ${builder.ink} 14%, transparent)` }}
+          >
+            <Icon size={15} strokeWidth={2.1} aria-hidden="true" style={{ color: builder.ink }} />
+          </span>
+        )}
         <span className="flex-1 min-w-0 truncate text-sm font-semibold" style={{ color: TEXT }} title={tip}>
           {graphNode.label}
         </span>

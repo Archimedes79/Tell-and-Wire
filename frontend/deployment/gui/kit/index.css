@@ -50,7 +50,7 @@ html, body, #root {
 
 /* The map's shade over what is out of view, in the scheme's own. */
 .react-flow__minimap-mask {
-  fill: var(--ui-scrim, rgba(0,0,0,0.70));
+  fill: color-mix(in srgb, var(--ui-sunken, #0f1117) 72%, transparent);
 }
 
 /* Scrollbar styling */
@@ -97,6 +97,9 @@ button:disabled {
 /* `ui/Button.tsx`: what its variants do under the pointer, and disabled. */
 .btn:disabled { opacity: 0.5; }
 .btn-fill:not(:disabled):hover { filter: brightness(1.12); }
+/* The framed and the tinted look set their background inline, which beats a class: hence !important. */
+.btn-outline:not(:disabled):hover { background: color-mix(in srgb, var(--ui-text, #e2e8f0) 6%, var(--ui-surface, #1a1d2e)) !important; }
+.btn-tint:not(:disabled):hover { background: color-mix(in srgb, var(--ui-accent, #6164ec) 16%, transparent) !important; }
 .btn-danger:not(:disabled):hover { background: color-mix(in srgb, var(--ui-danger, #ef4444) 16%, transparent); }
 
 /* A palette tile, in both palettes (the gui's blocks, the graph's nodes): an

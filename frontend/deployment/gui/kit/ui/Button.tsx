@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { ACCENT, DANGER_TEXT, LINE, MUTED, ON_ACCENT, TEXT } from './theme';
+import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DANGER_TEXT, LINE, MUTED, ON_ACCENT, SURFACE, TEXT } from './theme';
 
 /**
  * The one button of dialogs, panels and the GUI: every `<button>` that is not
@@ -8,7 +8,9 @@ import { ACCENT, DANGER_TEXT, LINE, MUTED, ON_ACCENT, TEXT } from './theme';
  *
  * `variant`, how much it asks for:
  *  - `primary`   the one action of a dialog or panel: accent fill. One per footer.
- *  - `secondary` the default: a filled neutral button (Cancel, Browse, Stop).
+ *  - `secondary` the default: the surface with a thin frame (Cancel, Browse, Stop).
+ *  - `tint`      what the AI does (Auto generate, Rewrite all): the accent as a
+ *                tint with a frame of its own, so ▶ Run stays the only solid button.
  *  - `danger`    quiet, in the danger colour: Discard, and the 🗑 that deletes
  *                a node or a block. Never a red fill.
  *  - `quiet`     no fill: ✕ closers, icon buttons, a toggle that is off.
@@ -24,9 +26,9 @@ import { ACCENT, DANGER_TEXT, LINE, MUTED, ON_ACCENT, TEXT } from './theme';
  * button's.
  *
  * An icon-only button has no words: give it `aria-label` and `title`.
- * A toggle is `variant={on ? 'primary' : 'quiet'}` with `aria-pressed={on}`.
+ * A toggle is `variant={on ? 'tint' : 'quiet'}` with `aria-pressed={on}`: lit, not solid.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'quiet';
+export type ButtonVariant = 'primary' | 'secondary' | 'tint' | 'danger' | 'quiet';
 type ButtonSize = 'sm' | 'md';
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'style'> {
@@ -34,11 +36,13 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'sty
   size?: ButtonSize;
 }
 
+// Every look has a one-pixel frame, clear where it shows none, so all of them are of one size.
 const LOOK = {
-  primary: { style: { background: ACCENT, color: ON_ACCENT }, className: 'btn-fill font-semibold' },
-  secondary: { style: { background: LINE, color: TEXT }, className: 'btn-fill font-medium' },
-  danger: { style: { color: DANGER_TEXT }, className: 'btn-danger font-medium' },
-  quiet: { style: { color: MUTED }, className: 'hover-raise font-medium' },
+  primary: { style: { background: ACCENT, color: ON_ACCENT, borderColor: 'transparent' }, className: 'btn-fill font-semibold' },
+  secondary: { style: { background: SURFACE, color: TEXT, borderColor: LINE }, className: 'btn-outline font-medium' },
+  tint: { style: { background: ACCENT_FILL, color: ACCENT_TEXT, borderColor: `color-mix(in srgb, ${ACCENT} 35%, transparent)` }, className: 'btn-tint font-semibold' },
+  danger: { style: { color: DANGER_TEXT, borderColor: 'transparent' }, className: 'btn-danger font-medium' },
+  quiet: { style: { color: MUTED, borderColor: 'transparent' }, className: 'hover-raise font-medium' },
 } as const;
 
 const SIZE = { sm: 'px-2.5 py-1 text-xs', md: 'px-3 py-1.5 text-sm' } as const;
@@ -48,7 +52,7 @@ export default function Button({ variant = 'secondary', size = 'md', type = 'but
   return (
     <button
       type={type}
-      className={`btn rounded-lg ${look.className} ${SIZE[size]} ${className}`}
+      className={`btn rounded-lg border ${look.className} ${SIZE[size]} ${className}`}
       style={look.style}
       {...rest}
     />

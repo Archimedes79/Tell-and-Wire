@@ -213,7 +213,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
         <div className="flex-1 min-w-0 text-xl"><HeadingField heading={node.label} onChange={(label) => panel.change((current) => ({ ...current, label }))} /></div>
         {parts.length > 0 && (
           <Button
-            variant={shown.part === 'settings' ? 'primary' : 'quiet'}
+            variant={shown.part === 'settings' ? 'tint' : 'quiet'}
             size="sm"
             aria-pressed={shown.part === 'settings'}
             onClick={() => setOpen(SETTINGS)}
@@ -251,8 +251,9 @@ function Opened({ node, panel, onClose, onOpenGui }: {
       {parts.length > 0 && (
         <>
           <div>
-            {/* Not the accent: that is ▶ Run's, and this one replaces files. */}
+            {/* Tinted, not solid: the solid accent is ▶ Run's, and this one replaces files. */}
             <Button
+              variant="tint"
               className="w-full"
               onClick={() => void writing.press('all')}
               disabled={writing.generate.busy}

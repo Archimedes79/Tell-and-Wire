@@ -1,5 +1,4 @@
-import Button from '../../deployment/gui/kit/ui/Button';
-import { SUCCESS_TEXT } from '../../deployment/gui/kit/ui/theme';
+import { MUTED, SUCCESS_TEXT, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 export type EditorView = 'graph' | 'design' | 'app';
 
@@ -26,21 +25,32 @@ export default function ViewTabs({
   view, onChange, running = false,
 }: { view: EditorView; onChange: (view: EditorView) => void; running?: boolean }) {
   return (
-    <nav className="flex items-center gap-1 shrink-0" aria-label="Views">
+    // A segmented control: the views are one choice, so they sit in one track and the chosen one lifts out of it.
+    <nav
+      className="flex items-center gap-0.5 shrink-0 p-[3px] rounded-[10px]"
+      style={{ background: `color-mix(in srgb, ${TEXT} 7%, ${SURFACE})` }}
+      aria-label="Views"
+    >
       {VIEW_TABS.filter((tab) => tab.id !== 'app' || running).map((tab) => {
         const active = view === tab.id;
         return (
-          <Button
+          <button
             key={tab.id}
-            variant={active ? 'secondary' : 'quiet'}
-            className="h-9 whitespace-nowrap"
+            type="button"
+            className="h-[30px] px-4 rounded-lg text-sm whitespace-nowrap"
+            style={{
+              background: active ? SURFACE : 'transparent',
+              color: active ? TEXT : MUTED,
+              fontWeight: active ? 600 : 500,
+              boxShadow: active ? '0 1px 2px rgba(16,24,40,0.14)' : undefined,
+            }}
             onClick={() => onChange(tab.id)}
             title={tab.hint}
             aria-current={active ? 'page' : undefined}
           >
             {tab.id === 'app' && <span className="mr-1.5" style={{ color: SUCCESS_TEXT }} aria-hidden="true">●</span>}
             {tab.label}
-          </Button>
+          </button>
         );
       })}
     </nav>

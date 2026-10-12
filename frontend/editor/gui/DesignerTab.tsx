@@ -233,7 +233,8 @@ export default function DesignerTab() {
           // The GUI, in its own colour scheme: the editor around it keeps its own.
           style={{
             ...schemeVars(metadata.gui_scheme),
-            background: SUNKEN,
+            // The page is a surface, so its fields (sunken) sit in it, as they do in a deployed tool.
+            background: SURFACE,
             ...(dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : {}),
           }}
         >

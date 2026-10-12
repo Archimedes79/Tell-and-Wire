@@ -1,5 +1,5 @@
 import { Plus, RefreshCw } from 'lucide-react';
-import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, ON_ACCENT, RAISE, SUCCESS, SUCCESS_TEXT, TEXT, WARNING_FILL, WARNING_TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, RAISE, SUCCESS, SUCCESS_TEXT, TEXT, WARNING_FILL, WARNING_TEXT } from '../../../deployment/gui/kit/ui/theme';
 
 /** One button of a row. */
 export interface RowAction {
@@ -27,15 +27,15 @@ export interface RowView {
 export const at = (row: string, action: string): string => `${row}:${action}`;
 
 /** The mark on a file's button: filled where something is written in it. */
-function Written({ written, on }: { written: boolean; on?: boolean }) {
+function Written({ written }: { written: boolean }) {
   return (
     <span
       aria-hidden="true"
       title={written ? 'Written' : 'Empty'}
       style={{
         width: 7, height: 7, borderRadius: '50%', flex: 'none',
-        background: written ? (on ? ON_ACCENT : SUCCESS) : 'transparent',
-        border: `1.5px solid ${on ? ON_ACCENT : written ? SUCCESS : DIMMER}`,
+        background: written ? SUCCESS : 'transparent',
+        border: `1.5px solid ${written ? SUCCESS : DIMMER}`,
       }}
     />
   );
@@ -132,17 +132,19 @@ export default function RowList({ rows, active, onAction }: {
                     onClick={() => onAction(row, action)}
                     title={action.title}
                     aria-pressed={lit}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md text-sm hover-raise"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg text-sm hover-raise"
                     style={{
                       height: 32,
                       border: `1px solid ${lit ? ACCENT : LINE}`,
-                      background: lit ? ACCENT : 'transparent',
-                      color: lit ? ON_ACCENT : MUTED,
+                      // The one open is tinted, not filled: the only solid button is ▶ Run.
+                      background: lit ? ACCENT_FILL : 'transparent',
+                      color: lit ? ACCENT_TEXT : MUTED,
+                      boxShadow: lit ? `0 0 0 3px color-mix(in srgb, ${ACCENT} 14%, transparent)` : undefined,
                       fontWeight: lit ? 600 : 500,
                       opacity: action.disabled ? 0.5 : 1,
                     }}
                   >
-                    {action.written !== undefined && <Written written={action.written} on={lit} />}
+                    {action.written !== undefined && <Written written={action.written} />}
                     {action.label}
                   </button>
                 );

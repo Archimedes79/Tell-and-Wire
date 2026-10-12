@@ -9,7 +9,7 @@
 // handed to someone else is not made to look like anyone's editor.
 
 import { create } from 'zustand';
-import { SCHEMES, schemeVars, type SchemeId } from '../../../deployment/gui/kit/ui/scheme';
+import { DEFAULT_SCHEME, SCHEMES, schemeVars, type SchemeId } from '../../../deployment/gui/kit/ui/scheme';
 
 /** A scheme, or `auto`: Night while the system is dark, White while it is light. */
 export type EditorSchemeChoice = SchemeId | 'auto';
@@ -33,15 +33,15 @@ function systemIsLight(): boolean {
   }
 }
 
-/** What the browser remembers of the last choice; Night when it remembers none -- or cannot. */
+/** What the browser remembers of the last choice; White when it remembers none -- or cannot. */
 function remembered(): EditorSchemeChoice {
   try {
     const kept = localStorage.getItem(KEY);
     if (kept === 'auto' || SCHEMES.some((one) => one.id === kept)) return kept as EditorSchemeChoice;
   } catch {
-    // A browser that keeps nothing starts in Night.
+    // A browser that keeps nothing starts in White.
   }
-  return WHEN_DARK;
+  return DEFAULT_SCHEME;
 }
 
 /** What a scheme is painted on: the root element of a page, or anything that takes variables and a colour scheme. */
