@@ -4,7 +4,7 @@
 // default, a kind nobody knows means the plainest, a number out of range is brought into it. What
 // cannot be read at all is thrown as a `NotWindows`, saying what is wrong where.
 
-import { SIZES, idOf, type InKind, type OutKind, type Step, type Trigger, type Window, type WindowIn, type WindowOut, type Windows } from './windows.ts';
+import { SIZES, idOf, type BlockKind, type PageBlock, type InKind, type OutKind, type Step, type Trigger, type Window, type WindowIn, type WindowOut, type Windows } from './windows.ts';
 
 export class NotWindows extends Error {}
 
@@ -57,6 +57,21 @@ function outputOf(raw: unknown, where: string): WindowOut {
   };
 }
 
+const BLOCK_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul', 'space', 'window'];
+
+function pageOf(raw: unknown): PageBlock[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const blocks = raw.flatMap((one, at): PageBlock[] => {
+    if (!isObject(one) || !BLOCK_KINDS.includes(one.kind as BlockKind)) return [];
+    const kind = one.kind as BlockKind;
+    return [{
+      id: text(one.id).trim() || `b${at + 1}`, kind,
+      ...(kind === 'window' ? { window: text(one.window) } : kind === 'space' ? {} : { text: text(one.text) }),
+    }];
+  });
+  return blocks;
+}
+
 function triggerOf(raw: unknown): Trigger | undefined {
   if (!isObject(raw)) return undefined;
   return {
@@ -80,11 +95,13 @@ export function parseWindows(raw: unknown): Windows {
       steps: list(one.steps).map((step) => stepOf(step, `${where}, cell`)),
       outputs: list(one.outputs).map((output) => outputOf(output, `${where}, output`)),
       ...(trigger && Object.keys(trigger).length ? { trigger } : {}),
+      ...(text(one.ask).trim() ? { ask: text(one.ask).trim() } : {}),
     };
   });
   return {
     name: text(raw.name, 'Untitled tool'), description: text(raw.description),
     ...(text(raw.scheme) ? { scheme: text(raw.scheme) } : {}),
     windows,
+    ...(pageOf(raw.page) ? { page: pageOf(raw.page) } : {}),
   };
 }

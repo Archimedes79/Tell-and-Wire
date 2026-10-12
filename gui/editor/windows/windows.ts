@@ -91,6 +91,17 @@ export interface WindowOut {
   of?: string;
 }
 
+/** What a block of the page is: a heading, a paragraph, a list, a gap, or a window standing in the text. */
+export type BlockKind = 'h1' | 'h2' | 'p' | 'ul' | 'space' | 'window';
+
+/** One block of the page, as an editor of pages has it. A list keeps its items one to a line in *text*; a window names itself by *window*. */
+export interface PageBlock {
+  id: string;
+  kind: BlockKind;
+  text?: string;
+  window?: string;
+}
+
 export interface Window {
   /** Lower case, letters, digits and `_`: it names the window's start point and every node and block of it. */
   id: string;
@@ -102,6 +113,8 @@ export interface Window {
   outputs: WindowOut[];
   /** What starts the window; the Run button, where it says nothing. */
   trigger?: Trigger;
+  /** What the window asks of the person, in a sentence: said beside its inputs, and told to the model with them. */
+  ask?: string;
 }
 
 /**
@@ -131,6 +144,8 @@ export interface Windows {
   /** The gui's colour scheme (`metadata.gui_scheme`); night, where it says none. */
   scheme?: string;
   windows: Window[];
+  /** The text of the page and where the windows stand in it. Left out, the page is its name, its description and the windows in turn (`pageOf`). */
+  page?: PageBlock[];
 }
 
 /** An element's name as an id: letters and digits, the rest `_`. */
@@ -337,6 +352,7 @@ export function windowContext(doc: Windows, id: string): string {
   const window = doc.windows.find((one) => one.id === id);
   if (!window) return '';
   const lines = [`Window "${window.title}": ${window.span} of 16 cells wide on the page "${doc.name}", ${windowRows(window)} rows tall, and it never grows: what comes out fills the room it is given.`];
+  if (window.ask) lines.push(`The person is asked: ${window.ask}`);
   lines.push(`The person puts in: ${window.inputs.map((one) => `${one.name} (${one.kind}${one.kind === 'choice' ? `: ${(one.options ?? []).join(', ')}` : ''})`).join('; ') || 'nothing'}.`);
   for (const one of window.outputs) {
     const piece = outPiece(window, one);
