@@ -1,5 +1,5 @@
 // Saving what a block shows as a file of its own -- a text as .txt, a chart as
-// .svg, a table's rows as .csv -- wherever the gui is drawn: the Gui tab,
+// .svg, a table's rows as .csv -- wherever the gui is drawn: the GUI tab,
 // the App tab and the delivered tool alike. The browser hands the file over, as it
 // does for any link that says `download`; the gui may be open on another
 // machine than the graph, and nothing of the server's is asked.

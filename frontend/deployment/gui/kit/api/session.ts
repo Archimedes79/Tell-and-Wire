@@ -2,7 +2,7 @@
 // outputs showed, the round going or gone -- as the server tells it, by name.
 //
 // One for every gui that shows a graph in use -- the delivered tool, the
-// editor's App and Gui tabs -- fed by the server's stream
+// editor's App and GUI tabs -- fed by the server's stream
 // (`GET /api/runtime/stream`): the session on connect and after every change,
 // each round as it starts, goes and ends, whoever started it -- this gui,
 // another tab, the clock.
@@ -132,7 +132,7 @@ let refusals = 0;
 function refused(reason: string, started: RoundSnapshot['started']): RoundSnapshot {
   refusals += 1;
   return {
-    round_id: `refused-${refusals}`, done: true, cancelled: false, completed: 0, total: 0, current_label: '',
+    round_id: `refused-${refusals}`, done: true, cancelled: false, completed: 0, total: 0, current_label: '', running: [], finished: {},
     item_done: 0, item_total: 0, idle_seconds: null, error: reason, result: null, outputs: null, started,
   };
 }

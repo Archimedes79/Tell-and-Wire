@@ -330,7 +330,7 @@ export const EDITOR_API = {
 
   /**
    * Hand the server's session the graph being edited: what its rounds run,
-   * whoever starts them -- the App tab, the Gui tab, the clock, `gui.html`
+   * whoever starts them -- the App tab, the GUI tab, the clock, `gui.html`
    * opened against it as the deployed gui in a window of its own. Answers
    * with the session, and what it dropped of what it kept.
    */

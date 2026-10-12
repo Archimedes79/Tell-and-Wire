@@ -21,13 +21,13 @@ const label = (id: string): string => AI_PROVIDER_LABELS[id as AIProvider] ?? id
 
 /** Where an AI comes from and what it takes, said under the provider that is chosen: the first question of someone who has none yet. */
 const PROVIDER_HELP: Partial<Record<AIProvider, string>> = {
-  ollama: 'Free, on your computer: install Ollama (ollama.com), then run `ollama pull llama3` in a terminal.',
+  ollama: 'Free, on your computer or another one: install Ollama (ollama.com), then run `ollama pull llama3` in a terminal.',
   lmstudio: 'Free, on your computer: load a model in LM Studio and start its local server.',
-  google: 'Free tier: get a key at aistudio.google.com/apikey and paste it under Keys.',
-  github_copilot: 'Free tier: a GitHub token with the models:read scope, pasted under Keys.',
-  openai: 'Paid: paste a key under Keys.',
-  anthropic: 'Paid: paste a key under Keys.',
-  openai_compatible: 'Any server that speaks the OpenAI API: its address under Server addresses.',
+  google: 'Free tier: get a key at aistudio.google.com/apikey and paste it below.',
+  github_copilot: 'Free tier: a GitHub token with the models:read scope, pasted below.',
+  openai: 'Paid: paste a key below.',
+  anthropic: 'Paid: paste a key below.',
+  openai_compatible: 'Any server that speaks the OpenAI API: its address below.',
 };
 
 /**
@@ -35,8 +35,10 @@ const PROVIDER_HELP: Partial<Record<AIProvider, string>> = {
  * it resolves to now, and -- for the AI as it is saved, not for a choice not saved yet -- why it
  * cannot answer. Where an environment variable sets it, that wins over what is saved here.
  */
-function Chosen({ purpose, provider, saved, probe }: {
+function Chosen({ purpose, provider, saved, probe, children }: {
   purpose: Purpose; provider: AIProvider; saved?: SettingsStatus['ai']; probe: ReturnType<typeof useProviderStatus>;
+  /** What it needs to be reached -- its server's address, its key -- between where it comes from and what it comes to. */
+  children?: React.ReactNode;
 }) {
   const trouble = purpose === 'write' ? probe?.writing_problem : probe?.problem;
   // A writing AI left to the nodes' says nothing of its own: it is the nodes' problem, said there.
@@ -44,6 +46,7 @@ function Chosen({ purpose, provider, saved, probe }: {
   return (
     <>
       {PROVIDER_HELP[provider] && <p className="text-xs mt-2" style={{ color: DIM }}>{PROVIDER_HELP[provider]}</p>}
+      {children}
       <p className="text-xs mt-3" style={{ color: DIM }}>Now: <strong style={{ color: TEXT }}>{nowText(probe, purpose)}</strong></p>
       {trouble && own && provider === (saved?.provider || 'default') && <p className="text-xs mt-1" style={{ color: DANGER_TEXT }} role="status">{trouble}</p>}
       {saved && saved.environment.length > 0 && (
@@ -125,6 +128,79 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
 
   const toggleRemoving = (id: string) => setRemoving((now) => (now.includes(id) ? now.filter((one) => one !== id) : [...now, id]));
 
+  /** The key of provider *id*: whether one is set and from where, and a box to type a new one in. */
+  const keyRow = (id: string) => {
+    const state = saved?.credentials[id];
+    if (!state) return null;
+    const going = removing.includes(id);
+    return (
+      <div key={id} className="flex items-center gap-2">
+        <div className="w-36 shrink-0">
+          <div className="text-xs font-medium" style={{ color: TEXT }}>{label(id)} key</div>
+          <div className="text-xs" style={{ color: going ? DANGER_TEXT : state.configured ? SUCCESS : DIMMER }}>
+            {going ? 'key will be removed' : state.configured ? `key set (${state.source})` : 'no key'}
+          </div>
+        </div>
+        <input
+          type="password"
+          className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-sm font-mono"
+          style={FIELD}
+          value={keys[id] ?? ''}
+          onChange={(e) => setKeys((now) => ({ ...now, [id]: e.target.value }))}
+          placeholder={state.configured ? 'Enter a new key to replace it' : KEY_HINTS[id] ?? 'Its API key'}
+          autoComplete="off"
+          disabled={going}
+          aria-label={`${label(id)} API key`}
+        />
+        {state.configured && state.source === 'settings file' && (
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => toggleRemoving(id)}
+            title={going ? 'Keep the stored key' : `Remove the stored ${label(id)} key`}
+          >
+            {going ? 'Keep' : 'Remove'}
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  /** The address of the server provider *id* is asked at: this computer's by default, or any other the editor can reach. */
+  const addressRow = (id: string) => {
+    if (!saved || !(id in saved.endpoints)) return null;
+    return (
+      <div key={id} className="flex items-center gap-2">
+        <label htmlFor={`address-${id}`} className="w-36 shrink-0 text-xs font-medium" style={{ color: TEXT }}>{label(id)} address</label>
+        <input
+          id={`address-${id}`}
+          className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-sm font-mono"
+          style={FIELD}
+          value={endpoints[id] ?? ''}
+          onChange={(e) => setEndpoints((now) => ({ ...now, [id]: e.target.value }))}
+          placeholder={DEFAULT_ENDPOINTS[id] || 'https://my-endpoint.example.com/v1'}
+        />
+      </div>
+    );
+  };
+
+  /** What provider *id* needs to be asked at all, under the choice of it: where its server is, and its key. */
+  const connection = (id: string | undefined) => {
+    if (!saved || !id) return null;
+    const rows = [addressRow(id), keyRow(id)].filter(Boolean);
+    if (!rows.length) return null;
+    return (
+      <div className="mt-3 space-y-2">
+        {rows}
+        {id in saved.endpoints && (
+          <p className="text-xs" style={{ color: DIM }}>
+            A model on another computer works too: enter its address, for example <code>http://192.168.1.20:11434</code>. The computer that runs the editor must reach it.
+          </p>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Modal
       title="⚙ Settings"
@@ -151,7 +227,9 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             onModelChange={setModel}
             defaultLabel={() => 'Not set (a local model that is running, else Ollama)'}
           />
-          <Chosen purpose="run" provider={provider} saved={saved?.ai} probe={probe} />
+          <Chosen purpose="run" provider={provider} saved={saved?.ai} probe={probe}>
+            {connection(provider === 'default' ? probe?.target.provider : provider)}
+          </Chosen>
         </section>
 
         <section>
@@ -167,71 +245,27 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             defaultLabel={() => 'Same as the AI that runs the nodes'}
             purpose="write"
           />
-          <Chosen purpose="write" provider={writingProvider} saved={saved?.writing} probe={probe} />
+          <Chosen purpose="write" provider={writingProvider} saved={saved?.writing} probe={probe}>
+            {writingProvider !== 'default' && connection(writingProvider)}
+          </Chosen>
         </section>
 
         {saved && (
           <>
-            <section>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Keys</h3>
-              <div className="space-y-2">
-                {/* The keys of the AIs chosen come first: they are the ones that are needed. */}
-                {Object.keys(saved.credentials).sort((a, b) => rank(a) - rank(b)).map((id) => {
-                  const state = saved.credentials[id];
-                  const going = removing.includes(id);
-                  return (
-                    <div key={id} className="flex items-center gap-2">
-                      <div className="w-36 shrink-0">
-                        <div className="text-xs font-medium" style={{ color: TEXT }}>{label(id)}</div>
-                        <div className="text-xs" style={{ color: going ? DANGER_TEXT : state.configured ? SUCCESS : DIMMER }}>
-                          {going ? 'key will be removed' : state.configured ? `key set (${state.source})` : 'no key'}
-                        </div>
-                      </div>
-                      <input
-                        type="password"
-                        className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-sm font-mono"
-                        style={FIELD}
-                        value={keys[id] ?? ''}
-                        onChange={(e) => setKeys((now) => ({ ...now, [id]: e.target.value }))}
-                        placeholder={state.configured ? 'Enter a new key to replace it' : KEY_HINTS[id] ?? 'Its API key'}
-                        autoComplete="off"
-                        disabled={going}
-                        aria-label={`${label(id)} API key`}
-                      />
-                      {state.configured && state.source === 'settings file' && (
-                        <Button
-                          size="sm"
-                          className="shrink-0"
-                          onClick={() => toggleRemoving(id)}
-                          title={going ? 'Keep the stored key' : `Remove the stored ${label(id)} key`}
-                        >
-                          {going ? 'Keep' : 'Remove'}
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
+            {/* Everything that can be set, for the AIs that are not chosen above. */}
+            <details>
+              <summary className="cursor-pointer select-none text-sm font-semibold" style={{ color: TEXT }}>All keys and server addresses</summary>
+              <div className="mt-3 space-y-5">
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold" style={{ color: MUTED }}>Keys</h4>
+                  {Object.keys(saved.credentials).sort((a, b) => rank(a) - rank(b)).map((id) => keyRow(id))}
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold" style={{ color: MUTED }}>Server addresses</h4>
+                  {Object.keys(saved.endpoints).map((id) => addressRow(id))}
+                </div>
               </div>
-            </section>
-
-            <section>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Server addresses</h3>
-              <div className="space-y-2">
-                {Object.keys(saved.endpoints).map((id) => (
-                  <div key={id} className="flex items-center gap-2">
-                    <label htmlFor={`address-${id}`} className="w-36 shrink-0 text-xs font-medium" style={{ color: TEXT }}>{label(id)}</label>
-                    <input
-                      id={`address-${id}`}
-                      className="flex-1 min-w-0 rounded-lg px-2 py-1.5 text-sm font-mono"
-                      style={FIELD}
-                      value={endpoints[id] ?? ''}
-                      onChange={(e) => setEndpoints((now) => ({ ...now, [id]: e.target.value }))}
-                      placeholder={DEFAULT_ENDPOINTS[id] || 'https://my-endpoint.example.com/v1'}
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
+            </details>
 
             <p className="text-xs" style={{ color: DIMMER, borderTop: `1px solid ${LINE}`, paddingTop: 12 }}>
               Stored in <span style={{ color: MUTED }} className="font-mono">{saved.settings_file}</span>.

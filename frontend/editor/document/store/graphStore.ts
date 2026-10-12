@@ -299,7 +299,7 @@ export interface GraphStore {
   takeDiskChanges: (changes: TextChange[]) => { taken: string[]; refused: string[] };
   /**
    * Hand the server's session the document: what every round runs, whoever
-   * starts it -- the App tab, the Gui tab, the clock, the tool opened in a
+   * starts it -- the App tab, the GUI tab, the clock, the tool opened in a
    * window of its own. What runs, not how each node was written: a node's
    * history is up to half a megabyte, and a round reads none of it. It is
    * handed over as the document of the session it was given before: another
@@ -539,6 +539,27 @@ export function useGoingRound(): RoundSnapshot | null {
   const round = useSession((s) => s.round);
   const elsewhere = useGraphStore((s) => s.heldElsewhere);
   return goingIn(elsewhere) && round;
+}
+
+/**
+ * What a node is doing in the round going now: 'running', or how it went once it is done -- 'success', 'error', 'partial', 'skipped' --
+ * or '' while no round goes or it has not begun. A word and not the round, so a card is drawn anew only when its own changes.
+ */
+export function useNodeWork(nodeId: string): string {
+  const work = useSession((s) => {
+    const round = s.round;
+    if (!round || round.done) return '';
+    return round.running.includes(nodeId) ? 'running' : round.finished[nodeId] ?? '';
+  });
+  const elsewhere = useGraphStore((s) => s.heldElsewhere);
+  return goingIn(elsewhere) ? work : '';
+}
+
+/** Whether a round goes in this document: a boolean, so what only wants to know is not drawn anew on every tick of it. */
+export function useRoundIsGoing(): boolean {
+  const going = useSession((s) => !!s.round && !s.round.done);
+  const elsewhere = useGraphStore((s) => s.heldElsewhere);
+  return going && goingIn(elsewhere) !== null;
 }
 
 // Every round of the session the editor's document is held in, from whichever

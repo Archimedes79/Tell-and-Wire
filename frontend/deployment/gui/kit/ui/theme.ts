@@ -11,7 +11,7 @@
 
 /**
  * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The gui's
- * container sets the variables (the Gui tab's surface, the App tab, a deployed
+ * container sets the variables (the GUI tab's surface, the App tab, a deployed
  * tool), so the blocks on it are in its scheme; the editor's own chrome sets
  * none, and so keeps the literal after the comma -- the Night scheme -- under
  * every scheme. Keep those literals equal to Night's values.

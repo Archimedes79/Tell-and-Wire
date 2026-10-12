@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Handle, NodeResizeControl, Position, NodeProps, useStore, useUpdateNodeInternals } from 'reactflow';
 import type { RFNodeData } from '../../document/store/nodeData';
 import type { GraphNode, GuiWidget, NodeResult, Port } from '../../document/graph';
-import { useGraphStore } from '../../document/store/graphStore';
+import { useGraphStore, useNodeWork, useRoundIsGoing } from '../../document/store/graphStore';
 import { dropOnto } from '../../document/model/wires';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { errorLine, portPreviews } from '../../document/elements/resultPreview';
@@ -133,7 +133,12 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
     measuredHandles.current = handles;
     updateNodeInternals(id);
   }, [id, handles, updateNodeInternals]);
-  const status = executionResult ? statusStyles[executionResult.held ? 'held' : executionResult.status] : undefined;
+  // While a round goes: this node's part in it, as it happens; else how it went the last time.
+  const work = useNodeWork(id);
+  const going = useRoundIsGoing();
+  const working = work === 'running';
+  const thisRun = work && !working ? statusStyles[work as keyof typeof statusStyles] : undefined;
+  const status = thisRun ?? (executionResult ? statusStyles[executionResult.held ? 'held' : executionResult.status] : undefined);
   // A node that did not run says why, when the run said -- one that stood
   // still with what it made before, too.
   const statusTitle = executionResult?.status === 'skipped'
@@ -208,9 +213,9 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       onDrop={onDrop}
       style={{
         background: SURFACE,
-        border: `1px ${fileOver || takesWire ? 'dashed' : 'solid'} ${lit || fileOver || takesWire ? ACCENT : LINE}`,
+        border: `1px ${fileOver || takesWire ? 'dashed' : 'solid'} ${lit || fileOver || takesWire || working ? ACCENT : LINE}`,
         // The accent, doubled to two pixels without moving anything, and its glow.
-        boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : undefined,
+        boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : working ? `0 0 0 4px ${ACCENT_GLOW}` : undefined,
         // As wide as its contents come to, between these -- unless it was made a size (`resizeCard`): then it is that.
         ...(typeof graphNode.width === 'number' && typeof graphNode.height === 'number'
           ? { width: '100%', height: '100%' }
@@ -243,12 +248,21 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         {writing && (
           <span className="shrink-0 text-xs animate-pulse" role="img" aria-label="✨ is writing for this node" title="✨ is writing for this node">✨</span>
         )}
-        {status && (
+        {working && (
+          <span
+            className="w-3.5 h-3.5 rounded-full animate-spin shrink-0"
+            style={{ border: `2px solid ${ACCENT}`, borderTopColor: 'transparent' }}
+            role="img"
+            aria-label="Working now"
+            title="Working now"
+          />
+        )}
+        {status && !working && (
           <span
             className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
-            style={{ background: status.color, color: SUNKEN }}
+            style={{ background: status.color, color: SUNKEN, opacity: thisRun || !going ? 1 : 0.5 }}
             role="img"
-            aria-label={`Last run: ${statusTitle}`}
+            aria-label={`${thisRun ? 'This run' : 'Last run'}: ${statusTitle}`}
             title={statusTitle}
           >
             {status.glyph}

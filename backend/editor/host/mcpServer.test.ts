@@ -369,7 +369,7 @@ describe('serveStdio', () => {
     ]);
     expect(answers).toHaveLength(3);
     const byId = new Map(answers.map((answer) => [answer.id, answer]));
-    expect(byId.get(1).result).toMatchObject({ protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'tell-and-wire' } });
+    expect(byId.get(1).result).toMatchObject({ protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'tell-and-wire', title: 'Tell & Wire', version: expect.stringMatching(/^\d+\.\d+\.\d+/) } });
     expect(byId.get(2).result).toEqual({});
     expect(byId.get(3).result.tools).toHaveLength(9);
   });

@@ -19,7 +19,7 @@ seconds. A local model costs nothing per call but can take minutes per answer.
 | port | A dot on a node's edge: an input on the left, an output on the right. |
 | wire | Carries an output to an input. |
 | run | One run of the graph, from a start point to the end points it reaches. The API calls it a round. |
-| gui | The blocks a person uses: what the tool looks like (Gui tab). |
+| gui | The blocks a person uses: what the tool looks like (GUI tab). |
 | block | One thing on the gui: a picker, a button, a chart, a chat. |
 
 ## The node kinds
@@ -37,7 +37,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 
 ## 1. Build the gui
 
-Name the tool in the field at the top left, then open the **Gui** tab. Click **File or
+Name the tool in the field at the top left, then open the **GUI** tab. Click **File or
 folder**, then **Chart** in the left column (or type `/` on the gui). Each block comes
 connected: what the picker holds goes to a new start point, *Start*, and the chart shows a
 new end point, *Chart*.
@@ -169,7 +169,7 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
   **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
 A start point, a folder, an end point and a subgraph have no files: they open on their
-settings. **Edit the gui** on a node a block uses goes to the Gui tab.
+settings. **Edit the gui** on a node a block uses goes to the GUI tab.
 
 Two things save the most time. Wire a node to what feeds it before **Pull input**, so the
 example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
@@ -244,7 +244,7 @@ An end point's value is the tool's result under its name: a block shows it, a sc
 the command line read it. **Also write it to** writes it to a file, or each item to its own
 file in a folder.
 
-## 6. The Gui tab and its blocks
+## 6. The GUI tab and its blocks
 
 The gui is built like a document. Type headings and text in place. Press `/` to insert a
 block, or drag one from the left column onto the gui. A selected block has a small toolbar:
@@ -290,8 +290,21 @@ each part the graph reads and a button per start point. Start points that start 
 start, and their clocks tick. A graph with no start point runs once, whole. **■ Stop** ends
 it; the delivered gui has a Stop of its own while a run goes.
 
+- While it runs, the cards show it: a ring turns on the node that works, and each node that is
+  done gets its mark -- ✓ done, ! failed, – did not run -- as it finishes. The bar says how many
+  nodes are done and which one is working.
 - After a run every node's card shows what it made: a line of text, a row count, a
   small chart, a thumbnail, or the first line of an error.
+- **The run report.** The word that ends the run in the bar (*success*, *partial*, *error*, with
+  **· Report**) opens it, as does the **Report** button on a failure's notice. It lists every node
+  in the order it ran, says in plain words what to look at first -- the AI that cannot be reached,
+  a key turned down, a file not found, code with a mistake -- and shows the error as the node gave it.
+  **Open it** goes to that node. **Copy report** puts it all on the clipboard as text, to send to
+  whoever can help; what went in and out of the nodes is in it only if you tick *Include what went in
+  and out*, since it is your data.
+- Everything the editor tells you -- saved, opened, failed, written, stopped -- is a card in the
+  top right corner that does not move the page. What went well goes by itself after a few
+  seconds; a warning or an error stays until you close it.
 - *Last run* above the gui says what began the last run, and, on hover, why any node
   did not run.
 - *What using it keeps* lists what the session holds: what each start point was sent, what
@@ -352,6 +365,12 @@ gui of its own in `frontend/index.html`, which uses the runtime API by name (see
 
 ## 11. The MCP server
 
+Tell & Wire meets MCP (the Model Context Protocol) in two ways, and only the first is this
+chapter. It **serves** an MCP server for graphs, so an AI assistant can build and test them -- it is
+not a server for general abilities. And an **AI node uses** the tools of other MCP servers: the web
+reader and the Word and PDF reader that come with it, or any you add (*Tools the model may use*, in
+the node's settings).
+
 An assistant such as Claude Code can design, check, save and run graphs in one folder:
 
 ```bash
@@ -377,6 +396,8 @@ open in the notebook. Details in [notebook.md](notebook.md).
 
 ## When something does not work
 
+- **A run failed.** Press the word that ends it in the bar -- *error* or *partial*, with **· Report** --
+  for the run report: where to look first, in plain words, and a button that copies it to send on.
 - **A run stopped and the gui shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
@@ -384,7 +405,7 @@ open in the notebook. Details in [notebook.md](notebook.md).
   before anything is asked: a local server that is not running, a model it has not pulled, a key
   not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (✨, the bar; the
   nodes' until you set it apart), each says *Now: provider / model* and, under the provider chosen,
-  where to get it; their keys come first. A wrong key, a model name nobody knows and a free tier's
+  where to get it and what it needs: the address of its server, or its key. A wrong key, a model name nobody knows and a free tier's
   limit come back with what to do. A small local model may be too small to write a whole graph:
   it says so, and a larger one in Settings (Gemini has a free tier) writes it.
 - **Using the gui starts nothing.** No block fires the start point: switch **Starts a run**

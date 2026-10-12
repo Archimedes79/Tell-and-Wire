@@ -38,6 +38,10 @@ class Round {
   readonly started: RoundStart | null;
   completed = 0;
   currentLabel = 'Waiting for the round before it';
+  /** The nodes started and not done, in the order they started. */
+  running: string[] = [];
+  /** How each node that is done went. */
+  finished: Record<string, string> = {};
   itemDone = 0;
   itemTotal = 0;
   lastActivity: number | null = null;
@@ -63,11 +67,17 @@ class Round {
     }
     this.lastActivity = Date.now();
     if (event.type === 'node_start') {
+      this.running = [...this.running.filter((id) => id !== event.node_id), event.node_id];
+      delete this.finished[event.node_id];
       this.currentLabel = labelOf(event.node_id);
       this.itemDone = 0;
       this.itemTotal = 0;
     }
-    if (event.type === 'node_done') this.completed += 1;
+    if (event.type === 'node_done') {
+      this.completed += 1;
+      this.running = this.running.filter((id) => id !== event.node_id);
+      this.finished[event.node_id] = event.status;
+    }
     if (event.type === 'batch') {
       this.itemDone = event.done;
       this.itemTotal = event.total;
@@ -91,6 +101,9 @@ class Round {
       completed: this.completed,
       total: this.total,
       current_label: this.currentLabel,
+      // Nothing works once it has ended, whatever it was cut off in.
+      running: this.finishedAt === null ? this.running : [],
+      finished: this.finishedAt === null ? this.finished : {},
       item_done: this.itemDone,
       item_total: this.itemTotal,
       idle_seconds: this.lastActivity === null ? null : (Date.now() - this.lastActivity) / 1000,
@@ -149,7 +162,9 @@ export class Rounds {
         id,
         report: (event) => {
           round.report(event, labelOf);
-          this.changed(id, false);
+          // A node beginning or ending is a moment: the canvas shows which ones work, and a start that was dropped for coming close
+          // after the last report would show a node as waiting for as long as it works. How far a batch has got is only progress.
+          this.changed(id, event.type === 'node_start' || event.type === 'node_done');
         },
         signal: round.stop.signal,
       });

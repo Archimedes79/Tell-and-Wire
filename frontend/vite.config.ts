@@ -60,6 +60,8 @@ function licenses(): Plugin {
 
 export default defineConfig({
   plugins: [react(), licenses()],
+  // The version the packages say, for the editor's About.
+  define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version) },
   // Dropbox syncs this workspace and locks files mid-write, causing EBUSY
   // errors when Vite's dep cache lives under node_modules/.vite. Keep it outside.
   cacheDir: path.join(os.tmpdir(), 'tell-and-wire-editor-vite-cache'),

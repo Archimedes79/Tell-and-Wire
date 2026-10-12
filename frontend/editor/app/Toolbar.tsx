@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { LayoutGrid, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
+import { say } from './noticeBoard';
+import { runReport } from './runReport';
+import { BookOpen, LayoutGrid, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from '../../deployment/gui/kit/ui/ToolbarButton';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { useGoingRound, useGraphStore } from '../document/store/graphStore';
@@ -47,11 +49,11 @@ interface ToolbarProps {
   onLoad: () => void;
   onInjectJson: () => void;
   onOpenSettings: () => void;
+  onOpenHelp: () => void;
+  /** What happened in the last run, node by node. */
+  onOpenReport: () => void;
   /** Make the document the graph ✨ designed, after asking about unsaved work; whether it was. */
   onLoadDesigned: (graph: Graph) => Promise<boolean>;
-  /** What the header says of saving and opening -- while the document is clean -- and what went wrong, always. */
-  saveStatus: string;
-  problem: string;
   view: EditorView;
   onViewChange: (view: EditorView) => void;
 }
@@ -64,8 +66,8 @@ interface ToolbarProps {
  * Changing the graph as said is the bar under the canvas.
  */
 export default function Toolbar({
-  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, onLoadDesigned,
-  saveStatus, problem, view, onViewChange,
+  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, onOpenHelp, onOpenReport, onLoadDesigned,
+  view, onViewChange,
 }: ToolbarProps) {
   const metadata = useGraphStore((s) => s.metadata);
   const currentFilePath = useGraphStore((s) => s.currentFilePath);
@@ -90,7 +92,6 @@ export default function Toolbar({
   const executionResult = useGraphStore((s) => s.executionResult);
 
   const [deployBusy, setDeployBusy] = useState('');
-  const [deployError, setDeployError] = useState('');
   // Asking what the graph needs, then running: the delivered gui's own steps.
   // The document is handed over by ▶ Run just before (`startApplication`).
   const delivered = useRound();
@@ -100,6 +101,27 @@ export default function Toolbar({
   const { ask, send, reset } = useGraphAsk();
   const asking = ask.phase === 'asking';
   const describeId = useId();
+
+  // What ✨ Generate all says goes where everything else is said, whole: going on while it writes, a card of its own when it ends.
+  useEffect(() => {
+    say('sweep', sweep.message, { sticky: sweep.busy || undefined });
+  }, [sweep.message, sweep.busy]);
+
+  // A run that failed says so where everything else is said, with the way to the report: where it stopped, and why in words.
+  const told = useRef<unknown>(null);
+  useEffect(() => {
+    if (!executionResult || executionResult === told.current) return;
+    told.current = executionResult;
+    if (executionResult.status !== 'error' && executionResult.status !== 'partial') {
+      say('run', '');
+      return;
+    }
+    const labels = useGraphStore.getState().rfNodes.map((item) => item.data.graphNode);
+    say('run', runReport(executionResult, labels).summary, {
+      level: executionResult.status === 'error' ? 'error' : 'warning',
+      action: { label: 'Report', run: onOpenReport },
+    });
+  }, [executionResult, onOpenReport]);
 
   /** Why another graph cannot be opened now, or null when it can. */
   const busyWith = graphBusy(sweep.busy);
@@ -128,9 +150,9 @@ export default function Toolbar({
       if (view !== 'app') ranFrom.current = view;
       onViewChange('app');
     }
-    setDeployError('');
+    say('run', '');
     startApplication(graph, () => delivered.run(null))
-      .catch((error) => setDeployError(errorText(error, 'The tool could not be started.')));
+      .catch((error) => say('run', errorText(error, 'The tool could not be started.'), { level: 'error' }));
   };
   // Stopped -- by ■ Stop, or by itself, having nothing left to do -- or its
   // gui gone, it takes its tab with it.
@@ -146,11 +168,12 @@ export default function Toolbar({
   // backend looks exactly like a dead button.
   const runDeployAction = async (label: string, action: () => Promise<void>) => {
     setDeployBusy(label);
-    setDeployError('');
+    say('deploy', 'Making the zip…');
     try {
       await action();
+      say('deploy', '');
     } catch (error) {
-      setDeployError(errorText(error, `${label} failed.`));
+      say('deploy', errorText(error, `${label} failed.`), { level: 'error' });
     } finally {
       setDeployBusy('');
     }
@@ -254,21 +277,6 @@ export default function Toolbar({
               ⏳ {Math.round(going.idle_seconds)}s
             </span>
           )}
-          {/* A "✅ Saved to …" that survives the next ten edits is a lie about
-              what is on disk; it only shows while the graph is actually clean. */}
-          {saveStatus && !dirty && (
-            <span className="text-xs truncate" style={{ color: MUTED }} title={saveStatus}>
-              {saveStatus}
-            </span>
-          )}
-          {/* What went wrong stays said while the graph is unsaved: a save that failed leaves it so. */}
-          {problem && (
-            <span className="text-xs font-medium truncate" style={{ color: DANGER_TEXT }} title={problem}>{problem}</span>
-          )}
-          {deployBusy && <span className="text-xs whitespace-nowrap" style={{ color: MUTED }}>⏳ Making the zip…</span>}
-          {deployError && (
-            <span className="text-xs font-medium truncate" style={{ color: DANGER_TEXT }} title={deployError}>❌ {deployError}</span>
-          )}
           {heldElsewhere && (
             <span
               className="text-xs font-medium truncate"
@@ -279,9 +287,15 @@ export default function Toolbar({
             </span>
           )}
           {statusLabel && !heldElsewhere && (
-            <span className="text-xs font-medium whitespace-nowrap" style={{ color: statusColor }}>
-              {statusLabel}
-            </span>
+            <button
+              type="button"
+              onClick={onOpenReport}
+              className="text-xs font-medium whitespace-nowrap hover:underline"
+              style={{ color: statusColor }}
+              title="The run report: what happened, node by node, and what to look at first"
+            >
+              {statusLabel} · Report
+            </button>
           )}
         </div>
 
@@ -343,6 +357,13 @@ export default function Toolbar({
           framed
         />
 
+        <ToolbarButton
+          icon={BookOpen}
+          label="Help"
+          title="Help: getting started, and the user guide"
+          onClick={onOpenHelp}
+        />
+
         {/* The gear alone: its title names what is inside, and an API key lives
             here, under "Keys". */}
         <ToolbarButton
@@ -352,20 +373,6 @@ export default function Toolbar({
           framed
         />
       </header>
-
-      {/* What ✨ Generate all says, whole, under the header: in the bar it is cut to the room there is. */}
-      {sweep.message && (
-        <div className="flex items-start gap-3 px-3 xl:px-5 py-1.5 text-xs flex-shrink-0" role="status"
-          style={{ background: SURFACE, borderBottom: `1px solid ${LINE}`, color: MUTED }}>
-          <span className="flex-1 min-w-0 break-words">{sweep.message}</span>
-          {!sweep.busy && (
-            <Button variant="quiet" size="sm" className="shrink-0" onClick={sweep.dismiss}
-              title="Dismiss what ✨ Generate all said" aria-label="Dismiss">
-              ✕
-            </Button>
-          )}
-        </div>
-      )}
 
       <RequirementsDialog
         requirements={delivered.requirements}

@@ -3,6 +3,7 @@
 // Knows nothing of what the tools do: it is handed them (`tools.ts`) and speaks the
 // protocol for them.
 
+import { readFileSync } from 'node:fs';
 import { INSTRUCTIONS, MAX_GRAPH_BYTES } from './spec.ts';
 import type { GraphTools, ToolResult } from './tools.ts';
 import { messageOf } from '../../../../graph/errors.ts';
@@ -12,7 +13,18 @@ const MAX_LINE_CHARS = 2 * MAX_GRAPH_BYTES;
 
 /** Newest first. The client's version is echoed when it is one of these; otherwise it is offered the first. */
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const SERVER_INFO = { name: 'tell-and-wire', version: '1.0.0' };
+
+/** The version of Tell & Wire this is, as its packages say: the zip carries `graph/package.json`, and so does a checkout. '0' where it cannot be read. */
+function appVersion(): string {
+  try {
+    return (JSON.parse(readFileSync(new URL('../../../../graph/package.json', import.meta.url), 'utf8')) as { version?: string }).version ?? '0';
+  } catch {
+    return '0';
+  }
+}
+
+/** Who answers: the name a client addresses it by, the name a person reads, and the version of the program -- not of the protocol. */
+const SERVER_INFO = { name: 'tell-and-wire', title: 'Tell & Wire', version: appVersion() };
 
 interface StdioStreams {
   input: NodeJS.ReadableStream;

@@ -33,7 +33,7 @@ const { useSession } = await import('../../../deployment/gui/kit/api/session');
 const store = () => useGraphStore.getState();
 
 const round = (over: Partial<RoundSnapshot> = {}): RoundSnapshot => ({
-  round_id: 'r1', done: true, cancelled: false, completed: 1, total: 1, current_label: '',
+  round_id: 'r1', done: true, cancelled: false, completed: 1, total: 1, current_label: '', running: [], finished: {},
   item_done: 0, item_total: 0, idle_seconds: null, error: null, result: null, outputs: null, started: { event: 'go', by: 'press' }, ...over,
 });
 const made = (node_id: string, outputs: Record<string, unknown>): ExecutionResult => ({

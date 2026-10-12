@@ -24,7 +24,7 @@ A tool in Tell & Wire has two halves.
 - **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
   runs through **code nodes**, **AI nodes**, **data nodes** (a struct kept between runs)
   and **subgraphs**, and ends at **end points**.
-- **The gui** (Gui tab): blocks such as text, a file picker, a dropdown, a slider, a
+- **The gui** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
   what an end point hands back. It connects by name; nothing is wired to the gui.
 
@@ -41,11 +41,24 @@ builds the open window, and a debug window shows every round. It saves the same 
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
-start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
-The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
+start. The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
 (not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.
+
+## Tell & Wire and MCP
+
+Tell & Wire is an editor for building tools. It is not an MCP server you add to an assistant for
+general abilities; it meets the [Model Context Protocol](https://modelcontextprotocol.io) in two
+specific ways:
+
+- **It serves one**, for graphs. `node backend/cli/main.ts --mcp --mcp-root <folder>` starts an MCP
+  server on stdio with nine tools -- the graph guide, have this machine's model write a graph,
+  validate, save, run, run one node, test, list -- so an AI assistant can design and test Tell & Wire
+  graphs in that folder.
+- **It uses them**, in AI nodes. An AI node can call the tools of MCP servers. A web reader and a
+  Word and PDF reader come with the download (`mcp/`), and any other can be added
+  (*Tools for an AI node*, below).
 
 ## Download and start
 
@@ -96,8 +109,12 @@ Open **⚙ Settings**, fill in what you need, press **Save**:
   every run, also in a delivered tool. The second serves ✨ (a node's code and prompt, a whole
   graph, the bar under the canvas) and is the first one until you set it apart -- a larger
   model may be worth it for writing, a small one enough for the nodes, or the other way round.
-- **Keys** and **Server addresses**: paste an API key or a server address. Keys are
-  write-only: saved on this machine, never shown again.
+- Under the provider you choose, what it needs: **the address of its server** (Ollama, LM Studio
+  or any server that speaks the OpenAI API -- on this computer or another one the editor can
+  reach, for example `http://192.168.1.20:11434`) or **an API key**. Keys are write-only: saved
+  on this machine, never shown again. *All keys and server addresses* lists every one.
+
+**Help** (top right) has *Getting started* and the whole user guide.
 
 Settings are saved in `ai-settings.json`. It is looked for in the working directory, then in the
 folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as
