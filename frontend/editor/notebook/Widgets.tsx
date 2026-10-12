@@ -68,7 +68,7 @@ function PathBox({ kind, value, extensions, onChange }: { kind: 'file' | 'folder
 export function Output({ kind, value, rows }: { kind: OutKind; value: unknown; rows: number }) {
   const height = Math.max(1, rows) * ROW + 12;
   const empty = value === undefined || value === null || value === '';
-  if (empty) return <div className="nb-out waiting" style={{ height }}>Waiting for output…</div>;
+  if (empty) return <div className="nb-out waiting" style={{ height }}>The result appears here</div>;
   if (kind === 'chart') return <div className="nb-out chart" style={{ height }}><Chart data={value} /></div>;
   if (kind === 'table') return <div className="nb-out" style={{ height }}><Table value={value} /></div>;
   if (kind === 'image') return <div className="nb-out" style={{ height }}><Pictures value={value} /></div>;

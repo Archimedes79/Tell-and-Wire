@@ -14,7 +14,10 @@ import { isDirty, useNotebook } from './store';
 import { startPage } from '../../../gui/editor/windows/page.ts';
 import { windowProblems } from '../../../gui/editor/windows/windows.ts';
 
-const folderOf = (path: string): string => path.replace(/[\\/]+$/, '').replace(/[\\/][^\\/]*$/, '');
+/** The looks a delivered tool can have (the gui's colour schemes), by their ids. */
+const LOOKS: [string, string][] = [['night', 'Night'], ['paper', 'Paper'], ['office', 'Office'], ['graphite', 'Graphite'], ['anthracite', 'Anthracite']];
+
+const folderOf =(path: string): string => path.replace(/[\\/]+$/, '').replace(/[\\/][^\\/]*$/, '');
 
 export default function App() {
   const doc = useNotebook((s) => s.doc);
@@ -82,6 +85,12 @@ export default function App() {
               <button aria-pressed={writing && source} onClick={() => show({ mode: 'write', source: true })} title="The page as Markdown to type">Markdown</button>
               <button aria-pressed={!writing} onClick={() => show({ mode: 'app', source: false })} title="The page as the people who use the tool see it">As app</button>
             </div>
+            <select
+              className="nb-select" aria-label="Look of the delivered tool" title="The colours of the tool when it is delivered; the model is told them too"
+              value={doc.scheme ?? 'night'} onChange={(event) => edit((one) => ({ ...one, scheme: event.target.value }), 'scheme')}
+            >
+              {LOOKS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </select>
             <button className="nb-btn quiet" disabled={!canUndo} onClick={undo} aria-label="Undo" title="Undo (Ctrl+Z)">↶</button>
             <button className="nb-btn quiet" disabled={!canRedo} onClick={redo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)">↷</button>
           </>
