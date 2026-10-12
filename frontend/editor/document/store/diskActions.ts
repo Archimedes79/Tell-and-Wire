@@ -7,7 +7,7 @@ import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
 import { endCoalescing } from './history';
 import type { GraphStore } from './graphStore';
 
-/** The store's action that takes code, prompts, the gui and nested graphs that changed on disk. */
+/** The store's action that takes code, prompts, the GUI and nested graphs that changed on disk. */
 export function diskActions(
   set: (recipe: (state: GraphStore) => void) => void,
   get: () => GraphStore,
@@ -23,12 +23,12 @@ export function diskActions(
       // on disk and said out loud instead.
       const refused = changes.filter((change) => change.field === NESTED_GRAPH_FIELD && !wasClean && nodeOf(change.node_id))
         .map((change) => change.node_id!);
-      // What is taken: a change to a node that is here, or to the gui, which
+      // What is taken: a change to a node that is here, or to the GUI, which
       // changes it. The step was taken first, and was an empty one -- Redo
       // thrown away -- when every change was refused, for a node gone, or what
       // the node held.
       const taken = changes.filter((change) => {
-        // The gui's own text, gui.json: its blocks. Only at the top: a graph inside a node has none.
+        // The GUI's own text, gui.json: its blocks. Only at the top: a graph inside a node has none.
         if (change.node_id === null) return !get().subgraphStack.length && JSON.stringify(get().gui) !== JSON.stringify(change.value ?? []);
         const node = nodeOf(change.node_id);
         if (!node) return false;
@@ -53,7 +53,7 @@ export function diskActions(
         if (!wasClean && state.savedSnapshot !== null) state.savedSnapshot = withDiskChanges(state.savedSnapshot, taken);
       });
       if (wasClean) get().markSaved();
-      // Said by what changed: a node by its id, the gui as "gui".
+      // Said by what changed: a node by its id, the GUI as "gui".
       return { taken: [...new Set(taken.map((change) => change.node_id ?? 'gui'))], refused };
     },
   };

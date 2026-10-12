@@ -1,7 +1,7 @@
-// A gui drawn from the graph: the blocks it still lacks.
+// A GUI drawn from the graph: the blocks it still lacks.
 //
 // A tool built as a graph has start points that read things and end points that
-// hand things back, and a gui is where a person meets them -- so a first gui
+// hand things back, and a GUI is where a person meets them -- so a first gui
 // needs no model: an input block for each thing a start point reads, a button
 // that starts it, a text output for each end point nobody shows. What a start
 // point reads is what the nodes wired to it take of its package, each by the
@@ -9,8 +9,8 @@
 // and no block can be made for what nothing says. Each block is sent under
 // that name -- it is its id -- so the input finds what the person gave.
 //
-// A start point is started by the gui or by a call, never both: one a call
-// starts is put on the gui only if the person says so (`Planned.ifSwitched`),
+// A start point is started by the GUI or by a call, never both: one a call
+// starts is put on the GUI only if the person says so (`Planned.ifSwitched`),
 // since it then stops serving the command line.
 
 import type { DataType, GraphNode, GuiWidget, Wire } from '../document/graph';
@@ -26,7 +26,7 @@ interface Made {
   blocks: GuiWidget[];
 }
 
-/** What a gui lacks: blocks to add now, and blocks for start points a call starts, which only a switch to the gui serves. */
+/** What a GUI lacks: blocks to add now, and blocks for start points a call starts, which only a switch to the GUI serves. */
 interface Planned {
   now: Made[];
   ifSwitched: Made[];
@@ -149,8 +149,8 @@ function outputsLaidOut(planned: Planned, gui: GuiWidget[]): void {
 }
 
 /**
- * What the gui lacks of what *nodes* offer: for each start point nothing on
- * the gui sends to or fires, its blocks; for each end point nothing shows, a
+ * What the GUI lacks of what *nodes* offer: for each start point nothing on
+ * the GUI sends to or fires, its blocks; for each end point nothing shows, a
  * text output. A start point set to start itself, on a clock, has none: the
  * gui cannot start it. Pure: the person is asked about the ones a call
  * starts before any of it is applied.

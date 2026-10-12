@@ -5,9 +5,9 @@
 // how large the chart it feeds will be drawn. That is what this says, once, the
 // same for every ✨: the graph's name and text; every node in the order it runs,
 // with its id, kind, heading and the first line of its text, this one marked;
-// the wires; and the gui -- its colour scheme, and each block with its size
+// the wires; and the GUI -- its colour scheme, and each block with its size
 // and the start and end points it connects to.
-// The editor owns the gui's grid and its schemes, so the editor says it; and
+// The editor owns the GUI's grid and its schemes, so the editor says it; and
 // it is cut to a budget, so a large graph leaves a small model room to answer.
 
 import type { Graph, GraphNode, GuiWidget, Wire } from '../../document/graph';
@@ -58,7 +58,7 @@ export function graphContext(nodeId: string, around: { nodes: GraphNode[]; edges
 
   if (gui.length) {
     const colours = scheme(metadata.gui_scheme);
-    lines.push('', `Its gui, on the ${colours.label} scheme -- background ${colours.sunken}, text ${colours.text}, accent ${colours.accent}:`);
+    lines.push('', `Its GUI, on the ${colours.label} scheme -- background ${colours.sunken}, text ${colours.text}, accent ${colours.accent}:`);
     for (const widget of gui) {
       const { width, height } = blockSize(widget);
       const joined = connections(widget);

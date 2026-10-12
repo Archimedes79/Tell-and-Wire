@@ -24,7 +24,7 @@ import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../deployment/gui/k
 const holdDocument = () => useGraphStore.getState().holdDocument();
 
 /**
- * The application, running (▶ Run, `document/application.ts`): its gui, as the
+ * The application, running (▶ Run, `document/application.ts`): its GUI, as the
  * deployed tool draws it -- the same component, not a rendition.
  *
  * `GuiSurface` is what `deployment/gui/GuiApp.tsx` renders when a bundle is
@@ -33,10 +33,10 @@ const holdDocument = () => useGraphStore.getState().holdDocument();
  * what is seen here is what they get: a block unreadable, mis-sized or
  * missing in the bundle is so here, because there is nothing else to be.
  *
- * It is the tool in use, not the document: what is set on its gui is the
+ * It is the tool in use, not the document: what is set on its GUI is the
  * session's, never an edit of the graph -- nothing to undo, nothing to save.
- * What the gui starts lights up the nodes on the graph next door. The graph
- * runs when the gui is used -- a block that fires a start point -- and when
+ * What the GUI starts lights up the nodes on the graph next door. The graph
+ * runs when the GUI is used -- a block that fires a start point -- and when
  * it is called: for a start point a call starts, this tab is the caller
  * (`CallForms`), as a script or a frontend would be.
  */
@@ -46,13 +46,13 @@ export default function ApplicationView({ onShowNode }: { onShowNode: (nodeId: s
   const wires = useGraphStore((s) => s.rfEdges);
   const widgets = useGraphStore((s) => s.gui);
   // What starts a round and what one hands back are the nodes' to say, and
-  // which block fires which the gui's; what a call is sent that the graph
+  // which block fires which the GUI's; what a call is sent that the graph
   // reads, the wires out of each start point's.
   const graph = useMemo(
     () => ({ metadata, nodes: nodes.map((node) => node.data.graphNode as GraphNode), edges: wires.map(graphEdge), gui: { blocks: widgets } }),
     [metadata, nodes, wires, widgets],
   );
-  // Whether using the gui starts the graph -- or only shows what its start
+  // Whether using the GUI starts the graph -- or only shows what its start
   // points that start themselves, or its one run at start, made.
   const starts = guiStarts(graph, registry);
   // The graph's names, as the runtime API tells a delivered tool them: which
@@ -151,7 +151,7 @@ export default function ApplicationView({ onShowNode }: { onShowNode: (nodeId: s
             ? 'As whoever gets it will use it: the graph runs when you use the gui. ■ Stop ends it.'
             : called
               ? 'As whoever gets it will use it: it runs when it is called -- here, as a script would call it. ■ Stop ends it.'
-              : 'As whoever gets it will use it: what starts the graph starts it, and the gui shows what it makes. ■ Stop ends it.'}
+              : 'As whoever gets it will use it: what starts the graph starts it, and the GUI shows what it makes. ■ Stop ends it.'}
         </span>
         {explained && (
           <span className="text-xs ml-auto truncate" style={{ color: MUTED }}

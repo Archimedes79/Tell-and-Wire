@@ -37,7 +37,7 @@ const store = () => useGraphStore.getState();
 const nodeById = (id: string) => store().rfNodes.find((n) => n.id === id)!.data.graphNode as GraphNode;
 
 describe('graphStore.loadGraph', () => {
-  it('opens a document clean, and saves what it was given: a size, a gui, a node of a type this editor does not know', () => {
+  it('opens a document clean, and saves what it was given: a size, a GUI, a node of a type this editor does not know', () => {
     const note = WIDGET_BUILDERS.text.create('note', 'Note');
     const sized = graphNode({ id: 'sized', width: 340, height: 300, outputs: [port('output', 'output')] });
     // A node of a newer version: kept as it came, wires and all.

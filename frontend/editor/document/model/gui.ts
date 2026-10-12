@@ -1,4 +1,4 @@
-// The gui of the document: blocks that connect themselves to the graph's
+// The GUI of the document: blocks that connect themselves to the graph's
 // start and end points by name.
 //
 // What a block can do with the graph -- send its data, fire a start point,
@@ -24,13 +24,13 @@ export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolea
   };
 }
 
-/** Whether a person sets what this block sends, and a round the gui starts is given it by the block's id -- the definition's answer. */
+/** Whether a person sets what this block sends, and a round the GUI starts is given it by the block's id -- the definition's answer. */
 export function widgetTakesValue(widget: GuiWidget): boolean {
   return widgetElement(widget.kind)?.takesValue(parseWidget(widget)) ?? false;
 }
 
 /**
- * Whether what this block holds is part of the gui's design, set while the
+ * Whether what this block holds is part of the GUI's design, set while the
  * gui is built -- not a conversation, which is only ever the session's -- the
  * design's answer (`WidgetDesign.valueIsDesign`).
  */
@@ -56,7 +56,7 @@ export interface Point {
   memory?: boolean;
 }
 
-/** The start points a block can send to and fire: the ones the gui starts. */
+/** The start points a block can send to and fire: the ones the GUI starts. */
 export function guiStartPoints(nodes: GraphNode[]): Point[] {
   return nodes
     .filter((node) => registry.node(node.node_type)?.startedBy(node as never) === 'gui')
@@ -81,14 +81,14 @@ export function memoryPoints(nodes: GraphNode[]): Point[] {
 /** Whether what a block shows, *name*, is one of *named* -- or a part of one: a memory's field is its id, a dot and the field's name. */
 const showsOf = (named: Set<string>, name: string | null | undefined): boolean => !!name && (named.has(name) || named.has(name.split('.')[0]));
 
-/** The blocks of *blocks* that name one of the points *ids*: what the gui loses with them. */
+/** The blocks of *blocks* that name one of the points *ids*: what the GUI loses with them. */
 function connectedTo(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
   const named = new Set(ids);
   return blocks.filter((block) => (block.fires && named.has(block.fires)) || showsOf(named, block.shows)
     || (block.sends_to ?? []).some((id) => named.has(id)));
 }
 
-/** *blocks* with every connection to one of the points *ids* taken off: what is left of the gui once they are gone. */
+/** *blocks* with every connection to one of the points *ids* taken off: what is left of the GUI once they are gone. */
 export function withoutPoints(blocks: GuiWidget[], ids: readonly string[]): GuiWidget[] {
   const named = new Set(ids);
   return blocks.map((block) => {

@@ -5,11 +5,12 @@ import Button from '../kit/ui/Button';
 import { DANGER_TEXT, DIM, LINE, MUTED, SURFACE, TEXT } from '../kit/ui/theme';
 
 /** How a run went, in a word: going, done, or failed -- nothing before the first. */
-function roundStatus(round: RoundSnapshot | null): { label: string; failed: boolean } {
+export function roundStatus(round: RoundSnapshot | null): { label: string; failed: boolean } {
   if (!round) return { label: '', failed: false };
   if (!round.done) return { label: '⏳ Running…', failed: false };
   const status = round.result?.status;
   if (status === 'success') return { label: '✅ Done', failed: false };
+  if (status === 'partial') return { label: '⚠ Partly failed', failed: true };
   if (status === 'error' || (!round.result && round.error && !round.cancelled)) return { label: '❌ Failed', failed: true };
   return { label: '', failed: false };
 }
@@ -20,7 +21,7 @@ function roundStatus(round: RoundSnapshot | null): { label: string; failed: bool
  *
  * It has no ▶ Run. A tool runs when it is started (`startEvents`: its start points
  * that start themselves, or, with no start point at all, the whole graph once) and
- * afterwards when its gui is used -- its buttons, and the blocks that say
+ * afterwards when its GUI is used -- its buttons, and the blocks that say
  * they start it -- or it is called.
  *
  * Every host draws the bar: `deployment/gui/GuiApp.tsx` for a tool someone

@@ -7,7 +7,7 @@
 // (📂, a drop, ⟳), and otherwise the one the graph hands a file-reading input
 // of the node: what the last run brought there, what the node wired to it
 // holds -- a path a data node stores -- or, from a start point, the file a
-// block of the gui that sends into it starts on.
+// block of the GUI that sends into it starts on.
 
 import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document/graph';
 import { NODE_BUILDERS } from '../../document/elements/registry';
@@ -26,7 +26,7 @@ export function firstPath(value: unknown): string | undefined {
 
 /**
  * The file start point *start* is sent, for an input that takes *field* of
- * it: what the block of the gui the field names starts on -- or, without a
+ * it: what the block of the GUI the field names starts on -- or, without a
  * field, the one block that sends to it -- else the path at *field* of what a
  * call sends it, for example. Not a folder's: a list of files is no one
  * example.

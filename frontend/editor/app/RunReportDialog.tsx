@@ -1,4 +1,3 @@
-import { useOnStatus } from '../document/store/look';
 import { useState } from 'react';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
@@ -6,7 +5,7 @@ import { useGraphStore } from '../document/store/graphStore';
 import { nowText, useProviderStatus } from './fields/ProviderModelSelect';
 import { reportText, runReport, type ReportStatus } from './runReport';
 import {
-  DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, SUCCESS, SUCCESS_FILL, SUNKEN, TEXT, WARNING,
+  DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, ON_SIGNAL, SUCCESS, SUCCESS_FILL, SUNKEN, TEXT, WARNING,
 } from '../../deployment/gui/kit/ui/theme';
 
 const LOOK: Record<ReportStatus, { color: string; glyph: string; word: string }> = {
@@ -42,7 +41,6 @@ async function copy(text: string): Promise<boolean> {
  * copy only if they say so.
  */
 export default function RunReportDialog({ onClose, onShowNode }: { onClose: () => void; onShowNode: (nodeId: string) => void }) {
-  const onStatus = useOnStatus();
   const result = useGraphStore((s) => s.executionResult);
   const nodes = useGraphStore.getState().rfNodes.map((item) => item.data.graphNode);
   const toolName = useGraphStore((s) => s.metadata.name);
@@ -112,7 +110,7 @@ export default function RunReportDialog({ onClose, onShowNode }: { onClose: () =
                     <li key={node.id} className="flex items-start gap-3 py-2" style={{ borderTop: `1px solid ${LINE}` }}>
                       <span
                         className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold leading-none"
-                        style={{ background: look.color, color: onStatus }}
+                        style={{ background: look.color, color: ON_SIGNAL }}
                         role="img"
                         aria-label={look.word}
                       >

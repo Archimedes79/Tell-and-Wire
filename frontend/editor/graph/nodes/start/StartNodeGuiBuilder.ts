@@ -8,7 +8,7 @@ import { Play } from 'lucide-react';
 const ELEMENT = new StartNodeDefinition();
 
 /**
- * Where a run begins: a start point, named, started by the gui, by a call
+ * Where a run begins: a start point, named, started by the GUI, by a call
  * or by the graph itself -- what it starts is what its "data" is wired to.
  */
 export class StartNodeGuiBuilder extends NodeGuiBuilder {
@@ -16,7 +16,7 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly label = 'Start point';
 
-  readonly hint = 'Where a run begins: started by the gui, by a call, or by itself -- when the tool starts, on a clock';
+  readonly hint = 'Where a run begins: started by the GUI, by a call, or by itself -- when the tool starts, on a clock';
 
   readonly example = 'e.g. The text to summarise, typed on the gui';
 

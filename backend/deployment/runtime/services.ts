@@ -206,7 +206,7 @@ function inBodyLines(error: unknown, lead: string): unknown {
   if (!(error instanceof Error)) return error;
   const offset = lead.split('\n').length - 1;
   error.message = error.message.replace(
-    /\S*body\.mjs:(\d+)(?::(\d+))?/g,
+    /[^\s()]*body\.mjs:(\d+)(?::(\d+))?/g,
     (whole, line: string, column?: string) => {
       const inBody = Number(line) - offset;
       return inBody > 0 ? `line ${inBody}${column ? `, column ${column}` : ''}` : whole;

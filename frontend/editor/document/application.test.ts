@@ -35,7 +35,7 @@ const node = (id: string, node_type: string, config: Record<string, unknown> = {
   id, node_type, label: id, description: '', position: { x: 0, y: 0 }, inputs: [], outputs: [], config,
 } as unknown as GraphNode);
 const graphOf = (...nodes: GraphNode[]): Graph => ({ metadata: { name: 'Tool', description: '', gui_scheme: 'night' }, nodes, edges: [] } as Graph);
-/** A graph with a gui of *blocks*, and the start point "go" they fire. */
+/** A graph with a GUI of *blocks*, and the start point "go" they fire. */
 const withGui = (blocks: Record<string, unknown>[], ...nodes: GraphNode[]): Graph => ({
   ...graphOf(node('go', 'start'), ...nodes), gui: { blocks: blocks as never },
 });
@@ -58,7 +58,7 @@ afterEach(async () => {
 });
 
 describe('the application ▶ Run starts', () => {
-  it('with a gui, hands the document over, starts the server clock and waits: the graph runs when the gui is used', async () => {
+  it('with a GUI, hands the document over, starts the server clock and waits: the graph runs when the GUI is used', async () => {
     const graph = open(withGui([{ id: 'msg', kind: 'text_io', mode: 'input', value: 'hello', sends_to: ['go'] }, button], node('work', 'code')));
     await startApplication(graph, runWhole);
     expect(server.asked).toEqual(['holdGraph', 'startApplication']);
@@ -66,7 +66,7 @@ describe('the application ▶ Run starts', () => {
     expect(useApplication.getState().running).toBe(true);
   });
 
-  it('without a gui, runs whole once, as a program does -- and has then ended', async () => {
+  it('without a GUI, runs whole once, as a program does -- and has then ended', async () => {
     const graph = open(graphOf(node('work', 'code'), node('shown', 'end')));
     await startApplication(graph, runWhole);
     expect(whole).toBe(1);

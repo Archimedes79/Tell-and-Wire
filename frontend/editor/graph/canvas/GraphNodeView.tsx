@@ -1,4 +1,3 @@
-import { useOnStatus } from '../../document/store/look';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Handle, NodeResizeControl, Position, NodeProps, useStore, useUpdateNodeInternals } from 'reactflow';
@@ -8,7 +7,7 @@ import { useGraphStore, useNodeWork, useRoundIsGoing } from '../../document/stor
 import { dropOnto } from '../../document/model/wires';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { errorLine, portPreviews } from '../../document/elements/resultPreview';
-import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, ON_SIGNAL, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
 import { blocksAt } from '../../document/model/gui';
@@ -88,9 +87,9 @@ function PortDot({ port, type, side, top, lit, fires }: {
 const labelsOf = (blocks: GuiWidget[]): string => blocks.map((block) => block.label || block.id).join(', ');
 
 /**
- * What the gui says of a start or an end point, in a line: which blocks fire
+ * What the GUI says of a start or an end point, in a line: which blocks fire
  * it and send to it, or show it -- what the card cannot otherwise show, since
- * nothing is wired between the gui and the graph.
+ * nothing is wired between the GUI and the graph.
  */
 function guiLine(node: GraphNode, gui: GuiWidget[]): string | undefined {
   const { fire, send, show } = blocksAt(gui, node.id);
@@ -107,12 +106,11 @@ function guiLine(node: GraphNode, gui: GuiWidget[]): string | undefined {
  * colour, its heading, a row for each port with the port's name and its dot on
  * the edge, and below them what it holds or made: after a run how it went and
  * a small picture of what it made, and for a start or end point which blocks of
- * the gui connect to it. What it should do is its tooltip; the rest of it is
+ * the GUI connect to it. What it should do is its tooltip; the rest of it is
  * the node view's. A click chooses it, a double-click opens it (the canvas's
  * `onNodeDoubleClick`), and the card chosen wears the accent.
  */
 const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
-  const onStatus = useOnStatus();
   const { graphNode } = data;
   // ✨ is writing for it, whether or not its view is open.
   const writing = useIsWriting(id);
@@ -262,7 +260,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         {status && !working && (
           <span
             className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
-            style={{ background: status.color, color: onStatus, opacity: thisRun || !going ? 1 : 0.5 }}
+            style={{ background: status.color, color: ON_SIGNAL, opacity: thisRun || !going ? 1 : 0.5 }}
             role="img"
             aria-label={`${thisRun ? 'This run' : 'Last run'}: ${statusTitle}`}
             title={statusTitle}
@@ -298,7 +296,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
 
       {hasFoot && (
         <div className="flex flex-col gap-1 px-3.5 py-2.5 min-w-0" style={{ borderTop: `1px solid ${LINE}` }}>
-          {/* Which blocks of the gui fire it, send to it or show it. */}
+          {/* Which blocks of the GUI fire it, send to it or show it. */}
           {connected && (
             <div className="truncate text-xs" style={{ color: MUTED }} title={connected}>
               {connected}

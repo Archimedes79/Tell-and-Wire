@@ -19,6 +19,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { useGraphStore } from '../../document/store/graphStore';
+import { useEditorScheme } from '../../document/store/editorScheme';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
 import QuickPick from '../../../deployment/gui/kit/ui/QuickPick';
@@ -38,7 +39,7 @@ import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
 import type { NodeType } from '../../document/graph';
 import { LINE, MUTED, PANEL, SUNKEN, SURFACE } from '../../../deployment/gui/kit/ui/theme';
-import { lookNodes, useLook } from '../../document/store/look';
+import { scheme } from '../../../deployment/gui/kit/ui/scheme';
 
 const nodeTypes = { graphNode: GraphNodeView };
 const edgeTypes = { routed: RoutedEdge };
@@ -65,8 +66,8 @@ const PICKABLE = Object.values(NODE_BUILDERS)
  * deleted more than it was pressed for. Keys belong to the view you are looking at.
  */
 export default function GraphCanvas({ active }: { active: boolean }) {
-  const look = useLook((s) => s.id);
   const rfNodes = useGraphStore((s) => s.rfNodes);
+  const editorScheme = useEditorScheme((s) => s.resolved);
   const rfEdges = useGraphStore((s) => s.rfEdges);
   const setRFNodes = useGraphStore((s) => s.setRFNodes);
   const setRFEdges = useGraphStore((s) => s.setRFEdges);
@@ -262,7 +263,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
       event.preventDefault();
       if (!reactFlowWrapper.current || !rfInstance) return;
 
-      // Only node types are dropped. A block is put on the gui, on the Gui
+      // Only node types are dropped. A block is put on the GUI, on the GUI
       // tab, so nothing drops a widget onto a canvas.
       const nodeType = event.dataTransfer.getData('application/nodeType') as NodeType;
       if (!nodeType) return;
@@ -397,8 +398,8 @@ export default function GraphCanvas({ active }: { active: boolean }) {
           <MiniMap
             style={PANEL}
             // The minimap paints SVG `fill` attributes, where a CSS variable does
-            // not resolve, so it takes the tints of the editor's look as values.
-            nodeColor={(node) => lookNodes(look)[node.data?.graphNode?.node_type as NodeType] ?? SURFACE}
+            // not resolve, so it takes the inks of the editor's scheme as values.
+            nodeColor={(node) => scheme(editorScheme).ink[node.data?.graphNode?.node_type as NodeType] ?? SURFACE}
           />
         )}
       </ReactFlow>

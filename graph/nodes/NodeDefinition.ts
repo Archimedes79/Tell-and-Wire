@@ -317,6 +317,15 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
+   * Whether this node calls a model when it runs -- which is whether whoever runs the tool needs an
+   * AI set up. None does by default; an AI node always does, a code node when its code calls one,
+   * a subgraph when a node in it does.
+   */
+  callsModel(_node: GraphNode, _kinds: Kinds): boolean {
+    return false;
+  }
+
+  /**
    * Who starts this node's events: the gui, a call from outside, or the
    * graph itself -- none, for a node that starts nothing. A graph the gui or
    * a call starts waits for them when it starts; one that starts itself does

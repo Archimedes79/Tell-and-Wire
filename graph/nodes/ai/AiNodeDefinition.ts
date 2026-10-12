@@ -72,6 +72,10 @@ says nothing but this, the node runs with the standard instructions.
 export class AiNodeDefinition extends NodeDefinition<AiConfig> {
   readonly nodeType = 'ai' as const;
 
+  override callsModel(): boolean {
+    return true;
+  }
+
   override texts(): readonly TextFile[] {
     return AI_TEXTS;
   }

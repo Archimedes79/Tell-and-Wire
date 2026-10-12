@@ -2,6 +2,7 @@ import { NodeDefinition, type Kinds } from '../NodeDefinition.ts';
 import { parseGraph, type Graph, type GraphNode } from '../../graph.ts';
 import { errorOutput } from '../../wiring.ts';
 import { boundaryPorts } from './boundary.ts';
+import { graphCallsModel } from '../../usesModel.ts';
 
 /**
  * A node that holds a graph.
@@ -27,6 +28,11 @@ import { boundaryPorts } from './boundary.ts';
  */
 export class SubgraphNodeDefinition extends NodeDefinition {
   readonly nodeType = 'subgraph' as const;
+
+  override callsModel(node: GraphNode, kinds: Kinds): boolean {
+    const graph = this.nestedGraph(node);
+    return !!graph && graphCallsModel(graph, kinds);
+  }
 
   /**
    * A copy, always. The executor may run this node several times at once (a

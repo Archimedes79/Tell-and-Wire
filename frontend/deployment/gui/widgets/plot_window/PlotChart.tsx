@@ -38,7 +38,7 @@ type PlotKind = 'bars' | 'columns' | 'line' | 'donut';
  * A node produces one of these -- it is ordinary data -- and the app draws it
  * at the size the block is. That is the whole point of the shape: choosing
  * between bars and a donut is a *value*, so it can come down a wire from a
- * dropdown on the gui, where writing SVG in a node could never follow.
+ * dropdown on the GUI, where writing SVG in a node could never follow.
  */
 export interface Figure {
   kind: PlotKind;

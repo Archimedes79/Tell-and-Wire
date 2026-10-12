@@ -106,7 +106,7 @@ interface RowProps {
 
 /**
  * What an input takes of the package its start point hands on: what one block
- * of the gui sends, a part of what a call sends it, or all of it.
+ * of the GUI sends, a part of what a call sends it, or all of it.
  */
 export function TakesSelect({ port, takes, onTake, label }: {
   port: Port;
@@ -117,7 +117,7 @@ export function TakesSelect({ port, takes, onTake, label }: {
 }) {
   return (
     <label className="flex items-center gap-1.5 text-xs pl-1" style={{ color: DIMMER }}
-      title="What this input takes of the package its start point hands on: what one block of the gui sends, a part of what a call sends it, or all of it">
+      title="What this input takes of the package its start point hands on: what one block of the GUI sends, a part of what a call sends it, or all of it">
       {label ? `${label} takes` : 'takes'}
       <select
         className="rounded px-1.5 py-0.5 text-xs"

@@ -51,7 +51,7 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
       const split = token.indexOf('](');
       const label = token.slice(1, split);
       const href = token.slice(split + 2, -1);
-      // rel: the gui may be opened from a bundle someone else built.
+      // rel: the GUI may be opened from a bundle someone else built.
       parts.push(linkable(href)
         ? <a key={key} href={href} target="_blank" rel="noreferrer noopener" style={{ color: ACCENT_TEXT }}>{label}</a>
         : label);

@@ -15,7 +15,7 @@
 // started, and the next one's input definition is written from what the node
 // wired into it defines (`generationContext.inputSources`).
 //
-// Only nodes are written. A block on a gui has no body: it shows or hands on
+// Only nodes are written. A block on a GUI has no body: it shows or hands on
 // what it holds.
 
 import { topologicalLevels } from '../../../../graph/order.ts';

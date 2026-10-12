@@ -10,24 +10,22 @@ import QuickInsert from './QuickInsert';
 import type { PaletteEntry } from './DesignerPalette';
 import { blockCan, widgetValueIsDesign } from '../document/model/gui';
 import Button from '../../deployment/gui/kit/ui/Button';
-import { ACCENT, DIMMER, LINE, MUTED, SURFACE, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
+import { ACCENT, DIMMER, LINE, MUTED, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
- * The gui, plus the few affordances needed to build one.
+ * The GUI, plus the few affordances needed to build one.
  *
  * Everything a *user* sees comes from `GuiSurface.tsx` — the same grid, the same
  * blocks, the same widgets the deployed tool renders. What is added here is
  * only what a builder needs, and it is modelled on a document editor rather
- * than a layout tool, because a document is what a gui is:
+ * than a layout tool, because a document is what a GUI is:
  *
  *  - **words are typed where they stand.** A heading is edited by clicking it
  *    and typing, not by selecting it and finding a box in a side panel;
  *  - **`/` inserts.** Type what you want, Enter, carry on;
- *  - **a block's size is a fraction of the gui** — ¼ ½ ¾ Full — on a small
- *    toolbar over the selected block, which also removes it. The grid
- *    underneath still counts cells, and the corner can still be dragged to any
- *    of them; nobody has to know that to get two things side by side. A block
- *    is moved by its grip.
+ *  - **a block is moved by its grip and sized by its corner**, to any cell of the
+ *    grid; the bin beside the selected block removes it. There is no second
+ *    way to set a width: with a grid, dragging is the simple one.
  *
  * None of it is reachable from the deployed tool's entry point, which is the
  * whole point of the split (see the note at the top of GuiSurface.tsx).
@@ -42,7 +40,7 @@ export default function DesignerSurface({
 }: {
   widgets: GuiWidget[];
   onWidgetValue: (widget: GuiWidget, value: unknown) => void;
-  /** A block was used: the same event the delivered gui gets, because the blocks here are live. */
+  /** A block was used: the same event the delivered GUI gets, because the blocks here are live. */
   onWidgetTrigger: (widget: GuiWidget, value?: unknown) => void;
   selectedId: string | null;
   onSelect: (widgetId: string | null) => void;
@@ -50,7 +48,7 @@ export default function DesignerSurface({
   overrides?: Record<string, string>;
   /** Where a palette drag in flight would land. */
   dropIndex?: number | null;
-  /** Where the `/` menu is open, as an index into the gui; null when it is not. */
+  /** Where the `/` menu is open, as an index into the GUI; null when it is not. */
   insertAt: number | null;
   onInsertAt: (index: number | null) => void;
   onInsert: (entry: PaletteEntry, index: number) => void;
@@ -65,7 +63,7 @@ export default function DesignerSurface({
   const [cell, setCell] = React.useState(GUI_MAX_CELL);
   const placements = resolveWidgetLayout(widgets);
 
-  // Every change goes through `guiWrite`, which reads the gui from the store
+  // Every change goes through `guiWrite`, which reads the GUI from the store
   // when the change lands: what this render drew may be a keystroke old.
 
   // ---- reorder by dragging ---------------------------------------------------
@@ -168,9 +166,9 @@ export default function DesignerSurface({
                 }}
                 // Selected, a block waiting for what it shows has its whole height: it is the one being sized.
                 keepRoom={selected}
-                // The toolbar hangs above the block and the grip beside it, outside its box.
+                // The bin and the grip stand beside the block, outside its box.
                 style={{
-                  // Not selected: the gui's focus ring shows where the keyboard is.
+                  // Not selected: the GUI's focus ring shows where the keyboard is.
                   outline: selected ? `2px solid ${ACCENT}` : undefined,
                   outlineOffset: 1,
                   opacity: draggingId === widget.id ? 0.55 : 1,
@@ -201,13 +199,7 @@ export default function DesignerSurface({
                   />
                 ) : undefined}
               >
-                {selected && (
-                  <BlockToolbar
-                    width={placement.w}
-                    onWidth={(w) => patchBlock(widget.id, { w })}
-                    onRemove={() => onRemove(widget.id)}
-                  />
-                )}
+                {selected && <DeleteButton onRemove={() => onRemove(widget.id)} />}
 
                 {/* The grip, not the block, starts a drag — so the widget stays
                     live and you can type in it while designing. A full-height
@@ -235,11 +227,11 @@ export default function DesignerSurface({
                 </div>
 
                 {/* Which blocks *start* the tool, seen without opening any of
-                    them. A gui is mostly fields that are sent when something
+                    them. A GUI is mostly fields that are sent when something
                     else starts a round; the one or two that start it are the
                     whole shape of how the tool is used, and they were
                     indistinguishable until you selected each block in turn.
-                    Builder's chrome: the delivered gui draws no badge. */}
+                    Builder's chrome: the delivered GUI draws no badge. */}
                 {fires && (
                   <span
                     className="absolute select-none pointer-events-none"
@@ -293,64 +285,26 @@ export default function DesignerSurface({
  * Where a dragged element would land.
  *
  * A grid item of its own, so it sits exactly where the dropped element will —
- * a line drawn over the gui would have to re-derive the same position and
+ * a line drawn over the GUI would have to re-derive the same position and
  * could disagree with it.
  */
 function InsertionLine() {
   return <div style={{ gridColumn: 'span 16', height: 2, background: ACCENT, borderRadius: 2 }} />;
 }
 
-/** Fractions of the gui, in the grid's own cells. Sixteen columns make quarters exact. */
-const WIDTHS: { label: string; title: string; w: number }[] = [
-  { label: '¼', title: 'A quarter of the gui', w: 4 },
-  { label: '½', title: 'Half the gui', w: 8 },
-  { label: '¾', title: 'Three quarters', w: 12 },
-  { label: 'Full', title: 'The whole width', w: GUI_GRID_COLUMNS },
-];
-
 /**
- * What you do to a block, on the block: how wide it is, and the bin. The rest
- * has a way of its own -- the grip moves it (Ctrl+↑↓ too), the corner sizes it
- * to any cell, `/` adds a neighbour -- so the bar carries only what is quicker
- * as a button than as anything else.
+ * What you do to a block, on the block: the bin. Everything else has a way of its own -- the grip
+ * moves it (Ctrl+↑↓ too), the corner sizes it to any cell, `/` adds a neighbour -- so there is no
+ * second way to set a width. It stands beside the block, on the right, where the grip stands on the
+ * left: above it, over the first block, it was cut off by the page's edge.
  */
-function BlockToolbar({ width, onWidth, onRemove }: {
-  width: number;
-  onWidth: (w: number) => void;
-  onRemove: () => void;
-}) {
-  const gap = <span style={{ width: 1, alignSelf: 'stretch', background: LINE, margin: '2px 3px' }} />;
-
-  // Kept inside the gui: over a block narrower than the toolbar at the gui's
-  // left edge it would reach past it, under the palette. Moved right by as
-  // much as it would stand out, measured anew whenever the gui is drawn -- the
-  // block may have moved -- before anything is painted.
-  const bar = React.useRef<HTMLDivElement>(null);
-  React.useLayoutEffect(() => {
-    const element = bar.current;
-    const gui = element?.closest('[data-gui-surface]');
-    if (!element || !gui) return;
-    element.style.right = '0px';
-    const standsOut = gui.getBoundingClientRect().left - element.getBoundingClientRect().left;
-    if (standsOut > 0) element.style.right = `${-Math.ceil(standsOut)}px`;
-  });
-
+function DeleteButton({ onRemove }: { onRemove: () => void }) {
   return (
     <div
-      ref={bar}
-      className="absolute flex items-center rounded-lg shadow-lg select-none"
-      // Right-aligned: what is above a block is usually words, and words start
-      // on the left -- a toolbar over the left edge sat exactly on the heading
-      // someone had just typed.
-      style={{ right: 0, top: -34, height: 28, padding: '0 4px', background: SURFACE, border: `1px solid ${LINE}`, zIndex: 20, whiteSpace: 'nowrap' }}
+      className="absolute select-none"
+      style={{ right: -34, top: 0, zIndex: 20 }}
       onMouseDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
     >
-      {WIDTHS.map((option) => (
-        <Button key={option.w} size="sm" variant={width === option.w ? 'primary' : 'quiet'} aria-pressed={width === option.w} title={option.title} onClick={() => onWidth(option.w)}>
-          {option.label}
-        </Button>
-      ))}
-      {gap}
       <Button variant="danger" size="sm" title="Delete block (Del)" aria-label="Delete block" onClick={onRemove}>
         <Trash2 size={14} aria-hidden="true" />
       </Button>

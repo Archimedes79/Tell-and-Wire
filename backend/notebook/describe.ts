@@ -24,7 +24,7 @@ A window is a short list of cells, read in this order:
 Rules: window ids are lower case letters, digits and "_" ("id"); every window has at least one step and one output; names inside a window are all different, whatever their kind; write the sentences in the language of the request and mean them literally, they are what the model that does the step is told.
 
 Shape:
-{"name": str, "description": str, "scheme": "office"|"paper"|"night"|"graphite"|"anthracite" (optional; leave it out for white, "office"), "windows": [{"id": str, "title": str, "span": int, "inputs": [...], "trigger": {...} (optional), "steps": [...], "outputs": [...]}]}
+{"name": str, "description": str, "scheme": "white"|"paper"|"night"|"graphite" (optional; leave it out for white), "windows": [{"id": str, "title": str, "span": int, "inputs": [...], "trigger": {...} (optional), "steps": [...], "outputs": [...]}]}
 
 Example, for "summarize a text file in a length I choose, then say it in English":
 {"name": "Summaries", "description": "Summarize a file, then in English.", "windows": [

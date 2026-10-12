@@ -39,7 +39,7 @@ export interface Graph {
   edges: GraphEdge[];
   /** The schedule: the rows of its table of cells (`graph/schedule.ts`). */
   schedule?: string[];
-  /** The gui the graph is used through: its blocks, which connect themselves to its start and end points by name. None, for a graph without one. */
+  /** The GUI the graph is used through: its blocks, which connect themselves to its start and end points by name. None, for a graph without one. */
   gui?: Gui;
 }
 
@@ -49,7 +49,7 @@ interface Gui {
 }
 
 export interface GraphMetadata extends FormatMetadata {
-  gui_scheme: 'night' | 'paper' | 'office' | 'graphite' | 'anthracite';
+  gui_scheme: 'night' | 'paper' | 'white' | 'graphite';
 }
 
 export interface GraphNode extends Omit<FormatNode, 'config'> {
@@ -93,7 +93,7 @@ export type NodeConfig = {
   mcp_servers?: string;
   /** An ai node: how often to ask again when the answer cannot be used (no JSON, a key left out, cut off). Unset: the machine's setting, else 2. */
   repairs?: number;
-  /** A start point: who starts it -- the gui, a call, itself -- and, by itself, when the tool starts and how often (`5m`). */
+  /** A start point: who starts it -- the GUI, a call, itself -- and, by itself, when the tool starts and how often (`5m`). */
   started_by: 'gui' | 'call' | 'itself';
   /** A start point: what it is sent when nobody sends it anything -- a run of it on its own, ▶ Try -- as a caller would name it. */
   values?: Record<string, unknown>;

@@ -140,12 +140,12 @@ export interface Trigger {
 }
 
 /** The look of a tool that says none: white. */
-export const DEFAULT_SCHEME = 'office';
+export const DEFAULT_SCHEME = 'white';
 
 export interface Windows {
   name: string;
   description: string;
-  /** The gui's colour scheme (`metadata.gui_scheme`); office (white), where it says none. */
+  /** The gui's colour scheme (`metadata.gui_scheme`); white, where it says none. */
   scheme?: string;
   windows: Window[];
   /** The text of the page and where the windows stand in it. Left out, the page is its name, its description and the windows in turn (`pageOf`). */

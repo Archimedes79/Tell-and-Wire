@@ -21,7 +21,7 @@ export interface WidgetViewProps {
   /**
    * The person did the thing this block is *for*: pressed the button, sent the
    * message, made the choice. Whether that starts the graph is not the block's
-   * call -- whoever draws the gui knows it (`fires`) -- so a block reports
+   * call -- whoever draws the GUI knows it (`fires`) -- so a block reports
    * every such moment and does not look at its own settings to decide.
    *
    * `value` is what the block holds as of this event. Passed along rather than

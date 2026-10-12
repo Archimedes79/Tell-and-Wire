@@ -1,6 +1,6 @@
 import type { RoundSnapshot } from '../api/client';
 
-/** Who sent what began a round, in words: a block of the gui by its name, or one of the senders that are not a block. */
+/** Who sent what began a round, in words: a block of the GUI by its name, or one of the senders that are not a block. */
 function byWords(by: string, nameOf: (id: string) => string): string {
   switch (by) {
     case 'call': return 'called';

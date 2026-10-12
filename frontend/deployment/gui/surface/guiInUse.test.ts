@@ -6,7 +6,7 @@ import type { GuiWidget } from '../kit/guiWidget';
 import { GuiSurface, type GuiModel } from './GuiSurface';
 
 /**
- * A gui in use, pressed and changed as a person does: what a block now holds
+ * A GUI in use, pressed and changed as a person does: what a block now holds
  * is handed on only for a block a round is given a value by, and a block that
  * starts the graph starts it by its name. A button pressed once sent its
  * press count as a value no graph takes, and the server turned the round down.
@@ -27,7 +27,7 @@ const gui: GuiModel = {
 
 let root: Root;
 let host: HTMLElement;
-/** What the gui told its host, in order. */
+/** What the GUI told its host, in order. */
 const told: string[] = [];
 
 beforeEach(async () => {
@@ -49,7 +49,7 @@ afterEach(async () => {
   host.remove();
 });
 
-describe('a gui in use', () => {
+describe('a GUI in use', () => {
   it('starts a round by a button\'s name, with no value of it, and hands on what a block that takes a value now holds', async () => {
     await act(async () => { host.querySelector('button')!.click(); });
     const select = host.querySelector('select')!;

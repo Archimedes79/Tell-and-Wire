@@ -16,7 +16,7 @@ import { startPage } from '../../gui/notebook/page.ts';
 import { DEFAULT_SCHEME, windowProblems } from '../../gui/notebook/windows.ts';
 
 /** The looks a delivered tool can have (the gui's colour schemes), by their ids. */
-const LOOKS: [string, string][] = [['office', 'White'], ['paper', 'Paper'], ['night', 'Night'], ['graphite', 'Graphite'], ['anthracite', 'Anthracite']];
+const LOOKS: [string, string][] = [['white', 'White'], ['paper', 'Paper'], ['night', 'Night'], ['graphite', 'Graphite']];
 
 const folderOf =(path: string): string => path.replace(/[\\/]+$/, '').replace(/[\\/][^\\/]*$/, '');
 

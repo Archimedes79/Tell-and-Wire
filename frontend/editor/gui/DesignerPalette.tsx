@@ -12,8 +12,8 @@ import { DIMMER, LINE, SURFACE } from '../../deployment/gui/kit/ui/theme';
  * on the graph tab (`.palette-tile`): a slim column on the left, click or drag
  * to add. The two share a look and no code.
  *
- * Grouped the way a gui is built rather than by implementation: the words that
- * hold a gui together, the things a person operates, the things a run fills in.
+ * Grouped the way a GUI is built rather than by implementation: the words that
+ * hold a GUI together, the things a person operates, the things a run fills in.
  *
  * An entry is a **kind plus a mode**, not just a kind. "Heading" and "Text" are
  * both `text` -- they hold the same string and connect the same way -- so
@@ -38,7 +38,7 @@ export interface PaletteEntry extends KindEntry {
 export const GROUPS: { label: string; folded?: boolean; items: { kind: WidgetKind; mode?: string }[] }[] = [
   {
     label: 'Words',
-    items: [{ kind: 'text', mode: 'heading' }, { kind: 'text', mode: 'body' }, { kind: 'divider', mode: 'horizontal' }],
+    items: [{ kind: 'text', mode: 'h1' }, { kind: 'text', mode: 'h2' }, { kind: 'text', mode: 'body' }, { kind: 'divider', mode: 'horizontal' }],
   },
   {
     label: 'The person does',
@@ -68,7 +68,7 @@ export function entryOf(kind: WidgetKind, mode?: string): PaletteEntry | undefin
 }
 
 /**
- * The block an entry adds to a gui that holds the blocks *taken*.
+ * The block an entry adds to a GUI that holds the blocks *taken*.
  *
  * A block that connects to the graph starts out named after what it is: a
  * start point's card says which blocks fire it and send to it by their names,
@@ -105,7 +105,7 @@ interface PaletteProps {
   onDragStart: (entry: PaletteEntry, event: React.MouseEvent) => void;
 }
 
-/** The gui drawn from the graph: how many start and end points still lack their blocks, and the way to make them. */
+/** The GUI drawn from the graph: how many start and end points still lack their blocks, and the way to make them. */
 interface FromGraph {
   points: number;
   onGenerate: () => void;
@@ -165,7 +165,7 @@ export default function DesignerPalette({ onAdd, onDragStart, fromGraph }: Palet
           </Button>
         )}
         <p className="text-[11px] leading-snug" style={{ color: DIMMER }}>
-          Drag onto the gui, or press <kbd>/</kbd>.
+          Drag onto the GUI, or press <kbd>/</kbd>.
         </p>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 {
   "name": "Paper review panel",
-  "description": "A pre-submission review panel: five AI reviewers — scientific soundness, an adversarial referee, evidence and claims, references, figures and tables — read the same manuscript in parallel, and a judge consolidates their findings into one ranked list with a recommendation. The AI advises; the researcher decides. The sample paper is fictional and has problems planted in it.",
+  "description": "Five AI reviewers read your manuscript in parallel, each with a remit of its own, and a judge merges what they found into one ranked list with a recommendation. The AI advises; you decide. The sample paper is fictional, with problems planted in it.",
   "wires": [
     "review.data -> read.file",
     "read.text -> scientific.paper",

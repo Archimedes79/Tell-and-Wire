@@ -14,8 +14,8 @@ const END = new EndNodeDefinition();
  * and, besides, a file or a folder it is written to.
  *
  * The run's result is no place a value is sent to, beside a file: it is what
- * the end point is. A gui block shows it by name, a script and the command
- * line read it by name, and the gui is never chosen here -- it chooses the
+ * the end point is. A GUI block shows it by name, a script and the command
+ * line read it by name, and the GUI is never chosen here -- it chooses the
  * end point (`shows`). Writing a file is the end point's own, done whether or
  * not anyone watches. What it is -- its text -- and where it is written are
  * what the node feeding it is told it wants (`EndNodeGuiBuilder.wantsOn`).
@@ -68,7 +68,7 @@ export default function EndNodePanel({ node, setConfig }: NodePanelProps) {
               placeholder={mode === 'file' ? 'output/result.txt' : 'output/results'}
             />
             <p className="text-xs mt-1" style={{ color: DIMMER }}
-              title={`${mode === 'file' ? 'A text is written as it is, anything else as JSON.' : 'Each value that arrives becomes a file of its own in this folder.'} Written every run, gui or no gui. A path wired into the “Path” port is used instead: one chosen on the gui, or sent by a call.`}>
+              title={`${mode === 'file' ? 'A text is written as it is, anything else as JSON.' : 'Each value that arrives becomes a file of its own in this folder.'} Written every run, gui or no gui. A path wired into the “Path” port is used instead: one chosen on the GUI, or sent by a call.`}>
               Written every run. A path wired into “Path” is used instead.
             </p>
           </div>

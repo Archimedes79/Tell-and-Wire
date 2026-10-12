@@ -26,7 +26,7 @@ const designOf = (session: string, revision: number): string => `${session}#${re
 /**
  * The deployed graph's front-end.
  *
- * It knows the graph only as the runtime API says it: the gui as it was
+ * It knows the graph only as the runtime API says it: the GUI as it was
  * designed (`gui`), what the graph offers by name (`interface`) -- which
  * block fires which start point, what it hands back -- and the session, which
  * the server tells as it changes (`stream`): what each block holds and shows,
@@ -43,7 +43,7 @@ const designOf = (session: string, revision: number): string => `${session}#${re
  * Served by the bundle's `backend/deployment/host/serve.ts` at `gui.html`.
  */
 export default function GuiApp() {
-  const [design, setDesign] = useState<(GuiDesign & { scheme: string; startsWhole: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
+  const [design, setDesign] = useState<(GuiDesign & { scheme: string; startsWhole: boolean; usesModel: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
   const [loadError, setLoadError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const view = useSession((s) => s.view);
@@ -60,6 +60,7 @@ export default function GuiApp() {
         ...connectionsOf(offered.events),
         outputs: offered.outputs.map(({ name, label }) => ({ name, label })),
         startsWhole: gui.starts_whole,
+        usesModel: gui.uses_model,
         drawn: designOf(gui.session, gui.design_revision),
         events: offered.events,
       }))
@@ -75,15 +76,15 @@ export default function GuiApp() {
     if (design && held && held !== design.drawn) load();
   }, [design, held, load]);
 
-  // What the gui still needs before a round it starts can run -- a file
+  // What the GUI still needs before a round it starts can run -- a file
   // nobody chose on a picker -- is asked for in the same window the editor
   // uses (`useRound`).
   const round = useRound();
 
-  // Opened, a tool that nothing on its gui and no start point of its own starts runs
+  // Opened, a tool that nothing on its GUI and no start point of its own starts runs
   // whole once, as ▶ Run starts it in the editor and a program runs when it is
   // started. Its start points that start themselves are the server's: they run on its clock
-  // whether or not a gui is open.
+  // whether or not a GUI is open.
   const started = useRef(false);
   const start = useRef(round.run);
   start.current = round.run;
@@ -115,22 +116,25 @@ export default function GuiApp() {
               className="shrink-0"
               onClick={() => { void startOver(); }}
               disabled={busy}
-              title="Forget what using this tool left behind: what was sent, what it remembers, what the gui holds"
+              title="Forget what using this tool left behind: what was sent, what it remembers, what the GUI holds"
             >
               ↺ Start over
             </Button>
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => setShowSettings(true)}
-              title="Point this tool at a different AI"
-            >
-              ⚙ AI Settings
-            </Button>
+            {/* Only a tool that asks a model has any use for choosing one. */}
+            {design?.usesModel && (
+              <Button
+                size="sm"
+                className="shrink-0"
+                onClick={() => setShowSettings(true)}
+                title="Point this tool at a different AI"
+              >
+                ⚙ AI Settings
+              </Button>
+            )}
           </>
         )}
         note={clock?.runs_by_itself && (
-          <span className="text-xs whitespace-nowrap" style={{ color: DIM }} title="This tool runs by itself; the clock is in the server, so it keeps running with this gui closed.">
+          <span className="text-xs whitespace-nowrap" style={{ color: DIM }} title="This tool runs by itself; the clock is in the server, so it keeps running with this GUI closed.">
             {current && !current.done ? '⏱ running…' : clock.next_at
               ? `⏱ next ${new Date(clock.next_at).toLocaleTimeString()}`
               : finishedAt ? `⏱ ran ${new Date(finishedAt).toLocaleTimeString()}` : '⏱'}
@@ -149,7 +153,7 @@ export default function GuiApp() {
         )}
 
         {/* A call to each start point a call starts, as a script would make it --
-            then the gui, or, when it has no blocks, what the tool does and
+            then the GUI, or, when it has no blocks, what the tool does and
             what its run hands back: the editor's running application draws the same. */}
         {design && (
           <CallForms events={design.events} sent={view?.sent ?? {}} busy={busy} onCall={(event, values) => { void round.run(event, undefined, values); }} />

@@ -185,7 +185,7 @@ interface Around {
   nodes: GraphNode[];
   edges: Wire[];
   metadata: Graph['metadata'];
-  /** The gui's blocks: what its start points are sent, what shows its end points. */
+  /** The GUI's blocks: what its start points are sent, what shows its end points. */
   gui: GuiWidget[];
 }
 

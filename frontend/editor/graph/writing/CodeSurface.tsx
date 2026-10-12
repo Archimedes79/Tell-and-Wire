@@ -5,12 +5,10 @@ import { keymap, placeholder as placeholderExtension } from '@codemirror/view';
 import { indentWithTab, redo } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
-import { oneDarkTheme } from '@codemirror/theme-one-dark';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { tags as t } from '@lezer/highlight';
-import { ACCENT, ACCENT_FILL, DIM, HOVER, LINE, SUNKEN, SURFACE, TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { ACCENT, LINE, SUNKEN, SURFACE, TEXT, HOVER } from '../../../deployment/gui/kit/ui/theme';
 import { scheme } from '../../../deployment/gui/kit/ui/scheme';
-import { useLook } from '../../document/store/look';
+import { useEditorScheme } from '../../document/store/editorScheme';
 import type { CodeLanguage } from './CodeField';
 
 // CodeMirror, and nothing else: this is the one module that imports it, and it
@@ -20,59 +18,22 @@ import type { CodeLanguage } from './CodeField';
 // where that graph is cut.
 
 /**
- * The token colours of a light box. Each reads at 4.5:1 on the lightest and the darkest of the light looks' recessed grounds (the setup's own
- * regular-expression red does not), and the dark looks keep One Dark's.
+ * The editor's look for a scheme: One Dark on a dark one, CodeMirror's own light colours on a light
+ * one, and the scheme's own ground, text and selection under either -- a code box is a field of the
+ * window it is in, not a window of its own.
  */
-const LIGHT_TOKENS = HighlightStyle.define([
-  { tag: [t.keyword, t.controlKeyword, t.operatorKeyword, t.definitionKeyword, t.moduleKeyword], color: '#7a2e9c' },
-  { tag: [t.string, t.special(t.string)], color: '#0b6b2e' },
-  { tag: [t.number, t.bool, t.null, t.atom], color: '#a14400' },
-  { tag: [t.regexp, t.escape, t.invalid], color: '#b4232a' },
-  { tag: [t.comment, t.lineComment, t.blockComment, t.quote], color: '#5b6470', fontStyle: 'italic' },
-  { tag: [t.function(t.variableName), t.definition(t.variableName), t.link, t.url], color: '#0a56c4' },
-  { tag: [t.typeName, t.className, t.monospace], color: '#8a4b00' },
-  { tag: [t.operator, t.punctuation, t.meta], color: '#4a515c' },
-  { tag: t.heading, color: '#0a56c4', fontWeight: 'bold' },
-  { tag: t.strong, fontWeight: 'bold' },
-  { tag: t.emphasis, fontStyle: 'italic' },
-]);
-
-/** One Dark's token colours with its comment grey a step lighter: it read at 3.6 to 4.4 on the dark looks' grounds. */
-const DARK_TOKENS = HighlightStyle.define([
-  { tag: [t.keyword, t.controlKeyword, t.operatorKeyword, t.definitionKeyword, t.moduleKeyword], color: '#c678dd' },
-  { tag: [t.string, t.special(t.string)], color: '#98c379' },
-  { tag: [t.number, t.bool, t.null, t.atom], color: '#d19a66' },
-  { tag: [t.regexp, t.escape, t.operator, t.link, t.url], color: '#56b6c2' },
-  { tag: [t.comment, t.lineComment, t.blockComment, t.quote], color: '#a3adbd', fontStyle: 'italic' },
-  { tag: [t.function(t.variableName), t.definition(t.variableName), t.propertyName], color: '#61afef' },
-  { tag: [t.typeName, t.className, t.monospace], color: '#e5c07b' },
-  { tag: [t.variableName, t.invalid], color: '#e06c75' },
-  { tag: t.heading, color: '#61afef', fontWeight: 'bold' },
-  { tag: t.strong, fontWeight: 'bold' },
-  { tag: t.emphasis, fontStyle: 'italic' },
-]);
-
-/**
- * The colours of the box, from the editor's look (ui/theme.ts: variables on the page), so a light look has a light box and a dark one a dark
- * box. A dark look also takes One Dark's token colours; a light one the setup's own, which are made for a light ground.
- */
-const lookTheme = (id: string) => {
-  const dark = !scheme(id).light;
+function lookFor(light: boolean) {
+  // The scheme's own first: of two extensions that style the same thing, the earlier wins.
   return [
-    // The first of the themes wins where two say the same thing: ours, over One Dark's grounds.
     EditorView.theme({
       '&': { backgroundColor: SUNKEN, color: TEXT },
-      '.cm-content': { caretColor: TEXT },
-      '.cm-cursor, .cm-dropCursor': { borderLeftColor: TEXT },
-      '.cm-gutters': { backgroundColor: SURFACE, color: DIM, border: 'none', borderRight: `1px solid ${LINE}` },
-      '.cm-activeLine': { backgroundColor: HOVER },
-      '.cm-activeLineGutter': { backgroundColor: HOVER, color: TEXT },
-      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: ACCENT_FILL },
-      '.cm-placeholder': { color: DIM },
-    }, { dark }),
-    ...(dark ? [oneDarkTheme, syntaxHighlighting(DARK_TOKENS)] : [syntaxHighlighting(LIGHT_TOKENS)]),
+      '.cm-gutters': { backgroundColor: SURFACE, color: 'var(--ui-dim)', border: 'none' },
+      '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: HOVER },
+      '.cm-cursor': { borderLeftColor: TEXT },
+    }, { dark: !light }),
+    ...(light ? [] : [oneDark]),
   ];
-};
+}
 
 const FONT = {
   '&': { fontSize: '12.5px', borderRadius: '8px', border: `1px solid ${LINE}`, overflow: 'hidden' },
@@ -107,7 +68,7 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
   changed.current = onChange;
   const languageSlot = useRef(new Compartment());
   const lookSlot = useRef(new Compartment());
-  const look = useLook((state) => state.id);
+  const light = !!scheme(useEditorScheme((s) => s.resolved)).light;
 
   useEffect(() => {
     if (!host.current) return undefined;
@@ -121,7 +82,7 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
           // Redo; CodeMirror's own key for it on Windows is Ctrl+Y alone.
           keymap.of([{ key: 'Mod-Shift-z', run: redo, preventDefault: true }, ...(tabIndents ? [indentWithTab] : [])]),
           languageSlot.current.of(language === 'javascript' ? javascript() : markdown()),
-          lookSlot.current.of(lookTheme(look)),
+          lookSlot.current.of(lookFor(light)),
           EditorView.lineWrapping,
           EditorView.theme({
             ...FONT,
@@ -150,14 +111,15 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
   }, [value]);
 
   useEffect(() => {
-    view.current?.dispatch({ effects: lookSlot.current.reconfigure(lookTheme(look)) });
-  }, [look]);
-
-  useEffect(() => {
     view.current?.dispatch({
       effects: languageSlot.current.reconfigure(language === 'javascript' ? javascript() : markdown()),
     });
   }, [language]);
+
+  // The scheme changed while the box is open: it follows, without losing the text or the place in it.
+  useEffect(() => {
+    view.current?.dispatch({ effects: lookSlot.current.reconfigure(lookFor(light)) });
+  }, [light]);
 
   return <div ref={host} style={height.fill ? { height: '100%' } : undefined} />;
 }

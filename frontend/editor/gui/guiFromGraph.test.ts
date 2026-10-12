@@ -6,7 +6,7 @@ import { guiFromGraph } from './guiFromGraph';
 /**
  * A first gui drawn from the graph: an input for each thing a start point
  * reads, a button that starts it, a text for each end point nobody shows --
- * and nothing for what the gui already meets, or cannot start.
+ * and nothing for what the GUI already meets, or cannot start.
  */
 
 const port = (id: string, extra: Partial<Port> = {}): Port => ({ id, name: id, kind: 'input', data_type: 'any', multi: false, required: false, description: '', ...extra });
@@ -32,10 +32,10 @@ const edges = [
   wire('api', 'answer', 'topic'), wire('clock', 'answer', 'topic'),
 ];
 
-describe('a gui drawn from the graph', () => {
+describe('a GUI drawn from the graph', () => {
   it('has an input for what each start point reads and one that starts it, a text for each end point, and asks before a start point a call starts is put on the gui', () => {
     const planned = guiFromGraph(nodes, edges, []);
-    // The gui's start point: a picker for the file whose parts are read, a text box for the length, a picker for the path -- each sending under the name its input takes it by -- and a button to start it; then the end point shown.
+    // The GUI's start point: a picker for the file whose parts are read, a text box for the length, a picker for the path -- each sending under the name its input takes it by -- and a button to start it; then the end point shown.
     expect(planned.now.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.label, block.send, block.sends_to, block.fires, block.shows])])).toEqual([
       ['read', [
         ['file', 'input_picker', 'File', undefined, ['read'], undefined, undefined],
@@ -49,7 +49,7 @@ describe('a gui drawn from the graph', () => {
         ['text_io', 'text_io', 'Summary', undefined, undefined, undefined, 'result'],
       ]],
     ]);
-    // A call starts the other: its blocks wait for the person's say. The clock's has none: the gui cannot start it.
+    // A call starts the other: its blocks wait for the person's say. The clock's has none: the GUI cannot start it.
     expect(planned.ifSwitched.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.sends_to, block.fires])])).toEqual([
       ['api', [['topic', 'text_io', ['api'], 'api']]],
     ]);
@@ -59,7 +59,7 @@ describe('a gui drawn from the graph', () => {
     expect(inputs.map((block) => [block.id, block.w, block.h])).toEqual([['file', 8, 1], ['length', 8, 2], ['source', 12, 1], ['button', 4, 1]]);
     expect(outputs.map((block) => [block.kind, block.w, block.h, block.tone])).toEqual([['divider', 16, 1, 'plain'], ['text_io', 16, 4, 'raised']]);
 
-    // What the gui already meets is left as it is.
+    // What the GUI already meets is left as it is.
     const drawn = planned.now.flatMap((made) => made.blocks);
     expect(guiFromGraph(nodes, edges, drawn).now).toEqual([]);
   });

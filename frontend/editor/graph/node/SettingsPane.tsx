@@ -31,7 +31,7 @@ export default function SettingsPane({ node, builder, panel }: {
 }) {
   const graphNodes = useGraphNodes();
   const graphEdges = useGraphStore((s) => s.rfEdges);
-  // The gui's blocks: what a start point wired here is sent, what shows an end point it feeds.
+  // The GUI's blocks: what a start point wired here is sent, what shows an end point it feeds.
   const gui = useGraphStore((s) => s.gui);
 
   const { setConfig, change: updateNode } = panel;
@@ -45,7 +45,7 @@ export default function SettingsPane({ node, builder, panel }: {
     outputs: outputTargets(node.id, graphNodes, graphEdges, true, gui),
   };
   // What an input wired from a start point can take of its package: what a
-  // block of the gui sends it, or a part of what a call sends it.
+  // block of the GUI sends it, or a part of what a call sends it.
   const fromStart = (port: Port) => graphEdges
     .filter((edge) => edge.target === node.id && edge.targetHandle === port.id)
     .map((edge) => graphNodes.find((candidate) => candidate.id === edge.source))

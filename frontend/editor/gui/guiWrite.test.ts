@@ -30,11 +30,11 @@ describe('the gui', () => {
     expect(store().exportGraph()).not.toHaveProperty('gui');
   });
 
-  it('sends to the gui\'s start point -- one made for it, where there is none, in the same undo step -- and fires it while nothing else does; a button always does', () => {
+  it('sends to the GUI\'s start point -- one made for it, where there is none, in the same undo step -- and fires it while nothing else does; a button always does', () => {
     insertBlock(WIDGET_BUILDERS.text_io.create('question', 'Question', 'input'));
     expect(store().past).toHaveLength(1);
     expect(ofType('start').map((node) => node.id)).toEqual(['start']);
-    // Alone on the gui, its Enter is what starts the graph: no setting to make.
+    // Alone on the GUI, its Enter is what starts the graph: no setting to make.
     expect(shown()[0]).toMatchObject({ sends_to: ['start'], fires: 'start' });
     // A second box sends too, and leaves the firing to the first.
     insertBlock(WIDGET_BUILDERS.text_io.create('topic', 'Topic', 'input'));

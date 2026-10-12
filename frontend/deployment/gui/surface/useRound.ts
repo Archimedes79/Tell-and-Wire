@@ -3,17 +3,17 @@ import { call, type Requirement } from '../kit/api/client';
 import { roundRefused, startRound, useSession, type RoundAsk } from '../kit/api/session';
 
 /**
- * Starting a round the way every gui starts one.
+ * Starting a round the way every GUI starts one.
  *
- * Three hosts draw a gui in use -- `deployment/gui/GuiApp.tsx` for a tool
- * someone was handed, the editor's running application, and the editor's Gui
+ * Three hosts draw a GUI in use -- `deployment/gui/GuiApp.tsx` for a tool
+ * someone was handed, the editor's running application, and the editor's GUI
  * tab, whose blocks are live -- and ▶ Run starts the rounds of a graph without
- * a gui the same way again. A round from any of them has the same two steps:
- * ask what the gui still needs (a file nobody chose on a picker), and only
- * then start it, with what was set on the gui and the answers, by name.
+ * a GUI the same way again. A round from any of them has the same two steps:
+ * ask what the GUI still needs (a file nobody chose on a picker), and only
+ * then start it, with what was set on the GUI and the answers, by name.
  *
  * *before*, given, runs first: the editor hands its document to the server,
- * so the round runs what is being edited. *values* is what the gui sends
+ * so the round runs what is being edited. *values* is what the GUI sends
  * besides what was set on it -- the GUI tab's design.
  */
 export function useRound(before?: () => Promise<void>, values?: () => Record<string, unknown>) {
@@ -24,8 +24,8 @@ export function useRound(before?: () => Promise<void>, values?: () => Record<str
 
   /**
    * Start a round at start point *event* -- the whole graph for none -- once
-   * whatever it still needs is answered. *by*, a block of the gui that fired
-   * it: the round is sent what the gui holds. Without one it is a call, sent
+   * whatever it still needs is answered. *by*, a block of the GUI that fired
+   * it: the round is sent what the GUI holds. Without one it is a call, sent
    * *sent* -- nothing, for a round of everything, which reads what the
    * session keeps.
    */

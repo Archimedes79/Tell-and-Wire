@@ -1,4 +1,4 @@
-// One block of a gui, as the gui holds it.
+// One block of a GUI, as the GUI holds it.
 
 import type { WidgetKind } from '../../../../graph/graph.ts';
 

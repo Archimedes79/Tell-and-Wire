@@ -48,7 +48,7 @@ export async function listAsRun(node: GraphNode): Promise<string[]> {
 }
 
 /**
- * The files a folder picker on a gui lists, as a run lists them: by a start
+ * The files a folder picker on a GUI lists, as a run lists them: by a start
  * point set to read as the picker is, since both list through the one function
  * (`readChosen`, `folderListing.ts`).
  */

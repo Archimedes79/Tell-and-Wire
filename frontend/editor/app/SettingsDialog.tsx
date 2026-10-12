@@ -6,6 +6,8 @@ import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { DEFAULT_ENDPOINTS } from '../../../graph/endpoints.ts';
+import { SCHEMES } from '../../deployment/gui/kit/ui/scheme';
+import { useEditorScheme, type EditorSchemeChoice } from '../document/store/editorScheme';
 import { ACCENT_FILL, ACCENT_TEXT, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /** Where each provider's key comes from, said where the key is typed. */
@@ -76,6 +78,7 @@ function Chosen({ purpose, provider, saved, probe, children }: {
  */
 export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   const probe = useProviderStatus();
+  const colours = useEditorScheme();
   const [saved, setSaved] = useState<SettingsStatus | null>(null);
   const [provider, setProvider] = useState<AIProvider>('default');
   const [model, setModel] = useState('');
@@ -215,6 +218,25 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="p-5 space-y-6">
+        <section>
+          <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>Appearance</h3>
+          <p className="text-xs mb-3" style={{ color: DIM }}>
+            The colours of this editor, kept in this browser. A tool's own colours -- its GUI tab and what it is delivered as -- are chosen on the GUI tab.
+          </p>
+          <label htmlFor="editor-colours" className="sr-only">Colour scheme of the editor</label>
+          <select
+            id="editor-colours"
+            className="w-full rounded-lg px-2 py-1.5 text-sm"
+            style={FIELD}
+            value={colours.choice}
+            // Applied at once, and kept: it is not one of the settings Save writes.
+            onChange={(event) => colours.choose(event.target.value as EditorSchemeChoice)}
+          >
+            <option value="auto">Automatic — follows your system</option>
+            {SCHEMES.map((one) => <option key={one.id} value={one.id}>{one.label}</option>)}
+          </select>
+        </section>
+
         <section>
           <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI that runs the nodes</h3>
           <p className="text-xs mb-3" style={{ color: DIM }}>

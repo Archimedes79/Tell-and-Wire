@@ -74,6 +74,11 @@ const CODE_TEXTS: readonly TextFile[] = [
 export class CodeNodeDefinition extends NodeDefinition {
   readonly nodeType = 'code' as const;
 
+  /** Its code calls a model: `node.llm`. */
+  override callsModel(node: GraphNode): boolean {
+    return /\bnode\s*\.\s*llm\b/.test(String(node.config.code ?? ''));
+  }
+
   override texts(): readonly TextFile[] {
     return CODE_TEXTS;
   }
