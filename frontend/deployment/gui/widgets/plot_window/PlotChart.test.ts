@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import PlotChart, { asDrawing, drawingSource, toFigure } from './PlotChart';
+import PlotChart, { asDrawing, drawingSource, toFigure, valueLabel } from './PlotChart';
 
 describe('a figure: what a node sends a chart', () => {
   /**
@@ -52,5 +52,20 @@ describe('a chart the model drew itself', () => {
       expect(html, hostile).toMatch(/^<div[^>]*><img src="data:image\/svg\+xml;charset=utf-8,[^"<>]*"[^>]*\/><\/div>$/);
       expect(html).toContain(drawingSource(asDrawing(hostile)!).replace(/&/g, '&amp;'));
     }
+  });
+});
+
+describe('bars with names and values', () => {
+  const points = ['Rent', 'Groceries', 'Transport'].map((label, i) => ({ label, value: [950, 274.4, 61.25][i] }));
+
+  it('name a category in full where its name has the room, and a value as it is', () => {
+    const html = renderToStaticMarkup(createElement(PlotChart, { data: { kind: 'bars', title: '', points }, width: 360, height: 180 }));
+    for (const shown of ['>Rent<', '>Groceries<', '>Transport<', '>274.4<', '>61.25<', '>950<']) expect(html).toContain(shown);
+    expect(html).not.toContain('…');
+  });
+
+  it('say a value to two decimals up to the thousands, and short beyond', () => {
+    expect([274.4, 61.254, 950, 0, -3.5, 9999.99].map(valueLabel)).toEqual(['274.4', '61.25', '950', '0', '-3.5', '9999.99']);
+    expect(valueLabel(1430000000)).toBe('1.4B');
   });
 });

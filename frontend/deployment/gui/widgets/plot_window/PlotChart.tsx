@@ -162,6 +162,14 @@ function axisLabel(value: number): string {
 }
 
 /**
+ * A value named beside its bar or in a legend: as it is, to two decimals, up to the thousands -- 274.4 is not 274 -- and short
+ * ('1.4B') beyond, where an exact figure would not fit its room.
+ */
+export function valueLabel(value: number): string {
+  return Math.abs(value) < 10000 ? String(Number(value.toFixed(2))) : axisLabel(value);
+}
+
+/**
  * Room for axes, in the block's own pixels, or the bare sparkline a canvas
  * preview has space for.
  *
@@ -443,7 +451,8 @@ function Bars({ figure, ...common }: Common & { figure: Figure }) {
   const { frame, margin, top, min, range } = common;
   const points = figure.points;
   const longest = points.reduce((most, p) => Math.max(most, p.label.length), 1);
-  const names = Math.min(Math.round(frame.width * 0.32), 8 + longest * 6.4);
+  // The room `fit` gives a name (6.2 pixels a letter, 10 beside it) is the room it is asked for: a name that fits is not cut.
+  const names = Math.min(Math.round(frame.width * 0.32), 18 + longest * 6.2);
   const left = margin.labelled ? Math.max(24, names) : 4;
   const right = margin.labelled ? 52 : 4;
   const plotW = Math.max(1, frame.width - left - right);
@@ -486,7 +495,7 @@ function Bars({ figure, ...common }: Common & { figure: Figure }) {
                 x={(p.value < 0 ? zero : Math.min(zero, end) + w) + 6} y={y + bar / 2 + 4}
                 fontSize={CHART_TEXT.label} fill={DIM}
               >
-                {axisLabel(p.value)}
+                {valueLabel(p.value)}
               </text>
             )}
           </g>
@@ -559,7 +568,7 @@ function Donut({ figure, ...common }: Common & { figure: Figure }) {
               {fit(p.label, frame.width - x - 90)}
             </text>
             <text x={frame.width - margin.right} y={y} textAnchor="end" fontSize={CHART_TEXT.label} fill={DIM}>
-              {`${axisLabel(p.value)} · ${(100 * p.value / total).toFixed(1)}%`}
+              {`${valueLabel(p.value)} · ${(100 * p.value / total).toFixed(1)}%`}
             </text>
           </g>
         );
