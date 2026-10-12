@@ -3,7 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { parseGraph } from '../../graph/graph.ts';
-import { writeProject } from '../editor/project/write.ts';
+import { writeProject } from '../authoring/write.ts';
 import { main, parseArgs } from './cli.ts';
 
 describe('parseArgs', () => {

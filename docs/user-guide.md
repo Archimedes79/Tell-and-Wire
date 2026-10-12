@@ -385,7 +385,7 @@ home folder.
 
 ## 12. The notebook
 
-The **Notebook** button of the toolbar opens a page of its own: a document you write -- headings, text, bullets, gaps, as in
+The notebook is started by its own file, `start-notebook.cmd` (`.ps1`, `.sh`), and opens a page of its own, beside the editor or without it: a document you write -- headings, text, bullets, gaps, as in
 any editor of pages -- with windows standing in it to be used. Type what the tool should do and press **Build the tool**, or
 start with an empty page. **Write**, **Markdown** (the page as text) and **As app** (the page as its users see it) are in the
 bar on top. A window has a **Cells** button: under the page, the list shows what it asks (Ask), what is done (Do) and what is

@@ -4,7 +4,7 @@ A second way to build and use a tool, on the same graph, runtime, host and packa
 editor: the notebook writes the files the graph editor reads, and a project made in the notebook opens in the graph editor
 (the other way round it does not: a graph is not a page).
 
-Branch `tell-and-wire-notebook`, built on `main`. New code in new files, a few lines added to existing ones.
+Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new folders, started by files of its own; the graph editor does not know it is there.
 
 ## The idea
 
@@ -33,12 +33,13 @@ Branch `tell-and-wire-notebook`, built on `main`. New code in new files, a few l
 
 | Part | Folder | Notes |
 |---|---|---|
-| The model of windows and page; compiling to graph, schedule and gui | `gui/editor/windows/` | Neutral. `windows.ts` (windows), `page.ts` and `pageModel.ts` (the page, Markdown), `edit.ts` (the edits, pure functions), `read.ts`. |
+| The model of windows and page; compiling to graph, schedule and gui | `gui/notebook/` | Neutral. `windows.ts` (windows), `page.ts` and `pageModel.ts` (the page, Markdown), `edit.ts` (the edits, pure functions), `read.ts`. Only the notebook uses it; a package leaves it behind. |
 | The order to run windows in | `gui/windows/` | Neutral and shipped: the delivered page needs it. |
-| Reading and writing `graph-windows.json`; a window from a sentence | `backend/editor/windows/` | Editor only. Three routes. |
+| Reading and writing `graph-windows.json`; a window from a sentence; the notebook's own server | `backend/notebook/` | Authoring only. Four routes (`api.ts`), started by `main.ts`. What it writes a project with is `backend/authoring/` (shared with the graph editor). |
 | The page of a delivered tool | `frontend/deployment/windows/` | Shipped. The words and the framed windows, run in order; knows no editor. |
-| The notebook | `frontend/editor/notebook/` | Editor only, written anew: its own client (`api.ts`), store, runner (`runs.ts`), boxes (`Widgets.tsx`, `Chart.tsx`), file browser (`Browse.tsx`) and stylesheet. It imports no component of the graph editor. |
-| Its page | `frontend/notebook.html` | A second entry of the same build; the graph editor's toolbar links to it. |
+| The notebook | `frontend/notebook/`, `frontend/gui-notebook/`, `frontend/graph-notebook/` | Written anew, a product of its own: the shell (`notebook/`: `document/` with its client, store and runner, `elements/` with the boxes, the chart and the file browser), the page and its windows (`gui-notebook/`), the list, under the hood and debug (`graph-notebook/`), and the stylesheet. It imports nothing of the graph editor. |
+| Its page | `frontend/notebook/index.html` | Built on its own (`npm run build:notebook`, `frontend/vite.notebook.config.ts`) into `frontend/notebook/dist`. |
+| Starting it | `start-notebook.cmd`, `.ps1`, `.sh`, `scripts/start-notebook.mjs` | The notebook has its own start and stop files (`stop-notebook.*`), its own port (8100), and runs beside the editor (8000) or without it. Neither names the other. |
 
 ## The files of a project
 

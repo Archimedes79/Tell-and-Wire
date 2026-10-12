@@ -10,10 +10,10 @@ import { createConnection } from 'node:net';
 
 const DEFAULT_PORT = 8000;
 
-/** `--port 8023` from *args*, or the default. Throws on anything that is not a port. */
-export function readPort(args) {
+/** `--port 8023` from *args*, or *fallback* (the editor's port, unless a product says its own). Throws on anything that is not a port. */
+export function readPort(args, fallback = DEFAULT_PORT) {
   const index = args.indexOf('--port');
-  const value = index >= 0 ? Number(args[index + 1]) : DEFAULT_PORT;
+  const value = index >= 0 ? Number(args[index + 1]) : fallback;
   if (!Number.isInteger(value) || value < 1 || value > 65535) {
     throw new Error(`Invalid port: ${index >= 0 ? args[index + 1] : value}`);
   }
@@ -77,14 +77,14 @@ function listenerPids(port) {
  * Returns `false` when nothing was listening. Throws, and stops nothing, when
  * the port is held by a program that is not Tell & Wire.
  */
-export async function stopEditor(port) {
+export async function stopEditor(port, name = 'editor') {
   if (!await isListening(port)) return false;
   if (!await isTellAndWire(port)) {
     throw new Error(`Port ${port} is used by a program that is not Tell & Wire. Stop it, or choose another port with --port.`);
   }
   for (const pid of listenerPids(port)) {
     if (pid === process.pid) continue;
-    console.log(`Stopping the editor on port ${port} (PID ${pid})...`);
+    console.log(`Stopping the ${name} on port ${port} (PID ${pid})...`);
     try {
       if (process.platform === 'win32') execFileSync('taskkill.exe', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
       else process.kill(pid, 'SIGTERM');

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { say } from './noticeBoard';
 import { runReport } from './runReport';
-import { BookOpen, LayoutGrid, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
+import { BookOpen, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from '../../deployment/gui/kit/ui/ToolbarButton';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { useGoingRound, useGraphStore } from '../document/store/graphStore';
@@ -346,15 +346,6 @@ export default function Toolbar({
             ? 'Stop after the node in flight'
             : 'Write every empty node, in the order the graph runs'}
           onClick={sweep.busy ? sweep.stop : sweep.run}
-          framed
-        />
-
-        {/* The notebook: the same tools said as a page of windows, in a page of its own (`docs/notebook.md`). */}
-        <ToolbarButton
-          icon={LayoutGrid}
-          label="Notebook"
-          title="Say a tool as a page of windows instead of a graph. Opens in a window of its own; what it saves, this editor opens too."
-          onClick={() => { window.open('notebook.html', 'tell-and-wire-notebook'); }}
           framed
         />
 

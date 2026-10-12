@@ -31,7 +31,7 @@ import { memoryState, sendFromOutside } from '../../graph/interface.ts';
 import { startFromGui } from '../../gui/gui.ts';
 import { guiPart } from '../deployment/gui/hooks.ts';
 import { WEB_DIR, builtGui, installFolder } from '../deployment/project/layout.ts';
-import { isLoopbackHost, portTaken, serve } from '../deployment/host/serve.ts';
+import { isLoopbackHost, portTaken, serve, type ServeOptions } from '../deployment/host/serve.ts';
 import { untilStopped } from '../deployment/host/lifecycle.ts';
 import { dirname, join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -70,6 +70,21 @@ interface CliOptions {
   mcp?: boolean;
   /** The one folder that server may touch. Where it was started, unless said otherwise. */
   mcpRoot?: string;
+}
+
+/**
+ * A page and the routes only it has, served by this command in place of a deployed gui: the editor (`--editor`), or another
+ * product with a start file of its own (`backend/notebook/main.ts`, which calls `runServer` with its own).
+ */
+export interface Product {
+  /** The page it serves, the routes it adds, and what answers them. */
+  part: NonNullable<ServeOptions['editor']>;
+  /** What the command calls it when it says what it does. */
+  name: string;
+  /** Where a free port is looked for first; 8000 where it names none. */
+  port?: number;
+  /** What it says about this machine's setup once it is up. */
+  setup?: () => Promise<string[]>;
 }
 
 /** Where a served tool looks first. Nothing addresses it from outside, so this is a habit, not a contract. */
@@ -223,26 +238,26 @@ async function runEvery(graph: Graph, trigger: Trigger | null, options: CliOptio
  * to be taken on your machine" is not a thing its recipient should ever have
  * to know about, let alone read a Node stack trace about.
  */
-async function runServer(options: CliOptions): Promise<number> {
+export async function runServer(options: CliOptions, given?: Product): Promise<number> {
+  // The editor is loaded here and nowhere else: a package that does not carry it serves none.
+  const product = given ?? (options.editor ? await editorProduct(resolve(options.editor)) : undefined);
   // The editor serves no graph of its own: the document being edited is handed
   // to the server (holdGraph), so a folder that happens to hold a graph.json is
   // not served unless it is named. A bundle is the other case, and there the
   // graph is right here. A graph that was named and is not there is a mistake to
   // say, not an empty server: `serve` says it, where it reads the graph.
-  const hasGraph = options.graphNamed || (!options.editor && existsSync(resolve(options.graphPath)));
+  const hasGraph = options.graphNamed || (!product && existsSync(resolve(options.graphPath)));
   // Beside the project -- a bundle is one -- or beside a single graph file.
   const carried = resolve(projectFolderOf(options.graphPath) ?? dirname(resolve(options.graphPath)), WEB_DIR);
   const guiDir = !hasGraph ? undefined : existsSync(join(carried, 'gui.html')) ? carried : builtGui();
-  // The editor is loaded here and nowhere else: a package that does not carry it serves none.
-  const editor = options.editor ? (await import('../editor/host/routes.ts')).editorPart(resolve(options.editor)) : undefined;
 
   // The editor opens, saves and runs code at any path, and keeps the keys, for
   // whoever reaches it, asking nobody who they are: beyond this machine that is
   // said out loud, not left to a flag typed in passing. A container opts in
   // (its loopback is its own); a tool the editor is not serving needs no opt-in.
-  if (options.editor && options.host && !isLoopbackHost(options.host) && process.env.TW_EDITOR_ON_NETWORK !== '1') {
+  if (product && options.host && !isLoopbackHost(options.host) && process.env.TW_EDITOR_ON_NETWORK !== '1') {
     throw new Error(
-      `The editor runs code, writes files and keeps keys for whoever reaches it, so it is not offered on ${options.host}.`
+      `The ${product.name} runs code, writes files and keeps keys for whoever reaches it, so it is not offered on ${options.host}.`
       + ' If this port cannot be reached by anyone else (a container published on 127.0.0.1), set TW_EDITOR_ON_NETWORK=1.',
     );
   }
@@ -252,7 +267,7 @@ async function runServer(options: CliOptions): Promise<number> {
     guiDir,
     port,
     gui: guiPart,
-    ...(editor ? { editor } : {}),
+    ...(product ? { editor: product.part } : {}),
     ...(options.host ? { host: options.host } : {}),
   });
 
@@ -275,7 +290,8 @@ async function runServer(options: CliOptions): Promise<number> {
         );
       }
     }
-    for (let port = DEFAULT_PORT; port < DEFAULT_PORT + PORTS_TRIED; port += 1) {
+    const first = product?.port ?? DEFAULT_PORT;
+    for (let port = first; port < first + PORTS_TRIED; port += 1) {
       try {
         return await start(port);
       } catch (error) {
@@ -285,25 +301,22 @@ async function runServer(options: CliOptions): Promise<number> {
     // Rather than a silent 0: a machine with ten busy ports in a row is one
     // where "it picked another" would be a guess nobody can check.
     throw new Error(
-      `Ports ${DEFAULT_PORT} to ${DEFAULT_PORT + PORTS_TRIED - 1} are all in use.`
+      `Ports ${first} to ${first + PORTS_TRIED - 1} are all in use.`
       + ' Free one, or say which to use with --port.',
     );
   })();
   process.stderr.write(`Serving on ${url}\n`);
   if (!loopback) {
-    const says = options.editor ? 'run code, open and save files and use the keys' : 'run this tool';
-    const local = options.editor ? 'Browsing, finding and opening files work' : 'Browsing the disk works';
+    const says = product ? 'run code, open and save files and use the keys' : 'run this tool';
+    const local = product ? 'Browsing, finding and opening files work' : 'Browsing the disk works';
     process.stderr.write(`Warning: bound to ${options.host}: anyone who can reach this port can ${says}. ${local} on this machine only.\n`);
   }
   // Only the editor: a deployed tool is configured by whoever runs it, and its
   // terminal is a log rather than something a person is sitting in front of.
-  if (options.editor) {
-    const { setupLines } = await import('../editor/runtime/settings.ts');
-    for (const line of await setupLines()) process.stderr.write(`${line}\n`);
-  }
+  for (const line of await product?.setup?.() ?? []) process.stderr.write(`${line}\n`);
   // Opening a browser is for something a person starts -- a tool they were
   // handed, or the editor -- not for a helper another process started.
-  if (hasGraph || options.editor) await open(url);
+  if (hasGraph || product) await open(url);
   // The server holds the process open until someone asks it to stop. Then the
   // runs in flight are ended rather than abandoned, and the code is returned so
   // the process ends by itself (see main.ts). Should something still hold it
@@ -311,6 +324,15 @@ async function runServer(options: CliOptions): Promise<number> {
   const code = await untilStopped(shutdown);
   setTimeout(() => process.exit(code), 2000).unref();
   return code;
+}
+
+/** The editor as a product: its page and routes, and what it says of the model setup. Loaded when asked for, never otherwise. */
+async function editorProduct(dist: string): Promise<Product> {
+  return {
+    part: (await import('../editor/host/routes.ts')).editorPart(dist),
+    name: 'editor',
+    setup: async () => (await import('../editor/runtime/settings.ts')).setupLines(),
+  };
 }
 
 /** Show the tool, if this machine has something to show it in. */

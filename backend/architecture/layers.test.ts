@@ -2,10 +2,11 @@
  * The folders are the architecture, asserted on the import graph.
  *
  * The code is cut by tier, then by role, then by module (`docs/architecture.md`). What ships in a
- * package is decided by one thing: a path with a folder named `editor` is only the editor's, and the
- * rest is carried. So the rules are few:
+ * package is decided by one thing: a path with a folder named `editor` or `notebook` is only for
+ * authoring, and the rest is carried (`backend/authoring` is not among the folders a package carries).
+ * So the rules are few:
  *
- * 1. Nothing outside an `editor` folder imports from one. (`backend/cli` may `import()` it: it
+ * 1. Nothing outside an authoring folder (`editor`, `notebook`, `authoring`) imports from one. (`backend/cli` may `import()` it: it
  *    composes, and a package without the editor is told so when a command asks for it.)
  * 2. `graph/` and `gui/` are neutral: they run in the browser and in Node, so they import no `node:*`,
  *    nothing of `backend/` or `frontend/`, and `graph/` nothing of `gui/`. Their tests too: a test that
@@ -14,6 +15,9 @@
  *    cli -- the editor's modules above the deployment's. Two modules of one rank do not import each
  *    other. The wire's files (`host/api.ts`) are types and tables for either end and rank with nothing.
  * 4. `frontend/` imports of `backend/` only the wire's files.
+ * 5. The two products -- the graph editor and the notebook -- do not import each other, in any tier: each is started by a file of its
+ *    own, and either can be taken away without the other noticing. What they share is below them: `graph/`, `gui/`, the deployment, and
+ *    `backend/authoring`.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -57,20 +61,36 @@ for (const from of SOURCES) {
 /** The tests of graph/ and gui/ are not carried, but they sit in the neutral folders and import like them. */
 const NEUTRAL_TESTS = ['graph', 'gui'].flatMap((dir) => walk(join(ROOT, dir))).map(rel).filter((path) => /\.test\.tsx?$/.test(path));
 
-const inEditor = (path: string): boolean => path.split('/').includes('editor');
+/** The folders only authoring uses: the editor's, the notebook's (its frontend is in three), and what both write with. */
+const AUTHORING = new Set(['editor', 'notebook', 'gui-notebook', 'graph-notebook', 'authoring']);
+/** A path only authoring uses: the editor's, the notebook's, or what both write with (`backend/authoring`). */
+const inAuthoring = (path: string): boolean => path.split('/').some((part) => AUTHORING.has(part));
+
+/** The folders each product owns, in every tier. */
+const PRODUCTS: Record<string, string[]> = {
+  editor: ['backend/editor/', 'frontend/editor/'],
+  notebook: ['backend/notebook/', 'frontend/notebook/', 'frontend/gui-notebook/', 'frontend/graph-notebook/', 'gui/notebook/'],
+};
+const productOf = (path: string): string | undefined => Object.keys(PRODUCTS).find((name) => PRODUCTS[name].some((prefix) => path.startsWith(prefix)));
 const show = (found: Import[]): string[] => found.map((one) => `${one.from} -> ${one.to}`).sort();
 
 /** The module of a backend path, with its rank: lower is imported by higher. */
 const RANK: Record<string, number> = {
   'deployment/project': 1, 'deployment/runtime': 2, 'deployment/gui': 2, 'deployment/host': 3,
-  'editor/project': 4, 'editor/graph': 4, 'editor/runtime': 4, 'editor/host': 5, cli: 6,
+  authoring: 3.5,
+  'editor/project': 4, 'editor/graph': 4, 'editor/runtime': 4, 'editor/host': 5, notebook: 5, cli: 6, 'notebook/main': 7,
 };
 const moduleOf = (path: string): string | undefined => {
   const found = /^backend\/(deployment|editor)\/([a-z]+)\//.exec(path);
-  return found ? `${found[1]}/${found[2]}` : path.startsWith('backend/cli/') ? 'cli' : undefined;
+  if (found) return `${found[1]}/${found[2]}`;
+  // The notebook's start file is above the command line it starts a product with; the rest of the notebook is a host's rank.
+  if (path === 'backend/notebook/main.ts') return 'notebook/main';
+  if (path.startsWith('backend/notebook/')) return 'notebook';
+  if (path.startsWith('backend/authoring/')) return 'authoring';
+  return path.startsWith('backend/cli/') ? 'cli' : undefined;
 };
 /** The wire's files: the routes' types and tables, which either end imports. */
-const isWire = (path: string): boolean => /^backend\/(deployment|editor)\/host\/api\.ts$/.test(path);
+const isWire = (path: string): boolean => /^backend\/(deployment\/host|editor\/host|notebook)\/api\.ts$/.test(path);
 
 describe('the folders', () => {
   it('are found, so the rules below are checked against something', () => {
@@ -79,8 +99,8 @@ describe('the folders', () => {
     expect(SOURCES.filter((path) => path.startsWith('backend/') && !isWire(path) && !moduleOf(path))).toEqual([]);
   });
 
-  it('keep the editor to itself: nothing a package carries imports from an editor folder', () => {
-    const against = IMPORTS.filter((one) => !inEditor(one.from) && inEditor(one.to) && !(one.dynamic && moduleOf(one.from) === 'cli'));
+  it('keep authoring to itself: nothing a package carries imports from an editor, notebook or authoring folder', () => {
+    const against = IMPORTS.filter((one) => !inAuthoring(one.from) && inAuthoring(one.to) && !(one.dynamic && moduleOf(one.from) === 'cli'));
     expect(show(against)).toEqual([]);
   });
 
@@ -98,6 +118,14 @@ describe('the folders', () => {
       const [from, to] = [moduleOf(one.from), moduleOf(one.to)];
       if (!from || !to || from === to) return false;
       return RANK[to] >= RANK[from];
+    });
+    expect(show(against)).toEqual([]);
+  });
+
+  it('keep the two products apart: the editor and the notebook import nothing of each other', () => {
+    const against = IMPORTS.filter((one) => {
+      const [from, to] = [productOf(one.from), productOf(one.to)];
+      return from !== undefined && to !== undefined && from !== to;
     });
     expect(show(against)).toEqual([]);
   });

@@ -30,7 +30,7 @@
 // Every call a generation makes is recorded and handed back: the editor shows
 // what was sent, and keeps it in the node's history.md.
 
-import type { AiRequest, AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { isStruct } from '../../../graph/graph.ts';
 import { RESERVED, hasField } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
@@ -50,10 +50,13 @@ import { BUDGET, clip, variables } from './brief.ts';
 import {
   OUTGROWN, SYSTEMS, bodyChange, codeChange, definitionChange, frame, mendPrompt, repairPrompt, type OutputAsked, type Shape,
 } from './generatePrompts.ts';
-import type { AICall, GenerateRequest, GenerateResponse, ProbeReport, Target } from '../host/api.ts';
+import type { GenerateRequest, GenerateResponse, ProbeReport } from '../host/api.ts';
 import { messageOf } from '../../../graph/errors.ts';
+import { FENCED, GenerationFailed, GenerationRefused, firstBlock, recording, type AICall, type Target } from '../../authoring/ask.ts';
 
-export class GenerationRefused extends Error {}
+// What every writing of a file shares with the other places a model writes for the person -- the notebook's windows too -- is in
+// `backend/authoring/ask.ts`; the names stay importable from here.
+export { GenerationFailed, GenerationRefused, firstBlock, recording };
 
 /** Thrown by the preview "model" at the first request: everything up to it was real. */
 class PreviewReached extends Error {}
@@ -66,61 +69,8 @@ const PREVIEW_AI: AiService = {
 };
 
 // ---------------------------------------------------------------------------
-// The transcript
-// ---------------------------------------------------------------------------
-
-/** An AI service that writes down every call it makes, for one generation. */
-export function recording(ai: AiService, calls: AICall[]): AiService {
-  return {
-    async complete(request: AiRequest): Promise<string> {
-      const entry: AICall = {
-        provider: request.provider ?? '',
-        model: request.model ?? '',
-        system: request.system ?? '',
-        prompt: request.prompt,
-        // Counted here rather than in the browser: "how much did I send" is
-        // the question a context-window error raises.
-        sent_chars: (request.system ?? '').length + request.prompt.length,
-        reply: null, reply_chars: 0, seconds: 0, error: null,
-      };
-      calls.push(entry);
-      const started = Date.now();
-      try {
-        const reply = await ai.complete(request);
-        entry.reply = reply;
-        entry.reply_chars = reply.length;
-        return reply;
-      } catch (error) {
-        entry.error = messageOf(error);
-        throw error;
-      } finally {
-        entry.seconds = Math.round((Date.now() - started) / 10) / 100;
-      }
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
 // How an answer is read
 // ---------------------------------------------------------------------------
-
-/**
- * A fenced block after any info string (`javascript `, `js title="x"`, `c++`),
- * closed at the start of a line by a fence at least as long as the one that
- * opened it: code that writes "```" into a string does not end its own block
- * there, and a ```json example in instructions fenced with four backticks does
- * not end theirs.
- */
-const FENCED = /(?<!`)(`{3,})[^\n`]*\n([\s\S]*?)\n[ \t]*\1`*/;
-/** The same closed mid-line: only where no block is closed at the start of one. */
-const FENCED_MID_LINE = /(?<!`)(`{3,})[^\n`]*\n([\s\S]*?)\1`*/;
-
-/** An answer's first fenced block, Windows line ends and all, and what the answer says after it. */
-export function firstBlock(text: string): { code: string; after: string } | undefined {
-  const plain = text.replace(/\r\n/g, '\n');
-  const block = FENCED.exec(plain) ?? FENCED_MID_LINE.exec(plain);
-  return block ? { code: block[2].trim(), after: plain.slice(block.index + block[0].length).trim() } : undefined;
-}
 
 /** The file a model wrote, out of its answer: its first fenced block, or the whole answer where it wrote none. */
 function fileIn(reply: string): string {
@@ -634,13 +584,5 @@ export async function generate(given: GenerateRequest, deps: GenerateDeps): Prom
     return job.kind === 'code' ? await writeCode(job) : await writeText(job, job.kind);
   } catch (error) {
     return failed(error, job.calls);
-  }
-}
-
-export class GenerationFailed extends Error {
-  readonly calls: AICall[];
-  constructor(message: string, calls: AICall[]) {
-    super(message);
-    this.calls = calls;
   }
 }

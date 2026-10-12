@@ -32,7 +32,7 @@ import type { GuiHooks, GuiPart } from '../gui/hooks.ts';
 import { Lifecycle } from './lifecycle.ts';
 import { frontendOf, loadGraph, projectFolderOf, stateFileOf } from '../project/folder.ts';
 
-interface ServeOptions {
+export interface ServeOptions {
   /**
    * The graph this server ships, for a deployed tool.
    *

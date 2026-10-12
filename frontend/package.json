@@ -11,6 +11,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:notebook": "tsc && vite build --config vite.notebook.config.ts",
+    "dev:notebook": "vite --config vite.notebook.config.ts",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",

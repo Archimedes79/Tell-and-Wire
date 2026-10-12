@@ -10,7 +10,7 @@
 // blocks of the start point it begins at, and no other's).
 //
 // Neutral and carried by a package: the page a deployed tool serves runs its
-// windows by this, and the editor's model of a window (`gui/editor/windows`)
+// windows by this, and the editor's model of a window (`gui/notebook`)
 // by the same, so they cannot disagree about what is current.
 
 /** A window as the order sees it: its id, and the windows it takes something from. */

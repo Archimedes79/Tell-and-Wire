@@ -22,6 +22,9 @@
   },
   "include": [
     "editor",
+    "notebook",
+    "gui-notebook",
+    "graph-notebook",
     "deployment",
     "test",
     "vite-env.d.ts"

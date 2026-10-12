@@ -7,7 +7,7 @@ import { parseGraph, type Graph } from '../../../graph/graph.ts';
 import { problemsIn } from '../../../gui/editor/check.ts';
 import { checkPath } from './folderCheck.ts';
 import { forgetSeen } from '../../deployment/project/folder.ts';
-import { writeProject } from './write.ts';
+import { writeProject } from '../../authoring/write.ts';
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 

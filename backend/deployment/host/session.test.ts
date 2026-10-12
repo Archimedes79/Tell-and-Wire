@@ -11,7 +11,7 @@ import { Session, holderOf, type SessionOptions } from './session.ts';
 import { guiHooks } from '../gui/hooks.ts';
 import { NotOffered } from '../../../graph/interface.ts';
 import { loadGraph, STATE_FILE, stateFileOf } from '../project/folder.ts';
-import { saveGraph, writeProject } from '../../editor/project/write.ts';
+import { saveGraph, writeProject } from '../../authoring/write.ts';
 import { folderProblems } from '../../editor/project/folderCheck.ts';
 import { writeBundle } from '../../editor/project/deploy/bundle.ts';
 

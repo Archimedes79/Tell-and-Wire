@@ -22,7 +22,7 @@ import { designs } from '../../../../graph/editor/nodes/registry.ts';
 import { withoutWriting } from '../../../../graph/editor/handedOn.ts';
 import { FRONTEND_DIR } from '../../../deployment/project/folder.ts';
 import { sameFile } from '../../../deployment/runtime/confine.ts';
-import { writeProject } from '../write.ts';
+import { writeProject } from '../../../authoring/write.ts';
 import { SETTINGS_FILENAME, candidatePaths } from '../../../deployment/runtime/ai/settings.ts';
 import { WEB_DIR, installFolder } from '../../../deployment/project/layout.ts';
 import { NODE_MAJOR, runCmd, runSh, zipMode } from './launchers.ts';

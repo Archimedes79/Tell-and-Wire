@@ -27,7 +27,7 @@ import {
   FileChanged, SCHEDULE_FILE, NODES_DIR, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, type Guard,
 } from '../../../deployment/project/folder.ts';
-import { saveGraph as saveToDisk } from '../../project/write.ts';
+import { saveGraph as saveToDisk } from '../../../authoring/write.ts';
 import { problemsIn } from '../../../../gui/editor/check.ts';
 import { completeGui } from '../../../../gui/editor/complete.ts';
 import { tableFor, tableLines } from '../../../../graph/schedule.ts';

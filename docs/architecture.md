@@ -48,38 +48,44 @@ they run in the browser and in Node.
 | `graph/` | **The graph's definition.** `graph.ts` (the format), `wiring.ts`, `order.ts`, `triggers.ts`, `schedule.ts` (the table the cards stand in), `batching.ts`, `interface.ts` (what a graph offers by name), `nodes/` (the **definition** of every node kind and its registry), `files/` (the project's file formats: flow, nodes, names, definitions, the run prompt). |
 | `graph/editor/` | What only the editor adds to the graph: `nodes/` (the **design** of every node kind: how an AI writes it, `check`, what a package needs), `prompts.ts`, `generation.ts`, `history.ts`, `pull.ts`, `handedOn.ts`, `scheduleEdit.ts` (where a card may be put in the table). |
 | `gui/` | **The gui's definition.** `gui.ts` (blocks, what they send and show), `interface.ts` (what a gui adds to a graph's interface), `widgets/` (the **definition** of every block kind). |
-| `gui/editor/` | What only the editor adds to the gui: `check.ts` (the one list of problems), `gui.ts`, `widgets/` (the **design** of every block kind). |
+| `gui/editor/` | What only the authoring adds to the gui, for the graph editor and the notebook alike: `check.ts` (the one list of problems), `gui.ts`, `widgets/` (the **design** of every block kind). |
+| `gui/notebook/` | The notebook's own model: windows and the page (`windows.ts`, `page.ts`, `pageModel.ts`, `edit.ts`, `read.ts`), and how they compile to a graph, a schedule and a gui. Only the notebook uses it; a package leaves it behind. |
 | `backend/deployment/project/` | Reads a project folder (`folder.ts`) and knows where things are in an install (`layout.ts`). |
 | `backend/deployment/runtime/` | The runtime: `executor.ts`, `localCore.ts`, `stdio.ts`, `protocol.ts` (the core protocol), `examples.ts`, `nodes/` (the **runner** of every node kind), `ai/` (the model client, settings, tool servers), `services.ts` (what a node touches the world with), `confine.ts`. |
 | `backend/deployment/gui/` | The gui as the host uses it: `hooks.ts`. |
 | `backend/deployment/host/` | The host: `session.ts`, `rounds.ts`, `serve.ts`, `http.ts`, `api.ts` (the wire), `lifecycle.ts`, `browse.ts`. |
-| `backend/editor/project/` | Writes projects (`write.ts`), finds and checks them, keeps rounds, and packs (`deploy/`: `bundle.ts`, `launchers.ts`, `zip.ts`). |
+| `backend/authoring/` | What both products write with, and no package carries: `write.ts` (writes projects), `ask.ts` (a model's transcript, how its answer is read, how a writing fails). |
+| `backend/editor/project/` | Finds and checks projects, keeps rounds, and packs (`deploy/`: `bundle.ts`, `launchers.ts`, `zip.ts`). |
 | `backend/editor/graph/` | The AI that writes nodes and whole graphs: `generate.ts`, `generateGraph.ts`, `graphPrompt.ts`. |
 | `backend/editor/runtime/` | The model and tool-server setup the editor does for the person: `settings.ts`, `mcpServers.ts`. |
 | `backend/editor/host/` | What only the editor's server answers: `api.ts`, `routes.ts`, `commands.ts` (`check`, `test`, `--bundle`, `--mcp`), `mcpServer.ts` with `mcp/`. |
-| `backend/cli/` | The composition root: `main.ts` and `cli.ts` start a run or a server and put the parts together. |
+| `backend/notebook/` | The notebook's server, started by a file of its own: `main.ts` (`node backend/notebook/main.ts`), `api.ts` (its routes), `routes.ts`, `describe.ts` (a window from a sentence), `files.ts` (`graph-windows.json`). |
+| `backend/cli/` | The composition root: `main.ts` and `cli.ts` start a run or a server and put the parts together; `runServer` takes the page and the routes of the product it serves (the editor's, or the notebook's own). |
 | `backend/architecture/` | Tests of the structure itself. |
 | `frontend/deployment/gui/` | What a deployed tool's browser loads: `kit/` (API client, look, dialogs), `surface/` (the gui drawn), `widgets/` (the block views). |
 | `frontend/deployment/windows/` | The page of framed windows a tool made of them shows, and running them in order; knows no editor. |
-| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client), `notebook/` (the notebook: a page of its own, `notebook.html`, written without the parts above it). |
+| `frontend/editor/` | The graph editor: `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model, the editor's look), `app/` (menus, tabs, toolbar), `api/` (the editor's client). |
+| `frontend/notebook/`, `frontend/gui-notebook/`, `frontend/graph-notebook/` | The notebook, a page of its own, built by `vite.notebook.config.ts` into `frontend/notebook/dist` and written without the parts of the graph editor: `notebook/` (the shell, `document/` the store and runs, `elements/` the boxes of a window), `gui-notebook/` (the page and its windows), `graph-notebook/` (the cells, under the hood, debug). |
 | `mcp/` | Optional tool servers, each a package of its own. |
 | `examples/`, `scripts/`, `docs/` | Projects that tests and CI run; the launchers, packaging and licence check; these documents. |
 
 `graph/`, `gui/` and `backend/` are TypeScript that Node 24 runs as it is: no build, no runtime
 dependencies. `frontend/` is React and Vite; `npm run build` writes `frontend/dist`. One process
-serves the editor, `node backend/cli/main.ts --editor frontend/dist`; a package starts the same
-program without the editor's folders.
+serves the editor, `node backend/cli/main.ts --editor frontend/dist` (`start.cmd`, `start.ps1`, `start.sh`); the notebook is a product of its own, started by files of its own
+(`start-notebook.cmd`, `.ps1`, `.sh`: `node backend/notebook/main.ts`, on :8100); a package starts the same program without the authoring folders.
 
 ## Rules
 
 | Rule | Held by |
 |---|---|
-| **A package carries every path except those with a folder named `editor`, and nothing outside an `editor` folder imports from one** (`import()` in `backend/cli` aside: it composes, and a package without the editor says so when a command asks for it). | `backend/architecture/layers.test.ts` |
+| **A package carries every path except those with a folder named `editor` or `notebook` (and `backend/authoring`, which it does not list), and nothing outside such a folder imports from one** (`import()` in `backend/cli` aside: it composes, and a package without the editor says so when a command asks for it). | `backend/architecture/layers.test.ts` |
+| **The graph editor and the notebook import nothing of each other**, in any tier: each is started by a file of its own, and either can be taken away without the other noticing. What they share is below them: `graph/`, `gui/`, the deployment and `backend/authoring`. | `layers.test.ts` |
 | `graph/` and `gui/` import no `node:*`, nothing from `backend/` or `frontend/`; `graph/` imports nothing from `gui/`. Their tests too: a test that needs a run lives in `backend/`, which runs. | `layers.test.ts` |
-| In `backend/`, a module imports only from below: project, then runtime and gui, then host, then cli; the editor's modules above the deployment's. Modules of one rank do not import each other. The wire's files (`host/api.ts`) rank with nothing. | `layers.test.ts` |
+| In `backend/`, a module imports only from below: project, then `authoring`, runtime and gui, then host, then cli; the products' modules above the deployment's. Modules of one rank do not import each other. The wires' files (`host/api.ts`, `notebook/api.ts`) rank with nothing. | `layers.test.ts` |
 | `frontend/` reaches `backend/` only through the wire's files. | `layers.test.ts` |
-| A deployed tool's browser loads nothing of an `editor` folder, no panel, and of `graph/`, `gui/` and `backend/` only the wire and the shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
-| The editor's page imports only downward through its layers: `ui`, `layout` · graph types · `model`, `api` · editor `api` · `store`, `views` · `dialogs` · deployed `widgets`, `surface` · the elements · `gui`, `canvas`, `node` · the app · the notebook · `App` · `main`. | `frontend/editor/app/layers.test.ts` |
+| A deployed tool's browser loads nothing of an `editor` folder or of the notebook's three, no panel, and of `graph/`, `gui/` and `backend/` only the wire and the shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
+| The editor's page imports only downward through its layers: `ui`, `layout` · graph types · `model`, `api` · editor `api` · `store`, `views` · `dialogs` · deployed `widgets`, `surface` · the elements · `gui`, `canvas`, `node` · the app · `App` · `main`. | `frontend/editor/app/layers.test.ts` |
+| The notebook's page the same way: `document` · `elements` · `gui-notebook`, `graph-notebook` (siblings, which do not import each other) · the shell · `main`. | `frontend/notebook/layers.test.ts` |
 | A deployed tool answers only the routes of the tables it is composed of; an editor route is a 404. | `backend/deployment/host/serve.test.ts` |
 | A package runs from a folder of its own, carries `MANIFEST.json` listing exactly its files, and nothing of the editor. | `backend/editor/project/deploy/bundle.test.ts` |
 | Every kind of node and block has all its faces, under the same name, and the registries list the same kinds. | `frontend/editor/document/elements/symmetry.test.ts` |

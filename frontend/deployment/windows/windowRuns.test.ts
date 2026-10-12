@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { RoundSnapshot } from '../gui/kit/api/client';
 import { useSession } from '../gui/kit/api/session';
-import { windowsToGraph, type Windows } from '../../../gui/editor/windows/windows.ts';
+import { windowsToGraph, type Windows } from '../../../gui/notebook/windows.ts';
 import { afterRun, afterEdit, type Done } from '../../../gui/windows/order.ts';
 import { forgetRuns, problemOf, runWindows, succeeded, useWindowRuns } from './windowRuns';
 import { isCurrent, isWindows, pageWindows, planFor, recorded, type RunOf } from './windowsInUse';
@@ -145,7 +145,7 @@ describe('running a window', () => {
 describe('the words of a page', () => {
   it('are read off the blocks that have no window, with where they stand; the windows say where theirs is', async () => {
     const { pageNotes } = await import('./windowsInUse');
-    const { addBlock, patchBlock, pageOf, startPage } = await import('../../../gui/editor/windows/page.ts');
+    const { addBlock, patchBlock, pageOf, startPage } = await import('../../../gui/notebook/page.ts');
     let doc = addBlock(startPage('Tool'), 'p', 1);
     doc = patchBlock(doc, pageOf(doc)[1].id, { text: 'Hello.' });
     const made = windowsToGraph(doc).gui!.blocks as never[];

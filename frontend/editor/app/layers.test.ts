@@ -24,6 +24,8 @@ import { describe, expect, it } from 'vitest';
  *     node              one node, opened: what the view's rows and chats do
  *   7 the app's files   toolbar, sidebar, changes
  *   8 App, deployed app the two things that are served
+ *
+ * The notebook is a product of its own with layers of its own (`notebook/layers.test.ts`); nothing here names it.
  *   9 main              the entry
  *
  * The elements are one tier and reach each other on purpose: a panel is made of
@@ -59,10 +61,9 @@ const AREAS: [string, number, ...string[]][] = [
   ['canvas', 6, 'editor/graph/canvas/'],
   ['node', 6, 'editor/graph/node/'],
   ['the app', 7, 'editor/app/', 'editor/document/'],
-  ['notebook', 7.5, 'editor/notebook/'],
   ['App', 8, 'editor/app/App.tsx'],
   ['deployed app', 8, 'deployment/gui/'],
-  ['main', 9, 'editor/app/main.tsx', 'editor/notebook/main.tsx'],
+  ['main', 9, 'editor/app/main.tsx'],
 ];
 const SIBLINGS = new Set(ELEMENTS.flatMap((from) => ELEMENTS.map((to) => `${from}>${to}`)));
 

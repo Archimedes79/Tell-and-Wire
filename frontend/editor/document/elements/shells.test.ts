@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-const SOURCES = import.meta.glob('/{editor,deployment}/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const SOURCES = import.meta.glob('/{editor,notebook,gui-notebook,graph-notebook,deployment}/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 const SHELLS = Object.entries(SOURCES)
   .filter(([path]) => !/^\/editor\/(document\/elements|app\/fields|graph\/nodes|graph\/fields|gui\/widgets)\//.test(path) && !/\.test\.tsx?$/.test(path));

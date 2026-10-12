@@ -36,8 +36,8 @@ you can read it, change it and diff it.
 
 **Notebook** is the other way to build the same tool: a page you write, like any web page, with windows standing in it to be
 used -- what goes in, a button, what comes out, at a size that never grows. Under the page, a list of cells (Ask, Do, Show)
-builds the open window, and a debug window shows every round. It saves the same project folder, so the graph editor opens it
-([docs/notebook.md](docs/notebook.md)).
+builds the open window, and a debug window shows every round. It has its own start file (`start-notebook.cmd`, `.ps1`, `.sh`) and saves
+the same project folder, so the graph editor opens it ([docs/notebook.md](docs/notebook.md)).
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
