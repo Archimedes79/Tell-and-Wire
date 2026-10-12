@@ -2,14 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RoundSnapshot, SessionView } from './client';
 
 // The server: each round started gets the next id; nothing else is asked.
-const server = vi.hoisted(() => ({ rounds: 0 }));
+const server = vi.hoisted(() => ({ rounds: 0, stopped: [] as string[], running: null as unknown }));
 vi.mock('./client', async (actual) => ({
   ...(await actual<typeof import('./client')>()),
-  call: vi.fn(async (route: string) => {
+  call: vi.fn(async (route: string, body?: { id?: string }) => {
     if (route === 'startRound') {
       server.rounds += 1;
       return { session: 's1', round_id: `r${server.rounds}`, total: 1 };
     }
+    if (route === 'stopRound') server.stopped.push(body!.id!);
+    // What the session says is going: the round that runs, where others only wait.
+    if (route === 'session') return { round: server.running };
     return {};
   }),
 }));
@@ -24,7 +27,7 @@ class FakeStream {
 }
 vi.stubGlobal('EventSource', FakeStream);
 
-const { setEdit, startRound, useSession, watchSession } = await import('./session');
+const { setEdit, startRound, stopRound, useSession, watchSession } = await import('./session');
 const told = (type: 'session' | 'round', data: unknown) => streams[streams.length - 1].listeners[type]({ data: JSON.stringify(data) } as MessageEvent<string>);
 
 /** The session as the server tells it, *gui* what each block holds. */
@@ -64,5 +67,29 @@ describe('what was set here on a GUI', () => {
     setEdit('say', 'next');
     told('round', round('r3'));
     expect(edits()).toEqual({ say: 'next' });
+  });
+});
+
+describe('Stop', () => {
+  it('stops the round this page was told of and the one that runs, where the latest is only a queued one', async () => {
+    server.stopped.length = 0;
+    server.running = round('r1', { done: false, result: null });
+    useSession.setState({ round: round('r2', { done: false, result: null }) });
+    await stopRound();
+    expect([...server.stopped].sort()).toEqual(['r1', 'r2']);
+  });
+
+  it('stops one round once, and nothing where nothing is going', async () => {
+    server.stopped.length = 0;
+    server.running = round('r1', { done: false, result: null });
+    useSession.setState({ round: round('r1', { done: false, result: null }) });
+    await stopRound();
+    expect(server.stopped).toEqual(['r1']);
+
+    server.stopped.length = 0;
+    server.running = null;
+    useSession.setState({ round: round('r3') });
+    await stopRound();
+    expect(server.stopped).toEqual([]);
   });
 });

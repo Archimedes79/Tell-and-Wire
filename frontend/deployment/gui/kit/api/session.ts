@@ -185,14 +185,15 @@ export async function startOver(): Promise<void> {
  * told of may be a round that only queued, and stopping that alone leaves the one that runs going.
  */
 export async function stopRound(): Promise<void> {
-  const ids = new Set<string>();
   const { round } = useSession.getState();
-  if (round && !round.done) ids.add(round.round_id);
+  const known = round && !round.done ? round.round_id : null;
+  // The one this page knows of is stopped at once; the server is asked for the one that runs besides.
+  const stops: Promise<unknown>[] = known ? [call('stopRound', { id: known })] : [];
   try {
     const { round: running } = await call('session', {});
-    if (running && !running.done) ids.add(running.round_id);
+    if (running && !running.done && running.round_id !== known) stops.push(call('stopRound', { id: running.round_id }));
   } catch {
-    // The server did not answer: stop what this page knows of.
+    // The server did not answer: what this page knows of is stopped.
   }
-  await Promise.all([...ids].map((id) => call('stopRound', { id })));
+  await Promise.all(stops);
 }
