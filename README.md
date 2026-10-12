@@ -34,10 +34,10 @@ example) and `code.js` or `prompt.md`. **Pull input** reads `input.js` off the g
 chat for each file changes it as you say. Every file is plain text in the tool's folder, so
 you can read it, change it and diff it.
 
-**Notebook** is the other way to build the same tool: a page of windows. A window is a short list of cells --
-what goes in, what starts it, what is done in a sentence, what comes out -- and it never grows when a result
-arrives. Say what the tool should do and the windows are made; open one to see its interface beside its
-cells. It saves the same project folder, so the graph editor opens it ([docs/notebook.md](docs/notebook.md)).
+**Notebook** is the other way to build the same tool: a page you write, like any web page, with windows standing in it to be
+used -- what goes in, a button, what comes out, at a size that never grows. Under the page, a list of cells (Ask, Do, Show)
+builds the open window, and a debug window shows every round. It saves the same project folder, so the graph editor opens it
+([docs/notebook.md](docs/notebook.md)).
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and

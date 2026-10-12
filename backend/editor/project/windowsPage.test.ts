@@ -74,3 +74,32 @@ describe('the page of a notebook', () => {
     expect(parseWindows({ windows: [] }).page).toBeUndefined();
   });
 });
+
+describe('the page in the tool that is delivered', () => {
+  it('is carried in the gui: the words as blocks that say where they stand, the windows with the place of their heading', async () => {
+    const { windowsToGraph } = await import('../../../gui/editor/windows/windows.ts');
+    const { writeProject } = await import('./write.ts');
+    const { loadGraph } = await import('../../deployment/project/folder.ts');
+    const { mkdtemp } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+
+    let doc = addBlock(startPage('Tool'), 'ul', 1);
+    const list = pageOf(doc)[1];
+    doc = patchBlock(doc, list.id, { text: 'one\ntwo' });
+    const graph = windowsToGraph(doc);
+    const blocks = graph.gui!.blocks as unknown as Record<string, unknown>[];
+    expect(blocks.filter((block) => typeof block.group !== 'string').map((block) => [block.page_at, block.page_style, block.value])).toEqual([[0, 'h1', 'Tool'], [1, 'ul', 'one\ntwo']]);
+    expect(blocks.find((block) => block.span !== undefined)?.page_at).toBe(2);
+
+    // The keys come back from the project folder, so a package draws the page without the file the notebook keeps.
+    const folder = await mkdtemp(join(tmpdir(), 'page-'));
+    await writeProject(folder, graph);
+    const back = (await loadGraph(folder)).gui!.blocks as unknown as Record<string, unknown>[];
+    expect(back.filter((block) => block.page_style).map((block) => [block.page_at, block.page_style])).toEqual([[0, 'h1'], [1, 'ul']]);
+
+    // A document with no page of its own has no words in its tool: the name above its windows is the tool's own.
+    const plain = windowsToGraph({ ...doc, page: undefined });
+    expect((plain.gui!.blocks as unknown as Record<string, unknown>[]).some((block) => block.page_style)).toBe(false);
+  });
+});

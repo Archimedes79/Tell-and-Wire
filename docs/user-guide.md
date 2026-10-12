@@ -366,13 +366,14 @@ home folder.
 
 ## 12. The notebook
 
-The **Notebook** button of the toolbar opens a page of windows in a window of its own: the same tools, said as
-cells. Type what the tool should do and press **✨ Make the windows**, or start with one window and fill it in.
-**Edit** on a window shows its interface on the left and its cells on the right; pointing at an element or a
-cell lights the other. In a sentence, `@Name` takes an input or an earlier result: click its chip to write it.
-A cell can be code instead of a model's. **Save as…** writes the project folder this guide describes, and the
-graph editor opens it; the other way round, a project made in the graph editor does not open in the notebook.
-Details in [notebook.md](notebook.md).
+The **Notebook** button of the toolbar opens a page of its own: a document you write -- headings, text, bullets, gaps, as in
+any editor of pages -- with windows standing in it to be used. Type what the tool should do and press **Build the tool**, or
+start with an empty page. **Write**, **Markdown** (the page as text) and **As app** (the page as its users see it) are in the
+bar on top. A window has a **Cells** button: under the page, the list shows what it asks (Ask), what is done (Do) and what is
+shown (Show), a card each, a sentence in each; in a sentence `@Name` takes an input or an earlier result, and a click on its
+chip writes it. **Under the hood** is the same window as a graph, **Debug** lists every round. **Save as…** writes the project
+folder this guide describes, and the graph editor opens it; the other way round, a project made in the graph editor does not
+open in the notebook. Details in [notebook.md](notebook.md).
 
 ## When something does not work
 

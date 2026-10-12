@@ -3,8 +3,8 @@ import type { GuiWidget } from '../gui/kit/guiWidget';
 import { GuiBlock, blockValue, type GuiModel } from '../gui/surface/GuiSurface';
 import { useContainerCell } from '../gui/surface/useContainerCell';
 import { GUI_GAP, GUI_GRID_COLUMNS, gridStyle, resolveWidgetLayout } from '../gui/kit/layout';
-import { LINE, MUTED, SUCCESS_FILL, SUCCESS_TEXT, SURFACE, WARNING_FILL, WARNING_TEXT, ACCENT_FILL, ACCENT_TEXT } from '../gui/kit/ui/theme';
-import { pageWindows, type PageWindow, type WindowBlock } from './windowsInUse';
+import { LINE, MUTED, SUCCESS_FILL, SUCCESS_TEXT, SURFACE, TEXT, WARNING_FILL, WARNING_TEXT, ACCENT_FILL, ACCENT_TEXT } from '../gui/kit/ui/theme';
+import { pageNotes, pageWindows, type PageNote, type PageWindow, type WindowBlock } from './windowsInUse';
 
 /** Where a window stands: what a person sees of it before reading its result. */
 export type WindowState = 'ready' | 'running' | 'waiting' | 'current' | 'stale';
@@ -49,6 +49,12 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
   const narrow = fixedCell === undefined && measured.narrow;
   const windows = pageWindows(gui.blocks).filter((window) => only === undefined || window.id === only);
   // A page of one window is as many cells wide as the window is, so it is as large as the cell lets it be.
+  // The words of the page and the windows, in the order the page was written; a tool whose page has no words is its windows.
+  const notes = only === undefined ? pageNotes(gui.blocks) : [];
+  const items = [
+    ...windows.map((window, order) => ({ at: window.at ?? order, window })),
+    ...notes.map((note) => ({ at: note.at, note })),
+  ].sort((a, b) => a.at - b.at);
   const columns = only !== undefined && windows[0] ? windows[0].span : GUI_GRID_COLUMNS;
 
   const keep = (block: GuiWidget, value: unknown) => {
@@ -66,7 +72,9 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
   return (
     <div className="flex-1 overflow-auto px-8 py-6">
       <div ref={measured.ref} data-windows-page style={{ ...page, alignItems: 'start' }}>
-        {windows.map((window) => {
+        {items.map((item) => {
+          if ('note' in item) return <Note key={item.note.id} note={item.note} />;
+          const { window } = item;
           const state = states?.[window.id] ?? 'ready';
           const extra = decorate?.window?.(window);
           return (
@@ -118,6 +126,20 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** A line of the page that is words, across the whole of it. */
+function Note({ note }: { note: PageNote }) {
+  const lines = note.text.split('\n').filter((line) => line.length > 0);
+  return (
+    <div style={{ gridColumn: '1 / -1', color: TEXT, minWidth: 0 }}>
+      {note.style === 'h1' && <h1 style={{ margin: '8px 0 0', fontSize: 30, lineHeight: 1.15, fontWeight: 650 }}>{note.text}</h1>}
+      {note.style === 'h2' && <h2 style={{ margin: '10px 0 0', fontSize: 20, lineHeight: 1.25, fontWeight: 600 }}>{note.text}</h2>}
+      {note.style === 'p' && <p style={{ margin: 0, fontSize: 16, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{note.text}</p>}
+      {note.style === 'ul' && <ul style={{ margin: 0, paddingLeft: 22, fontSize: 16, lineHeight: 1.55, listStyle: 'disc' }}>{lines.map((line, at) => <li key={at}>{line}</li>)}</ul>}
+      {note.style === 'space' && <div style={{ height: 20 }} aria-hidden />}
     </div>
   );
 }

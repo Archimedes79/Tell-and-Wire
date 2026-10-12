@@ -29,6 +29,7 @@ import type { DataType, Graph, GraphEdge, GraphNode, Port, RawConfig, WidgetKind
 import { wireOf } from '../../../graph/files/flow.ts';
 import { parseWidget } from '../../gui.ts';
 import { widgetDesign } from '../widgets/roster.ts';
+import { pageOf } from './pageModel.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { port } from '../../../graph/nodes/port.ts';
 import { tableLines } from '../../../graph/schedule.ts';
@@ -433,6 +434,8 @@ function endNode(window: Window, one: WindowOut, y: number): GraphNode {
 /** The blocks of one window, in the order they are drawn: heading, inputs, Run and the first sentence, outputs. */
 function blocksOf(doc: Windows, window: Window): RawConfig[] {
   const on = { group: window.id };
+  // Where the window stands on the page, among its words: so a tool that is delivered can draw the page it was written as.
+  const at = doc.page ? pageOf(doc).findIndex((block) => block.window === window.id) : -1;
   const trigger = window.trigger ?? {};
   const fires = trigger.onChange ? { fires: window.id } : {};
   const taking = (one: WindowIn, w: number, h: number): RawConfig => {
@@ -463,12 +466,25 @@ function blocksOf(doc: Windows, window: Window): RawConfig[] {
   const button = trigger.button !== false;
   const run = button ? Math.min(window.span, Math.max(2, Math.round(window.span / 4))) : 0;
   return [
-    { ...on, id: `${window.id}_title`, kind: 'text', mode: 'heading', label: '', w: window.span, h: 1, tone: 'plain', value: window.title, span: window.span, after: upstream(doc, window.id) },
+    { ...on, id: `${window.id}_title`, kind: 'text', mode: 'heading', label: '', w: window.span, h: 1, tone: 'plain', value: window.title, span: window.span, after: upstream(doc, window.id), ...(at >= 0 ? { page_at: at } : {}) },
     ...lay(window.inputs, window.inputs.map((one) => inPiece(window, one)), taking),
     ...(button ? [{ ...on, id: `${window.id}_run`, kind: 'button', label: trigger.label?.trim() || 'Run', w: run, h: 1, tone: 'plain', fires: window.id }] : []),
     { ...on, id: `${window.id}_sentence`, kind: 'text', mode: 'caption', label: '', w: window.span - run, h: 1, tone: 'plain', value: window.steps[0]?.sentence ?? '' },
     ...lay(window.outputs, window.outputs.map((one) => outPiece(window, one)), showing),
   ];
+}
+
+/**
+ * The words of the page as blocks of the gui, each saying where it stands (`page_at`, counted with the windows) and how it is
+ * set (`page_style`: a heading, a paragraph, a list, a gap). A document with no page of its own has none: its tool shows
+ * its windows under its name.
+ */
+function noteBlocks(doc: Windows): RawConfig[] {
+  if (!doc.page) return [];
+  return pageOf(doc).flatMap((block, at): RawConfig[] => (block.kind === 'window' ? [] : [{
+    id: `note_${block.id}`, kind: 'text', mode: block.kind === 'h1' || block.kind === 'h2' ? 'heading' : 'body', label: '', w: 16, h: 1, tone: 'plain',
+    value: block.kind === 'space' ? '' : block.text ?? '', page_at: at, page_style: block.kind,
+  }]));
 }
 
 /**
@@ -571,7 +587,7 @@ export function windowsToGraph(doc: Windows, before?: Graph): Graph {
     metadata: { name: doc.name, description: doc.description, gui_scheme: doc.scheme ?? 'night' },
     nodes,
     edges,
-    gui: { blocks: doc.windows.flatMap((window) => blocksOf(doc, window)) },
+    gui: { blocks: [...doc.windows.flatMap((window) => blocksOf(doc, window)), ...noteBlocks(doc)] },
   };
   graph.schedule = windowsSchedule(doc, edges);
   if (before) keepWriting(graph, before);

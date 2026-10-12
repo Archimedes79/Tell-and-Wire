@@ -141,3 +141,17 @@ describe('running a window', () => {
     expect(useWindowRuns.getState().going).toEqual([]);
   });
 });
+
+describe('the words of a page', () => {
+  it('are read off the blocks that have no window, with where they stand; the windows say where theirs is', async () => {
+    const { pageNotes } = await import('./windowsInUse');
+    const { addBlock, patchBlock, pageOf, startPage } = await import('../../../gui/editor/windows/page.ts');
+    let doc = addBlock(startPage('Tool'), 'p', 1);
+    doc = patchBlock(doc, pageOf(doc)[1].id, { text: 'Hello.' });
+    const made = windowsToGraph(doc).gui!.blocks as never[];
+    expect(pageNotes(made).map((note) => [note.at, note.style, note.text])).toEqual([[0, 'h1', 'Tool'], [1, 'p', 'Hello.']]);
+    expect(pageWindows(made).map((window) => [window.id, window.at])).toEqual([['first_window', 2]]);
+    // A page with no words of its own is only its windows.
+    expect(pageNotes(windowsToGraph({ ...doc, page: undefined }).gui!.blocks as never[])).toEqual([]);
+  });
+});

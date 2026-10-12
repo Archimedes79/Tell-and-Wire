@@ -10,7 +10,7 @@ import type { GuiWidget } from '../gui/kit/guiWidget';
 import { currentWindows, runOrder, type Done, type Linked } from '../../../gui/windows/order.ts';
 
 /** A block of a window: the gui's block, with the keys windows add. */
-export type WindowBlock = GuiWidget & { group?: string; span?: number; after?: string[] };
+export type WindowBlock = GuiWidget & { group?: string; span?: number; after?: string[]; page_at?: number; page_style?: string };
 
 /** One window of the page. */
 export interface PageWindow extends Linked {
@@ -23,6 +23,16 @@ export interface PageWindow extends Linked {
   inputs: string[];
   /** The block that starts it by a press, if it has one; else one that starts it by a change. */
   starter: string | null;
+  /** Where it stands on the page among its words, when the page has any (`page_at` of the heading). */
+  at?: number;
+}
+
+/** A line of the page that is words: a heading, a paragraph, a list or a gap, and where it stands. */
+export interface PageNote {
+  id: string;
+  at: number;
+  style: 'h1' | 'h2' | 'p' | 'ul' | 'space';
+  text: string;
 }
 
 /** Whether a gui is a page of windows: its blocks say so. */
@@ -46,12 +56,20 @@ export function pageWindows(blocks: readonly GuiWidget[]): PageWindow[] {
       window.title = String(block.value ?? block.group);
       window.span = Math.min(16, Math.max(1, Math.round(block.span)));
       if (Array.isArray(block.after)) window.after = block.after.filter((one): one is string => typeof one === 'string');
+      if (typeof block.page_at === 'number') window.at = block.page_at;
     }
     if (block.sends_to?.includes(block.group)) window.inputs.push(block.id);
     // A block that only fires (a button) starts it by a press; one that also sends (an input) starts it by a change.
     if (block.fires === block.group && (window.starter === null || !block.sends_to?.length)) window.starter = block.id;
   }
   return [...found.values()];
+}
+
+/** The words of the page, read off its blocks: the blocks that have no window and say where they stand. */
+export function pageNotes(blocks: readonly GuiWidget[]): PageNote[] {
+  const styles = ['h1', 'h2', 'p', 'ul', 'space'];
+  return (blocks as readonly WindowBlock[]).flatMap((block): PageNote[] => (typeof block.group !== 'string' && typeof block.page_at === 'number' && styles.includes(String(block.page_style))
+    ? [{ id: block.id, at: block.page_at, style: block.page_style as PageNote['style'], text: String(block.value ?? '') }] : []));
 }
 
 /** What a window was last run with, and what it saw of the windows it takes from. */

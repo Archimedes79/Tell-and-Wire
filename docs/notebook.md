@@ -1,120 +1,81 @@
-# Notebook: a tool said as a page of windows
+# Notebook: a page you write, with windows you use
 
-A second way to build and use a tool, on the same graph, runtime, host and package. Nothing here
-replaces the graph editor: the notebook writes the files the graph editor reads, and a project made in
-either opens in the other.
+A second way to build and use a tool, on the same graph, runtime, host and package. It does not replace the graph
+editor: the notebook writes the files the graph editor reads, and a project made in the notebook opens in the graph editor
+(the other way round it does not: a graph is not a page).
 
-Branch `tell-and-wire-notebook`, built on `main` (0.7.4). Rules for this work: new code in new files, a
-few lines added to existing ones where a new thing has to be told about; nothing deleted or rewritten;
-nothing on `main` until it is asked for.
+Branch `tell-and-wire-notebook`, built on `main`. New code in new files, a few lines added to existing ones.
 
-## The idea in four lines
+## The idea
 
-- The **page** is the tool. It holds **windows**, side by side like text, each a fixed size.
-- A window is a short list of **cells**: what goes in, what starts it (a trigger), what is done (a
-  sentence), what comes out. A cell takes what its sentence mentions with `@Name`; wires are never drawn.
-- Its elements are its size: a window never grows when a result arrives.
-- Open a window and you see its interface beside its cells. Cells are the notebook; the window is the app.
+- The **page** is a document, written like any web page or Markdown file: headings, text, bullets, gaps.
+- A **window** stands in the page: a small box to use, with what goes in, a button, and what comes out. It never grows when a
+  result arrives.
+- Under the page is **the list** of the open window (design A2): Ask, Do, Show, one card each, a sentence in each. A step
+  takes what its sentence points at with `@Name`; those chips are the wires, and no wire is drawn. Beside it
+  **Under the hood** (the window as the graph it is) and **Debug** (every round, node by node).
+
+## The screen
+
+| Part | What it does |
+|---|---|
+| Top bar | The tool's name, **Write / Markdown / As app**, undo and redo, **Run all**, Save, Save as, Open, New |
+| Page, **Write** | Blocks you type in. Enter starts the next block, `# ` `## ` `- ` at the start of a line make a heading or a list, an empty bullet ends the list, Backspace in an empty block takes it away. A bar over a block (pointer or cursor in it) changes its kind or moves it; the **+** between blocks adds Text, a heading, Bullets, a Gap or a Window. |
+| Page, **Markdown** | The same page as text: `# Title`, `## Heading`, `- bullet`, `[space]`, `[window: id]`. Leaving the box makes it the page. |
+| Page, **As app** | The page as the people who use the tool see it: nothing to write in, only the windows to use. |
+| Windows | Inputs (text, number, choice, file, folder), a button or a change of an input as the trigger, outputs (text, list, table, chart, image) at the height of their rows. A window that has not come to anything says why in the place of its first output. Running one runs the ones it takes from first when they are not current. |
+| **List** | The cards of the open window. Ask: what is asked, a field for each input (kind, width, rows, where it starts), what starts the window. Do: the sentence, `takes` and `gives`, done by a model or by code (seeded to run as it is), the prompt or the code. Show: kind, which result, size and width, and the result as it stands. A field for the model: "Say what should change". Pointing at an element of the window lights its card and the other way round. |
+| **Under the hood** | Ask → Do → Show as boxes with the names on the wires, and the stored graph. |
+| **Debug** | Each round: who ran, what each node got and made, why one did nothing. Stop, and forget what the windows made. |
 
 ## What is new, and where it lives
 
-The tiers and the rules between them are `docs/architecture.md`; every new file follows them.
-
 | Part | Folder | Notes |
 |---|---|---|
-| The model: windows, cells, trigger; compile to graph, schedule and gui; the words a model is told; problems | `gui/editor/windows/` | Neutral, editor only. Built: `windows.ts`, tested in `backend/editor/project/windows.test.ts`. |
-| The order to run windows in; which are current | `gui/windows/` | Neutral and **shipped**: the deployed page needs it. The same code as in the model, moved here. |
-| Reading and writing `graph-windows.json`; a window from a sentence | `backend/editor/windows/` | Editor only. Two routes to read and write, one to describe. |
-| The page with framed windows, and running them in order | `frontend/deployment/windows/` | Shipped. Draws the gui's blocks through the existing `GuiBlock`; knows no editor. |
-| The notebook editor: start, page, split view, cells | `frontend/editor/windows/` | Editor only. Reaches the host through the editor's API client. Built. |
-| Its edits | `gui/editor/windows/edit.ts` | Pure functions from windows to windows; the editor's buttons are one line each. |
-| Its page | `frontend/notebook.html` | A second entry of the same build, served from the same folder; the graph editor's toolbar links it. |
+| The model of windows and page; compiling to graph, schedule and gui | `gui/editor/windows/` | Neutral. `windows.ts` (windows), `page.ts` and `pageModel.ts` (the page, Markdown), `edit.ts` (the edits, pure functions), `read.ts`. |
+| The order to run windows in | `gui/windows/` | Neutral and shipped: the delivered page needs it. |
+| Reading and writing `graph-windows.json`; a window from a sentence | `backend/editor/windows/` | Editor only. Three routes. |
+| The page of a delivered tool | `frontend/deployment/windows/` | Shipped. The words and the framed windows, run in order; knows no editor. |
+| The notebook | `frontend/editor/notebook/` | Editor only, written anew: its own client (`api.ts`), store, runner (`runs.ts`), boxes (`Widgets.tsx`, `Chart.tsx`), file browser (`Browse.tsx`) and stylesheet. It imports no component of the graph editor. |
+| Its page | `frontend/notebook.html` | A second entry of the same build; the graph editor's toolbar links to it. |
 
 ## The files of a project
 
 ```
 my_tool/
-  graph-windows.json   the windows as the notebook edits them (editor only; not in a package)
+  graph-windows.json   the windows and the page as the notebook edits them (editor only; not in a package)
   graph-flow.json      made from it: every wire
   graph-nodes.json     made from it: every node
-  graph-schedule.json  made from it: one row for each window, read left to right
-  gui.json             made from it: the blocks, with group / span / after on them
-  nodes/<id>/          what a model wrote for a cell (prompt, code); a new sentence keeps it
+  graph-schedule.json  made from it: one row for each window
+  gui.json             made from it: the blocks of the windows and the words of the page
+  nodes/<id>/          what a model wrote for a step (prompt, code); a new sentence keeps it
 ```
 
-`graph-windows.json` carries a `signature` of what it made. When a project is opened and the graph on
-disk no longer matches (it was edited in the graph editor), the notebook says so and offers to make it
-again from the windows, or to leave it alone. Nothing is overwritten unasked.
+`gui.json` carries what a delivered tool needs to draw the page: each window block has `group`, the heading `span` and
+`after` (the windows it takes from) and `page_at` (its place among the words); each word is a text block with `page_at` and
+`page_style`. A package therefore shows the page and runs the windows in order from the gui alone.
 
-`gui.json` carries enough to draw the page without `graph-windows.json`: each block has `group` (its
-window), the heading block has `span` (cells across) and `after` (the windows it takes from). A tool
-delivered in a package therefore shows framed windows and runs them in order from the gui alone.
+`graph-windows.json` carries a `signature` of what it made. When a project is opened and the graph on disk no longer matches
+(it was edited in the graph editor), the notebook says so and nothing is overwritten unasked.
 
 ## Running
 
-A round of a window is sent the blocks of its own start point and, for what it takes from another
-window, that window's *last* answer. Measured on `main`: a window run before the one it takes from brings
-back "success" with nothing in it; a changed input that was not run is not seen by the window after. So
-whoever runs a window runs first the ones before it that are not current, in order (`runOrder`); a
-current one is reused, the model is not asked again.
+A round of a window is sent the blocks of its own start point and, for what it takes from another window, that window's
+*last* answer. So whoever runs a window runs first the ones before it that are not current, one round each, and stops where one
+does not come to anything (`runOrder`, `gui/windows/order.ts`). "Current" means it ran, nothing it holds changed since, and so
+for everything it takes from. A round that had a node of the window with nothing to do (an input left empty) is a window that did
+nothing, and the window after it is not run on that. Only the window's own nodes count: the other windows stand idle in the
+same round.
 
-"Current" is read from the session, not kept: a window is current when its start point was sent what its
-blocks hold now, and so is everything it takes from.
+## What a window cannot say yet
 
-## The editor
-
-Open it from the graph editor's **Notebook** button, or at `/notebook.html` of the same server. It is
-themed by the tool's own colour scheme, so the page looks like what is delivered.
-
-1. **Start.** One sentence ("What should the tool do?") makes the page, with its cells filled in; the model
-   is told the room, the scheme and what each output wants (`windowContext`). Or start with one window
-   to fill in, or open a project.
-2. **Page.** The windows as people will use them, live: run one and the ones it takes from run first when
-   they are not current. **Edit** opens a window; a window with something wrong says "⚠ n to fix". A line
-   above the page asks the model for a change to the whole page; **+ New window** adds one.
-3. **Split view.** Left: the interface, drawn by the code of the delivered page, as large as the pane
-   lets the whole window be (**Fit**) or at the size a tool draws it (**Real size**). Right: the cells, in
-   four groups. Each interface element has a number and so has its cell; pointing at one lights the other,
-   and the number on an element jumps to its cell. The divider is in the middle.
-4. **Cells.** *In*: text, file, folder, number, choice, or "from window" (what another window shows), each
-   with its width as a share of the window and its own settings. *Starts when*: a button (its words), a
-   change of an input, or both. *Do*: a sentence done by a model, or code (a small program, seeded so it
-   runs as it is), each result named; "@Name" in a sentence points at an input or an earlier result and a
-   click on a chip writes it. *Out*: text, list, table, chart or image, each with its size (S, M, L or rows),
-   width and the result it shows. Add, remove and move any of them; a rename follows into the sentences.
-5. **Scheme, undo, save.** One of the five schemes; undo and redo (a sentence typed is one step); **Save** and
-   **Save as** write the project folder and ask before writing over one; **Open** reads one back. When the
-   graph in a project was changed outside the notebook, a banner says so and nothing is overwritten unasked.
-6. **What the AI is told** about the open window is shown below its interface.
-
-What a window cannot say yet: a chat (a block of its own), a cell that runs several models side by side
-(`paper_review_panel` is a window with one cell for each reviewer, read top to bottom), a start by itself
-(when the tool starts, every few minutes).
-
-## Steps
-
-1. Model, compile, order, words. *Done.*
-2. Shipped order (`gui/windows`) and the deployed page (`frontend/deployment/windows`), one line in
-   `GuiApp`. *Done.*
-3. Files and routes (`backend/editor/windows`), tested through a session. *Done.*
-4. The notebook editor (`frontend/editor/windows`): start, page, split view, cells, scheme, undo, run, open and
-   save. *Done;* its edits are pure functions (`gui/editor/windows/edit.ts`) and tested as such.
-5. Describe a window with a model. *Done* (stubbed in tests; the DSL names code cells and their shape).
-6. Usability: examples rebuilt with the mouse (population plotter by hand in eight steps; a sentence makes the
-   summarizer and its follow-on window in one), what was found and changed is in the history of this branch.
-
-## Seams (existing files that get a line)
-
-- `frontend/vite.config.ts`: the second entry.
-- `frontend/deployment/gui/GuiApp.tsx`: draw windows when the blocks say they are in windows.
-- `backend/editor/host/api.ts`, `backend/editor/host/routes.ts`: three routes.
-- `docs/architecture.md`, `README.md`: a paragraph each.
+A chat (a block of its own), a cell that runs several models in parallel (steps stand one under the other and run in turn;
+`paper_review_panel` is one cell for each reviewer), and starting by itself (when the tool starts, every few minutes).
+The editor's own look follows the design (A2), not the colour scheme of the tool; the scheme is kept in the document and told
+to the model, and the delivered tool draws it.
 
 ## Open
 
-- Whether `graph-windows.json` stays a file of its own or moves into `graph-flow.json`'s metadata (it
-  would travel in a package; the flow would stop being "wires only").
-- Starting by itself (when the tool starts, every few minutes) is a start point that takes no inputs from
-  the gui: not a trigger of a window that has inputs, so not offered yet.
-- A window with more than one model step shows them as cells; cells that run in parallel (two reviewers of
-  one manuscript) need a group, as `paper_review_panel` does.
+- Whether `graph-windows.json` stays a file of its own or moves into `graph-flow.json`'s metadata (it would travel in a
+  package; the flow would stop being "wires only").
+- The delivered tool shows the tool's name above the page, so a page that begins with its name says it twice.

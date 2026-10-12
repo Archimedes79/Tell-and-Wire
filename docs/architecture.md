@@ -61,7 +61,7 @@ they run in the browser and in Node.
 | `backend/architecture/` | Tests of the structure itself. |
 | `frontend/deployment/gui/` | What a deployed tool's browser loads: `kit/` (API client, look, dialogs), `surface/` (the gui drawn), `widgets/` (the block views). |
 | `frontend/deployment/windows/` | The page of framed windows a tool made of them shows, and running them in order; knows no editor. |
-| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client), `windows/` (the notebook: a page of its own, `notebook.html`). |
+| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client), `notebook/` (the notebook: a page of its own, `notebook.html`, written without the parts above it). |
 | `mcp/` | Optional tool servers, each a package of its own. |
 | `examples/`, `scripts/`, `docs/` | Projects that tests and CI run; the launchers, packaging and licence check; these documents. |
 

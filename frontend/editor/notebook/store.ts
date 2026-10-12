@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { CallFailed, call, wordsOf } from './api';
+import { pageOf, withPage } from '../../../gui/editor/windows/page.ts';
 import { windowsToGraph, type Done, type Windows } from '../../../gui/editor/windows/windows.ts';
 import type { Graph } from '../../../graph/graph.ts';
 import type { RoundSnapshot } from '../../../backend/deployment/host/api.ts';
@@ -117,8 +118,10 @@ export const useNotebook = create<NotebookState>((set, get) => ({
   values: {}, results: {}, done: NOTHING_RAN, going: [], log: [],
   busy: '', error: '', taken: '', explanation: '',
 
-  start: (doc, from) => {
+  start: (opened, from) => {
     coalescing = null;
+    // What the page shows is the page the document keeps: the tool that is delivered says the same words.
+    const doc = withPage(opened, pageOf(opened));
     set({
       epoch: get().epoch + 1, doc, graph: from?.graph ?? null, path: from?.path ?? '', stale: from?.stale ?? false, saved: from ? JSON.stringify(doc) : '',
       past: [], future: [], mode: 'write', source: false, window: null, tab: 'cells', dockOpen: false, hot: null,
