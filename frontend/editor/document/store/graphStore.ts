@@ -541,6 +541,27 @@ export function useGoingRound(): RoundSnapshot | null {
   return goingIn(elsewhere) && round;
 }
 
+/**
+ * What a node is doing in the round going now: 'running', or how it went once it is done -- 'success', 'error', 'partial', 'skipped' --
+ * or '' while no round goes or it has not begun. A word and not the round, so a card is drawn anew only when its own changes.
+ */
+export function useNodeWork(nodeId: string): string {
+  const work = useSession((s) => {
+    const round = s.round;
+    if (!round || round.done) return '';
+    return round.running.includes(nodeId) ? 'running' : round.finished[nodeId] ?? '';
+  });
+  const elsewhere = useGraphStore((s) => s.heldElsewhere);
+  return goingIn(elsewhere) ? work : '';
+}
+
+/** Whether a round goes in this document: a boolean, so what only wants to know is not drawn anew on every tick of it. */
+export function useRoundIsGoing(): boolean {
+  const going = useSession((s) => !!s.round && !s.round.done);
+  const elsewhere = useGraphStore((s) => s.heldElsewhere);
+  return going && goingIn(elsewhere) !== null;
+}
+
 // Every round of the session the editor's document is held in, from whichever
 // gui or clock started it: the canvas and the toolbar follow it.
 useSession.subscribe((state, before) => {

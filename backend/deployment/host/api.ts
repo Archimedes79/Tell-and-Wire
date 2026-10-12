@@ -39,6 +39,10 @@ export interface RoundSnapshot {
   completed: number;
   total: number;
   current_label: string;
+  /** The nodes working now, by id: more than one where a column runs in any order. */
+  running: string[];
+  /** How the nodes that have finished in this round went, by id, while it goes: the canvas shows each as it is done, and the whole result once it has ended. */
+  finished: Record<string, string>;
   item_done: number;
   item_total: number;
   /** Seconds since the running node last showed life; null before anything reported. */

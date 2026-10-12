@@ -132,7 +132,7 @@ let refusals = 0;
 function refused(reason: string, started: RoundSnapshot['started']): RoundSnapshot {
   refusals += 1;
   return {
-    round_id: `refused-${refusals}`, done: true, cancelled: false, completed: 0, total: 0, current_label: '',
+    round_id: `refused-${refusals}`, done: true, cancelled: false, completed: 0, total: 0, current_label: '', running: [], finished: {},
     item_done: 0, item_total: 0, idle_seconds: null, error: reason, result: null, outputs: null, started,
   };
 }

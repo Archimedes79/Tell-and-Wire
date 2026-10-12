@@ -26,6 +26,25 @@ describe('Rounds', () => {
     expect(await rounds.start(1, named, async () => done()).outcome).toMatchObject({ status: 'success' });
   });
 
+  it('says which nodes work now, and none once it has ended', async () => {
+    const rounds = new Rounds();
+    let release = () => {};
+    const gate = new Promise<void>((open) => { release = open; });
+    const started = rounds.start(2, named, async (round) => {
+      round.report({ type: 'node_start', node_id: 'a' });
+      round.report({ type: 'node_start', node_id: 'b' });
+      round.report({ type: 'node_done', node_id: 'a', status: 'success' });
+      await gate;
+      return done();
+    });
+    await wait(10);
+    expect(rounds.snapshot(started.id)).toMatchObject({ running: ['b'], finished: { a: 'success' }, completed: 1 });
+    release();
+    await started.outcome;
+    await wait(0);
+    expect(rounds.snapshot(started.id)).toMatchObject({ running: [], finished: {} });
+  });
+
   it('stops a round in flight through the signal it handed the work, and stops everything still going at once', async () => {
     const rounds = new Rounds();
     const work = (round: RoundWork) => new Promise<ExecutionResult>((ended) => {
