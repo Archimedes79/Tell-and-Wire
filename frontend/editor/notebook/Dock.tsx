@@ -17,7 +17,7 @@ export default function Dock({ doc }: { doc: Windows }) {
   const selected = useNotebook((s) => s.window);
   const failures = useNotebook((s) => Object.values(s.results).filter((one) => one.outcome === 'failed').length);
   const { show } = useNotebook.getState();
-  const [height, setHeight] = useState(() => Math.round(window.innerHeight * 0.46));
+  const [height, setHeight] = useState(() => Math.min(440, Math.max(200, Math.round(window.innerHeight * 0.42))));
   const drag = useRef<{ y: number; h: number } | null>(null);
   const window$ = doc.windows.find((one) => one.id === selected);
 
@@ -45,6 +45,7 @@ export default function Dock({ doc }: { doc: Windows }) {
           ? <div className="nb-dock-grip" onPointerDown={press} onPointerMove={pull} onPointerUp={() => { drag.current = null; }} aria-hidden />
           : <span className="nb-sp" />}
         {open && <button className="nb-btn quiet small" aria-label="Close" onClick={() => show({ dockOpen: false })}>✕</button>}
+        {open && <button className="nb-btn small nb-dock-back" onClick={() => show({ dockOpen: false })}>← Back to the page</button>}
       </div>
       {open && (
         <div className="nb-dock-body">

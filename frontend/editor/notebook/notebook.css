@@ -35,6 +35,12 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-btn.danger { color: var(--red); }
 .nb-btn.small { min-height: 28px; padding: 0 10px; font-size: 13px; border-radius: 8px; }
 .nb-note { font-size: 13px; color: var(--muted); }
+.nb-path-note { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* whether the page is kept: said in the bar, in the colour of a thing to do when it was changed after it was saved */
+.nb-save { padding: 3px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.nb-save.changed, .nb-save.new { background: var(--amber-bg); color: var(--amber); }
+.nb-save.saved { color: var(--green); font-weight: 500; padding-left: 0; padding-right: 0; }
+.nb-btn.attention { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); font-weight: 600; }
 
 .nb-banner { display: flex; align-items: center; gap: 12px; padding: 8px 20px; font-size: 14px; }
 .nb-banner.error { background: var(--red-bg); color: var(--red); }
@@ -43,15 +49,27 @@ button:disabled { cursor: default; opacity: 0.45; }
 
 /* the page */
 .nb-doc { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 24px 16px 48px; }
-.nb-sheet { max-width: 920px; margin: 0 auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 36px clamp(16px, 5vw, 56px) 40px; box-shadow: 0 1px 2px rgba(21, 26, 35, 0.05); }
+.nb-sheet { --m: clamp(16px, 5vw, 56px); position: relative; max-width: 920px; margin: 0 auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 36px clamp(16px, 5vw, 56px) 40px; box-shadow: 0 1px 2px rgba(21, 26, 35, 0.05); }
 .nb-flow { display: flex; flex-wrap: wrap; gap: 0 16px; align-items: flex-start; }
 .nb-block { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding: 2px 0; }
 .nb-block.win { flex: 0 0 auto; padding: 8px 0; }
-.nb-block .nb-tools { position: absolute; right: -4px; top: -14px; display: none; gap: 4px; padding: 3px; background: #fff; border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 2px 6px rgba(21, 26, 35, 0.1); z-index: 5; }
-.nb-block:hover > .nb-tools, .nb-block:focus-within > .nb-tools { display: flex; }
-.nb-tools select { border: 1px solid var(--line); border-radius: 6px; background: #fff; font-size: 13px; padding: 2px 4px; }
-.nb-tools button { border: 0; background: transparent; border-radius: 6px; padding: 2px 8px; font-size: 13px; color: var(--muted); }
-.nb-tools button:hover:not(:disabled) { background: #eef0f4; color: var(--ink); }
+/* the options of a block: a handle in the margin beside it, a small menu only when it is pressed -- nothing lies over the words */
+.nb-grip { position: absolute; left: calc(-1 * var(--m) + 2px); top: 4px; z-index: 6; }
+.nb-grip .handle { width: 22px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dim); font-size: 13px; letter-spacing: -3px; opacity: 0; }
+.nb-block:hover > .nb-grip .handle, .nb-block:focus-within > .nb-grip .handle, .nb-grip.open .handle { opacity: 1; }
+.nb-grip .handle:hover { background: #eef0f4; color: var(--ink); }
+.nb-grip .nb-tools { position: absolute; left: 0; top: 32px; display: flex; flex-direction: column; gap: 2px; min-width: 176px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 18px rgba(21, 26, 35, 0.16); }
+.nb-tools select { border: 1px solid var(--line2); border-radius: 6px; background: #fff; font-size: 14px; padding: 5px 6px; margin-bottom: 2px; }
+.nb-tools button { border: 0; background: transparent; border-radius: 6px; padding: 6px 8px; font-size: 14px; color: var(--ink); text-align: left; }
+.nb-tools button:hover:not(:disabled) { background: #eef0f4; }
+.nb-tools button.remove { color: var(--red); }
+
+/* the right edge of a window, to be pulled */
+.nb-edge { position: absolute; top: 14px; bottom: 14px; right: -13px; width: 14px; cursor: ew-resize; touch-action: none; display: none; z-index: 6; border-radius: 6px; }
+.nb-edge::before { content: ""; position: absolute; left: 5px; top: calc(50% - 24px); width: 4px; height: 48px; border-radius: 2px; background: var(--line2); }
+.nb-block.win:hover > .nb-edge, .nb-edge:focus-visible, .nb-edge.pulling { display: block; }
+.nb-edge:hover::before, .nb-edge.pulling::before, .nb-edge:focus-visible::before { background: var(--blue); }
+.nb-edge-tip { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); padding: 3px 9px; border-radius: 7px; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 600; white-space: nowrap; pointer-events: none; }
 
 .nb-text { display: block; width: 100%; border: 0; outline: none; resize: none; overflow: hidden; background: transparent; padding: 3px 4px; border-radius: 6px; font-family: inherit; color: var(--ink); }
 .nb-text:hover { background: #fafbfc; }
@@ -120,6 +138,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-dock-bar { display: flex; align-items: center; gap: 8px; padding: 6px 16px; background: #fff; border-bottom: 1px solid var(--line); user-select: none; }
 .nb-dock-grip { cursor: ns-resize; flex: 1 1 auto; align-self: stretch; display: flex; align-items: center; }
 .nb-dock-grip::before { content: ""; width: 44px; height: 4px; border-radius: 2px; background: var(--line2); margin: 0 auto; }
+.nb-dock-back { display: none; }
 .nb-dock-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 18px 20px 28px; }
 .nb-narrow { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; }
 .nb-wide { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
@@ -234,6 +253,15 @@ textarea.nb-pre { width: 100%; min-height: 150px; resize: vertical; border: 0; }
   .nb-inputs .nb-field, .nb-outputs .nb-field { flex: 1 1 100% !important; }
   .nb-win-head { flex-wrap: wrap; }
   .nb-win-head .nb-name { flex: 1 1 100%; order: -1; }
+  /* a narrow screen has room for one of the two: opened, the dock is the screen, and a button goes back to the page */
+  .nb-app.dock-open .nb-doc, .nb-app.dock-open .nb-top { display: none; }
+  .nb-app.dock-open .nb-dock { flex: 1 1 auto; height: auto !important; border-top: 0; box-shadow: none; }
+  .nb-dock-back { display: inline-flex; align-items: center; }
+  .nb-dock-bar > button[aria-label="Close"], .nb-dock-grip { display: none; }
+  .nb-grip { left: auto; right: -13px; top: 2px; }
+  .nb-grip .handle { width: 20px; opacity: 0.7; background: #fff; border: 1px solid var(--line); }
+  .nb-edge { display: none !important; }
+  .nb-path-note { display: none; }
   .nb-dock-bar { padding: 4px 8px; gap: 6px; }
   .nb-dock-bar .nb-seg button { white-space: nowrap; padding: 4px 8px; font-size: 13px; }
   .nb-dock-bar > .nb-note { display: none; }

@@ -59,6 +59,8 @@ export interface NotebookState {
   path: string;
   /** The document as it was last opened or saved, to say whether there is something to save. */
   saved: string;
+  /** When the project was last opened or saved (a time), none while it is new: the header says how long ago the page was changed after it. */
+  savedAt: number;
   /** The graph on disk was changed by something else after the windows made it. */
   stale: boolean;
   past: Windows[];
@@ -113,7 +115,7 @@ let coalescing: { name: string; at: number } | null = null;
 const sameWindows = (a: Windows, b: Windows): boolean => JSON.stringify(a.windows) === JSON.stringify(b.windows);
 
 export const useNotebook = create<NotebookState>((set, get) => ({
-  doc: null, graph: null, path: '', saved: '', stale: false, past: [], future: [], epoch: 0,
+  doc: null, graph: null, path: '', saved: '', savedAt: 0, stale: false, past: [], future: [], epoch: 0,
   mode: 'write', source: false, window: null, tab: 'cells', dockOpen: false, hot: null,
   values: {}, results: {}, done: NOTHING_RAN, going: [], log: [],
   busy: '', error: '', taken: '', explanation: '',
@@ -123,7 +125,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
     // What the page shows is the page the document keeps: the tool that is delivered says the same words.
     const doc = withPage(opened, pageOf(opened));
     set({
-      epoch: get().epoch + 1, doc, graph: from?.graph ?? null, path: from?.path ?? '', stale: from?.stale ?? false, saved: from ? JSON.stringify(doc) : '',
+      epoch: get().epoch + 1, doc, graph: from?.graph ?? null, path: from?.path ?? '', stale: from?.stale ?? false, saved: from ? JSON.stringify(doc) : '', savedAt: from ? Date.now() : 0,
       past: [], future: [], mode: 'write', source: false, window: null, tab: 'cells', dockOpen: false, hot: null,
       values: {}, results: {}, done: NOTHING_RAN, going: [], log: [], error: '', taken: '', explanation: '',
     });
@@ -186,7 +188,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
     set({ busy: 'saving', error: '', taken: '' });
     try {
       const written = await call('saveWindows', { path, windows: doc, ...(replace ? { replace: true } : {}) });
-      set({ path, saved: JSON.stringify(doc), stale: false, graph: written.graph as unknown as Graph });
+      set({ path, saved: JSON.stringify(doc), savedAt: Date.now(), stale: false, graph: written.graph as unknown as Graph });
       return true;
     } catch (error) {
       if (error instanceof CallFailed && error.body.taken) set({ taken: path });

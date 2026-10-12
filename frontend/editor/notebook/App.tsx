@@ -10,12 +10,13 @@ import Dock from './Dock';
 import Page from './Page';
 import Start from './Start';
 import { runAll, stopRuns } from './runs';
+import { saveNote } from './status';
 import { isDirty, useNotebook } from './store';
 import { startPage } from '../../../gui/editor/windows/page.ts';
-import { windowProblems } from '../../../gui/editor/windows/windows.ts';
+import { DEFAULT_SCHEME, windowProblems } from '../../../gui/editor/windows/windows.ts';
 
 /** The looks a delivered tool can have (the gui's colour schemes), by their ids. */
-const LOOKS: [string, string][] = [['night', 'Night'], ['paper', 'Paper'], ['office', 'Office'], ['graphite', 'Graphite'], ['anthracite', 'Anthracite']];
+const LOOKS: [string, string][] = [['office', 'White'], ['paper', 'Paper'], ['night', 'Night'], ['graphite', 'Graphite'], ['anthracite', 'Anthracite']];
 
 const folderOf =(path: string): string => path.replace(/[\\/]+$/, '').replace(/[\\/][^\\/]*$/, '');
 
@@ -30,12 +31,15 @@ export default function App() {
   const source = useNotebook((s) => s.source);
   const going = useNotebook((s) => s.going.length > 0);
   const dirty = useNotebook(isDirty);
+  const savedAt = useNotebook((s) => s.savedAt);
+  const docked = useNotebook((s) => s.dockOpen);
   const canUndo = useNotebook((s) => s.past.length > 0);
   const canRedo = useNotebook((s) => s.future.length > 0);
   const { edit, undo, redo, open, save, clearError, start, show } = useNotebook.getState();
   const [browsing, setBrowsing] = useState<'open' | 'save' | null>(null);
   const problems = doc ? windowProblems(doc) : [];
   const writing = mode === 'write';
+  const note = saveNote({ path, dirty, savedAt });
 
   // Ctrl+S saves; Ctrl+Z and Ctrl+Shift+Z step through what was done, outside the boxes whose own undo is the browser's.
   useEffect(() => {
@@ -59,6 +63,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // The tab says when there is something to save, as an editor's tab does.
+  useEffect(() => { document.title = `${dirty ? '● ' : ''}${doc?.name || 'Notebook'} — Tell & Wire`; }, [dirty, doc?.name]);
+
   // Leaving a page that is not saved asks first.
   useEffect(() => {
     if (!dirty) return;
@@ -70,7 +77,7 @@ export default function App() {
   const saveHere = (): void => { if (path) void save(path); else setBrowsing('save'); };
 
   return (
-    <div className="nb-app">
+    <div className={`nb-app${doc && writing && docked ? ' dock-open' : ''}`}>
       <header className="nb-top">
         <span className="nb-brand">
           <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><circle cx="6" cy="8" r="3.5" stroke="#151a23" strokeWidth="2" /><circle cx="22" cy="20" r="3.5" stroke="#151a23" strokeWidth="2" /><path d="M9.5 8 C16 8 12 20 18.5 20" stroke="#1f4fbf" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -87,7 +94,7 @@ export default function App() {
             </div>
             <select
               className="nb-select" aria-label="Look of the delivered tool" title="The colours of the tool when it is delivered; the model is told them too"
-              value={doc.scheme ?? 'night'} onChange={(event) => edit((one) => ({ ...one, scheme: event.target.value }), 'scheme')}
+              value={doc.scheme ?? DEFAULT_SCHEME} onChange={(event) => edit((one) => ({ ...one, scheme: event.target.value }), 'scheme')}
             >
               {LOOKS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
             </select>
@@ -105,9 +112,9 @@ export default function App() {
             {problems.length} to fix
           </button>
         )}
-        {path && <span className="nb-note" title={path} style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path}</span>}
-        {dirty && <span className="nb-note" aria-label="Unsaved changes">● unsaved</span>}
-        {doc && <button className="nb-btn" disabled={busy === 'saving' || problems.length > 0} onClick={saveHere} title="Save as a project folder (Ctrl+S)">{busy === 'saving' ? 'Saving…' : 'Save'}</button>}
+        {path && <span className="nb-note nb-path-note" title={path}>{path}</span>}
+        {note.words && <span className={`nb-save ${note.kind}`} role="status" title={note.kind === 'saved' ? path : 'Press Ctrl+S to save'}>{note.kind === 'saved' ? '✓ ' : '● '}{note.words}</span>}
+        {doc && <button className={`nb-btn${dirty ? ' attention' : ''}`} disabled={busy === 'saving' || problems.length > 0} onClick={saveHere} title="Save as a project folder (Ctrl+S)">{busy === 'saving' ? 'Saving…' : 'Save'}</button>}
         {doc && <button className="nb-btn" onClick={() => setBrowsing('save')}>Save as…</button>}
         <button className="nb-btn" onClick={() => setBrowsing('open')}>Open…</button>
         {doc && <button className="nb-btn quiet" onClick={() => { if (!dirty || window.confirm('Leave this page without saving it?')) start(startPage()); }}>New</button>}

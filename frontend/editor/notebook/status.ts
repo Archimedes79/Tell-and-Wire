@@ -33,3 +33,14 @@ export function stepStatus(s: Pick<NotebookState, 'results'>, window: Window, at
   if (node.status === 'skipped' && !node.held) return { word: 'nothing to do', kind: 'empty' };
   return { word: node.reused ? 'done, as before' : 'done', kind: '' };
 }
+
+/**
+ * Whether the page is kept, for the bar on top: a page that was never saved, one changed after it was, or one that is as saved.
+ * *at* is a time, as `Date.now()` gives it.
+ */
+export function saveNote(s: { path: string; dirty: boolean; savedAt: number }): { kind: 'new' | 'changed' | 'saved'; words: string } {
+  const time = s.savedAt ? new Date(s.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  if (!s.path) return { kind: 'new', words: s.dirty ? 'Not saved yet' : '' };
+  if (s.dirty) return { kind: 'changed', words: `Changed since you saved it${time ? ` at ${time}` : ''}` };
+  return { kind: 'saved', words: `Saved${time ? ` at ${time}` : ''}` };
+}

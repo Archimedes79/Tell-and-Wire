@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { addBlock, pageOf, startPage } from '../../../gui/editor/windows/page.ts';
-import Page from './Page';
+import Page, { spanAt } from './Page';
 import { useNotebook } from './store';
 
 /**
@@ -118,5 +118,32 @@ describe('the page, read', () => {
     expect(screen.querySelectorAll('.nb-flow > .nb-block.win')).toHaveLength(1);
     expect(screen.querySelector('.nb-tools')).toBeNull();
     expect([...screen.querySelectorAll('button')].some((one) => one.textContent === 'Cells')).toBe(false);
+  });
+});
+
+describe('the options of a block and the width of a window', () => {
+  it('keeps the options behind a handle in the margin, and opens them only when it is pressed', async () => {
+    expect(screen.querySelector('.nb-tools')).toBeNull();
+    const handle = screen.querySelector<HTMLElement>('.nb-grip .handle')!;
+    await act(async () => { handle.click(); });
+    expect(screen.querySelector('.nb-tools')).not.toBeNull();
+    const down = [...screen.querySelectorAll<HTMLElement>('.nb-tools button')].find((one) => one.getAttribute('aria-label') === 'Move down')!;
+    await act(async () => { down.click(); });
+    expect(kinds()).toEqual(['window', 'h1']);
+    expect(screen.querySelector('.nb-tools')).toBeNull();
+  });
+
+  it('takes a window to a quarter, a half, three quarters or the full line, by a pull or the arrow keys', async () => {
+    const key = (key: string) => act(async () => { screen.querySelector<HTMLElement>('.nb-edge')!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })); });
+    expect(store().doc!.windows[0].span).toBe(8);
+    await key('ArrowRight');
+    expect(store().doc!.windows[0].span).toBe(12);
+    await key('ArrowRight'); await key('ArrowRight');
+    expect(store().doc!.windows[0].span).toBe(16);
+    await key('ArrowLeft'); await key('ArrowLeft'); await key('ArrowLeft'); await key('ArrowLeft'); await key('ArrowLeft');
+    expect(store().doc!.windows[0].span).toBe(4);
+    expect(spanAt(500, 100, 800)).toBe(8);
+    expect(spanAt(60, 100, 800)).toBe(4);
+    expect(spanAt(2000, 100, 800)).toBe(16);
   });
 });

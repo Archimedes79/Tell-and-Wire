@@ -6,7 +6,7 @@
 // web page the tool is (`As app`).
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { removeWindow } from '../../../gui/editor/windows/edit.ts';
+import { patchWindow, removeWindow } from '../../../gui/editor/windows/edit.ts';
 import { addBlock, fromMarkdown, freshBlockId, moveBlock, pageOf, patchBlock, removeBlock, setKind, toMarkdown } from '../../../gui/editor/windows/page.ts';
 import type { BlockKind, PageBlock, Windows } from '../../../gui/editor/windows/windows.ts';
 import { useNotebook } from './store';
@@ -180,6 +180,8 @@ function Block({ part, index, doc, writing, last, onType, onKeys, onAdd, onAddAb
   onAddAbove?: (kind: BlockKind) => void;
 }) {
   const { edit } = useNotebook.getState();
+  /** The width a window is being pulled to, before the pointer is let go. */
+  const [preview, setPreview] = useState<number | null>(null);
   const window = part.kind === 'window' ? doc.windows.find((one) => one.id === part.window) : undefined;
 
   if (!writing) {
@@ -194,28 +196,84 @@ function Block({ part, index, doc, writing, last, onType, onKeys, onAdd, onAddAb
     );
   }
 
-  const bar = (
-    <div className="nb-tools" role="toolbar" aria-label="Block">
-      {part.kind !== 'window' && (
-        <select aria-label="Kind of block" value={part.kind} onChange={(event) => edit((one) => setKind(one, part.id, event.target.value as BlockKind))}>
-          {KIND_WORDS.map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}
-        </select>
-      )}
-      <button aria-label="Move up" title="Move up" disabled={index === 0} onClick={() => edit((one) => moveBlock(one, part.id, -1))}>▲</button>
-      <button aria-label="Move down" title="Move down" disabled={last} onClick={() => edit((one) => moveBlock(one, part.id, 1))}>▼</button>
-      <button aria-label={window ? 'Remove window' : 'Remove block'} title={window ? 'Remove this window' : 'Remove'} onClick={() => edit((one) => (window ? removeWindow(one, window.id) : removeBlock(one, part.id)))}>✕</button>
-    </div>
-  );
-
   return (
-      <div className={`nb-block${window ? ' win' : ''}`} data-block={part.id} style={window ? sizeOf(window.span) : undefined}>
+      <div className={`nb-block${window ? ' win' : ''}`} data-block={part.id} style={window ? sizeOf(preview ?? window.span) : undefined}>
         {index === 0 && <AddRow where="above" onAdd={onAddAbove!} />}
-        {bar}
+        <BlockMenu part={part} index={index} last={!!last} windowId={window?.id} />
         {window && <WindowBox window={window} writing />}
+        {window && <Edge span={window.span} preview={preview} onPreview={setPreview} onSet={(span) => { setPreview(null); if (span !== window.span) edit((one) => patchWindow(one, window.id, { span })); }} />}
         {part.kind === 'space' && <div className="nb-space" aria-label="Gap" />}
         {part.kind !== 'window' && part.kind !== 'space' && <Text part={part} onChange={onType!} onKeyDown={onKeys!} />}
         <AddRow where="below" onAdd={onAdd!} />
       </div>
+  );
+}
+
+/** The options of a block, behind a handle in the margin beside it, so that they never cover the words. */
+function BlockMenu({ part, index, last, windowId }: { part: PageBlock; index: number; last: boolean; windowId?: string }) {
+  const { edit } = useNotebook.getState();
+  const [open, setOpen] = useState(false);
+  const holder = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent): void => { if (!holder.current?.contains(event.target as Node)) setOpen(false); };
+    const escape = (event: KeyboardEvent): void => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', escape); };
+  }, [open]);
+  const then = (change: (doc: Windows) => Windows) => (): void => { setOpen(false); edit(change); };
+  return (
+    <div className={`nb-grip${open ? ' open' : ''}`} ref={holder}>
+      <button type="button" className="handle" aria-label="Block options" aria-expanded={open} title="Options of this block" onClick={() => setOpen(!open)}>⋮⋮</button>
+      {open && (
+        <div className="nb-tools" role="toolbar" aria-label="Block">
+          {part.kind !== 'window' && (
+            <select aria-label="Kind of block" value={part.kind} onChange={(event) => { setOpen(false); edit((one) => setKind(one, part.id, event.target.value as BlockKind)); }}>
+              {KIND_WORDS.map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}
+            </select>
+          )}
+          <button aria-label="Move up" disabled={index === 0} onClick={then((one) => moveBlock(one, part.id, -1))}>▲ Move up</button>
+          <button aria-label="Move down" disabled={last} onClick={then((one) => moveBlock(one, part.id, 1))}>▼ Move down</button>
+          <button aria-label={windowId ? 'Remove window' : 'Remove block'} className="remove" onClick={then((one) => (windowId ? removeWindow(one, windowId) : removeBlock(one, part.id)))}>✕ {windowId ? 'Remove window' : 'Remove'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The cells a window takes (of 16), for a pointer at *x* when the window begins at *left* in a line *line* wide: a quarter at least, whole quarters. */
+export const spanAt = (x: number, left: number, line: number): number => Math.min(16, Math.max(4, Math.round(((x - left) / Math.max(1, line)) * 4) * 4));
+
+const FRACTION: Record<number, string> = { 4: '¼', 8: '½', 12: '¾', 16: 'full width' };
+
+/** The right edge of a window: pulled, it makes the window wider or narrower; with the arrow keys, by a quarter. */
+function Edge({ span, preview, onPreview, onSet }: { span: number; preview: number | null; onPreview: (span: number | null) => void; onSet: (span: number) => void }) {
+  const drag = useRef<{ left: number; line: number } | null>(null);
+  const shown = preview ?? span;
+  const spanFor = (event: React.PointerEvent): number => spanAt(event.clientX, drag.current!.left, drag.current!.line);
+  return (
+    <div
+      className={`nb-edge${preview !== null ? ' pulling' : ''}`} role="slider" tabIndex={0} aria-label="Window width" aria-orientation="horizontal"
+      aria-valuemin={4} aria-valuemax={16} aria-valuenow={shown} aria-valuetext={FRACTION[shown] ?? `${shown} of 16`} title="Pull to change the width of the window"
+      onPointerDown={(event) => {
+        const block = event.currentTarget.parentElement!;
+        drag.current = { left: block.getBoundingClientRect().left, line: block.parentElement!.clientWidth };
+        event.currentTarget.setPointerCapture(event.pointerId);
+        onPreview(span);
+      }}
+      onPointerMove={(event) => { if (drag.current) onPreview(spanFor(event)); }}
+      onPointerUp={(event) => { if (!drag.current) return; const next = spanFor(event); drag.current = null; onSet(next); }}
+      onPointerCancel={() => { drag.current = null; onPreview(null); }}
+      onKeyDown={(event) => {
+        const by = event.key === 'ArrowRight' ? 4 : event.key === 'ArrowLeft' ? -4 : 0;
+        if (!by) return;
+        event.preventDefault();
+        onSet(Math.min(16, Math.max(4, span + by)));
+      }}
+    >
+      {preview !== null && <span className="nb-edge-tip">{FRACTION[preview] ?? preview}</span>}
+    </div>
   );
 }
 

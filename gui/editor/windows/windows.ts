@@ -139,10 +139,13 @@ export interface Trigger {
   onChange?: boolean;
 }
 
+/** The look of a tool that says none: white. */
+export const DEFAULT_SCHEME = 'office';
+
 export interface Windows {
   name: string;
   description: string;
-  /** The gui's colour scheme (`metadata.gui_scheme`); night, where it says none. */
+  /** The gui's colour scheme (`metadata.gui_scheme`); office (white), where it says none. */
   scheme?: string;
   windows: Window[];
   /** The text of the page and where the windows stand in it. Left out, the page is its name, its description and the windows in turn (`pageOf`). */
@@ -601,7 +604,7 @@ export function windowsToGraph(doc: Windows, before?: Graph): Graph {
     });
   });
   const graph: Graph = {
-    metadata: { name: doc.name, description: doc.description, gui_scheme: doc.scheme ?? 'night' },
+    metadata: { name: doc.name, description: doc.description, gui_scheme: doc.scheme ?? DEFAULT_SCHEME },
     nodes,
     edges,
     gui: { blocks: [...doc.windows.flatMap((window) => blocksOf(doc, window)), ...noteBlocks(doc)] },
