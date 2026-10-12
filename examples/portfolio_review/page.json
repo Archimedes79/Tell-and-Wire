@@ -11,7 +11,7 @@
     "sends_to": [
       "review"
     ],
-    "tone": "sunken",
+    "tone": "plain",
     "value": "examples/data/portfolio_review/broker_export.csv",
     "w": 16
   },
@@ -21,7 +21,7 @@
     "kind": "plot_window",
     "label": "Allocation by theme",
     "shows": "allocation",
-    "tone": "plain",
+    "tone": "raised",
     "w": 8
   },
   {
@@ -30,7 +30,7 @@
     "kind": "table",
     "label": "Master action list",
     "shows": "actions",
-    "tone": "plain",
+    "tone": "raised",
     "w": 16
   },
   {
@@ -40,7 +40,7 @@
     "label": "Report",
     "mode": "output",
     "shows": "report",
-    "tone": "plain",
+    "tone": "raised",
     "value": "",
     "w": 16
   }

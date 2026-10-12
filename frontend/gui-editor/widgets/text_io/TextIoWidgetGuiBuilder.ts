@@ -30,9 +30,9 @@ export class TextIoWidgetGuiBuilder extends WidgetGuiBuilder {
     return `${BOX_TEXT.fontSize} px text that wraps and scrolls`;
   }
 
-  /** A box you type into looks like one; a box that only shows text does not. */
+  /** A box you type into draws its own frame; a box that shows text is a card, and the card is its frame. */
   protected override defaultTone(mode: string) {
-    return mode === 'output' ? 'plain' as const : 'sunken' as const;
+    return mode === 'output' ? 'raised' as const : 'plain' as const;
   }
 
   /** What is typed into it, nothing yet. */

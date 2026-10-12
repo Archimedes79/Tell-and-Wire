@@ -20,7 +20,7 @@
     "sends_to": [
       "summarize"
     ],
-    "tone": "sunken",
+    "tone": "plain",
     "value": "examples/data/stories/01_the_lighthouse_keeper.txt",
     "w": 9
   },
@@ -34,7 +34,7 @@
     "sends_to": [
       "summarize"
     ],
-    "tone": "sunken",
+    "tone": "plain",
     "value": "Three sentences",
     "w": 4
   },

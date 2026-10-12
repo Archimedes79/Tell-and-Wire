@@ -10,7 +10,7 @@
     "sends_to": [
       "chosen"
     ],
-    "tone": "sunken",
+    "tone": "plain",
     "value": "examples/data/stories",
     "w": 16
   },

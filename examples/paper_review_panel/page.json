@@ -19,7 +19,7 @@
     "sends_to": [
       "review"
     ],
-    "tone": "sunken",
+    "tone": "plain",
     "value": "examples/data/paper/sample_paper.md",
     "w": 12
   },

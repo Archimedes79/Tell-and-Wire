@@ -10,7 +10,7 @@
     "sends_to": [
       "draw"
     ],
-    "tone": "sunken",
+    "tone": "plain",
     "value": "examples/data/population.csv",
     "w": 16
   },
@@ -20,7 +20,7 @@
     "kind": "plot_window",
     "label": "",
     "shows": "plot",
-    "tone": "plain",
+    "tone": "raised",
     "w": 16
   }
 ]

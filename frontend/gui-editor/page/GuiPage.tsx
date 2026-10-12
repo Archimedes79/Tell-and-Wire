@@ -156,6 +156,9 @@ export function GuiBlock({
   const bare = toneIsBare(widget.tone as Tone, look);
   const waiting = !keepRoom && kind?.waits?.(widget, value) === true;
   const narrow = React.useContext(NarrowPage);
+  // A heading or a rule without a box is as tall as what is in it and stands where its kind does in its row (BlockKind.sits), not
+  // stretched over cells it does not fill. The one being sized keeps its room.
+  const sits = keepRoom || !bare ? undefined : kind?.sits?.(widget);
 
   return (
     <div
@@ -164,15 +167,18 @@ export function GuiBlock({
       style={{
         ...blockStyle(placement, waiting, narrow),
         ...toneStyle(widget.tone as Tone, look),
-        // The same horizontal padding either way: a heading that started 10px
-        // left of the box beneath it broke the one thing a document must get
-        // right, which is a single left margin.
-        padding: bare ? '2px 10px' : '8px 12px',
+        alignSelf: sits,
+        // A box's edge and a bare block's edge are the same line -- a field, a heading and a card start at one left margin, which
+        // is the one thing a document must get right; what is in a box is set in from it.
+        padding: bare ? '2px 0' : '10px 14px',
         ...style,
       }}
       {...frame}
     >
       {children}
+
+      {/* A button is its own caption; in a row with fields it stands level with them, not with their captions. */}
+      {bare && kind?.drawsLabel && <span aria-hidden="true" className="text-xs flex-shrink-0">&nbsp;</span>}
 
       {/* Over a plain block too: a chart or a reply without a frame still says what it is. */}
       {widget.label && !kind?.drawsLabel && (controlId

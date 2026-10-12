@@ -19,9 +19,9 @@ export class SelectWidgetGuiBuilder extends WidgetGuiBuilder {
     return { w: 6, h: 1 };
   }
 
-  /** A control you operate looks like a field, or nobody touches it. */
+  /** The control draws its own frame; a card around it would be a box in a box. */
   protected override defaultTone() {
-    return 'sunken' as const;
+    return 'plain' as const;
   }
 
   /** Two options to start from, so the dropdown is never empty on the page. */

@@ -24,6 +24,7 @@
 import type { ComponentType } from 'react';
 import type { GuiWidget, WidgetKind } from '../../app/graph';
 import type { WidgetViewProps } from '../widgets/WidgetView';
+import { textRole } from '../../../backend/gui-editor/widgets/text/role.ts';
 import { textIoRole } from '../../../backend/gui-editor/widgets/text_io/role.ts';
 import { asText } from '../../../backend/gui-editor/widgets/text_io/text.ts';
 
@@ -54,13 +55,18 @@ export interface BlockKind {
   drawsLabel?: true;
   /** The label above it names the one control in it, which takes the view's `controlId`. */
   labelsControl?: true;
+  /**
+   * Without a box it is as tall as what is in it and stands in its row on the bottom -- a heading, which is nearer the block under
+   * it than the one above -- or in the middle, as a rule between two sections does. Not said: it has the whole height it is given.
+   */
+  sits?: (widget: GuiWidget) => 'end' | 'center' | undefined;
   /** It shows what a run hands back and nothing has yet: it stands as one line until something does. */
   waits?: (widget: GuiWidget, value: unknown) => boolean;
 }
 
 export const BLOCKS: Record<WidgetKind, BlockKind> = {
-  text: { View: TextWidgetView },
-  divider: { View: DividerWidgetView },
+  text: { View: TextWidgetView, sits: (widget) => (textRole(widget.mode) === 'heading' ? 'end' : undefined) },
+  divider: { View: DividerWidgetView, sits: () => 'center' },
   spacer: { View: SpacerWidgetView },
   input_picker: { View: InputPickerWidgetView, labelsControl: true },
   // The box a person types into holds what they typed, which is what a run

@@ -19,4 +19,9 @@ export class ImageViewWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   override textShown(): undefined {
     return undefined;
   }
+
+  /** What a run shows is a card, like the other results on the page. */
+  protected override defaultTone() {
+    return 'raised' as const;
+  }
 }

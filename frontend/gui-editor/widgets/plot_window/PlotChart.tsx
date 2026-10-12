@@ -254,7 +254,7 @@ export default function PlotChart({ data, width = 220, height = 90 }: PlotWidget
   const drawing = asDrawing(data);
   if (drawing) {
     return (
-      <div className="w-full h-full flex items-center justify-center overflow-hidden" style={{ background: RAISE, borderRadius: 4 }}>
+      <div className="w-full h-full flex items-center justify-center overflow-hidden" style={{ borderRadius: 4 }}>
         <img src={drawingSource(drawing)} alt="" className="w-full h-full object-contain" />
       </div>
     );
@@ -308,7 +308,7 @@ export default function PlotChart({ data, width = 220, height = 90 }: PlotWidget
       aria-label={plotted
         ? `${plotted.kind} chart of ${plotted.points.length} point${plotted.points.length === 1 ? '' : 's'}`
         : figure ? waiting : 'Empty chart, waiting for data'}
-      style={{ background: RAISE, borderRadius: 4 }}
+      style={{ borderRadius: 4 }}
     >
       {titleH > 0 && (
         <text x={margin.left} y={margin.top + 8} fontSize={CHART_TEXT.title} fontWeight={600} fill={TEXT}>
