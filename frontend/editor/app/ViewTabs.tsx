@@ -1,5 +1,5 @@
 import Button from '../../deployment/gui/kit/ui/Button';
-import { SUCCESS } from '../../deployment/gui/kit/ui/theme';
+import { SUCCESS_TEXT } from '../../deployment/gui/kit/ui/theme';
 
 export type EditorView = 'graph' | 'design' | 'app';
 
@@ -38,7 +38,7 @@ export default function ViewTabs({
             title={tab.hint}
             aria-current={active ? 'page' : undefined}
           >
-            {tab.id === 'app' && <span className="mr-1.5" style={{ color: SUCCESS }} aria-hidden="true">●</span>}
+            {tab.id === 'app' && <span className="mr-1.5" style={{ color: SUCCESS_TEXT }} aria-hidden="true">●</span>}
             {tab.label}
           </Button>
         );

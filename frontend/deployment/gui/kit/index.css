@@ -40,9 +40,18 @@ html, body, #root {
   fill: currentColor !important;
 }
 
-/* The map's shade over what is out of view, in the scheme's own. */
+/* The map's shade over what is out of view: the scheme's text colour, thinly, so it darkens a light scheme and lightens a dark one
+   (the modal scrim, which is heavy, made a light scheme's map a grey slab). */
 .react-flow__minimap-mask {
-  fill: var(--ui-scrim, rgba(0,0,0,0.70));
+  fill: color-mix(in srgb, var(--ui-text, #e2e8f0) 14%, transparent);
+}
+
+/* The library's credit link ships in grey that reads on none of the schemes; the link stays, in the scheme's own. */
+.react-flow__attribution {
+  background: transparent !important;
+}
+.react-flow__attribution a {
+  color: var(--ui-dim, #96a0b0) !important;
 }
 
 /* Scrollbar styling */

@@ -3,14 +3,14 @@ import type { GuiWidget } from '../gui/kit/guiWidget';
 import { GuiBlock, blockValue, type GuiModel } from '../gui/surface/GuiSurface';
 import { useContainerCell } from '../gui/surface/useContainerCell';
 import { GUI_GAP, GUI_GRID_COLUMNS, gridStyle, resolveWidgetLayout } from '../gui/kit/layout';
-import { LINE, MUTED, SUCCESS_FILL, SUCCESS_TEXT, SURFACE, TEXT, WARNING_FILL, WARNING_TEXT, ACCENT_FILL, ACCENT_TEXT } from '../gui/kit/ui/theme';
+import { LINE, MUTED, SUCCESS_FILL, SUCCESS_TEXT, SURFACE, TEXT, WARNING_FILL, WARNING_TEXT, ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, WARNING } from '../gui/kit/ui/theme';
 import { pageNotes, pageWindows, type PageNote, type PageWindow, type WindowBlock } from './windowsInUse';
 
 /** Where a window stands: what a person sees of it before reading its result. */
-export type WindowState = 'ready' | 'running' | 'waiting' | 'current' | 'stale';
+export type WindowState = 'ready' | 'running' | 'waiting' | 'current' | 'stale' | 'failed' | 'empty';
 
 const STATE_WORDS: Record<WindowState, string> = {
-  ready: 'Ready', running: 'Running', waiting: 'Waiting', current: 'Done', stale: 'Out of date',
+  ready: 'Ready', running: 'Running', waiting: 'Waiting', current: 'Done', stale: 'Out of date', failed: 'Failed', empty: 'Nothing to do',
 };
 
 /** What an editor hangs on the page without the page knowing what it is: nothing, in a delivered tool. */
@@ -32,12 +32,14 @@ export interface Decoration {
  * It knows no editor. An editor draws chrome on it through *decorate*, and says a size for the cell
  * when it has less room than a page (*cell*); without one the cell is the page's own.
  */
-export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell, decorate, only }: {
+export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: fixedCell, decorate, only }: {
   gui: GuiModel;
   onValue: (block: GuiWidget, value: unknown) => void;
   onEvent: (block: GuiWidget) => void;
   /** Where each window stands, by id; a window not named is ready. */
   states?: Readonly<Record<string, WindowState>>;
+  /** Why a window came to nothing, by id, said in the place of its first result (the window does not grow). */
+  problems?: Readonly<Record<string, { state: 'failed' | 'empty'; message: string }>>;
   /** A cell of this many pixels, in place of one a sixteenth of the page. */
   cell?: number;
   decorate?: Decoration;
@@ -76,6 +78,9 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
           if ('note' in item) return <Note key={item.note.id} note={item.note} />;
           const { window } = item;
           const state = states?.[window.id] ?? 'ready';
+          const problem = problems?.[window.id]?.state === state ? problems[window.id] : undefined;
+          // The first thing the window shows is where it says what went wrong: in the place of its result, as the notebook does.
+          const firstShown = problem ? window.blocks.find((one) => (one as WindowBlock).shows)?.id : undefined;
           const extra = decorate?.window?.(window);
           return (
             <section
@@ -116,6 +121,7 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
                       style={narrow ? { gridColumn: '1 / -1' } : undefined}
                       frame={decorated?.frame}
                     >
+                      {block.id === firstShown && problem && <Problem problem={problem} />}
                       {decorated?.children}
                     </GuiBlock>
                   );
@@ -126,6 +132,22 @@ export function WindowsSurface({ gui, onValue, onEvent, states, cell: fixedCell,
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** What went wrong in a window, over the place of its first result: the window keeps its size. */
+function Problem({ problem }: { problem: { state: 'failed' | 'empty'; message: string } }) {
+  // Opaque: it lies over what the window shows, so the tint is mixed into the window's own ground, not left clear.
+  const look = problem.state === 'failed'
+    ? { background: `color-mix(in srgb, ${DANGER} 14%, ${SURFACE})`, color: DANGER_TEXT, border: `1px solid color-mix(in srgb, ${DANGER} 40%, transparent)` }
+    : { background: `color-mix(in srgb, ${WARNING} 14%, ${SURFACE})`, color: WARNING_TEXT, border: `1px solid color-mix(in srgb, ${WARNING} 40%, transparent)` };
+  return (
+    <div
+      role="alert"
+      style={{ position: 'absolute', inset: 6, zIndex: 2, overflow: 'auto', padding: '8px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word', ...look }}
+    >
+      {problem.message}
     </div>
   );
 }
@@ -149,6 +171,8 @@ function StateChip({ state }: { state: WindowState }) {
   const look = state === 'current' ? { background: SUCCESS_FILL, color: SUCCESS_TEXT }
     : state === 'stale' ? { background: WARNING_FILL, color: WARNING_TEXT }
       : state === 'running' || state === 'waiting' ? { background: ACCENT_FILL, color: ACCENT_TEXT }
+        : state === 'failed' ? { background: DANGER_FILL, color: DANGER_TEXT }
+          : state === 'empty' ? { background: WARNING_FILL, color: WARNING_TEXT }
         : { background: 'transparent', color: MUTED };
   return (
     <span

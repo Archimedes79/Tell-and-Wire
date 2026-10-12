@@ -11,14 +11,22 @@ import type { RoundSnapshot } from '../gui/kit/api/client';
 import { useSession } from '../gui/kit/api/session';
 import { planFor, recorded, type PageWindow, type RunOf } from './windowsInUse';
 
+/** A window whose last round came to nothing: why, in the words a person can read. */
+export interface Problem {
+  state: 'failed' | 'empty';
+  message: string;
+}
+
 interface WindowRuns {
   /** What each window was last run with. */
   runs: Record<string, RunOf>;
+  /** The windows whose last round failed or had nothing to do, by id; cleared when the window is run again. */
+  problems: Record<string, Problem>;
   /** The windows being run now, in order; none while nothing goes. */
   going: string[];
 }
 
-export const useWindowRuns = create<WindowRuns>(() => ({ runs: {}, going: [] }));
+export const useWindowRuns = create<WindowRuns>(() => ({ runs: {}, problems: {}, going: [] }));
 
 /** Another session, or one started over (its count of rounds fell): nothing of what ran is current. */
 let heldSession: string | null = null;
@@ -33,7 +41,7 @@ useSession.subscribe((state) => {
 
 /** The page is another document, or was started over: nothing of what ran is current. */
 export function forgetRuns(): void {
-  useWindowRuns.setState({ runs: {}, going: [] });
+  useWindowRuns.setState({ runs: {}, problems: {}, going: [] });
 }
 
 /** How long a start may take to show as a round before it is taken for one that did not start (a question is waiting, say). */
@@ -70,6 +78,20 @@ export const succeeded = (round: RoundSnapshot, id: string): boolean => !round.c
   && !round.result.node_results.some((one) => one.status === 'skipped' && !one.held && (one.node_id === id || one.node_id.startsWith(`${id}_`)));
 
 /**
+ * Why a round of window *id* did not end well, or null when it did or was stopped (a stop is the person's, and needs no word). A node of
+ * the window that failed says so in its own words; a node with nothing to do, that nothing came to it.
+ */
+export function problemOf(round: RoundSnapshot, id: string): Problem | null {
+  if (round.cancelled) return null;
+  const own = (round.result?.node_results ?? []).filter((one) => one.node_id === id || one.node_id.startsWith(`${id}_`));
+  const failed = own.find((one) => one.status === 'error');
+  if (failed || round.error || round.result?.status === 'error') return { state: 'failed', message: failed?.error || round.error || round.result?.error || 'It failed.' };
+  const idle = own.find((one) => one.status === 'skipped' && !one.held);
+  if (idle) return { state: 'empty', message: idle.messages?.[0] ?? 'Nothing arrived, so there was nothing to do.' };
+  return null;
+}
+
+/**
  * Run window *id* and, before it, every window it needs that is not current.
  *
  * *run* starts a round at a start point, by a block (`useRound().run`); it returns once the round
@@ -96,12 +118,17 @@ export async function runWindows(args: {
       const before = useSession.getState().round?.round_id ?? null;
       // What its blocks held when it was started: a change made while it runs is for the next round.
       const used = Object.fromEntries(window.inputs.map((blockId) => [blockId, held(blockId)]));
+      useWindowRuns.setState((state) => ({ problems: Object.fromEntries(Object.entries(state.problems).filter(([key]) => key !== window.id)) }));
       await run(window.id, window.starter);
       // A question the round waits on is set in the next tick of the page, not before this resumes.
       await new Promise((tick) => setTimeout(tick, 0));
       if (asking?.()) break;
       const ended = await roundOver(before);
-      if (!ended || !succeeded(ended, window.id)) break;
+      if (!ended || !succeeded(ended, window.id)) {
+        const problem = ended ? problemOf(ended, window.id) : null;
+        if (problem) useWindowRuns.setState((state) => ({ problems: { ...state.problems, [window.id]: problem } }));
+        break;
+      }
       useWindowRuns.setState((state) => ({ runs: recorded(state.runs, window, (blockId) => used[blockId]) }));
       done.push(window.id);
       useWindowRuns.setState({ going: plan.slice(done.length) });

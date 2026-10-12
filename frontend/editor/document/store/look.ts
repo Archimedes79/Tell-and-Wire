@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { SCHEMES, scheme, schemeVars } from '../../../deployment/gui/kit/ui/scheme';
+import { SUNKEN, SURFACE } from '../../../deployment/gui/kit/ui/theme';
 
 /** White, unless the person chose otherwise. */
 export const DEFAULT_LOOK = 'office';
@@ -41,3 +42,9 @@ export const useLook = create<{ id: string; choose: (id: string) => void }>((set
 
 /** The editor's tints for a node, by type, in the look it is in: what the minimap paints, where variables do not resolve. */
 export const lookNodes = (id: string) => scheme(id).nodes;
+
+/** The ink of a glyph on a status colour (the ✓ on the green): the page's own white on a light look, its dark ground on a dark one. */
+export function useOnStatus(): string {
+  const id = useLook((state) => state.id);
+  return scheme(id).light ? SURFACE : SUNKEN;
+}

@@ -64,7 +64,7 @@ my_tool/
 A round of a window is sent the blocks of its own start point and, for what it takes from another window, that window's
 *last* answer. So whoever runs a window runs first the ones before it that are not current, one round each, and stops where one
 does not come to anything (`runOrder`, `gui/windows/order.ts`). "Current" means it ran, nothing it holds changed since, and so
-for everything it takes from. A round that had a node of the window with nothing to do (an input left empty) is a window that did
+for everything it takes from. A window that failed, or had nothing to do, says why in the place of its first result, in the notebook and in the delivered tool alike (the delivered chip reads Failed or Nothing to do). A round that had a node of the window with nothing to do (an input left empty) is a window that did
 nothing, and the window after it is not run on that. Only the window's own nodes count: the other windows stand idle in the
 same round.
 

@@ -3,7 +3,7 @@ import type { RoundSnapshot } from '../gui/kit/api/client';
 import { useSession } from '../gui/kit/api/session';
 import { windowsToGraph, type Windows } from '../../../gui/editor/windows/windows.ts';
 import { afterRun, afterEdit, type Done } from '../../../gui/windows/order.ts';
-import { forgetRuns, runWindows, succeeded, useWindowRuns } from './windowRuns';
+import { forgetRuns, problemOf, runWindows, succeeded, useWindowRuns } from './windowRuns';
 import { isCurrent, isWindows, pageWindows, planFor, recorded, type RunOf } from './windowsInUse';
 
 /**
@@ -168,5 +168,34 @@ describe('a window that is a chat', () => {
     const runs = recorded({}, window, () => undefined);
     // The conversation grew after the window ran: it is still current.
     expect(isCurrent([window], runs, () => ({ messages: [{ role: 'user', text: 'hi' }] }), 'talk')).toBe(true);
+  });
+});
+
+describe('a window that came to nothing says why', () => {
+  const node = (node_id: string, status: string, rest: Record<string, unknown> = {}) => ({ node_id, status, inputs: {}, outputs: {}, error: null, ...rest });
+  const round = (nodes: unknown[], over: Partial<RoundSnapshot> = {}) => snapshot('r', { result: { status: 'partial', node_results: nodes as never, outputs: {} }, ...over });
+
+  it('with the words of its own node that failed, not another window\'s', () => {
+    const failed = round([node('summarize_summary', 'error', { error: 'TypeError: x is not a function' }), node('english_english', 'skipped')]);
+    expect(problemOf(failed, 'summarize')).toEqual({ state: 'failed', message: 'TypeError: x is not a function' });
+    // The other window stood idle in the same round: it is not the one that failed.
+    expect(problemOf(failed, 'english')).toMatchObject({ state: 'empty' });
+  });
+
+  it('as nothing to do when an input was left empty, and as nothing at all when it was stopped or went well', () => {
+    expect(problemOf(round([node('summarize_summary', 'skipped', { messages: ['No file chosen.'] })]), 'summarize')).toEqual({ state: 'empty', message: 'No file chosen.' });
+    expect(problemOf(round([node('summarize_summary', 'error', { error: 'x' })], { cancelled: true }), 'summarize')).toBeNull();
+    expect(problemOf(snapshot('ok'), 'summarize')).toBeNull();
+  });
+
+  it('is kept on the page for the window, and goes when it is run again', async () => {
+    useSession.setState({ round: null });
+    const bad = round([node('summarize_summary', 'error', { error: 'It broke.' })]);
+    const run = async () => { useSession.setState({ round: bad }); };
+    const ran = await runWindows({ windows, id: 'summarize', held, run });
+    expect(ran).toEqual([]);
+    expect(useWindowRuns.getState().problems.summarize).toEqual({ state: 'failed', message: 'It broke.' });
+    forgetRuns();
+    expect(useWindowRuns.getState().problems).toEqual({});
   });
 });

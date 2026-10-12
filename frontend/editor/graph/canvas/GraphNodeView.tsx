@@ -1,3 +1,4 @@
+import { useOnStatus } from '../../document/store/look';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Handle, NodeResizeControl, Position, NodeProps, useStore, useUpdateNodeInternals } from 'reactflow';
@@ -111,6 +112,7 @@ function guiLine(node: GraphNode, gui: GuiWidget[]): string | undefined {
  * `onNodeDoubleClick`), and the card chosen wears the accent.
  */
 const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
+  const onStatus = useOnStatus();
   const { graphNode } = data;
   // ✨ is writing for it, whether or not its view is open.
   const writing = useIsWriting(id);
@@ -260,7 +262,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         {status && !working && (
           <span
             className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
-            style={{ background: status.color, color: SUNKEN, opacity: thisRun || !going ? 1 : 0.5 }}
+            style={{ background: status.color, color: onStatus, opacity: thisRun || !going ? 1 : 0.5 }}
             role="img"
             aria-label={`${thisRun ? 'This run' : 'Last run'}: ${statusTitle}`}
             title={statusTitle}

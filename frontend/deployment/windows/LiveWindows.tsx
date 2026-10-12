@@ -28,6 +28,7 @@ const LiveWindows = memo(function LiveWindows({ design, onEvent, cell, decorate,
   const error = useSession((s) => roundError(s.round));
   const runs = useWindowRuns((s) => s.runs);
   const going = useWindowRuns((s) => s.going);
+  const problems = useWindowRuns((s) => s.problems);
 
   const windows = pageWindows(design.blocks);
   const designed = designValues(design.blocks);
@@ -36,8 +37,8 @@ const LiveWindows = memo(function LiveWindows({ design, onEvent, cell, decorate,
     window.id,
     going[0] === window.id ? 'running'
       : going.includes(window.id) ? 'waiting'
-        : !runs[window.id] ? 'ready'
-          : isCurrent(windows, runs, held, window.id) ? 'current' : 'stale',
+        : problems[window.id]?.state ?? (!runs[window.id] ? 'ready'
+          : isCurrent(windows, runs, held, window.id) ? 'current' : 'stale'),
   ]));
 
   return (
@@ -46,6 +47,7 @@ const LiveWindows = memo(function LiveWindows({ design, onEvent, cell, decorate,
       onValue={(block, value) => setEdit(block.id, value)}
       onEvent={onEvent}
       states={states}
+      problems={problems}
       cell={cell}
       decorate={decorate}
       only={only}
