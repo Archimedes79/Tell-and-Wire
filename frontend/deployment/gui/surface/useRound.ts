@@ -14,7 +14,7 @@ import { roundRefused, startRound, useSession, type RoundAsk } from '../kit/api/
  *
  * *before*, given, runs first: the editor hands its document to the server,
  * so the round runs what is being edited. *values* is what the gui sends
- * besides what was set on it -- the Gui tab's design.
+ * besides what was set on it -- the GUI tab's design.
  */
 export function useRound(before?: () => Promise<void>, values?: () => Record<string, unknown>) {
   const [requirements, setRequirements] = useState<Requirement[] | null>(null);

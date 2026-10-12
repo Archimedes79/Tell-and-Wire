@@ -19,7 +19,7 @@ seconds. A local model costs nothing per call but can take minutes per answer.
 | port | A dot on a node's edge: an input on the left, an output on the right. |
 | wire | Carries an output to an input. |
 | run | One run of the graph, from a start point to the end points it reaches. The API calls it a round. |
-| gui | The blocks a person uses: what the tool looks like (Gui tab). |
+| gui | The blocks a person uses: what the tool looks like (GUI tab). |
 | block | One thing on the gui: a picker, a button, a chart, a chat. |
 
 ## The node kinds
@@ -37,7 +37,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 
 ## 1. Build the gui
 
-Name the tool in the field at the top left, then open the **Gui** tab. Click **File or
+Name the tool in the field at the top left, then open the **GUI** tab. Click **File or
 folder**, then **Chart** in the left column (or type `/` on the gui). Each block comes
 connected: what the picker holds goes to a new start point, *Start*, and the chart shows a
 new end point, *Chart*.
@@ -169,7 +169,7 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
   **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
 A start point, a folder, an end point and a subgraph have no files: they open on their
-settings. **Edit the gui** on a node a block uses goes to the Gui tab.
+settings. **Edit the gui** on a node a block uses goes to the GUI tab.
 
 Two things save the most time. Wire a node to what feeds it before **Pull input**, so the
 example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
@@ -244,7 +244,7 @@ An end point's value is the tool's result under its name: a block shows it, a sc
 the command line read it. **Also write it to** writes it to a file, or each item to its own
 file in a folder.
 
-## 6. The Gui tab and its blocks
+## 6. The GUI tab and its blocks
 
 The gui is built like a document. Type headings and text in place. Press `/` to insert a
 block, or drag one from the left column onto the gui. A selected block has a small toolbar:

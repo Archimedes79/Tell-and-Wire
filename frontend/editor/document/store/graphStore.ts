@@ -299,7 +299,7 @@ export interface GraphStore {
   takeDiskChanges: (changes: TextChange[]) => { taken: string[]; refused: string[] };
   /**
    * Hand the server's session the document: what every round runs, whoever
-   * starts it -- the App tab, the Gui tab, the clock, the tool opened in a
+   * starts it -- the App tab, the GUI tab, the clock, the tool opened in a
    * window of its own. What runs, not how each node was written: a node's
    * history is up to half a megabyte, and a round reads none of it. It is
    * handed over as the document of the session it was given before: another

@@ -22,3 +22,22 @@ describe('Markdown lines', () => {
     expect(html.match(/<li>/g)).toHaveLength(2);
   });
 });
+
+describe('Markdown blocks', () => {
+  it('draws a fenced block as written, and numbered steps as a numbered list', () => {
+    const html = renderToStaticMarkup(createElement(Markdown, { source: 'Run:\n```\nnpm start\n  --port 8000\n```\n1. one\n2. two\nAfter.' }));
+    expect(html).toContain('<pre');
+    expect(html).toContain('npm start\n  --port 8000');
+    expect(html.match(/<ol/g)).toHaveLength(1);
+    expect(html.match(/<li>/g)).toHaveLength(2);
+    expect(html).toContain('After.');
+  });
+});
+
+describe('Markdown list items', () => {
+  it('go on over the indented lines under them', () => {
+    const html = renderToStaticMarkup(createElement(Markdown, { source: '- **One.** First part\n  and the rest.\n- Two' }));
+    expect(html.match(/<li>/g)).toHaveLength(2);
+    expect(html).toContain('First part and the rest.');
+  });
+});

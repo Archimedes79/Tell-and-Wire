@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Notices from './Notices';
+import { say as notice } from './noticeBoard';
 import { slugOf } from '../document/model/ids';
 import { ReactFlowProvider } from 'reactflow';
 
@@ -13,6 +15,8 @@ import NodeView from '../graph/node/NodeView';
 import ChangeBar from './ChangeBar';
 
 import SettingsDialog from './SettingsDialog';
+import HelpDialog from './HelpDialog';
+import RunReportDialog from './RunReportDialog';
 import JsonDialog, { parseGraphJson } from './JsonDialog';
 import { DiskChanges } from '../document/diskChanges';
 import { droppedProject, landedInCodeField } from './windowDrops';
@@ -81,27 +85,19 @@ export default function App() {
   }, [isDirty]);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [view, setView] = useState<EditorView>('graph');
 
-  // What the header says of saving and opening, kept with the graph it was
-  // said of: another one opened or started (`document` moved on) leaves it
-  // unsaid.
-  // A *problem* stays said while the graph is unsaved -- which a save that failed leaves it.
-  const [said, setSaid] = useState({ text: '', problem: false, document: 0 });
-  const say = useCallback((text: string, problem = false) => setSaid({ text, problem, document: useGraphStore.getState().document }), []);
-  const documentOpen = useGraphStore((s) => s.document);
-  const heard = said.document === documentOpen ? said : { text: '', problem: false };
-  // What went well is said for a few seconds, not for good: "Saving…" stays until the save says how it went.
-  useEffect(() => {
-    if (!said.text || said.problem || said.text.endsWith('…')) return;
-    const timer = setTimeout(() => setSaid((now) => (now === said ? { ...now, text: '' } : now)), 4000);
-    return () => clearTimeout(timer);
-  }, [said]);
+  // What is said of saving, opening and reading from disk: one card (`noticeBoard.ts`) that the next of them takes the place of.
+  // A problem stays until it is read; what went well goes by itself.
+  const say = useCallback((text: string, problem = false) => notice('file', text, problem ? { level: text.startsWith('⚠') ? 'warning' : 'error' } : {}), []);
 
-  // Editing the gui means the Gui tab -- at the size it will really be, next
+  // Editing the gui means the GUI tab -- at the size it will really be, next
   // to the blocks it will really sit beside -- which a start or end point the
   // gui uses offers from its own view.
   const openGui = useCallback(() => setView('design'), []);
+  const openReport = useCallback(() => setShowReport(true), []);
   // A node the run stopped at: its own view, on the graph.
   const showNode = useCallback((nodeId: string) => { setView('graph'); useGraphStore.getState().setEditingNode(nodeId); }, []);
 
@@ -435,13 +431,13 @@ export default function App() {
             ));
           }}
           onOpenSettings={() => setShowSettings(true)}
+          onOpenHelp={() => setShowHelp(true)}
+          onOpenReport={openReport}
           onLoadDesigned={async (graph) => {
             if (!(await mayReplace())) return false;
             replaceWith(graph, '', undefined, true);
             return true;
           }}
-          saveStatus={heard.problem ? '' : heard.text}
-          problem={heard.problem ? heard.text : ''}
           view={view}
           onViewChange={setView}
         />
@@ -466,7 +462,10 @@ export default function App() {
         {view === 'app' && <TopGraphOnly><ApplicationView onShowNode={showNode} /></TopGraphOnly>}
 
         {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
+        {showHelp && <HelpDialog onClose={() => setShowHelp(false)} />}
+        {showReport && <RunReportDialog onClose={() => setShowReport(false)} onShowNode={showNode} />}
         {dialogs.dialogs}
+        <Notices />
       </div>
     </ReactFlowProvider>
   );

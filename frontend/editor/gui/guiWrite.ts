@@ -10,7 +10,7 @@
 // the character that made the box grow was lost. A ✨ result accepted a minute
 // after it was asked for did the same to every edit made meanwhile.
 //
-// The designer's surface, its side panel, a block typed into on the Gui tab,
+// The designer's surface, its side panel, a block typed into on the GUI tab,
 // and `masterExamples.test.ts`, which builds the examples the way a person
 // does, all call these functions. A block used in the running application or
 // in a delivered tool never comes here: what is set there is the session's

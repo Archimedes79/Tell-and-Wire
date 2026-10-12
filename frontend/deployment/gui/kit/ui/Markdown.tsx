@@ -62,6 +62,11 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
   return parts;
 }
 
+/** An indented line under a list item goes on with that item; it is not a paragraph of its own. */
+function continues(line: string, items: string[]): boolean {
+  return items.length > 0 && /^\s{2,}\S/.test(line) && !/^\s*([-*]|\d+[.)])\s+/.test(line);
+}
+
 function isTableRule(line: string): boolean {
   return /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(line) && line.includes('-');
 }
@@ -133,10 +138,40 @@ function Markdown({ source }: { source: string }): React.ReactElement {
       continue;
     }
 
+    // Code: lines between two fences, as they are written.
+    if (/^\s*```/.test(line)) {
+      const code: string[] = [];
+      index += 1;
+      while (index < lines.length && !/^\s*```/.test(lines[index])) { code.push(lines[index]); index += 1; }
+      index += 1;
+      blocks.push(
+        <pre key={`c${index}`} style={{ margin: '4px 0', padding: '8px 10px', borderRadius: 6, background: HOVER, color: TEXT, fontSize: 12, overflowX: 'auto' }}>
+          <code>{code.join('\n')}</code>
+        </pre>,
+      );
+      continue;
+    }
+
+    if (/^\s*\d+[.)]\s+/.test(line)) {
+      const items: string[] = [];
+      while (index < lines.length && (/^\s*\d+[.)]\s+/.test(lines[index]) || continues(lines[index], items))) {
+        if (continues(lines[index], items)) items[items.length - 1] += ` ${lines[index].trim()}`;
+        else items.push(lines[index].replace(/^\s*\d+[.)]\s+/, ''));
+        index += 1;
+      }
+      blocks.push(
+        <ol key={`o${index}`} style={{ margin: '2px 0', paddingLeft: 20, listStyle: 'decimal', color: TEXT }}>
+          {items.map((item, i) => <li key={i}>{inline(item, `ol${index}-${i}`)}</li>)}
+        </ol>,
+      );
+      continue;
+    }
+
     if (/^\s*[-*]\s+/.test(line)) {
       const items: string[] = [];
-      while (index < lines.length && /^\s*[-*]\s+/.test(lines[index])) {
-        items.push(lines[index].replace(/^\s*[-*]\s+/, ''));
+      while (index < lines.length && (/^\s*[-*]\s+/.test(lines[index]) || continues(lines[index], items))) {
+        if (continues(lines[index], items)) items[items.length - 1] += ` ${lines[index].trim()}`;
+        else items.push(lines[index].replace(/^\s*[-*]\s+/, ''));
         index += 1;
       }
       blocks.push(
@@ -150,7 +185,8 @@ function Markdown({ source }: { source: string }): React.ReactElement {
     // Paragraph: consecutive non-blank lines that started none of the above.
     const paragraph: string[] = [];
     while (index < lines.length && lines[index].trim()
-           && !/^(#{1,4})\s+/.test(lines[index]) && !/^\s*[-*]\s+/.test(lines[index])) {
+           && !/^(#{1,4})\s+/.test(lines[index]) && !/^\s*[-*]\s+/.test(lines[index])
+           && !/^\s*```/.test(lines[index]) && !/^\s*\d+[.)]\s+/.test(lines[index])) {
       paragraph.push(lines[index]);
       index += 1;
     }

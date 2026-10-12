@@ -44,7 +44,7 @@ export class WidgetDesign<D extends WidgetDefinition = WidgetDefinition> {
    * Whether what this block holds is part of the gui's design -- a choice, a
    * text, a path to start on, set while the gui is built -- rather than only
    * ever what using it left: a conversation is what was said, never what a
-   * gui starts with. The editor's Gui tab writes the first kind into the
+   * gui starts with. The editor's GUI tab writes the first kind into the
    * design as it is set there; the second is the session's wherever it is set.
    */
   valueIsDesign(_widget: Widget): boolean {

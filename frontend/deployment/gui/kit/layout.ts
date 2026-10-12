@@ -119,7 +119,7 @@ export const BOX_TEXT = { fontSize: 14, lineHeight: '20px' } as const;
  * The side of one square cell for a container of *containerWidth* pixels.
  *
  * Below the capped width the cells shrink with the container, so the same gui
- * looks identical in the editor's Gui tab, its App tab and a deployed tool —
+ * looks identical in the editor's GUI tab, its App tab and a deployed tool —
  * only smaller.
  */
 export function cellSize(containerWidth: number): number {

@@ -24,7 +24,7 @@ A tool in Tell & Wire has two halves.
 - **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
   runs through **code nodes**, **AI nodes**, **data nodes** (a struct kept between runs)
   and **subgraphs**, and ends at **end points**.
-- **The gui** (Gui tab): blocks such as text, a file picker, a dropdown, a slider, a
+- **The gui** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
   what an end point hands back. It connects by name; nothing is wired to the gui.
 

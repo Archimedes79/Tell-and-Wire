@@ -5,7 +5,7 @@ import { cellSize, GUI_MAX_CELL, GUI_NARROW } from '../kit/layout';
  * The current square-cell size for whatever element this ref is on.
  *
  * The cell is `contentWidth / 16`, capped — so the same gui renders identically
- * in the editor's Gui tab, its App tab and a deployed tool, only smaller. That
+ * in the editor's GUI tab, its App tab and a deployed tool, only smaller. That
  * needs the real width, which only the browser knows, hence the observer.
  *
  * One hook for both surfaces: the designer and the deployed gui must never

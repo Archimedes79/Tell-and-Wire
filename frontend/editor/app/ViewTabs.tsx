@@ -6,7 +6,7 @@ export type EditorView = 'graph' | 'design' | 'app';
 /** The views, by the one word each: the graph is nodes and wires, the gui is blocks. */
 const VIEW_TABS: { id: EditorView; label: string; hint: string }[] = [
   { id: 'graph', label: 'Graph', hint: 'Nodes and the wires between them' },
-  { id: 'design', label: 'Gui', hint: 'The gui this tool shows — build it here, block by block' },
+  { id: 'design', label: 'GUI', hint: 'The gui this tool shows — build it here, block by block' },
   { id: 'app', label: 'App', hint: 'The tool, running: its gui, as whoever gets it will use it. ■ Stop ends it' },
 ];
 

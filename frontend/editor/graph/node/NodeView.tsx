@@ -244,7 +244,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
       {usedBy.length > 0 && (
         <div className="text-xs flex items-center gap-2 flex-wrap" style={{ color: DIMMER }}>
           <span className="min-w-0">On the gui: {usedBy.map((name) => `“${name}”`).join(', ')}</span>
-          <Button size="sm" onClick={onOpenGui} title="Show it on the Gui tab">Edit the gui</Button>
+          <Button size="sm" onClick={onOpenGui} title="Show it on the GUI tab">Edit the gui</Button>
         </div>
       )}
 

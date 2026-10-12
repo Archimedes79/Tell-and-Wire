@@ -5,7 +5,7 @@
 // scheme is dark blue versus warm paper, and that is what these are.
 //
 // It is the GUI's scheme: every value here becomes a CSS variable on the
-// gui's own container (see schemeVars) -- the gui surface of the Gui tab,
+// gui's own container (see schemeVars) -- the gui surface of the GUI tab,
 // the App tab, the delivered tool -- and every colour in `ui/theme.ts` is a
 // `var()` pointing at one, so a block asks for SURFACE and needs to know
 // nothing about schemes. The editor around it sets none, and keeps the
@@ -174,7 +174,7 @@ export function scheme(id: string | undefined): Scheme {
 }
 
 /**
- * The scheme as CSS variables, for the container of a gui: the Gui tab's
+ * The scheme as CSS variables, for the container of a gui: the GUI tab's
  * surface, the App tab, a deployed tool's root.
  *
  * Variables rather than props threaded through the tree: a component asks

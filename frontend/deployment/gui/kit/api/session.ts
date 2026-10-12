@@ -2,7 +2,7 @@
 // outputs showed, the round going or gone -- as the server tells it, by name.
 //
 // One for every gui that shows a graph in use -- the delivered tool, the
-// editor's App and Gui tabs -- fed by the server's stream
+// editor's App and GUI tabs -- fed by the server's stream
 // (`GET /api/runtime/stream`): the session on connect and after every change,
 // each round as it starts, goes and ends, whoever started it -- this gui,
 // another tab, the clock.

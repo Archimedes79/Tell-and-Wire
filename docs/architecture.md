@@ -91,7 +91,7 @@ program without the editor's folders.
 Every kind of node and block is an **element**, with one folder per kind under the same name in
 each tier it has a part in.
 
-| Face | Node (Graph tab) | Block (Gui tab) | Tier |
+| Face | Node (Graph tab) | Block (GUI tab) | Tier |
 |---|---|---|---|
 | **Definition**: what it is | `graph/nodes/<kind>/<Kind>NodeDefinition.ts` | `gui/widgets/<kind>/<Kind>WidgetDefinition.ts` | neutral, ships |
 | **Runner**: what runs it | `backend/deployment/runtime/nodes/<kind>/<Kind>NodeRunner.ts` | none: a block is computed by nothing language-specific | runtime, ships |

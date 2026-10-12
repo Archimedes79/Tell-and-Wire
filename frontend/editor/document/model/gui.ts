@@ -3,7 +3,7 @@
 //
 // What a block can do with the graph -- send its data, fire a start point,
 // show an end point -- is the definition's answer (`WidgetDefinition.sends`,
-// `event`, `showsEnd`), asked of the same one a round asks, so the Gui tab never
+// `event`, `showsEnd`), asked of the same one a round asks, so the GUI tab never
 // offers a connection a round then ignores and `check` names. What only
 // building asks is the design's (`WidgetDesign`).
 

@@ -200,7 +200,7 @@ function WithoutGui({ gui }: { gui: GuiModel }) {
       <div className="m-6 max-w-2xl">
         <p className="text-sm mb-2" style={{ color: TEXT }}>This graph has no nodes yet.</p>
         <p className="text-xs" style={{ color: DIM }}>
-          Add one from the palette on the Graph tab, or a block on the Gui tab.
+          Add one from the palette on the Graph tab, or a block on the GUI tab.
         </p>
       </div>
     );
