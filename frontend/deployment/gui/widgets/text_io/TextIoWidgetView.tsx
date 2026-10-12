@@ -4,7 +4,7 @@ import SaveButton from '../SaveButton';
 import { fileName, saveFile } from '../download';
 import { asText } from '../../../../../gui/widgets/text_io/text.ts';
 import { textIoRole } from '../../../../../gui/widgets/text_io/role.ts';
-import { DIMMER, FIELD, LINE } from '../../kit/ui/theme';
+import { DIMMER, FIELD, TEXT } from '../../kit/ui/theme';
 import { BOX_TEXT } from '../../kit/layout';
 
 /**
