@@ -36,6 +36,8 @@ describe('a body that does not run', () => {
     expect((failed as Error).message).toMatch(/boom/);
     expect((failed as Error).message).not.toMatch(/body\.mjs/);
     expect((failed as Error).message).toMatch(/line 2/);
+    // The stack frame keeps its own brackets: "at run (line 2, column 9)".
+    expect((failed as Error).message).toMatch(/\(line 2, column \d+\)/);
 
     const body = 'function run() { console.log("\\u001etell-and-wire:result {not json"); return { ok: 1 }; }';
     await expect(nodeCode.run(body, {})).rejects.toThrow(/only Tell & Wire may write/);

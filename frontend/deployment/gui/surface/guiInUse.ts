@@ -40,7 +40,8 @@ export function connectionsOf(events: InterfaceEntry[]): Pick<GuiDesign, 'fires'
 /** Why *round* failed, in its own words -- or nothing, for one that went, is going, or was stopped. */
 export function roundError(round: RoundSnapshot | null): string {
   if (!round?.done || round.cancelled) return '';
-  if (round.result) return round.result.status === 'error' ? round.result.error ?? '' : '';
+  // 'partial' is a run where a node failed and the rest went: it says why, too.
+  if (round.result) return round.result.status === 'success' ? '' : round.result.error ?? '';
   return round.error ?? '';
 }
 
