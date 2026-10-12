@@ -201,3 +201,49 @@ describe('the server as the front door of the editor', () => {
     expect(await asJson(await fetch(`${url}/api/runtime/gui`))).toMatchObject({ session: held.session, name: 'Handed over' });
   });
 });
+
+describe('a call that is hung up on', () => {
+  it('stops the round it started: nobody waits for the answer', async () => {
+    const slow = join(mkdtempSync(join(tmpdir(), 'served-slow-')), 'slow.json');
+    const graph = JSON.parse(await readFile(MINIMAL, 'utf8'));
+    graph.nodes.push({
+      id: 'slow', node_type: 'code', label: 'Slow', description: 'Waits four seconds.', position: { x: 0, y: 0 },
+      inputs: [], outputs: [{ id: 'output', name: 'output', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }],
+      config: { code: 'function run() { return new Promise((done) => setTimeout(() => done({ output: 1 }), 4000)); }' },
+    });
+    await writeFile(slow, JSON.stringify(graph));
+    const { server, url } = await serve({ graphPath: slow, port: 0, gui: guiPart });
+    started.push(server);
+
+    const hangup = new AbortController();
+    const called = fetch(`${url}/api/runtime/run`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: hangup.signal,
+    }).catch(() => null);
+    await new Promise((wait) => setTimeout(wait, 700));
+    hangup.abort();
+    await called;
+
+    // Within the four seconds the body would have taken: the round is stopped, not left to run.
+    const seen = Date.now();
+    let round = null as { cancelled?: boolean; done?: boolean } | null;
+    while (Date.now() - seen < 3000) {
+      round = (await asJson(await fetch(`${url}/api/runtime/session`))).round as { cancelled?: boolean; done?: boolean } | null;
+      if (round?.done) break;
+      await new Promise((wait) => setTimeout(wait, 100));
+    }
+    expect(round).toMatchObject({ done: true, cancelled: true });
+  }, 15000);
+});
+
+describe('a request to start a round', () => {
+  it('is turned down, before anything runs, where what it hands over is not what it must be', async () => {
+    const url = await serveGraph();
+    const post = (body: unknown) => fetch(`${url}/api/runtime/rounds`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    for (const bad of [{ values: 5 }, { values: 'abc' }, { values: [1] }, { answers: 'x' }, { event: 7 }, { by: {} }]) {
+      const answered = await post(bad);
+      expect(answered.status, JSON.stringify(bad)).toBe(400);
+    }
+    expect((await post({ values: {} })).status).toBe(200);
+    expect((await post({})).status).toBe(200);
+  });
+});

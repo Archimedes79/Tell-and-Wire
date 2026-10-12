@@ -287,7 +287,8 @@ export class Session {
       kept: this.kept(),
       rounds: this.count,
       finished_at: this.finishedAt,
-      round: this.lastRound ? this.snapshot(this.lastRound) : null,
+      // The round going -- the one running, where another waits behind it, so that Stop meets the one that runs -- else the last.
+      round: this.snapshotOf(this.rounds.oldestGoing() ?? this.lastRound),
       dropped: this.notes,
       design_revision: this.revision,
       clock: {
@@ -332,16 +333,17 @@ export class Session {
    * `design_revision` counts on -- or something was dropped.
    */
   hold(graph: Graph): string[] {
-    this.design = graph;
     // Handed over before every round and after every edit: most often it is
-    // the same design again, which changes nothing a GUI drew.
+    // the same design again, which changes nothing a GUI drew -- nor is there
+    // anything to fit, or to say again, and the copy every reader shares stays.
     const text = designText(graph);
-    const changed = text !== this.designText;
+    if (text === this.designText) return [];
+    this.design = graph;
     this.designText = text;
-    if (changed) this.revision += 1;
+    this.revision += 1;
     this.fit(this.keptNodes, this.keptBlocks);
     if (this.notes.length) void this.save();
-    if (changed || this.notes.length) this.tell({ type: 'session', session: this.view() });
+    this.tell({ type: 'session', session: this.view() });
     return this.notes;
   }
 
@@ -390,6 +392,10 @@ export class Session {
     const snapshot = this.rounds.snapshot(id);
     if (!snapshot) return null;
     return { ...snapshot, outputs: snapshot.result ? outputsOf(this.design, snapshot.result, registry) : null };
+  }
+
+  private snapshotOf(id: string | null): RoundSnapshot | null {
+    return id ? this.snapshot(id) : null;
   }
 
   stop(id: string): boolean {

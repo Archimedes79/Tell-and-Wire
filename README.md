@@ -36,7 +36,8 @@ you can read it, change it and diff it.
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
-start. The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
+start. The editor and every deployed tool listen on `127.0.0.1` unless you start one with another
+`--host` yourself, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
 (not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.

@@ -422,13 +422,15 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
  * so no kind of node has to know that stopping exists -- the same place the graph's
  * AI default is applied, for the same reason.
  */
-function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
+export function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
   if (!signal) return runtime;
   const { tools } = runtime;
+  // A call's own signal -- a time limit on a body -- is kept beside the round's: either stops it.
+  const joined = (own: AbortSignal | undefined): AbortSignal => (own ? AbortSignal.any([signal, own]) : signal);
   return {
     ...runtime,
-    ai: { ...runtime.ai, complete: (request) => runtime.ai.complete({ ...request, signal }) },
-    code: { run: (body, inputs, _signal, context) => runtime.code.run(body, inputs, signal, context) },
+    ai: { ...runtime.ai, complete: (request) => runtime.ai.complete({ ...request, signal: joined(request.signal) }) },
+    code: { run: (body, inputs, own, context) => runtime.code.run(body, inputs, joined(own), context) },
     ...(tools ? { tools: { open: (servers) => tools.open(servers, signal) } } : {}),
   };
 }

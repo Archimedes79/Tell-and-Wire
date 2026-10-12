@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
-import { DANGER_SOFT, DIM, FIELD, LINE, MUTED, TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { DANGER_TEXT, DIM, FIELD, LINE, MUTED, TEXT } from '../../../deployment/gui/kit/ui/theme';
 import type { NodePanelProps } from '../nodes/NodeGuiBuilder';
 import { fileOf } from '../writing/generation';
 
@@ -63,7 +63,7 @@ export default function DataFieldsForm({ node, setConfig }: { node: GraphNode; s
         />
         <Button size="sm" type="submit" disabled={!key || taken}>Add field</Button>
       </form>
-      {taken && <p style={{ color: DANGER_SOFT }}>There is a field “{key}” already.</p>}
+      {taken && <p style={{ color: DANGER_TEXT }}>There is a field “{key}” already.</p>}
       {Object.keys(fields).length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Its fields">
           {Object.entries(fields).map(([name, value]) => (

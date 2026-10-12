@@ -144,7 +144,10 @@ export async function serve(options: ServeOptions): Promise<Served> {
           ...(route.method === 'POST' ? await readJson(request) : {}),
           ...found.params,
         };
-        const answer = await handler(asked, exchange);
+        // A caller that hangs up -- a script call that timed out -- is not waiting any more.
+        const gone = new AbortController();
+        response.on('close', () => { if (!response.writableFinished) gone.abort(); });
+        const answer = await handler(asked, { ...exchange, gone: gone.signal });
         if (answer instanceof Download) return sendDownload(response, answer);
         if (answer instanceof EventStream) return sendEvents(response, answer);
         return sendJson(response, 200, answer);
@@ -229,6 +232,24 @@ function toolRoutes(
 ): HandlersOf<typeof API & typeof GUI_API> {
   const sessionAsked = (asked: { session?: string }): Session => held.asked(asked.session);
 
+  /**
+   * What a request to start a round may hold, said before anything runs: what the types promise
+   * reaches here as whatever the caller sent, and a value that is no record -- a 5, a text -- would
+   * be spread into the start point's package and kept in the session's state.
+   */
+  const roundChecked = (asked: { event?: unknown; values?: unknown; answers?: unknown; by?: unknown }): void => {
+    for (const name of ['values', 'answers'] as const) {
+      const given = asked[name];
+      if (given !== undefined && (typeof given !== 'object' || given === null || Array.isArray(given))) {
+        throw new Refusal(400, `"${name}" must be an object: one entry for each name it gives a value to.`);
+      }
+    }
+    for (const name of ['event', 'by'] as const) {
+      const given = asked[name];
+      if (given !== undefined && given !== null && typeof given !== 'string') throw new Refusal(400, `"${name}" must be text.`);
+    }
+  };
+
   return {
     // -- the runtime API: what any frontend uses, by name ---------------------
 
@@ -251,11 +272,13 @@ function toolRoutes(
     },
 
     requirements(asked) {
+      roundChecked(asked);
       const session = sessionAsked(asked);
       return session.requirements(eventOf(session.graph, asked.event, registry), asked);
     },
 
     startRound(asked, exchange) {
+      roundChecked(asked);
       const session = sessionAsked(asked);
       refuseFarPaths(session, gui, asked, exchange);
       const { id, total } = session.start(eventOf(session.graph, asked.event, registry), asked);
@@ -271,9 +294,11 @@ function toolRoutes(
     stopRound: (asked) => ({ stopped: sessionAsked(asked).stop(asked.id) }),
 
     async runRound(asked, exchange) {
+      roundChecked(asked);
       const session = sessionAsked(asked);
       refuseFarPaths(session, gui, asked, exchange);
-      const { id, outcome } = session.start(eventOf(session.graph, asked.event, registry), asked);
+      // Waited for, so stopped with the one who waits: a call that timed out leaves no round queued or running.
+      const { id, outcome } = session.start(eventOf(session.graph, asked.event, registry), asked, exchange.gone);
       const ended = await outcome.then((result) => result, (error: unknown) => {
         // Stopped while it waited: a round that did not run, not a graph that cannot.
         if (session.snapshot(id)?.cancelled) return null;

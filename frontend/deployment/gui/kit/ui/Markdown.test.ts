@@ -34,6 +34,16 @@ describe('Markdown blocks', () => {
   });
 });
 
+describe('Markdown quotes', () => {
+  it('draw lines starting with ">" as one quoted block, without the mark, and end it where they end', () => {
+    const html = renderToStaticMarkup(createElement(Markdown, { source: 'Say:\n\n> Read the CSV\n> and show a **chart**.\nAfter.' }));
+    expect(html.match(/<blockquote/g)).toHaveLength(1);
+    expect(html).toContain('Read the CSV and show a <strong>chart</strong>.');
+    expect(html).not.toContain('&gt;');
+    expect(html).toContain('After.');
+  });
+});
+
 describe('Markdown list items', () => {
   it('go on over the indented lines under them', () => {
     const html = renderToStaticMarkup(createElement(Markdown, { source: '- **One.** First part\n  and the rest.\n- Two' }));

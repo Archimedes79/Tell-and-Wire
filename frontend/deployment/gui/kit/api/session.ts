@@ -180,8 +180,19 @@ export async function startOver(): Promise<void> {
   }
 }
 
-/** Stop the round going, whoever started it. */
+/**
+ * Stop the round going, whoever started it -- and the one waiting behind it: the latest this page was
+ * told of may be a round that only queued, and stopping that alone leaves the one that runs going.
+ */
 export async function stopRound(): Promise<void> {
+  const ids = new Set<string>();
   const { round } = useSession.getState();
-  if (round && !round.done) await call('stopRound', { id: round.round_id });
+  if (round && !round.done) ids.add(round.round_id);
+  try {
+    const { round: running } = await call('session', {});
+    if (running && !running.done) ids.add(running.round_id);
+  } catch {
+    // The server did not answer: stop what this page knows of.
+  }
+  await Promise.all([...ids].map((id) => call('stopRound', { id })));
 }

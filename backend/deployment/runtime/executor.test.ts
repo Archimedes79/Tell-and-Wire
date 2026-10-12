@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Graph, GraphNode } from '../../../graph/graph.ts';
-import { executeGraph, inputsFor, runNodeAlone } from './executor.ts';
+import { executeGraph, inputsFor, runNodeAlone, stoppable } from './executor.ts';
 import { readingWires, topologicalLevels } from '../../../graph/order.ts';
 import { NodeRunner, type Runners } from './nodes/NodeRunner.ts';
 import { runners } from './nodes/registry.ts';
@@ -294,5 +294,33 @@ describe('a memory that reads a memory', () => {
     expect(result.node_results.find((one) => one.node_id === 'prev')!.inputs).toEqual({ v: 5 });
     expect(cur.config.data_value).toEqual({ v: 7 });
     expect(prev.config.data_value).toEqual({ v: 5 });
+  });
+});
+
+describe('what a round puts on every call', () => {
+  it('joins a call\'s own signal with the round\'s: either one stops it', async () => {
+    const seen: AbortSignal[] = [];
+    const runtime = {
+      ai: { complete: async (request: { signal?: AbortSignal }) => { seen.push(request.signal!); return ''; } },
+      code: { run: async (_body: string, _inputs: unknown, signal?: AbortSignal) => { seen.push(signal!); return {}; } },
+    } as unknown as Runtime;
+    const round = new AbortController();
+    const wrapped = stoppable(runtime, round.signal);
+
+    const own = new AbortController();
+    await wrapped.code.run('x', {}, own.signal);
+    expect(seen[0].aborted).toBe(false);
+    own.abort();
+    expect(seen[0].aborted).toBe(true);
+
+    const limit = new AbortController();
+    await wrapped.ai.complete({ signal: limit.signal } as never);
+    limit.abort();
+    expect(seen[1].aborted).toBe(true);
+
+    await wrapped.code.run('x', {});
+    expect(seen[2].aborted).toBe(false);
+    round.abort();
+    expect(seen[2].aborted).toBe(true);
   });
 });

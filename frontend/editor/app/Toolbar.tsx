@@ -116,7 +116,7 @@ export default function Toolbar({
       say('run', '');
       return;
     }
-    const labels = useGraphStore.getState().rfNodes.map((item) => item.data.graphNode);
+    const labels = useGraphStore.getState().rootGraph().nodes;
     say('run', runReport(executionResult, labels).summary, {
       level: executionResult.status === 'error' ? 'error' : 'warning',
       action: { label: 'Report', run: onOpenReport },

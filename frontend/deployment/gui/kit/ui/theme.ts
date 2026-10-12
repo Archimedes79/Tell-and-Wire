@@ -12,9 +12,10 @@
 /**
  * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The GUI's
  * container sets the variables (the GUI tab's surface, the App tab, a deployed
- * tool), so the blocks on it are in its scheme; the editor's own chrome sets
- * none, and so keeps the literal after the comma -- the Night scheme -- under
- * every scheme. Keep those literals equal to Night's values.
+ * tool), so the blocks on it are in the tool's scheme; the editor paints its own
+ * scheme on the page (`editorScheme.ts`), so its chrome is in the one the person
+ * chose. The literal after the comma is the fallback where nothing sets the
+ * variable at all -- a first paint, a test: keep those equal to Night's values.
  *
  * That indirection is the whole mechanism: a component asks for SURFACE and
  * knows nothing of schemes, and switching scheme repaints the GUI without one
@@ -84,8 +85,6 @@ export const PURPLE_TEXT = 'var(--ui-purple-text, #c4b5fd)';
 export const SUCCESS_FILL = `color-mix(in srgb, ${SUCCESS} 10%, transparent)`;
 export const DANGER_FILL = `color-mix(in srgb, ${DANGER} 10%, transparent)`;
 export const WARNING_FILL = `color-mix(in srgb, ${WARNING} 10%, transparent)`;
-/** Destructive affordance inside an otherwise neutral control. */
-export const DANGER_SOFT = 'var(--ui-danger, #f87171)';
 
 /**
  * One ink per kind of node, to draw its icon in: on its card, in its palette

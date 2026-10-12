@@ -20,7 +20,8 @@ import { ownPathProblem } from '../../../graph/nodes/ownPath.ts';
 /** Whether *path* is *folder* or lies in it (compared the way the platform compares names). */
 export function inside(folder: string, path: string): boolean {
   const way = relative(folder, path);
-  return way === '' || (!way.startsWith('..') && !isAbsolute(way));
+  // Out is a first step of "..": a folder that merely begins with two dots ("..cache") is in.
+  return way === '' || (way.split(/[\\/]/)[0] !== '..' && !isAbsolute(way));
 }
 
 /** *path* with links followed as far as it exists, so a file not yet written is placed too. */

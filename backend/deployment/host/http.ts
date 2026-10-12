@@ -54,6 +54,8 @@ export class EventStream {
 export interface Exchange {
   /** The server answers on this machine only: listing files and starting programs are allowed. */
   loopback: boolean;
+  /** Aborted when the caller hangs up before it is answered: nobody waits for what a call started. */
+  gone?: AbortSignal;
 }
 
 type Handler<R> =
@@ -277,8 +279,10 @@ export async function servePage(response: ServerResponse, path: string, dir: str
   } catch {
     return sendJson(response, 400, { detail: 'That is not a path.' });
   }
-  const full = join(dir, normalize(wanted).replace(/^([/\\])+/, ''));
-  if (!full.startsWith(resolve(dir) + sep) && full !== resolve(dir)) {
+  // Resolved first: a folder given as a relative path is compared with what it is, not with how it was written.
+  const root = resolve(dir);
+  const full = join(root, normalize(wanted).replace(/^([/\\])+/, ''));
+  if (!full.startsWith(root + sep) && full !== root) {
     return sendJson(response, 403, { detail: 'Outside the page.' });
   }
   // Read before the head is sent: a file that cannot be read is a 404, not a half answer.

@@ -196,6 +196,12 @@ export class Rounds {
     return this.kept.get(id)?.snapshot() ?? null;
   }
 
+  /** The round that has gone longest without ending -- the one running, where others wait behind it -- or null when none is going. */
+  oldestGoing(): string | null {
+    for (const [id, round] of this.kept) if (round.finishedAt === null) return id;
+    return null;
+  }
+
   /** Stop a round: the round is told, not just whoever was watching it. */
   stop(id: string): boolean {
     const round = this.kept.get(id);

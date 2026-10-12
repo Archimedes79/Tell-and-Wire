@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
-import { DANGER_SOFT, FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
+import { DANGER_TEXT, FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
 import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
 import CodeField, { type CodeLanguage } from '../writing/CodeField';
 import { OpenInEditor } from '../writing/FileChip';
@@ -55,7 +55,7 @@ function JsonEditor({ node, field, setConfig, ...editor }: Omit<EditorProps, 'va
   return (
     <>
       <Editor {...editor} value={typed} onChange={type} />
-      {problem && <p className="text-xs" style={{ color: DANGER_SOFT }}>Not JSON yet: {problem}. It is kept once it parses.</p>}
+      {problem && <p className="text-xs" style={{ color: DANGER_TEXT }}>Not JSON yet: {problem}. It is kept once it parses.</p>}
     </>
   );
 }

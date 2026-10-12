@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { linkSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { confineEverything, inProject } from './confine.ts';
+import { confineEverything, inProject, inside } from './confine.ts';
 import { nodeFiles } from './services.ts';
 
 afterEach(() => {
@@ -48,5 +48,16 @@ describe('which files a graph may reach', () => {
     } finally {
       rmSync(outside, { recursive: true, force: true });
     }
+  });
+});
+
+describe('whether a path lies in a folder', () => {
+  it('counts a folder that only begins with two dots as in, and a step up as out', () => {
+    const folder = join(tmpdir(), 'tool');
+    expect(inside(folder, folder)).toBe(true);
+    expect(inside(folder, join(folder, 'data', 'x.csv'))).toBe(true);
+    expect(inside(folder, join(folder, '..cache', 'x'))).toBe(true);
+    expect(inside(folder, join(folder, '..', 'other'))).toBe(false);
+    expect(inside(folder, tmpdir())).toBe(false);
   });
 });

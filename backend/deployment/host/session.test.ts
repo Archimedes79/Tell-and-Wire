@@ -169,6 +169,10 @@ describe('a design that changed', () => {
     dragged.nodes[1].position = { x: 400, y: 80 };
     session.hold(dragged);
     expect(session.designRevision).toBe(0);
+    // The same design again is nothing: the design in use is the one it was, not a fresh copy of it.
+    const inUse = session.graph;
+    expect(session.hold(counter())).toEqual([]);
+    expect(session.graph).toBe(inUse);
     const relabelled = counter();
     relabelled.nodes[1].label = 'Add one';
     expect(session.hold(relabelled)).toEqual([]);
