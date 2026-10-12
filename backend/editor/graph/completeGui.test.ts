@@ -4,8 +4,8 @@ import { registry } from '../../../graph/nodes/registry.ts';
 import { completeGui } from '../../../gui/editor/complete.ts';
 import { guiProblems } from '../../../gui/editor/gui.ts';
 
-/** A gui a model wrote with the blocks but not what they connect to: the points a person would have been given are made. */
-describe('a gui written whole', () => {
+/** A GUI a model wrote with the blocks but not what they connect to: the points a person would have been given are made. */
+describe('a GUI written whole', () => {
   it('gets the start and end points its blocks need, and is whole', () => {
     const graph = parseGraph({
       nodes: [{ id: 'shout', node_type: 'code', config: {} }],
@@ -40,7 +40,7 @@ describe('a gui written whole', () => {
     });
     completeGui(graph, registry);
     expect(graph.nodes.map((n) => n.id)).toEqual(['a', 'b', 'done', 'begin', 'answer']);
-    // "a" and "b" are both started by the gui: which one "free" sends to is for the person to say.
+    // "a" and "b" are both started by the GUI: which one "free" sends to is for the person to say.
     expect(graph.gui!.blocks.find((block) => block.id === 'free')?.sends_to).toBeUndefined();
     expect(graph.gui!.blocks.find((block) => block.id === 'two')).toMatchObject({ shows: 'answer' });
     // A button holds nothing to send: it means to fire the start point it names.

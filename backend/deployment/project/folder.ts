@@ -5,7 +5,7 @@
 //       graph-nodes.json          the nodes: each one's kind, heading, text, settings and ports
 //       graph-schedule.json       the order the nodes run in and where they stand: a table
 //                                 of cells, and the size of the cards a person resized
-//       gui.json                  the gui: what whoever uses the tool sees -- its blocks,
+//       gui.json                  the GUI: what whoever uses the tool sees -- its blocks,
 //                                 in order, each with what it connects to
 //       nodes/
 //         count/            one folder per node that keeps writing, by id
@@ -20,7 +20,7 @@
 // (`graph/schedule.ts`); writing -- code, prompts -- is a file of its own so it
 // is edited, reviewed and grepped as what it is.
 //
-// **The gui sits beside the graph, not in it.** It is no node: a graph has one
+// **The GUI sits beside the graph, not in it.** It is no node: a graph has one
 // gui, what a person using the tool sees, and its blocks connect themselves to
 // the graph's start and end points by name -- so it is a file of its own, and
 // the flow does not name it.
@@ -94,10 +94,10 @@ export function projectFolderOf(path: string): string | null {
 }
 
 /**
- * A gui of a project's own, written by hand: served at `/` in place of the
+ * A GUI of a project's own, written by hand: served at `/` in place of the
  * built gui when it holds an `index.html`, and carried by a bundle. It uses
  * the graph only through the runtime API, by name (`backend/deployment/host/api.ts`). Not
- * `gui.json`: that is the built-in gui's, its blocks.
+ * `gui.json`: that is the built-in GUI's, its blocks.
  */
 export const FRONTEND_DIR = 'frontend';
 
@@ -126,17 +126,17 @@ export function nodeFolder(nodeId: string): string {
   return `${NODES_DIR}/${folderName(nodeId)}`;
 }
 
-/** The field the gui's text is reported under (`TextChange`): its blocks. */
+/** The field the GUI's text is reported under (`TextChange`): its blocks. */
 const GUI_FIELD = 'blocks';
 
 /** One piece of writing in a graph: whose it is, which field holds it, and where its file goes. */
 interface ProjectText {
-  /** The node it is a node's; null for the graph's own -- its gui. */
+  /** The node it is a node's; null for the graph's own -- its GUI. */
   node_id: string | null;
   field: string;
   /** Relative to the project folder, with `/`. */
   path: string;
-  /** Where the field lives: the node's config, or the gui. */
+  /** Where the field lives: the node's config, or the GUI. */
   holder: Record<string, unknown>;
   /** See `TextFile`: a value kept as JSON, the file's stub, and what follows what the node holds. */
   json: boolean;
@@ -146,7 +146,7 @@ interface ProjectText {
 
 /**
  * Every piece of writing *graph* can keep in files, whether or not it holds
- * any: each node's, and the gui's -- which, to be read into, is given a
+ * any: each node's, and the GUI's -- which, to be read into, is given a
  * place in *graph* while it has none (`withoutEmptyGui` takes it out again).
  */
 export function projectTexts(graph: Graph): ProjectText[] {
@@ -181,7 +181,7 @@ export function projectTexts(graph: Graph): ProjectText[] {
   return found;
 }
 
-/** *graph* without the gui `projectTexts` gave it a place for, when nothing was put there: a gui is its blocks. */
+/** *graph* without the GUI `projectTexts` gave it a place for, when nothing was put there: a GUI is its blocks. */
 export function withoutEmptyGui(graph: Graph): Graph {
   if (!graph.gui?.blocks?.length) delete graph.gui;
   return graph;
@@ -262,8 +262,8 @@ export function heldIn(content: string, text: ProjectText, path: string): { valu
   } catch (error) {
     throw new NotAGraph(`${path} is not valid JSON: ${(error as Error).message}`);
   }
-  // The gui's file is its list of blocks and nothing else: `{"blocks": […]}` or `null` would read as
-  // no gui at all, and the next save would delete the file.
+  // The GUI's file is its list of blocks and nothing else: `{"blocks": […]}` or `null` would read as
+  // no GUI at all, and the next save would delete the file.
   if (text.node_id === null && !(Array.isArray(value) && value.every((block) => !!block && typeof block === 'object' && !Array.isArray(block)))) {
     throw new NotAGraph(`${path} must be a list of blocks: [ { "id": …, "kind": … }, … ].`);
   }

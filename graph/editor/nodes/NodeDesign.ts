@@ -18,7 +18,7 @@ import type { Generation } from '../generation.ts';
 
 /** What a package must carry for this node to run elsewhere. */
 export interface DeployNeeds {
-  /** The package needs the gui: the graph is used through it, not only from a terminal. */
+  /** The package needs the GUI: the graph is used through it, not only from a terminal. */
   needsInterface: boolean;
   /**
    * It calls a model, so whoever receives the package needs a provider set up.

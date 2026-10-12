@@ -17,12 +17,12 @@ export function installFolder(): string {
 
 /**
  * Where a bundle keeps the built gui, beside the project. Not `gui.json`:
- * in a project folder that is the gui itself, its blocks.
+ * in a project folder that is the GUI itself, its blocks.
  */
 export const WEB_DIR = 'web';
 
 /**
- * The gui this checkout built, when it has one: what a bundle carries, what
+ * The GUI this checkout built, when it has one: what a bundle carries, what
  * `--serve` serves a graph that brings none, and the editor's Deploy. Looked
  * up rather than passed, because the person writing a bundle should not have
  * to know where a build lands.

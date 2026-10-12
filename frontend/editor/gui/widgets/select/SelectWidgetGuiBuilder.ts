@@ -22,7 +22,7 @@ export class SelectWidgetGuiBuilder extends WidgetGuiBuilder {
     return 'plain' as const;
   }
 
-  /** Two options to start from, so the dropdown is never empty on the gui. */
+  /** Two options to start from, so the dropdown is never empty on the GUI. */
   protected override initialSettings() {
     return { options: 'Option A\nOption B' };
   }

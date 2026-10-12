@@ -1,11 +1,11 @@
 // What the host asks of a graph core, and what a core answers.
 //
 // A graph core is the one part of Tell & Wire that runs graphs: it takes the
-// graph definition -- nodes, their files, the wires; never the gui -- and
+// graph definition -- nodes, their files, the wires; never the GUI -- and
 // executes it in its language, asking the model with a client of its own. It
 // can live in the host's process (`localCore.ts`) or be a program of its
 // own that speaks this protocol on stdin and stdout (`stdio.ts`), one JSON
-// object per line. Everything a gui, a script or the editor sees goes through
+// object per line. Everything a GUI, a script or the editor sees goes through
 // the host (`backend/`), never to a core directly.
 //
 // What stays the host's: the session -- what nodes keep between rounds, the

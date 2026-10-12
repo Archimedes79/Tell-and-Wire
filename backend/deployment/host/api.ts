@@ -1,18 +1,18 @@
-// The wire between a gui and the server: the host's routes, and what travels each way.
+// The wire between a GUI and the server: the host's routes, and what travels each way.
 //
 // Two processes talk over HTTP -- Node runs graphs, the browser draws them --
 // and a conversation described twice, once by the server's replies and once by
-// what the gui expects, drifts apart unnoticed.
+// what the GUI expects, drifts apart unnoticed.
 //
 // So this file is the conversation, once. The server serves exactly these tables
-// (`serve.ts` fails to start if a route has no handler), a gui calls them by
+// (`serve.ts` fails to start if a route has no handler), a GUI calls them by
 // name (`frontend/deployment/gui/kit/api/client.ts`), and both are type-checked against the same
 // request and response here. Types and plain tables only -- nothing that
 // needs Node or a browser -- so either side can import it, and a package, which
 // carries it, pays for a list.
 //
 // Three tables, each with the module that answers it: `API` here (what any host answers: a graph
-// used by name), `GUI_API` here too (the gui's own read, answered when the tool has a gui), and
+// used by name), `GUI_API` here too (the GUI's own read, answered when the tool has a gui), and
 // `EDITOR_API` in `backend/editor/host/api.ts` (what only the editor serves). A server holds the
 // tables it was composed of (`backend/cli`); a route of another table is a 404. A `local` route
 // is also refused by a server bound wider than loopback.
@@ -81,21 +81,21 @@ export interface SessionView {
    * -- and each part of it by the name and the part
    * (`counter.clicks`): what the last round that ran to its end left, from
    * the design's values on, never a round half done. Watched without a round:
-   * a block of the gui can show it, a script read it.
+   * a block of the GUI can show it, a script read it.
    */
   state: Record<string, unknown>;
   /**
-   * What each block of the gui holds now, by the block's id: what was typed
+   * What each block of the GUI holds now, by the block's id: what was typed
    * or chosen, a conversation, what an end point handed back -- else its
    * design. Beside `sent`, not in it: a block and a start point may share a name.
    */
   gui: Record<string, unknown>;
-  /** What each block of the gui that shows an end point shows, by the block's id: what arrived, as the gui draws it. */
+  /** What each block of the GUI that shows an end point shows, by the block's id: what arrived, as the GUI draws it. */
   shown: Record<string, unknown>;
   /**
    * What using the graph left that differs from its design -- what Start over
    * forgets: each node's values by node id and name (a data node's fields,
-   * what a start point was sent), and what each block of the gui
+   * what a start point was sent), and what each block of the GUI
    * holds, by id.
    */
   kept: { nodes: Record<string, Record<string, unknown>>; gui: Record<string, unknown> };
@@ -106,7 +106,7 @@ export interface SessionView {
   round: RoundSnapshot | null;
   /** What opening the session, or handing it a graph, dropped of what it kept: said once, in words. */
   dropped: string[];
-  /** Which design this is, counted from 0: a gui drawn from the design is drawn again when it changes. */
+  /** Which design this is, counted from 0: a GUI drawn from the design is drawn again when it changes. */
   design_revision: number;
   /** The graph's own clock (its start points that start themselves), which the server keeps while the application runs. */
   clock: ClockView;
@@ -125,15 +125,15 @@ interface ClockView {
 }
 
 /**
- * The gui a tool shows, as the built-in gui draws it: the graph's name and
+ * The GUI a tool shows, as the built-in GUI draws it: the graph's name and
  * scheme, its blocks as they were designed -- what each holds now is the
  * session's (`SessionView.gui`) -- and whether opening it runs the graph
- * whole, as a program runs when it is started: nothing on the gui or in a
+ * whole, as a program runs when it is started: nothing on the GUI or in a
  * start point of its own starts it otherwise (`startEvents`).
  */
 export interface GuiView {
   session: string;
-  /** Which design of the session this gui is: see SessionView.design_revision. */
+  /** Which design of the session this GUI is: see SessionView.design_revision. */
   design_revision: number;
   name: string;
   description: string;
@@ -161,15 +161,15 @@ interface RoundRequest {
   session?: string;
   event?: string | null;
   /**
-   * What the round is sent: for a round the gui starts (*by* a block), what
+   * What the round is sent: for a round the GUI starts (*by* a block), what
    * its blocks hold, by block id; for another round of a start point, its
    * package's values under names of the sender's own. A round of the whole
    * graph is sent nothing.
    */
   values?: Record<string, unknown>;
-  /** What `requirements` asked of a round the gui starts, answered under the keys it asked with: the blocks' ids. */
+  /** What `requirements` asked of a round the GUI starts, answered under the keys it asked with: the blocks' ids. */
   answers?: Record<string, unknown>;
-  /** Who sends it, as the package says: a block of the gui by its id. A script leaves it out, and is a "call". */
+  /** Who sends it, as the package says: a block of the GUI by its id. A script leaves it out, and is a "call". */
   by?: string;
 }
 
@@ -188,7 +188,7 @@ export interface InSession {
 }
 
 /**
- * A path a round the gui starts needs before it can run, as the "before
+ * A path a round the GUI starts needs before it can run, as the "before
  * running" dialog asks for it: the backend's own question, keyed by the block
  * that answers it, so no end takes the key apart or builds it again.
  */
@@ -201,7 +201,7 @@ export interface BrowseEntry { name: string; path: string; is_dir: boolean; proj
  * One directory, for a picker -- on this machine only: it is for the person at the keyboard.
  * `project`: the directory shown is a project itself.
  */
-export interface BrowsePage { path: string; parent: string | null; entries: BrowseEntry[]; roots: string[]; project?: boolean }
+export interface BrowsePage { path: string; parent: string | null; entries: BrowseEntry[]; roots: string[]; project?: boolean; /** The folder shown is the program's own, or in it. */ program?: boolean }
 
 /** Which model a deployed tool calls, and whether `ai-settings.json` is there; where it is stays on the machine. Read-only: see the route. */
 export interface ToolAiSettings {
@@ -263,12 +263,12 @@ export const API = {
   /** What the graph offers by name: its start points -- each with what the graph reads of what it is sent -- and its end points. */
   interface: route<InSession, InterfaceView>('GET', '/api/runtime/interface'),
 
-  /** The session now: what each start point was sent, what the outputs showed, the gui, the round going or gone, the clock. */
+  /** The session now: what each start point was sent, what the outputs showed, the GUI, the round going or gone, the clock. */
   session: route<InSession, SessionView>('GET', '/api/runtime/session'),
 
   /**
    * Server-sent events, not JSON: `session` once on connect and after every
-   * change, `round` as each round starts, goes and ends -- the gui's, a
+   * change, `round` as each round starts, goes and ends -- the GUI's, a
    * clock's, another tab's. Read with an `EventSource`.
    */
   stream: route<InSession, never>('GET', '/api/runtime/stream'),
@@ -289,16 +289,16 @@ export const API = {
   /** Forget what using the graph left behind: it is as designed again. */
   reset: route<InSession, SessionView>('POST', '/api/runtime/reset'),
 
-  /** Which model the tool calls. Read-only: a recipient configures it in a file, not in a gui. */
+  /** Which model the tool calls. Read-only: a recipient configures it in a file, not in a GUI. */
   toolAiSettings: route<void, ToolAiSettings>('GET', '/api/runtime/ai-settings'),
 
   /** Listing directories is for the person at the keyboard. */
   browse: local(route<{ path: string; extensions?: string }, BrowsePage>('POST', '/api/files/browse')),
 } as const;
 
-/** What a host with a gui answers besides: the gui as it was designed. */
+/** What a host with a GUI answers besides: the GUI as it was designed. */
 export const GUI_API = {
-  /** The gui as it was designed: what the built-in gui draws, by the names its blocks are called. */
+  /** The GUI as it was designed: what the built-in GUI draws, by the names its blocks are called. */
   gui: route<InSession, GuiView>('GET', '/api/runtime/gui'),
 } as const;
 
@@ -306,7 +306,7 @@ export const GUI_API = {
  * Match a request against the tables: which route, and its `:params`.
  *
  * Here rather than in the server because it is the tables' own rule -- how a
- * path with parameters is read -- and the gui's client writes paths by the
+ * path with parameters is read -- and the GUI's client writes paths by the
  * inverse of it (`pathFor`).
  */
 export function matchRoute(api: Routes, method: string, path: string): { name: string; params: Record<string, string> } | null {

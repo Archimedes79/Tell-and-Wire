@@ -5,8 +5,8 @@ import { START_PORT } from '../../triggers.ts';
 
 interface StartConfig {
   /**
-   * Who starts it: the gui -- a block's event, which makes the graph one that
-   * needs a gui --, a call from outside -- a script, a model over MCP, the
+   * Who starts it: the GUI -- a block's event, which makes the graph one that
+   * needs a GUI --, a call from outside -- a script, a model over MCP, the
    * graph above --, or the graph itself, when the tool starts and on a clock.
    */
   startedBy: StartedBy;
@@ -15,7 +15,7 @@ interface StartConfig {
   /** Started by itself: again this often, `45`, `30s`, `5m`, `2h`, `1d`. Empty means never. */
   every: string;
   /**
-   * Started by itself: what it sends, as a picker block on a gui sends what
+   * Started by itself: what it sends, as a picker block on a GUI sends what
    * was chosen -- one file (its path and content), the files of a folder, or
    * nothing. The graph is then its own sender.
    */
@@ -30,7 +30,7 @@ interface StartConfig {
 }
 
 /**
- * Who a package says sent it when no block of the gui did: the gui as a
+ * Who a package says sent it when no block of the GUI did: the GUI as a
  * whole (a run of everything), a call, the graph itself, the graph above, or
  * a run nobody named. A block is named by its id, so no block may have one
  * of these (`guiProblems`).
@@ -41,7 +41,7 @@ export const SENDERS = ['gui', 'call', 'itself', 'graph', 'run'] as const;
 export interface Package {
   /** The event, in a round this start point began -- null in any other, where `values` are what it was sent last. `by`: a block's id, or one of `SENDERS`. */
   event: { name: string; by: string } | null;
-  /** What the sender sent, as the sender named it: a gui's blocks by id, a script's own names, the graph above under the start point's own. */
+  /** What the sender sent, as the sender named it: a GUI's blocks by id, a script's own names, the graph above under the start point's own. */
   values: unknown;
 }
 
@@ -51,17 +51,17 @@ const STARTED_BY: readonly StartedBy[] = ['gui', 'call', 'itself'];
  * Where a round begins: a named start point of the graph.
  *
  * The graph owns it -- its name, and what it runs, which is what it is wired
- * to. Whoever starts it owns what it is started with: a gui sends what its
+ * to. Whoever starts it owns what it is started with: a GUI sends what its
  * blocks hold, a script sends values of its own, the graph above hands down
  * the value on the wire. None of that is declared here. What arrives is one
  * package, `{event, values}`, on one port, and the first node it is wired to
  * reads out of it what it needs -- an AI node reads it whole, a code node's
- * code picks the values it wants. A field added to what a gui sends changes
+ * code picks the values it wants. A field added to what a GUI sends changes
  * the package, never the wiring.
  *
  * It is an event like a button's was: wired into a node's ◆, it opens it in
  * the round it began; and a round it did not begin finds it holding what it
- * was sent last, with no event -- what a clock's round reads of the gui.
+ * was sent last, with no event -- what a clock's round reads of the GUI.
  */
 export class StartNodeDefinition extends NodeDefinition<StartConfig> {
   readonly nodeType = 'start' as const;
@@ -119,7 +119,7 @@ export class StartNodeDefinition extends NodeDefinition<StartConfig> {
     return this.config(node).startedBy;
   }
 
-  /** An event under its own id, and how it is started: by the gui, by a call, by itself. */
+  /** An event under its own id, and how it is started: by the GUI, by a call, by itself. */
   override offers(node: GraphNode): Offer[] {
     return [{
       kind: 'event', name: node.id, label: node.label || node.id, type: 'json', port: START_PORT,

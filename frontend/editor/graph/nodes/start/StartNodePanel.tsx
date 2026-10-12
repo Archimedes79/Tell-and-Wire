@@ -18,7 +18,7 @@ const SENDS = [
 
 /** Who starts a start point, in the words the panel offers it. */
 const STARTERS = [
-  ['gui', 'The gui', 'a block on it: a button, Enter in a text box, a choice made'],
+  ['gui', 'The GUI', 'a block on it: a button, Enter in a text box, a choice made'],
   ['call', 'A call', 'a script, a model over MCP, or the graph above, by this start point\'s name'],
   ['itself', 'Itself', 'when the tool starts, and again on a clock'],
 ] as const;

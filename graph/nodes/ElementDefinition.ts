@@ -3,7 +3,7 @@
 // One class per node type and per widget kind says what that kind is -- what it
 // stores, which ports it contributes -- and answers whatever the graph asks of
 // it while it is read and run. Two branches share this base: `NodeDefinition`
-// for a node, `WidgetDefinition` for a block on a gui. What they share is
+// for a node, `WidgetDefinition` for a block on a GUI. What they share is
 // little: settings of their own.
 //
 // An element has more faces than this one, and the folder says which is which:

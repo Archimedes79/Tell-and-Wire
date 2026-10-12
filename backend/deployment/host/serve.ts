@@ -1,7 +1,7 @@
 // The server: the built gui or editor, and the routes of `api.ts`.
 //
 // One server for every use. Every host answers `API` -- the graph it holds, a way
-// to run it, the file picker -- and is composed with what else it has: a gui
+// to run it, the file picker -- and is composed with what else it has: a GUI
 // (its hooks into the session, and the route that tells what it was designed
 // as), the editor (its built app, and the routes only it has). The command line
 // does the composing (`backend/cli`); this file imports neither, so a package
@@ -10,7 +10,7 @@
 // The tables are the security boundary, and each is written out in one place
 // (`api.ts`) rather than assembled from a router someone might extend later
 // without noticing where it ends up. A route this server has no handler for is
-// a server that cannot start: the gui and the server never disagree about
+// a server that cannot start: the GUI and the server never disagree about
 // what exists.
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
@@ -46,7 +46,7 @@ interface ServeOptions {
   guiDir?: string;
   port?: number;
   host?: string;
-  /** The gui the tool has: what its blocks do around a round, and the route that tells what it was designed as. None: a tool with no gui, or a page of its own. */
+  /** The GUI the tool has: what its blocks do around a round, and the route that tells what it was designed as. None: a tool with no GUI, or a page of its own. */
   gui?: GuiPart;
   /** Serve the editor instead of a deployed gui: `dist` is the built editor, `api` its routes and `handlers` what answers them. */
   editor?: { dist: string; api: Routes; handlers: (held: SessionHolder) => Handlers };
@@ -159,10 +159,10 @@ export async function serve(options: ServeOptions): Promise<Served> {
     }
 
     if (options.editor) return servePage(response, path, options.editor.dist, 'index.html');
-    // A gui of the project's own, written by hand against the runtime API, wins over the built one.
+    // A GUI of the project's own, written by hand against the runtime API, wins over the built one.
     if (frontend) return servePage(response, path, frontend, 'index.html');
     if (options.guiDir) return servePage(response, path, options.guiDir, 'gui.html');
-    return sendJson(response, 404, { detail: 'No gui.' });
+    return sendJson(response, 404, { detail: 'No GUI.' });
   }
 
   const server = createServer((request, response) => {
@@ -294,17 +294,17 @@ function toolRoutes(
       return session.view();
     },
 
-    // -- what the built-in gui reads besides ----------------------------------
+    // -- what the built-in GUI reads besides ----------------------------------
 
-    // The gui as it was designed, and no more of the graph: its blocks are
+    // The GUI as it was designed, and no more of the graph: its blocks are
     // what it draws, by the names they are called by.
     ...(part ? { gui: (asked: { session?: string }) => part.view(sessionAsked(asked)) } : {}),
 
     // Read-only on purpose: a deployed tool is configured by whoever runs it,
-    // in the file beside it or its environment. A gui that wrote credentials
+    // in the file beside it or its environment. A GUI that wrote credentials
     // would put them in a file nobody asked for.
     async toolAiSettings() {
-      // The function a run asks, so the gui says what a run calls.
+      // The function a run asks, so the GUI says what a run calls.
       const { provider, model } = await aiSetting();
       // Whether the file is there, not where: any caller on the network may ask.
       return { provider, model, settings_file_exists: existsSync(settingsPath()) };

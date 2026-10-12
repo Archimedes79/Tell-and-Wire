@@ -72,5 +72,5 @@ export function caller<A extends Routes>(api: A) {
   };
 }
 
-/** Call one route of a host with a gui. */
+/** Call one route of a host with a GUI. */
 export const call = caller({ ...API, ...GUI_API });

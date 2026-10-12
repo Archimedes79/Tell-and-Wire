@@ -1,8 +1,8 @@
 // What a slider's stored settings mean: its range, its step and the number it
 // stands at.
 //
-// Its own tiny module, like `text_io/role.ts`, because the gui imports it too:
-// the port says the range in words, a run emits the value, and the gui draws
+// Its own tiny module, like `text_io/role.ts`, because the GUI imports it too:
+// the port says the range in words, a run emits the value, and the GUI draws
 // the handle -- and all three must read the settings alike, defaults included.
 
 export interface SliderRange {

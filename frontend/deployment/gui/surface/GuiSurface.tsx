@@ -237,7 +237,7 @@ function RunError({ error }: { error: string }) {
 
 /**
  * The GUI in use: what a deployed tool serves, and what the editor's running
- * application shows -- or, with no blocks, the tool without a gui. One
+ * application shows -- or, with no blocks, the tool without a GUI. One
  * component, so what is tried in the editor cannot flatter.
  *
  * A block used is *onValue* -- what it now holds, for a block a round is

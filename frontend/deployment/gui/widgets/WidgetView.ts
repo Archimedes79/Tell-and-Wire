@@ -32,7 +32,7 @@ export interface WidgetViewProps {
   onTrigger: (value?: unknown) => void;
   /**
    * Using this block starts a round, so it waits while one is going. Said by
-   * whoever draws the gui: a delivered tool by the graph's events, which it
+   * whoever draws the GUI: a delivered tool by the graph's events, which it
    * is told by name; the editor by the backend.
    */
   fires?: boolean;

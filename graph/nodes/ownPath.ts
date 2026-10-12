@@ -1,7 +1,7 @@
 // A path written in a graph file -- a start point's, an end point's -- is the
 // graph's, and a graph may come from a stranger. It names a place below the
 // folder the tool runs in, never one elsewhere. A path that comes at run time
-// from the person -- a file chosen on the gui, a call's values, the command
+// from the person -- a file chosen on the GUI, a call's values, the command
 // line -- is theirs and is not held to this.
 //
 // Only the spelling here, so that `check` can say it and a browser can run it;

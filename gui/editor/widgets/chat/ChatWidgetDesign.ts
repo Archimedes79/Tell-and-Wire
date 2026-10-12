@@ -9,7 +9,7 @@ export class ChatWidgetDesign extends WidgetDesign {
       + 'wired to, which the chat shows. Do not add data or code nodes to hold the conversation.';
   }
 
-  /** A conversation is what using the gui said: the session's, never the design's. */
+  /** A conversation is what using the GUI said: the session's, never the design's. */
   override valueIsDesign(): boolean {
     return false;
   }

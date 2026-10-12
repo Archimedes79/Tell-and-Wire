@@ -80,7 +80,7 @@ export interface GraphMetadata {
 }
 
 /**
- * The gui a graph is used through: its blocks, in order, each as the file
+ * The GUI a graph is used through: its blocks, in order, each as the file
  * keeps it. Not a node: a block connects itself to the graph by name -- where
  * its data goes, which start point it fires, which end point it shows
  * (`gui/gui.ts`) -- and nothing is wired to it.
@@ -100,7 +100,7 @@ export interface Graph {
    * from them. Where a node is drawn (`position`) follows from it.
    */
   schedule?: string[];
-  /** Its gui, when it has one: a graph used by a script, or held by a node, has none. */
+  /** Its GUI, when it has one: a graph used by a script, or held by a node, has none. */
   gui?: Gui;
 }
 
@@ -233,7 +233,7 @@ export function parseGraph(raw: unknown): Graph {
     nodes: nodes.map(parseNode),
     edges: edges.map(parseEdge),
     ...(Array.isArray(source.schedule) && source.schedule.length ? { schedule: source.schedule.map(String) } : {}),
-    // A gui is its blocks: one with none is no gui.
+    // A GUI is its blocks: one with none is no GUI.
     ...(Array.isArray(blocks) && blocks.length ? { gui: { blocks: blocks as RawConfig[] } } : {}),
   };
 }

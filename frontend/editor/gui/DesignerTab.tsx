@@ -66,7 +66,7 @@ export default function DesignerTab() {
         title: `Start “${name}” from the GUI?`,
         text: `A call starts “${name}” now: a script, the command line, or a model. The GUI can only start a start point the GUI starts, so `
           + 'switched, it serves the GUI and no longer a call. Cancel leaves it as it is, and makes no block for it.',
-        answers: [{ value: 'switch', label: 'Switch it to the gui', variant: 'primary' }],
+        answers: [{ value: 'switch', label: 'Switch it to the GUI', variant: 'primary' }],
       });
       if (answer !== 'switch') continue;
       switched.push(made.point);
@@ -96,7 +96,7 @@ export default function DesignerTab() {
   const [insertAt, setInsertAt] = useState<number | null>(null);
 
   /**
-   * Dragging a new element out of the palette and onto the gui.
+   * Dragging a new element out of the palette and onto the GUI.
    *
    * Pointer events rather than HTML5 drag-and-drop, for the same reason the
    * reorder uses them: this way it works inside live inputs, it can be tested,
@@ -150,7 +150,7 @@ export default function DesignerTab() {
 
   const selectedIndex = widgets.findIndex((widget) => widget.id === selectedId);
 
-  /** Move the selected block one place along the gui. */
+  /** Move the selected block one place along the GUI. */
   const moveSelected = (delta: -1 | 1) => {
     if (selected) moveBlock(selected.id, selectedIndex + delta);
   };
@@ -169,7 +169,7 @@ export default function DesignerTab() {
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
       if (target?.isContentEditable) return;
       if (event.key === '/') {
-        // After the block in hand, or at the end of the gui: where the next
+        // After the block in hand, or at the end of the GUI: where the next
         // thing would go if this were a document, which it is.
         event.preventDefault();
         setInsertAt(selectedIndex === -1 ? widgets.length : selectedIndex + 1);
@@ -206,7 +206,7 @@ export default function DesignerTab() {
     // Only text is remembered as an edit in progress; a block that stores
     // something richer holds it itself and has no half-typed state to protect.
     if (typeof value === 'string') setTyped((prev) => ({ ...prev, [widget.id]: value }));
-    // Through `guiWrite`, as every edit of the gui: a value and the event
+    // Through `guiWrite`, as every edit of the GUI: a value and the event
     // that follows it arrive in the same tick.
     patchBlock(widget.id, { value });
   };

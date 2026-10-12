@@ -42,7 +42,7 @@ beforeEach(() => {
   watchSession();
 });
 
-describe('what was set here on a gui', () => {
+describe('what was set here on a GUI', () => {
   const edits = () => useSession.getState().edits;
 
   it('goes with a round, and is let go of once the round has run to its end -- not when it was stopped, and not what was typed since', async () => {

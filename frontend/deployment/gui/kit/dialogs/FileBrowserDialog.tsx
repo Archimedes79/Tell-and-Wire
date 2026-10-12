@@ -111,9 +111,13 @@ export default function FileBrowserDialog({
   }, [extensions, mode]);
 
   // A folder remembered from before may be gone: then it starts where the server was started.
+  // Saving does not start in the program's own folder either -- its examples, where the folder
+  // last opened from is -- but where the server starts a person's: their home.
   useEffect(() => {
-    void load(initialPath || '').then((shown) => { if (!shown && initialPath) void load(''); });
-  }, [load, initialPath]);
+    void load(initialPath || '').then((shown) => {
+      if ((!shown || (shown.program && mode === 'save')) && initialPath) void load('');
+    });
+  }, [load, initialPath, mode]);
 
   /**
    * Go to what the person typed in the path box -- and where it names a file,

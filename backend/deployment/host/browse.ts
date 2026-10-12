@@ -15,7 +15,7 @@
 
 import { access, readdir, stat } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import type { BrowseEntry, BrowsePage } from './api.ts';
 import { FLOW_FILE } from '../../../graph/files/flow.ts';
@@ -51,9 +51,22 @@ async function filesystemRoots(): Promise<string[]> {
  * launcher), where nothing a person works on is -- then their home.
  */
 export async function startFolder(): Promise<string> {
+  return (await programFolder()) ? homedir() : process.cwd();
+}
+
+/** The program's own folder -- where it was started, when that holds `backend/cli/main.ts` or a launcher -- or null. */
+async function programFolder(): Promise<string | null> {
   const started = process.cwd();
   const program = await Promise.all(['backend/cli/main.ts', 'run.cmd', 'run.sh'].map((file) => exists(join(started, file))));
-  return program.includes(true) ? homedir() : started;
+  return program.includes(true) ? started : null;
+}
+
+/** Whether *folder* is the program's own folder or in it. */
+async function insideProgram(folder: string): Promise<boolean> {
+  const program = await programFolder();
+  if (!program) return false;
+  const within = relative(resolve(program), resolve(folder));
+  return within === '' || (!within.startsWith('..') && !isAbsolute(within));
 }
 
 /** `~/x` as the person meant it: their home, not a folder called `~`. */
@@ -104,5 +117,7 @@ export async function browse(path: string, extensions: string[] = [], home = pro
     roots: await filesystemRoots(),
     // The folder shown can be a project itself: a picker opened inside one can open it.
     ...(await isProject(root) ? { project: true } : {}),
+    // Inside the program's own folder (its examples, say): a tool saved there is lost with the next update.
+    ...(await insideProgram(root) ? { program: true } : {}),
   };
 }

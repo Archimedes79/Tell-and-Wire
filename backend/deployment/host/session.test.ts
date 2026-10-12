@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Graph } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { GraphCore } from '../runtime/protocol.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
 import { edge, graphOf, node, quietRuntime } from '../runtime/test/fakes.ts';
 import { Session, holderOf, type SessionOptions } from './session.ts';
@@ -48,7 +49,7 @@ function counter(add = 'function run(i) { return { next: i.n + 1 }; }'): Graph {
 }
 
 /**
- * A gui with a box that shows what a code node made of a dropdown's choice:
+ * A GUI with a box that shows what a code node made of a dropdown's choice:
  * choosing fires the start point "picked", which is sent the choice.
  */
 function echo(say = 'function run(i) { return { out: "picked " + i.pick }; }'): Graph {
@@ -72,7 +73,7 @@ function echo(say = 'function run(i) { return { out: "picked " + i.pick }; }'): 
 }
 
 const PICKED = { node_id: 'picked', port_id: 'data' };
-/** A round the dropdown starts, as the gui starts it: by the block, with what the gui set. */
+/** A round the dropdown starts, as the GUI starts it: by the block, with what the GUI set. */
 const picked = (session: Session, values: Record<string, unknown> = {}) => session.run(PICKED, { values, by: 'pick' });
 
 describe('state', () => {
@@ -86,7 +87,7 @@ describe('state', () => {
     expect(session.graph.nodes[0].config.data_value).toEqual({ total: 0 });
   });
 
-  it('lists what each memory node holds, by name and whole -- from its design on, before any round -- and a block of the gui shows it', async () => {
+  it('lists what each memory node holds, by name and whole -- from its design on, before any round -- and a block of the GUI shows it', async () => {
     const session = await open({ ...counter(), gui: { blocks: [{ id: 'total', kind: 'text_io', mode: 'output', shows: 'count' }] } });
     expect(session.view()).toMatchObject({ state: { count: { total: 0 } }, shown: { total: { total: 0 } } });
     await session.run(null);
@@ -127,7 +128,7 @@ describe('state', () => {
     expect(session.kept().gui).toEqual({ shown: 'picked a' });
   });
 
-  it('goes on after a restart, as the same session, from state.json: the nodes\' kept values and the gui\'s blocks', async () => {
+  it('goes on after a restart, as the same session, from state.json: the nodes\' kept values and the GUI\'s blocks', async () => {
     const file = await scratch();
     const first = await open(counter(), file);
     await first.run(null);
@@ -163,7 +164,7 @@ describe('a design that changed', () => {
     const file = await scratch();
     const session = await open(counter(), file);
     await session.run(null);
-    // Where a node is drawn is no design: dragging one does not make a gui draw itself again.
+    // Where a node is drawn is no design: dragging one does not make a GUI draw itself again.
     const dragged = counter();
     dragged.nodes[1].position = { x: 400, y: 80 };
     session.hold(dragged);
@@ -201,14 +202,14 @@ describe('a design that changed', () => {
     changed.gui!.blocks[1].value = 'b';
     expect(withGui.hold(changed)).toEqual([
       'What the block "pick" held was dropped: its design changed.',
-      'What the block "shown" held was dropped: it is no longer on the gui.',
+      'What the block "shown" held was dropped: it is no longer on the GUI.',
     ]);
     expect(withGui.kept().gui).toEqual({});
   });
 });
 
-describe('a round the gui starts', () => {
-  it('is sent what the gui set and keeps it, and is refused for a block that does not fire the start point or a value no block takes', async () => {
+describe('a round the GUI starts', () => {
+  it('is sent what the GUI set and keeps it, and is refused for a block that does not fire the start point or a value no block takes', async () => {
     const session = await open(echo());
     await picked(session, { pick: 'b' });
     expect(session.kept()).toEqual({ nodes: { picked: { values: { pick: 'b' } } }, gui: { pick: 'b', shown: 'picked b' } });
@@ -257,7 +258,7 @@ describe('a round the gui starts', () => {
   });
 });
 
-describe('a chatbot is a gui and a model', () => {
+describe('a chatbot is a GUI and a model', () => {
   it('remembers the turn, and sends it as history with the next one', async () => {
     const chatbot: Graph = {
       ...graphOf(
@@ -318,6 +319,21 @@ describe('the document the editor hands over', () => {
     await again.run(null);
     expect(await roundsIn(mine)).toBe(2);
     expect(existsSync(stateFileOf(theirs))).toBe(false);
+  });
+
+  it('holds nothing, and says so, when the session that follows cannot be opened -- not a session already closed', async () => {
+    let calls = 0;
+    const broken = { open: async () => { throw new Error('the core would not start'); }, close: async () => {} } as unknown as GraphCore;
+    // The first session is the ordinary one; the next one's core fails to open.
+    const holder = holderOf(null, { runtime: fake, gui: guiHooks, core: () => (++calls === 2 ? broken : undefined as never) });
+    const first = await holder.hold(counter());
+    await expect(holder.hold(counter())).rejects.toThrow('would not start');
+    expect(holder.session).toBeNull();
+    expect(() => holder.asked()).toThrow(/holds no graph yet/);
+    // And the document after it opens as it would on a server that had held nothing.
+    const next = await holder.hold(counter());
+    expect(next).not.toBe(first);
+    expect(holder.asked(next.id)).toBe(next);
   });
 });
 

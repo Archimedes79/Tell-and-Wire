@@ -34,7 +34,7 @@ const ECHO = {
     ],
   },
 };
-/** A round the dropdown starts, as the gui starts it. */
+/** A round the dropdown starts, as the GUI starts it. */
 const PICK_B = { event: 'picked', values: { pick: 'b' }, by: 'pick' };
 
 const served: Served[] = [];
@@ -75,7 +75,7 @@ describe('the runtime API', () => {
     expect((await get(`${url}/api/runtime/session?session=someone-else`)).status).toBe(404);
   });
 
-  it('runs a round the gui starts or a script calls, keeps what the gui set beside the graph, turns down what it does not offer, and forgets on reset', async () => {
+  it('runs a round the GUI starts or a script calls, keeps what the GUI set beside the graph, turns down what it does not offer, and forgets on reset', async () => {
     const { url, graphPath } = await tool();
     const { status, body } = await post(`${url}/api/runtime/run`, PICK_B);
     expect(status).toBe(200);
@@ -87,7 +87,7 @@ describe('the runtime API', () => {
       gui: { pick: 'b', shown: 'picked b' }, shown: { shown: 'picked b' }, outputs: { said: 'picked b' }, rounds: 1,
     });
 
-    // A script in the gui's place: a function call, sent what it sends. What the gui holds is the gui's.
+    // A script in the GUI's place: a function call, sent what it sends. What the GUI holds is the GUI's.
     const call = await post(`${url}/api/runtime/run`, { event: 'picked', values: { pick: 'a' } });
     expect(call.body).toMatchObject({ status: 'success', outputs: { said: 'picked a' } });
     expect((await get(`${url}/api/runtime/session`)).body).toMatchObject({ gui: { pick: 'b' } });

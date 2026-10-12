@@ -30,7 +30,7 @@ export const SUNKEN = 'var(--ui-sunken, #0f1117)';
 export const SURFACE = 'var(--ui-surface, #1a1d2e)';
 /** Borders — and the neutral button fill, which is the same colour by design. */
 export const LINE = 'var(--ui-line, #2d3148)';
-/** The barely-there lift of a block off the gui. */
+/** The barely-there lift of a block off the GUI. */
 export const RAISE = 'var(--ui-raise, rgba(255,255,255,0.03))';
 /** A row or button under the pointer. */
 export const HOVER = 'var(--ui-hover, rgba(255,255,255,0.06))';

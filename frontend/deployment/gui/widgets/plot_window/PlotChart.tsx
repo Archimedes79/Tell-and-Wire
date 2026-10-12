@@ -48,7 +48,7 @@ export interface Figure {
 
 const KINDS: PlotKind[] = ['bars', 'columns', 'line', 'donut'];
 
-/** A series colour that survives a scheme change, with a fallback for the canvas preview, which is outside the gui. */
+/** A series colour that survives a scheme change, with a fallback for the canvas preview, which is outside the GUI. */
 const FALLBACK = plotColours('night');
 const colour = (index: number) => `var(--plot-${(index % 8) + 1}, ${FALLBACK[index % 8]})`;
 

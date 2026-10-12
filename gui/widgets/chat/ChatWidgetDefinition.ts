@@ -58,7 +58,7 @@ export class ChatWidgetDefinition extends WidgetDefinition<ChatValue> {
 
   /**
    * Given a message, it is the one in hand, and what was said before stays:
-   * what a gui or a script sends a chat. Given a whole conversation, it is
+   * what a GUI or a script sends a chat. Given a whole conversation, it is
    * that conversation.
    */
   override setValue(stored: RawConfig, value: unknown): void {

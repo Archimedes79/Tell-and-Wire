@@ -6,7 +6,7 @@ import FolderListing from '../../../app/fields/FolderListing';
 import type { WidgetPanelProps } from '../WidgetGuiBuilder';
 
 /**
- * A file or a folder, picked on the gui. A folder is its file types and its
+ * A file or a folder, picked on the GUI. A folder is its file types and its
  * subfolders, then the list -- the listing a start point that reads a folder makes, drawn by
  * the same component: it is one behaviour at two levels.
  */

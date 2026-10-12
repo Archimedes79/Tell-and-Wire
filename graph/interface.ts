@@ -1,12 +1,12 @@
 // What a graph offers whoever uses it from outside, under names.
 //
-// A gui, a script, a model over MCP, a frontend somebody wrote: each starts a
+// A GUI, a script, a model over MCP, a frontend somebody wrote: each starts a
 // round with an event and values, and reads back what it produced -- by name,
 // never by node or port. There is one kind of way in, a start point, and one
 // of way out, an end point, each by its own id (`NodeDefinition.offers`) -- and
 // what a memory node holds can be watched, by its id, without a round. What a
 // round is sent goes into the start point it fires, as one package; nothing
-// else of the graph is set from outside. A gui's blocks are not among the
+// else of the graph is set from outside. A GUI's blocks are not among the
 // names: they connect themselves to them (`gui/interface.ts` adds which fire
 // what). A graph inside a node meets the graph above it the same way
 // (`nodes/subgraph/boundary.ts`).
@@ -29,11 +29,11 @@ export interface InterfaceEntry {
   type: DataType;
   list?: boolean;
   description?: string;
-  /** An event's: who starts it -- the gui, a call, the graph itself. */
+  /** An event's: who starts it -- the GUI, a call, the graph itself. */
   started_by?: StartedBy;
-  /** A start point's, added by a gui (`gui/interface.ts`): the blocks whose event fires it, by id. */
+  /** A start point's, added by a GUI (`gui/interface.ts`): the blocks whose event fires it, by id. */
   fired_by?: string[];
-  /** A start point's, added by a gui: what it sends with it -- each block whose data goes to it, by the block's id -- as the package's values. */
+  /** A start point's, added by a GUI: what it sends with it -- each block whose data goes to it, by the block's id -- as the package's values. */
   sends?: InterfaceEntry[];
   /**
    * A start point's: what the graph reads of the values it is sent -- each
@@ -48,7 +48,7 @@ export interface InterfaceEntry {
 export interface GraphInterface {
   events: InterfaceEntry[];
   outputs: InterfaceEntry[];
-  /** Each memory node, by its id, and each part of it -- a field -- by the id and its name: what it holds is in every session (`SessionView.state`), and a block of the gui can show it. */
+  /** Each memory node, by its id, and each part of it -- a field -- by the id and its name: what it holds is in every session (`SessionView.state`), and a block of the GUI can show it. */
   state: InterfaceEntry[];
 }
 
@@ -147,7 +147,7 @@ export function applySent(graph: Graph, trigger: Trigger | null, values: Record<
  * A round started from outside -- the command line, a model over MCP: the
  * event *name*, or the whole graph for none, sent *values* as a call sends
  * them. Refused (`NotOffered`) before anything is written. Returns the event
- * to run; a round of the whole graph still starts a gui's start points when
+ * to run; a round of the whole graph still starts a GUI's start points when
  * it runs (`startFromGui`).
  */
 export function sendFromOutside(graph: Graph, name: string | null | undefined, values: Record<string, unknown>, kinds: Kinds): Trigger | null {

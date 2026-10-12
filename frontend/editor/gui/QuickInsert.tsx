@@ -2,11 +2,11 @@ import { ALL_ENTRIES, matchesEntry, type PaletteEntry } from './DesignerPalette'
 import QuickPick from '../../deployment/gui/kit/ui/QuickPick';
 
 /**
- * "/" on the gui: type what you want, press Enter, keep going.
+ * "/" on the GUI: type what you want, press Enter, keep going.
  *
  * The palette is for finding out what exists. This is for when you know --
  * `/` `but` `Enter` puts a button where you were, without the hand leaving the
- * keyboard or the eye leaving the gui. It is the one thing every document
+ * keyboard or the eye leaving the GUI. It is the one thing every document
  * editor people call easy has in common, and it searches by what people call
  * things ("run" finds the button, "title" the heading) rather than by our names
  * for them. The menu itself is `QuickPick`; this hands it the blocks.

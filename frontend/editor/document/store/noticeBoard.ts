@@ -59,13 +59,15 @@ export const useNotices = create<NoticeStore>()((set) => ({
       sticky: sticky ?? (level === 'warning' || level === 'error'),
       at: Date.now() + Math.random(),
     };
-    const rest = state.notices.filter((one) => one.key !== key);
-    const all = [...rest, made];
-    while (all.length > MOST) {
-      const gone = all.findIndex((one) => one.level !== 'error' && one.level !== 'warning');
-      all.splice(gone < 0 ? 0 : gone, 1);
+    // What was said in another document is no longer shown, and takes no room from this one's.
+    const rest = state.notices.filter((one) => one.key !== key && one.document === made.document);
+    // First in, first out: the oldest that is not a problem goes, then the oldest of the problems --
+    // and never the one just said, which a full board of problems would otherwise drop at once.
+    while (rest.length > MOST - 1) {
+      const gone = rest.findIndex((one) => one.level !== 'error' && one.level !== 'warning');
+      rest.splice(gone < 0 ? 0 : gone, 1);
     }
-    return { notices: all };
+    return { notices: [...rest, made] };
   }),
   dismiss: (key) => set((state) => ({ notices: state.notices.filter((one) => one.key !== key) })),
 }));

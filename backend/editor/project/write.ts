@@ -91,7 +91,7 @@ function planProject(folder: string, copy: Graph): Plan[] {
     }
   }
   // Each block's keys in one order, so an unchanged gui saves unchanged; and
-  // a gui of no blocks is no gui, with no file.
+  // a GUI of no blocks is no GUI, with no file.
   const blocks = (copy.gui?.blocks ?? []).map((block) => sorted(block));
   for (const text of projectTexts(copy)) {
     const value = text.node_id === null ? (blocks.length ? blocks : undefined) : text.holder[text.field];

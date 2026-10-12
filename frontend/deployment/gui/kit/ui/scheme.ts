@@ -17,8 +17,8 @@
 // and a hovered row. `scheme.test.ts` checks it.
 //
 // The editor has the same choice (Settings → Appearance, `editor/document/store/editorScheme.ts`): the
-// same variables on the page's root, under whatever a gui sets on its own container, so the
-// editor can be light around a gui that is dark and the other way round.
+// same variables on the page's root, under whatever a GUI sets on its own container, so the
+// editor can be light around a GUI that is dark and the other way round.
 //
 // Four: Night and Graphite (two darks that are not the same), Paper and White (a warm light and a bright one). Enough that the tool
 // can look like the person using it, few enough that every colour pair of every one is checked
@@ -48,7 +48,7 @@ interface Scheme {
   surface: string;
   /** Borders, and the neutral button fill -- the same colour by design. */
   line: string;
-  /** The barely-there lift of a block off the gui. */
+  /** The barely-there lift of a block off the GUI. */
   raise: string;
   /** A row or button under the pointer. */
   hover: string;
@@ -161,7 +161,7 @@ export const SCHEMES: Scheme[] = [
 ];
 
 /**
- * Colours for telling series apart, one set per kind of gui.
+ * Colours for telling series apart, one set per kind of GUI.
  *
  * Not per scheme: what makes eight colours distinguishable is how they sit on a
  * dark or a light ground, and there are only those two grounds. The first of
@@ -184,7 +184,7 @@ export function scheme(id: string | undefined): Scheme {
 }
 
 /**
- * The scheme as CSS variables, for the container of a gui: the GUI tab's
+ * The scheme as CSS variables, for the container of a GUI: the GUI tab's
  * surface, the App tab, a deployed tool's root.
  *
  * Variables rather than props threaded through the tree: a component asks

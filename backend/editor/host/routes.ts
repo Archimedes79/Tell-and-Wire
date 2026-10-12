@@ -115,7 +115,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
     async nodeInputs(asked) {
       const graph = parseGraph(asked);
       const runtime = nodeRuntime();
-      // What would arrive is what the gui sends its start points now.
+      // What would arrive is what the GUI sends its start points now.
       await startFromGui(graph, runtime, registry);
       const { inputs, upstream } = await tries().arriving({ graph, node: String(asked.node_id ?? '') });
       const failed = upstream.node_results.find((result) => result.status === 'error');
@@ -187,7 +187,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
       const graph = parseGraph(asked.graph);
       const work = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
       try {
-        // The gui `--bundle` carries -- a bundle from the editor is the same
+        // The GUI `--bundle` carries -- a bundle from the editor is the same
         // bundle -- and the project's own, when it has one.
         await writeBundle(graph, work, { guiDir: builtGui(), frontend: asked.path ? project.frontendOf(asked.path) : null });
         const entries = [];

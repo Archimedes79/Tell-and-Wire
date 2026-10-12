@@ -1,6 +1,6 @@
 // What a served tool holds while it runs, and how it lets go of it.
 //
-// A server has a clock that starts rounds, runs a gui started, children those
+// A server has a clock that starts rounds, runs a GUI started, children those
 // runs spawned, and a socket. Each could always be stopped; nothing ever did.
 // Ctrl+C, a closed terminal and `docker stop` all ended the process where it
 // stood: a model call still billed and never read, a scheduled round cut off
@@ -11,7 +11,7 @@
 // So the things that must be stopped are written down in one list, by whoever
 // starts them, and stopped in the order they were started: what *makes* work
 // before what carries it. A clock goes before the runs, the runs before the
-// server that still has to answer "cancelled" to the gui watching them.
+// server that still has to answer "cancelled" to the GUI watching them.
 //
 // Deliberately small. It owns no resources and knows none of them; it is the
 // order, the patience and the promise that stopping happens once.

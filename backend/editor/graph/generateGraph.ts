@@ -38,7 +38,7 @@ function said(node: unknown): string {
 /**
  * *answer* with what it left out of *current* put back: the graph's name and
  * scheme, where each node it kept stands (the schedule) and the size it was drawn at, and
- * the gui, when the answer says nothing of it. Left out, each fell to its
+ * the GUI, when the answer says nothing of it. Left out, each fell to its
  * default -- a change to one node renamed the tool and moved every node into
  * the corner.
  *

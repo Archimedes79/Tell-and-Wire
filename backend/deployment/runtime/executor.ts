@@ -438,7 +438,7 @@ function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
  * to run that graph.
  *
  * Made per node rather than per run, because the inner run's progress is the
- * *outer* node's progress. A gui watching a run counts what it was told to
+ * *outer* node's progress. A GUI watching a run counts what it was told to
  * expect ("3 of 7"), and inner nodes it never heard of would count past the
  * end; they are forwarded as activity of the node they happened inside.
  */

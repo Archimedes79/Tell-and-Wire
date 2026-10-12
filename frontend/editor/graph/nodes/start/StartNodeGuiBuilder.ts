@@ -18,7 +18,7 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly hint = 'Where a run begins: started by the GUI, by a call, or by itself -- when the tool starts, on a clock';
 
-  readonly example = 'e.g. The text to summarise, typed on the gui';
+  readonly example = 'e.g. The text to summarise, typed on the GUI';
 
   readonly icon = Play;
 
@@ -41,7 +41,7 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
   /** Who starts it, and what it reads, under its port: the things worth reading without opening it. */
   override canvasSummary(node: GraphNode): string | undefined {
     const { startedBy, onStart, every, reads, path } = ELEMENT.config(node as never);
-    if (startedBy === 'gui') return 'started by the gui';
+    if (startedBy === 'gui') return 'started by the GUI';
     if (startedBy === 'call') return 'started by a call';
     const parts = [onStart ? 'at start' : '', every ? `every ${every}` : ''].filter(Boolean);
     const when = parts.length ? `by itself: ${parts.join(' · ')}` : 'never';

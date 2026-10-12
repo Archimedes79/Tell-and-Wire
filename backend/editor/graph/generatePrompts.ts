@@ -90,7 +90,7 @@ const newOutput = (body: string): string => 'If the change needs other outputs t
   + `return the new output.js, the whole file, in a second \`\`\`js block after ${body}.`;
 
 /**
- * What a body is told about the empty window as well as the full one: a gui
+ * What a body is told about the empty window as well as the full one: a GUI
  * is drawn before anything was chosen, and a node that fails on nothing shows
  * an error where a person should see what to do.
  */

@@ -1,10 +1,10 @@
-// What a gui does around the graph in use, as the host asks it.
+// What a GUI does around the graph in use, as the host asks it.
 //
 // The host (`../host/session.ts`) holds a graph in use and runs its rounds; it
-// knows no block. A gui is a part it is handed: with one, a round a block of it
+// knows no block. A GUI is a part it is handed: with one, a round a block of it
 // starts is sent what the blocks hold, and what the end points hand back is
 // settled into the blocks that show them (`gui/gui.ts` says how); without one
-// -- a tool that has no gui, or one with a page of its own written by hand --
+// -- a tool that has no GUI, or one with a page of its own written by hand --
 // the host is a graph in use and nothing more (`NO_GUI`, in the host).
 
 import type { Graph } from '../../../graph/graph.ts';
@@ -21,16 +21,16 @@ import {
 } from '../../../gui/gui.ts';
 import type { RuntimeRequirement } from '../../../gui/widgets/WidgetDefinition.ts';
 
-/** A round with a gui around it: how it began, and how it ends. */
+/** A round with a GUI around it: how it began, and how it ends. */
 interface GuiRound {
-  /** A block of the gui started it, and its start point has been sent what the blocks hold: nothing else is sent. */
+  /** A block of the GUI started it, and its start point has been sent what the blocks hold: nothing else is sent. */
   sent: boolean;
   /** What the end points handed back reaches the blocks that show them; what was sent with the round is emptied. Returns what each block shows now. */
   settle(graph: Graph, outputs: Record<string, unknown>, runtime: Runtime): Promise<Record<string, unknown>>;
 }
 
 export interface GuiHooks {
-  /** What the graph offers by name, with what the gui adds: which blocks fire a start point, and what they send with it. */
+  /** What the graph offers by name, with what the GUI adds: which blocks fire a start point, and what they send with it. */
   interfaceOf(graph: Graph): GraphInterface;
   /** What each block holds now, by the block's id. */
   state(graph: Graph): Record<string, unknown>;
@@ -40,16 +40,16 @@ export interface GuiHooks {
   shownFromState(graph: Graph, state: Record<string, unknown>): Record<string, unknown>;
   /** Which of the blocks named take a path of this machine: a picker's file or folder. */
   pathBlocks(graph: Graph, ids: string[]): string[];
-  /** Whether a round for *trigger* is one the gui starts: sent by one of its blocks, at a start point. */
+  /** Whether a round for *trigger* is one the GUI starts: sent by one of its blocks, at a start point. */
   starts(graph: Graph, trigger: Trigger | null, by: string): boolean;
-  /** Refuse a round the gui could not have started: *by* does not fire the start point, or *values* name a block that takes none. */
+  /** Refuse a round the GUI could not have started: *by* does not fire the start point, or *values* name a block that takes none. */
   check(graph: Graph, trigger: Trigger, by: string, values: Record<string, unknown>): void;
-  /** What a round the gui starts still asks a person, once *values* are put in: a picker with nothing chosen. None, for a round it does not start. */
+  /** What a round the GUI starts still asks a person, once *values* are put in: a picker with nothing chosen. None, for a round it does not start. */
   requirements(graph: Graph, trigger: Trigger | null, by: string, values: Record<string, unknown>): RuntimeRequirement[];
   /**
-   * Make *graph*, the working copy of a round, ready: for a round the gui starts, put what the blocks hold
+   * Make *graph*, the working copy of a round, ready: for a round the GUI starts, put what the blocks hold
    * into them and the start point it fires is sent what the blocks that send to it hold; for a round of the
-   * whole graph, the gui's start points count as started.
+   * whole graph, the GUI's start points count as started.
    */
   before(graph: Graph, trigger: Trigger | null, by: string, values: Record<string, unknown>, answers: Record<string, unknown>, runtime: Runtime): Promise<GuiRound>;
 }
@@ -74,7 +74,7 @@ export const guiHooks: GuiHooks = {
       throw new NotOffered(`The block "${by}" does not fire "${trigger.node_id}"${firing.length ? `; it is fired by ${names(firing)}` : ''}.`);
     }
     const unknown = Object.keys(values).filter((id) => !takesGuiValue(graph, id));
-    if (unknown.length) throw new NotOffered(`No block ${names(unknown)} on the gui takes a value.`);
+    if (unknown.length) throw new NotOffered(`No block ${names(unknown)} on the GUI takes a value.`);
   },
 
   requirements(graph, trigger, by, values) {
@@ -85,7 +85,7 @@ export const guiHooks: GuiHooks = {
 
   async before(graph, trigger, by, values, answers, runtime) {
     const viaGui = starts(graph, trigger, by);
-    // A round of everything counts the gui's events as fired too.
+    // A round of everything counts the GUI's events as fired too.
     if (!viaGui && !trigger) await startFromGui(graph, runtime, registry);
     const delivered = viaGui ? sentBy(graph, trigger!.node_id).map((widget) => widget.id) : [];
     if (viaGui) {
@@ -104,7 +104,7 @@ export const guiHooks: GuiHooks = {
   },
 };
 
-/** The gui as it was designed, and no more of the graph: its blocks are what it draws, by the names they are called by. */
+/** The GUI as it was designed, and no more of the graph: its blocks are what it draws, by the names they are called by. */
 function guiView(session: { id: string; graph: Graph; designRevision: number }) {
   const { graph } = session;
   return {
@@ -119,6 +119,6 @@ function guiView(session: { id: string; graph: Graph; designRevision: number }) 
   };
 }
 
-/** What a host is composed with to have a gui (`serve`). */
+/** What a host is composed with to have a GUI (`serve`). */
 export const guiPart = { hooks: guiHooks, view: guiView };
 export type GuiPart = typeof guiPart;

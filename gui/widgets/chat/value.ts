@@ -1,6 +1,6 @@
 // What a chat block holds: the conversation so far and the message in hand.
 //
-// Its own tiny module, like `text_io/role.ts`, because the gui imports it too:
+// Its own tiny module, like `text_io/role.ts`, because the GUI imports it too:
 // a run reads the stored value to send the message and the history, and the
 // gui reads it to draw the bubbles -- so a turn a run sent as the person's is
 // drawn on the person's side.

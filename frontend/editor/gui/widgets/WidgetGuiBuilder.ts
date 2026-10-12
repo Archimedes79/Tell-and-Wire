@@ -99,13 +99,13 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
     return false;
   }
 
-  /** What a new widget of this kind is called when the palette puts it on a gui: the palette's word for it. */
+  /** What a new widget of this kind is called when the palette puts it on a GUI: the palette's word for it. */
   initialLabel(paletteLabel: string): string {
     return paletteLabel;
   }
 
   /**
-   * A new widget of this kind called *id*, as the palette puts it on a gui:
+   * A new widget of this kind called *id*, as the palette puts it on a GUI:
    * the counterpart of `NODE_KINDS[type].create` (`document/model/nodeKinds.ts`).
    * The id is its caller's to give -- the palette's is its kind, numbered where
    * it is taken (`newBlock`). No position -- the order of the list is the

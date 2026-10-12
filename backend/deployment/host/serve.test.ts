@@ -14,7 +14,7 @@ import { guiPart } from '../gui/hooks.ts';
  * The endpoints a deployed gui calls, and the rules about them.
  *
  * The shapes are not this server's to choose: `api.ts` declares them for both
- * ends, and a snapshot missing `done` looks to the gui exactly like a run that
+ * ends, and a snapshot missing `done` looks to the GUI exactly like a run that
  * never finishes.
  *
  * The other rules are what is *absent* and who may ask. A deployed tool must
@@ -60,7 +60,7 @@ function ask(url: string, path: string, headers: Record<string, string>, body?: 
 const status = async (...args: Parameters<typeof ask>) => (await ask(...args)).status;
 
 describe('what a deployed tool serves', () => {
-  it('runs a round watchably, in the shape the gui reads', async () => {
+  it('runs a round watchably, in the shape the GUI reads', async () => {
     const url = await serveGraph();
     const post = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
     const { round_id: roundId, total } = await asJson(await fetch(`${url}/api/runtime/rounds`, post)) as
@@ -76,8 +76,8 @@ describe('what a deployed tool serves', () => {
       await new Promise((wait) => setTimeout(wait, 100));
     }
 
-    // Every field the gui's `RoundSnapshot` declares. A missing one is not a
-    // cosmetic gap: `done` is how the gui knows to stop polling.
+    // Every field the GUI's `RoundSnapshot` declares. A missing one is not a
+    // cosmetic gap: `done` is how the GUI knows to stop polling.
     expect(snapshot).toMatchObject({ round_id: roundId, done: true, cancelled: false, total, error: null });
     expect(snapshot).toHaveProperty('current_label');
     expect(snapshot).toHaveProperty('item_done');
@@ -169,7 +169,7 @@ describe('a web page elsewhere in the same browser', () => {
 });
 
 describe('the server as the front door of the editor', () => {
-  it('serves the editor page for any deep link, a file by its decoded name and never one from above it, forbids being framed, refuses what nothing serves, and serves the gui of the graph it is handed', async () => {
+  it('serves the editor page for any deep link, a file by its decoded name and never one from above it, forbids being framed, refuses what nothing serves, and serves the GUI of the graph it is handed', async () => {
     const parent = await mkdtemp(join(tmpdir(), 'editor-dist-'));
     const dist = join(parent, 'dist');
     await mkdir(dist);
@@ -191,7 +191,7 @@ describe('the server as the front door of the editor', () => {
     expect(await status(url, '/api/nothing/here', { Host: host })).toBe(404);
 
     // "Open as tool": the editor hands its session the graph it is editing, and the runtime page then
-    // asks for its gui over the ordinary route. Before that there is nothing to serve.
+    // asks for its GUI over the ordinary route. Before that there is nothing to serve.
     expect((await fetch(`${url}/api/runtime/gui`)).status).toBe(404);
     const graph = JSON.parse(await readFile(MINIMAL, 'utf8'));
     graph.metadata.name = 'Handed over';

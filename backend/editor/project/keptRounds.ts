@@ -34,7 +34,7 @@ export const TESTS_DIR = 'tests';
 interface KeptRound {
   /** The start point it began at, by name -- none: a round of the whole graph. */
   event: string | null;
-  /** Who sent what began it: a block of the gui by its id, or one of `SENDERS`. Said, for whoever reads the file. */
+  /** Who sent what began it: a block of the GUI by its id, or one of `SENDERS`. Said, for whoever reads the file. */
   by?: string;
   /**
    * What these nodes made in it, by node id: handed in again instead of run.

@@ -439,7 +439,8 @@ export default function App() {
             return true;
           }}
           view={view}
-          onViewChange={setView}
+          // The tab of the view one is already in is also the way out of a node that is open in it.
+          onViewChange={(next) => { if (next === view && next === 'graph') closeNode(); setView(next); }}
         />
 
         {/* Both views stay mounted: the graph keeps its ReactFlow viewport, and

@@ -21,7 +21,7 @@ const OWN: Record<WidgetKind, string[]> = {
   chat: [],
 };
 
-describe('a new block, as the palette puts it on a gui', () => {
+describe('a new block, as the palette puts it on a GUI', () => {
   it('holds only its own kind\'s settings', () => {
     // A divider or a chart carries no folder's file types and no options list.
     for (const [kind, builder] of Object.entries(WIDGET_BUILDERS) as [WidgetKind, (typeof WIDGET_BUILDERS)[WidgetKind]][]) {

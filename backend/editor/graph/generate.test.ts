@@ -164,8 +164,8 @@ describe('a whole graph, changed as said', () => {
     gui: { blocks: [{ id: 'text', kind: 'text_io', mode: 'input', sends_to: ['count'] }] },
   });
 
-  it('keeps what the answer leaves out: the graph\'s name and scheme, where each node stands, its size, the gui', async () => {
-    // An answer that says nothing of the metadata, of positions, of a size or of the gui.
+  it('keeps what the answer leaves out: the graph\'s name and scheme, where each node stands, its size, the GUI', async () => {
+    // An answer that says nothing of the metadata, of positions, of a size or of the GUI.
     const answer = {
       nodes: [
         { id: 'count', node_type: 'code', label: 'Count words' },

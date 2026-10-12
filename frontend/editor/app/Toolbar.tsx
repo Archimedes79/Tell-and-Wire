@@ -403,7 +403,7 @@ export default function Toolbar({
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg p-3 text-sm resize-y outline-none"
               style={{ ...FIELD, minHeight: 100 }}
-              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a gui."
+              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a GUI."
               disabled={asking}
             />
             <p className="text-xs" style={{ color: DIM }}>

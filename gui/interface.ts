@@ -1,13 +1,13 @@
-// What a gui adds to what a graph offers (`graph/interface.ts`): for a start
-// point a gui starts, which blocks fire it and what the gui sends with it --
-// so a script that starts it in the gui's place knows what to send.
+// What a GUI adds to what a graph offers (`graph/interface.ts`): for a start
+// point a GUI starts, which blocks fire it and what the GUI sends with it --
+// so a script that starts it in the GUI's place knows what to send.
 
 import type { Graph } from '../graph/graph.ts';
 import { interfaceOf, type GraphInterface, type InterfaceEntry } from '../graph/interface.ts';
 import type { Kinds } from '../graph/nodes/NodeDefinition.ts';
 import { firedBy, sentBy, widgetElement } from './gui.ts';
 
-/** What the gui sends with start point *name*, as a caller is told it: each block's data, by the block's id. */
+/** What the GUI sends with start point *name*, as a caller is told it: each block's data, by the block's id. */
 function guiSent(graph: Graph, name: string): InterfaceEntry[] {
   return sentBy(graph, name).map((widget) => {
     const sent = widgetElement(widget.kind)!.sends(widget)!;
@@ -15,7 +15,7 @@ function guiSent(graph: Graph, name: string): InterfaceEntry[] {
   });
 }
 
-/** What *graph* offers, with each start point told which blocks of its gui fire it and what the gui sends with it. */
+/** What *graph* offers, with each start point told which blocks of its GUI fire it and what the GUI sends with it. */
 export function interfaceWithGui(graph: Graph, kinds: Kinds): GraphInterface {
   const offered = interfaceOf(graph, kinds);
   const events = offered.events.map((event) => {

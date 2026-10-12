@@ -32,7 +32,7 @@ export async function folderProblems(folder: string): Promise<Problem[]> {
   const expected = new Map<string, Set<string>>();
   for (const text of projectTexts(graph)) {
     const slash = text.path.lastIndexOf('/');
-    if (slash < 0) continue; // the gui's file, beside the flow: not a node's folder
+    if (slash < 0) continue; // the GUI's file, beside the flow: not a node's folder
     const dir = text.path.slice(0, slash);
     if (!expected.has(dir)) expected.set(dir, new Set());
     expected.get(dir)!.add(text.path.slice(slash + 1));

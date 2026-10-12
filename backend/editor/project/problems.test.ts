@@ -166,7 +166,7 @@ describe('what check finds', () => {
     guided.gui = { blocks: [{ id: 'answer', kind: 'text_io', mode: 'output', label: 'Answer', shows: 'show' }] };
     expect(problemsIn(guided)).toEqual([]);
     guided.gui.blocks.push({ id: 'go', kind: 'button', label: 'Go', fires: 'nowhere' });
-    expect(where(guided)).toEqual([['the gui, block "go"', 'It fires "nowhere", which is no start point of the graph: it starts (none).']]);
+    expect(where(guided)).toEqual([['the GUI, block "go"', 'It fires "nowhere", which is no start point of the graph: it starts (none).']]);
   });
 
   it('in a project folder: a folder no node owns, a file nothing reads, and a project that cannot be read', async () => {

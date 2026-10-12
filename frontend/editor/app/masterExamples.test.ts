@@ -49,7 +49,7 @@ import type { Runtime } from '../../../graph/nodes/Runtime.ts';
  * offers -- is a trick, and this is where it is caught.
  */
 
-/** The examples as the backend reads their folders: the flow, each node's settings and ports, its files, and the gui. */
+/** The examples as the backend reads their folders: the flow, each node's settings and ports, its files, and the GUI. */
 const EXAMPLES: Record<string, Graph> = {};
 beforeAll(async () => {
   for (const name of ['population_plotter', 'folder_summaries', 'chat']) {
@@ -198,10 +198,10 @@ function runtime(asked: string[]): Runtime {
   };
 }
 
-/** The graph in use, as the server holds it for a gui: a session -- of a copy, the store's graph is frozen. */
+/** The graph in use, as the server holds it for a GUI: a session -- of a copy, the store's graph is frozen. */
 const use = (graph: Graph, asked: string[]) => Session.open(parseGraph(JSON.parse(JSON.stringify(graph))), { runtime: () => runtime(asked), gui: guiHooks });
 
-/** Block *by* used on the gui: a round at the start point it fires, sent what the GUI set. */
+/** Block *by* used on the GUI: a round at the start point it fires, sent what the GUI set. */
 async function used(graph: Graph, by: string, values: Record<string, unknown> = {}, asked: string[] = []) {
   const session = await use(graph, asked);
   const result = await session.run({ node_id: blockOf(by).fires!, port_id: 'data' }, { values, by });
