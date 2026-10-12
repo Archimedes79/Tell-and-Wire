@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useLayoutEffect, useRef, useState } from 'react';
 import FileBrowserDialog from './FileBrowserDialog';
 import Button from '../ui/Button';
 import { FIELD, FIELD_ON_SURFACE, MUTED } from '../ui/theme';
@@ -56,6 +56,10 @@ export default function PathField({
   onSurface, compact, mono, autoFocus, readOnly, disabled, onPicked, onKeyDown, children,
 }: PathFieldProps) {
   const [browsing, setBrowsing] = useState(false);
+  const box = useRef<HTMLInputElement>(null);
+  // A path longer than the box shows its end, the name of the file, until it is clicked into -- not the folders it begins with.
+  const showEnd = (): void => { const node = box.current; if (node && document.activeElement !== node) node.scrollLeft = node.scrollWidth; };
+  useLayoutEffect(showEnd, [value]);
   const size = onSurface || compact ? 'px-2 py-1.5' : 'px-3 py-2';
 
   return (
@@ -63,6 +67,9 @@ export default function PathField({
       <div className="flex items-center gap-2">
         <input
           id={id}
+          ref={box}
+          title={value || undefined}
+          onBlur={showEnd}
           className={`flex-1 min-w-0 rounded-lg ${size} text-sm${mono ? ' font-mono' : ''}`}
           style={onSurface ? FIELD_ON_SURFACE : FIELD}
           value={value}
