@@ -132,10 +132,9 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
   }
 
   /**
-   * A sensible first appearance. Only what you *operate* gets a frame: a box
-   * around a heading or a chart is a box around something with a shape of its
-   * own, while a field you type into has to look like a field or nobody
-   * clicks it. A default, not a rule: the tone is yours to change.
+   * A sensible first appearance: no box. A field or a button draws itself, and
+   * a card around it would be a box in a box; what a run shows overrides this
+   * with a card of its own. A default, not a rule: the tone is yours to change.
    */
   protected defaultTone(_mode: string): Tone {
     return 'plain';

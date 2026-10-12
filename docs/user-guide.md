@@ -252,7 +252,10 @@ block, or drag one from the left column onto the gui. A selected block has a sma
 by its grip, beside it while the pointer is on it, to move it, and its corner to size it. A block is as tall as what is in it
 needs and at least its height in cells, so text is not cut. One that shows what a run hands back is a
 single line, "Waiting for output…", until a run does; selected, it has its whole height. Below 640 px -- a phone -- the gui is one column: every block takes the whole width, in the gui's order. *Look & size* holds the tone, frame and
-background. With no block selected, the right column shows the gui: *Colour scheme*
+background. A new block has the look that suits it: fields, dropdowns, sliders and buttons have no box -- they draw
+themselves -- and what a run shows (text, chart, table, image) is a raised box, so a gui has one frame for each result and none for the rest.
+Without a box, a block's edge is the edge of the boxes, a heading stands on the bottom of its row, nearest what it titles, and a rule in the middle.
+With no block selected, the right column shows the gui: *Colour scheme*
 recolours the gui; the editor keeps its own colours. Blocks are live while you build: a
 button pressed here runs the graph.
 

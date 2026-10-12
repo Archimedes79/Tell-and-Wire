@@ -15,4 +15,9 @@ export class PlotWindowWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
   override textShown(): string {
     return `labels ${CHART_TEXT.label} px, title ${CHART_TEXT.title} px`;
   }
+
+  /** What a run shows is a card, like the other results on the page. */
+  protected override defaultTone() {
+    return 'raised' as const;
+  }
 }

@@ -1,5 +1,5 @@
 import type { WidgetViewProps } from '../WidgetView';
-import { DIMMER, LINE, MUTED, SUNKEN, WARNING_TEXT } from '../../kit/ui/theme';
+import { DIMMER, MUTED, SUNKEN, WARNING_TEXT } from '../../kit/ui/theme';
 import { cut } from '../../kit/ui/cut';
 
 /**
@@ -33,7 +33,7 @@ export default function ImageViewWidgetView({ widget, value, incoming }: WidgetV
   const problems = items.filter((item) => !item.startsWith('data:') && !item.startsWith('http'));
 
   return (
-    <div className="h-full overflow-auto rounded-lg p-2" style={{ background: SUNKEN, border: `1px solid ${LINE}` }}>
+    <div className="h-full overflow-auto rounded-lg p-2" style={{ background: SUNKEN }}>
       {/* Said as the other blocks say it: this is what whoever uses the tool
           sees, and how the graph is wired is not theirs to do. */}
       {images.length === 0 && problems.length === 0 && (

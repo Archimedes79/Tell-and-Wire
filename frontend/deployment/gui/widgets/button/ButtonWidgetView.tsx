@@ -10,7 +10,7 @@ import Button from '../../kit/ui/Button';
  */
 export default function ButtonWidgetView({ widget, onTrigger, busy }: WidgetViewProps) {
   return (
-    <Button variant="primary" className="w-full h-full" disabled={busy} onClick={() => onTrigger()}>
+    <Button variant="primary" className="w-full h-[34px]" disabled={busy} onClick={() => onTrigger()}>
       {widget.label || 'Press'}
     </Button>
   );

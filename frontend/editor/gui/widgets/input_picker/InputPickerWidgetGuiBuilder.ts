@@ -43,8 +43,8 @@ export class InputPickerWidgetGuiBuilder extends WidgetGuiBuilder {
     return { value: '', extensions: '', recursive: false };
   }
 
-  /** A field you operate looks like a field, or nobody clicks it. */
+  /** The field draws its own frame; a card around it would be a box in a box. */
   protected override defaultTone() {
-    return 'sunken' as const;
+    return 'plain' as const;
   }
 }

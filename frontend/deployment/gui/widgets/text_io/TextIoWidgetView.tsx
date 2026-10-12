@@ -89,7 +89,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
 
   if (mode === 'output' && text === '') {
     return (
-      <div className="h-full rounded-lg px-2 flex items-center" style={{ minHeight: 34, fontSize: 13, color: DIMMER, border: `1px dashed ${LINE}` }}>
+      <div className="h-full flex items-center" style={{ minHeight: 34, fontSize: 13, color: DIMMER }}>
         Waiting for output…
       </div>
     );
@@ -102,8 +102,8 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
           id={controlId}
           ref={follow.ref}
           onScroll={follow.onScroll}
-          className="w-full h-full rounded-lg px-2 py-1.5 resize-none"
-          style={{ ...FIELD, ...BOX_TEXT, minHeight: 80 }}
+          className="w-full h-full rounded-lg py-1.5 resize-none"
+          style={{ ...BOX_TEXT, minHeight: 80, background: 'transparent', color: TEXT, border: 'none', outline: 'none' }}
           value={text}
           readOnly
         />

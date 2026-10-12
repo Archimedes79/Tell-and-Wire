@@ -19,8 +19,8 @@ const LIFT = 'inset 0 1px 0 color-mix(in srgb, white 7%, transparent), 0 1px 2px
 export const TONES: Tone[] = ['plain', 'raised', 'sunken', 'accent'];
 
 export const TONE_LABELS: Record<Tone, string> = {
-  plain: 'Plain — no box (headings, prose)',
-  raised: 'Raised — lifts off the gui (windows, plots)',
+  plain: 'Plain — no box (headings, prose, fields)',
+  raised: 'Raised — lifts off the gui (results, plots)',
   sunken: 'Sunken — recessed (input fields)',
   accent: 'Accent — tinted (the one thing to notice)',
 };
@@ -62,7 +62,7 @@ export function toneStyle(tone: Tone | undefined, look: Look = {}): CSSPropertie
   return base;
 }
 
-/** Does the block draw a box at all? */
+/** Does the block draw a box at all? A bare block sets its edge on the box's: no padding at the sides. */
 export function toneIsBare(tone: Tone | undefined, look: Look = {}): boolean {
   if (look.border !== undefined) return !look.border && !look.background;
   return tone === 'plain' && !look.background;

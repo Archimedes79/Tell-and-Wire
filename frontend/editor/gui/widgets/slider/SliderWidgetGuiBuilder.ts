@@ -20,9 +20,9 @@ export class SliderWidgetGuiBuilder extends WidgetGuiBuilder {
     return { w: 8, h: 1 };
   }
 
-  /** A control you operate looks like a field, or nobody touches it. */
+  /** The control draws its own frame; a card around it would be a box in a box. */
   protected override defaultTone() {
-    return 'sunken' as const;
+    return 'plain' as const;
   }
 
   protected override initialSettings() {

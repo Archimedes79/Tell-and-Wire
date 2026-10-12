@@ -6,12 +6,10 @@ import { textRole, type TextRole } from '../../../../../gui/widgets/text/role.ts
 /**
  * Prose: a heading, a paragraph, or a caption — one widget, three roles.
  *
- * The role decides size and weight, and nothing else. Every one of them starts
- * at the top of its block, because a gui where some text hangs from the top
- * and other text sits on the bottom has no baseline the eye can follow -- and
- * the heading was the one hanging the other way. Air between sections comes
- * from the spacer, where it is visible and adjustable, instead of from a block
- * that is taller than its contents.
+ * The role decides size and weight, and nothing else. The text starts at the
+ * top of its block, so a block that is taller than its text has the air under
+ * it. A heading without a box is as tall as its text and stands on the bottom
+ * of its row (`BlockKind.sits`), nearer what it titles than what is above it.
  */
 export const TEXT_ROLES = {
   heading: { fontSize: 19, fontWeight: 600, color: TEXT, letterSpacing: '-0.01em' },
