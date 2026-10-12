@@ -8,6 +8,8 @@ const asked: { route: string; body: Record<string, unknown> }[] = [];
 let rounds: Record<string, Partial<RoundSnapshot>> = {};
 let nodesOf: (event: string) => NodeResult[] = () => [];
 let started = 0;
+/** What the host holds in the chat blocks after a round. */
+let talk: Record<string, unknown> = {};
 vi.mock('./api', async (actual) => ({
   ...(await actual<typeof import('./api')>()),
   call: vi.fn(async (route: string, body: Record<string, unknown>) => {
@@ -19,7 +21,7 @@ vi.mock('./api', async (actual) => ({
       return { session: 'held', round_id: id, total: 1 };
     }
     if (route === 'round') return rounds[String(body.id)];
-    if (route === 'session') return { shown: { second_out_result: 'made by second', first_out_result: 'made by first' } };
+    if (route === 'session') return { shown: { second_out_result: 'made by second', first_out_result: 'made by first' }, gui: talk };
     if (route === 'reset') return {};
     throw new Error(`not expected here: ${route}`);
   }),
@@ -48,7 +50,7 @@ const twoWindows = (): Windows => ({
 
 describe('running windows', () => {
   beforeEach(() => {
-    asked.length = 0; rounds = {}; started = 0;
+    asked.length = 0; rounds = {}; started = 0; talk = {};
     nodesOf = (event) => [ok(event), ok(`${event}_result`)];
     useNotebook.getState().start(twoWindows());
   });
@@ -106,6 +108,32 @@ describe('running windows', () => {
     await runWindow('first');
     expect(useNotebook.getState().results.first).toMatchObject({ outcome: 'failed', message: 'Failed to fetch' });
     expect(useNotebook.getState().going).toEqual([]);
+  });
+
+  it('sends what is said in a chat, and keeps the conversation the host made of it for the message after', async () => {
+    const chat: Windows = {
+      name: 'Chat', description: '',
+      windows: [{ id: 'talk', title: 'Talk', span: 12, inputs: [], steps: [{ name: 'Reply', sentence: 'Answer @Chat.message.', how: 'ai' }], outputs: [{ name: 'Chat', kind: 'chat', rows: 6 }] }],
+    };
+    useNotebook.getState().start(chat);
+    useNotebook.setState({ values: { talk_out_chat: { messages: [], pending: 'hello' } } });
+    talk = { talk_out_chat: { messages: [{ role: 'user', text: 'hello' }, { role: 'assistant', text: 'hi there' }], pending: '' } };
+    nodesOf = (event) => [ok(event), ok(`${event}_reply`)];
+    await runWindow('talk');
+    const sent = asked.find((one) => one.route === 'startRound')!.body;
+    // The chat is what starts the window, and what was said goes with it.
+    expect(sent).toMatchObject({ event: 'talk', by: 'talk_out_chat', values: { talk_out_chat: { pending: 'hello' } } });
+    expect(useNotebook.getState().values.talk_out_chat).toEqual(talk.talk_out_chat);
+
+    // A message nobody answered stays in hand.
+    nodesOf = (event) => [ok(event), { node_id: `${event}_reply`, status: 'error', inputs: {}, outputs: {}, error: 'Could not reach the model.' }];
+    useNotebook.setState({ values: { talk_out_chat: { messages: [], pending: 'again' } } });
+    await runWindow('talk');
+    expect(useNotebook.getState().values.talk_out_chat).toEqual({ messages: [], pending: 'again' });
+    // Run all leaves a chat to be talked to.
+    asked.length = 0;
+    await runAll();
+    expect(events()).toEqual([]);
   });
 
   it('runs all that are not current, in the order of the page, and forgets them when asked', async () => {

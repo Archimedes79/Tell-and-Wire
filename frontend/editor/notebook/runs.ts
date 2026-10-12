@@ -6,7 +6,7 @@
 
 import { call, wordsOf } from './api';
 import { compile, useNotebook, type NodeState, type Outcome, type WindowResult } from './store';
-import { inBlock, outEnd, sentBy, startValue } from './values';
+import { NO_CHAT, chatsOf, inBlock, outEnd, sentBy, startValue, starterOf } from './values';
 import { afterRun, runOrder, type Window } from '../../../gui/editor/windows/windows.ts';
 import { withoutWriting } from '../../../graph/editor/handedOn.ts';
 import type { RoundSnapshot } from '../../../backend/deployment/host/api.ts';
@@ -28,7 +28,8 @@ function heldValue(window: Window, blockId: string): unknown {
   const set = useNotebook.getState().values;
   if (blockId in set) return set[blockId];
   const one = window.inputs.find((input) => inBlock(window, input) === blockId);
-  return one ? startValue(one) : undefined;
+  if (one) return startValue(one);
+  return chatsOf(window).some((chat) => outEnd(window, chat) === blockId) ? NO_CHAT : undefined;
 }
 
 /** Hand the document, as the graph it is, to the host: what a round runs is what is on the page. */
@@ -67,7 +68,7 @@ async function runOne(id: string): Promise<boolean> {
   if (!doc || !window) return false;
   const session = held.session ?? undefined;
   const { round_id: roundId } = await call('startRound', {
-    event: id, by: `${id}_run`, session, values: sentBy(window, (blockId) => heldValue(window, blockId)),
+    event: id, by: starterOf(window), session, values: sentBy(window, (blockId) => heldValue(window, blockId)),
   });
   current = roundId;
   let round: RoundSnapshot;
@@ -82,7 +83,11 @@ async function runOne(id: string): Promise<boolean> {
   const shown: Record<string, unknown> = {};
   for (const out of window.outputs) shown[outEnd(window, out)] = view.shown[outEnd(window, out)];
   const result: WindowResult = { outcome, message, shown, nodes: nodesOf(round) };
+  // A chat holds the conversation: what the host settled into it is what the next message is sent with. A message that was not
+  // answered stays in hand, to be sent again.
+  const talks = Object.fromEntries(chatsOf(window).flatMap((chat) => (outcome === 'done' && view.gui[outEnd(window, chat)] ? [[outEnd(window, chat), view.gui[outEnd(window, chat)]]] : [])));
   useNotebook.setState((state) => ({
+    values: { ...state.values, ...talks },
     results: { ...state.results, [id]: result },
     log: [{ id: roundId, window: id, title: window.title, at: Date.now(), outcome, round }, ...state.log].slice(0, LOG_LIMIT),
     ...(outcome === 'done' ? { done: afterRun(doc, state.done, id) } : {}),
@@ -116,6 +121,8 @@ export async function runWindow(id: string): Promise<void> {
 export async function runAll(): Promise<void> {
   for (const window of useNotebook.getState().doc?.windows ?? []) {
     const { done, results } = useNotebook.getState();
+    // A chat is run by what is said in it, not by the page.
+    if (chatsOf(window).length) continue;
     if (done.ran.has(window.id) && !done.changed.has(window.id) && results[window.id]?.outcome === 'done') continue;
     await runWindow(window.id);
     if (useNotebook.getState().results[window.id]?.outcome !== 'done') return;
@@ -130,6 +137,9 @@ export async function stopRuns(): Promise<void> {
 
 /** Forget what the windows made, and what using them left with the host: the notebook is as written again. */
 export async function forgetRuns(): Promise<void> {
-  useNotebook.setState({ results: {}, done: { ran: new Set<string>(), changed: new Set<string>() }, log: [] });
+  const { doc, values } = useNotebook.getState();
+  // What was said in a chat goes with the rest.
+  const kept = Object.fromEntries(Object.entries(values).filter(([key]) => !doc?.windows.some((window) => chatsOf(window).some((chat) => outEnd(window, chat) === key))));
+  useNotebook.setState({ results: {}, values: kept, done: { ran: new Set<string>(), changed: new Set<string>() }, log: [] });
   if (held.session) await call('reset', { session: held.session }).catch(() => undefined);
 }

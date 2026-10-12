@@ -99,3 +99,30 @@ describe('a window on the page', () => {
     expect(screen.querySelector('.nb-chip')?.textContent).toBe('Failed');
   });
 });
+
+describe('a window that is a chat', () => {
+  const CHAT: Windows = {
+    name: 'Chat', description: '',
+    windows: [{ id: 'talk', title: 'Talk', span: 12, inputs: [], steps: [{ name: 'Reply', sentence: 'Answer @Chat.message.', how: 'ai' }], outputs: [{ name: 'Chat', kind: 'chat', rows: 5 }] }],
+  };
+
+  it('has a box to say things in instead of a button, and says what was said when it is sent', async () => {
+    useNotebook.getState().start(CHAT);
+    await act(async () => { root.render(createElement(WindowBox, { window: CHAT.windows[0], writing: false })); });
+    expect([...screen.querySelectorAll('button')].some((one) => one.textContent === 'Run')).toBe(false);
+    const box = screen.querySelector('textarea[aria-label="Message"]') as HTMLTextAreaElement;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(box, 'hello there');
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => { [...screen.querySelectorAll('button')].find((one) => one.textContent === 'Send')!.click(); await new Promise((over) => { setTimeout(over, 0); }); });
+    expect(run).toHaveBeenCalledWith('talk');
+    expect(useNotebook.getState().values.talk_out_chat).toEqual({ messages: [], pending: 'hello there' });
+    // The message in hand stands in the transcript.
+    expect(screen.querySelector('.nb-bubble.user')?.textContent).toBe('hello there');
+    await act(async () => {
+      useNotebook.setState({ values: { talk_out_chat: { messages: [{ role: 'user', text: 'hello there' }, { role: 'assistant', text: 'hi' }], pending: '' } } });
+    });
+    expect([...screen.querySelectorAll('.nb-bubble')].map((one) => one.textContent)).toEqual(['hello there', 'hi']);
+  });
+});

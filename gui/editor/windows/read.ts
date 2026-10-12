@@ -9,7 +9,7 @@ import { SIZES, idOf, type BlockKind, type PageBlock, type InKind, type OutKind,
 export class NotWindows extends Error {}
 
 const IN_KINDS: readonly InKind[] = ['file', 'folder', 'text', 'number', 'choice', 'from'];
-const OUT_KINDS: readonly OutKind[] = ['text', 'list', 'table', 'chart', 'image'];
+const OUT_KINDS: readonly OutKind[] = ['text', 'list', 'table', 'chart', 'image', 'chat'];
 
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown, fallback = ''): string => (typeof value === 'string' ? value : fallback);

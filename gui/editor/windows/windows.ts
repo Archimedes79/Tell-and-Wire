@@ -41,7 +41,7 @@ import { afterRun as orderAfterRun, currentWindows as orderCurrent, runOrder as 
 export type InKind = 'file' | 'folder' | 'text' | 'number' | 'choice' | 'from';
 
 /** What can come out of a window. */
-export type OutKind = 'text' | 'list' | 'table' | 'chart' | 'image';
+export type OutKind = 'text' | 'list' | 'table' | 'chart' | 'image' | 'chat';
 
 export interface WindowIn {
   /** What sentences call it (`@Name`) and what the window labels it. */
@@ -172,6 +172,7 @@ export const SIZES: Record<OutKind, Record<'S' | 'M' | 'L', number>> = {
   table: { S: 4, M: 5, L: 7 },
   chart: { S: 4, M: 5, L: 7 },
   image: { S: 3, M: 4, L: 6 },
+  chat: { S: 5, M: 7, L: 9 },
 };
 
 /** An element of a window, as it is laid out: how many cells across, how many rows down at least. */
@@ -193,10 +194,13 @@ function inLines(pieces: Piece[], span: number): { piece: Piece; rows: number }[
   return lines.map((line) => line.map((piece) => ({ piece, rows: Math.max(...line.map((one) => one.rows)) })));
 }
 
-/** The window's height in cells: heading, the lines of inputs, the row with Run and the first sentence, the lines of outputs. Fixed by the elements alone. */
+/** Whether a window has a button: unless it says it has none, and unless a chat is sent from by its own box. */
+const hasButton = (window: Window): boolean => window.trigger?.button !== false && !window.outputs.some((one) => one.kind === 'chat');
+
+/** The window's height in cells: heading, the lines of inputs, the row with its button, the lines of outputs. Fixed by the elements alone. */
 export function windowRows(window: Window): number {
   const height = (pieces: Piece[]): number => inLines(pieces, window.span).reduce((sum, line) => sum + line[0].rows, 0);
-  return 1 + height(window.inputs.map((one) => inPiece(window, one))) + 1 + height(window.outputs.map((one) => outPiece(window, one)));
+  return 1 + height(window.inputs.map((one) => inPiece(window, one))) + (hasButton(window) ? 1 : 0) + height(window.outputs.map((one) => outPiece(window, one)));
 }
 
 // ---- what a sentence points at ----------------------------------------------
@@ -206,7 +210,7 @@ export interface Mention { name: string; part?: string }
 
 /** The mentions of a sentence, in the order they stand. */
 export function mentions(sentence: string): Mention[] {
-  return [...sentence.matchAll(/@([\p{L}\p{N}_-]+)(?:\.(path|content))?/gu)].map((found) => ({ name: found[1], ...(found[2] ? { part: found[2] } : {}) }));
+  return [...sentence.matchAll(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu)].map((found) => ({ name: found[1], ...(found[2] ? { part: found[2] } : {}) }));
 }
 
 /** What a step hands on: its results, by name. */
@@ -236,9 +240,9 @@ function shownResult(window: Window, one: WindowOut): string | undefined {
 }
 
 /** The kind of block that shows each kind of output. */
-const OUT_BLOCK: Record<OutKind, WidgetKind> = { text: 'text_io', list: 'text_io', table: 'table', chart: 'plot_window', image: 'image_view' };
+const OUT_BLOCK: Record<OutKind, WidgetKind> = { text: 'text_io', list: 'text_io', table: 'table', chart: 'plot_window', image: 'image_view', chat: 'chat' };
 
-const OUT_TYPE: Record<OutKind, DataType> = { text: 'text', list: 'text', table: 'json', chart: 'json', image: 'image' };
+const OUT_TYPE: Record<OutKind, DataType> = { text: 'text', list: 'text', table: 'json', chart: 'json', image: 'image', chat: 'text' };
 const IN_TYPE: Record<InKind, DataType> = { file: 'text', folder: 'file_path', text: 'text', number: 'number', choice: 'text', from: 'text' };
 
 const multiStep = (step: Step): boolean => step.each === true;
@@ -246,6 +250,11 @@ const multiStep = (step: Step): boolean => step.each === true;
 /** What a mention in step *at* of *window* points at: an input, an earlier step's result, another window's output. */
 function sourceOf(doc: Windows, window: Window, at: number, mention: Mention): Source | undefined {
   const input = window.inputs.find((one) => idOf(one.name) === idOf(mention.name));
+  // A chat is sent from and shown in one box: what it was sent is the message, and the conversation so far.
+  const chat = input ? undefined : window.outputs.find((one) => one.kind === 'chat' && idOf(one.name) === idOf(mention.name));
+  if (chat) {
+    return { node: window.id, port: START_PORT, field: `${outEnd(window, chat)}.${mention.part === 'history' ? 'history' : 'message'}`, type: 'text', multi: false, label: chat.name };
+  }
   if (input && input.kind !== 'from') {
     const block = inBlock(window, input);
     const part = input.kind === 'file' ? mention.part ?? 'content' : undefined;
@@ -272,7 +281,12 @@ function sourceOf(doc: Windows, window: Window, at: number, mention: Mention): S
 export function taken(window: Window, at: number): Mention[] {
   const said = mentions(window.steps[at].sentence);
   if (said.length) return said;
-  return at === 0 ? window.inputs.map((one) => ({ name: one.name })) : resultsOf(window.steps[at - 1]).map((name) => ({ name }));
+  if (at > 0) return resultsOf(window.steps[at - 1]).map((name) => ({ name }));
+  // The first step takes everything that goes in: and from a chat, the message and what was said before it.
+  return [
+    ...window.inputs.map((one) => ({ name: one.name })),
+    ...window.outputs.filter((one) => one.kind === 'chat').flatMap((one) => [{ name: one.name, part: 'message' }, { name: one.name, part: 'history' }]),
+  ];
 }
 
 // ---- what is wrong ---------------------------------------------------------
@@ -393,7 +407,10 @@ export const afterRun = (doc: Windows, done: Done, id: string): Done => orderAft
 // ---- windows to a graph and a gui ------------------------------------------
 
 /** The sentence as the model reads it: a mention is the name of what it points at. */
-const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content))?/gu, (_, name: string, part?: string) => `"${name}${part === 'path' ? ' path' : ''}"`);
+const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu, (_, name: string, part?: string) => `"${name}${part && part !== 'content' ? ` ${part}` : ''}"`);
+
+/** What a port is called for the part of a thing a step takes: a file's `path`, a chat's `message` and `history`; the thing itself, nothing. */
+const partOf = (part?: string): string => (part && part !== 'content' ? `_${part}` : '');
 
 function stepNodeOf(doc: Windows, window: Window, at: number, y: number): { node: GraphNode; wires: { from: string; fromPort: string; toPort: string }[] } {
   const step = window.steps[at];
@@ -402,9 +419,9 @@ function stepNodeOf(doc: Windows, window: Window, at: number, y: number): { node
   for (const mention of taken(window, at)) {
     const source = sourceOf(doc, window, at, mention);
     if (!source) continue;
-    const id = idOf(mention.name) + (mention.part === 'path' ? '_path' : '');
+    const id = idOf(mention.name) + partOf(mention.part);
     if (ports.has(id)) continue;
-    const input = port(id, mention.part === 'path' ? `${mention.name} path` : mention.name, 'input', source.type, source.multi, `What goes into ${source.label}`);
+    const input = port(id, mention.part && mention.part !== 'content' ? `${mention.name} ${mention.part}` : mention.name, 'input', source.type, source.multi, `What goes into ${source.label}`);
     ports.set(id, source.field ? { ...input, field: source.field } : input);
     wires.push({ from: source.node, fromPort: source.port, toPort: id });
   }
@@ -456,6 +473,7 @@ function blocksOf(doc: Windows, window: Window): RawConfig[] {
       case 'table': return { ...common, kind: 'table' };
       case 'chart': return { ...common, kind: 'plot_window' };
       case 'image': return { ...common, kind: 'image_view' };
+      case 'chat': return { ...common, kind: 'chat', value: { messages: [], pending: '' }, sends_to: [window.id], fires: window.id };
       default: return { ...common, kind: 'text_io', mode: 'output' };
     }
   };
@@ -463,13 +481,12 @@ function blocksOf(doc: Windows, window: Window): RawConfig[] {
     const lines = inLines(pieces, window.span);
     return lines.flat().map((placed, at) => make(items[at], placed.piece.cells, placed.rows));
   };
-  const button = trigger.button !== false;
+  const button = hasButton(window);
   const run = button ? Math.min(window.span, Math.max(2, Math.round(window.span / 4))) : 0;
   return [
     { ...on, id: `${window.id}_title`, kind: 'text', mode: 'heading', label: '', w: window.span, h: 1, tone: 'plain', value: window.title, span: window.span, after: upstream(doc, window.id), ...(at >= 0 ? { page_at: at } : {}) },
     ...lay(window.inputs, window.inputs.map((one) => inPiece(window, one)), taking),
     ...(button ? [{ ...on, id: `${window.id}_run`, kind: 'button', label: trigger.label?.trim() || 'Run', w: run, h: 1, tone: 'plain', fires: window.id }] : []),
-    { ...on, id: `${window.id}_sentence`, kind: 'text', mode: 'caption', label: '', w: window.span - run, h: 1, tone: 'plain', value: window.steps[0]?.sentence ?? '' },
     ...lay(window.outputs, window.outputs.map((one) => outPiece(window, one)), showing),
   ];
 }

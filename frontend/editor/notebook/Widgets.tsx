@@ -3,8 +3,9 @@
 // Each is a few lines of HTML; none of the gui's blocks. A box of a window has the size the window gave it and keeps it,
 // whatever arrives (it scrolls inside itself).
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { asText } from '../../../gui/widgets/text_io/text.ts';
+import { chatValue } from '../../../gui/widgets/chat/value.ts';
 import type { InKind, OutKind, WindowIn } from '../../../gui/editor/windows/windows.ts';
 import Browse from './Browse';
 import Chart from './Chart';
@@ -100,4 +101,36 @@ function Pictures({ value }: { value: unknown }) {
   const items = (Array.isArray(value) ? value : [value]).filter((one): one is string => typeof one === 'string');
   if (!items.length) return <>{asText(value)}</>;
   return <>{items.map((src, at) => (/^(data:|https?:)/.test(src) ? <img key={at} src={src} alt="" /> : <div key={at}>{src}</div>))}</>;
+}
+
+/**
+ * A conversation: what was said, a box to say the next thing, and the answer coming into it. The message in hand (`pending`) stands
+ * in the transcript while it is answered, and stays there, marked, when nobody answered it. The box is as tall as its rows and the
+ * transcript scrolls inside it.
+ */
+export function ChatBox({ value, rows, busy, error, onSend }: { value: unknown; rows: number; busy: boolean; error?: string; onSend: (text: string) => void }) {
+  const { messages, pending } = chatValue(value);
+  const [draft, setDraft] = useState('');
+  const log = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [messages.length, busy, pending]);
+  const send = (): void => { if (draft.trim() && !busy) { onSend(draft.trim()); setDraft(''); } };
+  return (
+    <div className="nb-chat" style={{ height: Math.max(3, rows) * ROW + 12 + 64 }}>
+      <div className="nb-chat-log" ref={log} role="log" aria-label="Conversation">
+        {messages.length === 0 && !pending && <div className="nb-chat-none">Say something to begin.</div>}
+        {messages.map((one, at) => <div key={at} className={`nb-bubble ${one.role}`}>{one.text}</div>)}
+        {pending && <div className="nb-bubble user">{pending}</div>}
+        {pending && busy && <div className="nb-bubble assistant waiting">…</div>}
+        {pending && !busy && <div className="nb-chat-none">{error ? 'It was not answered. Send it again.' : 'Not answered yet.'}</div>}
+      </div>
+      <form className="nb-chat-send" onSubmit={(event) => { event.preventDefault(); send(); }}>
+        <textarea
+          aria-label="Message" rows={2} value={draft} placeholder="Type a message…" disabled={busy}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send(); } }}
+        />
+        <button type="submit" className="nb-btn primary" disabled={busy || !draft.trim()}>Send</button>
+      </form>
+    </div>
+  );
 }

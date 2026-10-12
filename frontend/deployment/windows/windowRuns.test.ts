@@ -155,3 +155,18 @@ describe('the words of a page', () => {
     expect(pageNotes(windowsToGraph({ ...doc, page: undefined }).gui!.blocks as never[])).toEqual([]);
   });
 });
+
+describe('a window that is a chat', () => {
+  it('is started by its chat, and what is said in it does not leave the window out of date', () => {
+    const chat: Windows = {
+      name: 'Chat', description: '',
+      windows: [{ id: 'talk', title: 'Talk', span: 12, inputs: [], steps: [{ name: 'Reply', sentence: 'Answer @Chat.message.', how: 'ai' }], outputs: [{ name: 'Chat', kind: 'chat', rows: 6 }] }],
+    };
+    const [window] = pageWindows(windowsToGraph(chat).gui!.blocks as never[]);
+    expect(window.starter).toBe('talk_out_chat');
+    expect(window.inputs).toEqual([]);
+    const runs = recorded({}, window, () => undefined);
+    // The conversation grew after the window ran: it is still current.
+    expect(isCurrent([window], runs, () => ({ messages: [{ role: 'user', text: 'hi' }] }), 'talk')).toBe(true);
+  });
+});

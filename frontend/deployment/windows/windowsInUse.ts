@@ -58,7 +58,8 @@ export function pageWindows(blocks: readonly GuiWidget[]): PageWindow[] {
       if (Array.isArray(block.after)) window.after = block.after.filter((one): one is string => typeof one === 'string');
       if (typeof block.page_at === 'number') window.at = block.page_at;
     }
-    if (block.sends_to?.includes(block.group)) window.inputs.push(block.id);
+    // A block that also shows what the window makes (a chat) is where it is talked to, not an input whose change leaves the window out of date.
+    if (block.sends_to?.includes(block.group) && !block.shows) window.inputs.push(block.id);
     // A block that only fires (a button) starts it by a press; one that also sends (an input) starts it by a change.
     if (block.fires === block.group && (window.starter === null || !block.sends_to?.length)) window.starter = block.id;
   }

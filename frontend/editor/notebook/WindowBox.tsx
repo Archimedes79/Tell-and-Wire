@@ -3,11 +3,12 @@
 // It never grows. An output has the height of its rows whatever arrives in it; a message about a run that came to
 // nothing stands in the first output's place, not under it.
 
-import { numbering, inBlock, outEnd, startValue } from './values';
+import { NO_CHAT, chatsOf, numbering, inBlock, outEnd, startValue } from './values';
 import { runWindow, stopRuns } from './runs';
 import { useNotebook } from './store';
 import { chipClass, STATE_WORDS, windowState } from './status';
-import { Input, Output } from './Widgets';
+import { ChatBox, Input, Output } from './Widgets';
+import { chatValue } from '../../../gui/widgets/chat/value.ts';
 import type { Window } from '../../../gui/editor/windows/windows.ts';
 
 /** The share of a line an element takes, as a flex basis that leaves room for the gap between elements. */
@@ -38,6 +39,12 @@ export default function WindowBox({ window, writing }: { window: Window; writing
       clearTimeout(timers.get(window.id));
       timers.set(window.id, setTimeout(() => { void runWindow(window.id); }, 600));
     }
+  };
+  /** Say something in a chat: it stands in hand, with what was said before it, and is answered by a round of the window. */
+  const send = (blockId: string, text: string): void => {
+    const said = chatValue(useNotebook.getState().values[blockId]).messages;
+    useNotebook.setState((state) => ({ values: { ...state.values, [blockId]: { messages: said, pending: text } } }));
+    void runWindow(window.id);
   };
   const mark = (blockId: string) => (numbers?.has(blockId)
     ? <button type="button" className="nb-mark" title="Show its cell" onClick={() => document.getElementById(`cell-${blockId}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })}>{numbers.get(blockId)}</button>
@@ -78,7 +85,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
         </div>
       )}
 
-      {trigger.button !== false && (
+      {trigger.button !== false && !chatsOf(window).length && (
         <div className="nb-run" {...pointing(`${window.id}_run`)}>
           {state === 'running' || state === 'waiting'
             ? <button className="nb-btn" onClick={() => { void stopRuns(); }}>■ Stop</button>
@@ -95,7 +102,14 @@ export default function WindowBox({ window, writing }: { window: Window; writing
             return (
               <div key={id} className={`nb-field${lit(id)}`} style={basis(out.width)} {...pointing(id)}>
                 <span className="nb-label">{out.name}</span>
-                {failed && at === 0 && shown === undefined
+                {out.kind === 'chat'
+                  ? (
+                    <>
+                      <ChatBox value={values[id] ?? NO_CHAT} rows={out.rows} busy={state === 'running' || state === 'waiting'} error={failed?.message} onSend={(text) => send(id, text)} />
+                      {failed && <div className={`nb-out msg ${failed.outcome}`} style={{ marginTop: 6 }}>{failed.message}</div>}
+                    </>
+                  )
+                  : failed && at === 0 && shown === undefined
                   ? (
                     <div className={`nb-out msg ${failed.outcome}`} style={{ height }}>
                       <div>{failed.message}</div>

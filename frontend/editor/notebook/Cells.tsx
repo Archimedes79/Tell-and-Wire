@@ -21,9 +21,9 @@ import { Output } from './Widgets';
 import Browse from './Browse';
 
 const IN_KINDS: [InKind, string][] = [['text', 'Text'], ['file', 'File'], ['folder', 'Folder'], ['number', 'Number'], ['choice', 'Choice'], ['from', 'From window']];
-const OUT_KINDS: [OutKind, string][] = [['text', 'Text'], ['list', 'List'], ['table', 'Table'], ['chart', 'Chart'], ['image', 'Image']];
+const OUT_KINDS: [OutKind, string][] = [['text', 'Text'], ['list', 'List'], ['table', 'Table'], ['chart', 'Chart'], ['image', 'Image'], ['chat', 'Chat']];
 const SHARES: [string, number][] = [['¼', 0.25], ['⅓', 1 / 3], ['½', 0.5], ['⅔', 2 / 3], ['¾', 0.75], ['Full', 1]];
-const KIND_WORD: Record<OutKind, string> = { text: 'text', list: 'a list', table: 'a table', chart: 'a chart', image: 'an image' };
+const KIND_WORD: Record<OutKind, string> = { text: 'text', list: 'a list', table: 'a table', chart: 'a chart', image: 'an image', chat: 'a chat' };
 
 type Change = (change: (doc: Windows) => Windows, name?: string) => void;
 
@@ -90,7 +90,8 @@ export default function Cells({ doc, window }: { doc: Windows; window: Window })
   const pointAt = (key: string | null) => useNotebook.getState().show({ hot: key });
   const names = window.inputs.map((one) => one.name);
   const trigger = window.trigger ?? {};
-  const askedFor = window.ask ?? `Ask for ${names.length ? names.join(', ').replace(/, ([^,]*)$/, ' and $1') : 'nothing'}.`;
+  const talks = window.outputs.some((one) => one.kind === 'chat');
+  const askedFor = window.ask ?? `Ask for ${names.length ? names.join(', ').replace(/, ([^,]*)$/, ' and $1') : talks ? 'what is said in the chat' : 'nothing'}.`;
   const results$ = window.steps.flatMap((step) => resultsOf(step));
   const hasFolder = window.inputs.some((one) => one.kind === 'folder');
   const others = doc.windows.filter((one) => one.id !== id && one.outputs.length > 0);

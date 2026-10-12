@@ -111,3 +111,43 @@ describe('a cell done by code', () => {
     expect(windowProblems(patchStep(doc, 'summarize', 1, { code: '  ' })).map((one) => one.problem)).toEqual(['The cell "Code" is code and holds none yet.']);
   });
 });
+
+describe('a window that is a chat', () => {
+  const CHAT: Windows = {
+    name: 'Chat', description: '',
+    windows: [{
+      id: 'talk', title: 'Talk', span: 12, inputs: [],
+      steps: [{ name: 'Reply', sentence: 'Answer @Chat.message, knowing @Chat.history.', how: 'ai' }],
+      outputs: [{ name: 'Chat', kind: 'chat', rows: 7 }],
+    }],
+  };
+
+  it('is a graph that works, with one box that sends and shows, and no button', async () => {
+    expect(windowProblems(CHAT)).toEqual([]);
+    const graph = windowsToGraph(CHAT);
+    expect(problemsIn(graph)).toEqual([]);
+    const blocks = graph.gui!.blocks as unknown as Record<string, unknown>[];
+    expect(blocks.filter((block) => block.group === 'talk').map((block) => block.kind)).toEqual(['text', 'chat']);
+    expect(blocks.find((block) => block.kind === 'chat')).toMatchObject({ id: 'talk_out_chat', sends_to: ['talk'], fires: 'talk', shows: 'talk_out_chat' });
+    const step = graph.nodes.find((node) => node.id === 'talk_reply')!;
+    expect(step.inputs.map((one) => [one.id, (one as { field?: string }).field])).toEqual([['chat_message', 'talk_out_chat.message'], ['chat_history', 'talk_out_chat.history']]);
+  });
+
+  it('answers, and the second message is sent with what was said before it', async () => {
+    const { Session } = await import('../../deployment/host/session.ts');
+    const { guiHooks } = await import('../../deployment/gui/hooks.ts');
+    const { quietRuntime } = await import('../../deployment/runtime/test/fakes.ts');
+    const asked: string[] = [];
+    const runtime = () => quietRuntime({ ai: { complete: async (request) => { asked.push(JSON.stringify(request)); return `answer ${asked.length}`; } } });
+    const session = await Session.open(windowsToGraph(CHAT), { runtime, gui: guiHooks });
+
+    await session.run({ node_id: 'talk', port_id: 'data' }, { by: 'talk_out_chat', values: { talk_out_chat: { messages: [], pending: 'first question' } } });
+    const said = (session.view().gui.talk_out_chat as { messages: { role: string; text: string }[] }).messages;
+    expect(said).toEqual([{ role: 'user', text: 'first question' }, { role: 'assistant', text: 'answer 1' }]);
+
+    await session.run({ node_id: 'talk', port_id: 'data' }, { by: 'talk_out_chat', values: { talk_out_chat: { messages: said, pending: 'second question' } } });
+    expect(asked[1]).toContain('second question');
+    expect(asked[1]).toContain('first question');
+    expect(asked[1]).toContain('answer 1');
+  });
+});

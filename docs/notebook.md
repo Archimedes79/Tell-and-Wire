@@ -23,7 +23,7 @@ Branch `tell-and-wire-notebook`, built on `main`. New code in new files, a few l
 | Page, **Write** | Blocks you type in. Enter starts the next block, `# ` `## ` `- ` at the start of a line make a heading or a list, an empty bullet ends the list, Backspace in an empty block takes it away. A bar over a block (pointer or cursor in it) changes its kind or moves it; the **+** between blocks adds Text, a heading, Bullets, a Gap or a Window. |
 | Page, **Markdown** | The same page as text: `# Title`, `## Heading`, `- bullet`, `[space]`, `[window: id]`. Leaving the box makes it the page. |
 | Page, **As app** | The page as the people who use the tool see it: nothing to write in, only the windows to use. |
-| Windows | Inputs (text, number, choice, file, folder), a button or a change of an input as the trigger, outputs (text, list, table, chart, image) at the height of their rows. A window that has not come to anything says why in the place of its first output. Running one runs the ones it takes from first when they are not current. |
+| Windows | Inputs (text, number, choice, file, folder), a button or a change of an input as the trigger, outputs (text, list, table, chart, image) at the height of their rows, or a chat: one box in which the person types and the answer of the last step is shown, with the conversation kept for the next message (a step takes `@Chat.message` and `@Chat.history`). A window that has not come to anything says why in the place of its first output. Running one runs the ones it takes from first when they are not current. |
 | **List** | The cards of the open window. Ask: what is asked, a field for each input (kind, width, rows, where it starts), what starts the window. Do: the sentence, `takes` and `gives`, done by a model or by code (seeded to run as it is), the prompt or the code. Show: kind, which result, size and width, and the result as it stands. A field for the model: "Say what should change". Pointing at an element of the window lights its card and the other way round. |
 | **Under the hood** | Ask → Do → Show as boxes with the names on the wires, and the stored graph. |
 | **Debug** | Each round: who ran, what each node got and made, why one did nothing. Stop, and forget what the windows made. |
@@ -69,8 +69,8 @@ same round.
 
 ## What a window cannot say yet
 
-A chat (a block of its own), a cell that runs several models in parallel (steps stand one under the other and run in turn;
-`paper_review_panel` is one cell for each reviewer), and starting by itself (when the tool starts, every few minutes).
+A cell that runs several models in parallel (steps stand one under the other and run in turn; `paper_review_panel` is one cell
+for each reviewer), a memory that lasts between rounds (the counter), and starting by itself (when the tool starts, every few minutes).
 The editor's own look follows the design (A2), not the colour scheme of the tool; the scheme is kept in the document and told
 to the model, and the delivered tool draws it.
 

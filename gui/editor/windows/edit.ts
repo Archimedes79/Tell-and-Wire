@@ -26,7 +26,7 @@ const NEW_INPUT: Record<InKind, (window: Window) => WindowIn> = {
   from: (window) => ({ name: freshName('From', namesIn(window)), kind: 'from' }),
 };
 
-const NEW_OUTPUT_NAME: Record<OutKind, string> = { text: 'Text', list: 'List', table: 'Table', chart: 'Chart', image: 'Image' };
+const NEW_OUTPUT_NAME: Record<OutKind, string> = { text: 'Text', list: 'List', table: 'Table', chart: 'Chart', image: 'Image', chat: 'Chat' };
 
 /** The window with *change* applied to the window of that id. */
 export function inWindow(doc: Windows, id: string, change: (window: Window) => Window): Windows {
