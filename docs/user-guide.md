@@ -290,8 +290,21 @@ each part the graph reads and a button per start point. Start points that start 
 start, and their clocks tick. A graph with no start point runs once, whole. **■ Stop** ends
 it; the delivered gui has a Stop of its own while a run goes.
 
+- While it runs, the cards show it: a ring turns on the node that works, and each node that is
+  done gets its mark -- ✓ done, ! failed, – did not run -- as it finishes. The bar says how many
+  nodes are done and which one is working.
 - After a run every node's card shows what it made: a line of text, a row count, a
   small chart, a thumbnail, or the first line of an error.
+- **The run report.** The word that ends the run in the bar (*success*, *partial*, *error*, with
+  **· Report**) opens it, as does the **Report** button on a failure's notice. It lists every node
+  in the order it ran, says in plain words what to look at first -- the AI that cannot be reached,
+  a key turned down, a file not found, code with a mistake -- and shows the error as the node gave it.
+  **Open it** goes to that node. **Copy report** puts it all on the clipboard as text, to send to
+  whoever can help; what went in and out of the nodes is in it only if you tick *Include what went in
+  and out*, since it is your data.
+- Everything the editor tells you -- saved, opened, failed, written, stopped -- is a card in the
+  top right corner that does not move the page. What went well goes by itself after a few
+  seconds; a warning or an error stays until you close it.
 - *Last run* above the gui says what began the last run, and, on hover, why any node
   did not run.
 - *What using it keeps* lists what the session holds: what each start point was sent, what
@@ -366,6 +379,8 @@ home folder.
 
 ## When something does not work
 
+- **A run failed.** Press the word that ends it in the bar -- *error* or *partial*, with **· Report** --
+  for the run report: where to look first, in plain words, and a button that copies it to send on.
 - **A run stopped and the gui shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
@@ -373,7 +388,7 @@ home folder.
   before anything is asked: a local server that is not running, a model it has not pulled, a key
   not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (✨, the bar; the
   nodes' until you set it apart), each says *Now: provider / model* and, under the provider chosen,
-  where to get it; their keys come first. A wrong key, a model name nobody knows and a free tier's
+  where to get it and what it needs: the address of its server, or its key. A wrong key, a model name nobody knows and a free tier's
   limit come back with what to do. A small local model may be too small to write a whole graph:
   it says so, and a larger one in Settings (Gemini has a free tier) writes it.
 - **Using the gui starts nothing.** No block fires the start point: switch **Starts a run**

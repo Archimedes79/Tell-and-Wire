@@ -162,7 +162,9 @@ export class Rounds {
         id,
         report: (event) => {
           round.report(event, labelOf);
-          this.changed(id, false);
+          // A node beginning or ending is a moment: the canvas shows which ones work, and a start that was dropped for coming close
+          // after the last report would show a node as waiting for as long as it works. How far a batch has got is only progress.
+          this.changed(id, event.type === 'node_start' || event.type === 'node_done');
         },
         signal: round.stop.signal,
       });

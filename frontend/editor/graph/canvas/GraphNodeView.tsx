@@ -215,7 +215,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         background: SURFACE,
         border: `1px ${fileOver || takesWire ? 'dashed' : 'solid'} ${lit || fileOver || takesWire || working ? ACCENT : LINE}`,
         // The accent, doubled to two pixels without moving anything, and its glow.
-        boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : undefined,
+        boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : working ? `0 0 0 4px ${ACCENT_GLOW}` : undefined,
         // As wide as its contents come to, between these -- unless it was made a size (`resizeCard`): then it is that.
         ...(typeof graphNode.width === 'number' && typeof graphNode.height === 'number'
           ? { width: '100%', height: '100%' }

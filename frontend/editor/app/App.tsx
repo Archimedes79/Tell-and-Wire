@@ -97,7 +97,7 @@ export default function App() {
   // to the blocks it will really sit beside -- which a start or end point the
   // gui uses offers from its own view.
   const openGui = useCallback(() => setView('design'), []);
-  const openReport = useCallback(() => setShowReport(true), []);
+  const openReport = useCallback(() => { notice('run', ''); setShowReport(true); }, []);
   // A node the run stopped at: its own view, on the graph.
   const showNode = useCallback((nodeId: string) => { setView('graph'); useGraphStore.getState().setEditingNode(nodeId); }, []);
 

@@ -26,6 +26,21 @@ describe('Rounds', () => {
     expect(await rounds.start(1, named, async () => done()).outcome).toMatchObject({ status: 'success' });
   });
 
+  it('tells the watchers at once when a node begins or ends, and lets how far a batch has got be throttled', async () => {
+    const told: boolean[] = [];
+    const rounds = new Rounds((_id, moment) => told.push(moment));
+    const ran = rounds.start(1, named, async (round) => {
+      round.report({ type: 'node_start', node_id: 'a' });
+      round.report({ type: 'batch', node_id: 'a', done: 1, total: 3 });
+      round.report({ type: 'node_done', node_id: 'a', status: 'success' });
+      return done();
+    });
+    await ran.outcome;
+    await wait(0);
+    // asked, began, then the three reports, then ended
+    expect(told.slice(2, 5)).toEqual([true, false, true]);
+  });
+
   it('says which nodes work now, and none once it has ended', async () => {
     const rounds = new Rounds();
     let release = () => {};

@@ -91,8 +91,12 @@ Open **⚙ Settings**, fill in what you need, press **Save**:
   every run, also in a delivered tool. The second serves ✨ (a node's code and prompt, a whole
   graph, the bar under the canvas) and is the first one until you set it apart -- a larger
   model may be worth it for writing, a small one enough for the nodes, or the other way round.
-- **Keys** and **Server addresses**: paste an API key or a server address. Keys are
-  write-only: saved on this machine, never shown again.
+- Under the provider you choose, what it needs: **the address of its server** (Ollama, LM Studio
+  or any server that speaks the OpenAI API -- on this computer or another one the editor can
+  reach, for example `http://192.168.1.20:11434`) or **an API key**. Keys are write-only: saved
+  on this machine, never shown again. *All keys and server addresses* lists every one.
+
+**Help** (top right) has *Getting started* and the whole user guide.
 
 Settings are saved in `ai-settings.json`. It is looked for in the working directory, then in the
 folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as

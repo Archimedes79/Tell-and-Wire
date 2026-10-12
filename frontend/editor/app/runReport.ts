@@ -42,7 +42,7 @@ const VALUE_LIMIT = 240;
 
 /** The errors people meet, as what to do about them. The first that matches speaks. */
 const KNOWN: { when: RegExp; plain: string }[] = [
-  { when: /not running at|ECONNREFUSED|fetch failed|ENOTFOUND|EHOSTUNREACH|network/i, plain: 'The AI could not be reached. Is its server running, and is the address in ⚙ Settings right?' },
+  { when: /not running at|could not reach|cannot connect|connection refused|ECONNREFUSED|fetch failed|ENOTFOUND|EHOSTUNREACH|network/i, plain: 'The AI could not be reached. Is its server running, and is the address in ⚙ Settings right?' },
   { when: /\b401\b|\b403\b|invalid api key|unauthori[sz]ed|incorrect api key|permission denied.*key/i, plain: 'The AI turned the key down. Check the key in ⚙ Settings.' },
   { when: /\b429\b|rate limit|quota|too many requests/i, plain: 'The AI says there were too many requests, or the free allowance is used up. Wait a little, or choose another AI in ⚙ Settings.' },
   { when: /model.*(not found|does not exist|unknown)|no such model|pull the model/i, plain: 'The AI does not know that model. Check its name in ⚙ Settings, or pull it first if it is a local one.' },
@@ -94,7 +94,7 @@ export function runReport(result: ExecutionResult, nodes: Pick<GraphNode, 'id' |
   let summary: string;
   if (result.status === 'success') summary = `It went well: ${done} of ${reported.length} nodes ran.`;
   else if (result.status === 'cancelled') summary = 'It was stopped before it was done.';
-  else if (failed) summary = `It stopped at "${failed.label}": ${failed.plain ?? 'it failed'}`;
+  else if (failed) summary = `${result.status === 'partial' ? 'Part of it worked, but' : 'It stopped:'} "${failed.label}" failed. ${failed.plain ?? ''}`.trim();
   else summary = result.error ? `It failed: ${explain(result.error)}` : 'It did not finish.';
   return { status: result.status, summary, nodes: reported, failed };
 }

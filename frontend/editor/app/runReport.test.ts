@@ -17,6 +17,7 @@ const failedRun: ExecutionResult = {
 describe('what an error comes to', () => {
   it('says what to look at for the errors people meet, and that it is the node for the rest', () => {
     expect(explain('Ollama is not running at http://localhost:11434')).toContain('could not be reached');
+    expect(explain('Could not reach localhost:11434. Is the server running?')).toContain('could not be reached');
     expect(explain('Request failed with status 401 Unauthorized')).toContain('key');
     expect(explain('429 Too Many Requests')).toContain('too many requests');
     expect(explain('ENOENT: no such file or directory, open x.txt')).toContain('not found');
@@ -30,7 +31,7 @@ describe('the report of a run', () => {
   it('names where it stopped, in words, and the nodes after it as not having run', () => {
     const report = runReport(failedRun, nodes);
     expect(report.failed).toMatchObject({ id: 'ask', label: 'Summarize', status: 'error' });
-    expect(report.summary).toContain('"Summarize"');
+    expect(report.summary).toContain('"Summarize" failed');
     expect(report.summary).toContain('could not be reached');
     expect(report.nodes.map((node) => node.status)).toEqual(['success', 'error', 'skipped']);
     expect(report.nodes[2].plain).toBe('Summarize failed, so there was nothing to show.');
