@@ -74,9 +74,13 @@ const CODE_TEXTS: readonly TextFile[] = [
 export class CodeNodeDefinition extends NodeDefinition {
   readonly nodeType = 'code' as const;
 
-  /** Its code calls a model: `node.llm`. */
+  /**
+   * Its code calls a model: `node.llm` -- whatever the second parameter of `run` is called -- or `["llm"]`, or `{ llm }`
+   * taken out of it. Read from the text, so a comment that says it counts too: showing the AI settings of a tool that
+   * does not need them is the lesser mistake.
+   */
   override callsModel(node: GraphNode): boolean {
-    return /\bnode\s*\.\s*llm\b/.test(String(node.config.code ?? ''));
+    return /\.\s*llm\b|\[\s*['"]llm['"]\s*\]|[{,]\s*llm\s*[,}:=]/.test(String(node.config.code ?? ''));
   }
 
   override texts(): readonly TextFile[] {
