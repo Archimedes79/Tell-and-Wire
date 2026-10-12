@@ -86,6 +86,6 @@ describe('colour schemes', () => {
   it('are told apart: no two of them have the same ground', () => {
     const grounds = SCHEMES.map((s) => [s.sunken, s.surface].join('/'));
     expect(new Set(grounds).size).toBe(SCHEMES.length);
-    expect(SCHEMES.map((s) => s.id)).toEqual(['night', 'paper', 'white']);
+    expect(SCHEMES.map((s) => s.id)).toEqual(['night', 'paper', 'white', 'graphite']);
   });
 });

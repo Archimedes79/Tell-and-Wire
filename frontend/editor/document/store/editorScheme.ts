@@ -1,4 +1,4 @@
-// The editor's own colour scheme: the three the GUI has, or whichever the system is in.
+// The editor's own colour scheme: the four the GUI has, or whichever the system is in.
 //
 // A scheme is a set of CSS variables (`ui/scheme.ts`), and every colour of the editor is a `var()`
 // that asks for one, so painting the editor is putting the variables on the page's root. A GUI
