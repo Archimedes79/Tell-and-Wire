@@ -20,7 +20,7 @@ seconds. A local model costs nothing per call but can take minutes per answer.
 | wire | Carries an output to an input. |
 | run | One run of the graph, from a start point to the end points it reaches. The API calls it a round. |
 | gui | The blocks a person uses: what the tool looks like (GUI tab). |
-| block | One thing on the gui: a picker, a button, a chart, a chat. |
+| block | One thing on the GUI: a picker, a button, a chart, a chat. |
 
 ## The node kinds
 
@@ -57,7 +57,7 @@ The first block that can fire a start point fires it, so choosing a file runs th
 button or a chat always fires its start point. A dropdown that only sends is a setting: it
 starts nothing, and the next run picks up its value.
 
-A graph built first can draw its own gui: **From the graph**, at the foot of the left
+A graph built first can draw its own GUI: **From the graph**, at the foot of the left
 column, adds a block for each start point and end point that has none -- an input for what
 a start point reads, a button that starts it, a text for what an end point hands back. They come
 laid out: inputs two to a row with the button beside the last, a rule, then the outputs in raised boxes,
@@ -130,7 +130,7 @@ names other ports than the node has.
 | **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
 | **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
-| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. |
+| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat, **Add field** takes a name and what it starts as -- by hand, with no AI. |
 | **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. ✨ writes it together with the fields; left empty, the start stands in. |
 
 - **Pull input** writes `input.js` from the graph, with no model: its types from the
@@ -187,7 +187,9 @@ data node and writes the new value into the field; the field's output goes back 
 *field* can name a key of it), and that wire is the read. Drag the card across the data node and the same wire
 carries the current value instead. A wire to a card in the same column is a `check` problem, as is any wire
 that does not end in a later column, and a loop with no data node in it is a cycle, which `check` says too.
-Without a schedule the wire that closes a loop is the read. A GUI, or a script, reads what the last round
+A card fed by nothing but such reads has no event to run it: it never runs and shows nothing, and the problem
+list says so -- drag it to a later column than the data node (a **Text output** that stays left of the counter shows
+nothing). Without a schedule the wire that closes a loop is the read. A GUI, or a script, reads what the last round
 left, never a round half done. The node holds no code: working out a new value is a code node, and the button
 that makes it happen is wired to that code node, not to the memory. What the struct holds can be read without
 a run: a block of the GUI can show a field (`count`, or the node's name and a dot and the field), and the

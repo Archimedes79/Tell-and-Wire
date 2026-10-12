@@ -26,7 +26,7 @@ A tool in Tell & Wire has two halves.
   and **subgraphs**, and ends at **end points**.
 - **The GUI** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
-  what an end point hands back. It connects by name; nothing is wired to the gui.
+  what an end point hands back. It connects by name; nothing is wired to the GUI.
 
 A node is a heading and a short text that says what it should do. ✨ writes the node's
 files from that text: `input.js` and `output.js` (what goes in and out, each with an

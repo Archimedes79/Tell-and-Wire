@@ -166,12 +166,12 @@ export default function Toolbar({
 
   // A busy state and the error, said: without them a slow or rejecting
   // backend looks exactly like a dead button.
-  const runDeployAction = async (label: string, action: () => Promise<void>) => {
+  const runDeployAction = async (label: string, action: () => Promise<string>) => {
     setDeployBusy(label);
     say('deploy', 'Making the zip…');
     try {
-      await action();
-      say('deploy', '');
+      // Said when it is done: the browser saves a download without a word, and nothing else says it came.
+      say('deploy', `✅ ${await action()} is made, as a program of its own: your browser has saved it with your downloads.`);
     } catch (error) {
       say('deploy', errorText(error, `${label} failed.`), { level: 'error' });
     } finally {
@@ -184,7 +184,7 @@ export default function Toolbar({
       // The tool someone is handed is the whole thing, not the level that is open.
       flushPanels();
       const { rootGraph, currentFilePath } = useGraphStore.getState();
-      await downloadBundle({ graph: rootGraph(), path: currentFilePath });
+      return downloadBundle({ graph: rootGraph(), path: currentFilePath });
     });
 
   const handleOpenDescribe = () => {

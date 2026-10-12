@@ -48,7 +48,7 @@ they run in the browser and in Node.
 | `graph/` | **The graph's definition.** `graph.ts` (the format), `wiring.ts`, `order.ts`, `triggers.ts`, `schedule.ts` (the table the cards stand in), `batching.ts`, `interface.ts` (what a graph offers by name), `nodes/` (the **definition** of every node kind and its registry), `files/` (the project's file formats: flow, nodes, names, definitions, the run prompt). |
 | `graph/editor/` | What only the editor adds to the graph: `nodes/` (the **design** of every node kind: how an AI writes it, `check`, what a package needs), `prompts.ts`, `generation.ts`, `history.ts`, `pull.ts`, `handedOn.ts`, `scheduleEdit.ts` (where a card may be put in the table). |
 | `gui/` | **The GUI's definition.** `gui.ts` (blocks, what they send and show), `interface.ts` (what a GUI adds to a graph's interface), `widgets/` (the **definition** of every block kind). |
-| `gui/editor/` | What only the editor adds to the gui: `check.ts` (the one list of problems), `gui.ts`, `widgets/` (the **design** of every block kind). |
+| `gui/editor/` | What only the editor adds to the GUI: `check.ts` (the one list of problems), `gui.ts`, `widgets/` (the **design** of every block kind). |
 | `backend/deployment/project/` | Reads a project folder (`folder.ts`) and knows where things are in an install (`layout.ts`). |
 | `backend/deployment/runtime/` | The runtime: `executor.ts`, `localCore.ts`, `stdio.ts`, `protocol.ts` (the core protocol), `examples.ts`, `nodes/` (the **runner** of every node kind), `ai/` (the model client, settings, tool servers), `services.ts` (what a node touches the world with), `confine.ts`. |
 | `backend/deployment/gui/` | The GUI as the host uses it: `hooks.ts`. |
@@ -120,7 +120,7 @@ input_picker, text_io, select, slider, button, chat, plot_window, table, image_v
 - **The GUI is no node.** It is the graph's list of blocks (`graph.gui.blocks`, stored in
   `gui.json`). A block connects by name: the start points its data goes to (`sends_to`), the
   one using it fires (`fires`), the end point it shows (`shows`). `gui/gui.ts` holds what a round,
-  `check` and a package ask of the gui. The host reaches it only through the hooks of
+  `check` and a package ask of the GUI. The host reaches it only through the hooks of
   `backend/deployment/gui/hooks.ts`; a host composed without them is a graph in use, nothing more.
 
 ## How a round runs
@@ -184,7 +184,7 @@ my_tool/
   graph-flow.json      name, description, every wire as one line: "draw.data -> chart.csv", or "draw.data -> chart.csv via C2" when it is drawn through a cell
   graph-nodes.json     id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is, as a person said it
   graph-schedule.json  { table, size? }: the order the nodes run in and where they stand (the schedule, below)
-  gui.json             the gui: a list of its blocks, each with sends_to / fires / shows
+  gui.json             the GUI: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
     input.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
     output.js          what one call returns, the same way; its keys are the outputs        (code, ai)
@@ -259,7 +259,7 @@ host. A **graph core** -- the runtime, in this process or a program of its own -
 ```
 
 The core is handed the graph definition as JSON (`Graph`, `graph/graph.ts`): the nodes with their
-settings, ports and files, and the wires, as the project folder holds them; not the gui. Today
+settings, ports and files, and the wires, as the project folder holds them; not the GUI. Today
 there is one core, in JavaScript.
 
 A server is **composed** by `backend/cli`: it answers the host's own routes, the GUI's route when it
