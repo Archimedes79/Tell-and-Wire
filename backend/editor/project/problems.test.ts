@@ -56,7 +56,7 @@ describe('what check finds', () => {
     made.nodes[2].description = '';
     expect(where(made)).toEqual([
       ['node "count"', 'It has no heading.'],
-      ['node "say"', 'Its text is empty: nothing says what it should do, and what ✨ writes for it is written from that text.'],
+      ['node "say"', 'Its text is empty: nothing says what it should do, and Auto generate writes from that text.'],
     ]);
 
     expect(where(graph({ output: 'module.exports = { "sum": 1 };' }))).toEqual([
@@ -126,6 +126,28 @@ describe('what check finds', () => {
       { id: 'y', source_node_id: 'twin', source_port_id: 'next', target_node_id: 'add', target_port_id: 'n' },
     );
     expect(problemsIn(circle).map((one) => one.problem)).toContainEqual(expect.stringMatching(/feed each other in a circle/));
+
+    // What only reads a memory as it was before the round has no event to run it: where a start point makes rounds, that is said.
+    const reader = (schedule: string[]): Graph => parseGraph({
+      metadata: { name: 'Reader' },
+      nodes: [
+        { id: 'go', node_type: 'start', label: 'Go', inputs: [], outputs: [port('data', 'output')], config: {} },
+        { id: 'count', node_type: 'data', label: 'Count', description: 'Counts.', inputs: [], outputs: [], config: { data_value: { total: 0 } } },
+        { id: 'add', node_type: 'code', label: 'Add', description: 'Adds one.', inputs: [port('n', 'input')], outputs: [port('next', 'output')], config: { code: 'function run(i) { return { next: i.n + 1 }; }' } },
+        { id: 'show', node_type: 'end', label: 'Show', inputs: [port('value', 'input')], outputs: [], config: {} },
+      ],
+      edges: [
+        { id: 'g', source_node_id: 'go', source_port_id: 'data', target_node_id: 'add', target_port_id: '__run' },
+        { id: 'r', source_node_id: 'count', source_port_id: 'total', target_node_id: 'add', target_port_id: 'n' },
+        { id: 'w', source_node_id: 'add', source_port_id: 'next', target_node_id: 'count', target_port_id: 'total' },
+        { id: 's', source_node_id: 'count', source_port_id: 'total', target_node_id: 'show', target_port_id: 'value' },
+      ],
+      schedule,
+    });
+    expect(said(reader(['go add count show']))).toBe('');
+    expect(problemsIn(reader(['go show add count']))).toEqual([expect.objectContaining({
+      where: 'node "show"', problem: expect.stringMatching(/only reads "Count" as it was before the run/), fix: expect.stringMatching(/to the right of that one/),
+    })]);
 
     const twins = graph();
     twins.nodes[2].label = 'Answer';

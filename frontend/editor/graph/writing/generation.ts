@@ -177,7 +177,7 @@ export function exchangeName(node: GraphNode, write: Write, how: { refine?: Refi
 /** Why ✨ cannot write for *node* yet, or undefined: it is written from the node's text, or from what the chat was told. */
 export function generationGuard(node: GraphNode, say: { refine?: Refine; ask?: string } = {}): string | undefined {
   if (node.description.trim() || say.ask?.trim() || say.refine?.change?.trim()) return undefined;
-  return 'Say what this node should do first: its text is what ✨ writes from.';
+  return 'Say what this node should do first: its text is what Auto generate writes from.';
 }
 
 /** The graph a node sits in, as ✨ is told it. */

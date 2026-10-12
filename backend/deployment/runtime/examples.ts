@@ -68,7 +68,7 @@ export async function runExample(
     if ('problem' in read) return { status: 'error', details: [`Its input.js cannot be read: ${read.problem}.`], held };
     inputs = read.example;
   } else if (node.inputs.length) {
-    return { status: 'error', details: ['It has no input.js, so there is nothing to try it on: write one with ✨ Input.'], held };
+    return { status: 'error', details: ['It has no input.js, so there is nothing to try it on: press Auto generate in the node, or write input.js.'], held };
   }
   const runtime = options.offline ? withoutModel(options.runtime, NO_MODEL) : options.runtime;
   const ran = await callNode(graph, nodeId, inputs, { runtime, registry: options.registry, signal: options.signal });
@@ -121,7 +121,7 @@ export async function testGraph(
       const definitions = options.registry.node(node.node_type)?.definitions(node);
       const unwritten = !options.only && definitions && node.inputs.length && !definitions.input.trim();
       const result: ExampleRun = unwritten
-        ? { status: 'skipped', details: ['It has no input.js yet, so there is nothing to try it on: write one with ✨ Input.'], held: holds(definitions.output) }
+        ? { status: 'skipped', details: ['It has no input.js yet, so there is nothing to try it on: press Auto generate in the node, or write input.js.'], held: holds(definitions.output) }
         : await runExample(level, node.id, { runtime: options.runtime(), registry: options.registry, offline: options.offline, signal: options.signal });
       results.push({ inside, nodeId: node.id, result });
     }

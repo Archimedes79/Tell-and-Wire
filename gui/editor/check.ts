@@ -9,7 +9,8 @@
 // `backend/editor/project/folderCheck.ts`.
 
 import { isStruct, type Graph, type GraphEdge, type GraphNode } from '../../graph/graph.ts';
-import { loopNodes } from '../../graph/order.ts';
+import { loopNodes, readingWires } from '../../graph/order.ts';
+import { placesOf } from '../../graph/schedule.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
 import { widgetElement } from '../gui.ts';
 import { fieldSender, guiProblems, showsMemory } from './gui.ts';
@@ -53,14 +54,14 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
       problems.push({
         where,
         problem: 'It has no heading.',
-        fix: 'Give it one (its "label"): a few words saying what it does -- the canvas, its panel and every ✨ call it by that.',
+        fix: 'Give it one: a few words saying what it does -- the canvas and its panel call it by that.',
       });
     }
     if (designs.node(node.node_type)?.generation() && !node.description.trim()) {
       problems.push({
         where,
-        problem: 'Its text is empty: nothing says what it should do, and what ✨ writes for it is written from that text.',
-        fix: 'Write its text (its "description"): what it should do, in words.',
+        problem: 'Its text is empty: nothing says what it should do, and Auto generate writes from that text.',
+        fix: 'Say what it should do, in words, under "What it does".',
       });
     }
 
@@ -133,6 +134,23 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
         problem: 'These nodes feed each other in a circle, so none of them can run first.',
         fix: 'A loop is only allowed through a data node: write the value into one, and wire it back to the node that reads it, which runs before it -- '
           + 'that wire carries what the data node held when the round began. Or remove one of the edges.',
+      });
+    }
+
+    // What only reads a data node as it was before the round is not for any event
+    // that reaches it: it never runs and shows nothing, and the run does not say so.
+    // Said where a start point makes rounds: a run that nothing started runs everything.
+    const reads = readingWires(graph.nodes, graph.edges, registry, placesOf(graph));
+    const hasStart = graph.nodes.some((one) => one.node_type === 'start');
+    for (const node of hasStart ? graph.nodes : []) {
+      const wiredIn = graph.edges.filter((edge) => edge.target_node_id === node.id);
+      if (!wiredIn.length || !wiredIn.every((edge) => reads.has(edge.id))) continue;
+      const memory = graph.nodes.find((one) => one.id === wiredIn[0].source_node_id);
+      const name = memory?.label || memory?.id;
+      problems.push({
+        where: `${inside}node "${node.id}"`,
+        problem: `It only reads "${name}" as it was before the run, and that is no reason for it to run: it never runs, and shows nothing.`,
+        fix: `Put it in a step after "${name}" (drag its card to the right of that one), so that it takes what "${name}" holds after the run.`,
       });
     }
   }

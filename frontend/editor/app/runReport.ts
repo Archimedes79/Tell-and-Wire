@@ -40,18 +40,23 @@ export interface RunReport {
 const ERROR_LIMIT = 1500;
 const VALUE_LIMIT = 240;
 
-/** The errors people meet, as what to do about them. The first that matches speaks. */
+/**
+ * The errors people meet, as what to do about them. The first that matches speaks,
+ * so the specific come first and the words that turn up in anything -- a code
+ * mistake that names "permission", a line "403" in a stack -- come after the rule
+ * for a mistake in the code, which they must not be taken for.
+ */
 const KNOWN: { when: RegExp; plain: string }[] = [
-  { when: /not running at|could not reach|cannot connect|connection refused|ECONNREFUSED|fetch failed|ENOTFOUND|EHOSTUNREACH|network/i, plain: 'The AI could not be reached. Is its server running, and is the address in ⚙ Settings right?' },
-  { when: /\b401\b|\b403\b|invalid api key|unauthori[sz]ed|incorrect api key|permission denied.*key/i, plain: 'The AI turned the key down. Check the key in ⚙ Settings.' },
-  { when: /\b429\b|rate limit|quota|too many requests/i, plain: 'The AI says there were too many requests, or the free allowance is used up. Wait a little, or choose another AI in ⚙ Settings.' },
+  { when: /not running at|could not reach|cannot connect|connection refused|ECONNREFUSED|fetch failed|ENOTFOUND|EHOSTUNREACH/i, plain: 'The AI could not be reached. Is its server running, and is the address in ⚙ Settings right?' },
+  { when: /(?<!line\s)\b(401|403)\b|invalid api key|unauthori[sz]ed|incorrect api key|permission denied.*key/i, plain: 'The AI turned the key down. Check the key in ⚙ Settings.' },
+  { when: /(?<!line\s)\b429\b|rate limit|quota|too many requests/i, plain: 'The AI says there were too many requests, or the free allowance is used up. Wait a little, or choose another AI in ⚙ Settings.' },
   { when: /model.*(not found|does not exist|unknown)|no such model|pull the model/i, plain: 'The AI does not know that model. Check its name in ⚙ Settings, or pull it first if it is a local one.' },
   { when: /TW_MAX_TOKENS|cut off|max.?tokens|context length/i, plain: 'The answer was too long for what the AI may write, or the question for what it can read. Ask for a shorter answer, or use another model.' },
-  { when: /ENOENT|no such file|not found/i, plain: 'A file or folder was not found. Check the path it was given.' },
-  { when: /EACCES|EPERM|permission/i, plain: 'A file could not be read or written: no permission.' },
-  { when: /JSON/i, plain: 'The answer was not in the form the next step expects (JSON). Open the node and press ✨ Fix, or ask for plain text.' },
-  { when: /time.?out|timed out|ETIMEDOUT/i, plain: 'It took too long and was stopped.' },
+  { when: /is not valid JSON|JSON at position|unexpected (token|end).*JSON|JSON.*unexpected (token|end)|not (in )?JSON/i, plain: 'The answer was not in the form the next step expects (JSON). Open the node and press ✨ Fix, or ask for plain text.' },
   { when: /is not defined|is not a function|cannot read prop|unexpected token|syntax ?error|reference ?error|type ?error/i, plain: 'The code of this node has a mistake. Open the node and press ▶ Try, or ✨ Fix.' },
+  { when: /ENOENT|no such file|file or folder.*not found|path.*not found/i, plain: 'A file or folder was not found. Check the path it was given.' },
+  { when: /EACCES|EPERM|permission denied|operation not permitted/i, plain: 'A file could not be read or written: no permission.' },
+  { when: /time.?out|timed out|ETIMEDOUT/i, plain: 'It took too long and was stopped.' },
 ];
 
 /** What an error comes to, in a sentence. */
@@ -91,10 +96,12 @@ export function runReport(result: ExecutionResult, nodes: Pick<GraphNode, 'id' |
   const reported = result.node_results.map((one) => reportNode(one, labelOf(one.node_id)));
   const failed = reported.find((node) => node.status === 'error');
   const done = reported.filter((node) => node.status === 'success' || node.status === 'partial').length;
+  const partly = reported.filter((node) => node.status === 'partial');
   let summary: string;
   if (result.status === 'success') summary = `It went well: ${done} of ${reported.length} nodes ran.`;
   else if (result.status === 'cancelled') summary = 'It was stopped before it was done.';
   else if (failed) summary = `${result.status === 'partial' ? 'Part of it worked, but' : 'It stopped:'} "${failed.label}" failed. ${failed.plain ?? ''}`.trim();
+  else if (result.status === 'partial' && partly.length) summary = `It ran, but part of it failed: ${partly.map((node) => `"${node.label}"`).join(', ')}. ${partly[0].plain ?? ''}`.trim();
   else summary = result.error ? `It failed: ${explain(result.error)}` : 'It did not finish.';
   return { status: result.status, summary, nodes: reported, failed };
 }

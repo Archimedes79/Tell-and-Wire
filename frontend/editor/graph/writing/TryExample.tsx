@@ -67,7 +67,7 @@ export function useTryExample(node: GraphNode, graph: () => Graph): { tried: Tri
 function triedLine(run: ExampleRun): string {
   if (run.status === 'pass') return run.held ? '✓ fits output.js' : 'It runs. There is no output.js yet to hold it to.';
   if (run.status === 'fail') {
-    return run.held ? `✗ Does not fit output.js: ${run.details.join('; ')}` : `✗ ${run.details.join('; ')}. ✨ Fix or ✨ Output writes it again.`;
+    return run.held ? `✗ Does not fit output.js: ${run.details.join('; ')}` : `✗ ${run.details.join('; ')}. ✨ Fix, or Auto generate, writes it again.`;
   }
   return run.status === 'skipped' ? run.details.join(' ') : `It failed: ${run.details.join('\n')}`;
 }

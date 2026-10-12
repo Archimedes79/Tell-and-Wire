@@ -11,7 +11,7 @@ export class AiNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly label = 'AI';
 
-  readonly hint = 'Ask a local or hosted model -- say what it should do, and ✨ writes its prompt';
+  readonly hint = 'Ask a local or hosted model -- say what it should do, and Auto generate writes its prompt';
 
   readonly example = 'e.g. Summarise the text in three bullet points, in the language it is written in';
 

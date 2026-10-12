@@ -257,7 +257,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
         <section>
           <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI that writes</h3>
           <p className="text-xs mb-3" style={{ color: DIM }}>
-            What ✨ Code, ✨ Prompt, Generate all and the bar under the canvas call. A larger model than the nodes need may be worth it here.
+            What Auto generate, Generate all, Describe a graph and the bar under the canvas call. A larger model than the nodes need may be worth it here.
           </p>
           <ProviderModelSelect
             provider={writingProvider}
