@@ -1,20 +1,19 @@
-// What the runners make of a node, as the editor's tests compare it.
+// What the definitions make of a node, as the editor's tests compare it.
 //
-// Beside the page's folders, not in them: a helper for tests, which the layers test has
-// no rank for and no page ever imports. vitest only runs `*.test.ts`, so it is
+// Beside the frontend's folders, not in them: a helper for tests, which the layers test has
+// no rank for and no frontend code ever imports. vitest only runs `*.test.ts`, so it is
 // imported and that is all.
 import { registry } from '../../graph/nodes/registry.ts';
 import type { GraphNode as FormatNode } from '../../graph/graph.ts';
-import type { GraphNode } from '../app/graph';
+import type { GraphNode } from '../editor/document/graph';
 
 /** What a run asks a node's element before and while running it. None of them runs anything. */
-export const RUN_QUESTIONS = [
-  'config', 'batchMode', 'batchConcurrency', 'catchesErrors', 'needsInput',
-  'derivedPorts', 'runtimeRequirements', 'referencedPaths', 'logic',
+const RUN_QUESTIONS = [
+  'config', 'batchMode', 'batchConcurrency', 'catchesErrors', 'needsInput', 'derivedPorts', 'logic',
 ] as const;
 
 /**
- * The node's runner's answer to each question a run asks of *node*, as
+ * The node's definition's answer to each question a run asks of *node*, as
  * JSON: two nodes with the same answers are one node to a run. *without*
  * leaves questions out, for a test that compares what they may spell apart.
  */

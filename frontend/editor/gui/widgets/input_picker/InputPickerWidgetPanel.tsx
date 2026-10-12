@@ -1,0 +1,69 @@
+import { useId } from 'react';
+import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialogs/PathField';
+import { listBlockAsRun } from '../../../graph/writing/readAsRun';
+import { FIELD_ON_SURFACE, MUTED } from '../../../../deployment/gui/kit/ui/theme';
+import FolderListing from '../../../app/fields/FolderListing';
+import type { WidgetPanelProps } from '../WidgetGuiBuilder';
+
+/**
+ * A file or a folder, picked on the gui. A folder is its file types and its
+ * subfolders, then the list -- the listing a start point that reads a folder makes, drawn by
+ * the same component: it is one behaviour at two levels.
+ */
+export default function InputPickerWidgetPanel({ widget, onUpdate }: WidgetPanelProps) {
+  const mode = widget.mode || 'file';
+  const directory = mode === 'directory';
+  const path = typeof widget.value === 'string' ? widget.value : '';
+  const id = useId();
+
+  const modeField = (
+    <div>
+      <label htmlFor={`${id}-mode`} className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Mode</label>
+      <select
+        id={`${id}-mode`}
+        className="w-full rounded-lg px-2 py-1.5 text-sm"
+        style={FIELD_ON_SURFACE}
+        value={mode}
+        onChange={(e) => onUpdate({ mode: e.target.value })}
+      >
+        <option value="file">Single file</option>
+        <option value="directory">Directory (list of files)</option>
+      </select>
+    </div>
+  );
+
+  const pathField = (
+    <div>
+      <label htmlFor={`${id}-path`} className="block text-xs font-medium mb-1" style={{ color: MUTED }}>
+        {directory ? 'Folder' : 'Default path'}
+      </label>
+      <PathField
+        id={`${id}-path`}
+        value={path}
+        onChange={(picked) => onUpdate({ value: picked })}
+        mode={directory ? 'directory' : 'file'}
+        extensions={widget.extensions ?? ''}
+        placeholder={directory ? 'Choose a folder…' : 'Choose a file…'}
+        ariaLabel={directory ? 'Folder' : 'Default path'}
+        onSurface
+      />
+    </div>
+  );
+
+  // Both modes: the block uses the setting for a file as for a folder.
+  const typesField = (
+    <FileTypesField value={widget.extensions ?? ''} onChange={(extensions) => onUpdate({ extensions })} onSurface />
+  );
+
+  const listing = directory && (
+    <FolderListing
+      recursive={widget.recursive === true}
+      onRecursive={(recursive) => onUpdate({ recursive })}
+      noFolder={!path.trim()}
+      list={() => listBlockAsRun(widget)}
+      of={JSON.stringify([path, widget.extensions ?? '', widget.recursive === true])}
+    />
+  );
+
+  return <div className="space-y-2">{modeField}{pathField}{typesField}{listing}</div>;
+}

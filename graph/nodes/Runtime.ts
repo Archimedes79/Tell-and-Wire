@@ -3,10 +3,11 @@
 // Services arrive as a `Runtime`, never as an import. An element that imported
 // the filesystem could only ever run where a filesystem exists, and could only
 // be tested by monkey-patching a module. Passed in, the same element runs on a
-// server (`core/node.ts`), in a browser tab and inside a test with fakes.
+// server (`backend/deployment/runtime/services.ts`), in a browser tab and inside
+// a test with fakes.
 
 import type { ExecutionResult, Graph } from '../graph.ts';
-import type { Runners } from './NodeRunner.ts';
+import type { Kinds } from './NodeDefinition.ts';
 
 /** Reading and writing files, wherever the graph happens to run. */
 export interface FileService {
@@ -20,13 +21,17 @@ export interface FileService {
    */
   remove?(path: string): Promise<void>;
   resolve(path: string): string;
-  exists(path: string): Promise<boolean>;
+  /**
+   * *path* as a graph file writes it, resolved below the folder the tool runs
+   * in; an error saying why when it is absolute or leads out. A path from the
+   * person at run time is `resolve`d instead.
+   */
+  inProject(path: string): string;
   /**
    * How many bytes the file at *path* holds, without reading it: what is too
-   * large is refused unread. Optional: a host that cannot say is not asked,
-   * and has nothing refused for its size.
+   * large is refused unread.
    */
-  size?(path: string): Promise<number>;
+  size(path: string): Promise<number>;
 }
 
 /**
@@ -38,11 +43,11 @@ export interface FileService {
  * function on `node` that sends its one argument out to the process holding
  * the graph and resolves to the answer, which must survive `JSON.stringify`.
  */
-export interface BodyContext {
+interface BodyContext {
   calls?: Record<string, (args: unknown) => Promise<unknown>>;
 }
 
-/** Running an authored body: `run(inputs, node) -> outputs`, inputs and outputs plain JSON. */
+/** Running a written body: `run(inputs, node) -> outputs`, inputs and outputs plain JSON. */
 export interface CodeService {
   /** `signal` ends the body early: a run that was stopped must not leave one grinding on. */
   run(
@@ -80,7 +85,7 @@ export interface AiRequest {
   provider?: string;
   model?: string;
   temperature?: number;
-  /** Pictures and PDFs sent as the files they are, each a base64 `data:` URL (`documents.ts`). */
+  /** Pictures and PDFs sent as the files they are, each a base64 `data:` URL (`fileContent.ts`). */
   files?: string[];
   /** When set, the model may call these, and the answer is what it says once it has. */
   tools?: ToolAccess;
@@ -112,9 +117,9 @@ export interface ModelChoice {
  * can only fail. A *home* that names no provider still lends its model to a
  * request that names none either.
  *
- * A run applies it (`core/node.ts`, `aiService`), and the
+ * A run applies it (`backend/deployment/runtime/services.ts`), and the
  * editor's model box applies it to say what an empty model will mean, so it
- * lives here, where both halves and the page can read it.
+ * lives here, where both halves and the browser can read it.
  */
 export function lent(asked: Partial<ModelChoice>, home: Partial<ModelChoice>): ModelChoice {
   const pinned = asked.provider && asked.provider !== 'default' ? asked.provider : '';
@@ -158,10 +163,10 @@ export type ProgressEvent =
  * registry, the signal, how deep it already is -- is known there and nowhere
  * else. An element only says "run this, with these results already known".
  */
-export interface SubgraphService {
+interface SubgraphService {
   run(graph: Graph, given: Record<string, Record<string, unknown>>): Promise<ExecutionResult>;
   /** The elements of this run, for asking about the nodes inside. */
-  elements: Runners;
+  elements: Kinds;
 }
 
 /** Everything an element may reach outside itself. */

@@ -8,7 +8,7 @@
 import { execFileSync } from 'node:child_process';
 import { createConnection } from 'node:net';
 
-export const DEFAULT_PORT = 8000;
+const DEFAULT_PORT = 8000;
 
 /** `--port 8023` from *args*, or the default. Throws on anything that is not a port. */
 export function readPort(args) {
@@ -45,7 +45,7 @@ export async function isTellAndWire(port) {
 }
 
 /** The processes listening on *port*. */
-export function listenerPids(port) {
+function listenerPids(port) {
   if (process.platform === 'win32') {
     let output = '';
     try { output = execFileSync('netstat.exe', ['-ano', '-p', 'tcp'], { encoding: 'utf8' }); } catch { return []; }

@@ -2,7 +2,7 @@
 
 How to build a tool in Tell & Wire, step by step. The running example is
 [examples/population_plotter](../examples/population_plotter/): choose a CSV, see a bar
-chart. `frontend/app/masterExamples.test.ts` builds this example, folder_summaries and
+chart. `frontend/editor/app/masterExamples.test.ts` builds this example, folder_summaries and
 chat the way this guide does (blocks added, a node dropped, a wire dragged) and runs them.
 
 Start the editor and set up a model first, as the [README](../README.md) says. ✨ needs a
@@ -13,14 +13,14 @@ seconds. A local model costs nothing per call but can take minutes per answer.
 
 | Word | What it is |
 |---|---|
-| tool | All of it: its name, graph and page. It is saved, run and deployed as one. |
+| tool | All of it: its name, graph and gui. It is saved, run and deployed as one. |
 | graph | The nodes and the wires between them: what the tool does (Graph tab). |
 | node | One step. A heading, a short text, and settings or files. |
 | port | A dot on a node's edge: an input on the left, an output on the right. |
 | wire | Carries an output to an input. |
 | run | One run of the graph, from a start point to the end points it reaches. The API calls it a round. |
-| page | The blocks a person uses: what the tool looks like (Page tab). |
-| block | One thing on the page: a picker, a button, a chart, a chat. |
+| gui | The blocks a person uses: what the tool looks like (Gui tab). |
+| block | One thing on the gui: a picker, a button, a chart, a chat. |
 
 ## The node kinds
 
@@ -28,17 +28,17 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 
 | Node | What it does |
 |---|---|
-| **Start point** | Where a run begins. Started by the page (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. Started by itself, it can also read for the graph, as a file or folder block on a page does: one file (its path and content) or the paths of the files in a folder, filtered by file types, optionally with subfolders. |
+| **Start point** | Where a run begins. Started by the gui (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. Started by itself, it can also read for the graph, as a file or folder block on a gui does: one file (its path and content) or the paths of the files in a folder, filtered by file types, optionally with subfolders. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
 | **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
-| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node, plus `all` (every field as one object), `round` (the number of the round, from 1) and `before` (every field as it was when the round began: its one passive output, which a loop reads). It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node. A page block can show a field or the round, with no run. |
+| **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node. It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node: a wire from it to a card in an earlier column reads what it held when the round began. A gui block can show a field, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
 
-## 1. Build the page
+## 1. Build the gui
 
-Name the tool in the field at the top left, then open the **Page** tab. Click **File or
-folder**, then **Chart** in the left column (or type `/` on the page). Each block comes
+Name the tool in the field at the top left, then open the **Gui** tab. Click **File or
+folder**, then **Chart** in the left column (or type `/` on the gui). Each block comes
 connected: what the picker holds goes to a new start point, *Start*, and the chart shows a
 new end point, *Chart*.
 
@@ -51,19 +51,19 @@ by name:
   points it becomes *Starts a run at*, and you choose which.
 - **Shows**: the end point, or the memory node, whose value the block draws.
 
-With no block selected the right column holds the page's own settings: its colour scheme.
+With no block selected the right column holds the gui's own settings: its colour scheme.
 
 The first block that can fire a start point fires it, so choosing a file runs the graph. A
 button or a chat always fires its start point. A dropdown that only sends is a setting: it
 starts nothing, and the next run picks up its value.
 
-A graph built first can draw its own page: **From the graph**, at the foot of the left
+A graph built first can draw its own gui: **From the graph**, at the foot of the left
 column, adds a block for each start point and end point that has none -- an input for what
 a start point reads, a button that starts it, a text for what an end point hands back. They come
 laid out: inputs two to a row with the button beside the last, a rule, then the outputs in raised boxes,
 two to a row. A start
-point a call starts is put on the page only if you say so, one at a time: the page can only
-start one the page starts, and switched, it no longer serves the command line or a script.
+point a call starts is put on the gui only if you say so, one at a time: the gui can only
+start one the gui starts, and switched, it no longer serves the command line or a script.
 
 ## 2. Add a node and wire it
 
@@ -79,6 +79,26 @@ from the code node's output to the end point's *Value* dot. A wire let go on **e
 opens a search: type `code` and press Enter, and the node arrives already wired. The first
 wire also sets what the input **takes** of the package: here the chosen file's content
 (`file.content`). The node's settings show it and let you change it.
+
+### The order the nodes run in
+
+The Graph tab is a table. **Time runs to the right**: a ruler on top counts the steps, one to a
+column, and a node runs after every node whose wire leads to it, so every wire ends in a later
+column than it starts. Cards **stacked in one column** have no wire between them: they may run
+in parallel or in any order, and a chip says so. A faint **+** marks the centre of each cell.
+
+- **Move a card** by dragging it. The cells it may stand in light up -- after the cards that feed
+  it, before the cards that need it -- and it is pulled to the nearest. Hold it in the **space
+  between two columns** and the columns after it slide over: it gets a column of its own. A column
+  that ends up empty closes by itself. A card dragged from the palette does the same.
+- **Make a card bigger** with the grip at its corner when it is chosen; the columns and rows after
+  it move over.
+- **Pull a wire** to another cell, by the wire itself or by the dot on it (the dot shows on a chosen
+  card's wires and under the pointer), and it is drawn through that cell, round the cards. Only a
+  wire with a column between its two cards has a cell to go through; a click on it still chooses it.
+  Double-click the dot for the straight way; Esc while pulling lets go.
+- **Thin out** moves every card to the earliest column its wires allow and closes the empty rows.
+  Wires drawn round cards are straightened by it.
 
 An empty Graph tab says where to start. A node's card has a 🗑 to delete it, as the Delete
 key does: nothing is asked, and Ctrl+Z brings it back. A **⚠ N problems** chip in the bar
@@ -149,28 +169,31 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
   **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
 A start point, a folder, an end point and a subgraph have no files: they open on their
-settings. **Edit the page** on a node a block uses goes to the Page tab.
+settings. **Edit the gui** on a node a block uses goes to the Gui tab.
 
 Two things save the most time. Wire a node to what feeds it before **Pull input**, so the
 example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
 
 **A data node is a struct.** Its **Fields** file, `data.json`, is an object: each key is a field,
-with its starting value. Each field is an input and an output of the node under its name;
-`all` carries every field as one object, and `round` is the number of the round, from 1. The node fills,
-then forwards: what arrives on a field replaces it, and the struct as it is then goes on to whatever the
-node feeds, in the same round. A field keeps its value when nothing arrives.
+with its starting value. Each field is an input and an output of the node under its name. The node fills, then forwards: what arrives on a field
+replaces it, and the struct as it is then goes on to whatever the node feeds, in the same round. A field
+keeps its value when nothing arrives.
 
-A field's output is **active**: a node wired from it runs after the node is filled, and sees the new value.
-`before` is the one **passive** output (a ring on the card, a dotted wire): every field as it was when the
-round began, as one object. A wire from it orders nothing and carries no event, so it can read the memory
-in a loop: a node that adds one to a count takes `count` from `before` (the input's *field*) and writes the
-new value into the field. Wired from the field's output instead, it would wait for the node it fills --
-that is a cycle, and `check` says so. A page, or a script, reads what the last round left, never a round
-half done. The node holds no code: working out a new value is a code node, and the button that makes it
-happen is wired to that code node, not to the memory. What the struct holds can
-be read without a run: a block of the page can show a field (`count`, or the node's name and
-a dot and the field) or the round, and the session answers by name. The **Example** file is
-what a node before it is shaped as.
+**Where a wire goes decides what it carries.** A wire from the node to a card in a *later* column carries
+what the node holds then, after what arrives has filled it. A wire to a card in an *earlier* column -- left of
+the node on the schedule -- reads what the node held when the round began: it is drawn dotted, orders nothing
+and carries no event. That is how a loop reads its memory: a node that adds one to a count stands before the
+data node and writes the new value into the field; the field's output goes back to that node (the input's
+*field* can name a key of it), and that wire is the read. Drag the card across the data node and the same wire
+carries the current value instead. A wire to a card in the same column is a `check` problem, as is any wire
+that does not end in a later column, and a loop with no data node in it is a cycle, which `check` says too.
+Without a schedule the wire that closes a loop is the read. A gui, or a script, reads what the last round
+left, never a round half done. The node holds no code: working out a new value is a code node, and the button
+that makes it happen is wired to that code node, not to the memory. What the struct holds can be read without
+a run: a block of the gui can show a field (`count`, or the node's name and a dot and the field), and the
+session answers by name. The **Example** file is what a node before it is shaped as: the fields start empty in
+`data.json`, and the example shows how they look once rounds have filled them.
+[examples/counter](../examples/counter/) is the smallest tool built this way.
 
 ## 4. Wiring in more detail
 
@@ -200,11 +223,17 @@ what a node before it is shaped as.
   Each repair shows in the node's activity. A line that dropped, a busy server and an empty answer
   are tried again before any of that (`TW_AI_ATTEMPTS`, `TW_AI_RETRY_DELAY`). Each ask is a call: put
   0 on a node whose model is costly.
+- **Tools for the model.** An AI node can let its model call tools while it answers: a web page
+  to read, a Word or PDF file in a folder you name. In the node's settings, **Tools the model may
+  use → + Add MCP server** lists the servers that come with Tell & Wire (one click for the web
+  reader; the document reader asks for its folders first) and takes any other MCP server by its
+  address. **Edit config** changes a server's settings on this machine, **Remove** takes it off the
+  node. See [mcp/](../mcp/README.md).
 
 ## 5. Start points and end points
 
 A run goes through what its start point is wired to, everything after that, and what
-those nodes need upstream. So one page with two start points is two tools in one window.
+those nodes need upstream. So one gui with two start points is two tools in one window.
 A start point wired to nothing starts everything; a run of the whole graph counts every
 start point as started.
 
@@ -215,19 +244,19 @@ An end point's value is the tool's result under its name: a block shows it, a sc
 the command line read it. **Also write it to** writes it to a file, or each item to its own
 file in a folder.
 
-## 6. The Page tab and its blocks
+## 6. The Gui tab and its blocks
 
-The page is built like a document. Type headings and text in place. Press `/` to insert a
-block, or drag one from the left column onto the page. A selected block has a small toolbar:
+The gui is built like a document. Type headings and text in place. Press `/` to insert a
+block, or drag one from the left column onto the gui. A selected block has a small toolbar:
 ¼ ½ ¾ Full for its width, and a 🗑 that deletes it (so does the Delete key); drag a block
 by its grip, beside it while the pointer is on it, to move it, and its corner to size it. A block is as tall as what is in it
 needs and at least its height in cells, so text is not cut. One that shows what a run hands back is a
-single line, "Waiting for output…", until a run does; selected, it has its whole height. Below 640 px -- a phone -- the page is one column: every block takes the whole width, in the page's order. *Look & size* holds the tone, frame and
+single line, "Waiting for output…", until a run does; selected, it has its whole height. Below 640 px -- a phone -- the gui is one column: every block takes the whole width, in the gui's order. *Look & size* holds the tone, frame and
 background. A new block has the look that suits it: fields, dropdowns, sliders and buttons have no box -- they draw
-themselves -- and what a run shows (text, chart, table, image) is a raised box, so a page has one frame for each result and none for the rest.
+themselves -- and what a run shows (text, chart, table, image) is a raised box, so a gui has one frame for each result and none for the rest.
 Without a box, a block's edge is the edge of the boxes, a heading stands on the bottom of its row, nearest what it titles, and a rule in the middle.
-With no block selected, the right column shows the page: *Colour scheme*
-recolours the page; the editor keeps its own colours. Blocks are live while you build: a
+With no block selected, the right column shows the gui: *Colour scheme*
+recolours the gui; the editor keeps its own colours. Blocks are live while you build: a
 button pressed here runs the graph.
 
 | Block | Sends | Fires | Shows |
@@ -239,7 +268,7 @@ button pressed here runs the graph.
 | Button | | when pressed | |
 | Chat | `{message, history}` | when a message is sent | the reply, added to the conversation |
 | Chart, Table, Image | | | what arrives |
-| Heading, Text, Caption, Divider, Gap | | | (the page's own design) |
+| Heading, Text, Caption, Divider, Gap | | | (the gui's own design) |
 
 A block runs no code. A node shapes the data first. A chart draws a **figure**:
 
@@ -255,28 +284,28 @@ image shows a path, a URL or a data URL, or a list of them. Text, charts and tab
 
 ## 7. ▶ Run and the App tab
 
-**▶ Run** runs the tool as its user will. With a page, the **App** tab opens and the graph
-runs when the page is used. With a start point a call starts, the App tab shows a box for
+**▶ Run** runs the tool as its user will. With a gui, the **App** tab opens and the graph
+runs when the gui is used. With a start point a call starts, the App tab shows a box for
 each part the graph reads and a button per start point. Start points that start themselves
 start, and their clocks tick. A graph with no start point runs once, whole. **■ Stop** ends
-it; the delivered page has a Stop of its own while a run goes.
+it; the delivered gui has a Stop of its own while a run goes.
 
 - After a run every node's card shows what it made: a line of text, a row count, a
   small chart, a thumbnail, or the first line of an error.
-- *Last run* above the page says what began the last run, and, on hover, why any node
+- *Last run* above the gui says what began the last run, and, on hover, why any node
   did not run.
 - *What using it keeps* lists what the session holds: what each start point was sent, what
   data nodes hold, what each block holds. **↺ Start over** forgets it. None of it changes
   the saved design.
 - A picker that has nothing chosen asks first, in a *Choose files for the run* window.
-- **⧉ Open as a tool** opens the delivered page in a window of its own, on the same session.
+- **⧉ Open as a tool** opens the delivered gui in a window of its own, on the same session.
 
 ## 8. Save the tool
 
 **File → Open…** and **Save as…** open a file browser: pick a folder or file, or type a
 path in its address box and press Enter. **Save as…** with a name without `.json` writes
-the tool as a folder: `flow.json` (a line per wire), `nodes.json` (each node's kind,
-heading, text, settings and ports), `layout.json` (positions), `page.json` (the blocks),
+the tool as a folder: `graph-flow.json` (a line per wire), `graph-nodes.json` (each node's kind,
+heading, text, settings and ports), `graph-schedule.json` (the order they run in, and where they stand), `gui.json` (the blocks),
 and a folder `nodes/<id>/` for each node that keeps code or text of its own. A name ending
 in `.json` writes one file with everything inline. **Save as…** onto a tool or graph file
 that is already there asks first (**Replace**). Anything that would drop unsaved changes (New, Open, Reload, a drop) asks
@@ -292,7 +321,7 @@ tool's `tests/` folder (the tool must be saved). From the command line, `--keep`
 the same:
 
 ```bash
-node backend/app/main.ts my_tool --event measure --value "paragraph=One two." --keep
+node backend/cli/main.ts my_tool --event measure --value "paragraph=One two." --keep
 ```
 
 The file holds what came from outside the graph (the start point's package, what the models
@@ -302,23 +331,23 @@ else. It also runs each code and AI node on its `input.js` example and holds the
 `output.js`; `--offline` skips what needs a model:
 
 ```bash
-node backend/app/main.ts test --offline my_tool    # what CI runs for every example
-node backend/app/main.ts check my_tool             # what is wrong, without running
+node backend/cli/main.ts test --offline my_tool    # what CI runs for every example
+node backend/cli/main.ts check my_tool             # what is wrong, without running
 ```
 
 ## 10. Deploy
 
-**File → Deploy as zip** downloads a zip; `node backend/app/main.ts my_tool --bundle ./out`
+**File → Deploy as zip** downloads a zip; `node backend/cli/main.ts my_tool --bundle ./out`
 writes the same folder. The person who gets it unzips it and starts `run.cmd` or `./run.sh`.
-They need Node 24 or newer and nothing else. With a page, the tool opens in the browser on
-port 8000 or the next free one. Without a page or a call, it runs once and prints JSON.
+They need Node 24 or newer and nothing else. With a gui, the tool opens in the browser on
+port 8000 or the next free one. Without a gui or a call, it runs once and prints JSON.
 
-The bundle carries the tool's folder, the code that ran it, the built page, the files the
+The bundle carries the tool's folder, the code that ran it, the built gui, the files the
 graph starts on (one from outside the tool goes to `data/`; a file or folder over 50 MB, or
 one that is missing, stops Deploy) and the licence. It leaves out the editor, the tests,
 each node's `history.md` and `state.json`. A tool that asks a model reads
 `ai-settings.json` beside `run.sh`, or the `TW_AI_*` variables. A tool can also bring a
-page of its own in `frontend/index.html`, which uses the runtime API by name (see
+gui of its own in `frontend/index.html`, which uses the runtime API by name (see
 `examples/nested_statistics/frontend/`).
 
 ## 11. The MCP server
@@ -326,24 +355,30 @@ page of its own in `frontend/index.html`, which uses the runtime API by name (se
 An assistant such as Claude Code can design, check, save and run graphs in one folder:
 
 ```bash
-claude mcp add tell-and-wire -- node <repo>/backend/app/main.ts --mcp --mcp-root <tools folder>
+claude mcp add tell-and-wire -- node <repo>/backend/cli/main.ts --mcp --mcp-root <tools folder>
 ```
 
-Its tools are `authoring_guide`, `generate_graph`, `validate_graph`, `save_graph`,
-`run_graph`, `describe_graph`, `run_node`, `test_graph` and `list_graphs`. Every path stays
+Its tools are `graph_guide`, `generate_graph`, `validate_graph`, `save_graph`,
+`run_graph`, `graph_interface`, `run_node`, `test_graph` and `list_graphs`. Every path stays
 inside `--mcp-root`; it never opens `ai-settings.json` and filters keys out of what it
 returns. A graph it runs runs for real, so point the root at a folder of tools, not at your
 home folder.
 
 ## When something does not work
 
+- **A run stopped and the gui shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
-- **✨ does nothing or fails.** Check **⚙ Settings**: its AI section says *Now: provider / model*.
-  A missing key or a local server that is not running ends here.
-- **Using the page starts nothing.** No block fires the start point: switch **Starts a run**
+- **✨ does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
+  before anything is asked: a local server that is not running, a model it has not pulled, a key
+  not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (✨, the bar; the
+  nodes' until you set it apart), each says *Now: provider / model* and, under the provider chosen,
+  where to get it; their keys come first. A wrong key, a model name nobody knows and a free tier's
+  limit come back with what to do. A small local model may be too small to write a whole graph:
+  it says so, and a larger one in Settings (Gemini has a free tier) writes it.
+- **Using the gui starts nothing.** No block fires the start point: switch **Starts a run**
   on for the block that should. `check` names this too.
-- **The page stays empty.** The block shows an end point nothing is wired into, or a wire
+- **The gui stays empty.** The block shows an end point nothing is wired into, or a wire
   is on the wrong dot. The end point's card says which blocks show it.
 - **A model's answer is empty or ends short.** A model that thinks spends the same token
   budget on thinking, and an answer cut off by it is an error that names `TW_MAX_TOKENS`

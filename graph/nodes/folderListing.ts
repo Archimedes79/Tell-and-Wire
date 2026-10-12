@@ -5,7 +5,7 @@
 // subfolders -- nothing else. Keeping only some of the files is a code node
 // wired in after the listing, like any other choice a graph makes.
 import { type Runtime } from './Runtime.ts';
-import { fileContent } from './documents.ts';
+import { fileContent } from './fileContent.ts';
 
 /**
  * `.md, TXT` -> ['.md', '.txt']: the file types a listing keeps, in lower case
@@ -30,7 +30,7 @@ export function listFolder(
 }
 
 /** What a start point or a picker block is set to read. */
-export interface Chosen {
+interface Chosen {
   path: string;
   /** A folder, listed; otherwise one file. */
   directory: boolean;

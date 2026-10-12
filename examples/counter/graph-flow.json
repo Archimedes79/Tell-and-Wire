@@ -1,0 +1,10 @@
+{
+  "name": "Counter",
+  "description": "Counts how many times it was started. A data node remembers the count; a code node adds one, reading the count as it was when the round began.",
+  "wires": [
+    "start.data -> code.__run",
+    "code.output -> data.total",
+    "data.total -> end.value",
+    "data.total -> code.the_count"
+  ]
+}

@@ -21,8 +21,8 @@
 </head>
 <body>
 <!--
-  A page written by hand, beside the project's flow.json: frontend/index.html.
-  A served project shows it in place of the built page, and a bundle carries it.
+  A gui written by hand, beside the project's graph-flow.json: frontend/index.html.
+  A served project shows it in place of the built gui, and a bundle carries it.
 
   It knows nothing of the graph but the names the runtime API gives it, and
   calls nothing else:
@@ -111,7 +111,7 @@
     document.getElementById('outputs').append(element('h2', { textContent: output.label }), pre);
   }
 
-  // What happens, as it happens -- this page's rounds, a clock's, another tab's.
+  // What happens, as it happens -- this gui's rounds, a clock's, another tab's.
   const stream = new EventSource(`/api/runtime/stream?session=${encodeURIComponent(graph.session)}`);
   stream.addEventListener('session', ({ data }) => {
     const session = JSON.parse(data);

@@ -1,0 +1,199 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import type { GraphNode, GuiWidget } from '../document/graph';
+import LiveGui from '../../deployment/gui/surface/LiveGui';
+import { connectionsOf } from '../../deployment/gui/surface/guiInUse';
+import { useRound } from '../../deployment/gui/surface/useRound';
+import DeliveredHeader from '../../deployment/gui/surface/DeliveredHeader';
+import CallForms from '../../deployment/gui/surface/CallForms';
+import { roundExplained } from './roundWords';
+import KeptFold from './KeptFold';
+import RequirementsDialog from '../../deployment/gui/kit/dialogs/RequirementsDialog';
+import { useGraphStore } from '../document/store/graphStore';
+import { graphEdge } from '../document/model/wires';
+import { roundGoing, startOver, useSession } from '../../deployment/gui/kit/api/session';
+import { errorText } from '../../deployment/gui/kit/api/errorText';
+import { call } from '../api/client';
+import { interfaceWithGui } from '../../../gui/interface.ts';
+import { guiStarts } from '../../../graph/triggers.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
+import Button from '../../deployment/gui/kit/ui/Button';
+import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
+import { DANGER_TEXT, DIMMER, LINE, MUTED, SUNKEN } from '../../deployment/gui/kit/ui/theme';
+
+/** Hand the server the document, so what runs is what is being edited. */
+const holdDocument = () => useGraphStore.getState().holdDocument();
+
+/**
+ * The application, running (▶ Run, `document/application.ts`): its gui, as the
+ * deployed tool draws it -- the same component, not a rendition.
+ *
+ * `GuiSurface` is what `deployment/gui/GuiApp.tsx` renders when a bundle is
+ * opened on someone else's machine, under the same `DeliveredHeader`, and
+ * each round goes through the same `useRound` against the same session. So
+ * what is seen here is what they get: a block unreadable, mis-sized or
+ * missing in the bundle is so here, because there is nothing else to be.
+ *
+ * It is the tool in use, not the document: what is set on its gui is the
+ * session's, never an edit of the graph -- nothing to undo, nothing to save.
+ * What the gui starts lights up the nodes on the graph next door. The graph
+ * runs when the gui is used -- a block that fires a start point -- and when
+ * it is called: for a start point a call starts, this tab is the caller
+ * (`CallForms`), as a script or a frontend would be.
+ */
+export default function ApplicationView({ onShowNode }: { onShowNode: (nodeId: string) => void }) {
+  const metadata = useGraphStore((s) => s.metadata);
+  const nodes = useGraphStore((s) => s.rfNodes);
+  const wires = useGraphStore((s) => s.rfEdges);
+  const widgets = useGraphStore((s) => s.gui);
+  // What starts a round and what one hands back are the nodes' to say, and
+  // which block fires which the gui's; what a call is sent that the graph
+  // reads, the wires out of each start point's.
+  const graph = useMemo(
+    () => ({ metadata, nodes: nodes.map((node) => node.data.graphNode as GraphNode), edges: wires.map(graphEdge), gui: { blocks: widgets } }),
+    [metadata, nodes, wires, widgets],
+  );
+  // Whether using the gui starts the graph -- or only shows what its start
+  // points that start themselves, or its one run at start, made.
+  const starts = guiStarts(graph, registry);
+  // The graph's names, as the runtime API tells a delivered tool them: which
+  // block fires which start point, which blocks a round is sent, and what a
+  // gui without blocks shows -- the outputs, under their labels.
+  const offered = useMemo(() => interfaceWithGui(graph, registry), [graph]);
+  const called = offered.events.some((event) => event.started_by === 'call');
+  const current = useSession((s) => s.round);
+  const view = useSession((s) => s.view);
+  const busy = useSession(roundGoing);
+  const round = useRound(holdDocument);
+  const latest = useRef(round);
+  latest.current = round;
+  // What the last round did, and why each node that did not run did not -- by the names on the canvas.
+  const nameOf = (id: string): string => {
+    const node = nodes.find((one) => one.id === id)?.data.graphNode as GraphNode | undefined;
+    return node?.label || widgets.find((block) => block.id === id)?.label || id;
+  };
+  const explained = roundExplained(current, nameOf);
+  // A round that went as it should, kept as a test of the tool: run again by `test`, asking no model.
+  const project = useGraphStore((s) => (s.isProject ? s.currentFilePath : null));
+  const [keeping, setKeeping] = useState<{ round: string; said: string } | null>(null);
+  const keepable = !!project && current?.done && current.result?.status === 'success';
+  const keep = async () => {
+    const id = current!.round_id;
+    setKeeping({ round: id, said: 'Keeping…' });
+    try {
+      const { file } = await call('keepRound', { id, path: project! });
+      setKeeping({ round: id, said: `Kept as ${file} -- the test command runs it again, asking no model.` });
+    } catch (error) {
+      setKeeping({ round: id, said: errorText(error, 'It could not be kept.') });
+    }
+  };
+  const [opening, setOpening] = useState('');
+
+  /**
+   * The tool as it is delivered, in a window of its own: the document is
+   * handed to the server and `gui.html` is opened against it -- the same
+   * page, the same entry point and the same routes a bundle serves, with no
+   * editor in the window, and the same session as this tab.
+   */
+  const openAsTool = async () => {
+    setOpening('Opening…');
+    try {
+      await holdDocument();
+      // Named, so pressing it again reloads the tool's own window instead of
+      // leaving a trail of them.
+      const opened = window.open('gui.html', 'tell-and-wire-tool');
+      setOpening(opened ? '' : 'The browser blocked the window. Allow pop-ups for this page.');
+    } catch (error) {
+      setOpening(errorText(error, 'The tool could not be opened.'));
+    }
+  };
+
+  const empty = nodes.length === 0;
+  const design = useMemo(() => ({
+    name: metadata.name,
+    description: metadata.description,
+    scheme: metadata.gui_scheme,
+    blocks: widgets,
+    ...connectionsOf(offered.events),
+    outputs: offered.outputs.map(({ name, label }) => ({ name, label })),
+    empty,
+  }), [metadata, widgets, offered, empty]);
+  const fire = useCallback((block: GuiWidget) => { void latest.current.run(design.fires[block.id], block.id); }, [design]);
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ ...schemeVars(metadata.gui_scheme), background: SUNKEN }}>
+      <DeliveredHeader
+        name={metadata.name}
+        description={metadata.description}
+        round={current}
+        tools={(
+          <>
+            {opening && opening !== 'Opening…' && (
+              <span className="text-xs" style={{ color: DANGER_TEXT }}>{opening}</span>
+            )}
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => { void openAsTool(); }}
+              disabled={opening === 'Opening…'}
+              title="A window of its own, served exactly as a bundle serves it. Nothing is written to disk."
+            >
+              ⧉ Open as a tool
+            </Button>
+          </>
+        )}
+      />
+      <div className="px-8 py-1.5 flex items-center gap-3" style={{ borderBottom: `1px solid ${LINE}` }}>
+        <span className="text-xs" style={{ color: MUTED }}>
+          Running
+        </span>
+        <span className="text-xs" style={{ color: DIMMER }}>
+          {starts
+            ? 'As whoever gets it will use it: the graph runs when you use the gui. ■ Stop ends it.'
+            : called
+              ? 'As whoever gets it will use it: it runs when it is called -- here, as a script would call it. ■ Stop ends it.'
+              : 'As whoever gets it will use it: what starts the graph starts it, and the gui shows what it makes. ■ Stop ends it.'}
+        </span>
+        {explained && (
+          <span className="text-xs ml-auto truncate" style={{ color: MUTED }}
+            title={explained.why.length ? explained.why.join('\n') : 'Every node it touched ran.'}>
+            {explained.line}
+          </span>
+        )}
+        {keepable && keeping?.round !== current!.round_id && (
+          <Button size="sm" className="shrink-0" onClick={() => { void keep(); }}
+            title="Keep this run as a test of the tool: what it was sent, what its models answered and what came back, in tests/ -- run again by test, asking no model">
+            Keep as a test
+          </Button>
+        )}
+        {keeping && keeping.round === current?.round_id && (
+          <span className="text-xs shrink-0" style={{ color: DIMMER }}>{keeping.said}</span>
+        )}
+      </div>
+
+      {/* Where the chain gave out, said where it is seen -- not only on hover -- with the way to the node. */}
+      {explained?.stopped && (
+        <div className="px-8 py-1.5 flex items-center gap-3 text-xs" style={{ borderBottom: `1px solid ${LINE}`, color: DANGER_TEXT }}>
+          <span className="min-w-0">⚠ The run stopped at “{nameOf(explained.stopped.node)}”: {explained.stopped.why}</span>
+          <Button size="sm" className="shrink-0" onClick={() => onShowNode(explained.stopped!.node)}>Show it</Button>
+        </div>
+      )}
+
+      <KeptFold kept={view?.kept} nameOf={nameOf} busy={busy} onStartOver={() => { void startOver(); }} />
+
+      <CallForms
+        events={offered.events}
+        sent={view?.sent ?? {}}
+        busy={busy}
+        onCall={(event, values) => { void round.run(event, undefined, values); }}
+      />
+
+      <LiveGui design={design} onEvent={fire} />
+
+      <RequirementsDialog
+        requirements={round.requirements}
+        onSubmit={round.submit}
+        onCancel={round.cancel}
+      />
+    </div>
+  );
+}

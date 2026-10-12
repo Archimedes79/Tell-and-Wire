@@ -1,6 +1,6 @@
 // The graph as it is stored and as a run sees it.
 //
-// **A node's config is opaque here.** Its element owns the type (`nodes/ElementRunner.ts`):
+// **A node's config is opaque here.** Its element owns the type (`nodes/ElementDefinition.ts`):
 // this file knows a config is an object, and only the element knows what is in it.
 
 export type NodeType = 'start' | 'ai' | 'code' | 'data' | 'end' | 'subgraph';
@@ -37,16 +37,13 @@ export interface Port {
    * node that receives a package reads it, said instead of written as code.
    */
   field?: string;
-  /**
-   * An output that is only read: a wire from it orders nothing and carries no
-   * event, and hands on what it held when the round began, whenever the node
-   * that takes it runs. How a loop through a memory is closed, said in the graph.
-   */
-  passive?: boolean;
 }
 
 /** An element's stored settings. Its own element narrows this; nothing else may. */
 export type RawConfig = Record<string, unknown>;
+
+/** Whether *value* is an object with keys: not empty-handed (`null`), not a list. */
+export const isStruct = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
 export interface GraphNode {
   id: string;
@@ -67,6 +64,12 @@ export interface GraphEdge {
   source_port_id: string;
   target_node_id: string;
   target_port_id: string;
+  /**
+   * The cells of the schedule the wire is drawn through, from its source to its target, named
+   * as a spreadsheet names them (`C2`: third column, second row; `schedule.ts`). None: it takes
+   * the straight way. Only how it is drawn: no part of what a run does.
+   */
+  via?: string[];
 }
 
 /** A graph's own settings. Any other key a file carries here is nobody's to read, and is kept as it was written. */
@@ -77,12 +80,12 @@ export interface GraphMetadata {
 }
 
 /**
- * The page a graph is used through: its blocks, in order, each as the file
+ * The gui a graph is used through: its blocks, in order, each as the file
  * keeps it. Not a node: a block connects itself to the graph by name -- where
  * its data goes, which start point it fires, which end point it shows
- * (`backend/gui-editor/widgets/page.ts`) -- and nothing is wired to it.
+ * (`gui/gui.ts`) -- and nothing is wired to it.
  */
-export interface Page {
+interface Gui {
   blocks: RawConfig[];
 }
 
@@ -90,15 +93,20 @@ export interface Graph {
   metadata: GraphMetadata;
   nodes: GraphNode[];
   edges: GraphEdge[];
-  /** Its page, when it has one: a graph used by a script, or held by a node, has none. */
-  page?: Page;
+  /**
+   * Its schedule, when it has one: the rows of a table of cells, each an id or
+   * `.` (`schedule.ts`). It says the order the nodes run in and where they
+   * stand; a graph without one runs in the order of its wires and is laid out
+   * from them. Where a node is drawn (`position`) follows from it.
+   */
+  schedule?: string[];
+  /** Its gui, when it has one: a graph used by a script, or held by a node, has none. */
+  gui?: Gui;
 }
-
-export type NodeStatus = 'success' | 'error' | 'partial' | 'skipped';
 
 export interface NodeResult {
   node_id: string;
-  status: NodeStatus;
+  status: 'success' | 'error' | 'partial' | 'skipped';
   /** What came off the wires: paths rather than file contents, raw rather than reshaped. */
   inputs: Record<string, unknown>;
   outputs: Record<string, unknown>;
@@ -109,14 +117,14 @@ export interface NodeResult {
    * reached it -- and `outputs` is what it was left holding from an earlier one.
    */
   held?: boolean;
-  /** It ran only as context, nothing it depends on had changed, and `outputs` is what it made last time (`execution/reuse.ts`). */
+  /** It ran only as context, nothing it depends on had changed, and `outputs` is what it made last time (`backend/deployment/runtime/reuse.ts`). */
   reused?: boolean;
 }
 
 /**
  * What a run produced. What memory nodes kept is not in it: the run settled
  * that into the copy of the graph it ran on, which is what a session keeps
- * (`backend/gui-editor/session.ts`).
+ * (`backend/deployment/host/session.ts`).
  */
 export interface ExecutionResult {
   status: 'success' | 'error' | 'partial' | 'cancelled';
@@ -141,11 +149,11 @@ export function mergeResults(previous: ExecutionResult, fresh: ExecutionResult):
 /**
  * A graph's settings when nothing says otherwise: a new graph's, and what a
  * file that leaves one out means. The one statement of them -- the
- * editor starts a new graph from it, and `flow.json` leaves out what equals
+ * editor starts a new graph from it, and `graph-flow.json` leaves out what equals
  * it. A fresh object each call, so no two graphs share one.
  *
  * Which AI a graph calls is not among them: that is the machine's one AI
- * setting (`ai/settings.ts`), or a node's own pin.
+ * setting (`backend/deployment/runtime/ai/settings.ts`), or a node's own pin.
  */
 export function defaultMetadata(): GraphMetadata {
   return {
@@ -170,29 +178,29 @@ export function defaultMetadata(): GraphMetadata {
  *
  * One default per key: a second one, for what a *loaded* node lacks, is what
  * turned a graph written by hand into a different graph after one Save. Each
- * element reads a missing key as this says (`frontend/app/elements/savedConfig.test.ts`
- * asks every kind's runner).
+ * element reads a missing key as this says (`frontend/editor/document/elements/savedConfig.test.ts`
+ * asks every kind).
  */
 export function defaultNodeConfig(): RawConfig {
   return {
     path: '',
     recursive: false,
     extensions: '',
-    // 'default' -> the one AI setting in ⚙ Settings (graph/ai/settings.ts
+    // 'default' -> the one AI setting in ⚙ Settings (backend/deployment/runtime/ai/settings.ts
     // `aiSetting`), until someone pins this node to a provider of its own.
     ai_provider: 'default',
     ai_model: '',
     code: '',
     prompt: '',
-    // A data node's fields (`DataNodeRunner`): none to start with.
+    // A data node's fields (`DataNodeDefinition`): none to start with.
     data_value: {},
     write_mode: 'none',
-    // Once on the whole list (`NodeRunner.batchMode`), as many at once as the run allows.
+    // Once on the whole list (`NodeDefinition.batchMode`), as many at once as the run allows.
     batch_mode: 'whole_list',
     batch_concurrency: 0,
     send_images: false,
     catch_errors: false,
-    started_by: 'page',
+    started_by: 'gui',
     on_start: true,
     every: '',
     reads: '',
@@ -218,14 +226,15 @@ export function parseGraph(raw: unknown): Graph {
   const source = raw as Record<string, unknown>;
   const nodes = Array.isArray(source.nodes) ? source.nodes : [];
   const edges = Array.isArray(source.edges) ? source.edges : [];
-  const blocks = (source.page as { blocks?: unknown } | undefined)?.blocks;
+  const blocks = (source.gui as { blocks?: unknown } | undefined)?.blocks;
 
   return {
     metadata: { ...defaultMetadata(), ...(source.metadata as object ?? {}) },
     nodes: nodes.map(parseNode),
     edges: edges.map(parseEdge),
-    // A page is its blocks: one with none is no page.
-    ...(Array.isArray(blocks) && blocks.length ? { page: { blocks: blocks as RawConfig[] } } : {}),
+    ...(Array.isArray(source.schedule) && source.schedule.length ? { schedule: source.schedule.map(String) } : {}),
+    // A gui is its blocks: one with none is no gui.
+    ...(Array.isArray(blocks) && blocks.length ? { gui: { blocks: blocks as RawConfig[] } } : {}),
   };
 }
 

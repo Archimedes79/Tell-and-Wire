@@ -60,8 +60,8 @@ test('starts, stops, and will not end a program on that port that is not Tell & 
   assert.match(first.stdout, /Editor stopped\./);
   assert.equal(await isListening(PORT), false);
 
-  // The reason the check exists: the launcher used to end whatever held the
-  // port, which on 8000 is somebody's database as often as it is the editor.
+  // The reason the check exists: whatever holds the port may be somebody's
+  // database as often as it is the editor.
   const stranger = createServer((_request, response) => response.end('not me'));
   await new Promise((listening) => stranger.listen(PORT, '127.0.0.1', listening));
   try {

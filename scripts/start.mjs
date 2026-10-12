@@ -6,8 +6,8 @@
 // start again is that the code changed, and a server keeps running the
 // code it was started with while serving whatever page was built since.
 // Dependencies are installed on first use, and the page is rebuilt when any
-// source it is built from is newer than it, graph/ and backend/ included: the
-// page bundles their elements, so a change there is a page change too.
+// source it is built from is newer than it, graph/, gui/ and backend/ included:
+// the page bundles their wire and definitions, so a change there is a page change too.
 
 import { spawn, spawnSync } from 'node:child_process';
 import { readdir, stat } from 'node:fs/promises';
@@ -20,11 +20,11 @@ const args = process.argv.slice(2);
 
 /** What the page is built from, besides the source folders. */
 const BUILD_INPUTS = [
-  'package.json', 'package-lock.json', 'frontend/package.json', 'frontend/index.html', 'frontend/runtime.html',
+  'package.json', 'package-lock.json', 'frontend/package.json', 'frontend/index.html', 'frontend/gui.html',
   'frontend/tsconfig.json', 'frontend/tsconfig.node.json', 'frontend/vite.config.ts', 'frontend/tailwind.config.js', 'frontend/postcss.config.js',
 ];
-/** The folders the page's code is in: its own, and the graph's and the backend's, which it imports from. */
-const SOURCES = ['frontend/app', 'frontend/graph-editor', 'frontend/gui-editor', 'graph', 'backend'];
+/** The folders the page's code is in: its own, and those of graph/, gui/ and backend/, which it imports from. */
+const SOURCES = ['frontend/editor', 'frontend/deployment', 'graph', 'gui', 'backend'];
 
 try {
   if (Number(process.versions.node.split('.')[0]) < 24) {
@@ -39,7 +39,7 @@ try {
   process.exit(1);
 }
 
-const editor = spawn(process.execPath, ['backend/app/main.ts', '--editor', 'frontend/dist', ...args], { cwd: root, stdio: 'inherit' });
+const editor = spawn(process.execPath, ['backend/cli/main.ts', '--editor', 'frontend/dist', ...args], { cwd: root, stdio: 'inherit' });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => editor.kill(signal));
 editor.on('exit', (code, signal) => process.exit(code ?? (signal ? 0 : 1)));
 editor.on('error', (error) => {

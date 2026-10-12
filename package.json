@@ -1,24 +1,25 @@
 {
   "name": "tell-and-wire",
   "private": true,
-  "description": "One workspace: the graph's code, the editor's server, and the editor's page.",
+  "description": "One workspace: the neutral definitions of graph and gui, the Node code of editor and deployment, and the browser code of both.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24"
   },
   "workspaces": [
     "graph",
+    "gui",
     "backend",
     "frontend"
   ],
   "scripts": {
-    "start": "node backend/app/main.ts --editor frontend/dist",
+    "start": "node backend/cli/main.ts --editor frontend/dist",
     "dev": "node scripts/dev.mjs",
     "build": "npm run build --workspace frontend",
     "package": "npm run build && node scripts/package.mjs",
-    "test": "npm test --workspaces",
+    "test": "npm test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces",
-    "lint": "npm run lint --workspace frontend && eslint graph backend --ext ts --no-eslintrc -c .eslintrc.node.cjs --report-unused-disable-directives --max-warnings 0",
+    "lint": "npm run lint --workspace frontend && eslint graph gui backend --ext ts --no-eslintrc -c .eslintrc.node.cjs --report-unused-disable-directives --max-warnings 0",
     "licenses": "node scripts/licenses.mjs"
   }
 }

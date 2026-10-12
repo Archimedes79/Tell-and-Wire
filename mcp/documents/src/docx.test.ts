@@ -9,9 +9,11 @@ describe('docxMarkdown', () => {
       p(r('Bericht'), '<w:pStyle w:val="Titel"/>') + p(r('Einleitung'), '<w:pStyle w:val="berschrift1"/>')
       + p(r('ein ') + r('fettes ', '<w:b/>') + r('Wort', '<w:i/>') + r(' &amp; mehr'))
       + p(r('a'), bullet(1)) + p(r('b'), bullet(1)) + p(r('eins'), bullet(2))
-      + `<w:tbl><w:tr>${cell('A')}${cell('B')}</w:tr><w:tr>${cell('1')}${cell('x | y')}</w:tr></w:tbl>`,
+      + p(r('nameless style'), '<w:pStyle w:val="Bare"/>')
+      + `<w:tbl><w:tr>${cell('A')}${cell('B')}</w:tr><w:tr>${cell('1')}<w:tc><w:tbl><w:tr>${cell('x | y')}</w:tr></w:tbl>${p(r('z'))}</w:tc></w:tr></w:tbl>`
+      + p(r('after')),
     ));
-    expect(said).toBe('# Bericht\n\n## Einleitung\n\nein **fettes** *Wort* & mehr\n\n- a\n- b\n1. eins\n\n| A | B |\n| --- | --- |\n| 1 | x \\| y |\n');
+    expect(said).toBe('# Bericht\n\n## Einleitung\n\nein **fettes** *Wort* & mehr\n\n- a\n- b\n1. eins\n\nnameless style\n\n| A | B |\n| --- | --- |\n| 1 | x \\| y z |\n\nafter\n');
   });
 
   it('reads a file whose entries are stored, not deflated', async () => {

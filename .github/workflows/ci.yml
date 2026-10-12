@@ -9,9 +9,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only unless a job below says otherwise: the release jobs ask for what they write.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -22,7 +27,7 @@ jobs:
           node-version: '24'
           cache: npm
 
-      # One workspace, one lockfile: graph/, backend/ and frontend/ share it.
+      # One workspace, one lockfile: graph/, gui/, backend/ and frontend/ share it.
       - name: Install
         run: npm ci
 
@@ -39,13 +44,12 @@ jobs:
         run: npm run typecheck
 
       # What the compiler does not see: the rules of hooks in frontend/, a promise
-      # nobody waits for in graph/ and backend/ (an unhandled rejection ends a server).
+      # nobody waits for in graph/, gui/ and backend/ (an unhandled rejection ends a server).
       - name: Lint
         run: npm run lint
 
-      # Before the tests: the bundle test asserts that a bundle carries the
-      # built page, so the page has to exist by then -- and a checkout that
-      # cannot build has no page to carry.
+      # The page a person gets: a checkout that cannot build fails here, not
+      # when a release is made.
       - name: Build the editor
         run: npm run build
 
@@ -55,19 +59,20 @@ jobs:
       # What a person would find broken by opening one: an edge to a port that
       # is not there, a file nothing reads, an interface naming a lost output.
       - name: Check the examples
-        run: node backend/app/main.ts check $(ls -d examples/*/ | grep -v '^examples/data/$')
+        run: node backend/cli/main.ts check $(ls -d examples/*/ | grep -v '^examples/data/$')
 
       # Each node run once on the example in its input.js and held to its
       # output.js, without a model: there is no key here, so an AI node is
       # skipped, not failed.
       - name: Test the examples' nodes
-        run: node backend/app/main.ts test --offline $(ls -d examples/*/ | grep -v '^examples/data/$')
+        run: node backend/cli/main.ts test --offline $(ls -d examples/*/ | grep -v '^examples/data/$')
 
   # The launcher, on a checkout that has nothing installed yet -- which is what
   # a person has when they clone this and double-click start. It installs and
   # builds on its own, so there is deliberately no Install step above it.
   launcher:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -91,6 +96,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -108,17 +114,59 @@ jobs:
       - name: Unzip it and start it
         run: node --test scripts/package.test.mjs
 
+  # The tests again where people work with this: on Windows, where names do not
+  # tell letter case, paths have drive letters and a file in use cannot be
+  # renamed. What only fails there is seen by no other job.
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the editor
+        run: npm run build
+
+      - name: Tests
+        run: npm test
+
+  # Whether the image builds, on every push that does not publish it: a
+  # Dockerfile that no longer builds is found on the branch that broke it, not
+  # on main.
+  docker:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+
   # The download for people who do not want a container: one zip holding the
-  # source of graph/ and backend/, the built page and the examples. The source has no
+  # source of graph/, gui/ and backend/, the built page and the examples. The source has no
   # runtime dependencies and Node runs its TypeScript unbuilt, so a recipient unzips it
   # and runs it -- no npm install, no build step, no Docker.
   #
   # On a vX.Y.Z tag only: a release is a thing people link to, so it gets a
   # version rather than moving under them.
   package:
-    needs: [test, package-test]
+    needs: [test, windows, launcher, package-test]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
@@ -164,9 +212,10 @@ jobs:
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
         run: |
-          gh release create "${{ github.ref_name }}" tell-and-wire-*.zip \
-            --title "Tell & Wire ${{ github.ref_name }}" \
+          gh release create "$TAG" tell-and-wire-*.zip \
+            --title "Tell & Wire $TAG" \
             --generate-notes
 
   # The same zip, for whoever wants what main is today rather than the last
@@ -180,9 +229,10 @@ jobs:
   # definition on its way and finishes the job, so the two are never apart for
   # longer than one run takes.
   latest:
-    needs: [test, package-test]
+    needs: [test, windows, launcher, package-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
@@ -231,9 +281,10 @@ jobs:
   # this run just tested. Skipped for a pull request: nobody should be able to
   # publish an image by opening one.
   publish:
-    needs: test
+    needs: [test, windows, launcher, package-test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write

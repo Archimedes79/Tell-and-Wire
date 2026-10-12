@@ -21,10 +21,10 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "app",
-    "graph-editor",
-    "gui-editor",
-    "test"
+    "editor",
+    "deployment",
+    "test",
+    "vite-env.d.ts"
   ],
   "references": [
     {

@@ -1,0 +1,43 @@
+import type { ReactNode } from 'react';
+import { useGraphStore } from '../document/store/graphStore';
+import { roundGoing, useSession } from '../../deployment/gui/kit/api/session';
+import Button from '../../deployment/gui/kit/ui/Button';
+import { DIMMER, MUTED, SUNKEN } from '../../deployment/gui/kit/ui/theme';
+
+/**
+ * A view of the gui, shown only where a gui can be: in the graph at the top.
+ *
+ * Inside a node's graph the canvas shows that graph, but the gui is not
+ * there: a gui put inside a subgraph is one `check` rejects and nobody sees,
+ * and a colour scheme written there is read by nothing. So in there the gui
+ * views say where the gui is, and take you back up to it.
+ */
+export default function TopGraphOnly({ children }: { children: ReactNode }) {
+  const inside = useGraphStore((s) => s.subgraphStack.length > 0);
+  const closeSubgraphsTo = useGraphStore((s) => s.closeSubgraphsTo);
+  // No level changes while a run is in flight -- its result would land on the
+  // canvas of another graph (`openSubgraph`) -- so the way up waits for it. A
+  // button that then did nothing, without a word, would look broken.
+  const running = useSession(roundGoing);
+  if (!inside) return <>{children}</>;
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center gap-2 px-8" style={{ background: SUNKEN }}>
+      <p className="text-sm" style={{ color: MUTED }}>
+        The gui belongs to the graph at the top.
+      </p>
+      <p className="text-xs text-center max-w-md" style={{ color: DIMMER }}>
+        You are inside a node's graph, which runs as one part of the graph above it and has no gui of its own.
+        Go back up to build the gui or try it.
+      </p>
+      <Button className="mt-2" disabled={running} onClick={() => closeSubgraphsTo(0)}>
+        ↑ Back to the graph at the top
+      </Button>
+      {running && (
+        <p className="text-xs" style={{ color: DIMMER }}>
+          A run is going on. The way up opens when it is over.
+        </p>
+      )}
+    </div>
+  );
+}

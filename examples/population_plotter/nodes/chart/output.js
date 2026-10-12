@@ -9,7 +9,7 @@
  * @property {Point[]} points  one per row, largest first; none when there is nothing to plot
  *
  * @typedef {Object} Output
- * @property {Figure} figure  what the chart block on the page shows
+ * @property {Figure} figure  what the chart block on the gui shows
  */
 module.exports = {
   "figure": {

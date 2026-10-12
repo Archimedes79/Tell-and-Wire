@@ -1,0 +1,152 @@
+// The gui a graph is used through, as a document rather than a canvas.
+//
+// Free positioning needs a designer's eye; a document flow is decent by default,
+// which is why a LaTeX file looks better than a hand-arranged slide. So the
+// **order of the widget list is the position** — blocks flow left to right and
+// wrap, exactly as text does in a browser — and the only thing anyone sets is
+// how large a block is, in cells.
+//
+// The grid underneath is still a grid: 16 square cells across a capped content
+// width, with fixed gaps. It is a substrate, not a control panel. Nobody
+// configures it, which is what makes it impossible to configure badly. A row is
+// as tall as a cell and taller where what is in it needs the room: a block's
+// height is the least it has, never a cut.
+//
+// Presentational only: never touches ports, wiring, or execution.
+import type { GuiWidget } from './guiWidget';
+
+/** Cells across the gui. Square, so `w` and `h` are one unit, not two. */
+export const GUI_GRID_COLUMNS = 16;
+
+/**
+ * The widest a cell is allowed to get.
+ *
+ * Without a cap, a square cell on a 4K monitor would be ~250px and every block
+ * would inflate with the window. A capped cell means the gui has a maximum
+ * width and centres, with margins growing instead — a printed page, and the
+ * reason a text column stays readable.
+ */
+export const GUI_MAX_CELL = 56;
+
+/**
+ * The gap between blocks, in pixels. One value, everywhere.
+ *
+ * Equal in both directions on purpose: the cell is square, and a row gap that
+ * differed from the column gap would quietly make a 4x4 block non-square.
+ * Where a *section* should end, the `spacer` block is for that, not a bigger
+ * uniform gap.
+ */
+export const GUI_GAP = 14;
+
+/** The widest the content column ever gets: 16 cells plus their gaps. */
+const GUI_MAX_WIDTH = GUI_GRID_COLUMNS * GUI_MAX_CELL + (GUI_GRID_COLUMNS - 1) * GUI_GAP;
+
+/**
+ * How many cells a drag of *pixels* is worth.
+ *
+ * One cell of pointer travel is the cell **plus the gap after it** -- the whole
+ * pitch of the grid, not the width of one square.
+ */
+export function cellsFromDrag(pixels: number, cell: number): number {
+  return Math.round(pixels / (cell + GUI_GAP));
+}
+
+/**
+ * Below this width the gui is one column: every block takes the whole width, in
+ * the gui's order. Three columns on a phone left each of them a sliver, and a
+ * person who built the gui on a desktop is not asked to build another.
+ */
+export const GUI_NARROW = 640;
+
+/** The least a row is high on a narrow gui, where a cell is a few pixels and a block of four rows would be a sliver. */
+const NARROW_ROW = 28;
+
+/** Cells a widget occupies when it has none of its own yet. */
+export const DEFAULT_WIDGET_SPAN = { w: 8, h: 4 };
+
+export interface WidgetPlacement {
+  widget: GuiWidget;
+  /** Columns spanned, 1..GUI_GRID_COLUMNS. */
+  w: number;
+  /** Rows spanned, at least 1. */
+  h: number;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Every widget with a usable span, in list order.
+ *
+ * No positions are computed: CSS grid places and wraps the blocks itself, which
+ * is both less code here and the same algorithm a browser uses for everything
+ * else on a page.
+ */
+export function resolveWidgetLayout(widgets: GuiWidget[]): WidgetPlacement[] {
+  return widgets.map((widget) => ({
+    widget,
+    w: clamp(Math.round(widget.w ?? DEFAULT_WIDGET_SPAN.w), 1, GUI_GRID_COLUMNS),
+    h: Math.max(1, Math.round(widget.h ?? DEFAULT_WIDGET_SPAN.h)),
+  }));
+}
+
+/**
+ * A block's size on a gui at its full width, in pixels -- its cells and the
+ * gaps between them -- and the cells it spans. The gui never needs the sum,
+ * since the browser's grid does it; a node wired into the end point the
+ * block shows does, to write what it sends for the room there is
+ * (`editor/graph/writing/generationContext.ts`). On a narrower gui every cell
+ * shrinks alike (`cellSize`), so this is the most the block gets.
+ */
+export function blockSize(widget: GuiWidget): { w: number; h: number; width: number; height: number } {
+  const [{ w, h }] = resolveWidgetLayout([widget]);
+  const pixels = (cells: number) => cells * GUI_MAX_CELL + (cells - 1) * GUI_GAP;
+  return { w, h, width: pixels(w), height: pixels(h) };
+}
+
+/**
+ * The text in a box on the gui -- what a text box shows and is typed into:
+ * 14 px on 20 px lines, as Tailwind's `text-sm`, which the other boxes (a
+ * dropdown, the field under a chat) still ask for by that name. Held here
+ * because a node that writes into a box is told how large its text is
+ * (`WidgetGuiBuilder.textShown`), and a size said in one place while drawn
+ * from another drifts apart unnoticed.
+ */
+export const BOX_TEXT = { fontSize: 14, lineHeight: '20px' } as const;
+
+/**
+ * The side of one square cell for a container of *containerWidth* pixels.
+ *
+ * Below the capped width the cells shrink with the container, so the same gui
+ * looks identical in the editor's Gui tab, its App tab and a deployed tool —
+ * only smaller.
+ */
+export function cellSize(containerWidth: number): number {
+  const usable = Math.max(0, Math.min(containerWidth, GUI_MAX_WIDTH));
+  const cell = (usable - (GUI_GRID_COLUMNS - 1) * GUI_GAP) / GUI_GRID_COLUMNS;
+  return Math.max(8, Math.min(GUI_MAX_CELL, cell));
+}
+
+/** The grid style shared by the designer and the deployed gui. */
+export function gridStyle(cell: number, narrow = false): React.CSSProperties {
+  return {
+    display: 'grid',
+    gridTemplateColumns: `repeat(${GUI_GRID_COLUMNS}, 1fr)`,
+    gridAutoRows: `minmax(${narrow ? NARROW_ROW : cell}px, auto)`,
+    gap: GUI_GAP,
+    maxWidth: GUI_MAX_WIDTH,
+    margin: '0 auto',
+  };
+}
+
+/** Where one block sits in that grid. Span only — the browser decides the rest. A block *waiting* for what it shows stands as one row, whatever it is to be; on a *narrow* gui every block is as wide as it, and one a cell wide -- a vertical rule, a gap -- is gone. */
+export function blockStyle(placement: WidgetPlacement, waiting = false, narrow = false): React.CSSProperties {
+  return {
+    gridColumn: `span ${narrow ? GUI_GRID_COLUMNS : placement.w}`,
+    gridRow: `span ${waiting ? 1 : placement.h}`,
+    minWidth: 0,
+    minHeight: 0,
+    ...(narrow && placement.w <= 1 ? { display: 'none' } : {}),
+  };
+}

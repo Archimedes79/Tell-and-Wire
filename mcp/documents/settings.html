@@ -1,0 +1,65 @@
+<!-- The document reader's settings, shown by Tell & Wire's editor when you add or edit it.
+     Plain HTML in a sandbox: it can only talk to the editor through `tw` (see mcp/README.md). -->
+<label>Folders it may read <span class="dim">— needed</span></label>
+<div id="folders"></div>
+<button id="add">+ Add a folder</button>
+<p class="help">It reads nothing outside them, and it only reads: it changes nothing.</p>
+
+<label for="mb">Largest file it reads (MB)</label>
+<input id="mb" type="number" min="0.0625" max="500" step="any" placeholder="50">
+
+<label for="pages">Most pages of a PDF it reads</label>
+<input id="pages" type="number" min="1" max="5000" placeholder="500">
+
+<script>
+  const MB = 1048576;
+  const mb = document.getElementById('mb');
+  const pages = document.getElementById('pages');
+  const list = document.getElementById('folders');
+  let folders = [''];
+  let delimiter = ';';
+
+  function report() {
+    const given = folders.map((folder) => folder.trim()).filter(Boolean);
+    tw.changed({
+      TW_DOCS_ROOTS: given.join(delimiter),
+      TW_DOCS_MAX_BYTES: mb.value ? String(Math.round(Number(mb.value) * MB)) : '',
+      TW_DOCS_MAX_PAGES: pages.value,
+    }, given.length > 0);
+  }
+
+  function draw() {
+    list.replaceChildren(...folders.map((folder, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const field = Object.assign(document.createElement('input'), { type: 'text', value: folder, placeholder: 'Choose a folder, or paste its whole path' });
+      field.style.flex = '1';
+      field.oninput = () => { folders[i] = field.value; report(); };
+      const browse = Object.assign(document.createElement('button'), { textContent: 'Browse…' });
+      browse.onclick = async () => {
+        const picked = await tw.browse(folders[i]);
+        if (picked) { folders[i] = picked; draw(); report(); }
+      };
+      row.append(field, browse);
+      if (folders.length > 1) {
+        const remove = Object.assign(document.createElement('button'), { textContent: '✕', title: 'Remove this folder' });
+        remove.onclick = () => { folders.splice(i, 1); draw(); report(); };
+        row.append(remove);
+      }
+      return row;
+    }));
+  }
+
+  document.getElementById('add').onclick = () => { folders.push(''); draw(); report(); };
+  mb.oninput = pages.oninput = report;
+
+  tw.init((values, host) => {
+    delimiter = host.delimiter;
+    folders = (values.TW_DOCS_ROOTS || '').split(delimiter).filter(Boolean);
+    if (!folders.length) folders = [''];
+    mb.value = values.TW_DOCS_MAX_BYTES ? String(Number(values.TW_DOCS_MAX_BYTES) / MB) : '';
+    pages.value = values.TW_DOCS_MAX_PAGES || '';
+    draw();
+    report();
+  });
+</script>

@@ -1,0 +1,10 @@
+{
+  "table": [
+    "review read scientific  scientific_review  verdict",
+    ".      .    adversarial adversarial_review .",
+    ".      .    claims      judge              .",
+    ".      .    references  claims_review      .",
+    ".      .    figures     references_review  .",
+    ".      .    .           figures_review     ."
+  ]
+}

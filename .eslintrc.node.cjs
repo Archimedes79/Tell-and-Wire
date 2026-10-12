@@ -6,7 +6,7 @@ module.exports = {
   root: true,
   env: { node: true, es2022: true },
   parser: '@typescript-eslint/parser',
-  parserOptions: { project: ['./graph/tsconfig.json', './backend/tsconfig.json'], tsconfigRootDir: __dirname },
+  parserOptions: { project: ['./graph/tsconfig.json', './gui/tsconfig.json', './backend/tsconfig.json'], tsconfigRootDir: __dirname },
   plugins: ['@typescript-eslint'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   rules: {

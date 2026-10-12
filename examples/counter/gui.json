@@ -1,0 +1,31 @@
+[
+  {
+    "fires": "start",
+    "h": 1,
+    "id": "button",
+    "kind": "button",
+    "label": "Count up",
+    "tone": "plain",
+    "w": 6
+  },
+  {
+    "h": 1,
+    "id": "divider",
+    "kind": "divider",
+    "label": "",
+    "mode": "horizontal",
+    "tone": "plain",
+    "w": 16
+  },
+  {
+    "h": 4,
+    "id": "text_io",
+    "kind": "text_io",
+    "label": "Result",
+    "mode": "output",
+    "shows": "end",
+    "tone": "raised",
+    "value": "",
+    "w": 16
+  }
+]

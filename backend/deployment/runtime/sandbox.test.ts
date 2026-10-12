@@ -1,0 +1,90 @@
+import { describe, it, expect } from 'vitest';
+import { rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { nodeCode } from './services.ts';
+
+/**
+ * What a body may do.
+ *
+ * A body is often generated, and the sweep runs it to check it before anyone
+ * has read it. So the policy is worth asserting rather than assuming: the
+ * working directory readable, but not the settings file that holds the keys;
+ * writing its own folder only; starting other programs closed, because no
+ * body has a reason to.
+ *
+ * The network is deliberately absent from these tests: Node has no flag for
+ * it, so there is nothing here to assert and nothing to protect. See
+ * `sandbox` in `services.ts`.
+ */
+
+describe('a code body', () => {
+  it('may read the working directory but not the settings file, and write nowhere but its own folder', async () => {
+    const settings = join(process.cwd(), '.sandbox-probe-settings.json');
+    const beside = join(process.cwd(), '.sandbox-probe-beside.txt');
+    writeFileSync(settings, '{"api_keys":{"openai":"sk-planted"}}');
+    process.env.TW_SETTINGS = settings;
+    try {
+      const body = `
+        import { readFileSync, writeFileSync } from 'node:fs';
+        import { tmpdir } from 'node:os';
+        import { dirname, join } from 'node:path';
+        const tried = (what) => { try { what(); return 'allowed'; } catch (error) { return error.code; } };
+        export function run() {
+          return {
+            package: tried(() => readFileSync('package.json')),
+            settings: tried(() => readFileSync(${JSON.stringify(settings)})),
+            beside: tried(() => writeFileSync(${JSON.stringify(beside)}, 'x')),
+            own: tried(() => writeFileSync(join(dirname(process.argv[1]), 'probe.txt'), 'x')),
+            temp: tried(() => writeFileSync(join(tmpdir(), 'tell-and-wire-sandbox-probe.txt'), 'x')),
+          };
+        }`;
+      expect(await nodeCode.run(body, {})).toEqual({ package: 'allowed', settings: 'ERR_ACCESS_DENIED', beside: 'ERR_ACCESS_DENIED', own: 'allowed', temp: 'ERR_ACCESS_DENIED' });
+    } finally {
+      delete process.env.TW_SETTINGS;
+      rmSync(settings, { force: true });
+      rmSync(beside, { force: true });
+    }
+  });
+
+  it('is ended when it runs longer than TW_BODY_TIMEOUT_MS', async () => {
+    process.env.TW_BODY_TIMEOUT_MS = '300';
+    try {
+      await expect(nodeCode.run('export function run() { for (;;) {} }', {})).rejects.toThrow(/ran longer than 0[.]3 s/);
+    } finally {
+      delete process.env.TW_BODY_TIMEOUT_MS;
+    }
+  });
+
+  it('is not the end of the process when it writes a line that only Tell & Wire may write, whatever follows the mark', async () => {
+    // What a body prints is its own: a call that is no object, or asks for what does not exist, is answered, not thrown.
+    const body = `
+      export function run() {
+        process.stdout.write('\\x1etell-and-wire:call null\\n');
+        process.stdout.write('\\x1etell-and-wire:call {"id":1,"name":"constructor","args":[]}\\n');
+        return { value: 'ran' };
+      }
+    `;
+    expect(await nodeCode.run(body, {})).toEqual({ value: 'ran' });
+  });
+
+  it('may not start another program, and is handed no key of the process that runs it: it asks through node.llm', async () => {
+    const body = `
+      export function run() {
+        const { execSync } = require('node:child_process');
+        execSync('echo x');
+        return { value: 'ran' };
+      }
+    `;
+    await expect(nodeCode.run(body, {})).rejects.toThrow(/Access to this API has been restricted/);
+
+    // Fake values, set for this test only: what matters is which names arrive.
+    const planted = { OPENAI_API_KEY: 'sk-planted', GITHUB_TOKEN: 'ghp-planted', SERVICE_PASSWORD: 'planted', TW_PLAIN: 'kept' };
+    Object.assign(process.env, planted);
+    try {
+      const names = `export function run() { return { names: Object.keys(process.env).filter((name) => ${JSON.stringify(Object.keys(planted))}.includes(name)) }; }`;
+      expect(await nodeCode.run(names, {})).toEqual({ names: ['TW_PLAIN'] });
+    } finally {
+      for (const name of Object.keys(planted)) delete process.env[name];
+    }
+  });
+});

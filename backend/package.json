@@ -1,9 +1,9 @@
 {
   "name": "tell-and-wire-backend",
-  "version": "0.7.1",
+  "version": "0.7.4",
   "private": true,
   "type": "module",
-  "description": "The editor's server: the graph editor's and the Gui editor's backends, and the server and command line around them.",
+  "description": "Node code: what a deployment does (read a project, run its graph, serve it and its gui), what the editor adds (write, try, hand over), and the command line that puts them together.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24"

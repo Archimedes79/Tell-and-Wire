@@ -1,10 +1,10 @@
 // Every package this folder installs, held to the licences it may come under.
 //
 // The same lists and the same rule as ../../scripts/licenses.mjs, read from this
-// folder's own lockfile: the root lockfile does not know these packages, and
-// nothing here is part of the download or a bundle. Whoever runs this server
-// installs them from npm; this check is for the push that brings in one on
-// terms the project does not accept.
+// folder's own lockfile: the root lockfile does not know these packages. The
+// download carries them (scripts/package.mjs installs them, each with its licence
+// file); this check is for the push that brings in one on terms the project does
+// not accept.
 
 import { readFileSync } from 'node:fs';
 

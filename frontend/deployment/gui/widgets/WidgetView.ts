@@ -1,0 +1,43 @@
+import type { GuiWidget } from '../kit/guiWidget';
+
+/**
+ * What every widget view is handed (`widgets/<kind>/<Kind>WidgetView.tsx`).
+ *
+ * The two values are deliberately separate. `value` is what the widget itself
+ * holds -- the user's edit, or its stored value -- and is what it sends.
+ * `incoming` is what the end point it shows handed back last.
+ *
+ * As one prop, a chat's read pane and write pane would both show `value`, and
+ * typing a reply would overwrite the answer the user is reading. Widgets that
+ * only display (`plot_window`, a read-only text_io) just take
+ * `incoming ?? value`; only the ones that do both need the distinction.
+ */
+export interface WidgetViewProps {
+  widget: GuiWidget;
+  value: unknown;
+  incoming?: unknown;
+  /** Mostly a string; a block that holds more than one thing -- a conversation -- stores an object. */
+  onChange: (value: unknown) => void;
+  /**
+   * The person did the thing this block is *for*: pressed the button, sent the
+   * message, made the choice. Whether that starts the graph is not the block's
+   * call -- whoever draws the gui knows it (`fires`) -- so a block reports
+   * every such moment and does not look at its own settings to decide.
+   *
+   * `value` is what the block holds as of this event. Passed along rather than
+   * read back, because the event and the last keystroke arrive in one tick and
+   * a run that started from the stored value would send the message minus its
+   * final letter.
+   */
+  onTrigger: (value?: unknown) => void;
+  /**
+   * Using this block starts a round, so it waits while one is going. Said by
+   * whoever draws the gui: a delivered tool by the graph's events, which it
+   * is told by name; the editor by the backend.
+   */
+  fires?: boolean;
+  /** A run is in flight. For a block that shows waiting: a chat's typing dots. */
+  busy?: boolean;
+  /** The `id` of the block's one control, which the label above the block names (`BlockKind.labelsControl`). */
+  controlId?: string;
+}

@@ -1,4 +1,4 @@
-// `npm run lint --workspace editor`. Type errors are `typecheck`'s job; this is
+// `npm run lint --workspace frontend`. Type errors are `typecheck`'s job; this is
 // for what the compiler does not see -- above all the rules of hooks, whose
 // breaking shows up as a panel that forgets what was typed into it.
 module.exports = {

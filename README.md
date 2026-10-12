@@ -3,7 +3,7 @@
 # Tell & Wire
 
 **A visual node editor for AI workflows and small local tools: say in plain words what
-each node should do, wire the nodes into a graph, give it a page, and hand it on as a
+each node should do, wire the nodes into a graph, give it a gui, and hand it on as a
 folder that runs wherever Node runs -- offline, with a local model, if you like.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
@@ -24,9 +24,9 @@ A tool in Tell & Wire has two halves.
 - **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
   runs through **code nodes**, **AI nodes**, **data nodes** (a struct kept between runs)
   and **subgraphs**, and ends at **end points**.
-- **The page** (Page tab): blocks such as text, a file picker, a dropdown, a slider, a
+- **The gui** (Gui tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
-  what an end point hands back. It connects by name; nothing is wired to the page.
+  what an end point hands back. It connects by name; nothing is wired to the gui.
 
 A node is a heading and a short text that says what it should do. ✨ writes the node's
 files from that text: `input.js` and `output.js` (what goes in and out, each with an
@@ -39,7 +39,7 @@ can be kept as an offline test. **File → Deploy as zip** writes a zip that any
 start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
 The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
-(not `ai-settings.json`), writes only the temp folder, starts no program and holds no key.
+(not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.
 
 ## Download and start
@@ -64,7 +64,7 @@ start.cmd         # Windows cmd, or double-click it
 
 The launcher installs on first use, builds the page when its sources changed, restarts an
 editor already on the port and opens the browser; `stop.*` stops it. By hand it is
-`npm ci`, `npm run build`, then `npm start` (`node backend/app/main.ts --editor frontend/dist`).
+`npm ci`, `npm run build`, then `npm start` (`node backend/cli/main.ts --editor frontend/dist`).
 `npm run dev` serves the page with live reload on <http://127.0.0.1:3000>. Keep a checkout
 out of folders that Dropbox or OneDrive sync: they lock files during `npm ci` and the build.
 
@@ -72,12 +72,12 @@ A graph also runs without the editor. Paths inside a graph resolve against the w
 directory, so run the examples from the repository root:
 
 ```bash
-node backend/app/main.ts examples/population_plotter          # run once, print the result as JSON
-node backend/app/main.ts check examples/population_plotter    # what is wrong, without running
-node backend/app/main.ts test --offline examples/nested_statistics   # node examples and kept runs
-node backend/app/main.ts my_tool --serve                      # serve its page
-node backend/app/main.ts my_tool --bundle ./out               # write a deployable folder
-node backend/app/main.ts --mcp --mcp-root ./tools             # an MCP server on stdio
+node backend/cli/main.ts examples/population_plotter          # run once, print the result as JSON
+node backend/cli/main.ts check examples/population_plotter    # what is wrong, without running
+node backend/cli/main.ts test --offline examples/nested_statistics   # node examples and kept runs
+node backend/cli/main.ts my_tool --serve                      # serve its gui
+node backend/cli/main.ts my_tool --bundle ./out               # write a deployable folder
+node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on stdio
 ```
 
 ## Set up a model
@@ -86,8 +86,11 @@ node backend/app/main.ts --mcp --mcp-root ./tools             # an MCP server on
 
 Open **⚙ Settings**, fill in what you need, press **Save**:
 
-- **AI**: the provider and model. This one setting serves ✨, ▶ Try and every AI node
-  that does not name its own model.
+- **AI that runs the nodes** and **AI that writes**: a provider and a model each. The first
+  serves every AI node that does not name its own model, a code node's `node.llm`, ▶ Try and
+  every run, also in a delivered tool. The second serves ✨ (a node's code and prompt, a whole
+  graph, the bar under the canvas) and is the first one until you set it apart -- a larger
+  model may be worth it for writing, a small one enough for the nodes, or the other way round.
 - **Keys** and **Server addresses**: paste an API key or a server address. Keys are
   write-only: saved on this machine, never shown again.
 
@@ -95,7 +98,8 @@ Settings are saved in `ai-settings.json`. It is looked for in the working direct
 folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as
 `~/.tell-and-wire/settings.json`; `TW_SETTINGS` names one file instead. The file is
 gitignored; `ai-settings.example.json` shows its shape. Environment variables win over the
-file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
+file: `TW_AI_PROVIDER`, `TW_AI_MODEL` (the nodes), `TW_WRITING_PROVIDER`, `TW_WRITING_MODEL`
+(writing), and the key and address variables below.
 
 | Provider (id) | Cost | Key or address |
 |---|---|---|
@@ -108,15 +112,19 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL`, and the key and address variables below.
 | OpenAI-compatible (`openai_compatible`) | depends | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` |
 
 With nothing set, Tell & Wire uses a local model server that is running (Ollama or
-LM Studio), else Ollama. For Gemini, use the `-latest` model names; dated names are retired.
+LM Studio), else Ollama, and the editor says at once if that is not running. For Gemini, use
+the `-latest` model names; dated names are retired. Ollama is asked for a context window as large
+as the request (4096 to 32768 tokens), since it cuts a longer prompt silently at its own default.
 
 A small local model slips now and then: an empty answer, broken JSON, a key left out. Tell & Wire
 asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
 [docs/architecture.md](docs/architecture.md)).
 
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
-servers: list them under *the node's settings → Tools the model may use*, one per line -- an
-`https://…/mcp` address, or a name this machine's `ai-settings.json` defines:
+servers. In *the node's settings → Tools the model may use*, **+ Add MCP server** offers the ones
+that come with Tell & Wire -- a web reader and a Word and PDF reader, each with the settings it
+needs -- and takes any other, by a name that the machine's own settings file
+(`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`) defines:
 
 ```json
 { "mcp_servers": {
@@ -124,8 +132,9 @@ servers: list them under *the node's settings → Tools the model may use*, one 
     "internal":   { "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer …" } } } }
 ```
 
-A graph can name a server but never the command that starts one, so a graph someone hands
-you cannot start a program of its choosing. A server started by `command` does not
+A graph can name a server but never the command or the address of one, so a graph someone
+hands you cannot start a program of its choosing or post its data to a stranger's server. A
+Word file is read by the `documents` server, not by the nodes. A server started by `command` does not
 inherit variables named like keys, tokens, secrets or passwords from the environment: give
 it what it needs in its own `env`. A tool call gets two minutes
 (`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight turns of calls per answer.
@@ -139,21 +148,23 @@ docker run -p 127.0.0.1:8000:8000 -v ./data:/app/data ghcr.io/archimedes79/tell-
 
 ## Examples
 
-[`examples/`](examples/) holds seven tools, each a folder; open one with **File → Open…**. The
+[`examples/`](examples/) holds eight tools, each a folder; open one with **File → Open…**. The
 simplest are population_plotter (choose a CSV, see a chart; no model), folder_summaries
-(a summary of each file in a folder) and chat (a chat block and an AI node).
+(a summary of each file in a folder) and chat (a chat block and an AI node). counter
+remembers in a data node: a button counts up, no model, and the wire back to the node that adds one
+reads the count as it was when the round began.
 file_summarizer starts one run from a picker, a dropdown and a button. nested_statistics
-shows a subgraph, a hand-written page and a kept test. paper_review_panel and
+shows a subgraph, a hand-written gui and a kept test. paper_review_panel and
 portfolio_review are teams of AI reviewers.
 
 ## Documentation
 
 - [docs/user-guide.md](docs/user-guide.md): how to build a tool, step by step.
 - [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
-  between them, the tool's folder format, the wrapper's APIs and the core protocol, and how to
-  extend Tell & Wire.
-- [mcp/](mcp/README.md): optional tool servers that let an AI node read web pages and Word and
-  PDF files. Each has its own dependencies; none of it is in the download.
+  between them, the tool's folder format, the host's APIs and the core protocol, what a package
+  carries, and how to extend Tell & Wire.
+- [mcp/](mcp/README.md): the tool servers that come with Tell & Wire -- they let an AI node read web
+  pages and Word and PDF files -- and how a server brings its own settings.
 
 ## Licence
 

@@ -1,0 +1,175 @@
+// Asking a model, as a node does it -- and as a body may ask for it to be done.
+//
+// One function, because there is one way: what arrived is sent after the
+// instructions (`prompt.ts`), pictures and PDFs are sent as files, tool servers live for
+// the length of the question. An ai node calls it directly; a code node reaches
+// the same function through `node.llm` (see `Runtime.BodyContext`), so a call
+// made from a body is not a second, thinner way to ask.
+
+import type { Runtime } from '../../../../../graph/nodes/Runtime.ts';
+import { fileContent, inlineMediaType, isInlineFile } from '../../../../../graph/nodes/fileContent.ts';
+import type { AskSettings } from '../../../../../graph/nodes/ai/AiNodeDefinition.ts';
+import { assemblePrompt } from './prompt.ts';
+
+/** How often one run of a body may ask for the model. A loop that forgot to end must not spend a budget. */
+const LLM_CALLS_PER_RUN = 25;
+
+/**
+ * What a second ask says about the first: the answer it got, why that could not be
+ * used, and how to answer instead. Said after what arrived, in the same message, so
+ * that it works with every provider and does not depend on one keeping a conversation.
+ */
+export interface Repair {
+  /** What the model said. Empty where it said nothing that could be kept: it ran out of length. */
+  answer: string;
+  problem: string;
+  /** How to answer this time, in one sentence. */
+  reminder: string;
+}
+
+/** How much of its own answer a model is shown again: enough to see what it got wrong, not the whole of a runaway. */
+const SHOWN_AGAIN = 1500;
+
+function repairNote({ answer, problem, reminder }: Repair): string {
+  const shown = answer.length > SHOWN_AGAIN ? `${answer.slice(0, SHOWN_AGAIN)}...` : answer;
+  return `
+
+---
+Your previous answer could not be used: ${problem}
+${shown ? `
+Your previous answer was:
+${shown}
+` : ''}
+Answer again, from the start. ${reminder}`;
+}
+
+/** Nothing said: the one AI setting's model, plain text, no tools. What a code node's `node.llm` starts from. */
+export const PLAIN_ASK: AskSettings = {
+  instructions: '', provider: 'default', model: '', sendImages: false, toolServers: [],
+};
+
+/**
+ * Ask once. *order* is the node's own port order: the message a person
+ * previews must be the message that is sent, whatever order the edges are
+ * stored in. *repair* is a second try: the same question, and what was wrong
+ * with the first answer.
+ */
+export async function askModel(
+  settings: AskSettings,
+  inputs: Record<string, unknown>,
+  runtime: Runtime,
+  order: string[] = [],
+  repair?: Repair,
+): Promise<string> {
+  const text: Record<string, unknown> = {};
+  const files: string[] = [];
+  const names = [...order.filter((id) => id in inputs), ...Object.keys(inputs).filter((id) => !order.includes(id))];
+
+  for (const name of names) {
+    const value = inputs[name];
+    if (value === null || value === undefined) continue;
+    // A picture or a PDF goes as the file it is: one a file port read
+    // (`fileContent.ts`) always, and one named by its path when the node sends
+    // files (`send_images`), read here -- the provider's machine is not this
+    // one, so a filename would arrive as a filename and the model would
+    // dutifully talk about the filename. A list is expanded, so a folder
+    // picker wired straight in sends every file; what is not a file in a mixed
+    // list -- a caption beside a photo -- stays in the prompt.
+    const candidates = Array.isArray(value) ? value : [value];
+    const words: unknown[] = [];
+    for (const candidate of candidates) {
+      const file = isInlineFile(candidate) ? candidate : settings.sendImages ? await asInlineFile(candidate, runtime) : null;
+      if (file) files.push(file);
+      else words.push(candidate);
+    }
+    if (!words.length) continue;
+    text[name] = Array.isArray(value) ? words : value;
+  }
+
+  const { system, user } = assemblePrompt(settings.instructions, text);
+  if (!user && !files.length) {
+    throw new Error('Nothing to ask: this node has no instructions, and nothing wired into it brought anything.');
+  }
+  const request = {
+    prompt: repair ? `${user}${repairNote(repair)}` : user,
+    system,
+    provider: settings.provider,
+    model: settings.model,
+    ...(settings.temperature === undefined ? {} : { temperature: settings.temperature }),
+    ...(files.length ? { files } : {}),
+  };
+
+  // A failed call is not caught here: `catch_errors` is read by the executor,
+  // which turns a throw into this node's `error` port for every kind of
+  // node alike. One mechanism, not one per kind.
+  if (!settings.toolServers.length) return runtime.ai.complete(request);
+
+  // Tools live for one question and no longer: a server started for it is
+  // stopped when it is answered, so a graph that ran leaves nothing running.
+  if (!runtime.tools) throw new Error('This node asks for tool servers, and nothing here can reach one.');
+  const session = await runtime.tools.open(settings.toolServers);
+  try {
+    return await runtime.ai.complete({ ...request, tools: session });
+  } finally {
+    await session.close();
+  }
+}
+
+/** What a body may say when it asks: everything optional, the node's settings for the rest. */
+interface LlmArgs {
+  /** The instructions, before what is asked about. */
+  system?: unknown;
+  /** Values to send, each under its name where there are several. */
+  inputs?: unknown;
+  /** Instead of `inputs`, for a call that is just a question. */
+  prompt?: unknown;
+  temperature?: unknown;
+  provider?: unknown;
+  model?: unknown;
+}
+
+/**
+ * `node.llm`, as the process holding the keys answers it.
+ *
+ * Counted, because the body asking is code nobody may have read: a loop that
+ * forgot to end asks a finite number of times and then is told why it stopped.
+ */
+export function llmCall(settings: AskSettings, runtime: Runtime): (args: unknown) => Promise<unknown> {
+  const most = runtime.llmCallsPerBody ?? LLM_CALLS_PER_RUN;
+  let asked = 0;
+  return async (raw) => {
+    asked += 1;
+    if (asked > most) {
+      throw new Error(`This body has asked the model ${most} times in one run, which is as often as it may. `
+        + 'If it is meant to ask more, raise TW_MAX_LLM_CALLS where the tool runs.');
+    }
+    const args = (raw && typeof raw === 'object' ? raw : {}) as LlmArgs;
+    const given = args.inputs && typeof args.inputs === 'object' && !Array.isArray(args.inputs)
+      ? args.inputs as Record<string, unknown> : {};
+    const question = typeof args.prompt === 'string';
+    return askModel({
+      ...settings,
+      ...(typeof args.system === 'string' ? { instructions: args.system } : {}),
+      ...(typeof args.temperature === 'number' ? { temperature: args.temperature } : {}),
+      ...(typeof args.provider === 'string' && args.provider ? { provider: args.provider } : {}),
+      ...(typeof args.model === 'string' && args.model ? { model: args.model } : {}),
+    }, question ? { prompt: args.prompt } : given, runtime);
+  };
+}
+
+/**
+ * A picture or a PDF named by its path, inlined -- or null for anything else.
+ *
+ * A file that looks like one but cannot be read (missing, too large) counts as
+ * text: it goes into the prompt as the string it is, which is what someone
+ * wiring a filename in would expect, rather than failing the whole node over a
+ * file it was optional to send.
+ */
+async function asInlineFile(value: unknown, runtime: Runtime): Promise<string | null> {
+  if (typeof value !== 'string' || !inlineMediaType(value)) return null;
+  try {
+    return await fileContent(value, runtime.files);
+  } catch {
+    return null;
+  }
+}

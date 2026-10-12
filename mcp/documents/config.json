@@ -1,0 +1,12 @@
+{
+  "title": "Document reader",
+  "about": "Reads Word and PDF files in the folders you allow and hands the model their text, in pieces when it is long.",
+  "command": "node",
+  "args": ["src/main.ts"],
+  "env": {
+    "TW_DOCS_ROOTS": "The folders it may read, one after the other, separated by ; on Windows and by : elsewhere.",
+    "TW_DOCS_MAX_BYTES": "The largest file it reads, in bytes. Without it: 52428800 (50 MB).",
+    "TW_DOCS_MAX_PAGES": "The most pages of a PDF it reads. Without it: 500."
+  },
+  "required": ["TW_DOCS_ROOTS"]
+}

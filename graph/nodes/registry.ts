@@ -1,37 +1,36 @@
-// The runtime registry: every node a deployed tool can run.
+// The registry of node kinds: every node a graph can hold, as its definition.
 //
-// One list, built from the element classes themselves. The editor keeps its own
-// registry of subclasses that add the config panels — this one is what a bundle
-// imports, and it is the reason a bundle contains no editor. The blocks of a
-// page are not run by the executor: the page asks them
-// (`backend/gui-editor/widgets/page.ts`), and `widgets/roster.ts` there is their list.
+// One list, built from the definition classes themselves. It is what a tool
+// carries and what the editor asks; the runners (`backend/deployment/runtime/nodes/`)
+// and the designs (`graph/editor/nodes/`) are listed beside it, each by its
+// own registry. The blocks of a gui are not nodes: the gui asks them
+// (`gui/gui.ts`), and `gui/widgets/roster.ts` is their list.
 
-import type { NodeRunner } from './NodeRunner.ts';
-import type { NodeType } from '../graph.ts';
-import { AiNodeRunner } from './ai/AiNodeRunner.ts';
-import { CodeNodeRunner } from './code/CodeNodeRunner.ts';
-import { DataNodeRunner } from './data/DataNodeRunner.ts';
-import { EndNodeRunner } from './end/EndNodeRunner.ts';
-import { StartNodeRunner } from './start/StartNodeRunner.ts';
-import { SubgraphNodeRunner } from './subgraph/SubgraphNodeRunner.ts';
+import type { NodeDefinition } from './NodeDefinition.ts';
+import { AiNodeDefinition } from './ai/AiNodeDefinition.ts';
+import { CodeNodeDefinition } from './code/CodeNodeDefinition.ts';
+import { DataNodeDefinition } from './data/DataNodeDefinition.ts';
+import { EndNodeDefinition } from './end/EndNodeDefinition.ts';
+import { StartNodeDefinition } from './start/StartNodeDefinition.ts';
+import { SubgraphNodeDefinition } from './subgraph/SubgraphNodeDefinition.ts';
 
 /** In the order a person or a model is shown them: where a graph starts, what works, where it ends. */
-export const NODES: NodeRunner<unknown>[] = [
-  new StartNodeRunner(),
-  new AiNodeRunner(),
-  new CodeNodeRunner(),
-  new DataNodeRunner(),
-  new EndNodeRunner(),
-  new SubgraphNodeRunner(),
-] as NodeRunner<unknown>[];
+export const NODES: NodeDefinition[] = [
+  new StartNodeDefinition(),
+  new AiNodeDefinition(),
+  new CodeNodeDefinition(),
+  new DataNodeDefinition(),
+  new EndNodeDefinition(),
+  new SubgraphNodeDefinition(),
+];
 
-const NODES_BY_TYPE = new Map<string, NodeRunner<unknown>>(
-  NODES.map((element) => [element.nodeType, element]),
+const NODES_BY_TYPE = new Map<string, NodeDefinition>(
+  NODES.map((kind) => [kind.nodeType, kind]),
 );
 
-/** The registry the executor asks. An unknown type is a missing element, not a crash. */
+/** The registry the executor asks. An unknown type is a missing kind, not a crash. */
 export const registry = {
-  node(type: NodeType | string): NodeRunner<unknown> | undefined {
+  node(type: string): NodeDefinition | undefined {
     return NODES_BY_TYPE.get(type);
   },
   nodeTypes(): string[] {

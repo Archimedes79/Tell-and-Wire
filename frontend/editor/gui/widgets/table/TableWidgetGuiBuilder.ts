@@ -1,0 +1,23 @@
+import { DisplayWidgetGuiBuilder } from '../DisplayWidgetGuiBuilder';
+import { TABLE_TEXT } from '../../../../deployment/gui/widgets/table/TableWidgetView';
+import { Table } from 'lucide-react';
+
+export class TableWidgetGuiBuilder extends DisplayWidgetGuiBuilder {
+  readonly widgetKind = 'table';
+
+  readonly label = 'Table';
+
+  paletteEntries() {
+    return [{ label: this.label, icon: Table, also: 'rows grid data' }];
+  }
+
+  /** Its rows, at the size the table draws them. */
+  override textShown(): string {
+    return `${TABLE_TEXT} px rows`;
+  }
+
+  /** What a run shows is a card, like the other results on the page. */
+  protected override defaultTone() {
+    return 'raised' as const;
+  }
+}

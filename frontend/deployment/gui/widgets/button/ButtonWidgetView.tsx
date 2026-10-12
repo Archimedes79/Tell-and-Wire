@@ -1,0 +1,17 @@
+import type { WidgetViewProps } from '../WidgetView';
+import Button from '../../kit/ui/Button';
+
+/**
+ * A button: a press fires the start point the button names.
+ *
+ * A press is an event and nothing else: it holds no value a round could be
+ * sent (`WidgetDefinition.takesValue`). Which button it was, the round's
+ * package says (`event.by`).
+ */
+export default function ButtonWidgetView({ widget, onTrigger, busy }: WidgetViewProps) {
+  return (
+    <Button variant="primary" className="w-full h-[34px]" disabled={busy} onClick={() => onTrigger()}>
+      {widget.label || 'Press'}
+    </Button>
+  );
+}

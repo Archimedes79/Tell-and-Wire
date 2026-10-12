@@ -1,0 +1,299 @@
+import { describe, it, expect } from 'vitest';
+import { useGraphStore } from './graphStore';
+import type { Graph, GraphNode } from '../graph';
+import { baseNodeConfig } from '../model/baseNodeConfig';
+import { WIDGET_BUILDERS } from '../elements/registry';
+import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
+import { NODE_KINDS } from '../model/nodeKinds';
+import { answers as runAnswers } from '../../../test/runAnswers';
+
+function graphNode(overrides: Partial<GraphNode>): GraphNode {
+  return {
+    id: 'n',
+    node_type: 'code',
+    label: 'Node',
+    description: '',
+    position: { x: 0, y: 0 },
+    inputs: [],
+    outputs: [],
+    config: baseNodeConfig(),
+    ...overrides,
+  };
+}
+
+const port = (id: string, kind: 'input' | 'output', name = id) =>
+  ({ id, name, kind, data_type: 'any' as const, multi: false, required: false, description: '' });
+
+function loadTestGraph(nodes: GraphNode[], edges: Graph['edges'] = [], gui?: Graph['gui']) {
+  useGraphStore.getState().loadGraph({
+    metadata: { name: 'Test', description: '', gui_scheme: 'night' },
+    nodes,
+    edges,
+    ...(gui ? { gui } : {}),
+  });
+}
+
+const store = () => useGraphStore.getState();
+const nodeById = (id: string) => store().rfNodes.find((n) => n.id === id)!.data.graphNode as GraphNode;
+
+describe('graphStore.loadGraph', () => {
+  it('opens a document clean, and saves what it was given: a size, a gui, a node of a type this editor does not know', () => {
+    const note = WIDGET_BUILDERS.text.create('note', 'Note');
+    const sized = graphNode({ id: 'sized', width: 340, height: 300, outputs: [port('output', 'output')] });
+    // A node of a newer version: kept as it came, wires and all.
+    const later = {
+      id: 'later', node_type: 'vision', label: 'Later', description: '', position: { x: 5, y: 6 },
+      inputs: [port('picture', 'input')], outputs: [], config: { batch_mode: 'whole_list', lens: 'wide' },
+    } as unknown as GraphNode;
+    loadTestGraph([sized, graphNode({ id: 'plain' }), later],
+      [{ id: 'e1', source_node_id: 'sized', source_port_id: 'output', target_node_id: 'later', target_port_id: 'picture' }],
+      { blocks: [note] });
+    // What ReactFlow does once a node is drawn: it reports what the node measured. That is no change.
+    store().setRFNodes(store().rfNodes.map((n) => ({ ...n, width: 675, height: 366 })));
+    expect(store().isDirty()).toBe(false);
+
+    const saved = store().exportGraph();
+    // Where it stands is the schedule's to say: the position a file gave is not kept.
+    const { position: _given, ...kept } = later;
+    expect(saved.nodes.find((n) => n.id === 'later')).toMatchObject(kept);
+    expect(saved.schedule).toBeDefined();
+    expect(saved.nodes.find((n) => n.id === 'sized')).toMatchObject({ width: 340, height: 300 });
+    expect(saved.nodes.find((n) => n.id === 'plain')!.width).toBeUndefined();
+    expect(saved.edges).toHaveLength(1);
+    expect(saved.gui).toEqual({ blocks: [note] });
+    loadTestGraph([], [], { blocks: [] });
+    expect(store().exportGraph()).not.toHaveProperty('gui');
+  });
+
+  it('says the wires it leaves out, to nodes that are not there', () => {
+    const wire = { id: 'w', source_node_id: 'plain', source_port_id: 'output', target_node_id: 'missing', target_port_id: 'input' };
+    expect(store().loadGraph({ metadata: store().metadata, nodes: [graphNode({ id: 'plain' })], edges: [wire] }).dropped).toEqual(['plain.output -> missing.input']);
+    expect(store().rfEdges).toEqual([]);
+  });
+
+  /**
+   * A graph written by hand, by the MCP server or by a model leaves keys out, and a
+   * run reads each missing one some way. Opening such a graph and saving it must not
+   * change what it does: a missing key is not filled with what a *new* node starts
+   * with. (`elements/savedConfig.test.ts` holds a saved node to the full one; this
+   * holds a loaded node to the file it was loaded from.)
+   */
+  it('leaves a key the file leaves out as it was: every node type, opened and saved, runs as the file said', () => {
+    for (const kind of Object.values(NODE_KINDS)) {
+      const bare = { ...kind.create('n'), config: {} as GraphNode['config'] };
+      loadTestGraph([bare]);
+      const saved = store().exportGraph().nodes[0];
+      expect(runAnswers(saved, ['config']), bare.node_type).toEqual(runAnswers(bare, ['config']));
+    }
+  });
+});
+
+describe('graphStore: what a round remembered', () => {
+  // What using a graph leaves behind is the server's session's, never the document's
+  // (docs/architecture.md, "State"): no undo step, nothing to save, nothing Deploy would ship.
+  it('shows what a round made, and keeps none of it in the document', () => {
+    const chat = WIDGET_BUILDERS.chat.create('talk', 'Talk');
+    loadTestGraph([graphNode({ id: 'data1', node_type: 'data', config: { ...baseNodeConfig(), data_value: { value: 'old value' } } })], [], { blocks: [chat] });
+    const before = store().exportGraph();
+    const result = {
+      status: 'success', node_results: [{ node_id: 'data1', status: 'success', inputs: {}, outputs: { value: 'new value' } }],
+      memory: [{ node_id: 'data1', port_id: 'value', value: 'new value' }],
+    };
+    store().setExecutionResult(result as never);
+    expect(store().executionResult).toBe(result);
+    expect(store().exportGraph()).toEqual(before);
+    expect(store().isDirty()).toBe(false);
+  });
+});
+
+describe('graphStore.takeDiskChanges', () => {
+  const inner = (nodes: unknown[] = []) => ({ metadata: { name: 'Inner', description: '', gui_scheme: 'night' }, nodes, edges: [] });
+
+  it('takes what changed on disk in without an undo step -- no Undo brings the old text back -- and leaves a graph inside a node alone while there is unsaved work', () => {
+    loadTestGraph([
+      graphNode({
+        id: 'count', node_type: 'code', outputs: [port('total', 'output', 'Total')],
+        config: { ...baseNodeConfig(), code: 'function run() { return { total: 1 }; }' },
+      }),
+      graphNode({ id: 'part', node_type: 'subgraph', config: { ...baseNodeConfig(), subgraph: inner() } }),
+      graphNode({ id: 'kept', node_type: 'data', config: { ...baseNodeConfig(), data_value: { clicks: 0, seen: 0 } } }),
+    ], [{ id: 'w', source_node_id: 'count', source_port_id: 'total', target_node_id: 'kept', target_port_id: 'clicks' }]);
+    store().markSaved();
+
+    // The graph a node holds, changed in its folder: taken whole, its ports following -- and what is on disk is saved by definition.
+    store().takeDiskChanges([{ node_id: 'part', field: NESTED_GRAPH_FIELD, value: inner([graphNode({ id: 'result', node_type: 'end', label: 'Result' })]) }]);
+    expect((nodeById('part').config.subgraph as Graph).nodes.map((n) => n.id)).toEqual(['result']);
+    expect(nodeById('part').outputs.map((p) => p.name)).toEqual(['Result']);
+    expect(store().isDirty()).toBe(false);
+
+    // A change made here, then code changed on disk: taken over the unsaved work, which stays.
+    store().updateNode('count', { label: 'Counter' });
+    store().takeDiskChanges([
+      { node_id: 'count', field: 'code', value: 'function run() { return { total: 2 }; }' },
+      { node_id: 'gone', field: 'code', value: 'ignored' },
+    ]);
+    expect(nodeById('count').config.code).toContain('total: 2');
+    expect(store().isDirty()).toBe(true);
+
+    // With unsaved work here, taking a whole graph would replace it without a word.
+    const { refused } = store().takeDiskChanges([{ node_id: 'part', field: NESTED_GRAPH_FIELD, value: inner([graphNode({ id: 'theirs' })]) }]);
+    expect(refused).toEqual(['part']);
+    expect((nodeById('part').config.subgraph as Graph).nodes.map((n) => n.id)).toEqual(['result']);
+
+    // Undo takes back what was done here, not what the other editor wrote: saved after it, that would be overwritten.
+    store().undo();
+    expect(nodeById('count').label).toBe('Node');
+    expect(nodeById('count').config.code).toContain('total: 2');
+    expect(store().isDirty()).toBe(false);
+
+    // A field the file on disk leaves out is a port gone, and takes its wire with it -- left, nobody could see it to delete it, and no Redo brings it back.
+    store().takeDiskChanges([{ node_id: 'kept', field: 'data_value', value: { seen: 0 } }]);
+    expect(nodeById('kept').inputs.map((p) => p.id)).toEqual(['seen']);
+    expect(store().rfEdges).toEqual([]);
+    store().redo();
+    expect(store().rfEdges).toEqual([]);
+  });
+});
+
+describe('a graph inside a node', () => {
+  const holder = () => graphNode({
+    id: 'part', node_type: 'subgraph', label: 'Part',
+    config: { ...baseNodeConfig(), subgraph: { metadata: { name: 'Inner', description: '', gui_scheme: 'night' }, nodes: [], edges: [] } },
+  });
+  const held = () => (nodeById('part').config.subgraph as Graph).nodes;
+
+  it('is opened in place of the one outside, is unsaved work like any other, and comes back as one undo step', () => {
+    loadTestGraph([holder()]);
+    store().markSaved();
+
+    store().openSubgraph('part');
+    expect(store().rfNodes).toHaveLength(0);
+    expect(store().metadata.name).toBe('Inner');
+    // Going in changes nothing; a change in there is a change of the whole document.
+    expect(store().isDirty()).toBe(false);
+    store().addNode('end', { x: 0, y: 0 });
+    store().addNode('code', { x: 0, y: 0 });
+    expect(store().isDirty()).toBe(true);
+    store().closeSubgraph();
+
+    // Back outside, the node holds what was built -- and an end point in there is an output port out here.
+    expect(store().metadata.name).toBe('Test');
+    expect(held()).toHaveLength(2);
+    expect(nodeById('part').outputs).toHaveLength(1);
+    // One Ctrl+Z took away everything built inside.
+    store().undo();
+    expect(held()).toHaveLength(0);
+    store().redo();
+    expect(held()).toHaveLength(2);
+  });
+
+  it('takes the wires of a port it no longer has with it when the end point behind it is deleted in there', () => {
+    const inner = { metadata: { name: 'Inner', description: '', gui_scheme: 'night' }, nodes: [graphNode({ id: 'result', node_type: 'end', label: 'Result' })], edges: [] };
+    loadTestGraph([
+      graphNode({ id: 'part', node_type: 'subgraph', label: 'Part', config: { ...baseNodeConfig(), subgraph: inner } }),
+      graphNode({ id: 'after', node_type: 'code', inputs: [port('in', 'input')] }),
+    ]);
+    store().connect({ source: 'part', sourceHandle: nodeById('part').outputs[0].id, target: 'after', targetHandle: 'in' });
+    expect(store().rfEdges).toHaveLength(1);
+
+    store().openSubgraph('part');
+    store().deleteNodes(['result']);
+    // Still inside, what Save and Run take is the whole document.
+    expect(store().rootGraph().edges).toEqual([]);
+    store().closeSubgraph();
+    expect(nodeById('part').outputs).toEqual([]);
+    expect(store().rfEdges).toEqual([]);
+  });
+});
+
+describe('graphStore.connect', () => {
+  it('names a new wire the way graph-flow.json writes it, and draws none twice, whatever the one already there is called', () => {
+    const nodes = () => [
+      graphNode({ id: 'a', node_type: 'code', outputs: [port('out', 'output')] }),
+      graphNode({ id: 'b', node_type: 'code', inputs: [port('in', 'input')] }),
+    ];
+    const wire = { source: 'a', sourceHandle: 'out', target: 'b', targetHandle: 'in' };
+    loadTestGraph(nodes());
+    store().connect(wire);
+    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['a.out -> b.in']);
+    // A graph pasted in or designed by ✨ may call its wires anything.
+    loadTestGraph(nodes(), [{ id: 'e1', source_node_id: 'a', source_port_id: 'out', target_node_id: 'b', target_port_id: 'in' }]);
+    store().connect(wire);
+    expect(store().rfEdges).toHaveLength(1);
+  });
+
+  it('sets what an input takes: files where a path arrives at a node that reads its files, and the part of a call it is named after', () => {
+    const paths = { ...port('files', 'output'), data_type: 'file_path' as const, multi: true };
+    loadTestGraph([
+      graphNode({ id: 'folder', node_type: 'code', outputs: [paths] }),
+      graphNode({ id: 'reader', node_type: 'code', inputs: [port('in', 'input')] }),
+      graphNode({ id: 'memory', node_type: 'data', inputs: [port('value', 'input')], config: { ...baseNodeConfig(), data_value: { value: null } } }),
+      graphNode({ id: 'result', node_type: 'end', inputs: [port('value', 'input')] }),
+      graphNode({
+        id: 'ask', node_type: 'start', outputs: [port('data', 'output')],
+        config: { ...baseNodeConfig(), started_by: 'call', values: { topic: 'cats', size: 3 } },
+      }),
+      graphNode({ id: 'say', node_type: 'code', inputs: [port('topic', 'input'), port('other', 'input')] }),
+    ]);
+    for (const [target, handle] of [['reader', 'in'], ['memory', 'value'], ['result', 'value']]) {
+      store().connect({ source: 'folder', sourceHandle: 'files', target, targetHandle: handle });
+    }
+    expect(nodeById('reader').inputs[0]).toMatchObject({ data_type: 'file_path', multi: true });
+    expect(nodeById('memory').inputs[0]).toMatchObject({ data_type: 'any', multi: false });
+    // An end point hands back the paths, not their files -- a list of them, as one arrives.
+    expect(nodeById('result').inputs[0]).toMatchObject({ data_type: 'any', multi: true });
+
+    store().connect({ source: 'ask', sourceHandle: 'data', target: 'say', targetHandle: 'topic' });
+    store().connect({ source: 'ask', sourceHandle: 'data', target: 'say', targetHandle: 'other' });
+    expect(nodeById('say').inputs[0]).toMatchObject({ field: 'topic', data_type: 'text' });
+    // Two parts, neither named after it: the whole package.
+    expect(nodeById('say').inputs[1].field).toBeUndefined();
+  });
+});
+
+describe('graphStore.connectToNewInput', () => {
+  it('gives a wire dropped on a code node an input of its own, named after what arrives -- and undone, the input goes with its wire', () => {
+    loadTestGraph([
+      graphNode({ id: 'page', node_type: 'code', outputs: [port('select_out', 'output', 'Darstellung'), port('picker_out', 'output', 'Größe')] }),
+      graphNode({ id: 'sum', node_type: 'code', inputs: [port('input', 'input')] }),
+    ]);
+    expect(store().connectToNewInput({ source: 'page', sourceHandle: 'select_out', target: 'sum' })).toBe(true);
+    expect(store().connectToNewInput({ source: 'page', sourceHandle: 'picker_out', target: 'sum' })).toBe(true);
+    expect(nodeById('sum').inputs.map((p) => [p.id, p.name])).toEqual([['input', 'input'], ['darstellung', 'Darstellung'], ['groesse', 'Größe']]);
+    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['page.select_out -> sum.darstellung', 'page.picker_out -> sum.groesse']);
+
+    store().undo();
+    expect(nodeById('sum').inputs.map((p) => p.id)).toEqual(['input', 'darstellung']);
+    expect(store().rfEdges).toHaveLength(1);
+  });
+});
+
+describe('graphStore.connectToNewInput, on a node with inputs of its own', () => {
+  it('takes a wire dropped on an end point on its value, not its path -- and on a data node, whose inputs are its fields, does nothing', () => {
+    loadTestGraph([
+      graphNode({ id: 'src', node_type: 'code', outputs: [port('out', 'output')] }),
+      NODE_KINDS.end.create('done'),
+      NODE_KINDS.data.create('memory'),
+    ]);
+    expect(store().connectToNewInput({ source: 'src', sourceHandle: 'out', target: 'done' })).toBe(true);
+    expect(store().rfEdges.map((edge) => edge.id)).toEqual(['src.out -> done.value']);
+    expect(store().connectToNewInput({ source: 'src', sourceHandle: 'out', target: 'memory' })).toBe(false);
+  });
+});
+
+describe('graphStore.addNodeFrom', () => {
+  it('adds the node a wire was let go for, and wires it -- on a new input where the node names its own, else on its first -- as one undo step', () => {
+    loadTestGraph([graphNode({ id: 'read', node_type: 'code', label: 'Read', outputs: [port('info', 'output', 'Info')] })]);
+    const code = store().addNodeFrom('code', { x: 300, y: 0 }, { source: 'read', sourceHandle: 'info' });
+    const end = store().addNodeFrom('end', { x: 600, y: 0 }, { source: code, sourceHandle: 'output' });
+
+    // A code node names the input after what arrives; an end point takes the wire on the input it has.
+    expect(nodeById(code).inputs.map((p) => p.id)).toEqual(['read']);
+    expect(store().rfEdges.map((edge) => edge.id)).toEqual([`read.info -> ${code}.read`, `${code}.output -> ${end}.${nodeById(end).inputs[0].id}`]);
+
+    // The node and its wire went in together, and go together.
+    store().undo();
+    expect(store().rfNodes.map((node) => node.id)).toEqual(['read', code]);
+    expect(store().rfEdges).toHaveLength(1);
+  });
+});

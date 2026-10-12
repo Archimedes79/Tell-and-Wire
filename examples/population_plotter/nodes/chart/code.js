@@ -3,7 +3,7 @@
  *
  * Names are in the first column; the first column that is numbers all the way
  * down is what gets plotted, largest first. Nothing is drawn here: this says
- * *what* to plot, and the chart block on the page draws it.
+ * *what* to plot, and the chart block on the gui draws it.
  *
  * @typedef {Object} Inputs
  * @property {string} csv  the content of the chosen file
@@ -37,6 +37,6 @@ if (/^code(\.js)?$/.test(process.getBuiltinModule('node:path').basename(process.
   process.getBuiltinModule('node:vm').runInNewContext(process.getBuiltinModule('node:fs').readFileSync(file, 'utf8'), { module: input });
   const example = input.exports;
   if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input.js has no example yet -- an object keyed by input, written by ✨ Input.');
-  const node = { llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/app/main.ts run-node <project> <node id>'); } };
+  const node = { llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/cli/main.ts run-node <project> <node id>'); } };
   Promise.resolve(run(example, node)).then((out) => console.log(JSON.stringify(out, null, 2)));
 }
