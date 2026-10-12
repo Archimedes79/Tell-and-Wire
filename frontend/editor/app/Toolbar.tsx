@@ -20,7 +20,7 @@ import GraphProblems from './GraphProblems';
 import ViewTabs, { type EditorView } from './ViewTabs';
 import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from '../document/application';
 import FileMenu, { fileActions } from './FileMenu';
-import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS, SURFACE } from '../../deployment/gui/kit/ui/theme';
+import { ACCENT_FILL, ACCENT_TEXT, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS_TEXT, SURFACE } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * How long a node may go without producing anything before the toolbar says so.
@@ -206,7 +206,7 @@ export default function Toolbar({
   };
 
   const statusColor = executionResult
-    ? executionResult.status === 'success' ? SUCCESS : DANGER
+    ? executionResult.status === 'success' ? SUCCESS_TEXT : DANGER_TEXT
     : DIMMER;
   // The last run's word, not said while the next one goes: "6/18" and "cancelled" side by side
   // read as if the run going had been stopped.

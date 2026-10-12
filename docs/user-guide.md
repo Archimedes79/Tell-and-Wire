@@ -261,7 +261,10 @@ Without a box, a block's edge is the edge of the boxes, and a heading and a rule
 The description above the page -- the sentence under the tool's name, also in the header of the tool as it is delivered -- is
 for the people who use the tool: **✨ Write it** has the AI write it from what the graph does, in their words.
 With no block selected, the right column shows the GUI: *Colour scheme*
-recolours the GUI; the editor keeps its own colours. Blocks are live while you build: a
+recolours the GUI -- **Night** (dark), **Paper** (warm cream) or **White** (bright) -- and travels with
+the tool, so a delivered tool looks as designed. The editor around it has its own choice: **⚙ Settings →
+Appearance**, the same three, or *Automatic*, which follows your system's light or dark; it is kept in
+your browser, and a light editor can sit around a dark GUI. Blocks are live while you build: a
 button pressed here runs the graph.
 
 | Block | Sends | Fires | Shows |

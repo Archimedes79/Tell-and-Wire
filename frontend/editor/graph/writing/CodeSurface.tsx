@@ -6,7 +6,9 @@ import { indentWithTab, redo } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { ACCENT, LINE } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, LINE, SUNKEN, SURFACE, TEXT, HOVER } from '../../../deployment/gui/kit/ui/theme';
+import { scheme } from '../../../deployment/gui/kit/ui/scheme';
+import { useEditorScheme } from '../../document/store/editorScheme';
 import type { CodeLanguage } from './CodeField';
 
 // CodeMirror, and nothing else: this is the one module that imports it, and it
@@ -14,6 +16,24 @@ import type { CodeLanguage } from './CodeField';
 // a chunk of its own, fetched when the first box is drawn and not with the
 // editor's first page -- the import graph decides what loads, and this file is
 // where that graph is cut.
+
+/**
+ * The editor's look for a scheme: One Dark on a dark one, CodeMirror's own light colours on a light
+ * one, and the scheme's own ground, text and selection under either -- a code box is a field of the
+ * window it is in, not a window of its own.
+ */
+function lookFor(light: boolean) {
+  // The scheme's own first: of two extensions that style the same thing, the earlier wins.
+  return [
+    EditorView.theme({
+      '&': { backgroundColor: SUNKEN, color: TEXT },
+      '.cm-gutters': { backgroundColor: SURFACE, color: 'var(--ui-dim)', border: 'none' },
+      '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: HOVER },
+      '.cm-cursor': { borderLeftColor: TEXT },
+    }, { dark: !light }),
+    ...(light ? [] : [oneDark]),
+  ];
+}
 
 const FONT = {
   '&': { fontSize: '12.5px', borderRadius: '8px', border: `1px solid ${LINE}`, overflow: 'hidden' },
@@ -47,6 +67,8 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
   const changed = useRef(onChange);
   changed.current = onChange;
   const languageSlot = useRef(new Compartment());
+  const lookSlot = useRef(new Compartment());
+  const light = !!scheme(useEditorScheme((s) => s.resolved)).light;
 
   useEffect(() => {
     if (!host.current) return undefined;
@@ -60,7 +82,7 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
           // Redo; CodeMirror's own key for it on Windows is Ctrl+Y alone.
           keymap.of([{ key: 'Mod-Shift-z', run: redo, preventDefault: true }, ...(tabIndents ? [indentWithTab] : [])]),
           languageSlot.current.of(language === 'javascript' ? javascript() : markdown()),
-          oneDark,
+          lookSlot.current.of(lookFor(light)),
           EditorView.lineWrapping,
           EditorView.theme({
             ...FONT,
@@ -93,6 +115,11 @@ export default function CodeSurface({ value, onChange, language, placeholder, he
       effects: languageSlot.current.reconfigure(language === 'javascript' ? javascript() : markdown()),
     });
   }, [language]);
+
+  // The scheme changed while the box is open: it follows, without losing the text or the place in it.
+  useEffect(() => {
+    view.current?.dispatch({ effects: lookSlot.current.reconfigure(lookFor(light)) });
+  }, [light]);
 
   return <div ref={host} style={height.fill ? { height: '100%' } : undefined} />;
 }

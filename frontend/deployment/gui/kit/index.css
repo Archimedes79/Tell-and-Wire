@@ -8,7 +8,7 @@
   padding: 0;
 }
 
-/* The editor is dark under every colour scheme (a gui container sets its own): native controls and scrollbars follow. */
+/* Dark until a scheme is painted on the root (`editor/document/store/editorScheme.ts`, `schemeVars`), which sets it for the scheme chosen: native controls and scrollbars follow. */
 html {
   color-scheme: dark;
 }
@@ -38,6 +38,14 @@ html, body, #root {
    taking the button's own colour makes them follow every scheme. */
 .react-flow__controls button svg {
   fill: currentColor !important;
+}
+
+/* The attribution React Flow asks to keep, readable in every scheme. */
+.react-flow__attribution {
+  background: var(--ui-surface, #1a1d2e) !important;
+}
+.react-flow__attribution a {
+  color: var(--ui-dim, #96a0b0) !important;
 }
 
 /* The map's shade over what is out of view, in the scheme's own. */

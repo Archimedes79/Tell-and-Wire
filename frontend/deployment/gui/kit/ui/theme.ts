@@ -65,6 +65,9 @@ export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 30%, transparent)`;
  */
 export const EVENT = 'var(--ui-event, #f59e0b)';
 
+/** Text on a success, danger or warning fill: the mark in a round badge. */
+export const ON_SIGNAL = 'var(--ui-on-signal, #0f1117)';
+
 export const SUCCESS = 'var(--ui-success, #22c55e)';
 /** Success as text. */
 export const SUCCESS_TEXT = 'var(--ui-success-text, #86efac)';
@@ -86,17 +89,17 @@ export const DANGER_SOFT = 'var(--ui-danger, #f87171)';
 
 /**
  * One ink per kind of node, to draw its icon in: on its card, in its palette
- * chip. Literals, because the editor is Night under every scheme. A start and
- * an end point are the amber of an event: where a run begins and ends is one
- * colour, on the canvas and the gui.
+ * chip. The scheme's own -- bright on a dark ground, deep on a light one --
+ * with Night's after the comma. A start and an end point are the amber of an
+ * event: where a run begins and ends is one colour, on the canvas and the GUI.
  */
 export const INK = {
-  ai: '#cdaef2',
-  code: '#69d3c6',
-  data: '#f2a3c1',
-  end: '#f5b75b',
-  subgraph: '#b3bfd2',
-  start: '#f5b75b',
+  ai: 'var(--ui-ink-ai, #cdaef2)',
+  code: 'var(--ui-ink-code, #69d3c6)',
+  data: 'var(--ui-ink-data, #f2a3c1)',
+  end: 'var(--ui-ink-end, #f5b75b)',
+  subgraph: 'var(--ui-ink-subgraph, #b3bfd2)',
+  start: 'var(--ui-ink-start, #f5b75b)',
 } as const;
 
 /** A form control on a panel. The single most copied style object in the app. */

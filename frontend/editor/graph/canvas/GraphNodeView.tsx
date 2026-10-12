@@ -7,7 +7,7 @@ import { useGraphStore, useNodeWork, useRoundIsGoing } from '../../document/stor
 import { dropOnto } from '../../document/model/wires';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { errorLine, portPreviews } from '../../document/elements/resultPreview';
-import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, ON_SIGNAL, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
 import { blocksAt } from '../../document/model/gui';
@@ -260,7 +260,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
         {status && !working && (
           <span
             className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold leading-none shrink-0"
-            style={{ background: status.color, color: SUNKEN, opacity: thisRun || !going ? 1 : 0.5 }}
+            style={{ background: status.color, color: ON_SIGNAL, opacity: thisRun || !going ? 1 : 0.5 }}
             role="img"
             aria-label={`${thisRun ? 'This run' : 'Last run'}: ${statusTitle}`}
             title={statusTitle}

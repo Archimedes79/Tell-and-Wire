@@ -49,7 +49,7 @@ interface Gui {
 }
 
 export interface GraphMetadata extends FormatMetadata {
-  gui_scheme: 'night' | 'paper' | 'office' | 'graphite' | 'anthracite';
+  gui_scheme: 'night' | 'paper' | 'white';
 }
 
 export interface GraphNode extends Omit<FormatNode, 'config'> {

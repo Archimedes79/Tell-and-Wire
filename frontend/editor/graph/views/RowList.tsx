@@ -1,5 +1,5 @@
 import { Plus, RefreshCw } from 'lucide-react';
-import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, ON_ACCENT, RAISE, SUCCESS, TEXT, WARNING_FILL, WARNING_TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, ON_ACCENT, RAISE, SUCCESS, SUCCESS_TEXT, TEXT, WARNING_FILL, WARNING_TEXT } from '../../../deployment/gui/kit/ui/theme';
 
 /** One button of a row. */
 export interface RowAction {
@@ -46,7 +46,7 @@ function Chip({ name, kind }: { name: string; kind: 'input' | 'output' }) {
   return (
     <span
       className="inline-flex items-center rounded-md px-1.5 text-xs font-mono"
-      style={{ background: kind === 'input' ? ACCENT_FILL : `color-mix(in srgb, ${SUCCESS} 14%, transparent)`, color: kind === 'input' ? ACCENT_TEXT : SUCCESS }}
+      style={{ background: kind === 'input' ? ACCENT_FILL : `color-mix(in srgb, ${SUCCESS} 14%, transparent)`, color: kind === 'input' ? ACCENT_TEXT : SUCCESS_TEXT }}
     >
       {name}
     </span>

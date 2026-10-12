@@ -1,6 +1,6 @@
 import { LayoutTemplate } from 'lucide-react';
 import { useGraphStore } from '../document/store/graphStore';
-import { SCHEMES, type SchemeId } from '../../deployment/gui/kit/ui/scheme';
+import { SCHEMES, scheme as schemeOf, type SchemeId } from '../../deployment/gui/kit/ui/scheme';
 import { DIMMER, FIELD_ON_SURFACE, MUTED } from '../../deployment/gui/kit/ui/theme';
 
 /**
@@ -10,7 +10,8 @@ import { DIMMER, FIELD_ON_SURFACE, MUTED } from '../../deployment/gui/kit/ui/the
  * sit on the same surfaces, so no combination can come out wrong.
  */
 export default function GuiSettings() {
-  const scheme = useGraphStore((s) => s.metadata.gui_scheme);
+  // A graph saved with a scheme that is no longer offered shows, and is shown, in the nearest.
+  const scheme = useGraphStore((s) => schemeOf(s.metadata.gui_scheme).id);
   const setMetadata = useGraphStore((s) => s.setMetadata);
 
   return (
