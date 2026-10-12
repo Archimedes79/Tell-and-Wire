@@ -1,6 +1,12 @@
 # The editor, as one process: the backend serving the built page on :8000.
 FROM node:24-alpine
 
+LABEL org.opencontainers.image.title="Tell & Wire"
+LABEL org.opencontainers.image.description="A visual node editor for AI workflows and small local tools: describe each node in plain words, wire the nodes into a graph, give it a GUI, run it offline with a local model."
+LABEL org.opencontainers.image.source="https://github.com/Archimedes79/Tell-and-Wire"
+LABEL org.opencontainers.image.documentation="https://github.com/Archimedes79/Tell-and-Wire#readme"
+LABEL org.opencontainers.image.licenses="PolyForm-Noncommercial-1.0.0"
+
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY graph/package.json graph/

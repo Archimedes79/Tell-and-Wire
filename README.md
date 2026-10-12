@@ -36,11 +36,24 @@ you can read it, change it and diff it.
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
-start. Tell & Wire also serves an MCP server, so an assistant can build and test graphs.
-The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
+start. The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
 (not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.
+
+## Tell & Wire and MCP
+
+Tell & Wire is an editor for building tools. It is not an MCP server you add to an assistant for
+general abilities; it meets the [Model Context Protocol](https://modelcontextprotocol.io) in two
+specific ways:
+
+- **It serves one**, for graphs. `node backend/cli/main.ts --mcp --mcp-root <folder>` starts an MCP
+  server on stdio with nine tools -- the graph guide, have this machine's model write a graph,
+  validate, save, run, run one node, test, list -- so an AI assistant can design and test Tell & Wire
+  graphs in that folder.
+- **It uses them**, in AI nodes. An AI node can call the tools of MCP servers. A web reader and a
+  Word and PDF reader come with the download (`mcp/`), and any other can be added
+  (*Tools for an AI node*, below).
 
 ## Download and start
 

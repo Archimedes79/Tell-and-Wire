@@ -1,7 +1,29 @@
 {
   "name": "tell-and-wire",
   "private": true,
-  "description": "One workspace: the neutral definitions of graph and gui, the Node code of editor and deployment, and the browser code of both.",
+  "description": "Tell & Wire: a visual node editor for AI workflows and small local tools. Say in plain words what each node should do, wire the nodes into a graph, give it a GUI, and run it offline with a local model. Source-available, free for noncommercial use.",
+  "keywords": [
+    "visual-programming",
+    "node-editor",
+    "no-code",
+    "low-code",
+    "ai-workflows",
+    "workflow-automation",
+    "local-llm",
+    "local-first",
+    "offline",
+    "mcp",
+    "model-context-protocol",
+    "source-available"
+  ],
+  "homepage": "https://github.com/Archimedes79/Tell-and-Wire#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Archimedes79/Tell-and-Wire.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Archimedes79/Tell-and-Wire/issues"
+  },
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24"

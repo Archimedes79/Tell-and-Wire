@@ -365,6 +365,12 @@ gui of its own in `frontend/index.html`, which uses the runtime API by name (see
 
 ## 11. The MCP server
 
+Tell & Wire meets MCP (the Model Context Protocol) in two ways, and only the first is this
+chapter. It **serves** an MCP server for graphs, so an AI assistant can build and test them -- it is
+not a server for general abilities. And an **AI node uses** the tools of other MCP servers: the web
+reader and the Word and PDF reader that come with it, or any you add (*Tools the model may use*, in
+the node's settings).
+
 An assistant such as Claude Code can design, check, save and run graphs in one folder:
 
 ```bash

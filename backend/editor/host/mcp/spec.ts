@@ -165,8 +165,10 @@ export const SPECS: ToolSpec[] = [
 // ---------------------------------------------------------------------------
 
 /** What the server says when a client connects. */
-export const INSTRUCTIONS = 'Designs, checks, saves and runs Tell & Wire graphs inside one folder. To write a graph yourself, read '
-  + 'graph_guide first; to have this machine\'s model write one, use generate_graph. Validate before saving.';
+export const INSTRUCTIONS = 'Tell & Wire is a visual node editor for AI workflows and small local tools; a graph is a tool\'s '
+  + 'nodes and the wires between them. This server designs, checks, saves, runs and tests such graphs inside one folder. '
+  + 'To write a graph yourself, read graph_guide first; to have this machine\'s model write one, use generate_graph. '
+  + 'Validate before saving.';
 
 /** What `graph_guide` answers: the model's own brief for designing a graph, and how to use it through this server. */
 export function graphGuide(): string {

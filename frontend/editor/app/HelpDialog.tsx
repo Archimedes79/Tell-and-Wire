@@ -18,6 +18,7 @@ export default function HelpDialog({ onClose }: { onClose: () => void }) {
           {CHAPTERS.map((one, index) => (
             <div key={one.id}>
               {index === 1 && <div className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: DIM }}>User guide</div>}
+              {one.id === 'about' && <div className="mx-3 my-2" style={{ borderTop: `1px solid ${LINE}` }} />}
               <button
                 type="button"
                 onClick={() => setAt(one.id)}

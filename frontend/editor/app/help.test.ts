@@ -23,3 +23,14 @@ describe('the help', () => {
     expect(CHAPTERS.some((chapter) => chapter.body.includes(']('.concat('../')))).toBe(false);
   });
 });
+
+describe('the about page', () => {
+  it('is the last chapter, names the version running, and makes only the claims the README makes', () => {
+    const last = CHAPTERS[CHAPTERS.length - 1];
+    expect(last).toMatchObject({ id: 'about', title: 'About' });
+    expect(last.body).toMatch(/^# About Tell & Wire \d+\.\d+\.\d+/);
+    expect(last.body).toContain('MCP, in two ways');
+    expect(last.body).toContain('source-available');
+    expect(last.body.toLowerCase()).not.toContain('open source');
+  });
+});
