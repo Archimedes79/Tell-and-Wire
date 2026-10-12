@@ -5,7 +5,7 @@ How to build a tool in Tell & Wire, step by step. The running example is
 chart. `frontend/editor/app/masterExamples.test.ts` builds this example, folder_summaries and
 chat the way this guide does (blocks added, a node dropped, a wire dragged) and runs them.
 
-Start the editor and set up a model first, as the [README](../README.md) says. ✨ needs a
+Start the editor and set up a model first, as the [README](../README.md) says. Auto generate needs a
 model; a small, fast one (for example `gemini-flash-lite-latest`) writes a node's files in
 seconds. A local model costs nothing per call but can take minutes per answer.
 
@@ -105,7 +105,7 @@ key does: nothing is asked, and Ctrl+Z brings it back. A **⚠ N problems** chip
 under the canvas lists what `check` finds, for example a loop that no data node closes or
 a block connected to nothing.
 
-## 3. Say what the node does; ✨ writes its files
+## 3. Say what the node does; Auto generate writes its files
 
 Double-click a node (or press Enter on it) and it opens where the canvas was: **Esc**, or
 **← Graph**, goes back, and ‹ › step to the node before and the node after. On the left is
@@ -131,7 +131,7 @@ names other ports than the node has.
 | **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
 | **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat, **Add field** takes a name and what it starts as -- by hand, with no AI. |
-| **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. ✨ writes it together with the fields; left empty, the start stands in. |
+| **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. Auto generate writes it together with the fields; left empty, the start stands in. |
 
 - **Pull input** writes `input.js` from the graph, with no model: its types from the
   `output.js` of the node wired before it, its example from running what comes before it on
@@ -172,7 +172,7 @@ A start point, a folder, an end point and a subgraph have no files: they open on
 settings. **Edit the GUI** on a node a block uses goes to the GUI tab.
 
 Two things save the most time. Wire a node to what feeds it before **Pull input**, so the
-example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
+example is real data. And name inputs for what they hold (`story`, not `prompt`): Auto generate reads the names.
 
 **A data node is a struct.** Its **Fields** file, `data.json`, is an object: each key is a field,
 with its starting value. Each field is an input and an output of the node under its name. The node fills, then forwards: what arrives on a field
@@ -402,9 +402,9 @@ home folder.
 - **A run stopped and the GUI shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
-- **✨ does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
+- **Auto generate does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
   before anything is asked: a local server that is not running, a model it has not pulled, a key
-  not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (✨, the bar; the
+  not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (Auto generate, the bar; the
   nodes' until you set it apart), each says *Now: provider / model* and, under the provider chosen,
   where to get it and what it needs: the address of its server, or its key. A wrong key, a model name nobody knows and a free tier's
   limit come back with what to do. A small local model may be too small to write a whole graph:
