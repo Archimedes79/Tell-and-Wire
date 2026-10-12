@@ -110,6 +110,22 @@ describe('the cells of a window', () => {
     expect(screen.textContent).toContain('Nothing starts this window yet.');
   });
 
+  it('keeps the new line a person has just typed in the choices, which are the lines with words in them', async () => {
+    await type(field('Kind', 0), 'choice');
+    const box = field('Choices') as HTMLTextAreaElement;
+    await type(box, 'One\n');
+    expect((field('Choices') as HTMLTextAreaElement).value).toBe('One\n');
+    expect(window0().inputs[0].options).toEqual(['One']);
+    await type(field('Choices'), 'One\nTwo\n\n');
+    expect(window0().inputs[0].options).toEqual(['One', 'Two']);
+  });
+
+  it('gives the window the share of the page it is as wide as', async () => {
+    expect(window0().span).toBe(8);
+    await click(button('Full'));
+    expect(window0().span).toBe(16);
+  });
+
   it('sizes an output by a click, and gives it another kind with the height of that kind', async () => {
     await click(button('L'));
     expect(window0().outputs[0].rows).toBe(5);

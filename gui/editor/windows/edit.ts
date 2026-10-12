@@ -164,7 +164,11 @@ export function renameStep(doc: Windows, id: string, at: number, name: string): 
         if (place === at) return { ...step, name };
         return old === undefined ? step : { ...step, sentence: repoint(step.sentence, old, name) };
       }),
-      outputs: window.outputs.map((out) => (old !== undefined && out.of && idOf(out.of) === idOf(old) ? { ...out, of: name } : out)),
+      // An output that shows it and is called by the same name goes on being called what it shows.
+      outputs: window.outputs.map((out) => {
+        const shows = old !== undefined && (out.of ? idOf(out.of) === idOf(old) : at === window.steps.length - 1);
+        return shows ? { ...out, of: name, ...(idOf(out.name) === idOf(old!) ? { name } : {}) } : out;
+      }),
     };
   });
 }

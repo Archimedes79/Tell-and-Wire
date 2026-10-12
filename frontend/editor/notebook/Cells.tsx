@@ -110,7 +110,14 @@ export default function Cells({ doc, window }: { doc: Windows; window: Window })
           <button className="nb-play" aria-label="Run this window" title="Run this window" disabled={state === 'running' || state === 'waiting'} onClick={() => { void runWindow(id); }}><Play /></button>
         </div>
         <Sentence label="What the window asks" value={askedFor} onChange={(ask) => edit((one) => patchWindow(one, id, { ask }), `ask-${id}`)} />
-        <div className="nb-chips"><Pill>gives: {names.map((name, at) => <b key={name + at}>{at ? ', ' : ''}{name}</b>)}</Pill></div>
+        <div className="nb-chips">
+          <Pill>gives: {names.map((name, at) => <b key={name + at}>{at ? ', ' : ''}{name}</b>)}</Pill>
+          <span className="nb-sp" />
+          <span className="nb-note" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            Window width
+            <Seg label="Window width" value={window.span} options={[['¼', 4], ['½', 8], ['¾', 12], ['Full', 16]]} onPick={(span) => edit((d) => patchWindow(d, id, { span }))} />
+          </span>
+        </div>
         <div className="nb-form">
           {window.inputs.map((one, at) => {
             const key = inBlock(window, one);
@@ -215,6 +222,15 @@ function PathSetting({ kind, value, extensions, onChange }: { kind: 'file' | 'fo
   );
 }
 
+/** The choices as typed: a new line stays while it is typed into, and only the lines with words in them are the choices. */
+function Choices({ options, onChange }: { options: string[]; onChange: (options: string[]) => void }) {
+  const lines = (text: string): string[] => text.split('\n').filter((line) => line.trim());
+  const [raw, setRaw] = useState(options.join('\n'));
+  // Changed from elsewhere (undo): what is shown follows.
+  if (lines(raw).join('\n') !== options.join('\n')) setRaw(options.join('\n'));
+  return <textarea aria-label="Choices" rows={2} value={raw} onChange={(event) => { setRaw(event.target.value); onChange(lines(event.target.value)); }} />;
+}
+
 function InputRow({ cellKey, one, others, lit, first, last, point, onName, onPatch, onUp, onDown, onRemove }: {
   cellKey: string; one: WindowIn; others: Window[]; lit: boolean; first: boolean; last: boolean;
   point: (key: string | null) => void;
@@ -243,7 +259,7 @@ function InputRow({ cellKey, one, others, lit, first, last, point, onName, onPat
       {one.kind === 'text' && <label className="grow">Starts with<input aria-label="Starts with" value={String(one.value ?? '')} onChange={(event) => onPatch({ value: event.target.value }, 'value')} /></label>}
       {one.kind === 'choice' && (
         <label className="grow">Choices, one a line (the first is where it starts)
-          <textarea aria-label="Choices" rows={2} value={(one.options ?? []).join('\n')} onChange={(event) => onPatch({ options: event.target.value.split('\n').filter((line) => line.trim()), value: undefined }, 'options')} />
+          <Choices options={one.options ?? []} onChange={(options) => onPatch({ options, value: undefined }, 'options')} />
         </label>
       )}
       {one.kind === 'number' && (['min', 'max', 'step'] as const).map((part) => (

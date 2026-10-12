@@ -24,6 +24,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
   const values = useNotebook((s) => s.values);
   const result = useNotebook((s) => s.results[window.id]);
   const hot = useNotebook((s) => s.hot);
+  const titles = useNotebook((s) => s.doc?.windows);
   const open = useNotebook((s) => s.window === window.id);
   const going = useNotebook((s) => s.going.length > 0);
   const { setValue, show, edit } = useNotebook.getState();
@@ -48,11 +49,15 @@ export default function WindowBox({ window, writing }: { window: Window; writing
     <section className={`nb-win${open ? ' open' : ''}`} aria-label={window.title} data-window={window.id}>
       <div className="nb-win-head">
         {writing
-          ? <input className="nb-name" style={{ width: 'auto', flex: 1, fontSize: 17 }} aria-label="Window title" value={window.title} onChange={(event) => edit((doc) => ({ ...doc, windows: doc.windows.map((one) => (one.id === window.id ? { ...one, title: event.target.value } : one)) }), `title-${window.id}`)} />
+          ? <input className="nb-name nb-win-title" aria-label="Window title" value={window.title} onChange={(event) => edit((doc) => ({ ...doc, windows: doc.windows.map((one) => (one.id === window.id ? { ...one, title: event.target.value } : one)) }), `title-${window.id}`)} />
           : <h3>{window.title}</h3>}
         <span className={`nb-chip ${chipClass(state)}`} role="status">{STATE_WORDS[state]}</span>
         {writing && (
-          <button className="nb-btn small" aria-pressed={open} onClick={() => show(open ? { window: null, dockOpen: false } : { window: window.id, tab: 'cells', dockOpen: true })} title="Open the cells of this window under the page">
+          <button className="nb-btn small" aria-pressed={open} onClick={() => {
+              show(open ? { window: null, dockOpen: false } : { window: window.id, tab: 'cells', dockOpen: true });
+              // The dock takes room from the page: the window stays in sight above it.
+              setTimeout(() => document.querySelector(`[data-window="${window.id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 60);
+            }} title="Open the cells of this window under the page">
             {open ? 'Close cells' : 'Cells'}
           </button>
         )}
@@ -64,8 +69,8 @@ export default function WindowBox({ window, writing }: { window: Window; writing
             const id = inBlock(window, one);
             return (
               <div key={id} className={`nb-field${lit(id)}`} style={basis(one.width)} {...pointing(id)}>
-                <label htmlFor={`in-${one.name}`}>{one.name}</label>
-                <Input one={one} value={id in values ? values[id] : startValue(one)} onChange={(value) => set(id, value)} onRun={() => { void runWindow(window.id); }} />
+                <label htmlFor={`in-${one.name}`}>{one.kind === 'from' ? 'Takes' : one.name}</label>
+                <Input one={one} fromTitle={titles?.find((other) => other.id === one.from?.window)?.title} value={id in values ? values[id] : startValue(one)} onChange={(value) => set(id, value)} onRun={() => { void runWindow(window.id); }} />
                 {mark(id)}
               </div>
             );
@@ -91,7 +96,12 @@ export default function WindowBox({ window, writing }: { window: Window; writing
               <div key={id} className={`nb-field${lit(id)}`} style={basis(out.width)} {...pointing(id)}>
                 <span className="nb-label">{out.name}</span>
                 {failed && at === 0 && shown === undefined
-                  ? <div className={`nb-out msg ${failed.outcome}`} style={{ height }}>{failed.message}</div>
+                  ? (
+                    <div className={`nb-out msg ${failed.outcome}`} style={{ height }}>
+                      <div>{failed.message}</div>
+                      {writing && <button type="button" className="nb-link" onClick={() => show({ tab: 'debug', dockOpen: true, window: window.id })}>Show it in Debug</button>}
+                    </div>
+                  )
                   : <Output kind={out.kind} value={shown} rows={out.rows} />}
                 {mark(id)}
               </div>

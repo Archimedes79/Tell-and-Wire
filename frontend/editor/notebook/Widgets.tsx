@@ -12,7 +12,7 @@ import Chart from './Chart';
 /** The height of a row of a window, in pixels: what an output is as tall as, in rows. */
 export const ROW = 30;
 
-export function Input({ one, value, onChange, onRun }: { one: WindowIn; value: unknown; onChange: (value: unknown) => void; onRun: () => void }) {
+export function Input({ one, value, onChange, onRun, fromTitle }: { one: WindowIn; value: unknown; onChange: (value: unknown) => void; onRun: () => void; fromTitle?: string }) {
   const kind: InKind = one.kind;
   const rows = one.rows ?? (kind === 'text' ? 2 : 1);
   const id = `in-${one.name}`;
@@ -38,16 +38,19 @@ export function Input({ one, value, onChange, onRun }: { one: WindowIn; value: u
         </select>
       )}
       {(kind === 'file' || kind === 'folder') && <PathBox kind={kind} value={String(value ?? '')} extensions={one.extensions} onChange={onChange} />}
-      {kind === 'from' && <span className="nb-label">From “{one.from?.output}” of another window</span>}
+      {kind === 'from' && <div className="nb-from">“{one.from?.output}” of “{fromTitle ?? 'another window'}”</div>}
     </>
   );
 }
+
+/** The last part of a path: what a person knows a file by; the whole of it is the box's title. */
+const nameOf = (path: string): string => path.replace(/[\\/]+$/, '').split(/[\\/]/).pop() ?? path;
 
 function PathBox({ kind, value, extensions, onChange }: { kind: 'file' | 'folder'; value: string; extensions?: string; onChange: (value: string) => void }) {
   const [browsing, setBrowsing] = useState(false);
   return (
     <div className="nb-path">
-      <span className={value ? '' : 'empty'} title={value}>{value || (kind === 'file' ? 'Choose a file…' : 'Choose a folder…')}</span>
+      <span className={value ? '' : 'empty'} title={value}>{nameOf(value) || (kind === 'file' ? 'Choose a file…' : 'Choose a folder…')}</span>
       {value && <button type="button" aria-label="Clear" title="Clear" onClick={() => onChange('')}>✕</button>}
       <button type="button" onClick={() => setBrowsing(true)}>Browse…</button>
       {browsing && (

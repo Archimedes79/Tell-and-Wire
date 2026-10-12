@@ -56,7 +56,9 @@ export default function Chart({ data }: { data: unknown }) {
   const figure = figureOf(data);
   if (!figure) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>This is not something a chart can draw.</div>;
   if (!figure.points.length) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>{figure.title || 'Nothing to plot.'}</div>;
-  return <div ref={box} style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex' }}><svg width={size.w} height={size.h} viewBox={`0 0 ${size.w} ${size.h}`} role="img" aria-label={figure.title || 'chart'}>{drawn(figure, size.w, size.h)}</svg></div>;
+  // Bars have a least height of their own: with more of them than the box has room for, it scrolls rather than the letters shrinking.
+  const tall = figure.kind === 'bars' ? Math.max(size.h, (figure.title ? 28 : 8) + Math.min(figure.points.length, 24) * 18 + 6) : size.h;
+  return <div ref={box} style={{ width: '100%', height: '100%' }}><svg width={size.w} height={tall} viewBox={`0 0 ${size.w} ${tall}`} role="img" aria-label={figure.title || 'chart'}>{drawn(figure, size.w, tall)}</svg></div>;
 }
 
 function drawn(figure: Figure, W: number, H: number) {

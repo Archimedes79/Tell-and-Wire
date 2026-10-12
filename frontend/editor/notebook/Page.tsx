@@ -183,11 +183,11 @@ function Block({ part, index, doc, writing, last, onType, onKeys, onAdd, onAddAb
   const window = part.kind === 'window' ? doc.windows.find((one) => one.id === part.window) : undefined;
 
   if (!writing) {
-    if (part.kind === 'window') return window ? <div className="nb-part win" style={sizeOf(window.span)}><WindowBox window={window} writing={false} /></div> : null;
-    if (part.kind === 'space') return <div className="nb-part"><div className="nb-space" /></div>;
+    if (part.kind === 'window') return window ? <div className="nb-block win" style={sizeOf(window.span)}><WindowBox window={window} writing={false} /></div> : null;
+    if (part.kind === 'space') return <div className="nb-block"><div className="nb-space" /></div>;
     const text = part.text ?? '';
     return (
-      <div className="nb-part">
+      <div className="nb-block">
         {part.kind === 'h1' ? <h1>{text}</h1> : part.kind === 'h2' ? <h2>{text}</h2>
           : part.kind === 'ul' ? <ul>{text.split('\n').filter(Boolean).map((line, at) => <li key={at}>{line}</li>)}</ul> : <p>{text}</p>}
       </div>

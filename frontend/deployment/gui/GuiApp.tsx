@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GuiWidget } from './kit/guiWidget';
 import LiveGui from './surface/LiveGui';
 import LiveWindows, { useWindowFire } from '../windows/LiveWindows';
-import { isWindows } from '../windows/windowsInUse';
+import { isWindows, pageNotes } from '../windows/windowsInUse';
 import { useRound } from './surface/useRound';
 import CallForms from './surface/CallForms';
 import type { InterfaceEntry } from '../../../graph/interface.ts';
@@ -98,13 +98,15 @@ export default function GuiApp() {
   const fire = useCallback((block: GuiWidget) => { if (design) void start.current(design.fires[block.id], block.id); }, [design]);
   // A tool made of windows runs the one used, and the ones before it that are not current, in order.
   const fireWindow = useWindowFire(design ?? NO_BLOCKS, round);
+  // A page that has words of its own says what the tool is itself; its name and description are not said twice above it.
+  const worded = !!design && pageNotes(design.blocks).length > 0;
 
   return (
     // A deployed tool looks like the thing that was designed, scheme included.
     <div className="flex flex-col h-screen overflow-hidden" style={{ ...schemeVars(design?.scheme), background: SUNKEN }}>
       <DeliveredHeader
-        name={design?.name ?? ''}
-        description={design?.description ?? ''}
+        name={worded ? '' : design?.name ?? ''}
+        description={worded ? '' : design?.description ?? ''}
         round={current}
         tools={(
           <>

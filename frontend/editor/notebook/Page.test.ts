@@ -113,6 +113,9 @@ describe('the page, read', () => {
     expect(screen.querySelector('h1')?.textContent).toBe('Tool');
     expect(screen.querySelectorAll('textarea.nb-text')).toHaveLength(0);
     expect(screen.querySelector('.nb-win')).not.toBeNull();
+    // Every part stands in the flow as the stylesheet knows it, written and read alike: a heading across the page, a window in its share.
+    expect(screen.querySelectorAll('.nb-flow > .nb-block')).toHaveLength(pageOf(store().doc!).length);
+    expect(screen.querySelectorAll('.nb-flow > .nb-block.win')).toHaveLength(1);
     expect(screen.querySelector('.nb-tools')).toBeNull();
     expect([...screen.querySelectorAll('button')].some((one) => one.textContent === 'Cells')).toBe(false);
   });

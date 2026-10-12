@@ -53,7 +53,7 @@ describe('editing windows', () => {
     let doc = addStep(page(), 'summarize');
     doc = renameStep(doc, 'summarize', 0, 'Simple');
     expect(doc.windows[0].steps[1].sentence).toBe('Continue with @Simple');
-    expect(doc.windows[0].outputs[0].of).toBe('Simple');
+    expect(doc.windows[0].outputs[0]).toMatchObject({ of: 'Simple', name: 'Simple' });
     expect(windowProblems(doc)).toEqual([]);
   });
 
