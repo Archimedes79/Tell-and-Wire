@@ -256,7 +256,7 @@ background. A new block has the look that suits it: fields, dropdowns, sliders a
 themselves -- and what a run shows (text, chart, table, image) is a raised box, so a gui has one frame for each result and none for the rest.
 Without a box, a block's edge is the edge of the boxes, a heading stands on the bottom of its row, nearest what it titles, and a rule in the middle.
 With no block selected, the right column shows the gui: *Colour scheme*
-recolours the gui; the editor keeps its own colours. Blocks are live while you build: a
+recolours the gui (white unless you choose another); the editor has its own look, chosen in the toolbar beside Help (white by default, kept in this browser). Blocks are live while you build: a
 button pressed here runs the graph.
 
 | Block | Sends | Fires | Shows |

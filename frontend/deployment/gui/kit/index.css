@@ -8,7 +8,7 @@
   padding: 0;
 }
 
-/* The editor is dark under every colour scheme (a gui container sets its own): native controls and scrollbars follow. */
+/* Dark until the editor puts its look on the page (editor/document/store/look.ts sets this, and the scheme variables, on html); a gui container sets its own. */
 html {
   color-scheme: dark;
 }

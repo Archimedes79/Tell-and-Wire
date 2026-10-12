@@ -159,7 +159,7 @@ export function defaultMetadata(): GraphMetadata {
   return {
     name: 'Untitled tool',
     description: '',
-    gui_scheme: 'night',
+    gui_scheme: 'office',
   };
 }
 

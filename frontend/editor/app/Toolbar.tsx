@@ -20,6 +20,7 @@ import GraphProblems from './GraphProblems';
 import ViewTabs, { type EditorView } from './ViewTabs';
 import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from '../document/application';
 import FileMenu, { fileActions } from './FileMenu';
+import LookPicker from './LookPicker';
 import { ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS, SURFACE } from '../../deployment/gui/kit/ui/theme';
 
 /**
@@ -356,6 +357,8 @@ export default function Toolbar({
           onClick={() => { window.open('notebook.html', 'tell-and-wire-notebook'); }}
           framed
         />
+
+        <LookPicker />
 
         <ToolbarButton
           icon={BookOpen}

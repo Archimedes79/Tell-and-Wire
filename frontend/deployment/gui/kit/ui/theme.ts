@@ -12,9 +12,10 @@
 /**
  * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The gui's
  * container sets the variables (the GUI tab's surface, the App tab, a deployed
- * tool), so the blocks on it are in its scheme; the editor's own chrome sets
- * none, and so keeps the literal after the comma -- the Night scheme -- under
- * every scheme. Keep those literals equal to Night's values.
+ * tool), so the blocks on it are in its scheme; the editor's own chrome is in the
+ * look the person chose (editor/document/store/look.ts puts that scheme's variables on the
+ * page), and where none is set it keeps the literal after the comma -- the Night
+ * scheme. Keep those literals equal to Night's values.
  *
  * That indirection is the whole mechanism: a component asks for SURFACE and
  * knows nothing of schemes, and switching scheme repaints the gui without one

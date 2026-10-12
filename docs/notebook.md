@@ -73,7 +73,7 @@ same round.
 A cell that runs several models in parallel (steps stand one under the other and run in turn; `paper_review_panel` is one cell
 for each reviewer), a memory that lasts between rounds (the counter), and starting by itself (when the tool starts, every few minutes).
 The editor's own look follows the design (A2), a pale page with white cards, not the colour scheme of the tool; the scheme is kept in the document and told
-to the model, and the delivered tool draws it. A tool that says no look is white (`office`); the others are chosen at the top.
+to the model, and the delivered tool draws it. A tool that says no look is white (`office`); the others are chosen at the top. The graph editor has a look of its own too (toolbar, beside Help; white by default), kept in the browser and not in any file.
 
 ## Open
 

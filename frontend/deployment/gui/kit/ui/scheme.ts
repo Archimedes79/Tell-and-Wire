@@ -8,9 +8,9 @@
 // gui's own container (see schemeVars) -- the gui surface of the GUI tab,
 // the App tab, the delivered tool -- and every colour in `ui/theme.ts` is a
 // `var()` pointing at one, so a block asks for SURFACE and needs to know
-// nothing about schemes. The editor around it sets none, and keeps the
-// literals after the comma in `ui/theme.ts` (the Night palette) under every
-// scheme.
+// nothing about schemes. The editor around it has a look of its own
+// (`editor/document/store/look.ts`, white by default, chosen by the person); where none is
+// set, the literals after the comma in `ui/theme.ts` (the Night palette) stand.
 //
 // Text on a surface meets 4.5:1 in every scheme -- `text`, `muted`, `dim`,
 // `dimmer` and each `...Text` colour, on the gui, the panels, a raised block
@@ -24,6 +24,9 @@
 //
 // Stored on `metadata.gui_scheme`: presentation of the graph as a whole, so it
 // travels with the file and a deployed tool looks like what was designed.
+
+/** The scheme a tool has when nothing says otherwise: white. `defaultMetadata` in graph/graph.ts says the same. */
+export const DEFAULT_SCHEME_ID: SchemeId = 'office';
 
 export type SchemeId = 'night' | 'paper' | 'office' | 'graphite' | 'anthracite';
 
@@ -170,7 +173,7 @@ export function plotColours(id: string | undefined): string[] {
 }
 
 export function scheme(id: string | undefined): Scheme {
-  return SCHEMES.find((s) => s.id === id) ?? SCHEMES[0];
+  return SCHEMES.find((s) => s.id === id) ?? SCHEMES.find((s) => s.id === DEFAULT_SCHEME_ID)!;
 }
 
 /**
