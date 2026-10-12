@@ -227,30 +227,36 @@ export default function DesignerTab() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <GuiHeading name={metadata.name} description={metadata.description} onChange={setMetadata} />
-        <div
-          data-gui-dropzone
-          className="flex-1 overflow-auto px-8 py-6"
-          // The GUI, in its own colour scheme: the editor around it keeps its own.
-          style={{
-            ...schemeVars(metadata.gui_scheme),
-            // The page is a surface, so its fields (sunken) sit in it, as they do in a deployed tool.
-            background: SURFACE,
-            ...(dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : {}),
-          }}
-        >
-          <DesignerSurface
-            dropIndex={dragEntry ? dropIndex : null}
-            widgets={widgets}
-            onWidgetValue={setWidgetValue}
-            onWidgetTrigger={fire}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onRemove={remove}
-            overrides={overrides}
-            insertAt={insertAt}
-            onInsertAt={setInsertAt}
-            onInsert={(entry, index) => { setInsertAt(null); addWidget(entry.kind, entry.mode, index); }}
-          />
+        {/* The page as a sheet on the editor's own ground: the element that scrolls and takes the
+            drops is the sheet itself, so nothing about how a block is dropped or measured moves. */}
+        <div className="flex-1 min-h-0 flex flex-col p-4">
+          <div
+            data-gui-dropzone
+            className="flex-1 overflow-auto px-8 py-6 rounded-xl"
+            // The GUI, in its own colour scheme: the editor around it keeps its own.
+            style={{
+              ...schemeVars(metadata.gui_scheme),
+              // The page is a surface, so its fields (sunken) sit in it, as they do in a deployed tool.
+              background: SURFACE,
+              border: `1px solid ${LINE}`,
+              boxShadow: '0 8px 24px rgba(16,24,40,0.06)',
+              ...(dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : {}),
+            }}
+          >
+            <DesignerSurface
+              dropIndex={dragEntry ? dropIndex : null}
+              widgets={widgets}
+              onWidgetValue={setWidgetValue}
+              onWidgetTrigger={fire}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onRemove={remove}
+              overrides={overrides}
+              insertAt={insertAt}
+              onInsertAt={setInsertAt}
+              onInsert={(entry, index) => { setInsertAt(null); addWidget(entry.kind, entry.mode, index); }}
+            />
+          </div>
         </div>
       </div>
 

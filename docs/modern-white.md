@@ -21,8 +21,12 @@ it is and what it touched, so it can be put on a newer `main` later, or rebuilt 
 5. **A card's kind** is its icon on a tile of its ink at 14 %.
 6. **A file is a card**: the code box is the surface with a frame, on the sunken pane.
 7. **A GUI page is a surface** (designer, App tab, delivered tool): its fields, which are sunken,
-   sit in it.
+   sit in it. In the designer it is a sheet: rounded, framed, on the editor's own ground.
 8. **The canvas**: dots a little larger, the minimap's shade lighter.
+9. **The ◆ gate** is drawn where it matters: when a start point is wired to it, the card is chosen or
+   under the pointer, or a wire is on its way. The handle is always there and takes a wire.
+10. **A palette tile** is white with a frame; **the bar under the canvas** has a white field and a
+    tinted Change button (what the AI does).
 
 ## The White values
 
@@ -57,10 +61,13 @@ for ports and help. No other font is loaded.
 | `frontend/editor/graph/views/RowList.tsx` | the open row button is tinted |
 | `frontend/editor/graph/node/NodeView.tsx` | Auto generate is `tint`; the settings toggle is `tint` when on |
 | `frontend/editor/gui/widgets/text/TextWidgetPanel.tsx` | the chosen text role is `tint` |
-| `frontend/editor/graph/canvas/GraphNodeView.tsx` | the kind's icon on a tile |
+| `frontend/editor/graph/canvas/GraphNodeView.tsx` | the kind's icon on a tile; the ◆ gate drawn where it matters |
+| `frontend/editor/app/ChangeBar.tsx` | a white field; Change is `tint` |
+| `frontend/deployment/gui/kit/index.css` (`.palette-tile`) | white tile, 13 px, 36 px high |
 | `frontend/editor/graph/canvas/GraphCanvas.tsx` | larger dots |
 | `frontend/editor/graph/writing/CodeSurface.tsx` | the code box is the surface |
-| `frontend/editor/gui/DesignerTab.tsx`, `ApplicationView.tsx`, `frontend/deployment/gui/GuiApp.tsx` | a GUI page is the surface |
+| `frontend/editor/gui/DesignerTab.tsx` | the GUI page is the surface, as a framed sheet (the element that scrolls and takes drops is unchanged) |
+| `frontend/editor/gui/ApplicationView.tsx`, `frontend/deployment/gui/GuiApp.tsx` | a GUI page is the surface |
 | tests | `scheme.test.ts` (the pinned values, the default), `editorScheme.test.ts` (starts in White) |
 
 ## Putting it on a newer `main`
@@ -77,5 +84,5 @@ for ports and help. No other font is loaded.
 
 Everything is in this table and the one above: the White scheme exists on `main` as it is; set it as
 the default (`DEFAULT_SCHEME`, `defaultMetadata`, `editorScheme`), add the `tint` look to
-`Button.tsx`, give `secondary` a frame, and make the six small changes of the table. The design
+`Button.tsx`, give `secondary` a frame, and make the small changes of the table, one file each. The design
 canvas this came from is private to its owner and is not part of the repository.

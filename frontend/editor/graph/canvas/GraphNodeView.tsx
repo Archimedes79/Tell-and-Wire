@@ -200,6 +200,8 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
   const wireComing = useStore((s) => s.connectionHandleType === 'source' && !!s.connectionNodeId && s.connectionNodeId !== id);
   const drop = wireComing ? dropOnto(graphNode) : undefined;
   const takesWire = !!drop;
+  // Whether a start point is wired to its ◆: a boolean, so a card is not drawn anew for every other change of the edges.
+  const gateWired = useGraphStore((s) => s.rfEdges.some((edge) => edge.target === id && edge.targetHandle === RUN_PORT));
 
   const failedDrop = statusTone('error');
   const rows = Math.max(graphNode.inputs.length, graphNode.outputs.length);
@@ -233,8 +235,10 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
           title="Start here. Wire a start point to this, and the run it begins goes from this node on. It carries no value."
           style={{ width: 12, height: 12, top: -7, left: 18, transform: 'none', background: 'transparent', border: 'none', borderRadius: 0 }}
         >
+          {/* Drawn where it matters -- wired, the card chosen or under the pointer, a wire on its way --
+              and only then; the handle is there, and takes a wire, all the same. */}
           <span
-            className="absolute pointer-events-none"
+            className={`absolute pointer-events-none transition-opacity group-hover:opacity-100 ${gateWired || lit || wireComing ? 'opacity-100' : 'opacity-0'}`}
             style={{ inset: 1, background: EVENT, border: `2px solid ${SUNKEN}`, borderRadius: 2, transform: 'rotate(45deg)' }}
           />
         </Handle>
