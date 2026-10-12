@@ -12,6 +12,8 @@ import { whatCameOf, type useTryExample } from '../writing/TryExample';
 import { bodyOf, fileOf, isWritten, partName, type Write } from '../writing/generation';
 import ChatPane, { type ChatLine } from '../views/ChatPane';
 import { PaneHeader } from '../views/NodeViewLayout';
+import type { NodePanelProps } from '../nodes/NodeGuiBuilder';
+import DataFieldsForm from './DataFieldsForm';
 import type { usePartGenerate } from './usePartGenerate';
 
 /** Words typed to a chat and not sent, by document, node and file: they outlast a look at the file, another node, closing the view. */
@@ -31,11 +33,12 @@ function inviting(node: GraphNode, write: Write): string {
  * the file as said -- a body with what its last try showed. What goes with the
  * words is the same for every file of every kind of node (`SENT_WITH`).
  */
-export default function PartChat({ node, write, writing, trying }: {
+export default function PartChat({ node, write, writing, trying, setConfig }: {
   node: GraphNode;
   write: Write;
   writing: ReturnType<typeof usePartGenerate>;
   trying: ReturnType<typeof useTryExample>;
+  setConfig: NodePanelProps['setConfig'];
 }) {
   const { file } = fileOf(node, write);
   const lines: ChatLine[] = partExchanges(String(node.config.history ?? ''), partName(node, write)).map((one, index) => ({
@@ -99,6 +102,7 @@ export default function PartChat({ node, write, writing, trying }: {
           )}
         </div>
       </ChatPane>
+      {write === 'body' && bodyOf(node)?.kind === 'data' && <DataFieldsForm node={node} setConfig={setConfig} />}
     </div>
   );
 }

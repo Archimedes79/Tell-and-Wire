@@ -303,6 +303,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
                 write={shown.part}
                 writing={writing}
                 trying={trying}
+                setConfig={panel.setConfig}
               />
             ) : (
               <FilePane
