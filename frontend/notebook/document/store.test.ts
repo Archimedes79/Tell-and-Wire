@@ -48,7 +48,7 @@ describe('the notebook that is open', () => {
     });
     store().edit((doc) => addBlock(doc, 'p'));
     expect(Object.keys(store().results)).toEqual([id]);
-    store().edit((doc) => patchWindow(doc, id, { title: 'Changed' }));
+    store().edit((doc) => patchWindow(doc, id, { steps: [{ ...doc.windows[0].steps[0], sentence: 'Say it another way.' }] }));
     expect(store().results).toEqual({});
     expect(store().done.ran.size).toBe(0);
   });
@@ -135,5 +135,26 @@ describe('the notebook that is open', () => {
     expect(await store().describe('again')).toBe(false);
     expect(store().error).toMatch(/model down/);
     expect(store().busy).toBe('');
+  });
+});
+
+describe('what a window made, when the window is changed', () => {
+  beforeEach(() => { store().start(startPage('Tool')); });
+  const made = () => useNotebook.setState({ results: { [store().doc!.windows[0].id]: { outcome: 'done', message: '', shown: {}, nodes: {} } } });
+
+  it('stands when only how wide it is, how tall its boxes are or what it is called changes', () => {
+    const id = store().doc!.windows[0].id;
+    made();
+    store().edit((doc) => patchWindow(doc, id, { span: 16 }));
+    store().edit((doc) => patchWindow(doc, id, { title: 'Another name' }));
+    store().edit((doc) => ({ ...doc, windows: doc.windows.map((one) => ({ ...one, outputs: one.outputs.map((out) => ({ ...out, rows: out.rows + 2, width: 0.5 })) })) }));
+    expect(Object.keys(store().results)).toEqual([id]);
+  });
+
+  it('goes when what it asks, does or shows changes', () => {
+    const id = store().doc!.windows[0].id;
+    made();
+    store().edit((doc) => patchWindow(doc, id, { steps: [{ ...store().doc!.windows[0].steps[0], sentence: 'Say it differently.' }] }));
+    expect(store().results).toEqual({});
   });
 });

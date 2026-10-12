@@ -89,10 +89,15 @@ function Table({ value }: { value: unknown }) {
   }
   const columns = [...new Set(rows.flatMap((row) => (row && typeof row === 'object' ? Object.keys(row) : [])))];
   if (!columns.length) return <>{asText(value)}</>;
+  // A column of numbers stands to the right, and with the same decimals all down it (274.40 under 950.00), as a ledger has it.
+  const at = (row: unknown, name: string): unknown => (row as Record<string, unknown>)[name];
+  const numbers = new Set(columns.filter((name) => rows.every((row) => at(row, name) === null || at(row, name) === undefined || typeof at(row, name) === 'number')));
+  const decimals = new Set([...numbers].filter((name) => rows.some((row) => typeof at(row, name) === 'number' && !Number.isInteger(at(row, name)))));
+  const shown = (name: string, value: unknown): string => (decimals.has(name) && typeof value === 'number' ? value.toFixed(2) : cell(value));
   return (
     <table>
-      <thead><tr>{columns.map((name) => <th key={name}>{name}</th>)}</tr></thead>
-      <tbody>{rows.map((row, at) => <tr key={at}>{columns.map((name) => <td key={name}>{cell((row as Record<string, unknown>)[name])}</td>)}</tr>)}</tbody>
+      <thead><tr>{columns.map((name) => <th key={name} className={numbers.has(name) ? 'num' : undefined}>{name}</th>)}</tr></thead>
+      <tbody>{rows.map((row, r) => <tr key={r}>{columns.map((name) => <td key={name} className={numbers.has(name) ? 'num' : undefined}>{shown(name, at(row, name))}</td>)}</tr>)}</tbody>
     </table>
   );
 }

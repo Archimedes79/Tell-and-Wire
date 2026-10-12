@@ -98,6 +98,14 @@ describe('a window on the page', () => {
     expect(message.style.height).toBe('162px');
     expect(screen.querySelector('.nb-chip')?.textContent).toBe('Failed');
   });
+
+  it('says so even where an earlier answer still stands in the box, and shows the other old answers as old', async () => {
+    const first = outEnd(window0(), window0().outputs[0]);
+    const second = outEnd(window0(), window0().outputs[1]);
+    await act(async () => { useNotebook.setState({ results: { w: { outcome: 'failed', message: 'TypeError: x is not a function', shown: { [first]: { kind: 'bars', points: [] }, [second]: [{ a: 1 }] }, nodes: {} } } }); });
+    expect(screen.querySelector('.nb-out.msg')?.textContent).toContain('TypeError: x is not a function');
+    expect(screen.querySelectorAll('.nb-field.old')).toHaveLength(3);
+  });
 });
 
 describe('a window that is a chat', () => {

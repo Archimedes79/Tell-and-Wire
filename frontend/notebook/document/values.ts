@@ -49,3 +49,6 @@ export const tag = (name: string): string => name.trim().replace(/\s+/g, '_');
 
 /** What a sentence says to the model it is done by: each `@Name` as the name in quotes. */
 export const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu, (_, name: string, part?: string) => `“${name.replace(/_/g, ' ')}${part && part !== 'content' ? ` ${part}` : ''}”`);
+
+/** A folder name from a tool's name: "Expense overview" is expense_overview. */
+export const folderName = (name: string): string => name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');

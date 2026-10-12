@@ -53,7 +53,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
   const pointing = (blockId: string) => (numbers ? { onMouseEnter: () => show({ hot: blockId }), onMouseLeave: () => show({ hot: null }) } : {});
 
   return (
-    <section className={`nb-win${open ? ' open' : ''}`} aria-label={window.title} data-window={window.id}>
+    <section className={`nb-win${open && writing ? ' open' : ''}`} aria-label={window.title} data-window={window.id}>
       <div className="nb-win-head">
         {writing
           ? <input className="nb-name nb-win-title" aria-label="Window title" value={window.title} onChange={(event) => edit((doc) => ({ ...doc, windows: doc.windows.map((one) => (one.id === window.id ? { ...one, title: event.target.value } : one)) }), `title-${window.id}`)} />
@@ -100,7 +100,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
             const shown = result?.shown[id];
             const height = Math.max(1, out.rows) * 30 + 12;
             return (
-              <div key={id} className={`nb-field${lit(id)}`} style={basis(out.width)} {...pointing(id)}>
+              <div key={id} className={`nb-field${lit(id)}${failed && at > 0 && out.kind !== 'chat' ? ' old' : ''}`} style={basis(out.width)} {...pointing(id)}>
                 <span className="nb-label">{out.name}</span>
                 {out.kind === 'chat'
                   ? (
@@ -109,7 +109,8 @@ export default function WindowBox({ window, writing }: { window: Window; writing
                       {failed && <div className={`nb-out msg ${failed.outcome}`} style={{ marginTop: 6 }}>{failed.message}</div>}
                     </>
                   )
-                  : failed && at === 0 && shown === undefined
+                  // Said even where an earlier answer still stands in the box (the host holds it): a window that failed does not show it as if it were new.
+                  : failed && at === 0
                   ? (
                     <div className={`nb-out msg ${failed.outcome}`} style={{ height }}>
                       <div>{failed.message}</div>

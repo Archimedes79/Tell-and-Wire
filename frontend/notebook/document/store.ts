@@ -112,7 +112,16 @@ export interface NotebookState {
 const NOTHING_RAN: Done = { ran: new Set<string>(), changed: new Set<string>() };
 let coalescing: { name: string; at: number } | null = null;
 
-const sameWindows = (a: Windows, b: Windows): boolean => JSON.stringify(a.windows) === JSON.stringify(b.windows);
+/**
+ * What a window makes depends on what it asks, does and shows -- not on how wide it is, how tall its boxes are, or what it is called on the
+ * page. A change of only those leaves what it made standing (widening a window used to wipe its result).
+ */
+const answers = (windows: Windows['windows']): unknown => windows.map(({ span: _span, title: _title, inputs, outputs, ...rest }) => ({
+  ...rest,
+  inputs: inputs.map(({ width: _width, rows: _rows, ...one }) => one),
+  outputs: outputs.map(({ width: _width, rows: _rows, ...one }) => one),
+}));
+const sameWindows = (a: Windows, b: Windows): boolean => JSON.stringify(answers(a.windows)) === JSON.stringify(answers(b.windows));
 
 export const useNotebook = create<NotebookState>((set, get) => ({
   doc: null, graph: null, path: '', saved: '', savedAt: 0, stale: false, past: [], future: [], epoch: 0,

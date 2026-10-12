@@ -13,6 +13,20 @@ const STATE_WORDS: Record<WindowState, string> = {
   ready: 'Ready', running: 'Running', waiting: 'Waiting', current: 'Done', stale: 'Out of date', failed: 'Failed', empty: 'Nothing to do',
 };
 
+/**
+ * The pixels a button needs for its label: a window whose cells are so small that a button of its cells is narrower is stacked, one
+ * block under the other, as a whole page is on a phone ("Summarize all" was cut off in 36 px).
+ */
+const needsPixels = (label: string): number => Math.ceil(label.length * 7 + 28);
+
+/** The block that runs a window and is nothing else: its button (a window started by a change of an input has none). */
+const isRun = (window: PageWindow, block: GuiWidget): boolean => block.id === window.starter && !(block as WindowBlock).sends_to?.length;
+
+/** Whether a window's buttons, at the width its cells give them, are too narrow for their labels. */
+export function cramped(window: PageWindow, cell: number): boolean {
+  return resolveWidgetLayout(window.blocks).some(({ widget, w }) => isRun(window, widget) && w * cell + (w - 1) * GUI_GAP < needsPixels(widget.label ?? ''));
+}
+
 /** What an editor hangs on the page without the page knowing what it is: nothing, in a delivered tool. */
 export interface Decoration {
   /** Added to a window's frame. */
@@ -77,6 +91,8 @@ export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: 
         {items.map((item) => {
           if ('note' in item) return <Note key={item.note.id} note={item.note} />;
           const { window } = item;
+          // A window is as wide as its cells make it, not as the page is: on a tablet two side by side have cells too small for a button.
+          const compact = narrow || (fixedCell === undefined && cramped(window, cell));
           const state = states?.[window.id] ?? 'ready';
           const problem = problems?.[window.id]?.state === state ? problems[window.id] : undefined;
           // The first thing the window shows is where it says what went wrong: in the place of its result, as the notebook does.
@@ -88,7 +104,7 @@ export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: 
               data-window={window.id}
               aria-label={window.title}
               style={{
-                gridColumn: `span ${narrow ? columns : window.span}`,
+                gridColumn: `span ${compact ? columns : window.span}`,
                 position: 'relative', boxSizing: 'border-box', minWidth: 0,
                 padding: 12, borderRadius: 16, border: `1px solid ${LINE}`, background: SURFACE,
                 ...extra?.style,
@@ -98,8 +114,8 @@ export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: 
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: narrow ? '1fr' : `repeat(${window.span}, minmax(0, 1fr))`,
-                  gridAutoRows: `${narrow ? 'minmax(28px, auto)' : `${cell}px`}`,
+                  gridTemplateColumns: compact ? '1fr' : `repeat(${window.span}, minmax(0, 1fr))`,
+                  gridAutoRows: `${compact ? 'minmax(28px, auto)' : `${cell}px`}`,
                   gap: GUI_GAP,
                 }}
               >
@@ -118,7 +134,10 @@ export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: 
                       fires={gui.fires(block)}
                       busy={gui.busy}
                       keepRoom
-                      style={narrow ? { gridColumn: '1 / -1' } : undefined}
+                      style={compact
+                        ? { gridColumn: '1 / -1', ...(placement.w <= 1 ? { display: 'none' } : {}), ...(!narrow && isRun(window, block) ? { justifySelf: 'start', minWidth: 'max-content' } : {}) }
+                        // A button stands on a row of its own, as wide as its cells: an output of half the window that follows it must not be packed beside it.
+                        : isRun(window, block) ? { gridColumn: '1 / -1', justifySelf: 'start', width: placement.w * cell + (placement.w - 1) * GUI_GAP } : undefined}
                       frame={decorated?.frame}
                     >
                       {block.id === firstShown && problem && <Problem problem={problem} />}

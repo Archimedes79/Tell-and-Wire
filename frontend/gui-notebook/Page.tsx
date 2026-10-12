@@ -25,9 +25,19 @@ function Text({ part, onChange, onKeyDown }: {
   const box = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const node = box.current;
-    if (!node) return;
-    node.style.height = 'auto';
-    node.style.height = `${node.scrollHeight}px`;
+    if (!node) return undefined;
+    const fit = (): void => {
+      node.style.height = 'auto';
+      node.style.height = `${node.scrollHeight}px`;
+    };
+    fit();
+    // As tall as its text at the width it has *now*: measured at another width (before the page was laid out, or the window made wider), it
+    // was a column of one word to a line.
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    let width = node.clientWidth;
+    const observer = new ResizeObserver(() => { if (node.clientWidth !== width) { width = node.clientWidth; fit(); } });
+    observer.observe(node);
+    return () => observer.disconnect();
   }, [part.text, part.kind]);
   return (
     <textarea

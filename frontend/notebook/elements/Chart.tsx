@@ -19,6 +19,8 @@ export function short(value: number): string {
   const size = Math.abs(value);
   const [divide, unit] = size >= 1e9 ? [1e9, 'B'] : size >= 1e6 ? [1e6, 'M'] : size >= 1e4 ? [1e3, 'k'] : [1, ''];
   const scaled = value / divide;
+  // Under ten thousand a number is as it is (274.4, not 274), to two places; above, it is a short one with its unit.
+  if (!unit) return String(Number(value.toFixed(2)));
   return `${Math.abs(scaled) >= 100 || Number.isInteger(scaled) ? Math.round(scaled) : scaled.toFixed(1)}${unit}`;
 }
 

@@ -100,6 +100,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-win.open { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-bg); }
 .nb-win-head { display: flex; align-items: center; gap: 10px; min-height: 28px; }
 .nb-win-title { width: auto; flex: 1 1 auto; min-width: 0; font-size: 17px; }
+.nb-win-head .nb-btn, .nb-win-head .nb-chip { flex: 0 0 auto; white-space: nowrap; }
 .nb-win-head h3 { margin: 0; font-size: 17px; font-weight: 600; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nb-chip { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #ebeef3; color: var(--muted); white-space: nowrap; }
 .nb-chip.running { background: var(--blue-bg); color: var(--blue); }
@@ -123,12 +124,14 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-out.msg .nb-link { color: inherit; text-decoration: underline; padding: 6px 0 0; }
 .nb-out table { border-collapse: collapse; font-size: 13.5px; white-space: normal; }
 .nb-out th, .nb-out td { padding: 4px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+.nb-out td.num, .nb-out th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .nb-out th { position: sticky; top: -10px; background: #f8f9fb; font-weight: 600; }
 .nb-out ul { margin: 0; padding-left: 20px; }
 .nb-out img { max-width: 100%; max-height: 100%; display: block; margin: 0 auto; }
 .nb-out.chart { padding: 6px; display: block; overflow: auto; }
 .nb-from { padding: 6px 11px; border: 1px dashed #98a1b2; border-radius: 8px; color: var(--muted); font-size: 13.5px; background: #fafbfc; }
 .nb-out.chart svg { display: block; }
+.nb-field.old > .nb-out { opacity: 0.45; }
 .nb-mark { position: absolute; top: -8px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--blue-bg); color: var(--blue); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border: 0; z-index: 3; }
 .lit > .nb-mark { background: var(--blue); color: #fff; }
 .lit > input, .lit > select, .lit > textarea, .lit > .nb-path, .lit > .nb-out { outline: 2px solid var(--blue); outline-offset: 0; }

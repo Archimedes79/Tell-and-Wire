@@ -11,6 +11,7 @@ import Page from '../gui-notebook/Page';
 import Start from './Start';
 import { runAll, stopRuns } from './document/runs';
 import { saveNote } from './document/status';
+import { folderName } from './document/values';
 import { isDirty, useNotebook } from './document/store';
 import { startPage } from '../../gui/notebook/page.ts';
 import { DEFAULT_SCHEME, windowProblems } from '../../gui/notebook/windows.ts';
@@ -147,7 +148,7 @@ export default function App() {
       {browsing && (
         <Browse
           mode={browsing} title={browsing === 'open' ? 'Open a notebook project' : 'Save the notebook as'} start={browsing === 'open' ? folderOf(path) : path ? folderOf(path) : ''}
-          suggested="my_tool"
+          suggested={folderName(doc?.name ?? '') || 'my_tool'}
           onPick={async (picked) => {
             if (browsing === 'open') {
               if (!(await open(picked))) throw new Error(useNotebook.getState().error || 'It could not be opened.');

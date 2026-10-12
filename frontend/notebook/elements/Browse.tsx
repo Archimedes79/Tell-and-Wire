@@ -45,7 +45,9 @@ export default function Browse({ mode, title, start, extensions, suggested, onPi
   useEffect(() => { void go(start ?? ''); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const here = page?.path ?? '';
-  const target = mode === 'save' ? `${here}${here.endsWith(separatorOf(here)) ? '' : separatorOf(here)}${name.trim()}` : mode === 'folder' ? (chosen || here) : chosen;
+  // Typed or climbed into a project itself: it is what Open opens, without being picked out of its parent.
+  const hereIsProject = page?.entries.some((entry) => !entry.is_dir && (entry.name === 'graph-windows.json' || entry.name === 'graph-flow.json')) === true;
+  const target = mode === 'save' ? `${here}${here.endsWith(separatorOf(here)) ? '' : separatorOf(here)}${name.trim()}` : mode === 'folder' ? (chosen || here) : mode === 'open' ? (chosen || (hereIsProject ? here : '')) : chosen;
   const pick = async (path: string): Promise<void> => {
     setBusy(true);
     setError('');
@@ -106,7 +108,7 @@ export default function Browse({ mode, title, start, extensions, suggested, onPi
         <footer>
           <span className="nb-note" style={{ flex: 1, alignSelf: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={target}>{target}</span>
           <button className="nb-btn" onClick={onClose}>Cancel</button>
-          <button className="nb-btn primary" disabled={busy || !target || (mode === 'save' && !name.trim()) || (mode === 'open' && !chosen)} onClick={() => void pick(target)}>
+          <button className="nb-btn primary" disabled={busy || !target || (mode === 'save' && !name.trim())} onClick={() => void pick(target)}>
             {mode === 'save' ? 'Save here' : mode === 'folder' ? 'Choose this folder' : mode === 'open' ? 'Open' : 'Choose'}
           </button>
         </footer>

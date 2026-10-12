@@ -1,6 +1,6 @@
 // The first page (A1): one sentence about what the tool should do, and the tool is built from it.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { startPage } from '../../gui/notebook/page.ts';
 import { useNotebook } from './document/store';
 
@@ -12,6 +12,9 @@ const EXAMPLES = [
 
 export default function Start({ onOpen }: { onOpen: () => void }) {
   const [said, setSaid] = useState('');
+  const box = useRef<HTMLTextAreaElement>(null);
+  // The cursor is in the box from the start, and the page stays where it is: the question above it is read first (autoFocus scrolled it away).
+  useEffect(() => { box.current?.focus({ preventScroll: true }); }, []);
   const busy = useNotebook((s) => s.busy);
   const error = useNotebook((s) => s.error);
   const making = busy === 'describing';
@@ -26,7 +29,7 @@ export default function Start({ onOpen }: { onOpen: () => void }) {
         </div>
         <div className="nb-ask">
           <textarea
-            aria-label="What should the tool do?" autoFocus value={said} disabled={making}
+            ref={box} aria-label="What should the tool do?" value={said} disabled={making}
             placeholder="For example: Read a text file and summarize it in as many sentences as I say."
             onChange={(event) => setSaid(event.target.value)}
             onKeyDown={(event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) build(); }}

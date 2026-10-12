@@ -13,3 +13,12 @@ describe('whether the page is kept', () => {
     expect(saveNote({ path: '/p', dirty: false, savedAt: at })).toMatchObject({ kind: 'saved' });
   });
 });
+
+describe('the name a project folder starts with', () => {
+  it('is the tool\'s name as a folder is named, and nothing where the name says nothing', async () => {
+    const { folderName } = await import('./values');
+    expect(folderName('Expense overview')).toBe('expense_overview');
+    expect(folderName('  Café: Zahlen & Zeiten! ')).toBe('cafe_zahlen_zeiten');
+    expect(folderName('???')).toBe('');
+  });
+});

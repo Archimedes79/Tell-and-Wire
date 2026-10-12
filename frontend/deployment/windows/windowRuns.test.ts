@@ -5,6 +5,7 @@ import { windowsToGraph, type Windows } from '../../../gui/notebook/windows.ts';
 import { afterRun, afterEdit, type Done } from '../../../gui/windows/order.ts';
 import { forgetRuns, problemOf, runWindows, succeeded, useWindowRuns } from './windowRuns';
 import { isCurrent, isWindows, pageWindows, planFor, recorded, type RunOf } from './windowsInUse';
+import { cramped } from './WindowsSurface';
 
 /**
  * A page of windows runs its windows in order, from the gui alone: the blocks of the gui a package
@@ -197,5 +198,17 @@ describe('a window that came to nothing says why', () => {
     expect(useWindowRuns.getState().problems.summarize).toEqual({ state: 'failed', message: 'It broke.' });
     forgetRuns();
     expect(useWindowRuns.getState().problems).toEqual({});
+  });
+});
+
+describe('a window whose buttons the cells cannot hold', () => {
+  it('is stacked when a button of its cells is narrower than its label, and left as drawn when it fits', () => {
+    const wide = pageWindows(windowsToGraph({ ...DOC, windows: [{ ...DOC.windows[0], trigger: { label: 'Summarize all' } }] }).gui!.blocks as never[]);
+    // Two cells of 36 px and a gap are 86 px: "Summarize all" wants about 120.
+    expect(cramped(wide[0], 36)).toBe(true);
+    expect(cramped(wide[0], 56)).toBe(false);
+    // A short word fits sooner.
+    const short = pageWindows(windowsToGraph(DOC).gui!.blocks as never[]);
+    expect(cramped(short[0], 40)).toBe(false);
   });
 });
