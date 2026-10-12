@@ -1,9 +1,9 @@
 import { lazy } from 'react';
 import { StaticWidgetGuiBuilder } from '../StaticWidgetGuiBuilder';
 import TextInPlace from './TextInPlace';
-import { AlignLeft, Captions, Heading1 } from 'lucide-react';
+import { AlignLeft, Captions, Heading1, Heading2 } from 'lucide-react';
 
-/** Prose on the gui, rendered as markdown: a heading, a paragraph, a caption. */
+/** Prose on the GUI, rendered as markdown: a heading of the first or second level, a paragraph, a caption. */
 export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
   readonly widgetKind = 'text';
 
@@ -11,7 +11,8 @@ export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
 
   paletteEntries() {
     return [
-      { mode: 'heading', label: 'Heading', icon: Heading1, also: 'title h1' },
+      { mode: 'h1', label: 'Heading 1', icon: Heading1, also: 'title h1 heading' },
+      { mode: 'h2', label: 'Heading 2', icon: Heading2, also: 'subtitle h2 heading' },
       { mode: 'body', label: 'Text', icon: AlignLeft, also: 'paragraph markdown body' },
       { mode: 'caption', label: 'Caption', icon: Captions, also: 'small note' },
     ];
@@ -21,7 +22,7 @@ export class TextWidgetGuiBuilder extends StaticWidgetGuiBuilder {
 
   override readonly defaultMode = 'body';
 
-  /** Typed where it stands, on the gui being built. */
+  /** Typed where it stands, on the GUI being built. */
   override readonly InlineEditor = TextInPlace;
 
   /** Its words, none yet. */

@@ -50,6 +50,12 @@ Valid node_type values: ${NODE_TYPES}. What each one keeps in its config is said
 const NODE_WORDS = `Every node is its label and its description: the label a short heading, the description one or two sentences saying in plain words what the node does. A person reads them on the canvas, and a code, ai or data node has what it holds or runs written from its description.`;
 
 /**
+ * What the tool says of itself. Its description is the one line under its name in the header of the
+ * tool as it is delivered -- read by whoever uses it, who never saw the graph.
+ */
+const TOOL_WORDS = `The tool's "metadata.description" is shown under its name to the person who uses the tool: one sentence, in their words, saying what the tool does for them. It never mentions nodes, start points, ports, wires, blocks or files by their technical names.`;
+
+/**
  * Where a round starts and what it is started with: one package, read by the
  * node it reaches. Without this a generated tool wires a block's field
  * straight to a node, which no wire can carry, and the node is handed nothing.
@@ -94,7 +100,7 @@ const DERIVED_PORTS = `Where a node type's ports are DERIVED from its settings -
 const EXAMPLE = `A complete, working example:
 \`\`\`json
 {
-  "metadata": {"name": "Count rows", "description": ""},
+  "metadata": {"name": "Count rows", "description": "Counts the rows of a CSV file you choose."},
   "nodes": [
     {"id": "count", "node_type": "start", "label": "Count", "description": "The gui's Count button starts it.",
      "inputs": [],
@@ -121,4 +127,4 @@ const EXAMPLE = `A complete, working example:
 }
 \`\`\``;
 
-export const GRAPH_SYSTEM = [SHAPE, NODE_WORDS, EVENTS, CONFIG_KEYS, GUI, MUST_SHOW, DERIVED_PORTS, EXAMPLE].join('\n\n');
+export const GRAPH_SYSTEM = [SHAPE, TOOL_WORDS, NODE_WORDS, EVENTS, CONFIG_KEYS, GUI, MUST_SHOW, DERIVED_PORTS, EXAMPLE].join('\n\n');

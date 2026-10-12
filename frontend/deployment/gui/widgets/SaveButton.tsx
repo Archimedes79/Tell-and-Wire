@@ -7,7 +7,7 @@ import Button from '../kit/ui/Button';
  * `relative` and the hover `group`, and not scrolled with it.
  *
  * Out of sight until that element is pointed at, or the button is reached
- * with the keyboard: a gui is for reading what it shows, and a button on
+ * with the keyboard: a GUI is for reading what it shows, and a button on
  * every block would be read first.
  */
 export default function SaveButton({ title, onSave }: { title: string; onSave: () => void }) {

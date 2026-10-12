@@ -140,6 +140,8 @@ export interface GuiView {
   scheme: string;
   blocks: Record<string, unknown>[];
   starts_whole: boolean;
+  /** Running it asks a model somewhere: the delivered tool offers its AI settings only then. */
+  uses_model: boolean;
 }
 
 /** What the graph offers whoever uses it, by name -- and which session that is. */

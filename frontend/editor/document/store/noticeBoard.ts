@@ -11,7 +11,7 @@
 // one opened leaves it unsaid.
 
 import { create } from 'zustand';
-import { useGraphStore } from '../document/store/graphStore';
+import { useGraphStore } from './graphStore';
 
 export type NoticeLevel = 'done' | 'info' | 'warning' | 'error';
 

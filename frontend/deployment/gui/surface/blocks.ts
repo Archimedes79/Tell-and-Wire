@@ -9,7 +9,7 @@
 // looks at and operates.
 //
 // It is a `View` because it is not the running half of anything: the designer
-// draws these same components while the gui is being built, so a
+// draws these same components while the GUI is being built, so a
 // `SelectWidgetView` is on screen in the builder and in the delivered tool
 // alike. It is *how a widget looks*.
 //
@@ -22,7 +22,7 @@ import type { ComponentType } from 'react';
 import type { WidgetKind } from '../../../../graph/graph.ts';
 import type { GuiWidget } from '../kit/guiWidget';
 import type { WidgetViewProps } from '../widgets/WidgetView';
-import { textRole } from '../../../../gui/widgets/text/role.ts';
+import { isHeadingRole, textRole } from '../../../../gui/widgets/text/role.ts';
 import { textIoRole } from '../../../../gui/widgets/text_io/role.ts';
 import { asText } from '../../../../gui/widgets/text_io/text.ts';
 
@@ -39,7 +39,7 @@ import TableWidgetView from '../widgets/table/TableWidgetView';
 import TextWidgetView from '../widgets/text/TextWidgetView';
 import TextIoWidgetView from '../widgets/text_io/TextIoWidgetView';
 
-/** One kind of block, as the gui draws it. */
+/** One kind of block, as the GUI draws it. */
 interface BlockKind {
   /** The one component. The designer and the delivered tool draw this same one. */
   View: ComponentType<WidgetViewProps>;
@@ -54,16 +54,16 @@ interface BlockKind {
   /** The label above it names the one control in it, which takes the view's `controlId`. */
   labelsControl?: true;
   /**
-   * Without a box it is as tall as what is in it and stands in its row on the bottom -- a heading, which is nearer the block under
-   * it than the one above -- or in the middle, as a rule between two sections does. Not said: it has the whole height it is given.
+   * Without a box it is as tall as what is in it and stands in the middle of its row, as a heading and a rule between two
+   * sections do. Not said: it has the whole height it is given.
    */
-  sits?: (widget: GuiWidget) => 'end' | 'center' | undefined;
+  sits?: (widget: GuiWidget) => 'center' | undefined;
   /** It shows what a run hands back and nothing has yet: it stands as one line until something does. */
   waits?: (widget: GuiWidget, value: unknown) => boolean;
 }
 
 export const BLOCKS: Record<WidgetKind, BlockKind> = {
-  text: { View: TextWidgetView, sits: (widget) => (textRole(widget.mode) === 'heading' ? 'end' : undefined) },
+  text: { View: TextWidgetView, sits: (widget) => (isHeadingRole(textRole(widget.mode)) ? 'center' : undefined) },
   divider: { View: DividerWidgetView, sits: () => 'center' },
   spacer: { View: SpacerWidgetView },
   input_picker: { View: InputPickerWidgetView, labelsControl: true },

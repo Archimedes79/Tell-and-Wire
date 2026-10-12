@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { say } from './noticeBoard';
+import { say } from '../document/store/noticeBoard';
 import { runReport } from './runReport';
 import { BookOpen, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from '../../deployment/gui/kit/ui/ToolbarButton';
@@ -92,7 +92,7 @@ export default function Toolbar({
   const executionResult = useGraphStore((s) => s.executionResult);
 
   const [deployBusy, setDeployBusy] = useState('');
-  // Asking what the graph needs, then running: the delivered gui's own steps.
+  // Asking what the graph needs, then running: the delivered GUI's own steps.
   // The document is handed over by ▶ Run just before (`startApplication`).
   const delivered = useRound();
 
@@ -128,12 +128,12 @@ export default function Toolbar({
 
   /**
    * ▶ Run: the tool, run as whoever gets it will run it -- one button,
-   * the same on every tab (`document/application.ts`). With a gui, the gui opens
+   * the same on every tab (`document/application.ts`). With a GUI, the GUI opens
    * (the App tab) and the graph runs when it is used; without one, what starts
    * the graph starts it. While it runs the button is ■ Stop, which ends it.
    *
    * It is the document that runs: from inside a node's graph, the canvas goes
-   * back up to the top first, where the gui is and where the results land.
+   * back up to the top first, where the GUI is and where the results land.
    * A graph run whole at start goes through the delivered tool's own steps
    * (`useRound`), as every run does.
    */
@@ -327,7 +327,7 @@ export default function Toolbar({
             className="h-9 shrink-0 flex items-center gap-2"
             onClick={handleRun}
             title={opensTab
-              ? 'Run the tool: it opens as whoever gets it uses it -- its gui, or a call to each start point a call starts -- and the graph runs when it is used'
+              ? 'Run the tool: it opens as whoever gets it uses it -- its GUI, or a call to each start point a call starts -- and the graph runs when it is used'
               : 'Run the tool: what starts the graph starts it -- its start points that start themselves, or, with none, the whole graph once'}
           >
             <Play size={13} strokeWidth={2.5} aria-hidden="true" />

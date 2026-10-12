@@ -19,7 +19,7 @@ interface Props {
 
 /**
  * What a folder listing adds to the folder and its file types, for a start point
- * and a folder picker on a gui alike: whether it looks into subfolders,
+ * and a folder picker on a GUI alike: whether it looks into subfolders,
  * that it hands on every file it lists, and -- when asked -- that list, made
  * the way a run makes it. Keeping only some of the files is a code node after
  * it, and the panel says so.

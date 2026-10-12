@@ -4,8 +4,8 @@ import { SCHEMES, type SchemeId } from '../../deployment/gui/kit/ui/scheme';
 import { DIMMER, FIELD_ON_SURFACE, MUTED } from '../../deployment/gui/kit/ui/theme';
 
 /**
- * What the right panel shows while no block is selected: the gui itself. One
- * choice for the whole gui, from a closed set -- a block's `tone` says what
+ * What the right panel shows while no block is selected: the GUI itself. One
+ * choice for the whole GUI, from a closed set -- a block's `tone` says what
  * the block is, this says what the tool looks like. Every accent is picked to
  * sit on the same surfaces, so no combination can come out wrong.
  */
@@ -16,7 +16,7 @@ export default function GuiSettings() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2 text-xs font-medium" style={{ color: MUTED }}>
-        <LayoutTemplate size={14} aria-hidden="true" /> Gui
+        <LayoutTemplate size={14} aria-hidden="true" /> GUI
       </div>
       <label className="block">
         <span className="block text-xs font-medium mb-1" style={{ color: MUTED }}>Colour scheme</span>
@@ -32,7 +32,7 @@ export default function GuiSettings() {
         </select>
       </label>
       <p className="text-xs" style={{ color: DIMMER }}>
-        Select a block on the gui to change it, or press <kbd>/</kbd> to add one.
+        Select a block on the GUI to change it, or press <kbd>/</kbd> to add one.
       </p>
     </div>
   );

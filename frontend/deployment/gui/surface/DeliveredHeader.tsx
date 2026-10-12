@@ -20,7 +20,7 @@ function roundStatus(round: RoundSnapshot | null): { label: string; failed: bool
  *
  * It has no ▶ Run. A tool runs when it is started (`startEvents`: its start points
  * that start themselves, or, with no start point at all, the whole graph once) and
- * afterwards when its gui is used -- its buttons, and the blocks that say
+ * afterwards when its GUI is used -- its buttons, and the blocks that say
  * they start it -- or it is called.
  *
  * Every host draws the bar: `deployment/gui/GuiApp.tsx` for a tool someone

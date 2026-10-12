@@ -35,7 +35,7 @@ function useFollow(text: string) {
     if (at) at.scrollTop = following.current ? at.scrollHeight : kept.current;
   }, [text]);
 
-  // A box is drawn before the gui has measured its grid, and a window can be
+  // A box is drawn before the GUI has measured its grid, and a window can be
   // resized: a box that grows or shrinks moves its end, and one being followed
   // goes with it -- the newest line was left half under the edge.
   const ref = useCallback((element: HTMLElement | null) => {
@@ -72,7 +72,7 @@ export default function TextIoWidgetView({ widget, value, incoming, onChange, on
   const follow = useFollow(mode === 'output' ? text : incomingText);
   // In a box that sends, Enter sends and Shift+Enter is the newline -- what
   // every messenger does. In one that does not, Enter is just a newline.
-  // Whether it sends is the gui's to say, the one it acts on (WidgetViewProps.fires).
+  // Whether it sends is the GUI's to say, the one it acts on (WidgetViewProps.fires).
   const sends = fires === true;
   const sendOnEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!sends || event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;

@@ -1,4 +1,4 @@
-// The gui a graph is used through, as a document rather than a canvas.
+// The GUI a graph is used through, as a document rather than a canvas.
 //
 // Free positioning needs a designer's eye; a document flow is decent by default,
 // which is why a LaTeX file looks better than a hand-arranged slide. So the
@@ -22,7 +22,7 @@ export const GUI_GRID_COLUMNS = 16;
  * The widest a cell is allowed to get.
  *
  * Without a cap, a square cell on a 4K monitor would be ~250px and every block
- * would inflate with the window. A capped cell means the gui has a maximum
+ * would inflate with the window. A capped cell means the GUI has a maximum
  * width and centres, with margins growing instead — a printed page, and the
  * reason a text column stays readable.
  */
@@ -52,9 +52,9 @@ export function cellsFromDrag(pixels: number, cell: number): number {
 }
 
 /**
- * Below this width the gui is one column: every block takes the whole width, in
- * the gui's order. Three columns on a phone left each of them a sliver, and a
- * person who built the gui on a desktop is not asked to build another.
+ * Below this width the GUI is one column: every block takes the whole width, in
+ * the GUI's order. Three columns on a phone left each of them a sliver, and a
+ * person who built the GUI on a desktop is not asked to build another.
  */
 export const GUI_NARROW = 640;
 
@@ -92,8 +92,8 @@ export function resolveWidgetLayout(widgets: GuiWidget[]): WidgetPlacement[] {
 }
 
 /**
- * A block's size on a gui at its full width, in pixels -- its cells and the
- * gaps between them -- and the cells it spans. The gui never needs the sum,
+ * A block's size on a GUI at its full width, in pixels -- its cells and the
+ * gaps between them -- and the cells it spans. The GUI never needs the sum,
  * since the browser's grid does it; a node wired into the end point the
  * block shows does, to write what it sends for the room there is
  * (`editor/graph/writing/generationContext.ts`). On a narrower gui every cell
@@ -106,7 +106,7 @@ export function blockSize(widget: GuiWidget): { w: number; h: number; width: num
 }
 
 /**
- * The text in a box on the gui -- what a text box shows and is typed into:
+ * The text in a box on the GUI -- what a text box shows and is typed into:
  * 14 px on 20 px lines, as Tailwind's `text-sm`, which the other boxes (a
  * dropdown, the field under a chat) still ask for by that name. Held here
  * because a node that writes into a box is told how large its text is
@@ -118,7 +118,7 @@ export const BOX_TEXT = { fontSize: 14, lineHeight: '20px' } as const;
 /**
  * The side of one square cell for a container of *containerWidth* pixels.
  *
- * Below the capped width the cells shrink with the container, so the same gui
+ * Below the capped width the cells shrink with the container, so the same GUI
  * looks identical in the editor's GUI tab, its App tab and a deployed tool —
  * only smaller.
  */

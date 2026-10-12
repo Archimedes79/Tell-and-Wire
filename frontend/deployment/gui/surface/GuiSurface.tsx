@@ -8,7 +8,7 @@ import { DANGER, DANGER_FILL, DANGER_TEXT, DIM, MUTED, TEXT } from '../kit/ui/th
 import RunResult, { type ShownOutput } from './RunResult';
 
 /**
- * The gui a graph shows: its blocks, in order, on one grid.
+ * The GUI a graph shows: its blocks, in order, on one grid.
  *
  * **This module is the deployment boundary.** It holds what a *user* of the
  * finished tool sees and nothing else — no selection, no drag handle, no resize
@@ -21,12 +21,12 @@ import RunResult, { type ShownOutput } from './RunResult';
  * base. Only the import graph decides what ends up in a bundle, so the boundary
  * is a module boundary — `deployment/gui/boundary.test.ts` asserts that it stays one.
  *
- * It knows no graph and no store: whoever draws it hands it the gui as
+ * It knows no graph and no store: whoever draws it hands it the GUI as
  * designed and what is in use -- the delivered tool from the runtime API, the
  * editor from its document and the same API -- and is told what was used.
  */
 
-/** The gui as it is drawn: what was designed, and what is in use. */
+/** The GUI as it is drawn: what was designed, and what is in use. */
 export interface GuiModel {
   name: string;
   description: string;
@@ -36,15 +36,15 @@ export interface GuiModel {
   valueOf: (block: GuiWidget) => unknown;
   /** What a block shows of what the end point it shows handed back; undefined for nothing yet. */
   shownOn: (block: GuiWidget) => unknown;
-  /** Using the block starts a round: it fires a start point the gui starts. */
+  /** Using the block starts a round: it fires a start point the GUI starts. */
   fires: (block: GuiWidget) => boolean;
-  /** A round the gui starts is sent what the block holds, under its id. */
+  /** A round the GUI starts is sent what the block holds, under its id. */
   takes: (block: GuiWidget) => boolean;
   /** A round is going: a block that starts one waits. */
   busy: boolean;
   /** Why the last round failed, in its own words; empty when it did not. */
   error: string;
-  /** For a gui without blocks: what the graph hands back, each output under its label. */
+  /** For a GUI without blocks: what the graph hands back, each output under its label. */
   outputs: ShownOutput[];
   /** The graph has no nodes at all: nothing to run, nothing to show. */
   empty?: boolean;
@@ -70,15 +70,15 @@ export function blockValue(
   return incoming !== undefined && overrides?.[widget.id] === undefined ? incoming : held;
 }
 
-/** Whether the gui is narrow (`GUI_NARROW`): set by the grid, read by each block. */
+/** Whether the GUI is narrow (`GUI_NARROW`): set by the grid, read by each block. */
 const NarrowGui = React.createContext(false);
 
-/** The grid the gui flows on: 16 square columns, capped at a readable width. */
+/** The grid the GUI flows on: 16 square columns, capped at a readable width. */
 export function GuiGrid({
   children, minRows, onCell,
 }: {
   children: React.ReactNode;
-  /** Keep this much height when empty, so there is a gui to aim at. */
+  /** Keep this much height when empty, so there is a GUI to aim at. */
   minRows?: number;
   /**
    * The measured cell size, whenever it changes.
@@ -133,7 +133,7 @@ export function GuiBlock({
   children?: React.ReactNode;
   /**
    * Drawn in place of the block's own widget. Designer only: it is how a
-   * heading becomes a box you type in while it is selected. A deployed gui
+   * heading becomes a box you type in while it is selected. A deployed GUI
    * passes none, so nothing that edits can be reached from it.
    */
   content?: React.ReactNode;
@@ -148,9 +148,9 @@ export function GuiBlock({
   const bare = toneIsBare(widget.tone as Tone, look);
   const waiting = !keepRoom && kind?.waits?.(widget, value) === true;
   const narrow = React.useContext(NarrowGui);
-  // A heading or a rule without a box is as tall as what is in it and stands where its kind does in its row (BlockKind.sits), not
-  // stretched over cells it does not fill. The one being sized keeps its room.
-  const sits = keepRoom || !bare ? undefined : kind?.sits?.(widget);
+  // A heading or a rule without a box is as tall as what is in it and stands in the middle of its row (BlockKind.sits), not
+  // stretched over cells it does not fill -- selected as well: it is the row that is sized, not the words.
+  const sits = !bare ? undefined : kind?.sits?.(widget);
 
   return (
     <div
@@ -190,7 +190,7 @@ export function GuiBlock({
 }
 
 /**
- * What a tool shows when its gui has no blocks: what it does, how to start
+ * What a tool shows when its GUI has no blocks: what it does, how to start
  * it, and what its run handed back -- each output under its name.
  */
 function WithoutGui({ gui }: { gui: GuiModel }) {
@@ -220,8 +220,8 @@ function WithoutGui({ gui }: { gui: GuiModel }) {
 
 /**
  * Why the last round failed, in the round's own words -- which can be several
- * lines long, and belong above the gui rather than squeezed into the header
- * beside its "❌ Failed". Part of what the gui shows, so every host draws it.
+ * lines long, and belong above the GUI rather than squeezed into the header
+ * beside its "❌ Failed". Part of what the GUI shows, so every host draws it.
  */
 function RunError({ error }: { error: string }) {
   if (!error) return null;
@@ -236,7 +236,7 @@ function RunError({ error }: { error: string }) {
 }
 
 /**
- * The gui in use: what a deployed tool serves, and what the editor's running
+ * The GUI in use: what a deployed tool serves, and what the editor's running
  * application shows -- or, with no blocks, the tool without a gui. One
  * component, so what is tried in the editor cannot flatter.
  *

@@ -82,7 +82,7 @@ export function handoffActions(
           error: round.error ?? 'The run ended without a result.',
         };
         // A round an event started ran part of the graph, so what the rest of
-        // the gui shows is still true and stays: pressing "Plot" must not
+        // the GUI shows is still true and stays: pressing "Plot" must not
         // blank the summary beside it. A whole round starts from a clean slate.
         const shown = state.executionResult as ExecutionResult | null;
         state.executionResult = (shown && round.started ? mergeResults(shown, made) : made) as never;

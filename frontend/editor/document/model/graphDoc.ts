@@ -126,7 +126,7 @@ function keptNested(node: GraphNode): GraphNode {
   return kept;
 }
 
-/** The gui's blocks as a change of gui.json says them. */
+/** The GUI's blocks as a change of gui.json says them. */
 export const guiOf = (change: TextChange): GuiWidget[] => (Array.isArray(change.value) ? change.value : []) as GuiWidget[];
 
 /** *change* taken into *node*: a file of it as it is on disk, or the graph it holds; its ports follow. */
@@ -174,7 +174,7 @@ export function normalizeGraph(graph: Graph): Graph {
     ? graph.edges.filter((edge) => nodeIds.has(edge.source_node_id) && nodeIds.has(edge.target_node_id))
     : [];
 
-  // A gui is its blocks: one with none is no gui.
+  // A GUI is its blocks: one with none is no gui.
   const blocks = Array.isArray(graph.gui?.blocks) ? graph.gui.blocks : [];
   return {
     metadata: normalizeMetadata(graph.metadata),

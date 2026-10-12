@@ -6,7 +6,7 @@ import PlotChart, { asDrawing, drawingSource, toFigure } from './PlotChart';
 describe('a figure: what a node sends a chart', () => {
   /**
    * Choosing bars or a donut is a *value*, so it can come down a wire from a
-   * dropdown on the gui -- which a node writing finished SVG could never follow.
+   * dropdown on the GUI -- which a node writing finished SVG could never follow.
    */
   it('is the kind and the title of an object, a bare list of numbers, or JSON text, with the kind chosen when nobody asked', () => {
     const point = { label: 'a', value: 1 };

@@ -43,10 +43,10 @@ export interface GraphStore {
   metadata: GraphMetadata;
 
   /**
-   * The gui the graph is used through: its blocks, in order -- none, for a
+   * The GUI the graph is used through: its blocks, in order -- none, for a
    * graph without one. Beside the nodes and not among them: a block connects
    * itself to the graph's start and end points by name, and nothing is wired
-   * to it. The graph open is the one whose gui this is; a graph inside a
+   * to it. The graph open is the one whose GUI this is; a graph inside a
    * node has none.
    */
   gui: GuiWidget[];
@@ -114,14 +114,14 @@ export interface GraphStore {
    */
   changeGraph: (graph: Graph) => void;
   /**
-   * Change what the graph is called, what it does, its gui's scheme: a
+   * Change what the graph is called, what it does, its GUI's scheme: a
    * change like any other, one undo step per field typed into (`commit`).
    * The tool's name and description took none, so an Undo meant for the
    * block added before them took them too.
    */
   setMetadata: (meta: Partial<GraphMetadata>) => void;
   /**
-   * The gui's blocks replaced by *blocks*, as one undo step -- named by
+   * The GUI's blocks replaced by *blocks*, as one undo step -- named by
    * *coalesce*, as a node's panel names its own (`commit`) -- and, with
    * *add*, those nodes put into the graph in the same step: a block's start
    * or end point, made with the block (`gui/guiWrite.ts`).

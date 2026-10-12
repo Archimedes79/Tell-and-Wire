@@ -19,7 +19,7 @@ const server = vi.hoisted(() => {
   };
   return Object.assign(state, { call });
 });
-// The editor's client and the one a gui has (the session helpers call that one) both reach this server.
+// The editor's client and the one a GUI has (the session helpers call that one) both reach this server.
 vi.mock('../../api/client', async (actual) => ({ ...(await actual<typeof import('../../api/client')>()), call: server.call }));
 vi.mock('../../../deployment/gui/kit/api/client', async (actual) => ({ ...(await actual<typeof import('../../../deployment/gui/kit/api/client')>()), call: server.call }));
 // Listening to a session is the stream's; here, rounds are told by hand.

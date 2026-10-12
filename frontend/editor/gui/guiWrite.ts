@@ -1,12 +1,12 @@
 // Changing the gui: the one way a block is added, changed, moved or removed.
 //
-// The gui is the document's list of blocks, beside its nodes -- a graph has
-// one gui -- and every edit on it ends here.
+// The GUI is the document's list of blocks, beside its nodes -- a graph has
+// one GUI -- and every edit on it ends here.
 //
-// Each edit reads the gui from the store when it lands, never from what a
+// Each edit reads the GUI from the store when it lands, never from what a
 // component drew. A box that grows as it is typed into changes its block twice
 // in one keystroke -- the text, then the height -- and the second change,
-// made on the gui as it was drawn, put back the text from before the first:
+// made on the GUI as it was drawn, put back the text from before the first:
 // the character that made the box grow was lost. A ✨ result accepted a minute
 // after it was asked for did the same to every edit made meanwhile.
 //
@@ -23,7 +23,7 @@ import { blockCan, blocksAt, endPoints, guiStartPoints } from '../document/model
 import { WIDGET_BUILDERS } from '../document/elements/registry';
 
 /**
- * The gui's blocks as the store holds them now, rewritten by *edit* and
+ * The GUI's blocks as the store holds them now, rewritten by *edit* and
  * stored back. Nothing, when the edit changed nothing: no undo step, and no
  * "unsaved". *coalesce* names the change, as a node's panel names its own
  * (`graphStore.commit`); *add* puts nodes into the graph in the same step.
@@ -75,7 +75,7 @@ function followLabel(block: GuiWidget, label: string, step: string): void {
 }
 
 /**
- * Put block *widgetId* at place *to* on the gui -- or, *to* being a block's
+ * Put block *widgetId* at place *to* on the GUI -- or, *to* being a block's
  * id, where that block stands now, which is what a drag onto it means.
  * Nothing, for a place that is not there.
  */
@@ -118,13 +118,13 @@ function newPoint(kind: 'start' | 'end', label: string, made: GraphNode[]): Grap
 
 /**
  * *widget* connected as a new block of its kind is most often wanted, and the
- * points that takes, made in the same step: what it sends goes to the gui's
+ * points that takes, made in the same step: what it sends goes to the GUI's
  * start point -- the one there is, or one made for it --, a button or a chat
- * fires it, and so does any other block that can while nothing on the gui
- * fires it yet: a picker alone on a gui runs the graph when a file is
+ * fires it, and so does any other block that can while nothing on the GUI
+ * fires it yet: a picker alone on a GUI runs the graph when a file is
  * picked, with no setting to make. What it shows is an end point: one the
  * graph has that no block shows yet, or one made for it. With several start
- * points the gui starts, which one is the person's to say.
+ * points the GUI starts, which one is the person's to say.
  */
 function connected(widget: GuiWidget, nodes: GraphNode[], blocks: GuiWidget[]): { block: GuiWidget; add: GraphNode[] } {
   const can = blockCan(widget);
@@ -156,7 +156,7 @@ function connected(widget: GuiWidget, nodes: GraphNode[], blocks: GuiWidget[]): 
 }
 
 /**
- * Put *widget* on the gui at place *at*, at the end without one -- the order
+ * Put *widget* on the GUI at place *at*, at the end without one -- the order
  * is the position -- connected as a new block of its kind is most often
  * wanted (`connected`), and with the start or end point that takes, in the
  * block's own undo step: one Undo takes back the block and what came with it.
@@ -171,9 +171,9 @@ export function insertBlock(widget: GuiWidget, at?: number): void {
 }
 
 /**
- * The blocks of a gui drawn from the graph (`guiFromGraph`), added at the
+ * The blocks of a GUI drawn from the graph (`guiFromGraph`), added at the
  * end in one undo step -- with the start points a call started that the person
- * put on the gui, which are then started by it.
+ * put on the GUI, which are then started by it.
  */
 export function addBlocks(blocks: GuiWidget[], toGui: GraphNode[] = []): void {
   const step = 'gui.from-graph';

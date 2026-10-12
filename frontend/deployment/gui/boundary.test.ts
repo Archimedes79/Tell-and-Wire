@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest';
  * that nothing imports yet is held to the same rule before it is wired in. It
  * follows imports through every area, which the editor's layer rule
  * (`layers.test.ts`) cannot: that one sees a single import at a time. And it
- * follows them into graph/, gui/ and backend/, where the gui is held to load
+ * follows them into graph/, gui/ and backend/, where the GUI is held to load
  * nothing that runs a graph. An import of types only is erased and ships
  * nothing, so it is not followed.
  *
@@ -66,7 +66,7 @@ function resolveSpec(fromPath: string, spec: string): string | null {
 }
 
 /**
- * Every module the deployed gui reaches -- what a deployed tool is built from
+ * Every module the deployed GUI reaches -- what a deployed tool is built from
  * -- each with the module that first imported it, or null for one of its own.
  */
 function deployedImports(): Map<string, string | null> {
@@ -102,7 +102,7 @@ describe('deployment boundary', () => {
   };
   const reaching = (found: (path: string) => boolean) => [...reachable].filter(found).map(chain);
 
-  it('reaches the gui a deployed tool renders, and draws the gui it is handed from the halves that are delivered', () => {
+  it('reaches the GUI a deployed tool renders, and draws the GUI it is handed from the halves that are delivered', () => {
     // A check on the walker itself: without it, the assertions below could pass
     // because nothing was found rather than because nothing is wrong.
     expect(BY_PATH.has('deployment/gui/main.tsx')).toBe(true);
@@ -127,7 +127,7 @@ describe('deployment boundary', () => {
    * (`host/api.ts`), and the shapes of a few values its views read -- a chat's
    * conversation, a dropdown's choice, a slider's range. Which blocks start a
    * round and which are given a value are the graph's events and values, which
-   * the runtime API tells the gui by name.
+   * the runtime API tells the GUI by name.
    */
   it('loads of graph/, gui/ and backend/ only the contract and the shapes of the values its views read', () => {
     const loaded = [...reachable].filter((path) => /^(graph|gui|backend)\//.test(path));

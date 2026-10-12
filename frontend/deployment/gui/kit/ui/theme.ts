@@ -10,14 +10,14 @@
  */
 
 /**
- * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The gui's
+ * Every colour is a `var()` into a colour scheme (ui/scheme.ts). The GUI's
  * container sets the variables (the GUI tab's surface, the App tab, a deployed
  * tool), so the blocks on it are in its scheme; the editor's own chrome sets
  * none, and so keeps the literal after the comma -- the Night scheme -- under
  * every scheme. Keep those literals equal to Night's values.
  *
  * That indirection is the whole mechanism: a component asks for SURFACE and
- * knows nothing of schemes, and switching scheme repaints the gui without one
+ * knows nothing of schemes, and switching scheme repaints the GUI without one
  * call site changing.
  *
  * CSS variables resolve in style *properties* only, never in SVG presentation
@@ -61,7 +61,7 @@ export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 30%, transparent)`;
 /**
  * An event: the ◆ a run begins at, and a wire into one. Amber whatever the
  * scheme -- it is the one colour that says "a run starts here", on the canvas
- * and on the gui alike.
+ * and on the GUI alike.
  */
 export const EVENT = 'var(--ui-event, #f59e0b)';
 

@@ -20,7 +20,7 @@ const found = (entry: PickEntry, query: string): boolean => {
 /**
  * A search menu: type what you want, press Enter, keep going. Used where a thing
  * is added without the hand leaving the keyboard or the eye leaving the
- * work -- a block on the gui (`/`), a node on a wire let go on empty canvas.
+ * work -- a block on the GUI (`/`), a node on a wire let go on empty canvas.
  * It knows nothing of either: it is handed the entries, and says which was picked.
  *
  * It searches by what people call things (`also`), not by what we call them.

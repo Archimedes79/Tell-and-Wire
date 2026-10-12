@@ -1,15 +1,15 @@
 // The application ▶ Run starts, as an IDE runs the program it builds.
 //
-// One button, and it runs the tool the way whoever gets it will: with a gui,
-// the gui opens -- its fields filled in as they are set -- and the graph runs
-// when the gui is used, a button pressed, a file picked. With a start point a
+// One button, and it runs the tool the way whoever gets it will: with a GUI,
+// the GUI opens -- its fields filled in as they are set -- and the graph runs
+// when the GUI is used, a button pressed, a file picked. With a start point a
 // call starts, the App tab opens as its caller, as a script would call it.
 // Without either, what starts the graph starts it: a start point set to start
 // when the tool starts starts, a clock keeps its time, and a graph with
 // nothing that starts itself runs whole, once, as a program runs when it is
 // started (`startEvents`). ■ Stop ends it.
 //
-// It runs until it is stopped where something is left to happen -- a gui to
+// It runs until it is stopped where something is left to happen -- a GUI to
 // use, a call to make, a clock to tick -- and ends by itself where nothing is:
 // a graph that only computes, like a program that has returned.
 //
@@ -31,7 +31,7 @@ import { startEvents } from '../../../graph/triggers.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 
 /**
- * Whether ▶ Run opens the App tab for *graph*: it has a gui to use, or a
+ * Whether ▶ Run opens the App tab for *graph*: it has a GUI to use, or a
  * start point a call starts -- the App tab is its caller then.
  */
 export function opensApp(graph: Pick<Graph, 'nodes' | 'gui'>): boolean {
@@ -39,7 +39,7 @@ export function opensApp(graph: Pick<Graph, 'nodes' | 'gui'>): boolean {
 }
 
 export const useApplication = create<{
-  /** The application is running: its gui waits to be used, its clocks tick. */
+  /** The application is running: its GUI waits to be used, its clocks tick. */
   running: boolean;
 }>(() => ({ running: false }));
 
@@ -112,7 +112,7 @@ export async function startApplication(graph: Graph, runWhole: () => Promise<voi
       return;
     }
     if (startEvents(graph, registry).includes(null)) await runWhole();
-    // Nothing left to happen: no gui to use, no call to make, no clock to tick.
+    // Nothing left to happen: no GUI to use, no call to make, no clock to tick.
     if (current() && !opensApp(graph) && !ticks) await end();
   } catch (error) {
     if (current()) await end();

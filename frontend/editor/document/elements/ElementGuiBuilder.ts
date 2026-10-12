@@ -7,7 +7,7 @@
 // under the same name.
 //
 // **The name is the whole point.** `Definition` says what an element is, and a
-// tool carries it; `GuiBuilder` says how a person edits it. `Gui` in the middle
+// tool carries it; `GuiBuilder` says how a person edits it. `GUI` in the middle
 // is *where it lives*: everything a person clicks is in the browser, and the
 // editor's part of it is not carried -- see `deployment/gui/surface/blocks.ts`
 // for the part of the browser a tool does carry.

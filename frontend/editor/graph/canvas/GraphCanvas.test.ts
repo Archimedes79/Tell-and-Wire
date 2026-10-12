@@ -22,7 +22,7 @@ const node = (id: string) => store().rfNodes.find((item) => item.id === id)?.dat
 let root: Root;
 let screen: HTMLElement;
 
-/** A code node wired to an end point, which a block of the gui shows. */
+/** A code node wired to an end point, which a block of the GUI shows. */
 beforeEach(async () => {
   const answer = { ...WIDGET_BUILDERS.text_io.create('answer', 'Answer', 'output'), shows: 'shown' };
   store().loadGraph({

@@ -244,15 +244,15 @@ function Opened({ node, panel, onClose, onOpenGui }: {
       {usedBy.length > 0 && (
         <div className="text-xs flex items-center gap-2 flex-wrap" style={{ color: DIMMER }}>
           <span className="min-w-0">On the gui: {usedBy.map((name) => `“${name}”`).join(', ')}</span>
-          <Button size="sm" onClick={onOpenGui} title="Show it on the GUI tab">Edit the gui</Button>
+          <Button size="sm" onClick={onOpenGui} title="Show it on the GUI tab">Edit the GUI</Button>
         </div>
       )}
 
       {parts.length > 0 && (
         <>
           <div>
+            {/* Not the accent: that is ▶ Run's, and this one replaces files. */}
             <Button
-              variant="primary"
               className="w-full"
               onClick={() => void writing.press('all')}
               disabled={writing.generate.busy}

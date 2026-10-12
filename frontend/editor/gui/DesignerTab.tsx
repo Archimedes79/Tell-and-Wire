@@ -18,7 +18,7 @@ import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
 import { ACCENT, LINE, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
- * The graph's gui, built on the gui itself. One graph, one tool, one gui --
+ * The graph's gui, built on the GUI itself. One graph, one tool, one GUI --
  * a bundle's recipient wants a window, not three.
  */
 export default function DesignerTab() {
@@ -27,7 +27,7 @@ export default function DesignerTab() {
   const widgets = useGraphStore((s) => s.gui);
   // Its blocks are live, and a round they start is the delivered tool's: the
   // document is handed over, what the graph still needs is asked first, and
-  // the round is sent what this gui shows -- its design, set here.
+  // the round is sent what this GUI shows -- its design, set here.
   const round = useRound(
     () => useGraphStore.getState().holdDocument(),
     () => Object.fromEntries(useGraphStore.getState().gui
@@ -45,7 +45,7 @@ export default function DesignerTab() {
 
   const selected = widgets.find((widget) => widget.id === selectedId) ?? null;
 
-  // What the graph's start and end points still lack on the gui, and the
+  // What the graph's start and end points still lack on the GUI, and the
   // question of the ones a call starts.
   const nodes = useGraphNodes();
   const edges = useGraphStore((s) => s.rfEdges);
@@ -53,9 +53,9 @@ export default function DesignerTab() {
   const dialogs = useDialogs();
 
   /**
-   * Draw the gui's missing blocks from the graph. A start point a call starts
-   * is put on the gui only when the person says so, one at a time: the gui
-   * can only start one the gui starts, and switched it no longer serves a call.
+   * Draw the GUI's missing blocks from the graph. A start point a call starts
+   * is put on the GUI only when the person says so, one at a time: the GUI
+   * can only start one the GUI starts, and switched it no longer serves a call.
    */
   const generate = async () => {
     const added = lacking.now.flatMap((made) => made.blocks);
@@ -63,9 +63,9 @@ export default function DesignerTab() {
     for (const made of lacking.ifSwitched) {
       const name = made.point.label || made.point.id;
       const answer = await dialogs.ask<'switch'>({
-        title: `Start “${name}” from the gui?`,
-        text: `A call starts “${name}” now: a script, the command line, or a model. The gui can only start a start point the gui starts, so `
-          + 'switched, it serves the gui and no longer a call. Cancel leaves it as it is, and makes no block for it.',
+        title: `Start “${name}” from the GUI?`,
+        text: `A call starts “${name}” now: a script, the command line, or a model. The GUI can only start a start point the GUI starts, so `
+          + 'switched, it serves the GUI and no longer a call. Cancel leaves it as it is, and makes no block for it.',
         answers: [{ value: 'switch', label: 'Switch it to the gui', variant: 'primary' }],
       });
       if (answer !== 'switch') continue;
@@ -77,22 +77,22 @@ export default function DesignerTab() {
     setSelectedId(added[0].id);
   };
 
-  // Every change to the gui goes through `guiWrite`, which reads it from the
+  // Every change to the GUI goes through `guiWrite`, which reads it from the
   // store when the change lands: a block's editor may hand its change on long
   // after it was drawn.
 
-  /** Add a block to the gui, where it was asked for -- at the end by default. */
+  /** Add a block to the GUI, where it was asked for -- at the end by default. */
   const addWidget = (kind: WidgetKind, mode?: string, at?: number) => {
     const widget = newBlock(kind, mode, widgets);
     insertBlock(widget, at);
     setSelectedId(widget.id);
   };
-  // The drop below is wired once per drag, and must add to the gui as it is
+  // The drop below is wired once per drag, and must add to the GUI as it is
   // when the mouse comes up, not as it was when the drag began.
   const addWidgetNow = useRef(addWidget);
   addWidgetNow.current = addWidget;
 
-  /** Where the `/` menu is open, as a place in the gui order. */
+  /** Where the `/` menu is open, as a place in the GUI order. */
   const [insertAt, setInsertAt] = useState<number | null>(null);
 
   /**
@@ -102,14 +102,14 @@ export default function DesignerTab() {
    * reorder uses them: this way it works inside live inputs, it can be tested,
    * and the element lands **where you let go** instead of always at the end.
    *
-   * The drop target is the whole gui column, not the grid: the grid is only as
+   * The drop target is the whole GUI column, not the grid: the grid is only as
    * tall as its contents, which on an empty gui is zero pixels.
    */
   const [dragEntry, setDragEntry] = useState<PaletteEntry | null>(null);
   const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
-  /** Where in the gui order a release at this point would land. */
+  /** Where in the GUI order a release at this point would land. */
   const indexAt = (event: MouseEvent): number | null => {
     const zone = document.querySelector('[data-gui-dropzone]');
     if (!zone) return null;
@@ -120,7 +120,7 @@ export default function DesignerTab() {
     const children = [...zone.querySelectorAll('[data-gui-surface] > [data-block]')];
     for (let i = 0; i < children.length; i += 1) {
       const rect = children[i].getBoundingClientRect();
-      // Before the first block whose middle is past the pointer: on a gui that
+      // Before the first block whose middle is past the pointer: on a GUI that
       // flows, "here" means "in front of the thing I am pointing above".
       if (event.clientY < rect.top + rect.height / 2) return i;
     }
@@ -193,7 +193,7 @@ export default function DesignerTab() {
 
   /**
    * A live edit in a block. What a block holds by design -- a choice, a text,
-   * a path to start on -- is set here as the gui's design, as everything on
+   * a path to start on -- is set here as the GUI's design, as everything on
    * this tab is; a conversation is only ever the session's (`valueIsDesign`).
    * A block a round is given no value by -- a button -- keeps nothing.
    */
@@ -230,7 +230,7 @@ export default function DesignerTab() {
         <div
           data-gui-dropzone
           className="flex-1 overflow-auto px-8 py-6"
-          // The gui, in its own colour scheme: the editor around it keeps its own.
+          // The GUI, in its own colour scheme: the editor around it keeps its own.
           style={{
             ...schemeVars(metadata.gui_scheme),
             background: SUNKEN,
@@ -253,8 +253,8 @@ export default function DesignerTab() {
         </div>
       </div>
 
-      {/* Always there, so the gui does not move when a block is selected: the
-          block's settings -- or, with none, the gui's. */}
+      {/* Always there, so the GUI does not move when a block is selected: the
+          block's settings -- or, with none, the GUI's. */}
       <aside
         className="overflow-y-auto px-4 py-4"
         style={{ width: 300, background: SURFACE, borderLeft: `1px solid ${LINE}`, flexShrink: 0 }}

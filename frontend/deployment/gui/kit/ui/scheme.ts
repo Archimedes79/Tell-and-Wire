@@ -5,7 +5,7 @@
 // scheme is dark blue versus warm paper, and that is what these are.
 //
 // It is the GUI's scheme: every value here becomes a CSS variable on the
-// gui's own container (see schemeVars) -- the gui surface of the GUI tab,
+// gui's own container (see schemeVars) -- the GUI surface of the GUI tab,
 // the App tab, the delivered tool -- and every colour in `ui/theme.ts` is a
 // `var()` pointing at one, so a block asks for SURFACE and needs to know
 // nothing about schemes. The editor around it sets none, and keeps the
@@ -13,7 +13,7 @@
 // scheme.
 //
 // Text on a surface meets 4.5:1 in every scheme -- `text`, `muted`, `dim`,
-// `dimmer` and each `...Text` colour, on the gui, the panels, a raised block
+// `dimmer` and each `...Text` colour, on the GUI, the panels, a raised block
 // and a hovered row. `scheme.test.ts` checks it.
 //
 // Five: two dark, two light, one in between. Enough that the tool can look
@@ -34,7 +34,7 @@ interface Scheme {
   light?: boolean;
 
   // ---- surfaces -------------------------------------------------------------
-  /** Recessed: the gui itself, input fields, code areas. */
+  /** Recessed: the GUI itself, input fields, code areas. */
   sunken: string;
   /** Raised: panels, modals, nodes, cards. */
   surface: string;
@@ -95,7 +95,7 @@ export const SCHEMES: Scheme[] = [
     id: 'paper',
     label: 'Paper — light and warm',
     light: true,
-    // Warm off-white rather than #fff, and ink rather than black: a gui you can
+    // Warm off-white rather than #fff, and ink rather than black: a GUI you can
     // look at for an afternoon. The accent is a burnt orange, the one hue that
     // stays legible both as a 1px border and as a filled button.
     sunken: '#efece3', surface: '#faf9f5', line: '#dcd8cb',
@@ -157,7 +157,7 @@ export const SCHEMES: Scheme[] = [
  * Not per scheme: what makes eight colours distinguishable is how they sit on a
  * dark or a light ground, and there are only those two grounds. The first of
  * the eight is always the scheme's own accent, so a one-series chart matches
- * the gui it is on. A chart -- or SVG that arrives at one -- reaches them as
+ * the GUI it is on. A chart -- or SVG that arrives at one -- reaches them as
  * `var(--plot-1)` … `var(--plot-8)`, which is how it keeps working when the
  * scheme is changed.
  */
@@ -179,7 +179,7 @@ export function scheme(id: string | undefined): Scheme {
  *
  * Variables rather than props threaded through the tree: a component asks
  * `ui/theme.ts` for SURFACE and needs to know nothing about schemes, which is
- * what lets one switch repaint every block, border and accent of the gui
+ * what lets one switch repaint every block, border and accent of the GUI
  * without touching a single call site.
  */
 export function schemeVars(id: string | undefined): React.CSSProperties {

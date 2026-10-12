@@ -3,7 +3,7 @@
 # Tell & Wire
 
 **A visual node editor for AI workflows and small local tools: say in plain words what
-each node should do, wire the nodes into a graph, give it a gui, and hand it on as a
+each node should do, wire the nodes into a graph, give it a GUI, and hand it on as a
 folder that runs wherever Node runs -- offline, with a local model, if you like.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
@@ -24,7 +24,7 @@ A tool in Tell & Wire has two halves.
 - **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
   runs through **code nodes**, **AI nodes**, **data nodes** (a struct kept between runs)
   and **subgraphs**, and ends at **end points**.
-- **The gui** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
+- **The GUI** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
   what an end point hands back. It connects by name; nothing is wired to the gui.
 
@@ -88,7 +88,7 @@ directory, so run the examples from the repository root:
 node backend/cli/main.ts examples/population_plotter          # run once, print the result as JSON
 node backend/cli/main.ts check examples/population_plotter    # what is wrong, without running
 node backend/cli/main.ts test --offline examples/nested_statistics   # node examples and kept runs
-node backend/cli/main.ts my_tool --serve                      # serve its gui
+node backend/cli/main.ts my_tool --serve                      # serve its GUI
 node backend/cli/main.ts my_tool --bundle ./out               # write a deployable folder
 node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on stdio
 ```

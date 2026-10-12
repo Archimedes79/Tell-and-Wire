@@ -5,7 +5,7 @@ import { GuiSurface } from './GuiSurface';
 import { guiInUse, roundError, type GuiDesign } from './guiInUse';
 
 /**
- * The gui in use, for the host that runs rounds: *design* with what the
+ * The GUI in use, for the host that runs rounds: *design* with what the
  * session holds. It listens to the session for itself, and only to what the
  * gui shows -- not to every tick of a round, which would draw every chart
  * again ten times a second -- and, memoed, is not drawn again for its host's.

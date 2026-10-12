@@ -84,7 +84,7 @@ export function editActions(
       }
       const source = nodeOf(wire.source);
       const from = source?.outputs.find((port) => port.id === wire.sourceHandle);
-      // From a start point the gui sends one block to: named after that block.
+      // From a start point the GUI sends one block to: named after that block.
       const sent = source && registry.node(source.node_type)?.takesPackage ? defaultField(get().gui, source) : undefined;
       // From a node with one output, named after that node: a judge's inputs
       // were "output" and "output2", beside its own output "output".

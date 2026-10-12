@@ -22,10 +22,20 @@ describe('the tone a new block has', () => {
 });
 
 describe('where a bare block stands in its row', () => {
-  it('has a heading on the bottom, a rule in the middle, the rest the whole height', () => {
-    expect(BLOCKS.text.sits?.(WIDGET_BUILDERS.text.create('t', '', 'heading'))).toBe('end');
+  it('has a heading of either level, and a rule, in the middle of its row, the rest the whole height', () => {
+    for (const mode of ['h1', 'h2', 'heading']) {
+      expect(BLOCKS.text.sits?.(WIDGET_BUILDERS.text.create('t', '', mode)), mode).toBe('center');
+    }
     expect(BLOCKS.text.sits?.(WIDGET_BUILDERS.text.create('t', '', 'body'))).toBeUndefined();
     expect(BLOCKS.divider.sits?.(WIDGET_BUILDERS.divider.create('d', ''))).toBe('center');
     expect(BLOCKS.plot_window.sits).toBeUndefined();
+  });
+});
+
+describe('the style of prose', () => {
+  it('knows two levels of heading, and takes what a heading was called before there were two for the second', async () => {
+    const { textRole, isHeadingRole } = await import('../../../gui/widgets/text/role.ts');
+    expect(['h1', 'h2', 'heading', 'body', 'caption', 'nonsense', undefined].map(textRole)).toEqual(['h1', 'h2', 'h2', 'body', 'caption', 'body', 'body']);
+    expect(['h1', 'h2', 'body', 'caption'].map((role) => isHeadingRole(role as never))).toEqual([true, true, false, false]);
   });
 });

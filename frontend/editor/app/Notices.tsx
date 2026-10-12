@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useGraphStore } from '../document/store/graphStore';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { ACCENT, DANGER, DANGER_TEXT, LINE, MUTED, SUCCESS, SUCCESS_TEXT, SURFACE, TEXT, WARNING, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
-import { DONE_FOR_MS, useNotices, type Notice, type NoticeLevel } from './noticeBoard';
+import { DONE_FOR_MS, useNotices, type Notice, type NoticeLevel } from '../document/store/noticeBoard';
 
 const LOOK: Record<NoticeLevel, { color: string; ink: string; mark: string; label: string }> = {
   done: { color: SUCCESS, ink: SUCCESS_TEXT, mark: '✓', label: 'Done' },

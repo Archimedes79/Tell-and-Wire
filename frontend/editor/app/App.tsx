@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Notices from './Notices';
-import { say as notice } from './noticeBoard';
+import { say as notice } from '../document/store/noticeBoard';
 import { slugOf } from '../document/model/ids';
 import { ReactFlowProvider } from 'reactflow';
 
@@ -89,11 +89,11 @@ export default function App() {
   const [showReport, setShowReport] = useState(false);
   const [view, setView] = useState<EditorView>('graph');
 
-  // What is said of saving, opening and reading from disk: one card (`noticeBoard.ts`) that the next of them takes the place of.
+  // What is said of saving, opening and reading from disk: one card (`document/store/noticeBoard.ts`) that the next of them takes the place of.
   // A problem stays until it is read; what went well goes by itself.
   const say = useCallback((text: string, problem = false) => notice('file', text, problem ? { level: text.startsWith('⚠') ? 'warning' : 'error' } : {}), []);
 
-  // Editing the gui means the GUI tab -- at the size it will really be, next
+  // Editing the GUI means the GUI tab -- at the size it will really be, next
   // to the blocks it will really sit beside -- which a start or end point the
   // gui uses offers from its own view.
   const openGui = useCallback(() => setView('design'), []);
@@ -456,7 +456,7 @@ export default function App() {
           </div>
           {openNodeId && <NodeView key={openNodeId} nodeId={openNodeId} onClose={closeNode} onOpenGui={openGui} />}
         </div>
-        {/* The gui is the top graph's: inside a node's graph there is none to
+        {/* The GUI is the top graph's: inside a node's graph there is none to
             build or try, and these would act on the graph in there. */}
         {view === 'design' && <TopGraphOnly><DesignerTab /></TopGraphOnly>}
         {view === 'app' && <TopGraphOnly><ApplicationView onShowNode={showNode} /></TopGraphOnly>}

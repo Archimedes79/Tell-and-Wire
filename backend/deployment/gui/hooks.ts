@@ -9,6 +9,7 @@
 
 import type { Graph } from '../../../graph/graph.ts';
 import { NotOffered, applySent, type GraphInterface } from '../../../graph/interface.ts';
+import { graphCallsModel } from '../../../graph/usesModel.ts';
 import { interfaceWithGui } from '../../../gui/interface.ts';
 import { startEvents, type Trigger } from '../../../graph/triggers.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
@@ -114,6 +115,7 @@ function guiView(session: { id: string; graph: Graph; designRevision: number }) 
     scheme: String(graph.metadata.gui_scheme ?? ''),
     blocks: guiBlocks(graph),
     starts_whole: startEvents(graph, registry).includes(null),
+    uses_model: graphCallsModel(graph, registry),
   };
 }
 

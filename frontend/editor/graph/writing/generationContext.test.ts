@@ -52,7 +52,7 @@ describe('what ✨ is told of a node\'s neighbours', () => {
     expect(said()).toMatch(/a struct of no fields yet: Ten European capitals with their population$/);
   });
 
-  it('tells a node fed by a start point what the gui sends it -- the one value its input takes, by its field', () => {
+  it('tells a node fed by a start point what the GUI sends it -- the one value its input takes, by its field', () => {
     const start = NODE_KINDS.start.create('go');
     const code = NODE_KINDS.code.create('worker');
     code.inputs[0] = { ...code.inputs[0], field: 'file.content' };

@@ -22,7 +22,7 @@ import { cut } from '../../../deployment/gui/kit/ui/cut';
  * put into words: {Input Definition} and {Output Definition} while a node has
  * none of its own.
  *
- * Where a wire comes from a start point or ends at an end point, the gui is
+ * Where a wire comes from a start point or ends at an end point, the GUI is
  * part of the fact: what its blocks send a start point -- the one value an
  * input takes of it, by its field -- and what the block that shows an end
  * point wants, at the size it is drawn.
@@ -44,7 +44,7 @@ function exampleAt(start: GraphNode, field?: string): string | undefined {
 }
 
 /**
- * What the gui sends start point *start*, in words, for an input that takes
+ * What the GUI sends start point *start*, in words, for an input that takes
  * *field* of its package -- or the whole package, without one: each block
  * that sends to it, by its id, with what it sends -- or what a call sends
  * it, for example.
@@ -56,7 +56,7 @@ function sentWords(start: GraphNode, gui: GuiWidget[], field: string | undefined
     const block = senders.find((widget) => widget.id === id);
     const example = exampleAt(start, field);
     if (!block && example) return `"${field}" of what a call sends it -- for example ${example}`;
-    if (!block) return `"${field}" of what it is sent, which no block of the gui sends it`;
+    if (!block) return `"${field}" of what it is sent, which no block of the GUI sends it`;
     const sent = blockCan(block).sends;
     if (!inside.length) return `what ${calledBlock(block)} sends -- ${sent?.description ?? 'its value'}`;
     // The part alone, in its own words: said with the whole object after it,
@@ -102,7 +102,7 @@ export function lastRunInputs(
  * it is what turns a skeleton line from `files: list[str]` into
  * `files: list[str]  // from "Folder" (port "Files")` — provenance, which no
  * type expresses. What the input takes matters as much as the node: the blocks
- * of a gui all send into one package of a start point, and an input takes one
+ * of a GUI all send into one package of a start point, and an input takes one
  * field of it -- a file picked, a text typed -- so code written against the
  * wrong one reads a file name as the text.
  *
@@ -132,7 +132,7 @@ export function inputSources(
     let said = port ? `"${source.label}" (port "${port.name}")` : `"${source.label}"`;
     if (field) said += `, as "${field}"`;
     // The port's own words first, then what the node declares of its output
-    // (`NodeGuiBuilder.describeOutput`) -- for a start point, what the gui or
+    // (`NodeGuiBuilder.describeOutput`) -- for a start point, what the GUI or
     // a call sends it, which says it all.
     const sent = registry.node(source.node_type)?.takesPackage && (gui.length || exampleAt(source)) ? sentWords(source, gui, field) : '';
     const emits = !withEmits ? ''

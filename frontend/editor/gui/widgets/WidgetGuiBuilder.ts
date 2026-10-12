@@ -19,7 +19,7 @@ export interface WidgetPanelProps {
   onUpdate: (patch: Partial<GuiWidget>) => void;
 }
 
-/** One entry of the gui designer's palette: a kind in one of its modes, as a person looks for it. */
+/** One entry of the GUI designer's palette: a kind in one of its modes, as a person looks for it. */
 export interface PaletteEntry {
   /** Omitted: the kind's `defaultMode`. */
   mode?: string;
@@ -29,7 +29,7 @@ export interface PaletteEntry {
   also?: string;
 }
 
-/** What a block typed in where it stands is handed by the gui designer (`WidgetGuiBuilder.InlineEditor`). */
+/** What a block typed in where it stands is handed by the GUI designer (`WidgetGuiBuilder.InlineEditor`). */
 export interface InlineEditorProps {
   widget: GuiWidget;
   /** One grid cell's size in pixels, so the box can say how many rows its text needs. */
@@ -50,7 +50,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
   readonly defaultMode: string = '';
 
   /**
-   * What the gui designer's palette offers of this kind: one entry, or one
+   * What the GUI designer's palette offers of this kind: one entry, or one
    * per mode that a person reaches for as a thing of its own -- a heading and
    * a paragraph are both `text`. Where each stands in the palette is the
    * palette's layout (`gui/DesignerPalette.tsx`); what it is called, its icon
@@ -60,7 +60,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
 
   /**
    * What a block of this kind is called in a sentence -- "a chart block", "a
-   * text input block" -- as ✨ is told the gui ({Context}): the palette's
+   * text input block" -- as ✨ is told the GUI ({Context}): the palette's
    * name for the mode it is in, not the file format's kind.
    */
   called(widget: GuiWidget): string {
@@ -71,7 +71,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
   }
 
   /**
-   * The widget *is* its text: a heading, a paragraph. Selected on the gui
+   * The widget *is* its text: a heading, a paragraph. Selected on the GUI
    * being built, this takes its place, a box to type in where the words stand.
    */
   readonly InlineEditor?: ComponentType<InlineEditorProps>;
@@ -80,7 +80,7 @@ export abstract class WidgetGuiBuilder extends ElementGuiBuilder<WidgetPanelProp
    * How the block draws the text of what arrives, in words for the node wired
    * into the end point it shows (`graph/writing/generationContext.ts`), so that node can write a title that
    * fits or a summary that is read in the room there is. The text of a box on
-   * the gui by default; a kind that draws its own says so from the constant
+   * the GUI by default; a kind that draws its own says so from the constant
    * its view draws with, and one that draws none says nothing.
    */
   textShown(): string | undefined {

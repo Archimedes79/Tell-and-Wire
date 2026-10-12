@@ -12,8 +12,8 @@ import { messageOf } from '../../../../../graph/errors.ts';
 /** What a start point that starts itself can send, in the words the panel offers it. */
 const SENDS = [
   ['', 'Nothing', 'it only starts the round'],
-  ['folder', 'The files of a folder', 'their paths, as a folder block on a gui sends them'],
-  ['file', 'One file', 'its path and what is in it, as a file block on a gui sends it'],
+  ['folder', 'The files of a folder', 'their paths, as a folder block on a GUI sends them'],
+  ['file', 'One file', 'its path and what is in it, as a file block on a GUI sends it'],
 ] as const;
 
 /** Who starts a start point, in the words the panel offers it. */
@@ -82,7 +82,7 @@ function ExampleSent({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConf
 
 /**
  * What a start point that starts itself sends: a file or a folder it reads
- * each time it starts, as a picker block on a gui sends what was chosen -- the
+ * each time it starts, as a picker block on a GUI sends what was chosen -- the
  * same reading (`readChosen`), so the list shown here is the list a run makes.
  */
 function SendsFiles({ node, setConfig }: Pick<NodePanelProps, 'node' | 'setConfig'>) {

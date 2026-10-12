@@ -1,11 +1,11 @@
 import React from 'react';
-import { textRole } from '../../../../../gui/widgets/text/role.ts';
+import { isHeadingRole, textRole } from '../../../../../gui/widgets/text/role.ts';
 import { GUI_GAP } from '../../../../deployment/gui/kit/layout';
 import type { InlineEditorProps } from '../WidgetGuiBuilder';
 import { TEXT_ROLES } from '../../../../deployment/gui/widgets/text/TextWidgetView';
 
 /**
- * A heading or a paragraph, typed where it stands on the gui being built
+ * A heading or a paragraph, typed where it stands on the GUI being built
  * (`WidgetGuiBuilder.InlineEditor`).
  *
  * The box grows with what is written — rows are added as the text needs them,
@@ -14,6 +14,7 @@ import { TEXT_ROLES } from '../../../../deployment/gui/widgets/text/TextWidgetVi
 export default function TextInPlace({ widget, cell, rows, onText, onRows }: InlineEditorProps) {
   const box = React.useRef<HTMLTextAreaElement | null>(null);
   const role = textRole(widget.mode);
+  const heading = isHeadingRole(role);
 
   React.useEffect(() => {
     const element = box.current;
@@ -31,13 +32,19 @@ export default function TextInPlace({ widget, cell, rows, onText, onRows }: Inli
   return (
     <textarea
       ref={box}
+      rows={heading ? 1 : undefined}
       className="w-full h-full resize-none bg-transparent outline-none"
       style={{ ...TEXT_ROLES[role], border: 'none', padding: 0, fontFamily: 'inherit', lineHeight: 1.45 }}
       value={typeof widget.value === 'string' ? widget.value : ''}
-      onChange={(event) => { onText(event.target.value); fit(event.target); }}
+      onChange={(event) => {
+        onText(event.target.value);
+        // A heading has no room above or below it to scroll in: the box is as tall as its words.
+        if (heading) { event.target.style.height = 'auto'; event.target.style.height = `${event.target.scrollHeight}px`; }
+        fit(event.target);
+      }}
       onMouseDown={(event) => event.stopPropagation()}
-      placeholder={role === 'heading' ? 'Heading' : 'Write something… Markdown works: **bold**, lists, links'}
-      aria-label={widget.label || (role === 'heading' ? 'Heading' : 'Text')}
+      placeholder={heading ? (role === 'h1' ? 'Heading 1' : 'Heading 2') : 'Write something… Markdown works: **bold**, lists, links'}
+      aria-label={widget.label || (heading ? 'Heading' : 'Text')}
       spellCheck
     />
   );

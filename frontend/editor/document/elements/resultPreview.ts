@@ -51,7 +51,7 @@ function brief(value: unknown): string {
     .join(', '));
 }
 
-/** A text a gui shows as a picture -- a data URL of an image, an image's address, finished SVG -- as a source. */
+/** A text a GUI shows as a picture -- a data URL of an image, an image's address, finished SVG -- as a source. */
 function pictureOf(text: string): string | undefined {
   const value = text.trim();
   if (/^data:image\//i.test(value) || /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg|avif)(\?\S*)?$/i.test(value)) return value;

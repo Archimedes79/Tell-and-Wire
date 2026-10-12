@@ -1,25 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 /**
- * The gui's layers, asserted on the import graph.
+ * The GUI's layers, asserted on the import graph.
  *
  * An area may import from a lower one, never from a higher one, and never from
  * a sibling of its own rank. What each rank is:
  *
- *  -1 block type        what a block of a gui is made of
+ *  -1 block type        what a block of a GUI is made of
  *   0 ui, layout        look, without knowing a graph: theme, tone, colour scheme, Modal
  *   1 graph types       the document's types
- *   2 model             what a graph *is* to the editor: node kinds, the gui's connections, grid placement
- *     api               the contract's client, and the host a gui follows
+ *   2 model             what a graph *is* to the editor: node kinds, the GUI's connections, grid placement
+ *     api               the contract's client, and the host a GUI follows
  *   2.5 editor api      the same, with the routes only the editor's server has
  *   3 store             the open graph, its undo, what a round shows on it
  *     views             the node view's drawing, pure: props in, callbacks out
  *   4 dialogs           small dialogs that ask the server something
  *     deployed widgets  the views of the blocks, drawn alike in the editor and in a tool
- *     surface           the gui a tool renders, and the editor draws the same way
+ *     surface           the GUI a tool renders, and the editor draws the same way
  *   5 the elements      document/elements (the registry), graph/nodes, gui/widgets,
  *                       the fields their panels are made of, and graph/writing
- *   6 gui               a gui, designed
+ *   6 gui               a GUI, designed
  *     canvas            the graph, drawn
  *     node              one node, opened: what the view's rows and chats do
  *   7 the app's files   toolbar, sidebar, changes
@@ -88,7 +88,7 @@ function resolve(from: string, spec: string): string | null {
   return [base, `${base}.ts`, `${base}.tsx`].find((candidate) => FILES.has(candidate)) ?? null;
 }
 
-describe('the gui\'s layers', () => {
+describe('the GUI\'s layers', () => {
   it('are found, so the rule below is checked against something', () => {
     expect(FILES.size).toBeGreaterThan(100);
     expect([...FILES.keys()].filter((path) => !areaOf(path)), 'files in no area: say where they stand in the list above').toEqual([]);

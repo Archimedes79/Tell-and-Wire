@@ -1,4 +1,4 @@
-// How a block sits on the gui, chosen from a closed set rather than picked
+// How a block sits on the GUI, chosen from a closed set rather than picked
 // from a colour wheel.
 //
 // A colour picker is how interfaces get ugly: every value is available, most
@@ -20,7 +20,7 @@ export const TONES: Tone[] = ['plain', 'raised', 'sunken', 'accent'];
 
 export const TONE_LABELS: Record<Tone, string> = {
   plain: 'Plain — no box (headings, prose, fields)',
-  raised: 'Raised — lifts off the gui (results, plots)',
+  raised: 'Raised — lifts off the GUI (results, plots)',
   sunken: 'Sunken — recessed (input fields)',
   accent: 'Accent — tinted (the one thing to notice)',
 };

@@ -61,7 +61,7 @@ export default function WidgetEditor({ widget, onChange }: WidgetEditorProps) {
 
       {/* Everything that is a preference rather than a decision: how it looks,
           its exact size. Folded, because a block is finished without any of
-          it -- the gui used to open on these. */}
+          it -- the GUI used to open on these. */}
       <details className="rounded-lg" style={{ border: `1px solid ${LINE}` }}>
         <summary className="px-3 py-2 text-xs font-medium cursor-pointer select-none" style={{ color: MUTED }}>
           Look & size
@@ -110,7 +110,7 @@ export default function WidgetEditor({ widget, onChange }: WidgetEditorProps) {
             )}
           </div>
 
-          {/* Exact cells, for when ¼ ½ ¾ on the block is not the size wanted. */}
+          {/* Exact cells, for when dragging the corner is not precise enough. */}
           <div className="flex items-center gap-3">
             {([['w', 'Width', GUI_GRID_COLUMNS], ['h', 'Height', 99]] as const).map(([field, label, max]) => (
               <label key={field} className="flex items-center gap-1 text-xs" style={{ color: DIMMER }}>

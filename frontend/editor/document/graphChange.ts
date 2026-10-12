@@ -8,7 +8,7 @@ import { derivedNodePorts } from './model/ports';
 import { savedNode } from './model/nodeKinds';
 import { wireOf } from '../../../graph/files/flow.ts';
 
-/** What a change of the whole graph changes: nodes by id, wires by what they join, and the gui's blocks by id. */
+/** What a change of the whole graph changes: nodes by id, wires by what they join, and the GUI's blocks by id. */
 interface GraphChange {
   added: GraphNode[];
   removed: GraphNode[];
@@ -57,7 +57,7 @@ export function graphChange(before: Graph, after: Graph): GraphChange {
   };
 }
 
-/** *change* in a line or two: what it adds, removes and changes, the gui's blocks too -- or that it changes nothing. */
+/** *change* in a line or two: what it adds, removes and changes, the GUI's blocks too -- or that it changes nothing. */
 export function describeChange(change: GraphChange): string[] {
   const names = (nodes: GraphNode[]) => nodes.map((node) => node.label || node.id).join(', ');
   const blocks = (list: GuiWidget[]) => list.map((block) => block.label || block.id).join(', ');
@@ -67,9 +67,9 @@ export function describeChange(change: GraphChange): string[] {
     change.removed.length ? `Removes ${names(change.removed)}.` : '',
     change.changed.length ? `Changes ${names(change.changed)}.` : '',
     added || removed ? `Wires: ${added} added, ${removed} removed.` : '',
-    change.blocks.added.length ? `Gui adds ${blocks(change.blocks.added)}.` : '',
-    change.blocks.removed.length ? `Gui removes ${blocks(change.blocks.removed)}.` : '',
-    change.blocks.changed.length ? `Gui changes ${blocks(change.blocks.changed)}.` : '',
+    change.blocks.added.length ? `GUI adds ${blocks(change.blocks.added)}.` : '',
+    change.blocks.removed.length ? `GUI removes ${blocks(change.blocks.removed)}.` : '',
+    change.blocks.changed.length ? `GUI changes ${blocks(change.blocks.changed)}.` : '',
   ].filter(Boolean);
-  return lines.length ? lines : ['Nothing in the graph or the gui changes.'];
+  return lines.length ? lines : ['Nothing in the graph or the GUI changes.'];
 }

@@ -261,7 +261,7 @@ export default function GraphCanvas({ active }: { active: boolean }) {
       event.preventDefault();
       if (!reactFlowWrapper.current || !rfInstance) return;
 
-      // Only node types are dropped. A block is put on the gui, on the Gui
+      // Only node types are dropped. A block is put on the GUI, on the GUI
       // tab, so nothing drops a widget onto a canvas.
       const nodeType = event.dataTransfer.getData('application/nodeType') as NodeType;
       if (!nodeType) return;

@@ -87,9 +87,9 @@ function PortDot({ port, type, side, top, lit, fires }: {
 const labelsOf = (blocks: GuiWidget[]): string => blocks.map((block) => block.label || block.id).join(', ');
 
 /**
- * What the gui says of a start or an end point, in a line: which blocks fire
+ * What the GUI says of a start or an end point, in a line: which blocks fire
  * it and send to it, or show it -- what the card cannot otherwise show, since
- * nothing is wired between the gui and the graph.
+ * nothing is wired between the GUI and the graph.
  */
 function guiLine(node: GraphNode, gui: GuiWidget[]): string | undefined {
   const { fire, send, show } = blocksAt(gui, node.id);
@@ -106,7 +106,7 @@ function guiLine(node: GraphNode, gui: GuiWidget[]): string | undefined {
  * colour, its heading, a row for each port with the port's name and its dot on
  * the edge, and below them what it holds or made: after a run how it went and
  * a small picture of what it made, and for a start or end point which blocks of
- * the gui connect to it. What it should do is its tooltip; the rest of it is
+ * the GUI connect to it. What it should do is its tooltip; the rest of it is
  * the node view's. A click chooses it, a double-click opens it (the canvas's
  * `onNodeDoubleClick`), and the card chosen wears the accent.
  */
@@ -296,7 +296,7 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
 
       {hasFoot && (
         <div className="flex flex-col gap-1 px-3.5 py-2.5 min-w-0" style={{ borderTop: `1px solid ${LINE}` }}>
-          {/* Which blocks of the gui fire it, send to it or show it. */}
+          {/* Which blocks of the GUI fire it, send to it or show it. */}
           {connected && (
             <div className="truncate text-xs" style={{ color: MUTED }} title={connected}>
               {connected}

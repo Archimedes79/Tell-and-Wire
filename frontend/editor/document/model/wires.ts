@@ -96,7 +96,7 @@ export function retypeJoined(
   const source = nodeOf(wire.source);
   const into = nodeOf(wire.target);
   const own = !!into && derivedNodePorts(into) === null;
-  // From a start point the gui sends one block to: the input takes
+  // From a start point the GUI sends one block to: the input takes
   // what that block sends, typed as it says -- a text, a folder's files
   // -- rather than the whole package; from one a call starts, the part of
   // its example the input is named after, or its one part. A port that

@@ -19,8 +19,8 @@ Teal ships in a package, grey dashed is only the editor. Three cuts run through 
 - **Design, state and computation are apart.** Design belongs to the editor and is written to the
   project. State belongs to the host (`state.json`, never in the project). Computation belongs to
   the runtime.
-- **Graph and gui are apart.** The graph is nodes wired together; the gui is the blocks a person
-  uses it through. The graph runs without a gui, a gui can be replaced by a page of the project's
+- **Graph and GUI are apart.** The graph is nodes wired together; the GUI is the blocks a person
+  uses it through. The graph runs without a GUI, a GUI can be replaced by a page of the project's
   own, and each has its own files, definition and editor.
 - **Definition, execution and design are apart.** What a kind of node *is* is neutral and runs in
   the browser and in Node; what *runs* it is the runtime's; how an AI *writes* it is the editor's.
@@ -47,11 +47,11 @@ they run in the browser and in Node.
 |---|---|
 | `graph/` | **The graph's definition.** `graph.ts` (the format), `wiring.ts`, `order.ts`, `triggers.ts`, `schedule.ts` (the table the cards stand in), `batching.ts`, `interface.ts` (what a graph offers by name), `nodes/` (the **definition** of every node kind and its registry), `files/` (the project's file formats: flow, nodes, names, definitions, the run prompt). |
 | `graph/editor/` | What only the editor adds to the graph: `nodes/` (the **design** of every node kind: how an AI writes it, `check`, what a package needs), `prompts.ts`, `generation.ts`, `history.ts`, `pull.ts`, `handedOn.ts`, `scheduleEdit.ts` (where a card may be put in the table). |
-| `gui/` | **The gui's definition.** `gui.ts` (blocks, what they send and show), `interface.ts` (what a gui adds to a graph's interface), `widgets/` (the **definition** of every block kind). |
+| `gui/` | **The GUI's definition.** `gui.ts` (blocks, what they send and show), `interface.ts` (what a GUI adds to a graph's interface), `widgets/` (the **definition** of every block kind). |
 | `gui/editor/` | What only the editor adds to the gui: `check.ts` (the one list of problems), `gui.ts`, `widgets/` (the **design** of every block kind). |
 | `backend/deployment/project/` | Reads a project folder (`folder.ts`) and knows where things are in an install (`layout.ts`). |
 | `backend/deployment/runtime/` | The runtime: `executor.ts`, `localCore.ts`, `stdio.ts`, `protocol.ts` (the core protocol), `examples.ts`, `nodes/` (the **runner** of every node kind), `ai/` (the model client, settings, tool servers), `services.ts` (what a node touches the world with), `confine.ts`. |
-| `backend/deployment/gui/` | The gui as the host uses it: `hooks.ts`. |
+| `backend/deployment/gui/` | The GUI as the host uses it: `hooks.ts`. |
 | `backend/deployment/host/` | The host: `session.ts`, `rounds.ts`, `serve.ts`, `http.ts`, `api.ts` (the wire), `lifecycle.ts`, `browse.ts`. |
 | `backend/editor/project/` | Writes projects (`write.ts`), finds and checks them, keeps rounds, and packs (`deploy/`: `bundle.ts`, `launchers.ts`, `zip.ts`). |
 | `backend/editor/graph/` | The AI that writes nodes and whole graphs: `generate.ts`, `generateGraph.ts`, `graphPrompt.ts`. |
@@ -59,8 +59,8 @@ they run in the browser and in Node.
 | `backend/editor/host/` | What only the editor's server answers: `api.ts`, `routes.ts`, `commands.ts` (`check`, `test`, `--bundle`, `--mcp`), `mcpServer.ts` with `mcp/`. |
 | `backend/cli/` | The composition root: `main.ts` and `cli.ts` start a run or a server and put the parts together. |
 | `backend/architecture/` | Tests of the structure itself. |
-| `frontend/deployment/gui/` | What a deployed tool's browser loads: `kit/` (API client, look, dialogs), `surface/` (the gui drawn), `widgets/` (the block views). |
-| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the gui designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client). |
+| `frontend/deployment/gui/` | What a deployed tool's browser loads: `kit/` (API client, look, dialogs), `surface/` (the GUI drawn), `widgets/` (the block views). |
+| `frontend/editor/` | `graph/` (canvas, node view, panels), `gui/` (the GUI designer), `document/` (the open project: store, undo, model), `app/` (menus, tabs, toolbar), `api/` (the editor's client). |
 | `mcp/` | Optional tool servers, each a package of its own. |
 | `examples/`, `scripts/`, `docs/` | Projects that tests and CI run; the launchers, packaging and licence check; these documents. |
 
@@ -75,7 +75,7 @@ program without the editor's folders.
 |---|---|
 | **A package carries every path except those with a folder named `editor`, and nothing outside an `editor` folder imports from one** (`import()` in `backend/cli` aside: it composes, and a package without the editor says so when a command asks for it). | `backend/architecture/layers.test.ts` |
 | `graph/` and `gui/` import no `node:*`, nothing from `backend/` or `frontend/`; `graph/` imports nothing from `gui/`. Their tests too: a test that needs a run lives in `backend/`, which runs. | `layers.test.ts` |
-| In `backend/`, a module imports only from below: project, then runtime and gui, then host, then cli; the editor's modules above the deployment's. Modules of one rank do not import each other. The wire's files (`host/api.ts`) rank with nothing. | `layers.test.ts` |
+| In `backend/`, a module imports only from below: project, then runtime and GUI, then host, then cli; the editor's modules above the deployment's. Modules of one rank do not import each other. The wire's files (`host/api.ts`) rank with nothing. | `layers.test.ts` |
 | `frontend/` reaches `backend/` only through the wire's files. | `layers.test.ts` |
 | A deployed tool's browser loads nothing of an `editor` folder, no panel, and of `graph/`, `gui/` and `backend/` only the wire and the shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
 | The editor's page imports only downward through its layers: `ui`, `layout` · graph types · `model`, `api` · editor `api` · `store`, `views` · `dialogs` · deployed `widgets`, `surface` · the elements · `gui`, `canvas`, `node` · the app · `App` · `main`. | `frontend/editor/app/layers.test.ts` |
@@ -117,7 +117,7 @@ input_picker, text_io, select, slider, button, chat, plot_window, table, image_v
 - A **design** says how an AI writes the kind (`generation()`), what `check` says about it
   (`problems()`), what it tells the model that designs a whole graph, what a package must carry for
   it, and what running it would cost (`asksModel`).
-- **The gui is no node.** It is the graph's list of blocks (`graph.gui.blocks`, stored in
+- **The GUI is no node.** It is the graph's list of blocks (`graph.gui.blocks`, stored in
   `gui.json`). A block connects by name: the start points its data goes to (`sends_to`), the
   one using it fires (`fires`), the end point it shows (`shows`). `gui/gui.ts` holds what a round,
   `check` and a package ask of the gui. The host reaches it only through the hooks of
@@ -125,12 +125,12 @@ input_picker, text_io, select, slider, button, chat, plot_window, table, image_v
 
 ## How a round runs
 
-1. **Asked.** A gui, a script, the clock or a caller asks the session
-   (`backend/deployment/host/session.ts`) for a round at a start point, with values. A round a gui
-   starts is sent what the blocks that send to that start point hold (`guiSends`, in the gui's
+1. **Asked.** A GUI, a script, the clock or a caller asks the session
+   (`backend/deployment/host/session.ts`) for a round at a start point, with values. A round a GUI
+   starts is sent what the blocks that send to that start point hold (`guiSends`, in the GUI's
    hooks).
 2. **Queued.** `rounds.ts` runs one round at a time, in the order asked, and turns progress into
-   the snapshots a gui follows on the stream.
+   the snapshots a GUI follows on the stream.
 3. **Run.** The core gets a working copy: the design, with what nodes keep and what the round was
    sent put in. `backend/deployment/runtime/localCore.ts` runs `executeGraph`
    (`backend/deployment/runtime/executor.ts`): it orders nodes in levels (`graph/order.ts`), where
@@ -142,7 +142,7 @@ input_picker, text_io, select, slider, button, chat, plot_window, table, image_v
    A wired ◆ gate opens only for the round's start point or a `true`; a node that stands still keeps
    what it made last (`latch.ts`); unchanged context upstream is reused (`reuse.ts`). The runner of
    the kind does the node's own work.
-4. **Settled.** Data nodes keep what arrived, field by field (`settleMemory`). The session hands each end point's value to the blocks that show it (the gui's
+4. **Settled.** Data nodes keep what arrived, field by field (`settleMemory`). The session hands each end point's value to the blocks that show it (the GUI's
    hooks). A round that ran to its end commits and writes `state.json`.
 
 ## State
@@ -152,9 +152,9 @@ the editor or a served tool, and what using it leaves behind. The rules are held
 `backend/deployment/host/session.test.ts`.
 
 1. **What state is.** Each node's kept values, as its definition says (`NodeDefinition.state`): a
-   start point's `values`, a data node's fields. The gui's: what each block holds,
+   start point's `values`, a data node's fields. The GUI's: what each block holds,
    by id (a value set, a conversation, what an end point handed back). Beside them: what every node
-   made last (the latch, held by the graph core), what the gui shows, how many rounds ran. Not
+   made last (the latch, held by the graph core), what the GUI shows, how many rounds ran. Not
    state: the reuse cache, a round in flight.
 2. **Where.** In the session, and in `state.json` beside `graph-flow.json` (`<file>.state.json`
    beside a single graph file). Not part of the project: a save and `check` leave it alone, a
@@ -203,8 +203,8 @@ my_tool/
   `graph-schedule.json` (when they run, and where they stand). A run needs the first two and the node
   folders, and reads the third for the order; without it, a graph runs in the order of its wires. Every node has an
   entry in `graph-nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a `check`
-  problem. The gui is no part of the graph: `gui.json` names start and end points by id, and a tool
-  without a gui has no such file.
+  problem. The GUI is no part of the graph: `gui.json` names start and end points by id, and a tool
+  without a GUI has no such file.
 - **The schedule** (`graph/schedule.ts`) is a table: rows of text, one id or `.` for an empty cell each,
   `"table": ["start read .", ". clean summarize"]`. Its columns are the steps and time runs to the right;
   nodes in one column have no wire between them, so they may run in parallel or in any order, and the
@@ -221,7 +221,7 @@ my_tool/
   are the ports that follow from a node's settings (a start point's, a data node's from its fields,
   a subgraph's from its graph): they are worked out when the folder is read. Of those inputs the
   file keeps what a person chose: `field` and `list`.
-- The gui is a flow, not coordinates: its blocks sit in the order of the list, each `w` cells wide
+- The GUI is a flow, not coordinates: its blocks sit in the order of the list, each `w` cells wide
   (of 16 across) and at least `h` high -- a row grows with what is in it --, wrapping like text
   (`frontend/deployment/gui/kit/layout.ts`).
 - Which setting is which file is the definition's to say (`NodeDefinition.texts`). Every file is
@@ -247,7 +247,7 @@ host. A **graph core** -- the runtime, in this process or a program of its own -
         │  runtime API: /api/runtime/…, by name         │  editor API: /api/graphs/…, /api/ai/…, /api/execute/…
         ▼                                               ▼
  ┌────────────────────────── host: backend/deployment/host ───────────────────────────────┐
- │ the session: what nodes keep, what the gui's blocks hold, state.json, the clock,        │
+ │ the session: what nodes keep, what the GUI's blocks hold, state.json, the clock,        │
  │ the queue of rounds; start points, end points, packages                                 │
  └───────────────────────────────────────────┬─────────────────────────────────────────────┘
                                              │  core protocol (backend/deployment/runtime/protocol.ts)
@@ -262,8 +262,8 @@ The core is handed the graph definition as JSON (`Graph`, `graph/graph.ts`): the
 settings, ports and files, and the wires, as the project folder holds them; not the gui. Today
 there is one core, in JavaScript.
 
-A server is **composed** by `backend/cli`: it answers the host's own routes, the gui's route when it
-has a gui part (`serve({ gui })`), and the editor's routes when it serves the editor
+A server is **composed** by `backend/cli`: it answers the host's own routes, the GUI's route when it
+has a GUI part (`serve({ gui })`), and the editor's routes when it serves the editor
 (`serve({ editor })`). The tables are `API` and `GUI_API` in `backend/deployment/host/api.ts` and
 `EDITOR_API` in `backend/editor/host/api.ts`. The server refuses to start when a route of a table it
 holds has no handler, and the browser calls routes by name
@@ -281,17 +281,17 @@ except the stream; a refusal is `{ "detail": "…" }`.
 | `GET /api/runtime/interface` | What the graph offers: its start points (who starts each, what the graph reads of what it is sent, which blocks fire it), its end points, and its memory nodes (`state`: what can be watched without a round) |
 | `GET /api/runtime/session` | The session now: what each start point was sent, what the end points handed back, what each memory node holds (`state`, by name, from the design's values on), what each block holds and shows, what a reset forgets (`kept`), the round, the clock |
 | `GET /api/runtime/stream` | Server-sent events: `session` on connect and after every change, `round` as each round starts, goes and ends |
-| `POST /api/runtime/requirements` | What a round started from the gui still needs (a file nobody picked) |
+| `POST /api/runtime/requirements` | What a round started from the GUI still needs (a file nobody picked) |
 | `POST /api/runtime/rounds` | Start a round at a start point (`{ event, values, answers, by }`); answers its id at once |
 | `GET /api/runtime/rounds/:id` | One round as it goes, and what it handed back by name once it ended |
 | `POST /api/runtime/rounds/:id/stop` | Stop it |
 | `POST /api/runtime/run` | Start a round and wait for what it hands back: a function call |
 | `POST /api/runtime/reset` | Forget what using the graph left behind |
-| `GET /api/runtime/gui` | The gui: its blocks as designed, and how they connect by name (answered when the tool has a gui) |
+| `GET /api/runtime/gui` | The gui: its blocks as designed, and how they connect by name (answered when the tool has a GUI) |
 | `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
 
-With `by` (a block id) a round is one the gui starts, refused unless that block fires the start
+With `by` (a block id) a round is one the GUI starts, refused unless that block fires the start
 point; without it, a call, and `values` are the package as sent. Types and tables:
 `backend/deployment/host/api.ts`; handlers: `toolRoutes` in `backend/deployment/host/serve.ts`;
 tests: `backend/deployment/host/runtimeApi.test.ts`, `frontend.test.ts`.
@@ -374,7 +374,7 @@ The shapes asked and answered (`Graph`, `Trigger`, `ExecutionResult`, `NodeResul
 the types of `graph/graph.ts`, `graph/triggers.ts` and `backend/deployment/runtime/examples.ts`, as
 JSON.
 
-**What a core does not do:** the gui, the session, state.json, the clock, the queue of rounds, HTTP.
+**What a core does not do:** the GUI, the session, state.json, the clock, the queue of rounds, HTTP.
 It is handed a graph with what the round was sent already in its start points and what nodes keep
 already in them, and it changes nothing it was handed.
 
@@ -420,7 +420,7 @@ Checked by `symmetry.test.ts`, `layers.test.ts` and both `shells.test.ts`.
    `frontend/deployment/gui/widgets/gauge/GaugeWidgetView.tsx`, in `BLOCKS`
    (`frontend/deployment/gui/surface/blocks.ts`).
 
-Checked by `symmetry.test.ts`, and by `boundary.test.ts`, since a deployed gui draws the view.
+Checked by `symmetry.test.ts`, and by `boundary.test.ts`, since a deployed GUI draws the view.
 
 **A language.** Everything that is JavaScript about writing a body is the code node's `Language`
 (`JAVASCRIPT` in `graph/editor/nodes/code/javascript.ts`; the interface is in
@@ -469,7 +469,7 @@ folder. A package carries:
   over 50 MB stops the package; a settings file is never carried, whatever folder holds it);
 - the project's own `frontend/`;
 - `LICENSE`, a `README.md`, `run.cmd` / `run.sh` (which run `node backend/cli/main.ts .`, with
-  `--serve` when there is a gui), and `MANIFEST.json`: the package and its version, the tool, and
+  `--serve` when there is a GUI), and `MANIFEST.json`: the package and its version, the tool, and
   every file in it.
 
 It leaves out `backend/editor/`, `backend/architecture/`, the editor's folders in `graph/` and
@@ -494,7 +494,7 @@ everything, with Node.
   (`backend/deployment/runtime/confine.ts`, `confine.test.ts`). A path written in the graph file -- a
   start or end point's `path` -- is relative and stays below the working directory (links followed);
   `check` says so, and a run refuses. A path that comes at run time from the person -- a file chosen
-  on the gui, a call's values, the command line -- is theirs. The files that hold keys or a command
+  on the GUI, a call's values, the command line -- is theirs. The files that hold keys or a command
   (the settings files) are never read, written or listed, whoever names them, and a code body does
   not see them. A tool served beyond loopback (`--host`) touches nothing outside its folder at all,
   so a remote caller's values cannot name a local path. An end point's file names are made of its
