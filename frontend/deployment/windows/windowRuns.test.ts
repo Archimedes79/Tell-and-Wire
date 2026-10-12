@@ -36,7 +36,7 @@ let typed: Record<string, unknown> = {};
 const held = (id: string): unknown => (id in typed ? typed[id] : id === 'summarize_in_text' ? 'A long text.' : undefined);
 
 const snapshot = (id: string, over: Partial<RoundSnapshot> = {}): RoundSnapshot => ({
-  round_id: id, done: true, cancelled: false, completed: 1, total: 1, current_label: '', item_done: 0, item_total: 0,
+  round_id: id, done: true, cancelled: false, completed: 1, total: 1, current_label: '', running: [], finished: {}, item_done: 0, item_total: 0,
   idle_seconds: null, error: null, result: { status: 'success', node_results: [], outputs: {} }, outputs: {}, started: null, ...over,
 });
 
