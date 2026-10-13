@@ -10,7 +10,7 @@ import { parseGraph, type Graph } from '../../graph/graph.ts';
 import { problemsIn } from '../../gui/editor/check.ts';
 import { withoutWriting } from '../../graph/editor/handedOn.ts';
 import { parseWindows } from '../../gui/notebook/read.ts';
-import { windowProblems, windowsToGraph } from '../../gui/notebook/windows.ts';
+import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
 import { expandHome } from '../deployment/host/browse.ts';
 import { Refusal, type HandlersOf } from '../deployment/host/http.ts';
 import * as project from '../deployment/project/folder.ts';
@@ -45,6 +45,16 @@ async function onProject<T>(action: string, work: () => Promise<T>): Promise<T> 
   }
 }
 
+/**
+ * Whether the graph on disk is no longer what the windows made: it is neither what they were saved with nor what they make today.
+ * The second reading is for a project saved by another version, whose files this version would make a little differently
+ * (a scheme named another way, a block with one more key): nobody changed anything, so saving it loses nothing.
+ */
+function changedOutside(kept: { windows: Windows; signature: string }, graph: Graph): boolean {
+  const now = signatureOf(graph);
+  return kept.signature !== now && signatureOf(windowsToGraph(kept.windows, graph)) !== now;
+}
+
 /** The project at *full*, with the windows kept in it and whether the graph beside them is still what they made. */
 async function opened(full: string): Promise<WindowsFile> {
   const graph = await project.loadGraph(full);
@@ -53,7 +63,7 @@ async function opened(full: string): Promise<WindowsFile> {
   return {
     path: folder ?? full, project: folder !== null, graph: graph as never,
     windows: kept?.windows ?? null,
-    stale: !!kept && kept.signature !== signatureOf(graph),
+    stale: !!kept && changedOutside(kept, graph),
   };
 }
 

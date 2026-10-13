@@ -58,7 +58,7 @@ my_tool/
 `page_style`. A package therefore shows the page and runs the windows in order from the gui alone.
 
 `graph-windows.json` carries a `signature` of what it made. When a project is opened and the graph on disk no longer matches
-(it was edited in the graph editor), the notebook says so and nothing is overwritten unasked.
+(it was edited in the graph editor), the notebook says so and nothing is overwritten unasked. A graph that is not what the windows were saved with but is what they make today (saved by another version) is not a change.
 
 ## Running
 
@@ -68,6 +68,17 @@ does not come to anything (`runOrder`, `gui/windows/order.ts`). "Current" means 
 for everything it takes from. In the delivered tool a button stands on a row of its own, and a window whose cells are too small for its button's label (a narrow page, two windows side by side on a tablet) is stacked, one block under the other, as a whole page is on a phone. A window that failed, or had nothing to do, says why in the place of its first result, in the notebook and in the delivered tool alike (the delivered chip reads Failed or Nothing to do). A round that had a node of the window with nothing to do (an input left empty) is a window that did
 nothing, and the window after it is not run on that. Only the window's own nodes count: the other windows stand idle in the
 same round.
+
+### Code that draws knows its window
+
+A code cell is `function run(inputs, node)`. Beside `node.llm`, a cell of a window has `node.window`: the window it is in
+(`id`, `title`, `span`, `rows`), the outputs it feeds (`shows`: for each, `kind`, `cells`, `rows` and `width` x `height`, the pixels a
+drawing has in that block on a full-width page, the block's card taken off) and the scheme as values (`scheme`: `background`,
+`surface`, `text`, `muted`, `accent`, `series` for chart series). A chart takes a figure (`{kind, title, points}`) and draws it to fit;
+a cell that draws SVG itself, which is shown as a picture where the scheme's CSS variables do not reach, reads its room and its colours from here. The facts are written into the settings of the code node
+(`config.window`, `windowFacts` in `gui/notebook/windows.ts`) and made again with every graph, so a changed width or scheme reaches the code on its next run. On a narrower page everything scales alike, so text in a drawing
+should be 14 px or more (run on its own, `node code.js`, a cell has no `node.window`); the notebook shows the same picture scaled to its own, flatter block, and the delivered tool is the one that is exact.
+The numbers the facts rest on, the grid and the schemes' colours, are in `gui/windows/grid.ts` and `gui/windows/scheme.ts` (a delivered tool loads both).
 
 ## What a window cannot say yet
 

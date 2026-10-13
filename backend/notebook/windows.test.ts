@@ -57,6 +57,17 @@ describe('a notebook on disk', () => {
     await writeFile(nodes, (await readFile(nodes, 'utf8')).replace('Summarize \\"Text\\".', 'Sum up \\"Text\\".'), 'utf8');
     expect((await openWindows({ path })).stale).toBe(true);
 
+    // A project saved by another version made its files a little differently, so the signature it kept is not the one of today:
+    // nothing was changed by anyone, and the notebook does not say so. A graph that is neither is still found changed.
+    const old = await tmp();
+    await saveWindows({ path: old, windows: { ...DOC, scheme: 'office' } });
+    const kept = join(old, WINDOWS_FILE);
+    await writeFile(kept, (await readFile(kept, 'utf8')).replace(/"signature": "[0-9a-f]+"/, '"signature": "0000000000000000"'), 'utf8');
+    expect((await openWindows({ path: old })).stale).toBe(false);
+    const oldNodes = join(old, 'graph-nodes.json');
+    await writeFile(oldNodes, (await readFile(oldNodes, 'utf8')).replace('Summarize \\"Text\\".', 'Sum up \\"Text\\".'), 'utf8');
+    expect((await openWindows({ path: old })).stale).toBe(true);
+
     // A project the notebook did not make has no windows.
     const other = await tmp();
     await saveWindows({ path: other, windows: DOC });

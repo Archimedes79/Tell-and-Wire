@@ -22,6 +22,10 @@ export class CodeNodeRunner extends NodeRunner<CodeNodeDefinition> {
     //
     // It may ask a model: `await node.llm({ prompt })`, answered by the
     // process that holds the keys, on the one AI setting's model.
-    return runBody(logic.body, inputs, runtime);
+    //
+    // A node of a window is told the window (`node.window`): what it was made with, in its settings beside its code
+    // (`windowFacts` in `gui/notebook/windows.ts`).
+    const window = node.config.window;
+    return runBody(logic.body, inputs, runtime, window && typeof window === 'object' ? { facts: { window } } : {});
   }
 }

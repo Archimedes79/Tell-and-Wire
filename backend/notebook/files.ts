@@ -15,6 +15,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Graph } from '../../graph/graph.ts';
 import { sorted } from '../../graph/files/nodesFile.ts';
+import { scheme } from '../../gui/windows/scheme.ts';
 import { parseWindows } from '../../gui/notebook/read.ts';
 import type { Windows } from '../../gui/notebook/windows.ts';
 
@@ -33,7 +34,7 @@ const canonical = (value: unknown): string => JSON.stringify(value, (_key, item:
  */
 export function signatureOf(graph: Graph): string {
   const made = {
-    metadata: { name: graph.metadata.name, description: graph.metadata.description, gui_scheme: graph.metadata.gui_scheme },
+    metadata: { name: graph.metadata.name, description: graph.metadata.description, gui_scheme: scheme(graph.metadata.gui_scheme).id },
     nodes: graph.nodes.map((node) => ({
       id: node.id, type: node.node_type, label: node.label, description: node.description, inputs: node.inputs, outputs: node.outputs,
       config: { batch_mode: node.config.batch_mode, batch_concurrency: node.config.batch_concurrency },

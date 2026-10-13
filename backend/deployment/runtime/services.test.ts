@@ -26,6 +26,18 @@ describe('a body that asks the process holding the graph', () => {
   });
 });
 
+describe('a body that is told something', () => {
+  it('finds it on node, beside the questions it may put -- and a question of the same name is the question', async () => {
+    const out = await nodeCode.run(
+      `async function run(inputs, node) { return { size: node.window.shows[0].width, same: typeof node.llm, keys: Object.keys(node).sort() }; }`,
+      {},
+      undefined,
+      { calls: { llm: async () => 'asked' }, facts: { window: { shows: [{ width: 266 }] }, llm: 'a fact that loses' } },
+    );
+    expect(out).toEqual({ size: 266, same: 'function', keys: ['llm', 'window'] });
+  });
+});
+
 /** What a body that does not run says: one sentence a person can act on. */
 describe('a body that does not run', () => {
   it('is named by its syntax error, its thrown error and the line as the body was written; fails, and only itself, when it writes Tell & Wire\'s mark; ends when its run never settles', async () => {

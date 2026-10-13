@@ -3,6 +3,7 @@ import type { GuiWidget } from '../gui/kit/guiWidget';
 import { GuiBlock, blockValue, type GuiModel } from '../gui/surface/GuiSurface';
 import { useContainerCell } from '../gui/surface/useContainerCell';
 import { GUI_GAP, GUI_GRID_COLUMNS, gridStyle, resolveWidgetLayout } from '../gui/kit/layout';
+import { WINDOW_BORDER, WINDOW_PADDING } from '../../../gui/windows/grid.ts';
 import { LINE, MUTED, SUCCESS_FILL, SUCCESS_TEXT, SURFACE, TEXT, WARNING_FILL, WARNING_TEXT, ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, WARNING } from '../gui/kit/ui/theme';
 import { pageNotes, pageWindows, type PageNote, type PageWindow, type WindowBlock } from './windowsInUse';
 
@@ -106,7 +107,7 @@ export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: 
               style={{
                 gridColumn: `span ${compact ? columns : window.span}`,
                 position: 'relative', boxSizing: 'border-box', minWidth: 0,
-                padding: 12, borderRadius: 16, border: `1px solid ${LINE}`, background: SURFACE,
+                padding: WINDOW_PADDING, borderRadius: 16, border: `${WINDOW_BORDER}px solid ${LINE}`, background: SURFACE,
                 ...extra?.style,
               }}
             >

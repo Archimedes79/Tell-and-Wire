@@ -14,29 +14,9 @@
 //
 // Presentational only: never touches ports, wiring, or execution.
 import type { GuiWidget } from './guiWidget';
+import { GUI_GAP, GUI_GRID_COLUMNS, GUI_MAX_CELL } from '../../../../gui/windows/grid.ts';
 
-/** Cells across the gui. Square, so `w` and `h` are one unit, not two. */
-export const GUI_GRID_COLUMNS = 16;
-
-/**
- * The widest a cell is allowed to get.
- *
- * Without a cap, a square cell on a 4K monitor would be ~250px and every block
- * would inflate with the window. A capped cell means the GUI has a maximum
- * width and centres, with margins growing instead — a printed page, and the
- * reason a text column stays readable.
- */
-export const GUI_MAX_CELL = 56;
-
-/**
- * The gap between blocks, in pixels. One value, everywhere.
- *
- * Equal in both directions on purpose: the cell is square, and a row gap that
- * differed from the column gap would quietly make a 4x4 block non-square.
- * Where a *section* should end, the `spacer` block is for that, not a bigger
- * uniform gap.
- */
-export const GUI_GAP = 14;
+export { GUI_GRID_COLUMNS, GUI_MAX_CELL, GUI_GAP };
 
 /** The widest the content column ever gets: 16 cells plus their gaps. */
 const GUI_MAX_WIDTH = GUI_GRID_COLUMNS * GUI_MAX_CELL + (GUI_GRID_COLUMNS - 1) * GUI_GAP;

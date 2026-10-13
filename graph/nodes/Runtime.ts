@@ -45,6 +45,11 @@ export interface FileService {
  */
 interface BodyContext {
   calls?: Record<string, (args: unknown) => Promise<unknown>>;
+  /**
+   * What the body is told, as plain JSON on `node` beside the calls: a code node of a window is told the window it is in
+   * (`node.window`). A call of the same name wins.
+   */
+  facts?: Record<string, unknown>;
 }
 
 /** Running a written body: `run(inputs, node) -> outputs`, inputs and outputs plain JSON. */

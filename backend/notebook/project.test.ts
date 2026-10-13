@@ -9,6 +9,7 @@ import {
   afterEdit, afterRun, runOrder, windowContext, windowProblems, windowRows, windowsToGraph, type Done, type Window, type Windows,
 } from '../../gui/notebook/windows.ts';
 import { quietRuntime } from '../deployment/runtime/test/fakes.ts';
+import { nodeCode } from '../deployment/runtime/services.ts';
 import { Session } from '../deployment/host/session.ts';
 import { guiHooks } from '../deployment/gui/hooks.ts';
 import { loadGraph } from '../deployment/project/folder.ts';
@@ -205,6 +206,46 @@ describe('windows', () => {
     expect(asked[1]).toContain('answer 1');
     expect(asked).toHaveLength(2);
     expect(session.view().shown).toMatchObject({ summarize_out_summary: 'answer 1', english_out_english: 'answer 2' });
+  });
+});
+
+describe('code that draws for a window', () => {
+  const DRAW: Windows = {
+    name: 'Drawing', description: '', scheme: 'night',
+    windows: [{
+      id: 'draw', title: 'Draw', span: 8,
+      inputs: [{ name: 'Text', kind: 'text', value: 'a b c' }],
+      steps: [
+        { name: 'Count', sentence: 'Count the words of @Text.', how: 'code', code: 'function run(inputs) { return { count: 3 }; }' },
+        { name: 'Figure', sentence: 'Draw @Count.', how: 'code', code: 'function run(inputs, node) { return { figure: node.window.shows[0].width }; }' },
+        { name: 'Say', sentence: 'Say what @Figure shows.', how: 'ai' },
+      ],
+      outputs: [{ name: 'Plot', kind: 'chart', rows: 5, width: 0.5, of: 'Figure' }, { name: 'Words', kind: 'text', rows: 2, of: 'Say' }],
+    }],
+  };
+
+  it('is told its window: the room of what it feeds in pixels, the scheme as values -- an AI step is told nothing, a step feeding nothing has no room', () => {
+    const nodes = windowsToGraph(DRAW).nodes;
+    const told = (id: string) => nodes.find((node) => node.id === id)!.config.window as Record<string, any> | undefined;
+    // A chart 4 cells across and 5 down, in a window of 8: 4 cells of the window (56 less its padding and border shared out) and 3 gaps, less the card of the block; 5 rows of 56 and 4 gaps, less the card.
+    expect(told('draw_figure')).toMatchObject({
+      id: 'draw', title: 'Draw', span: 8, rows: 11, page: { columns: 16, cell: 56, gap: 14 },
+      shows: [{ output: 'Plot', kind: 'chart', result: 'Figure', cells: 4, rows: 5, width: 223, height: 294 }],
+      scheme: { id: 'night', light: false, background: '#0f1117', text: '#e2e8f0', accent: '#6164ec' },
+    });
+    expect(told('draw_figure')!.scheme.series).toHaveLength(8);
+    expect(told('draw_count')!.shows).toEqual([]);
+    expect(told('draw_say')).toBeUndefined();
+    // The scheme the page is set to, and white where it says none.
+    expect(windowsToGraph({ ...DRAW, scheme: undefined }).nodes.find((node) => node.id === 'draw_figure')!.config.window).toMatchObject({ scheme: { id: 'white', light: true } });
+  });
+
+  it('reads it as node.window when it runs, in the sandbox a graph runs it in', async () => {
+    const runtime = () => quietRuntime({ ai: { complete: async () => 'said' }, code: nodeCode });
+    const session = await Session.open(windowsToGraph(DRAW), { runtime, gui: guiHooks });
+    const done = await session.run({ node_id: 'draw', port_id: 'data' }, { by: 'draw_run' });
+    expect(done.status).toBe('success');
+    expect(session.view().shown).toMatchObject({ draw_out_plot: 223 });
   });
 });
 

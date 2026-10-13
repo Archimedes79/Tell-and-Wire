@@ -28,6 +28,8 @@
 import type { DataType, Graph, GraphEdge, GraphNode, Port, RawConfig, WidgetKind } from '../../graph/graph.ts';
 import { wireOf } from '../../graph/files/flow.ts';
 import { parseWidget } from '../gui.ts';
+import { BLOCK_CHROME, GUI_GAP, GUI_MAX_CELL, WINDOW_BORDER, WINDOW_PADDING } from '../windows/grid.ts';
+import { plotColours, scheme } from '../windows/scheme.ts';
 import { widgetDesign } from '../editor/widgets/roster.ts';
 import { pageOf } from './pageModel.ts';
 import { registry } from '../../graph/nodes/registry.ts';
@@ -428,7 +430,7 @@ function stepNodeOf(doc: Windows, window: Window, at: number, y: number): { node
     ports.set(id, source.field ? { ...input, field: source.field } : input);
     wires.push({ from: source.node, fromPort: source.port, toPort: id });
   }
-  const config: RawConfig = step.how === 'code' ? { code: step.code ?? '' } : {};
+  const config: RawConfig = step.how === 'code' ? { code: step.code ?? '', window: windowFacts(doc, window, step) } : {};
   if (step.each) Object.assign(config, { batch_mode: 'per_item', batch_concurrency: 3 });
   const node: GraphNode = {
     id: stepNode(window, step), node_type: step.how, label: step.name, description: spoken(step.sentence),
@@ -492,6 +494,39 @@ function blocksOf(doc: Windows, window: Window): RawConfig[] {
     ...(button ? [{ ...on, id: `${window.id}_run`, kind: 'button', label: trigger.label?.trim() || 'Run', w: run, h: 1, tone: 'plain', fires: window.id }] : []),
     ...lay(window.outputs, window.outputs.map((one) => outPiece(window, one)), showing),
   ];
+}
+
+/**
+ * What a cell that makes a drawing is told of its window, as `node.window` -- plain JSON, written into the settings of its code node
+ * (`config.window`) and made again with every graph, so it follows the windows.
+ *
+ * A function that draws (SVG for a chart, a figure) cannot see the page it draws for: the room it has is what the window gives the
+ * output it feeds, and finished SVG is shown as a picture, where the scheme's CSS variables do not reach. So it is told both: the
+ * room -- the pixels a drawing has in the block, at the full width of the page (a narrower page scales every cell alike, so a shape
+ * drawn for this size keeps its proportions), and the cells it comes from -- and the scheme's colours as values.
+ */
+export function windowFacts(doc: Windows, window: Window, step: Step): Record<string, unknown> {
+  const id = scheme(doc.scheme ?? DEFAULT_SCHEME);
+  // A row is one cell high; a window's own padding and border come out of its width, so across, a cell is a little narrower than the page's.
+  const across = GUI_MAX_CELL - (2 * (WINDOW_PADDING + WINDOW_BORDER)) / window.span;
+  // What is drawn has the block less its card (`BLOCK_CHROME`): that is the room, the number a drawing is made for.
+  const wide = (cells: number): number => Math.round(cells * across + (cells - 1) * GUI_GAP - BLOCK_CHROME.width);
+  const high = (cells: number): number => cells * GUI_MAX_CELL + (cells - 1) * GUI_GAP - BLOCK_CHROME.height;
+  const shows = window.outputs.flatMap((one) => {
+    const made = shownResult(window, one);
+    if (!made || producer(window, made)?.step !== step) return [];
+    const piece = outPiece(window, one);
+    return [{ output: one.name, kind: one.kind, result: made, cells: piece.cells, rows: piece.rows, width: wide(piece.cells), height: high(piece.rows) }];
+  });
+  return {
+    id: window.id, title: window.title, span: window.span, rows: windowRows(window),
+    page: { name: doc.name, columns: 16, cell: GUI_MAX_CELL, gap: GUI_GAP },
+    shows,
+    scheme: {
+      id: id.id, light: id.light === true, background: id.sunken, surface: id.surface, line: id.line, text: id.text, muted: id.muted,
+      accent: id.accent, success: id.success, danger: id.danger, warning: id.warning, series: plotColours(id.id),
+    },
+  };
 }
 
 /**

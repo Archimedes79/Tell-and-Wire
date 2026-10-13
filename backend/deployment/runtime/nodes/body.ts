@@ -6,7 +6,8 @@
 //   async function run(inputs, node) { …; return { <output port>: value }; }
 //
 // - `inputs` is what arrived, keyed by port.
-// - `node` holds `node.llm(...)`, a question put to the process that holds
+// - `node` holds what the node was told of where it stands -- a code node of a
+//   window has `node.window` -- and `node.llm(...)`, a question put to the process that holds
 //   the graph. Every body may ask, and its process is handed no key: not in
 //   its environment, and not in the settings file, which it may not read
 //   (`../services.ts`).
@@ -31,6 +32,8 @@ interface BodyGiven {
    * only this.
    */
   signal?: AbortSignal;
+  /** What `node` holds besides `node.llm`: plain JSON (see `Runtime.BodyContext`). */
+  facts?: Record<string, unknown>;
 }
 
 export function runBody(
@@ -39,5 +42,5 @@ export function runBody(
   runtime: Runtime,
   given: BodyGiven = {},
 ): Promise<Record<string, unknown>> {
-  return runtime.code.run(body, inputs, given.signal, { calls: { llm: llmCall(given.ask ?? PLAIN_ASK, runtime) } });
+  return runtime.code.run(body, inputs, given.signal, { calls: { llm: llmCall(given.ask ?? PLAIN_ASK, runtime) }, ...(given.facts ? { facts: given.facts } : {}) });
 }
