@@ -73,6 +73,13 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   /** Where the cursor goes after the next change: the end of a block, or a place in it (`at`, and `to` for a chosen stretch). */
   const focus = useRef<{ id: string; end: boolean; at?: number; to?: number } | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
+  // Markdown typed and then left by any way but the box losing the cursor (a view chosen in the bar, the window not in front) is still the page.
+  useEffect(() => {
+    if ((!source || !writing) && draft !== null) {
+      edit((one) => fromMarkdown(one, draft), 'markdown');
+      setDraft(null);
+    }
+  }, [source, writing, draft, edit]);
 
   // After a block is made or taken away, the cursor goes where the person is writing.
   useEffect(() => {

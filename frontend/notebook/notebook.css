@@ -143,6 +143,8 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-out tr.total td { font-weight: 600; border-top: 2px solid var(--line2); }
 .nb-out ul { margin: 0; padding-left: 20px; }
 .nb-out img { max-width: 100%; max-height: 100%; display: block; margin: 0 auto; }
+.nb-contact { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; align-items: start; }
+.nb-contact img { width: 100%; height: auto; max-height: none; border-radius: 6px; }
 .nb-out.chart { padding: 6px; display: block; overflow: auto; }
 .nb-from { padding: 6px 11px; border: 1px dashed var(--dash); border-radius: 8px; color: var(--muted); font-size: 13.5px; background: var(--faint); }
 .nb-out.chart svg { display: block; }

@@ -100,8 +100,8 @@ what is chosen. In **Write** the boxes show the marks as they are typed (a numbe
 (`frontend/notebook/elements/inline.tsx` and `frontend/deployment/windows/inline.tsx`: two copies, the two products share no code). A window's outputs are text, a list, a table, a chart or a
 picture; a picture is a file, a data or http URL, or the markup of an SVG a code step drew.
 
-`notebook-examples/` holds four pages written by hand, as the notebook saves them: `sales_report` (a CSV, a key-figure table, a trend, a model's two sentences), `text_toolbox`
-(a pasted text: numbers by code, a summary by a model), `badge_maker` (a picture drawn by code for the room it has) and `tip_calculator` (a short page with a small calculator that runs
+`notebook-examples/` holds five pages written by hand, as the notebook saves them: `sales_report` (a CSV, a key-figure table, a trend, a model's two sentences), `text_toolbox`
+(a pasted text: numbers by code, a summary by a model), `badge_maker` (a picture drawn by code for the room it has), `picture_sheet` (a folder of pictures shown as a contact sheet, each described by a model that can see) and `tip_calculator` (a short page with a small calculator that runs
 when an input changes). Open one with **Open…**; the file inputs name `notebook-examples/data/…`, relative to where the notebook was started. `backend/notebook/examples.test.ts` opens each,
 checks that the graph on disk is what its windows make, and presses the buttons of the ones that need no file and no model.
 

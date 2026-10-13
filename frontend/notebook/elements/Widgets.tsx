@@ -138,10 +138,12 @@ function Table({ value }: { value: unknown }) {
   );
 }
 
+/** One picture fills its box; several lie side by side as a contact sheet, wrapping, each as wide as the room lets it be. */
 function Pictures({ value }: { value: unknown }) {
   const items = (Array.isArray(value) ? value : [value]).filter((one): one is string => typeof one === 'string');
   if (!items.length) return <>{asText(value)}</>;
-  return <>{items.map((src, at) => (/^(data:|https?:)/.test(src) ? <img key={at} src={src} alt="" /> : <div key={at}>{src}</div>))}</>;
+  const pictures = items.map((src, at) => (/^(data:|https?:)/.test(src) ? <img key={at} src={src} alt="" /> : <div key={at}>{src}</div>));
+  return items.length === 1 ? <>{pictures}</> : <div className="nb-contact">{pictures}</div>;
 }
 
 /**

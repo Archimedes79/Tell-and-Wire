@@ -1,0 +1,10 @@
+{
+  "name": "Picture sheet",
+  "description": "A folder of pictures, shown together and described one by one.",
+  "wires": [
+    "sheet.data -> sheet_pictures.folder",
+    "sheet.data -> sheet_captions.folder",
+    "sheet_pictures.pictures -> sheet_out_pictures.value",
+    "sheet_captions.output -> sheet_out_captions.value"
+  ]
+}

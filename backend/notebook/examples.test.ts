@@ -21,7 +21,7 @@ const NAMES = readdirSync(ROOT, { withFileTypes: true }).filter((entry) => entry
 
 describe('the notebook examples', () => {
   it('are there', () => {
-    expect(NAMES).toEqual(['badge_maker', 'sales_report', 'text_toolbox', 'tip_calculator']);
+    expect(NAMES).toEqual(['badge_maker', 'picture_sheet', 'sales_report', 'text_toolbox', 'tip_calculator']);
   });
 
   it.each(NAMES)('%s: sound windows, and a graph on disk that they make', async (name) => {

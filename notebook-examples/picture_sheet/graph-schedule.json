@@ -1,0 +1,6 @@
+{
+  "table": [
+    "sheet sheet_pictures sheet_captions sheet_out_pictures",
+    ".     .              .              sheet_out_captions"
+  ]
+}

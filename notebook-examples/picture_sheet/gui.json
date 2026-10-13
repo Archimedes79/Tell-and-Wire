@@ -1,0 +1,98 @@
+[
+  {
+    "after": [],
+    "group": "sheet",
+    "h": 1,
+    "id": "sheet_title",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 2,
+    "span": 16,
+    "tone": "plain",
+    "value": "Look at a folder",
+    "w": 16
+  },
+  {
+    "extensions": ".png, .jpg, .jpeg",
+    "group": "sheet",
+    "h": 2,
+    "id": "sheet_in_folder",
+    "kind": "input_picker",
+    "label": "Folder",
+    "mode": "directory",
+    "sends_to": [
+      "sheet"
+    ],
+    "tone": "sunken",
+    "value": "notebook-examples/data/pictures",
+    "w": 16
+  },
+  {
+    "fires": "sheet",
+    "group": "sheet",
+    "h": 1,
+    "id": "sheet_run",
+    "kind": "button",
+    "label": "Show them",
+    "tone": "plain",
+    "w": 4
+  },
+  {
+    "group": "sheet",
+    "h": 4,
+    "id": "sheet_out_pictures",
+    "kind": "image_view",
+    "label": "Pictures",
+    "shows": "sheet_out_pictures",
+    "tone": "raised",
+    "w": 10
+  },
+  {
+    "group": "sheet",
+    "h": 4,
+    "id": "sheet_out_captions",
+    "kind": "text_io",
+    "label": "Captions",
+    "mode": "output",
+    "shows": "sheet_out_captions",
+    "tone": "raised",
+    "w": 6
+  },
+  {
+    "h": 1,
+    "id": "note_b1",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 0,
+    "page_style": "h1",
+    "tone": "plain",
+    "value": "Picture sheet",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b2",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 1,
+    "page_style": "p",
+    "tone": "plain",
+    "value": "Choose a folder of pictures. They are shown side by side; a model that can see pictures describes each in a sentence.",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b4",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 3,
+    "page_style": "quote",
+    "tone": "plain",
+    "value": "The pictures of this example are three small generated ones, in notebook-examples/data/pictures.",
+    "w": 16
+  }
+]
