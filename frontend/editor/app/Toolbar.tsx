@@ -152,6 +152,12 @@ export default function Toolbar({
     }
     say('run', '');
     startApplication(graph, () => delivered.run(null))
+      .then((started) => {
+        // ▶ Run that did nothing must not look like a button that is dead.
+        if (started === 'nothing') {
+          say('run', '⚠ Nothing started: its start points wait for a GUI block or a call, and there is no GUI. Add blocks on the GUI tab (From the graph does it for you), or set a start point to start when the tool starts.');
+        }
+      })
       .catch((error) => say('run', errorText(error, 'The tool could not be started.'), { level: 'error' }));
   };
   // Stopped -- by ■ Stop, or by itself, having nothing left to do -- or its
