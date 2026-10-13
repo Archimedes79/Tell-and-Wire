@@ -15,28 +15,10 @@
 // Presentational only: never touches ports, wiring, or execution.
 import type { GuiWidget } from './guiWidget';
 
-/** Cells across the GUI. Square, so `w` and `h` are one unit, not two. */
-export const GUI_GRID_COLUMNS = 16;
+import { DEFAULT_WIDGET_SPAN, GUI_GAP, GUI_GRID_COLUMNS, GUI_MAX_CELL, blockSize, cellsOf } from '../../../../gui/size.ts';
 
-/**
- * The widest a cell is allowed to get.
- *
- * Without a cap, a square cell on a 4K monitor would be ~250px and every block
- * would inflate with the window. A capped cell means the GUI has a maximum
- * width and centres, with margins growing instead — a printed page, and the
- * reason a text column stays readable.
- */
-export const GUI_MAX_CELL = 56;
-
-/**
- * The gap between blocks, in pixels. One value, everywhere.
- *
- * Equal in both directions on purpose: the cell is square, and a row gap that
- * differed from the column gap would quietly make a 4x4 block non-square.
- * Where a *section* should end, the `spacer` block is for that, not a bigger
- * uniform gap.
- */
-export const GUI_GAP = 14;
+// The grid's sizes are the GUI's, not this page's: a run asks them too.
+export { DEFAULT_WIDGET_SPAN, GUI_GAP, GUI_GRID_COLUMNS, GUI_MAX_CELL, blockSize };
 
 /** The widest the content column ever gets: 16 cells plus their gaps. */
 const GUI_MAX_WIDTH = GUI_GRID_COLUMNS * GUI_MAX_CELL + (GUI_GRID_COLUMNS - 1) * GUI_GAP;
@@ -61,19 +43,12 @@ export const GUI_NARROW = 640;
 /** The least a row is high on a narrow gui, where a cell is a few pixels and a block of four rows would be a sliver. */
 const NARROW_ROW = 28;
 
-/** Cells a widget occupies when it has none of its own yet. */
-export const DEFAULT_WIDGET_SPAN = { w: 8, h: 4 };
-
 export interface WidgetPlacement {
   widget: GuiWidget;
   /** Columns spanned, 1..GUI_GRID_COLUMNS. */
   w: number;
   /** Rows spanned, at least 1. */
   h: number;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 /**
@@ -84,25 +59,7 @@ function clamp(value: number, min: number, max: number): number {
  * else on a page.
  */
 export function resolveWidgetLayout(widgets: GuiWidget[]): WidgetPlacement[] {
-  return widgets.map((widget) => ({
-    widget,
-    w: clamp(Math.round(widget.w ?? DEFAULT_WIDGET_SPAN.w), 1, GUI_GRID_COLUMNS),
-    h: Math.max(1, Math.round(widget.h ?? DEFAULT_WIDGET_SPAN.h)),
-  }));
-}
-
-/**
- * A block's size on a GUI at its full width, in pixels -- its cells and the
- * gaps between them -- and the cells it spans. The GUI never needs the sum,
- * since the browser's grid does it; a node wired into the end point the
- * block shows does, to write what it sends for the room there is
- * (`editor/graph/writing/generationContext.ts`). On a narrower gui every cell
- * shrinks alike (`cellSize`), so this is the most the block gets.
- */
-export function blockSize(widget: GuiWidget): { w: number; h: number; width: number; height: number } {
-  const [{ w, h }] = resolveWidgetLayout([widget]);
-  const pixels = (cells: number) => cells * GUI_MAX_CELL + (cells - 1) * GUI_GAP;
-  return { w, h, width: pixels(w), height: pixels(h) };
+  return widgets.map((widget) => ({ widget, ...cellsOf(widget) }));
 }
 
 /**

@@ -44,3 +44,12 @@ describe('a body that does not run', () => {
     await expect(nodeCode.run('function run() { return new Promise(() => {}); }', {}, undefined, { calls: { llm: async () => 'x' } })).rejects.toThrow();
   });
 });
+
+describe('a body that draws', () => {
+  it('is told the blocks that show its result as node.windows -- none, as a list, when nobody says', async () => {
+    const windows = [{ port: 'out', block: 'chart', kind: 'plot_window', label: '', w: 6, h: 3, width: 406, height: 196 }];
+    const body = 'function run(inputs, node) { return { windows: node.windows }; }';
+    expect(await nodeCode.run(body, {}, undefined, { windows })).toEqual({ windows });
+    expect(await nodeCode.run(body, {})).toEqual({ windows: [] });
+  });
+});

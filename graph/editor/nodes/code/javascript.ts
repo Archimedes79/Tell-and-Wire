@@ -52,7 +52,11 @@ export const JAVASCRIPT: Language = {
     + 'When the task needs the judgement of a model -- classifying, summarising, extracting meaning -- declare '
     + 'the function as "async function run(inputs, node)" and ask with '
     + '"await node.llm({ prompt: "..." })", which resolves to the answer as text; never call a model API '
-    + 'yourself and never use a key. For everything else, plain code.',
+    + 'yourself and never use a key. For everything else, plain code. '
+    // The size the text of the request says is the size when it was written; the block may be resized since.
+    + 'When the result is drawn (an SVG, a picture), the second argument also lists, as "node.windows", the blocks that show it: '
+    + '[{ port, block, kind, label, w, h, width, height }], the size in cells and in pixels at most; draw for that size '
+    + 'if it is there, and for the size the request names if not.',
   skeleton: renderSkeleton,
   limits: 'Use only what Node has built in. There is no package manager and no `npm install`: `require` '
     + "and `import` of anything outside Node's own standard library will fail at run time. "

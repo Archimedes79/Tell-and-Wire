@@ -173,7 +173,7 @@ export const nodeCode: CodeService = {
       // before it: `process.stdout.write('50%')` has no newline to end on.
       + 'const __ask = (name) => (args) => new Promise((ok, fail) => { const id = ++__count; process.stdin.ref?.(); '
       + `__asked.set(id, { ok, fail }); process.stdout.write('\\n' + ${JSON.stringify(MARK)} + 'call ' + JSON.stringify({ id, name, args: args ?? null }) + '\\n'); });\n`
-      + 'const __node = Object.fromEntries(__given.calls.map((name) => [name, __ask(name)]));\n\n';
+      + 'const __node = Object.assign(Object.fromEntries(__given.calls.map((name) => [name, __ask(name)])), { windows: __given.windows });\n\n';
     // What cannot be written as JSON -- a function -- is "not an object", said below.
     const tail = '\n\nconst __out = await run(__given.inputs, __node);\n'
       + `process.stdout.write('\\n' + ${JSON.stringify(MARK)} + 'result ' + (JSON.stringify(__out ?? null) ?? 'null') + '\\n', () => process.stdin.unref?.());\n`;
@@ -181,7 +181,7 @@ export const nodeCode: CodeService = {
 
     try {
       await writeFile(file, wrapper, 'utf8');
-      const given = { inputs, calls: Object.keys(context?.calls ?? {}) };
+      const given = { inputs, calls: Object.keys(context?.calls ?? {}), windows: context?.windows ?? [] };
       const result = await converse(process.execPath, [...sandbox(dir), file], JSON.stringify(given), context?.calls ?? {}, signal);
       if (result === undefined) throw new Error('the body returned nothing; does it return an object?');
       if (result === null || typeof result !== 'object') throw new Error('the body must return an object keyed by output port.');

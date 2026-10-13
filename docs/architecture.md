@@ -446,7 +446,7 @@ that points at the settings file is followed anyway. A file elsewhere reaches it
 (`backend/deployment/runtime/services.ts`; `services.test.ts`, `sandbox.test.ts`):
 
 ```
-stdin   {"inputs": {…}, "calls": ["llm", …]}                  what it is handed
+stdin   {"inputs": {…}, "calls": ["llm", …], "windows": […]}   what it is handed
 stdout  ␞tell-and-wire:call {"id": 1, "name": "llm", "args": …}   a question (␞ is U+001E)
 stdin   {"id": 1, "result": …}  or  {"id": 1, "error": "…"}      its answer
 stdout  ␞tell-and-wire:result {…}                               what it made; the run is over
@@ -454,6 +454,8 @@ stdout  ␞tell-and-wire:result {…}                               what it made
 
 `node.llm` is answered by the process running the graph (`backend/deployment/runtime/nodes/ai/ask.ts`),
 at most 25 times per run (`TW_MAX_LLM_CALLS`).
+`windows` is what a body that draws needs to know and need not ask: the blocks of the GUI that show what its node hands on,
+each with its size in cells and in pixels (`gui/windows.ts`); the body has it as `node.windows`, empty without a GUI.
 
 ## The package
 
