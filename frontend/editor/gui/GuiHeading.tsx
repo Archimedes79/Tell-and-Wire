@@ -70,6 +70,7 @@ export default function GuiHeading({ name, description, onChange }: {
         onChange={(e) => onChange({ description: e.target.value })}
       />
       <Button
+        variant="ai"
         size="sm"
         className="shrink-0 inline-flex items-center gap-1.5"
         onClick={() => { void write(); }}

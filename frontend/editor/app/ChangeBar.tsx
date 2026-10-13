@@ -9,7 +9,7 @@ import ProblemsChip from './ProblemsChip';
 import { useGraphAsk, type GraphAsk } from '../document/graphAsk';
 import { refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
 import { describeChange, graphChange } from '../document/graphChange';
-import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
+import { AI, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * The bar under the canvas, always there: say what to change in the graph.
@@ -127,7 +127,7 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
           className="flex h-10 flex-1 min-w-0 items-center gap-2.5 rounded-lg px-3"
           style={{ background: SURFACE, border: `1px solid ${LINE}` }}
         >
-          <Sparkles size={14} strokeWidth={2} aria-hidden="true" style={{ color: ACCENT_TEXT, flexShrink: 0 }} />
+          <Sparkles size={14} strokeWidth={2} aria-hidden="true" style={{ color: AI, flexShrink: 0 }} />
           <input
             value={text}
             onChange={(event) => setText(event.target.value)}
@@ -146,7 +146,7 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
           />
         </label>
         <Button
-          variant="tint"
+          variant="ai"
           onClick={() => { void submit(); }}
           disabled={asking || !text.trim()}
           className="h-10 shrink-0"

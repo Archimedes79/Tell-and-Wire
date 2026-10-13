@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Check, Sparkles, X } from 'lucide-react';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import Chip from '../../../deployment/gui/kit/ui/Chip';
-import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED, RAISE, SUCCESS_TEXT, TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { AI, DANGER_TEXT, DIMMER, FIELD, LINE, RAISE, SUCCESS_TEXT, TEXT } from '../../../deployment/gui/kit/ui/theme';
 
 /** One exchange of the chat: the words said, and what came of them. */
 export interface ChatLine {
@@ -62,7 +62,7 @@ export default function ChatPane({ lines, sentWith, placeholder, empty, busy, te
         {sentWith.map((one) => <Chip key={one}>{one}</Chip>)}
       </div>
       <div className="flex items-end gap-2 rounded-xl px-3 py-2" style={{ ...FIELD }}>
-        <Sparkles size={15} strokeWidth={2} aria-hidden="true" style={{ color: MUTED, marginBottom: 7, flexShrink: 0 }} />
+        <Sparkles size={15} strokeWidth={2} aria-hidden="true" style={{ color: AI, marginBottom: 7, flexShrink: 0 }} />
         <textarea
           className="flex-1 min-w-0 bg-transparent text-sm outline-none resize-none py-1"
           style={{ color: TEXT }}
@@ -82,7 +82,7 @@ export default function ChatPane({ lines, sentWith, placeholder, empty, busy, te
             void send();
           }}
         />
-        <Button variant="primary" size="sm" disabled={busy || !text.trim()} onClick={() => void send()} title="Send (Enter). Shift+Enter starts a new line.">Send</Button>
+        <Button variant="ai" size="sm" disabled={busy || !text.trim()} onClick={() => void send()} title="Send (Enter). Shift+Enter starts a new line.">Send</Button>
       </div>
       {children}
     </div>

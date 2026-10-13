@@ -57,7 +57,18 @@ export const ON_ACCENT = 'var(--ui-on-accent, #ffffff)';
  * The accent as a soft glow around what is selected: mixed from the scheme's
  * own accent, so it is that accent's glow in every scheme.
  */
-export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 30%, transparent)`;
+export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 18%, transparent)`;
+/** What the AI does: a button that writes, a chat's send, the sparkle -- told from what the person does. */
+export const AI = 'var(--ui-ai, #fb923c)';
+/** Text on top of `AI`. */
+export const ON_AI = 'var(--ui-on-ai, #0f1117)';
+
+/**
+ * Elevation, as two thin layers rather than one heavy one: a card is lifted by what is just under
+ * it and by what is further away. `SHADOW_FLOAT` is for what comes over the work: a notice.
+ */
+export const SHADOW_SOFT = '0 1px 2px rgba(16,24,40,0.05), 0 6px 16px rgba(16,24,40,0.06)';
+export const SHADOW_FLOAT = '0 1px 2px rgba(16,24,40,0.06), 0 8px 24px rgba(16,24,40,0.12)';
 
 /**
  * An event: the ◆ a run begins at, and a wire into one. Amber whatever the

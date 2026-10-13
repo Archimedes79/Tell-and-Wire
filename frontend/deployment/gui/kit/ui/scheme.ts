@@ -30,14 +30,14 @@
 // Stored on `metadata.gui_scheme`: presentation of the graph as a whole, so it
 // travels with the file and a deployed tool looks like what was designed.
 
-export type SchemeId = 'night' | 'paper' | 'white' | 'graphite';
+export type SchemeId = 'night' | 'paper' | 'white' | 'modern' | 'graphite';
 
 /**
  * The scheme of whoever, or whatever, names none: the editor of a person who has not chosen, and a
  * tool whose file says nothing. `defaultMetadata` in `graph/graph.ts` repeats the id, as that
  * package imports nothing of the frontend; `scheme.test.ts` keeps the two equal.
  */
-export const DEFAULT_SCHEME: SchemeId = 'white';
+export const DEFAULT_SCHEME: SchemeId = 'modern';
 
 /** What a graph saved with a scheme that is no longer offered shows in: the nearest. */
 const LEGACY: Record<string, SchemeId> = { office: 'white', anthracite: 'graphite' };
@@ -76,6 +76,12 @@ interface Scheme {
   accentFill: string;
   /** Text on top of the accent itself -- a button's label. */
   onAccent: string;
+  /** What the AI does -- a button that writes, a chat's send, the sparkle: its own colour, so it is told from what the person does. */
+  ai: string;
+  /** Text on top of `ai`. */
+  onAi: string;
+  /** The first colour of a chart, where the accent would not do for it (a near-black accent). */
+  plot?: string;
 
   // ---- meaning --------------------------------------------------------------
   success: string;
@@ -107,6 +113,7 @@ export const SCHEMES: Scheme[] = [
     scrim: 'rgba(0,0,0,0.70)',
     text: '#e2e8f0', muted: '#a5b2c3', dim: '#96a0b0', dimmer: '#8c95a1',
     accent: '#6164ec', accentText: '#a5b4fc', accentFill: 'rgba(99,102,241,0.10)', onAccent: '#ffffff',
+    ai: '#fb923c', onAi: '#0f1117',
     success: '#22c55e', successText: '#86efac', danger: '#ef4444', dangerText: '#fca5a5',
     warning: '#eab308', warningText: '#fcd34d', purpleText: '#c4b5fd',
     onSignal: '#0f1117',
@@ -125,6 +132,7 @@ export const SCHEMES: Scheme[] = [
     scrim: 'rgba(35,32,26,0.45)',
     text: '#22201c', muted: '#4e4b46', dim: '#5b5853', dimmer: '#64615b',
     accent: '#b85b36', accentText: '#8f4526', accentFill: 'rgba(192,95,56,0.10)', onAccent: '#ffffff',
+    ai: '#b85b36', onAi: '#ffffff',
     success: '#2f7d32', successText: '#25652a', danger: '#b3261e', dangerText: '#8c1d18',
     warning: '#b45309', warningText: '#8a4108', purpleText: '#5b21b6',
     onSignal: '#ffffff',
@@ -143,7 +151,28 @@ export const SCHEMES: Scheme[] = [
     scrim: 'rgba(16,24,40,0.45)',
     text: '#1a1d23', muted: '#4a515c', dim: '#585e6a', dimmer: '#63676f',
     accent: '#2563eb', accentText: '#1d4ed8', accentFill: 'rgba(37,99,235,0.08)', onAccent: '#ffffff',
+    ai: '#c2410c', onAi: '#ffffff',
     success: '#15803d', successText: '#166534', danger: '#b42318', dangerText: '#912018',
+    warning: '#b45309', warningText: '#8a4108', purpleText: '#5b21b6',
+    onSignal: '#ffffff',
+    event: '#b45309',
+    ink: { ai: '#6d28d9', code: '#0f766e', data: '#be185d', end: '#b45309', subgraph: '#475569', start: '#b45309' },
+  },
+  {
+    id: 'modern',
+    label: 'Modern White — black, orange',
+    light: true,
+    // The White ground with the blue taken out: the main button is near-black, so the one
+    // thing that is a colour is what the AI does -- orange. A chosen card has a black ring, a
+    // chosen wire is black; the rest is grey, thin frames and soft shadows. `docs/modern-white.md`.
+    sunken: '#f3f4f6', surface: '#ffffff', line: '#dde0e5',
+    raise: 'rgba(16,24,40,0.03)', hover: 'rgba(16,24,40,0.06)',
+    scrim: 'rgba(16,24,40,0.45)',
+    text: '#16181d', muted: '#4f5562', dim: '#5b616e', dimmer: '#636a76',
+    accent: '#16181d', accentText: '#16181d', accentFill: 'rgba(22,24,29,0.06)', onAccent: '#ffffff',
+    ai: '#c2410c', onAi: '#ffffff',
+    plot: '#2448a6',
+    success: '#1f7a4d', successText: '#166534', danger: '#b42323', dangerText: '#912018',
     warning: '#b45309', warningText: '#8a4108', purpleText: '#5b21b6',
     onSignal: '#ffffff',
     event: '#b45309',
@@ -159,6 +188,7 @@ export const SCHEMES: Scheme[] = [
     scrim: 'rgba(0,0,0,0.70)',
     text: '#e8e8ea', muted: '#b3b3b9', dim: '#a1a1a5', dimmer: '#96969a',
     accent: '#2dd4bf', accentText: '#5eead4', accentFill: 'rgba(45,212,191,0.12)', onAccent: '#06231f',
+    ai: '#fb923c', onAi: '#111113',
     success: '#34d399', successText: '#86efac', danger: '#f87171', dangerText: '#fca5a5',
     warning: '#eab308', warningText: '#fcd34d', purpleText: '#c4b5fd',
     onSignal: '#0f1117',
@@ -182,7 +212,7 @@ const PLOT_ON_LIGHT = ['#15803d', '#b45309', '#be185d', '#0e7490', '#6d28d9', '#
 
 export function plotColours(id: string | undefined): string[] {
   const s = scheme(id);
-  return [s.accent, ...(s.light ? PLOT_ON_LIGHT : PLOT_ON_DARK)];
+  return [s.plot ?? s.accent, ...(s.light ? PLOT_ON_LIGHT : PLOT_ON_DARK)];
 }
 
 export function scheme(id: string | undefined): Scheme {
@@ -216,6 +246,8 @@ export function schemeVars(id: string | undefined): React.CSSProperties {
     '--ui-accent-text': s.accentText,
     '--ui-accent-fill': s.accentFill,
     '--ui-on-accent': s.onAccent,
+    '--ui-ai': s.ai,
+    '--ui-on-ai': s.onAi,
     '--ui-success': s.success,
     '--ui-success-text': s.successText,
     '--ui-danger': s.danger,

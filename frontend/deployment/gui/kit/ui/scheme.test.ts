@@ -54,6 +54,7 @@ describe('colour schemes', () => {
       check('successText on its tint', s.successText, tint(s.success, surface));
       check('warningText on its tint', s.warningText, tint(s.warning, surface));
       check('a button label on the accent', s.onAccent, paint(s.accent));
+      check('a button label on the colour of the AI', s.onAi, paint(s.ai));
     }
     expect(failures).toEqual([]);
   });
@@ -87,21 +88,22 @@ describe('colour schemes', () => {
   it('are told apart: no two of them have the same ground', () => {
     const grounds = SCHEMES.map((s) => [s.sunken, s.surface].join('/'));
     expect(new Set(grounds).size).toBe(SCHEMES.length);
-    expect(SCHEMES.map((s) => s.id)).toEqual(['night', 'paper', 'white', 'graphite']);
+    expect(SCHEMES.map((s) => s.id)).toEqual(['night', 'paper', 'white', 'modern', 'graphite']);
   });
 
-  it('keep White as designed: the values of docs/modern-white.md, so a change to them is meant', () => {
-    expect(scheme('white')).toMatchObject({
-      sunken: '#f4f5f7', surface: '#ffffff', line: '#d8dbe0',
-      text: '#1a1d23', muted: '#4a515c', dim: '#585e6a', dimmer: '#63676f',
-      accent: '#2563eb', accentText: '#1d4ed8', accentFill: 'rgba(37,99,235,0.08)', onAccent: '#ffffff',
-      success: '#15803d', danger: '#b42318', warning: '#b45309', event: '#b45309',
+  it('keep Modern White as designed: the values of docs/modern-white.md, so a change to them is meant', () => {
+    expect(scheme('modern')).toMatchObject({
+      sunken: '#f3f4f6', surface: '#ffffff', line: '#dde0e5',
+      text: '#16181d', muted: '#4f5562', dim: '#5b616e', dimmer: '#636a76',
+      accent: '#16181d', accentText: '#16181d', accentFill: 'rgba(22,24,29,0.06)', onAccent: '#ffffff',
+      ai: '#c2410c', onAi: '#ffffff', plot: '#2448a6',
+      success: '#1f7a4d', danger: '#b42323', warning: '#b45309', event: '#b45309',
       ink: { ai: '#6d28d9', code: '#0f766e', data: '#be185d', end: '#b45309', subgraph: '#475569', start: '#b45309' },
     });
   });
 
-  it('start in White: a tool that names none, and the default of the format, agree', () => {
-    expect(DEFAULT_SCHEME).toBe('white');
+  it('start in Modern White: a tool that names none, and the default of the format, agree', () => {
+    expect(DEFAULT_SCHEME).toBe('modern');
     expect(scheme(undefined).id).toBe(DEFAULT_SCHEME);
     expect(scheme('no-such-scheme').id).toBe(DEFAULT_SCHEME);
     expect(defaultMetadata().gui_scheme).toBe(DEFAULT_SCHEME);

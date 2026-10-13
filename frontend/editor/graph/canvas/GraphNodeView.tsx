@@ -7,7 +7,7 @@ import { useGraphStore, useNodeWork, useRoundIsGoing } from '../../document/stor
 import { dropOnto } from '../../document/model/wires';
 import { NODE_BUILDERS } from '../../document/elements/registry';
 import { errorLine, portPreviews } from '../../document/elements/resultPreview';
-import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, ON_SIGNAL, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
+import { ACCENT, ACCENT_GLOW, ACCENT_TEXT, DANGER, DIM, EVENT, HOVER, LINE, MUTED, ON_SIGNAL, RAISE, SHADOW_SOFT, SUCCESS, SUNKEN, SURFACE, TEXT, WARNING } from '../../../deployment/gui/kit/ui/theme';
 import { cut } from '../../../deployment/gui/kit/ui/cut';
 import { hasOutputs, statusTone } from '../../document/store/executionStatus';
 import { blocksAt } from '../../document/model/gui';
@@ -216,8 +216,8 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       style={{
         background: SURFACE,
         border: `1px ${fileOver || takesWire ? 'dashed' : 'solid'} ${lit || fileOver || takesWire || working ? ACCENT : LINE}`,
-        // The accent, doubled to two pixels without moving anything, and its glow.
-        boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : working ? `0 0 0 4px ${ACCENT_GLOW}` : undefined,
+        // The accent, doubled to two pixels without moving anything, and its glow; at rest, a card is lifted a little.
+        boxShadow: lit ? `0 0 0 1px ${ACCENT}, 0 0 0 6px ${ACCENT_GLOW}` : working ? `0 0 0 4px ${ACCENT_GLOW}` : SHADOW_SOFT,
         // As wide as its contents come to, between these -- unless it was made a size (`resizeCard`): then it is that.
         ...(typeof graphNode.width === 'number' && typeof graphNode.height === 'number'
           ? { width: '100%', height: '100%' }
@@ -307,7 +307,11 @@ const GraphNodeView = memo(({ id, data, selected }: NodeProps<RFNodeData>) => {
       )}
 
       {hasFoot && (
-        <div className="flex flex-col gap-1 px-3.5 py-2.5 min-w-0" style={{ borderTop: `1px solid ${LINE}` }}>
+        <div
+          className="flex flex-col gap-1 px-3.5 py-2.5 min-w-0"
+          // What the card holds or made sits on a quiet band of its own, under a hairline.
+          style={{ borderTop: `1px solid ${LINE}`, background: RAISE, borderRadius: '0 0 11px 11px' }}
+        >
           {/* Which blocks of the GUI fire it, send to it or show it. */}
           {connected && (
             <div className="truncate text-xs" style={{ color: MUTED }} title={connected}>

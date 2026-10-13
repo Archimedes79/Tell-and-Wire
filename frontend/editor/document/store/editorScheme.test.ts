@@ -3,15 +3,15 @@ import { SCHEMES } from '../../../deployment/gui/kit/ui/scheme';
 import { paintEditor, resolvedScheme, useEditorScheme } from './editorScheme';
 
 describe('the colour scheme of the editor', () => {
-  it('is the scheme chosen, and with auto the system one: Night in the dark, White in the light', () => {
+  it('is the scheme chosen, and with auto the system one: Night in the dark, Modern White in the light', () => {
     expect(resolvedScheme('paper', true)).toBe('paper');
     expect(resolvedScheme('auto', false)).toBe('night');
-    expect(resolvedScheme('auto', true)).toBe('white');
+    expect(resolvedScheme('auto', true)).toBe('modern');
   });
 
-  it('is White for a person who has chosen nothing', () => {
-    expect(useEditorScheme.getState().choice).toBe('white');
-    expect(useEditorScheme.getState().resolved).toBe('white');
+  it('is Modern White for a person who has chosen nothing', () => {
+    expect(useEditorScheme.getState().choice).toBe('modern');
+    expect(useEditorScheme.getState().resolved).toBe('modern');
   });
 
   it('is painted on the root of the page: the variables of the scheme, and its colour scheme for native controls', () => {
@@ -21,7 +21,8 @@ describe('the colour scheme of the editor', () => {
       paintEditor(s.id, root);
       expect(set['--ui-surface'], s.id).toBe(s.surface);
       expect(set['--ui-ink-ai'], s.id).toBe(s.ink.ai);
-      expect(set['--plot-1'], s.id).toBe(s.accent);
+      expect(set['--plot-1'], s.id).toBe(s.plot ?? s.accent);
+      expect(set['--ui-ai'], s.id).toBe(s.ai);
       expect(root.style.colorScheme, s.id).toBe(s.light ? 'light' : 'dark');
     }
   });

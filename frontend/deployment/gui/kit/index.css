@@ -19,6 +19,11 @@ html, body, #root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
+/* The two heading levels a window has, a little closer together: the way a title is set. */
+h1, h2 {
+  letter-spacing: -0.01em;
+}
+
 /* ReactFlow overrides */
 .react-flow__handle {
   cursor: crosshair !important;

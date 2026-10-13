@@ -11,12 +11,12 @@
 import { create } from 'zustand';
 import { DEFAULT_SCHEME, SCHEMES, schemeVars, type SchemeId } from '../../../deployment/gui/kit/ui/scheme';
 
-/** A scheme, or `auto`: Night while the system is dark, White while it is light. */
+/** A scheme, or `auto`: Night while the system is dark, Modern White while it is light. */
 export type EditorSchemeChoice = SchemeId | 'auto';
 
 const KEY = 'tell-and-wire.editor-scheme';
 const WHEN_DARK: SchemeId = 'night';
-const WHEN_LIGHT: SchemeId = 'white';
+const WHEN_LIGHT: SchemeId = DEFAULT_SCHEME;
 
 /** What the choice is now: itself, or what the system asks for. */
 export function resolvedScheme(choice: EditorSchemeChoice, systemIsLight: boolean): SchemeId {

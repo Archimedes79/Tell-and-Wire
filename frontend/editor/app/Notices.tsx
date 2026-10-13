@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useGraphStore } from '../document/store/graphStore';
 import Button from '../../deployment/gui/kit/ui/Button';
-import { ACCENT, DANGER, DANGER_TEXT, LINE, MUTED, ON_SIGNAL, SUCCESS, SUCCESS_TEXT, SURFACE, TEXT, WARNING, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
+import { ACCENT, DANGER, DANGER_TEXT, LINE, MUTED, ON_SIGNAL, SHADOW_FLOAT, SUCCESS, SUCCESS_TEXT, SURFACE, TEXT, WARNING, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
 import { DONE_FOR_MS, useNotices, type Notice, type NoticeLevel } from '../document/store/noticeBoard';
 
 const LOOK: Record<NoticeLevel, { color: string; ink: string; mark: string; label: string }> = {
@@ -24,8 +24,8 @@ function Card({ notice }: { notice: Notice }) {
   return (
     <div
       role={notice.level === 'error' ? 'alert' : 'status'}
-      className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm shadow-2xl"
-      style={{ background: SURFACE, border: `1px solid ${LINE}`, borderLeft: `3px solid ${look.color}`, color: TEXT }}
+      className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm"
+      style={{ background: SURFACE, border: `1px solid ${LINE}`, borderLeft: `3px solid ${look.color}`, color: TEXT, boxShadow: SHADOW_FLOAT }}
     >
       <span
         className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold leading-none"

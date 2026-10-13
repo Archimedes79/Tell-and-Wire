@@ -38,7 +38,10 @@ import { deleteSelected, deletes } from './nodeRemoval';
 import { drawnWire } from './wireLook';
 import { allInView, panToShow, READABLE_ZOOM, viewDue, type ViewDue } from './inView';
 import type { NodeType } from '../../document/graph';
-import { LINE, MUTED, PANEL, SUNKEN, SURFACE } from '../../../deployment/gui/kit/ui/theme';
+import { LINE, MUTED, PANEL, SHADOW_SOFT, SUNKEN, SURFACE } from '../../../deployment/gui/kit/ui/theme';
+
+/** The groups that float over the canvas -- the zoom buttons, the map: a frame, rounded, and lifted. */
+const FLOATING = { ...PANEL, borderRadius: 10, boxShadow: SHADOW_SOFT, overflow: 'hidden' } as const;
 import { scheme } from '../../../deployment/gui/kit/ui/scheme';
 
 const nodeTypes = { graphNode: GraphNodeView };
@@ -395,11 +398,11 @@ export default function GraphCanvas({ active }: { active: boolean }) {
           <ThinOut />
         </Panel>
         <Controls
-          style={PANEL}
+          style={FLOATING}
         />
         {roomy && (
           <MiniMap
-            style={PANEL}
+            style={FLOATING}
             // The minimap paints SVG `fill` attributes, where a CSS variable does
             // not resolve, so it takes the inks of the editor's scheme as values.
             nodeColor={(node) => scheme(editorScheme).ink[node.data?.graphNode?.node_type as NodeType] ?? SURFACE}

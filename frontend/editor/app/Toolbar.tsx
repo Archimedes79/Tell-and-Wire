@@ -391,7 +391,7 @@ export default function Toolbar({
               {ask.phase === 'ready' ? (
                 <Button variant="primary" onClick={() => { void handleLoadDescribed(); }}>Load graph</Button>
               ) : (
-                <Button variant="primary" onClick={() => { void send(description, description); }} disabled={asking || !description.trim()}>
+                <Button variant="ai" onClick={() => { void send(description, description); }} disabled={asking || !description.trim()}>
                   {asking ? '⏳ Generating…' : 'Generate'}
                 </Button>
               )}

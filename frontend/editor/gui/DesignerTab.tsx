@@ -15,7 +15,7 @@ import GuiHeading from './GuiHeading';
 import WidgetEditor from './WidgetEditor';
 import GuiSettings from './GuiSettings';
 import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
-import { ACCENT, LINE, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
+import { ACCENT, LINE, SHADOW_SOFT, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * The graph's gui, built on the GUI itself. One graph, one tool, one GUI --
@@ -239,7 +239,7 @@ export default function DesignerTab() {
               // The page is a surface, so its fields (sunken) sit in it, as they do in a deployed tool.
               background: SURFACE,
               border: `1px solid ${LINE}`,
-              boxShadow: '0 8px 24px rgba(16,24,40,0.06)',
+              boxShadow: SHADOW_SOFT,
               ...(dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : {}),
             }}
           >

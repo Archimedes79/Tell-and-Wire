@@ -251,9 +251,9 @@ function Opened({ node, panel, onClose, onOpenGui }: {
       {parts.length > 0 && (
         <>
           <div>
-            {/* Tinted, not solid: the solid accent is ▶ Run's, and this one replaces files. */}
+            {/* The AI's own colour, not the accent: the accent is ▶ Run's, and this one replaces files. */}
             <Button
-              variant="tint"
+              variant="ai"
               className="w-full"
               onClick={() => void writing.press('all')}
               disabled={writing.generate.busy}

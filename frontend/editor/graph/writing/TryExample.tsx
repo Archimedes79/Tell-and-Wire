@@ -106,7 +106,7 @@ export default function TryExample({ tried, running, onTry, whyNot, busy, onFix 
         </Button>
         <span className="text-xs" style={{ color: DIMMER }}>{whyNot ?? 'On the example in input.js, held to output.js.'}</span>
         {fixable && (
-          <Button size="sm" disabled={busy} onClick={onFix} title="Repair the body from how it failed, or where it does not fit output.js">
+          <Button variant="ai" size="sm" disabled={busy} onClick={onFix} title="Repair the body from how it failed, or where it does not fit output.js">
             ✨ Fix
           </Button>
         )}
