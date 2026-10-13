@@ -74,6 +74,11 @@ export default function GuiApp() {
   useEffect(() => {
     if (design && held && held !== design.drawn) load();
   }, [design, held, load]);
+  // The tab of a tool someone was handed is called what the tool is.
+  const toolName = design?.name;
+  useEffect(() => {
+    if (toolName) document.title = toolName;
+  }, [toolName]);
 
   // What the GUI still needs before a round it starts can run -- a file
   // nobody chose on a picker -- is asked for in the same window the editor

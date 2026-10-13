@@ -51,8 +51,16 @@ function rememberFolder(folder: string): void {
   }
 }
 
+/** The page's own title, as it was loaded: what the tab says while the tool has no name of its own. */
+const PAGE_TITLE = typeof document === 'undefined' ? '' : document.title;
+
 export default function App() {
   const addNode = useGraphStore((s) => s.addNode);
+  // The tab says which tool it is: two editors, or the editor and the tool opened from it, are told apart.
+  const toolName = useGraphStore((s) => s.metadata.name);
+  useEffect(() => {
+    document.title = toolName && toolName !== defaultMetadata().name ? `${toolName} – Tell & Wire` : PAGE_TITLE;
+  }, [toolName]);
   // The node open in place of the canvas, while it is there.
   const openNodeId = useGraphStore((s) => (s.rfNodes.some((n) => n.id === s.editingNodeId) ? s.editingNodeId : null));
   const setEditingNode = useGraphStore((s) => s.setEditingNode);
