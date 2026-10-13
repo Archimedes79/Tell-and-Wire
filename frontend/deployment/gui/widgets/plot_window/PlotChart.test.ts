@@ -69,3 +69,25 @@ describe('bars with names and values', () => {
     expect(valueLabel(1430000000)).toBe('1.4B');
   });
 });
+
+describe('the names under columns', () => {
+  it('are whole where there is room, and every other one where there is not -- never run into each other', () => {
+    const months = ['2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08'].map((label, i) => ({ label, value: 10 + i }));
+    const html = renderToStaticMarkup(createElement(PlotChart, { data: { kind: 'columns', title: '', points: months }, width: 360, height: 180 }));
+    const named = months.filter((one) => html.includes(`>${one.label}<`)).map((one) => one.label);
+    expect(named).toEqual(['2026-03', '2026-05', '2026-07']);
+    expect(html).not.toContain('…');
+  });
+});
+
+describe('what a step hands on under a key of its own', () => {
+  it('is the figure or the drawing itself when it is all there is: { figure: … }', () => {
+    const point = { label: 'a', value: 1 };
+    expect(toFigure({ figure: { kind: 'donut', title: 'T', points: [point] } })).toEqual({ kind: 'donut', title: 'T', points: [point] });
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+    expect(asDrawing({ figure: svg })).toBe(svg);
+    // But a figure with nothing else is still a figure, and two keys are not a wrapper.
+    expect(toFigure({ points: [point] })?.points).toEqual([point]);
+    expect(toFigure({ figure: 1, other: 2 })).toBeNull();
+  });
+});

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
  * for the notebook alone. An area may import from a lower one, never from a higher one, and never from a sibling of its own rank.
  *
  *   1 document    what the page holds and does: the store, the runs, the client, and what an input holds
+ *     look        light or dark, kept in the browser
  *   2 elements    the boxes a window is made of: the inputs and outputs, the chart, the file browser
  *   3 gui-notebook   the page and its windows, to be used
  *     graph-notebook the list of cells, under the hood, and the debug window: the windows seen as a graph
@@ -15,6 +16,7 @@ import { describe, expect, it } from 'vitest';
  */
 const AREAS: [string, number, ...string[]][] = [
   ['document', 1, 'notebook/document/'],
+  ['look', 1, 'notebook/look.ts'],
   ['elements', 2, 'notebook/elements/'],
   ['gui-notebook', 3, 'gui-notebook/'],
   ['graph-notebook', 3, 'graph-notebook/'],

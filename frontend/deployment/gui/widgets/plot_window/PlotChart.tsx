@@ -77,6 +77,16 @@ function toPoints(value: unknown): PlotPoint[] | null {
 }
 
 /**
+ * What a step handed on under one name of its own -- `{ figure: { kind, points } }`, a key the page's cell was not called by -- is the thing
+ * itself: a chart takes it as it is and says what it takes when it is not one.
+ */
+function soleValue(data: unknown): unknown {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  const keys = Object.keys(data);
+  return keys.length === 1 && !['points', 'values', 'data'].includes(keys[0]) ? soleValue((data as Record<string, unknown>)[keys[0]]) : data;
+}
+
+/**
  * What a chart was handed, as a figure.
  *
  * Three shapes are accepted and they are not alternatives so much as a ladder.
@@ -86,11 +96,11 @@ function toPoints(value: unknown): PlotPoint[] | null {
  * plot."). Neither is SVG: a body that draws its own is caught before this,
  * by `asDrawing`.
  */
-export function toFigure(data: unknown): Figure | null {
-  let value = data;
+export function toFigure(given: unknown): Figure | null {
+  let value = soleValue(given);
   if (typeof value === 'string') {
     try {
-      value = JSON.parse(value);
+      value = soleValue(JSON.parse(value));
     } catch {
       return null;
     }
@@ -219,7 +229,8 @@ function fit(label: string, slotWidth: number): string {
  * run -- and stripping scripts out of it by pattern left ways in that markup
  * in the page would have run, in the editor's own origin.
  */
-export function asDrawing(data: unknown): string | null {
+export function asDrawing(given: unknown): string | null {
+  const data = soleValue(given);
   if (typeof data !== 'string') return null;
   const text = data.trim();
   if (!/^<svg[\s>]/i.test(text)) return null;
@@ -381,8 +392,9 @@ function Upright({ figure, ...common }: Common & { figure: Figure }) {
   const scaleY = (v: number) => top + plotH - ((v - min) / range) * plotH;
   const points = figure.points;
   const slot = plotW / points.length;
-  // A name needs a slot of 22 pixels; narrower, every n-th has the room of n.
-  const every = labelEvery(slot, 22);
+  // A name needs its letters and a gap (at most ten of them are drawn); narrower than that, every n-th has the room of n.
+  const longest = Math.min(10, points.reduce((most, p) => Math.max(most, p.label.length), 1));
+  const every = labelEvery(slot, Math.max(22, longest * 6.2 + 8));
   const alongX = (i: number) => margin.left
     + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
 

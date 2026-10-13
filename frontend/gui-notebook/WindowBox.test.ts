@@ -4,6 +4,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Window, Windows } from '../../gui/notebook/windows.ts';
 import { outEnd } from '../../gui/notebook/windows.ts';
+import { tableHeight } from '../notebook/elements/Widgets';
 
 const run = vi.fn(async (_id: string) => undefined);
 vi.mock('../notebook/document/runs', () => ({ runWindow: (id: string) => run(id), stopRuns: vi.fn(async () => undefined) }));
@@ -87,8 +88,8 @@ describe('a window on the page', () => {
     expect([...screen.querySelectorAll('li')].map((one) => one.textContent)).toEqual(['one', 'two']);
     expect(screen.textContent).toContain('plain words');
     expect(screen.querySelector('.nb-chip')?.textContent).toBe('Done');
-    // The boxes are as tall as they were.
-    expect([...screen.querySelectorAll<HTMLElement>('.nb-out')].map((one) => one.style.height)).toEqual(['162px', '102px', '102px', '72px']);
+    // The boxes are as tall as they were, but a table: it is as tall as its two rows and its header need (`tableHeight`), more than the 3 rows it was given.
+    expect([...screen.querySelectorAll<HTMLElement>('.nb-out')].map((one) => one.style.height)).toEqual(['162px', `${tableHeight(2)}px`, '102px', '72px']);
   });
 
   it('says why a run came to nothing in the place of the first output, not under it, and does not grow', async () => {

@@ -2,7 +2,8 @@ import type { WidgetViewProps } from '../WidgetView';
 import SaveButton from '../SaveButton';
 import { csvText, fileName, saveFile } from '../download';
 import { inlineText } from '../../../../../gui/widgets/text_io/text.ts';
-import { DIMMER, LINE, MUTED, SUNKEN, TEXT } from '../../kit/ui/theme';
+import { columnsFrom, isTotal } from '../../../../../gui/widgets/table/figures.ts';
+import { DANGER_TEXT, DIMMER, LINE, MUTED, SUCCESS_TEXT, SUNKEN, TEXT } from '../../kit/ui/theme';
 
 /**
  * The size a table's header and rows are drawn at, in pixels. Named because
@@ -16,7 +17,7 @@ export const TABLE_TEXT = 12;
  * a list of objects sharing their keys (keys become the header) or a list of
  * lists whose first row is the header. Anything else is null.
  */
-function toRows(value: unknown): { header: string[]; rows: string[][] } | null {
+function toRows(value: unknown): { header: string[]; rows: string[][]; raw: unknown[][] } | null {
   let data = value;
   if (typeof data === 'string') {
     try {
@@ -33,6 +34,7 @@ function toRows(value: unknown): { header: string[]; rows: string[][] } | null {
     return {
       header: header.map(String),
       rows: rest.map((row) => (Array.isArray(row) ? row.map(inlineText) : [inlineText(row)])),
+      raw: rest.map((row) => (Array.isArray(row) ? row : [row])),
     };
   }
   if (first && typeof first === 'object') {
@@ -45,6 +47,7 @@ function toRows(value: unknown): { header: string[]; rows: string[][] } | null {
     return {
       header,
       rows: (data as Record<string, unknown>[]).map((row) => header.map((key) => inlineText(row?.[key]))),
+      raw: (data as Record<string, unknown>[]).map((row) => header.map((key) => row?.[key])),
     };
   }
   return null;
@@ -58,6 +61,9 @@ function toRows(value: unknown): { header: string[]; rows: string[][] } | null {
 export default function TableWidgetView({ widget, value, incoming }: WidgetViewProps) {
   const data = incoming !== undefined ? incoming : value;
   const table = toRows(data);
+  // What is saved is what was read; what is shown is set as its cells say (`gui/widgets/table/figures.ts`): figures to the right,
+  // thousands told apart, a rise and a fall in colour.
+  const columns = table ? columnsFrom(table.header, table.header.map((_, c) => table.raw.map((row) => row[c]))) : [];
 
   if (!table) {
     const text = data === undefined || data === null || data === ''
@@ -83,7 +89,7 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
                 <th
                   key={i}
                   style={{
-                    textAlign: 'left', padding: '3px 8px', position: 'sticky', top: 0,
+                    textAlign: columns[i]?.numeric ? 'right' : 'left', padding: '3px 8px', position: 'sticky', top: 0,
                     borderBottom: `1px solid ${LINE}`, color: MUTED, fontWeight: 600,
                     // The GUI's own recessed colour, so the header follows its
                     // scheme -- a fixed near-black band sat on the light ones --
@@ -98,12 +104,23 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
           </thead>
           <tbody>
             {table.rows.map((row, r) => (
-              <tr key={r}>
-                {row.map((cell, c) => (
-                  <td key={c} style={{ padding: '3px 8px', borderBottom: `1px solid ${LINE}`, color: TEXT }}>
-                    {cell}
-                  </td>
-                ))}
+              <tr key={r} style={isTotal({ first: table.raw[r][0] }, ['first']) ? { fontWeight: 600 } : undefined}>
+                {row.map((cell, c) => {
+                  const column = columns[c];
+                  const value = table.raw[r][c];
+                  const tone = column?.tone(value);
+                  return (
+                    <td
+                      key={c}
+                      style={{
+                        padding: '3px 8px', borderBottom: `1px solid ${LINE}`, color: tone === 'up' ? SUCCESS_TEXT : tone === 'down' ? DANGER_TEXT : TEXT,
+                        ...(column?.numeric ? { textAlign: 'right', fontVariantNumeric: 'tabular-nums' } : {}),
+                      }}
+                    >
+                      {column && typeof value === 'number' ? column.show(value) : cell}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

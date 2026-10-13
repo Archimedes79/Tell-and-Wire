@@ -6,7 +6,9 @@ import { useLayoutEffect, useRef, useState } from 'react';
 interface Point { label: string; value: number }
 interface Figure { kind: 'bars' | 'columns' | 'line' | 'donut'; title: string; points: Point[] }
 
-const COLOURS = ['#3d63d8', '#8a5ad8', '#1f9a76', '#d98a1f', '#d84a6a', '#2b9ac9', '#7a8494', '#b0b800'];
+// The notebook's colours, by variable (`notebook.css`), so a chart follows the look the notebook has.
+const COLOURS = Array.from({ length: 8 }, (_, at) => `var(--series-${at + 1})`);
+const INK = 'var(--ink)', MUTED = 'var(--muted)', AXIS = 'var(--line2)';
 const KINDS = ['bars', 'columns', 'line', 'donut'];
 
 const numberOf = (value: unknown): number | null => {
@@ -24,8 +26,25 @@ export function short(value: number): string {
   return `${Math.abs(scaled) >= 100 || Number.isInteger(scaled) ? Math.round(scaled) : scaled.toFixed(1)}${unit}`;
 }
 
+/** How many places apart the names under columns or a line stand, so that none runs into the next: each name needs its letters (at 10 px) and a gap. */
+export function labelStep(labels: string[], step: number): number {
+  const longest = Math.min(10, Math.max(1, ...labels.map((one) => one.length)));
+  return Math.max(1, Math.ceil((longest * 5.8 + 8) / Math.max(1, step)));
+}
+
+/**
+ * What a step handed on under one name of its own -- `{ figure: { kind, points } }`, a key the page's cell was not called by -- is the thing
+ * itself: a chart takes it as it is and says what it takes when it is not one.
+ */
+export function soleValue(data: unknown): unknown {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  const keys = Object.keys(data);
+  return keys.length === 1 && !['points', 'values', 'data'].includes(keys[0]) ? soleValue((data as Record<string, unknown>)[keys[0]]) : data;
+}
+
 /** What arrived at a chart, as a figure: a figure itself, or a list of numbers or of `{ label, value }`. */
-function figureOf(data: unknown): Figure | null {
+function figureOf(given: unknown): Figure | null {
+  const data = soleValue(given);
   const raw = data && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, unknown> : null;
   const list = raw ? raw.points : data;
   if (!Array.isArray(list)) return null;
@@ -37,7 +56,10 @@ function figureOf(data: unknown): Figure | null {
     if (value === null) return null;
     points.push({ label: String(object ? object.x ?? object.label ?? at : at), value });
   }
-  return { kind: raw && KINDS.includes(String(raw.kind)) ? raw.kind as Figure['kind'] : 'bars', title: raw ? String(raw.title ?? '') : '', points };
+  // A model says "pie" as often as "donut", and "bar" for bars.
+  const said = String(raw?.kind ?? '').toLowerCase();
+  const asked = ({ pie: 'donut', doughnut: 'donut', bar: 'bars', column: 'columns', lines: 'line' } as Record<string, string>)[said] ?? said;
+  return { kind: raw && KINDS.includes(asked) ? asked as Figure['kind'] : 'bars', title: raw ? String(raw.title ?? '') : '', points };
 }
 
 export default function Chart({ data }: { data: unknown }) {
@@ -54,9 +76,10 @@ export default function Chart({ data }: { data: unknown }) {
     watch.observe(node);
     return () => watch.disconnect();
   }, []);
-  if (typeof data === 'string' && data.trim().startsWith('<svg')) return <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(data)}`} style={{ maxWidth: '100%', maxHeight: '100%', margin: 'auto' }} />;
+  const sole = soleValue(data);
+  if (typeof sole === 'string' && sole.trim().startsWith('<svg')) return <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(sole)}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
   const figure = figureOf(data);
-  if (!figure) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>This is not something a chart can draw.</div>;
+  if (!figure) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>{`A chart draws points -- a list of numbers, or {"kind", "title", "points": [{"label", "value"}]} -- and this is ${(JSON.stringify(data) ?? String(data)).slice(0, 100)}. A code step before it can make them.`}</div>;
   if (!figure.points.length) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>{figure.title || 'Nothing to plot.'}</div>;
   // Bars have a least height of their own: with more of them than the box has room for, it scrolls rather than the letters shrinking.
   const tall = figure.kind === 'bars' ? Math.max(size.h, (figure.title ? 28 : 8) + Math.min(figure.points.length, 24) * 18 + 6) : size.h;
@@ -66,7 +89,7 @@ export default function Chart({ data }: { data: unknown }) {
 function drawn(figure: Figure, W: number, H: number) {
   const { points } = figure;
   const top = figure.title ? 28 : 8;
-  const title = figure.title && <text x={W / 2} y="17" textAnchor="middle" fontSize="13" fontWeight="600" fill="#151a23">{figure.title}</text>;
+  const title = figure.title && <text x={W / 2} y="17" textAnchor="middle" fontSize="13" fontWeight="600" style={{ fill: INK }}>{figure.title}</text>;
   const max = Math.max(...points.map((one) => one.value), 0) || 1;
 
   if (figure.kind === 'donut') {
@@ -82,12 +105,12 @@ function drawn(figure: Figure, W: number, H: number) {
           const point = (r: number, a: number) => `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
           const large = sweep > Math.PI ? 1 : 0;
           const d = `M ${point(outer, from)} A ${outer} ${outer} 0 ${large} 1 ${point(outer, angle - 1e-4)} L ${point(inner, angle - 1e-4)} A ${inner} ${inner} 0 ${large} 0 ${point(inner, from)} Z`;
-          return <path key={at} d={d} fill={COLOURS[at % COLOURS.length]} />;
+          return <path key={at} d={d} style={{ fill: COLOURS[at % COLOURS.length] }} />;
         })}
         {points.slice(0, 12).map((one, at) => (
           <g key={at} transform={`translate(${cx + outer + 24} ${top + 12 + at * 17})`}>
-            <rect width="10" height="10" y="-9" rx="2" fill={COLOURS[at % COLOURS.length]} />
-            <text x="16" fontSize="11" fill="#151a23">{one.label.slice(0, 18)} · {short(one.value)}</text>
+            <rect width="10" height="10" y="-9" rx="2" style={{ fill: COLOURS[at % COLOURS.length] }} />
+            <text x="16" fontSize="11" style={{ fill: INK }}>{one.label.slice(0, 18)} · {short(one.value)}</text>
           </g>
         ))}
       </>
@@ -106,9 +129,9 @@ function drawn(figure: Figure, W: number, H: number) {
           const width = Math.max(0, one.value / max) * (W - left - 52);
           return (
             <g key={at}>
-              <text x={left - 6} y={y + height / 2 + 4} textAnchor="end" fontSize={Math.min(11, height * 0.8)} fill="#566070">{one.label.slice(0, 16)}</text>
-              <rect x={left} y={y + height * 0.12} width={width} height={height * 0.76} rx="2" fill={COLOURS[0]} />
-              <text x={left + width + 5} y={y + height / 2 + 4} fontSize={Math.min(11, height * 0.8)} fill="#151a23">{short(one.value)}</text>
+              <text x={left - 6} y={y + height / 2 + 4} textAnchor="end" fontSize={Math.min(11, height * 0.8)} style={{ fill: MUTED }}>{one.label.slice(0, 16)}</text>
+              <rect x={left} y={y + height * 0.12} width={width} height={height * 0.76} rx="2" style={{ fill: COLOURS[0] }} />
+              <text x={left + width + 5} y={y + height / 2 + 4} fontSize={Math.min(11, height * 0.8)} style={{ fill: INK }}>{short(one.value)}</text>
             </g>
           );
         })}
@@ -123,23 +146,24 @@ function drawn(figure: Figure, W: number, H: number) {
   const range = max - low || 1;
   const y = (value: number) => bottom - ((value - low) / range) * span;
   const step = width / shownPoints.length;
+  const named = labelStep(shownPoints.map((one) => one.label), step);
   return (
     <>
       {title}
-      <line x1={left} y1={bottom} x2={W - 12} y2={bottom} stroke="#c7cdd8" />
-      <line x1={left} y1={top} x2={left} y2={bottom} stroke="#c7cdd8" />
-      <text x={left - 4} y={top + 4} textAnchor="end" fontSize="10" fill="#566070">{short(max)}</text>
-      <text x={left - 4} y={bottom} textAnchor="end" fontSize="10" fill="#566070">{short(low)}</text>
+      <line x1={left} y1={bottom} x2={W - 12} y2={bottom} style={{ stroke: AXIS }} />
+      <line x1={left} y1={top} x2={left} y2={bottom} style={{ stroke: AXIS }} />
+      <text x={left - 4} y={top + 4} textAnchor="end" fontSize="10" style={{ fill: MUTED }}>{short(max)}</text>
+      <text x={left - 4} y={bottom} textAnchor="end" fontSize="10" style={{ fill: MUTED }}>{short(low)}</text>
       {figure.kind === 'columns'
-        ? shownPoints.map((one, at) => <rect key={at} x={left + at * step + step * 0.12} y={Math.min(y(one.value), y(0))} width={step * 0.76} height={Math.abs(y(one.value) - y(0))} rx="2" fill={COLOURS[0]} />)
+        ? shownPoints.map((one, at) => <rect key={at} x={left + at * step + step * 0.12} y={Math.min(y(one.value), y(0))} width={step * 0.76} height={Math.abs(y(one.value) - y(0))} rx="2" style={{ fill: COLOURS[0] }} />)
         : (
           <>
-            <polyline fill="none" stroke={COLOURS[0]} strokeWidth="2" points={shownPoints.map((one, at) => `${left + at * step + step / 2},${y(one.value)}`).join(' ')} />
-            {shownPoints.map((one, at) => <circle key={at} cx={left + at * step + step / 2} cy={y(one.value)} r="2.5" fill={COLOURS[0]} />)}
+            <polyline fill="none" style={{ stroke: COLOURS[0] }} strokeWidth="2" points={shownPoints.map((one, at) => `${left + at * step + step / 2},${y(one.value)}`).join(' ')} />
+            {shownPoints.map((one, at) => <circle key={at} cx={left + at * step + step / 2} cy={y(one.value)} r="2.5" style={{ fill: COLOURS[0] }} />)}
           </>
         )}
-      {shownPoints.map((one, at) => (at % Math.ceil(shownPoints.length / 8) === 0
-        ? <text key={at} x={left + at * step + step / 2} y={bottom + 14} textAnchor="middle" fontSize="10" fill="#566070">{one.label.slice(0, 8)}</text> : null))}
+      {shownPoints.map((one, at) => (at % named === 0
+        ? <text key={at} x={left + at * step + step / 2} y={bottom + 14} textAnchor="middle" fontSize="10" style={{ fill: MUTED }}>{one.label.length > 10 ? `${one.label.slice(0, 9)}…` : one.label}</text> : null))}
     </>
   );
 }

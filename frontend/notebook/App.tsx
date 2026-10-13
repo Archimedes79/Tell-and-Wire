@@ -13,6 +13,7 @@ import { runAll, stopRuns } from './document/runs';
 import { saveNote } from './document/status';
 import { folderName } from './document/values';
 import { isDirty, useNotebook } from './document/store';
+import { applyLook, savedLook, type Look } from './look';
 import { startPage } from '../../gui/notebook/page.ts';
 import { DEFAULT_SCHEME, windowProblems } from '../../gui/notebook/windows.ts';
 
@@ -38,6 +39,8 @@ export default function App() {
   const canRedo = useNotebook((s) => s.future.length > 0);
   const { edit, undo, redo, open, save, clearError, start, show } = useNotebook.getState();
   const [browsing, setBrowsing] = useState<'open' | 'save' | null>(null);
+  const [look, setLook] = useState<Look>(savedLook);
+  const changeLook = (next: Look): void => { applyLook(next); setLook(next); };
   const problems = doc ? windowProblems(doc) : [];
   const writing = mode === 'write';
   const note = saveNote({ path, dirty, savedAt });
@@ -81,7 +84,7 @@ export default function App() {
     <div className={`nb-app${doc && writing && docked ? ' dock-open' : ''}`}>
       <header className="nb-top">
         <span className="nb-brand">
-          <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><circle cx="6" cy="8" r="3.5" stroke="#151a23" strokeWidth="2" /><circle cx="22" cy="20" r="3.5" stroke="#151a23" strokeWidth="2" /><path d="M9.5 8 C16 8 12 20 18.5 20" stroke="#1f4fbf" strokeWidth="2" strokeLinecap="round" /></svg>
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true"><circle cx="6" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" /><circle cx="22" cy="20" r="3.5" stroke="currentColor" strokeWidth="2" /><path d="M9.5 8 C16 8 12 20 18.5 20" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round" /></svg>
           Tell &amp; Wire
         </span>
         {doc && (
@@ -104,6 +107,12 @@ export default function App() {
           </>
         )}
         <span className="nb-sp" />
+        <button
+          className="nb-btn quiet" aria-pressed={look === 'dark'} aria-label="Dark notebook" title={look === 'dark' ? 'Back to the white notebook' : 'A dark notebook (the delivered tool keeps its own look)'}
+          onClick={() => changeLook(look === 'dark' ? 'light' : 'dark')}
+        >
+          {look === 'dark' ? '☀ Light' : '☾ Dark'}
+        </button>
         {doc && (going
           ? <button className="nb-btn" onClick={() => { void stopRuns(); }}>■ Stop</button>
           : <button className="nb-btn primary" disabled={problems.length > 0} onClick={() => { void runAll(); }} title="Run every window that is not current, in order">▶ Run all</button>)}

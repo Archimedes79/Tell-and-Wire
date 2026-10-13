@@ -8,7 +8,8 @@ import { asText } from '../../../gui/widgets/text_io/text.ts';
 import { chatValue } from '../../../gui/widgets/chat/value.ts';
 import type { InKind, OutKind, WindowIn } from '../../../gui/notebook/windows.ts';
 import Browse from './Browse';
-import Chart from './Chart';
+import { columnsOf, isTotal } from '../../../gui/widgets/table/figures.ts';
+import Chart, { soleValue } from './Chart';
 
 /** The height of a row of a window, in pixels: what an output is as tall as, in rows. */
 export const ROW = 30;
@@ -64,14 +65,31 @@ function PathBox({ kind, value, extensions, onChange }: { kind: 'file' | 'folder
   );
 }
 
+/**
+ * The proportions of a finished drawing -- width over height, from its viewBox or its width and height -- or none where it says neither.
+ * What a step drew for its window's room (`node.window`) keeps that shape in the box it is shown in, instead of being fitted into a
+ * flatter one with its letters shrunk to nothing.
+ */
+export function drawingAspect(value: unknown): number | null {
+  const text = soleValue(Array.isArray(value) ? value[0] : value);
+  if (typeof text !== 'string' || !/^\s*<svg[\s>]/i.test(text)) return null;
+  const tag = text.slice(0, text.indexOf('>') + 1);
+  const box = /viewBox\s*=\s*"\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)\s*"/i.exec(tag);
+  const w = box ? Number(box[1]) : Number(/\swidth\s*=\s*"([\d.]+)(?:px)?"/i.exec(tag)?.[1]);
+  const h = box ? Number(box[2]) : Number(/\sheight\s*=\s*"([\d.]+)(?:px)?"/i.exec(tag)?.[1]);
+  return w > 0 && h > 0 ? w / h : null;
+}
+
 /** What an output shows, as its kind says: the text of it, a list, a table, a chart, an image. */
 export function Output({ kind, value, rows }: { kind: OutKind; value: unknown; rows: number }) {
   const height = Math.max(1, rows) * ROW + 12;
   const empty = value === undefined || value === null || value === '';
   if (empty) return <div className="nb-out waiting" style={{ height }}>The result appears here</div>;
-  if (kind === 'chart') return <div className="nb-out chart" style={{ height }}><Chart data={value} /></div>;
-  if (kind === 'table') return <div className="nb-out" style={{ height }}><Table value={value} /></div>;
-  if (kind === 'image') return <div className="nb-out" style={{ height }}><Pictures value={value} /></div>;
+  const aspect = kind === 'chart' || kind === 'image' ? drawingAspect(value) : null;
+  if (kind === 'chart') return <div className="nb-out chart" style={aspect ? { height: 'auto', aspectRatio: String(aspect), minHeight: height } : { height }}><Chart data={value} /></div>;
+  // A table is as tall as its rows, up to a limit: a key-figure table with its Total row cut off is not the answer, and the rows the page gave it are a guess made before there were any.
+  if (kind === 'table') return <div className="nb-out" style={{ height: Array.isArray(value) ? Math.min(Math.max(height, tableHeight(value.length)), TABLE_LIMIT) : height }}><Table value={value} /></div>;
+  if (kind === 'image') return <div className="nb-out" style={aspect ? { height: 'auto', aspectRatio: String(aspect), minHeight: height } : { height }}><Pictures value={value} /></div>;
   if (kind === 'list') {
     const items = Array.isArray(value) ? value.map(asText) : asText(value).split(/\n{2,}|\n/).filter((line) => line.trim());
     return <div className="nb-out" style={{ height }}><ul>{items.map((item, at) => <li key={at}>{item}</li>)}</ul></div>;
@@ -81,6 +99,10 @@ export function Output({ kind, value, rows }: { kind: OutKind; value: unknown; r
 
 const cell = (value: unknown): string => (typeof value === 'string' ? value : value === null || value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value));
 
+/** The height of a table of *count* rows and a header, in pixels. */
+export const tableHeight = (count: number): number => (count + 1) * 28 + 34;
+const TABLE_LIMIT = 14 * ROW;
+
 function Table({ value }: { value: unknown }) {
   const rows = Array.isArray(value) ? value : null;
   if (!rows || !rows.length) return <>{asText(value)}</>;
@@ -89,15 +111,19 @@ function Table({ value }: { value: unknown }) {
   }
   const columns = [...new Set(rows.flatMap((row) => (row && typeof row === 'object' ? Object.keys(row) : [])))];
   if (!columns.length) return <>{asText(value)}</>;
-  // A column of numbers stands to the right, and with the same decimals all down it (274.40 under 950.00), as a ledger has it.
-  const at = (row: unknown, name: string): unknown => (row as Record<string, unknown>)[name];
-  const numbers = new Set(columns.filter((name) => rows.every((row) => at(row, name) === null || at(row, name) === undefined || typeof at(row, name) === 'number')));
-  const decimals = new Set([...numbers].filter((name) => rows.some((row) => typeof at(row, name) === 'number' && !Number.isInteger(at(row, name)))));
-  const shown = (name: string, value: unknown): string => (decimals.has(name) && typeof value === 'number' ? value.toFixed(2) : cell(value));
+  // Set as its cells say (`tableFormat.ts`): figures to the right and even, a rise or a fall in colour, a Total row apart.
+  const objects = rows as Record<string, unknown>[];
+  const set = columnsOf(objects, columns);
   return (
     <table>
-      <thead><tr>{columns.map((name) => <th key={name} className={numbers.has(name) ? 'num' : undefined}>{name}</th>)}</tr></thead>
-      <tbody>{rows.map((row, r) => <tr key={r}>{columns.map((name) => <td key={name} className={numbers.has(name) ? 'num' : undefined}>{shown(name, at(row, name))}</td>)}</tr>)}</tbody>
+      <thead><tr>{set.map((one) => <th key={one.name} className={one.numeric ? 'num' : undefined}>{one.name}</th>)}</tr></thead>
+      <tbody>
+        {objects.map((row, r) => (
+          <tr key={r} className={isTotal(row, columns) ? 'total' : undefined}>
+            {set.map((one) => <td key={one.name} className={[one.numeric ? 'num' : '', one.tone(row[one.name]) ?? ''].filter(Boolean).join(' ') || undefined}>{one.show(row[one.name])}</td>)}
+          </tr>
+        ))}
+      </tbody>
     </table>
   );
 }

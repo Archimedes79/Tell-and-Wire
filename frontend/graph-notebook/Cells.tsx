@@ -202,7 +202,7 @@ export default function Cells({ doc, window }: { doc: Windows; window: Window })
       </div>
 
       <form className="nb-ai" onSubmit={(event) => { event.preventDefault(); if (wish.trim()) void useNotebook.getState().describe(wish.trim()).then((ok) => { if (ok) setWish(''); }); }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 L13.8 9.2 L20 11 L13.8 12.8 L12 19 L10.2 12.8 L4 11 L10.2 9.2 Z" stroke="#5b2fb3" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 L13.8 9.2 L20 11 L13.8 12.8 L12 19 L10.2 12.8 L4 11 L10.2 9.2 Z" stroke="var(--purple)" strokeWidth="1.8" strokeLinejoin="round" /></svg>
         <input aria-label="Say what should change" placeholder="Say what should change. For example: let the language be chosen." value={wish} disabled={busy === 'describing'} onChange={(event) => setWish(event.target.value)} />
         <button type="submit" disabled={!wish.trim() || busy === 'describing'}>{busy === 'describing' ? 'Working…' : 'Change'}</button>
       </form>

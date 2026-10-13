@@ -80,6 +80,18 @@ a cell that draws SVG itself, which is shown as a picture where the scheme's CSS
 should be 14 px or more (run on its own, `node code.js`, a cell has no `node.window`); the notebook shows the same picture scaled to its own, flatter block, and the delivered tool is the one that is exact.
 The numbers the facts rest on, the grid and the schemes' colours, are in `gui/windows/grid.ts` and `gui/windows/scheme.ts` (a delivered tool loads both).
 
+### A dark notebook, and key-figure tables
+
+The top bar has **☾ Dark** / **☀ Light**: the notebook itself in a dark look (`frontend/notebook/look.ts`; every colour of `notebook.css` is a variable
+and `data-look="dark"` gives them other values; kept in the browser, white by default). It is not the look of the delivered tool, which stays
+the document's own choice beside it. Every screen was checked for text contrast in both looks.
+
+A table is set as its cells say (`gui/widgets/table/figures.ts`, used by the notebook and by a delivered tool alike): a column of figures to the right with the
+same decimals all down and thousands told apart (174,898; always as English writes them, so a number and a "+10.2 %" a step wrote as text do not use two ways of writing one),
+a signed percentage in green or red, a last row that says Total in bold. The saved CSV keeps the raw values. In the notebook a table is as tall as its rows need,
+up to a limit, instead of cutting its last row off; a chart's names are thinned to every other one where they would touch; a finished drawing keeps the proportions
+it was drawn for. A chart or a drawing a step handed on under a key of its own (`{ figure: … }`) is taken as the thing itself.
+
 ## What a window cannot say yet
 
 A cell that runs several models in parallel (steps stand one under the other and run in turn; `paper_review_panel` is one cell
