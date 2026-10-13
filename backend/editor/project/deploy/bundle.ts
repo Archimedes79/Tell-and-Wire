@@ -211,11 +211,11 @@ export async function filesIn(dir: string, under = ''): Promise<string[]> {
  * What a package carries of the code, by folder: the neutral definitions, and the deployment's
  * command line and modules. A folder not named here -- `backend/editor`, the architecture
  * tests -- is not carried, and inside these a folder named `editor` (the editor's part of
- * `graph/` and `gui/`), a test and its fixtures stay behind: a recipient runs the tool, not
+ * `graph/` and `gui/`) or `notebook` (the notebook's: `gui/notebook`, which writes the files a package is), a test and its fixtures stay behind: a recipient runs the tool, not
  * its test suite and not an editor. `bundle.test.ts` is the check that says so.
  */
 const CARRIED = ['graph', 'gui', 'backend/cli', 'backend/deployment'];
-const LEFT_BEHIND = new Set(['editor', 'test', 'node_modules']);
+const LEFT_BEHIND = new Set(['editor', 'notebook', 'test', 'node_modules']);
 
 /** The file that says what a package is and lists what is in it. */
 const MANIFEST = 'MANIFEST.json';

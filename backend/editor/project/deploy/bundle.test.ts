@@ -61,7 +61,7 @@ describe('a bundle', () => {
       const there = (await readdir(dir, { recursive: true, withFileTypes: true })).filter((entry) => entry.isFile())
         .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1).split('\\').join('/')).filter((path) => path !== 'MANIFEST.json');
       expect(manifest.files).toEqual(there.sort());
-      expect(there.filter((path) => path.split('/').includes('editor') || path.startsWith('backend/architecture/'))).toEqual([]);
+      expect(there.filter((path) => path.split('/').includes('editor') || path.split('/').includes('notebook') || path.startsWith('backend/architecture/'))).toEqual([]);
       expect(await readFile(join(dir, 'LICENSE'), 'utf8')).toBe(await readFile(join(REPO, 'LICENSE'), 'utf8'));
     } finally {
       await rm(dir, { recursive: true, force: true });

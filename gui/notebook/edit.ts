@@ -36,8 +36,10 @@ export function inWindow(doc: Windows, id: string, change: (window: Window) => W
 /** A window with nothing in it yet but a first cell and a first output, on a page that has *others*. */
 export function newWindow(doc: Windows, title = 'New window'): Window {
   const name = freshName(title, doc.windows.map((window) => window.title));
-  let id = idOf(name);
-  for (let n = 2; doc.windows.some((window) => window.id === id); n += 1) id = `${idOf(name)}_${n}`;
+  // "New window 2" is `new_window2`, not `new_window_2`: no id begins another's followed by an underscore, as the nodes of a window are named.
+  let id = idOf(name).replace(/_(\d+)$/, '$1');
+  // "new_window2", not "new_window_2": no window's id begins another's followed by an underscore, as the nodes of a window do.
+  for (let n = 2; doc.windows.some((window) => window.id === id); n += 1) id = `${idOf(name)}${n}`;
   return {
     id, title: name, span: 8,
     inputs: [{ name: 'Text', kind: 'text' }],
@@ -47,16 +49,6 @@ export function newWindow(doc: Windows, title = 'New window'): Window {
 }
 
 export const addWindow = (doc: Windows, title?: string): Windows => ({ ...doc, windows: [...doc.windows, newWindow(doc, title)] });
-
-/** A window moved one place earlier (-1) or later (+1) on the page, which is the order it is read and run in. */
-export function moveWindow(doc: Windows, id: string, by: -1 | 1): Windows {
-  const at = doc.windows.findIndex((window) => window.id === id);
-  const to = at + by;
-  if (at < 0 || to < 0 || to >= doc.windows.length) return doc;
-  const windows = doc.windows.slice();
-  [windows[at], windows[to]] = [windows[to], windows[at]];
-  return { ...doc, windows };
-}
 
 export const removeWindow = (doc: Windows, id: string): Windows => ({
   ...doc,
@@ -187,8 +179,23 @@ export const patchInput = (doc: Windows, id: string, at: number, patch: Partial<
 export const patchStep = (doc: Windows, id: string, at: number, patch: Partial<Step>): Windows =>
   inWindow(doc, id, (window) => ({ ...window, steps: window.steps.map((one, place) => (place === at ? { ...one, ...patch } : one)) }));
 
-export const patchOutput = (doc: Windows, id: string, at: number, patch: Partial<WindowOut>): Windows =>
-  inWindow(doc, id, (window) => ({ ...window, outputs: window.outputs.map((one, place) => (place === at ? { ...one, ...patch } : one)) }));
+/**
+ * The output at *at*, changed by *patch*. Renamed, what points at it follows, as it does for an input or a step: the windows that take it
+ * (`from`), and -- for a chat, whose name is what `@Chat.message` says -- the cells of its own window.
+ */
+export function patchOutput(doc: Windows, id: string, at: number, patch: Partial<WindowOut>): Windows {
+  const was = doc.windows.find((window) => window.id === id)?.outputs[at];
+  const changed = inWindow(doc, id, (window) => ({ ...window, outputs: window.outputs.map((one, place) => (place === at ? { ...one, ...patch } : one)) }));
+  if (!was || patch.name === undefined || patch.name === was.name) return changed;
+  const name = patch.name;
+  return {
+    ...changed,
+    windows: changed.windows.map((window) => {
+      if (window.id === id) return was.kind === 'chat' ? { ...window, steps: window.steps.map((step) => ({ ...step, sentence: repoint(step.sentence, was.name, name) })) } : window;
+      return { ...window, inputs: window.inputs.map((one) => (one.from?.window === id && one.from.output === was.name ? { ...one, from: { ...one.from, output: name } } : one)) };
+    }),
+  };
+}
 
 export const patchWindow = (doc: Windows, id: string, patch: Partial<Window>): Windows => inWindow(doc, id, (window) => ({ ...window, ...patch }));
 

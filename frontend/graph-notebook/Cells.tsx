@@ -154,8 +154,10 @@ export default function Cells({ doc, window }: { doc: Windows; window: Window })
 
       {/* ---- Do ---- */}
       {window.steps.map((step, at) => {
-        const available = [...names, ...window.steps.slice(0, at).flatMap((one) => resultsOf(one))];
-        const known = new Set(available.map(idOf));
+        // What a chat of the window says is pointed at too (@Chat.message, @Chat.history), by the chat's own name.
+        const chats = window.outputs.filter((one) => one.kind === 'chat').map((one) => one.name);
+        const available = [...names, ...chats.flatMap((chat) => [`${chat}.message`, `${chat}.history`]), ...window.steps.slice(0, at).flatMap((one) => resultsOf(one))];
+        const known = new Set([...available, ...chats].map(idOf));
         const said = mentions(step.sentence);
         const takes = taken(window, at);
         const status = stepWords[at];

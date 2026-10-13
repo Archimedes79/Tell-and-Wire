@@ -25,12 +25,10 @@
 // Editor only, like everything that is written for a person: a package runs
 // the graph and the gui this makes, and carries nothing of this file.
 
-import type { DataType, Graph, GraphEdge, GraphNode, Port, RawConfig, WidgetKind } from '../../graph/graph.ts';
+import type { DataType, Graph, GraphEdge, GraphNode, Port, RawConfig } from '../../graph/graph.ts';
 import { wireOf } from '../../graph/files/flow.ts';
-import { parseWidget } from '../gui.ts';
 import { BLOCK_CHROME, GUI_GAP, GUI_MAX_CELL, WINDOW_BORDER, WINDOW_PADDING } from '../windows/grid.ts';
 import { plotColours, scheme } from '../windows/scheme.ts';
-import { widgetDesign } from '../editor/widgets/roster.ts';
 import { pageOf } from './pageModel.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { port } from '../../graph/nodes/port.ts';
@@ -244,8 +242,6 @@ function shownResult(window: Window, one: WindowOut): string | undefined {
   return one.of ?? resultsOf(window.steps[window.steps.length - 1] ?? { name: '', sentence: '', how: 'ai' })[0];
 }
 
-/** The kind of block that shows each kind of output. */
-const OUT_BLOCK: Record<OutKind, WidgetKind> = { text: 'text_io', list: 'text_io', table: 'table', chart: 'plot_window', image: 'image_view', chat: 'chat' };
 
 const OUT_TYPE: Record<OutKind, DataType> = { text: 'text', list: 'text', table: 'json', chart: 'json', image: 'image', chat: 'text' };
 const IN_TYPE: Record<InKind, DataType> = { file: 'text', folder: 'file_path', text: 'text', number: 'number', choice: 'text', from: 'text' };
@@ -357,37 +353,6 @@ export function windowProblems(doc: Windows): Problem[] {
   return problems;
 }
 
-// ---- what the model is told ------------------------------------------------
-
-/**
- * A window, in words, for ✨ to write its cells from: where it sits on the page,
- * what the person puts in, and what room each output has -- in cells, which is
- * all the page keeps of a size. How big a cell is in pixels, the scheme's
- * colours, and what a box can hold are said by the editor around the graph
- * (`frontend/editor/graph/writing/graphContext.ts`, `generationContext.ts`),
- * for every block of the gui alike; this adds only what those cannot: that
- * the blocks are one window, and what the others on the page make.
- */
-export function windowContext(doc: Windows, id: string): string {
-  const window = doc.windows.find((one) => one.id === id);
-  if (!window) return '';
-  const lines = [`Window "${window.title}": ${window.span} of 16 cells wide on the page "${doc.name}", ${windowRows(window)} rows tall, and it never grows: what comes out fills the room it is given.`];
-  if (window.ask) lines.push(`The person is asked: ${window.ask}`);
-  lines.push(`The person puts in: ${window.inputs.map((one) => `${one.name} (${one.kind}${one.kind === 'choice' ? `: ${(one.options ?? []).join(', ')}` : ''})`).join('; ') || 'nothing'}.`);
-  for (const one of window.outputs) {
-    const piece = outPiece(window, one);
-    const made = shownResult(window, one);
-    const step = made ? producer(window, made)?.step : undefined;
-    // What the block that shows it wants is the block's own to say (its design), the same words every node wired to a block is told.
-    const kind = OUT_BLOCK[one.kind];
-    const wants = widgetDesign(kind)?.receives(parseWidget({ id: outEnd(window, one), kind }))?.trim().replace(/\.$/, '');
-    lines.push(`Comes out: "${one.name}", a ${one.kind} ${piece.cells} x ${piece.rows} cells${made ? `, showing "${made}"` : ''}${step ? `, which the cell "${step.name}" makes` : ''}.${wants ? ` It wants ${wants}.` : ''}`);
-  }
-  const others = doc.windows.filter((one) => one.id !== id);
-  if (others.length) lines.push(`Other windows on the page: ${others.map((one) => `"${one.title}" makes ${one.outputs.map((out) => `"${out.name}"`).join(', ')}`).join('; ')}.`);
-  return lines.join('\n');
-}
-
 // ---- which windows to run, and in what order -------------------------------
 //
 // The rule is shared with the page a deployed tool serves, so it lives in `gui/windows/order.ts`; here it is
@@ -412,7 +377,7 @@ export const afterRun = (doc: Windows, done: Done, id: string): Done => orderAft
 // ---- windows to a graph and a gui ------------------------------------------
 
 /** The sentence as the model reads it: a mention is the name of what it points at. */
-const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu, (_, name: string, part?: string) => `"${name}${part && part !== 'content' ? ` ${part}` : ''}"`);
+export const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu, (_, name: string, part?: string) => `"${name}${part && part !== 'content' ? ` ${part}` : ''}"`);
 
 /** What a port is called for the part of a thing a step takes: a file's `path`, a chat's `message` and `history`; the thing itself, nothing. */
 const partOf = (part?: string): string => (part && part !== 'content' ? `_${part}` : '');

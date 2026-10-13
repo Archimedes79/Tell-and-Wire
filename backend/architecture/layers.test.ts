@@ -130,6 +130,13 @@ describe('the folders', () => {
     expect(show(against)).toEqual([]);
   });
 
+  it('let the notebook use of the editor-named folders only what both write with: the check of a gui and the writing of a graph handed on', () => {
+    // graph/editor and gui/editor are shared, and neutral; these two files are all the notebook asks of them. Another one is the editor's, or goes beside them.
+    const BOTH_WRITE_WITH = new Set(['gui/editor/check.ts', 'graph/editor/handedOn.ts']);
+    const against = IMPORTS.filter((one) => productOf(one.from) === 'notebook' && /^(gui|graph)\/editor\//.test(one.to) && !BOTH_WRITE_WITH.has(one.to));
+    expect(show(against)).toEqual([]);
+  });
+
   it('let the frontend reach the backend only through the wire', () => {
     const against = IMPORTS.filter((one) => one.from.startsWith('frontend/') && one.to.startsWith('backend/') && !isWire(one.to));
     expect(show(against)).toEqual([]);

@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { CallFailed, call, wordsOf } from './api';
+import { windowOfBlock } from './values';
 import { pageOf, withPage } from '../../../gui/notebook/page.ts';
 import { windowsToGraph, type Done, type Windows } from '../../../gui/notebook/windows.ts';
 import type { Graph } from '../../../graph/graph.ts';
@@ -121,7 +122,7 @@ const answers = (windows: Windows['windows']): unknown => windows.map(({ span: _
   inputs: inputs.map(({ width: _width, rows: _rows, ...one }) => one),
   outputs: outputs.map(({ width: _width, rows: _rows, ...one }) => one),
 }));
-const sameWindows = (a: Windows, b: Windows): boolean => JSON.stringify(answers(a.windows)) === JSON.stringify(answers(b.windows));
+export const sameWindows = (a: Windows, b: Windows): boolean => JSON.stringify(answers(a.windows)) === JSON.stringify(answers(b.windows));
 
 export const useNotebook = create<NotebookState>((set, get) => ({
   doc: null, graph: null, path: '', saved: '', savedAt: 0, stale: false, past: [], future: [], epoch: 0,
@@ -163,7 +164,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
 
   setValue: (blockId, value) => {
     const { doc, done } = get();
-    const window = doc?.windows.find((one) => blockId.startsWith(`${one.id}_in_`));
+    const window = doc ? windowOfBlock(doc.windows, blockId) : undefined;
     set((state) => ({
       values: { ...state.values, [blockId]: value },
       // An input changed after its window ran: the window, and what takes from it, no longer answers to the page.
@@ -193,10 +194,13 @@ export const useNotebook = create<NotebookState>((set, get) => ({
 
   save: async (path, replace = false) => {
     const { doc } = get();
-    if (!doc) return false;
+    // One write at a time: a second press while the first goes (a double click, Ctrl+S held) would write the same files together and fail in the middle.
+    if (!doc || get().busy === 'saving') return false;
     set({ busy: 'saving', error: '', taken: '' });
     try {
-      const written = await call('saveWindows', { path, windows: doc, ...(replace ? { replace: true } : {}) });
+      // Saving again where this page was saved or opened from is writing over nothing but itself (unless the graph there was changed outside: that is asked); another place asks.
+      const again = replace || (path === get().path && !get().stale);
+      const written = await call('saveWindows', { path, windows: doc, ...(again ? { replace: true } : {}) });
       set({ path, saved: JSON.stringify(doc), savedAt: Date.now(), stale: false, graph: written.graph as unknown as Graph });
       return true;
     } catch (error) {

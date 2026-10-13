@@ -107,6 +107,19 @@ describe('the notebook that is open', () => {
     answers.saveWindows = (body) => (body.replace ? file(store().doc) : (() => { throw new Error('no'); })());
     expect(await store().save('/abs/x', true)).toBe(true);
     expect(store().taken).toBe('');
+
+    // A second save while one goes is not a second write.
+    let writes = 0;
+    answers.saveWindows = () => new Promise((resolve) => { writes += 1; setTimeout(() => resolve(file(store().doc)), 10); });
+    const first = store().save(store().path);
+    expect(await store().save(store().path)).toBe(false);
+    expect(await first).toBe(true);
+    expect(writes).toBe(1);
+
+    // Where it is kept already, saving again asks nothing: it is the page's own folder.
+    answers.saveWindows = (body) => (body.replace ? file(store().doc) : (() => { throw new CallFailed(409, { detail: 'taken', taken: true }); })());
+    expect(await store().save(store().path)).toBe(true);
+    expect(store().taken).toBe('');
   });
 
   it('makes a page from a sentence when there is none, and changes the windows of the page there is, keeping its text', async () => {

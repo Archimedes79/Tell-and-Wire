@@ -133,6 +133,10 @@ describe('running a window', () => {
     expect(succeeded(snapshot('b', { result: { status: 'success', node_results: [{ ...idle, held: true }], outputs: {} } }), 'summarize')).toBe(true);
     // Another window's node idle in the same round is not this window's doing.
     expect(succeeded(snapshot('c', { result: { status: 'success', node_results: [idle], outputs: {} } }), 'english')).toBe(true);
+    // Nor when its id begins that window's: "summarize" does not own the nodes of "summarize_2".
+    const next = { ...idle, node_id: 'summarize_2_summary' };
+    expect(succeeded(snapshot('d', { result: { status: 'success', node_results: [next], outputs: {} } }), 'summarize', ['summarize', 'summarize_2'])).toBe(true);
+    expect(succeeded(snapshot('e', { result: { status: 'success', node_results: [next], outputs: {} } }), 'summarize_2', ['summarize', 'summarize_2'])).toBe(false);
   });
 
   it('stops where a question is waiting, and where no round began', async () => {

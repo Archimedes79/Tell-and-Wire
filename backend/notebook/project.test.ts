@@ -6,7 +6,7 @@ import type { Graph } from '../../graph/graph.ts';
 import { columnsOf, parseTable } from '../../graph/schedule.ts';
 import { problemsIn } from '../../gui/editor/check.ts';
 import {
-  afterEdit, afterRun, runOrder, windowContext, windowProblems, windowRows, windowsToGraph, type Done, type Window, type Windows,
+  afterEdit, afterRun, runOrder, windowProblems, windowRows, windowsToGraph, type Done, type Window, type Windows,
 } from '../../gui/notebook/windows.ts';
 import { quietRuntime } from '../deployment/runtime/test/fakes.ts';
 import { nodeCode } from '../deployment/runtime/services.ts';
@@ -14,7 +14,6 @@ import { Session } from '../deployment/host/session.ts';
 import { guiHooks } from '../deployment/gui/hooks.ts';
 import { loadGraph } from '../deployment/project/folder.ts';
 import { writeProject } from '../authoring/write.ts';
-import { folderProblems } from '../editor/project/folderCheck.ts';
 
 /**
  * Windows are said once and run as any graph runs: they become a graph and a
@@ -157,21 +156,13 @@ describe('windows', () => {
 
     const folder = await mkdtemp(join(tmpdir(), 'windows-'));
     await writeProject(folder, graph);
-    expect(await folderProblems(folder)).toEqual([]);
+    // What was written is read back as a graph that checks (the graph editor's own check of a folder is the editor's, and not used here).
     const again = await loadGraph(folder);
+    expect(problemsIn(again)).toEqual([]);
     expect(again.schedule).toEqual(graph.schedule);
     expect(again.edges.map((edge) => edge.id)).toEqual(graph.edges.map((edge) => edge.id));
     // What groups the blocks into windows survives the file.
     expect(again.gui!.blocks.filter((block) => block.group === 'summarize')).toHaveLength(graph.gui!.blocks.filter((block) => block.group === 'summarize').length);
-  });
-
-  it('say in words what a model that writes a cell needs: the window, its room in cells, the others on the page', () => {
-    expect(windowContext(DOC, 'english')).toBe([
-      'Window "In English": 8 of 16 cells wide on the page "Texts", 5 rows tall, and it never grows: what comes out fills the room it is given.',
-      'The person puts in: Summary (from).',
-      'Comes out: "English", a text 8 x 2 cells, showing "English", which the cell "English" makes.',
-      'Other windows on the page: "Summarize" makes "Summary"; "Each story" makes "Summaries".',
-    ].join('\n'));
   });
 
   it('start by what the window says -- a button with its words, a change of an input, or both -- and hand each output\'s needs to the model', () => {
@@ -185,11 +176,6 @@ describe('windows', () => {
     expect(windowProblems(quiet).map((one) => one.problem)).toEqual(['Nothing starts it: it has no button and a change of an input does not run it.']);
     expect(press(windowsToGraph({ ...quiet, windows: [{ ...quiet.windows[0], trigger: { button: false, onChange: true } }] }).gui!.blocks)).toBeUndefined();
 
-    // Two outputs of one result, a text and a chart: each is told what its block draws, the chart in the words of the chart block.
-    const plotted = { ...DOC, windows: [{ ...DOC.windows[0], outputs: [{ name: 'Summary', kind: 'text' as const, rows: 3 }, { name: 'Plot', kind: 'chart' as const, rows: 5, width: 0.5, of: 'Summary' }] }, ...DOC.windows.slice(1)] };
-    const said = windowContext(plotted, 'summarize').split('\n');
-    expect(said[2]).toBe('Comes out: "Summary", a text 8 x 3 cells, showing "Summary", which the cell "Summary" makes.');
-    expect(said[3]).toMatch(/^Comes out: "Plot", a chart 4 x 5 cells, showing "Summary", which the cell "Summary" makes\. It wants what to plot: a list of points/);
   });
 
   it('run window by window: one that takes from another gets its answer, and the other is not asked again', async () => {

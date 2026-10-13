@@ -69,9 +69,9 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-tools .ask { max-width: 220px; padding: 4px 8px 6px; font-size: 13.5px; line-height: 1.4; color: var(--ink); }
 
 /* the right edge of a window, to be pulled */
-.nb-edge { position: absolute; top: 14px; bottom: 14px; right: -13px; width: 14px; cursor: ew-resize; touch-action: none; display: none; z-index: 6; border-radius: 6px; }
+.nb-edge { position: absolute; top: 14px; bottom: 14px; right: -13px; width: 14px; cursor: ew-resize; touch-action: none; opacity: 0; z-index: 6; border-radius: 6px; }
 .nb-edge::before { content: ""; position: absolute; left: 5px; top: calc(50% - 24px); width: 4px; height: 48px; border-radius: 2px; background: var(--line2); }
-.nb-block.win:hover > .nb-edge, .nb-edge:focus-visible, .nb-edge.pulling { display: block; }
+.nb-block.win:hover > .nb-edge, .nb-block.win:focus-within > .nb-edge, .nb-edge:focus-visible, .nb-edge.pulling { opacity: 1; }
 .nb-edge:hover::before, .nb-edge.pulling::before, .nb-edge:focus-visible::before { background: var(--blue); }
 .nb-edge-tip { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); padding: 3px 9px; border-radius: 7px; background: var(--ink); color: var(--on-ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; pointer-events: none; }
 

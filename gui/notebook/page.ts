@@ -12,9 +12,6 @@ import type { BlockKind, PageBlock, Windows } from './windows.ts';
 
 export { BLOCK_KINDS, freshBlockId, introPage, pageOf };
 
-/** The kinds that hold text a person types. */
-export const TEXT_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul', 'ol', 'quote'];
-
 /** The kinds whose text is lines, one item or one line of the quotation to a line. */
 export const LINE_KINDS: readonly BlockKind[] = ['ul', 'ol', 'quote'];
 
@@ -136,12 +133,13 @@ export function fromMarkdown(doc: Windows, text: string): Windows {
     const line = raw.trimEnd();
     const window = /^\[window:\s*([^\]\s]+)\s*\]$/.exec(line.trim());
     if (!line.trim()) flush();
-    else if (/^##\s+/.test(line)) { flush(); add('h2', { text: line.replace(/^##\s+/, '') }); }
-    else if (/^#\s+/.test(line)) { flush(); add('h1', { text: line.replace(/^#\s+/, '') }); }
+    // A mark with nothing after it is still the block (`toMarkdown` writes an empty heading as "# "): not a paragraph of "#".
+    else if (/^##(\s+|$)/.test(line)) { flush(); add('h2', { text: line.replace(/^##\s*/, '') }); }
+    else if (/^#(\s+|$)/.test(line)) { flush(); add('h1', { text: line.replace(/^#\s*/, '') }); }
     else if (/^\s*\[space\]\s*$/.test(line)) { flush(); add('space'); }
     else if (window) { flush(); if (ids.has(window[1])) add('window', { window: window[1] }); }
-    else if (/^[-*]\s+/.test(line)) addLine('ul', line.replace(/^[-*]\s+/, ''));
-    else if (/^\d+[.)]\s+/.test(line)) addLine('ol', line.replace(/^\d+[.)]\s+/, ''));
+    else if (/^[-*](\s+|$)/.test(line)) addLine('ul', line.replace(/^[-*]\s*/, ''));
+    else if (/^\d+[.)](\s+|$)/.test(line)) addLine('ol', line.replace(/^\d+[.)]\s*/, ''));
     else if (/^>\s?/.test(line)) addLine('quote', line.replace(/^>\s?/, ''));
     else { if (lines.length) flush(); paragraph.push(line); }
   }

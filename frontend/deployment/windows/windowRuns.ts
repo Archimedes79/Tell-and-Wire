@@ -9,6 +9,7 @@
 import { create } from 'zustand';
 import type { RoundSnapshot } from '../gui/kit/api/client';
 import { useSession } from '../gui/kit/api/session';
+import { owns } from '../../../gui/windows/owns.ts';
 import { planFor, recorded, type PageWindow, type RunOf } from './windowsInUse';
 
 /** A window whose last round came to nothing: why, in the words a person can read. */
@@ -74,16 +75,16 @@ function roundOver(previous: string | null): Promise<RoundSnapshot | null> {
  * to do -- an input left empty is a window that did nothing, and the window after it would only be handed that. The nodes of the
  * other windows are in the round too, standing idle, and are not its business: a node is the window's by its id (`<window>_...`).
  */
-export const succeeded = (round: RoundSnapshot, id: string): boolean => !round.cancelled && !round.error && round.result?.status === 'success'
-  && !round.result.node_results.some((one) => one.status === 'skipped' && !one.held && (one.node_id === id || one.node_id.startsWith(`${id}_`)));
+export const succeeded = (round: RoundSnapshot, id: string, ids: readonly string[] = [id]): boolean => !round.cancelled && !round.error && round.result?.status === 'success'
+  && !round.result.node_results.some((one) => one.status === 'skipped' && !one.held && owns(id, one.node_id, ids));
 
 /**
  * Why a round of window *id* did not end well, or null when it did or was stopped (a stop is the person's, and needs no word). A node of
  * the window that failed says so in its own words; a node with nothing to do, that nothing came to it.
  */
-export function problemOf(round: RoundSnapshot, id: string): Problem | null {
+export function problemOf(round: RoundSnapshot, id: string, ids: readonly string[] = [id]): Problem | null {
   if (round.cancelled) return null;
-  const own = (round.result?.node_results ?? []).filter((one) => one.node_id === id || one.node_id.startsWith(`${id}_`));
+  const own = (round.result?.node_results ?? []).filter((one) => owns(id, one.node_id, ids));
   const failed = own.find((one) => one.status === 'error');
   if (failed || round.error || round.result?.status === 'error') return { state: 'failed', message: failed?.error || round.error || round.result?.error || 'It failed.' };
   const idle = own.find((one) => one.status === 'skipped' && !one.held);
@@ -124,8 +125,9 @@ export async function runWindows(args: {
       await new Promise((tick) => setTimeout(tick, 0));
       if (asking?.()) break;
       const ended = await roundOver(before);
-      if (!ended || !succeeded(ended, window.id)) {
-        const problem = ended ? problemOf(ended, window.id) : null;
+      const ids = windows.map((candidate) => candidate.id);
+      if (!ended || !succeeded(ended, window.id, ids)) {
+        const problem = ended ? problemOf(ended, window.id, ids) : null;
         if (problem) useWindowRuns.setState((state) => ({ problems: { ...state.problems, [window.id]: problem } }));
         break;
       }

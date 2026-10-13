@@ -7,6 +7,7 @@ import { NO_CHAT, chatsOf, numbering, inBlock, outEnd, startValue } from '../not
 import { runWindow, stopRuns } from '../notebook/document/runs';
 import { useNotebook } from '../notebook/document/store';
 import { chipClass, STATE_WORDS, windowState } from '../notebook/document/status';
+import Boundary from '../notebook/elements/Boundary';
 import { ChatBox, Input, Output } from '../notebook/elements/Widgets';
 import { chatValue } from '../../gui/widgets/chat/value.ts';
 import type { Window } from '../../gui/notebook/windows.ts';
@@ -76,8 +77,8 @@ export default function WindowBox({ window, writing }: { window: Window; writing
             const id = inBlock(window, one);
             return (
               <div key={id} className={`nb-field${lit(id)}`} style={basis(one.width)} {...pointing(id)}>
-                <label htmlFor={`in-${one.name}`}>{one.kind === 'from' ? 'Takes' : one.name}</label>
-                <Input one={one} fromTitle={titles?.find((other) => other.id === one.from?.window)?.title} value={id in values ? values[id] : startValue(one)} onChange={(value) => set(id, value)} onRun={() => { void runWindow(window.id); }} />
+                <label htmlFor={id}>{one.kind === 'from' ? 'Takes' : one.name}</label>
+                <Input id={id} one={one} fromTitle={titles?.find((other) => other.id === one.from?.window)?.title} value={id in values ? values[id] : startValue(one)} onChange={(value) => set(id, value)} onRun={() => { void runWindow(window.id); }} />
                 {mark(id)}
               </div>
             );
@@ -117,7 +118,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
                       {writing && <button type="button" className="nb-link" onClick={() => show({ tab: 'debug', dockOpen: true, window: window.id })}>Show it in Debug</button>}
                     </div>
                   )
-                  : <Output kind={out.kind} value={shown} rows={out.rows} />}
+                  : <Boundary value={shown}><Output kind={out.kind} value={shown} rows={out.rows} /></Boundary>}
                 {mark(id)}
               </div>
             );

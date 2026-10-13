@@ -4,12 +4,13 @@
 import { useMemo } from 'react';
 import { columnsOf, parseTable } from '../../graph/schedule.ts';
 import { resultsOf, taken, type Window, type Windows } from '../../gui/notebook/windows.ts';
+import { owns } from '../../gui/windows/owns.ts';
 import { compile, useNotebook } from '../notebook/document/store';
 
 export default function Haube({ doc, window }: { doc: Windows; window: Window }) {
   const graph = useNotebook((s) => s.graph);
   const made = useMemo(() => compile(doc, graph), [doc, graph]);
-  const mine = made.nodes.filter((node) => node.id === window.id || node.id.startsWith(`${window.id}_`));
+  const mine = made.nodes.filter((node) => owns(window.id, node.id, doc.windows.map((one) => one.id)));
   const ids = new Set(mine.map((node) => node.id));
   const wires = made.edges.filter((edge) => ids.has(edge.source_node_id) && ids.has(edge.target_node_id));
   const column = made.schedule ? columnsOf(parseTable(made.schedule)) : new Map<string, number>();

@@ -53,6 +53,8 @@ export default function App() {
       const typing = (event.target as HTMLElement | null)?.closest?.('input, textarea, select');
       if (key === 's') {
         event.preventDefault();
+        // What is typed in the Markdown box is the page once the cursor leaves it: leave it, then save what the page is.
+        (document.activeElement as HTMLElement | null)?.blur?.();
         const now = useNotebook.getState();
         if (now.path) void now.save(now.path); else setBrowsing('save');
       } else if (!typing && key === 'z') {
@@ -126,8 +128,8 @@ export default function App() {
         {note.words && <span className={`nb-save ${note.kind}`} role="status" title={note.kind === 'saved' ? path : 'Press Ctrl+S to save'}>{note.kind === 'saved' ? '✓ ' : '● '}{note.words}</span>}
         {doc && <button className={`nb-btn${dirty ? ' attention' : ''}`} disabled={busy === 'saving' || problems.length > 0} onClick={saveHere} title="Save as a project folder (Ctrl+S)">{busy === 'saving' ? 'Saving…' : 'Save'}</button>}
         {doc && <button className="nb-btn" onClick={() => setBrowsing('save')}>Save as…</button>}
-        <button className="nb-btn" onClick={() => setBrowsing('open')}>Open…</button>
-        {doc && <button className="nb-btn quiet" onClick={() => { if (!dirty || window.confirm('Leave this page without saving it?')) start(startPage()); }}>New</button>}
+        <button className="nb-btn" disabled={going} title={going ? 'Stop the windows that run first' : undefined} onClick={() => setBrowsing('open')}>Open…</button>
+        {doc && <button className="nb-btn quiet" disabled={going} title={going ? 'Stop the windows that run first' : undefined} onClick={() => { if (!dirty || window.confirm('Leave this page without saving it?')) start(startPage()); }}>New</button>}
       </header>
 
       {error && doc && <div className="nb-banner error" role="alert"><span>{error}</span><button className="nb-btn small quiet" onClick={clearError}>Dismiss</button></div>}

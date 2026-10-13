@@ -41,6 +41,10 @@ Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new fold
 | Its page | `frontend/notebook/index.html` | Built on its own (`npm run build:notebook`, `frontend/vite.notebook.config.ts`) into `frontend/notebook/dist`. |
 | Starting it | `start-notebook.cmd`, `.ps1`, `.sh`, `scripts/start-notebook.mjs` | The notebook has its own start and stop files (`stop-notebook.*`), its own port (8100), and runs beside the editor (8000) or without it. Neither names the other. |
 
+What the notebook takes of the folders named `editor` is two shared files both products write with, `gui/editor/check.ts` (the check of a gui) and `graph/editor/handedOn.ts` (a graph without
+the writing of its cells, as it is handed to the host); `backend/architecture/layers.test.ts` lists them and fails for a third. A package leaves `gui/notebook` behind with the rest of authoring.
+Code is doubled where the two products would otherwise share it (the table's figures, the words of the page): a copy is tested in the product it is in.
+
 ## The files of a project
 
 ```

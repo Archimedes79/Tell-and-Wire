@@ -43,7 +43,8 @@ function tidy(windows: Windows): Windows {
   const renamed = new Map<string, string>();
   const made = windows.windows.map((window) => {
     let id = idOf(window.id).replace(/^[^a-z]+/, '') || 'window';
-    while (seen.has(id)) id = `${id}_2`;
+    // "summarize2", not "summarize_2": a window's nodes are named after it with an underscore, and no id may begin another's that way.
+    while (seen.has(id)) id = `${id}2`;
     seen.add(id);
     renamed.set(window.id, id);
     return { ...window, id };

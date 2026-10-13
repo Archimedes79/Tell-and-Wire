@@ -72,6 +72,9 @@ describe('the page of a notebook', () => {
       ['ol', 'one\ntwo'], ['ul', 'apart'], ['quote', 'said\ntwice'], ['p', 'then **bold** words'],
     ]);
     expect(toMarkdown(read)).toContain('1. one\n2. two\n\n- apart\n\n> said\n> twice\n\nthen **bold** words');
+    // A block with no words in it comes back as it was written: an empty heading is not a paragraph of "#".
+    const empty = fromMarkdown(doc, toMarkdown(addBlock(addBlock(doc, 'h1'), 'ul')));
+    expect(pageOf(empty).filter((block) => block.kind !== 'window').map((block) => [block.kind, block.text])).toEqual([['h1', 'Tool'], ['h1', ''], ['ul', '']]);
     expect(setKind(read, pageOf(read)[0].id, 'ol')).toEqual(read);
     // The file keeps them, and a kind nobody knows is still left out.
     expect(parseWindows(JSON.parse(JSON.stringify(read))).page).toEqual(read.page);

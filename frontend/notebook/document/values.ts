@@ -11,9 +11,9 @@ export function startValue(one: WindowIn): string | number {
   return one.value === undefined ? '' : String(one.value);
 }
 
-/** The window an input block belongs to, by its id (`<window>_in_<name>`). */
+/** The window an input block belongs to, by its id (`<window>_in_<name>`): the one with the longest id that begins it, where one id begins another's. */
 export function windowOfBlock(windows: readonly Window[], blockId: string): Window | undefined {
-  return windows.find((window) => blockId.startsWith(`${window.id}_in_`));
+  return windows.filter((window) => blockId.startsWith(`${window.id}_in_`)).sort((a, b) => b.id.length - a.id.length)[0];
 }
 
 /** The chats of a window: outputs that are also where a message is typed. */
@@ -47,8 +47,8 @@ export function numbering(window: Window): Map<string, number> {
 /** The name a sentence points at *name* by: a mention has no spaces. */
 export const tag = (name: string): string => name.trim().replace(/\s+/g, '_');
 
-/** What a sentence says to the model it is done by: each `@Name` as the name in quotes. */
-export const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu, (_, name: string, part?: string) => `“${name.replace(/_/g, ' ')}${part && part !== 'content' ? ` ${part}` : ''}”`);
+/** What a sentence says to the model it is done by: each `@Name` as the name in quotes -- the one made from the windows (`gui/notebook/windows.ts`), so what is shown here is what is sent. */
+export { spoken } from '../../../gui/notebook/windows.ts';
 
 /** A folder name from a tool's name: "Expense overview" is expense_overview. */
 export const folderName = (name: string): string => name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');

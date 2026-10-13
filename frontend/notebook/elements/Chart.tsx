@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 // A chart, drawn here: bars, columns, a line or a donut from `{ kind, title, points: [{ label, value }] }` -- or SVG a step
 // wrote, shown as a picture (so nothing in it runs).
@@ -63,11 +63,12 @@ function figureOf(given: unknown): Figure | null {
 }
 
 export default function Chart({ data }: { data: unknown }) {
-  const box = useRef<HTMLDivElement>(null);
+  // The box that is measured exists only while a figure is drawn: a drawing or an answer that is no figure comes first, and a figure after them still gets measured.
+  const [box, setBox] = useState<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ w: 400, h: 200 });
   // Drawn at the size of the box it is in, in its pixels, so a wide box gets a wide chart.
   useLayoutEffect(() => {
-    const node = box.current;
+    const node = box;
     if (!node) return;
     const measure = () => setSize({ w: Math.max(160, node.clientWidth), h: Math.max(80, node.clientHeight) });
     measure();
@@ -75,7 +76,7 @@ export default function Chart({ data }: { data: unknown }) {
     const watch = new ResizeObserver(measure);
     watch.observe(node);
     return () => watch.disconnect();
-  }, []);
+  }, [box]);
   const sole = soleValue(data);
   if (typeof sole === 'string' && sole.trim().startsWith('<svg')) return <img alt="" src={`data:image/svg+xml;utf8,${encodeURIComponent(sole)}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
   const figure = figureOf(data);
@@ -83,7 +84,7 @@ export default function Chart({ data }: { data: unknown }) {
   if (!figure.points.length) return <div style={{ margin: 'auto', color: 'var(--muted)' }}>{figure.title || 'Nothing to plot.'}</div>;
   // Bars have a least height of their own: with more of them than the box has room for, it scrolls rather than the letters shrinking.
   const tall = figure.kind === 'bars' ? Math.max(size.h, (figure.title ? 28 : 8) + Math.min(figure.points.length, 24) * 18 + 6) : size.h;
-  return <div ref={box} style={{ width: '100%', height: '100%' }}><svg width={size.w} height={tall} viewBox={`0 0 ${size.w} ${tall}`} role="img" aria-label={figure.title || 'chart'}>{drawn(figure, size.w, tall)}</svg></div>;
+  return <div ref={setBox} style={{ width: '100%', height: '100%' }}><svg width={size.w} height={tall} viewBox={`0 0 ${size.w} ${tall}`} role="img" aria-label={figure.title || 'chart'}>{drawn(figure, size.w, tall)}</svg></div>;
 }
 
 function drawn(figure: Figure, W: number, H: number) {

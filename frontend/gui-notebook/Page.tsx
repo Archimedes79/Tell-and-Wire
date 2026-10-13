@@ -152,6 +152,7 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
       edit((one) => patchBlock(one, part.id, { text: `${text.slice(0, from)}${mark}${text.slice(from, to)}${mark}${text.slice(to)}` }), `text-${part.id}`);
       return;
     }
+    if (event.nativeEvent.isComposing) return; // Enter that chooses a candidate of an input method is not a new block
     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
       if (LINE_KINDS.includes(part.kind)) {
         const lines = text.split('\n');

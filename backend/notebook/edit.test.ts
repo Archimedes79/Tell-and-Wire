@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
-  addInput, addOutput, addStep, addWindow, blankPage, freshName, kindOfOutput, moveCell, removeCell, removeWindow, renameInput, renameStep, repoint,
+  addInput, addOutput, addStep, addWindow, blankPage, freshName, kindOfOutput, moveCell, patchOutput, removeCell, removeWindow, renameInput, renameStep, repoint,
 } from '../../gui/notebook/edit.ts';
 import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
+import { owns } from '../../gui/windows/owns.ts';
 import { problemsIn } from '../../gui/editor/check.ts';
 
 /**
@@ -16,6 +17,19 @@ const page = (): Windows => {
 };
 
 describe('editing windows', () => {
+  it('renames an output and what points at it: the windows that take it, and the sentences that mention a chat', () => {
+    let doc = addWindow(addWindow({ name: 'T', description: '', windows: [] }, 'One'), 'Two');
+    doc = { ...doc, windows: [doc.windows[0], { ...doc.windows[1], inputs: [{ name: 'Result', kind: 'from' as const, from: { window: 'one', output: 'Result' } }], steps: [{ name: 'Say', sentence: 'Say @Result.', how: 'ai' as const }], outputs: [{ name: 'Say', kind: 'text' as const, rows: 3, of: 'Say' }] }] };
+    expect(windowProblems(doc)).toEqual([]);
+    const renamed = patchOutput(doc, 'one', 0, { name: 'Answer' });
+    expect(renamed.windows[1].inputs[0].from).toEqual({ window: 'one', output: 'Answer' });
+    expect(windowProblems(renamed)).toEqual([]);
+    // A change that is no new name touches nothing else; a chat's name is what its mentions say.
+    expect(patchOutput(doc, 'one', 0, { rows: 4 }).windows[1]).toEqual(doc.windows[1]);
+    const talk = patchOutput(addOutput(doc, 'one', 'chat'), 'one', 1, { name: 'Talk' });
+    expect(talk.windows[0].outputs[1].name).toBe('Talk');
+  });
+
   it('starts a page with a window that already works', () => {
     const doc = blankPage('Tool');
     expect(doc.windows).toHaveLength(1);
@@ -75,7 +89,13 @@ describe('editing windows', () => {
   it('gives an output of another kind the height of that kind, and names windows apart', () => {
     const doc = kindOfOutput(page(), 'summarize', 0, 'chart');
     expect(doc.windows[0].outputs[0]).toMatchObject({ kind: 'chart', rows: 5 });
-    expect(addWindow(addWindow(page(), 'Summarize'), 'Summarize').windows.map((window) => window.id)).toEqual(['summarize', 'summarize_2', 'summarize_3']);
+    expect(addWindow(addWindow(page(), 'Summarize'), 'Summarize').windows.map((window) => window.id)).toEqual(['summarize', 'summarize2', 'summarize3']);
+    // No window's id begins another's followed by an underscore: the nodes of a window are named so, and are told apart by it (`gui/windows/owns.ts`).
+    expect(owns('summarize', 'summarize2_result', ['summarize', 'summarize2'])).toBe(false);
+    expect(owns('a', 'a_2_result', ['a', 'a_2'])).toBe(false);
+    expect(owns('a_2', 'a_2_result', ['a', 'a_2'])).toBe(true);
+    expect(owns('a', 'a_result', ['a', 'a_2'])).toBe(true);
+    expect(owns('a', 'a', ['a', 'a_2'])).toBe(true);
     expect(freshName('Result', ['result'])).toBe('Result 2');
   });
 });

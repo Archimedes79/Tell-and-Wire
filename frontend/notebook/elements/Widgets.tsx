@@ -14,10 +14,10 @@ import Chart, { soleValue } from './Chart';
 /** The height of a row of a window, in pixels: what an output is as tall as, in rows. */
 export const ROW = 30;
 
-export function Input({ one, value, onChange, onRun, fromTitle }: { one: WindowIn; value: unknown; onChange: (value: unknown) => void; onRun: () => void; fromTitle?: string }) {
+/** An input of a window; *id* is its own on the page (the id of its block: window and name), which its label points at. */
+export function Input({ id, one, value, onChange, onRun, fromTitle }: { id: string; one: WindowIn; value: unknown; onChange: (value: unknown) => void; onRun: () => void; fromTitle?: string }) {
   const kind: InKind = one.kind;
   const rows = one.rows ?? (kind === 'text' ? 2 : 1);
-  const id = `in-${one.name}`;
   return (
     <>
       {kind === 'text' && (
@@ -31,7 +31,7 @@ export function Input({ one, value, onChange, onRun, fromTitle }: { one: WindowI
         <input
           id={id} type="number" value={String(value ?? '')} min={one.min} max={one.max} step={one.step}
           onChange={(event) => onChange(event.target.value === '' ? '' : Number(event.target.value))}
-          onKeyDown={(event) => { if (event.key === 'Enter') onRun(); }}
+          onKeyDown={(event) => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) onRun(); }}
         />
       )}
       {kind === 'choice' && (
@@ -122,7 +122,8 @@ function Table({ value }: { value: unknown }) {
   const columns = [...new Set(rows.flatMap((row) => (row && typeof row === 'object' ? Object.keys(row) : [])))];
   if (!columns.length) return <>{asText(value)}</>;
   // Set as its cells say (`tableFormat.ts`): figures to the right and even, a rise or a fall in colour, a Total row apart.
-  const objects = rows as Record<string, unknown>[];
+  // A row that is nothing (a code step may hand on a null among the rows) is an empty one.
+  const objects = rows.map((row) => (row && typeof row === 'object' ? row : {})) as Record<string, unknown>[];
   const set = columnsOf(objects, columns);
   return (
     <table>
@@ -170,7 +171,7 @@ export function ChatBox({ value, rows, busy, error, onSend }: { value: unknown; 
         <textarea
           aria-label="Message" rows={2} value={draft} placeholder="Type a message…" disabled={busy}
           onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send(); } }}
+          onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); send(); } }}
         />
         <button type="submit" className="nb-btn primary" disabled={busy || !draft.trim()}>Send</button>
       </form>

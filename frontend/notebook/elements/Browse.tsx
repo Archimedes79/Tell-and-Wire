@@ -47,7 +47,8 @@ export default function Browse({ mode, title, start, extensions, suggested, onPi
   const here = page?.path ?? '';
   // Typed or climbed into a project itself: it is what Open opens, without being picked out of its parent.
   const hereIsProject = page?.entries.some((entry) => !entry.is_dir && (entry.name === 'graph-windows.json' || entry.name === 'graph-flow.json')) === true;
-  const target = mode === 'save' ? `${here}${here.endsWith(separatorOf(here)) ? '' : separatorOf(here)}${name.trim()}` : mode === 'folder' ? (chosen || here) : mode === 'open' ? (chosen || (hereIsProject ? here : '')) : chosen;
+  // Saving is into the folder that is shown: with none shown (still being read, or it could not be), there is nowhere to save to, and not the root.
+  const target = mode === 'save' ? (page ? `${here}${here.endsWith(separatorOf(here)) ? '' : separatorOf(here)}${name.trim()}` : '') : mode === 'folder' ? (chosen || here) : mode === 'open' ? (chosen || (hereIsProject ? here : '')) : chosen;
   const pick = async (path: string): Promise<void> => {
     setBusy(true);
     setError('');
