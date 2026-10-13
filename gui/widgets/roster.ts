@@ -1,8 +1,8 @@
-// The blocks a gui is built from.
+// The blocks a GUI is built from.
 //
 // Each is the definition of a kind of block: it owns its settings and says what
 // it can do with the graph -- what it sends, what event it fires, whether it
-// shows an end point -- and the gui connects it by name (`gui.ts`). The executor
+// shows an end point -- and the GUI connects it by name (`gui.ts`). The executor
 // never sees one: what a block sends arrives in a start point's package.
 //
 // This file is the roster — the only place that knows the whole set, which is

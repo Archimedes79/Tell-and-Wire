@@ -27,7 +27,8 @@
 
 import type { DataType, Graph, GraphEdge, GraphNode, Port, RawConfig } from '../../graph/graph.ts';
 import { wireOf } from '../../graph/files/flow.ts';
-import { BLOCK_CHROME, GUI_GAP, GUI_MAX_CELL, WINDOW_BORDER, WINDOW_PADDING } from '../windows/grid.ts';
+import { GUI_GAP, GUI_MAX_CELL } from '../size.ts';
+import { BLOCK_CHROME, WINDOW_BORDER, WINDOW_PADDING } from '../windows/grid.ts';
 import { plotColours, scheme } from '../windows/scheme.ts';
 import { pageOf } from './pageModel.ts';
 import { registry } from '../../graph/nodes/registry.ts';

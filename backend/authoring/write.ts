@@ -91,7 +91,7 @@ function planProject(folder: string, copy: Graph): Plan[] {
     }
   }
   // Each block's keys in one order, so an unchanged gui saves unchanged; and
-  // a gui of no blocks is no gui, with no file.
+  // a GUI of no blocks is no GUI, with no file.
   const blocks = (copy.gui?.blocks ?? []).map((block) => sorted(block));
   for (const text of projectTexts(copy)) {
     const value = text.node_id === null ? (blocks.length ? blocks : undefined) : text.holder[text.field];
@@ -228,6 +228,9 @@ export function graphAt(path: string): string | null {
  * `package.json` -- is nobody's to replace.
  */
 export async function saveGraph(path: string, graph: Graph, guard?: Guard): Promise<void> {
+  // "." and ".." are folders, not names: resolved, they would put the tool into the folder it was to be saved in, or above it.
+  const last = path.split(/[\\/]/).filter(Boolean).pop();
+  if (last === '.' || last === '..') throw new NotAGraph(`"${last}" is a folder, not a name: a tool is saved under a name of its own, in a folder.`);
   const full = resolve(path);
   const folder = projectFolderOf(full);
   if (folder) return writeProject(folder, graph, guard);

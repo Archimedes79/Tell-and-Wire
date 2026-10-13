@@ -42,7 +42,8 @@ async function copy(text: string): Promise<boolean> {
  */
 export default function RunReportDialog({ onClose, onShowNode }: { onClose: () => void; onShowNode: (nodeId: string) => void }) {
   const result = useGraphStore((s) => s.executionResult);
-  const nodes = useGraphStore.getState().rfNodes.map((item) => item.data.graphNode);
+  // The nodes of the graph that ran -- the top one -- even while a graph inside one of them is open.
+  const nodes = useGraphStore.getState().rootGraph().nodes;
   const toolName = useGraphStore((s) => s.metadata.name);
   const probe = useProviderStatus();
   const [withData, setWithData] = useState(false);

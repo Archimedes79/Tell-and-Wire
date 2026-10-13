@@ -45,7 +45,7 @@ if (/^code(\\.js)?$/.test(process.getBuiltinModule('node:path').basename(process
   process.getBuiltinModule('node:vm').runInNewContext(process.getBuiltinModule('node:fs').readFileSync(file, 'utf8'), { module: input });
   const example = input.exports;
   if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input.js has no example yet -- an object keyed by input, written by ✨ Input.');
-  const node = { llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/cli/main.ts run-node <project> <node id>'); } };
+  const node = { windows: [], llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/cli/main.ts run-node <project> <node id>'); } };
   Promise.resolve(run(example, node)).then((out) => console.log(JSON.stringify(out, null, 2)));
 }`;
 
@@ -74,9 +74,13 @@ const CODE_TEXTS: readonly TextFile[] = [
 export class CodeNodeDefinition extends NodeDefinition {
   readonly nodeType = 'code' as const;
 
-  /** Its code calls a model: `node.llm`. */
+  /**
+   * Its code calls a model: `node.llm` -- whatever the second parameter of `run` is called -- or `["llm"]`, or `{ llm }`
+   * taken out of it. Read from the text, so a comment that says it counts too: showing the AI settings of a tool that
+   * does not need them is the lesser mistake.
+   */
   override callsModel(node: GraphNode): boolean {
-    return /\bnode\s*\.\s*llm\b/.test(String(node.config.code ?? ''));
+    return /\.\s*llm\b|\[\s*['"]llm['"]\s*\]|[{,]\s*llm\s*[,}:=]/.test(String(node.config.code ?? ''));
   }
 
   override texts(): readonly TextFile[] {

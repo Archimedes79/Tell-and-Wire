@@ -11,7 +11,8 @@ export class CodeNodeDesign extends NodeDesign<CodeNodeDefinition> {
       + 'returning an object whose keys are exactly this node\'s output port ids. Use only what Node has built in; there is no '
       + 'package manager. The function may be async and is handed a second argument, node: "await node.llm({ prompt: \'...\' })" '
       + 'asks the configured model a question and resolves to its answer as text -- use it when code has to decide what to ask, '
-      + 'or ask in a loop; for one question, use an ai node instead. config.input_definition and config.output_definition may '
+      + 'or ask in a loop; for one question, use an ai node instead. node.windows lists the blocks of the GUI that show what '
+      + 'the node hands on, each { port, block, kind, label, w, h, width, height } (cells, and pixels at most): code that draws can use it. config.input_definition and config.output_definition may '
       + 'say what one call is handed and returns, each as a JSDoc typedef followed by "module.exports = <one example as plain JSON>;".';
   }
 
@@ -25,7 +26,7 @@ export class CodeNodeDesign extends NodeDesign<CodeNodeDefinition> {
     return [{
       where,
       problem: 'Its code.js holds no code yet: it fails the moment it runs.',
-      fix: 'Write it with ✨ Code, or write function run(inputs) { … } in code.js (config.code in a graph file), returning an object keyed by its outputs.',
+      fix: 'Press Auto generate in the node, or write function run(inputs) { … } in code.js (config.code in a graph file), returning an object keyed by its outputs.',
     }];
   }
 

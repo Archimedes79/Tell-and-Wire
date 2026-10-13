@@ -42,6 +42,8 @@ export interface FileService {
  * not given to it; it is *asked for*. `calls` are those questions: each becomes an async
  * function on `node` that sends its one argument out to the process holding
  * the graph and resolves to the answer, which must survive `JSON.stringify`.
+ * What it needs to know rather than ask -- the room its result is shown in --
+ * is `node.windows`.
  */
 interface BodyContext {
   calls?: Record<string, (args: unknown) => Promise<unknown>>;
@@ -50,6 +52,26 @@ interface BodyContext {
    * (`node.window`). A call of the same name wins.
    */
   facts?: Record<string, unknown>;
+  /** `node.windows`: the blocks of the GUI that show what the body hands on. */
+  windows?: BlockWindow[];
+}
+
+/**
+ * One block of the GUI that shows what a node hands on, and how large it is
+ * drawn at most (`gui/windows.ts`): a body that draws is told it as `node.windows`.
+ */
+export interface BlockWindow {
+  /** The output port of the node whose result is shown there. */
+  port: string;
+  /** The block's id, its kind (`plot_window`, `image_view`, …) and its label. */
+  block: string;
+  kind: string;
+  label: string;
+  /** Its size in cells, and in pixels on a GUI at its full width: on a narrower one it gets less. */
+  w: number;
+  h: number;
+  width: number;
+  height: number;
 }
 
 /** Running a written body: `run(inputs, node) -> outputs`, inputs and outputs plain JSON. */
@@ -183,6 +205,8 @@ export interface Runtime {
   tools?: ToolService;
   /** Absent outside a run: only the executor can offer it. */
   subgraph?: SubgraphService;
+  /** Put there by the executor, per node: the blocks of the GUI that show what the node hands on. Absent: none do, or it is not known. */
+  windows?: BlockWindow[];
   /** How often one run of a body may ask for the model (`node.llm`). Absent: the standard limit. */
   llmCallsPerBody?: number;
   /** How often an ai node asks again when its answer cannot be used, where the node does not say. Absent: the standard (2); 0: never. */

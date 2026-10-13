@@ -25,6 +25,21 @@ describe('what an error comes to', () => {
     expect(explain('x is not defined')).toContain('mistake');
     expect(explain('something odd')).toContain('The node reported an error');
   });
+
+  it('does not take a mistake in the code for the words it happens to contain', () => {
+    // A stack line "403" and a property named "permission" are the code's, not the AI's key or a file's rights.
+    expect(explain('Error: boom at run (line 403, column 5)')).toBe('The node reported an error. The text below says which.');
+    expect(explain("TypeError: Cannot read properties of undefined (reading 'permission')")).toContain('mistake');
+    expect(explain('ReferenceError: network is not defined')).toContain('mistake');
+    expect(explain('EACCES: permission denied, open x.txt')).toContain('no permission');
+    expect(explain('TypeError: fetch failed')).toContain('could not be reached');
+    expect(explain('SyntaxError: Unexpected token < in JSON at position 0')).toContain('JSON');
+    // Words that belong to an AI's complaint, named by a mistake in the code, and a position that looks like a status.
+    expect(explain('ReferenceError: maxTokens is not defined')).toContain('mistake');
+    expect(explain("TypeError: Cannot read properties of undefined (reading 'quota')")).toContain('mistake');
+    expect(explain('Error: boom at run (x.js:403:5)')).toBe('The node reported an error. The text below says which.');
+    expect(explain('Request failed with status 429 Too Many Requests')).toContain('too many requests');
+  });
 });
 
 describe('the report of a run', () => {
@@ -35,6 +50,15 @@ describe('the report of a run', () => {
     expect(report.summary).toContain('could not be reached');
     expect(report.nodes.map((node) => node.status)).toEqual(['success', 'error', 'skipped']);
     expect(report.nodes[2].plain).toBe('Summarize failed, so there was nothing to show.');
+  });
+
+  it('says which node went in part, where a run is partial and none of them failed outright', () => {
+    const partial = runReport({
+      status: 'partial', outputs: {},
+      node_results: [{ node_id: 'ask', status: 'partial', inputs: {}, outputs: {}, error: 'item 2: boom' }],
+    }, nodes);
+    expect(partial.summary).toContain('part of it failed: "Summarize"');
+    expect(partial.summary).not.toContain('did not finish');
   });
 
   it('says a run that went well, and one that was stopped', () => {

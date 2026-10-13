@@ -11,6 +11,9 @@
 //   the graph. Every body may ask, and its process is handed no key: not in
 //   its environment, and not in the settings file, which it may not read
 //   (`../services.ts`).
+// - `node.windows` lists the blocks of the GUI that show what the body hands
+//   on, each with its size (`gui/windows.ts`): code that draws draws for the
+//   room there is, whenever the block was last resized. Empty where none does.
 // - It runs in a process of its own (`../services.ts`: no child processes, no
 //   addons, no workers; it reads the working directory and writes its own
 //   folder only, and ends after `TW_BODY_TIMEOUT_MS`), and what it returns is
@@ -42,5 +45,7 @@ export function runBody(
   runtime: Runtime,
   given: BodyGiven = {},
 ): Promise<Record<string, unknown>> {
-  return runtime.code.run(body, inputs, given.signal, { calls: { llm: llmCall(given.ask ?? PLAIN_ASK, runtime) }, ...(given.facts ? { facts: given.facts } : {}) });
+  return runtime.code.run(body, inputs, given.signal, {
+    calls: { llm: llmCall(given.ask ?? PLAIN_ASK, runtime) }, windows: runtime.windows, ...(given.facts ? { facts: given.facts } : {}),
+  });
 }

@@ -13,7 +13,7 @@ export class CodeNodeRunner extends NodeRunner<CodeNodeDefinition> {
   ): Promise<Record<string, unknown>> {
     const logic = this.kind.logic(node);
     if (logic.isEmpty) {
-      throw new Error(`${node.label || node.id}: its code.js holds no code yet -- write it with ✨ Code.`);
+      throw new Error(`${node.label || node.id}: its code.js holds no code yet -- press Auto generate in the node, or write run(inputs) in code.js.`);
     }
 
     // Once, for whatever it was handed. Fanning out and reading wired files

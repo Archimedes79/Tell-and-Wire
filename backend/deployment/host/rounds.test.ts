@@ -74,6 +74,24 @@ describe('Rounds', () => {
     expect(await rounds.stopAll()).toBe(0);
   });
 
+  it('names the round that has gone longest as the one going: the one running, not the one queued behind it', async () => {
+    const rounds = new Rounds();
+    expect(rounds.oldestGoing()).toBeNull();
+    const work = (round: RoundWork) => new Promise<ExecutionResult>((ended) => {
+      round.signal.addEventListener('abort', () => ended(done('cancelled')));
+    });
+    const first = rounds.start(1, named, work);
+    const second = rounds.start(1, named, work);
+    await wait(10);
+    expect(rounds.oldestGoing()).toBe(first.id);
+    rounds.stop(first.id);
+    await first.outcome;
+    await wait(0);
+    expect(rounds.oldestGoing()).toBe(second.id);
+    await rounds.stopAll();
+    expect(rounds.oldestGoing()).toBeNull();
+  });
+
   it('does not stop a round that has ended: it keeps what it was, and the answer says nothing was stopped', async () => {
     const rounds = new Rounds();
     const ended = rounds.start(1, named, async () => done());

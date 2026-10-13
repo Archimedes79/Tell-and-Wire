@@ -41,7 +41,7 @@ export function aboutText(version: string): string {
     '',
     'A visual node editor for AI workflows and small local tools. You say in plain words what each node should do, a model writes it, you wire the nodes into a graph, give it a GUI, and hand it on as a folder that runs wherever Node runs -- offline, with a local model, if you like.',
     '',
-    '- **Local.** The editor and every deployed tool listen on this computer only. There is no telemetry and no account. Only the AI you choose receives what you send it.',
+    '- **Local.** The editor and every deployed tool listen on this computer only, unless you start one with another `--host` yourself. There is no telemetry and no account. What you send to an AI goes to the one you chose in Settings; the JavaScript of a code node you write is yours to answer for.',
     '- **MCP, in two ways.** Tell & Wire serves an MCP server, so an AI assistant can design, check, save, run and test graphs (`--mcp`, see the user guide, chapter 11). And an AI node can use the tools of MCP servers: a web reader and a Word and PDF reader come with it.',
     '- **Licence.** PolyForm Noncommercial 1.0.0: source-available, free for noncommercial use.',
     '- **Source, downloads, issues.** [github.com/Archimedes79/Tell-and-Wire](https://github.com/Archimedes79/Tell-and-Wire)',

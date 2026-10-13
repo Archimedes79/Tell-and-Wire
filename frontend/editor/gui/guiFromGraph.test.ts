@@ -33,7 +33,7 @@ const edges = [
 ];
 
 describe('a GUI drawn from the graph', () => {
-  it('has an input for what each start point reads and one that starts it, a text for each end point, and asks before a start point a call starts is put on the gui', () => {
+  it('has an input for what each start point reads and one that starts it, a text for each end point, and asks before a start point a call starts is put on the GUI', () => {
     const planned = guiFromGraph(nodes, edges, []);
     // The GUI's start point: a picker for the file whose parts are read, a text box for the length, a picker for the path -- each sending under the name its input takes it by -- and a button to start it; then the end point shown.
     expect(planned.now.map((made) => [made.point.id, made.blocks.map((block) => [block.id, block.kind, block.label, block.send, block.sends_to, block.fires, block.shows])])).toEqual([

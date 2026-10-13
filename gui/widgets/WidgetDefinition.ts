@@ -1,5 +1,5 @@
-// A widget: the element branch that sits on the gui a graph is used through.
-// This is what a package carries of it; what only building the gui asks is the
+// A widget: the element branch that sits on the GUI a graph is used through.
+// This is what a package carries of it; what only building the GUI asks is the
 // widget's design (`gui/editor/widgets/WidgetDesign.ts`).
 
 import type { DataType, RawConfig, WidgetKind } from '../../graph/graph.ts';
@@ -7,7 +7,7 @@ import { ElementDefinition } from '../../graph/nodes/ElementDefinition.ts';
 import type { Runtime } from '../../graph/nodes/Runtime.ts';
 
 /**
- * What a round the gui starts asks a person before it runs: a file or a
+ * What a round the GUI starts asks a person before it runs: a file or a
  * folder for a picker with nothing chosen. Asked under the key it is answered
  * by -- the block's id -- so a dialog in the editor and a frontend that sends
  * answers read the same list.
@@ -22,8 +22,8 @@ export interface RuntimeRequirement {
 }
 
 /**
- * How a block sits on the gui. Nothing an element ever reads to decide what
- * it does: the gui draws from these, the backend only carries them.
+ * How a block sits on the GUI. Nothing an element ever reads to decide what
+ * it does: the GUI draws from these, the backend only carries them.
  */
 export interface WidgetPresentation {
   w: number;
@@ -146,9 +146,9 @@ export abstract class WidgetDefinition<C = unknown> extends ElementDefinition<Wi
   }
 
   /**
-   * Keep what the end point it shows handed back, for the gui to show.
+   * Keep what the end point it shows handed back, for the GUI to show.
    *
-   * `stored` is the block as the gui holds it. Most blocks simply become the
+   * `stored` is the block as the GUI holds it. Most blocks simply become the
    * value; one that holds more than the last thing it was told -- a
    * conversation -- says here what arriving means.
    */
@@ -168,15 +168,15 @@ export abstract class WidgetDefinition<C = unknown> extends ElementDefinition<Wi
     return false;
   }
 
-  /** Last step before what an end point handed this block reaches the gui: an image's path read into the picture. */
+  /** Last step before what an end point handed this block reaches the GUI: an image's path read into the picture. */
   async displayValue(_widget: Widget, value: unknown, _runtime: Runtime): Promise<unknown> {
     return value;
   }
 
   /**
    * What this block needs a person to supply before the graph can run -- a
-   * picker with nothing chosen. Its gui asks it under the block's own key,
-   * which is the gui's to make; most blocks ask nothing.
+   * picker with nothing chosen. Its GUI asks it under the block's own key,
+   * which is the GUI's to make; most blocks ask nothing.
    */
   runtimeRequirements(_widget: Widget): Omit<RuntimeRequirement, 'key'>[] {
     return [];
@@ -192,7 +192,7 @@ export abstract class WidgetDefinition<C = unknown> extends ElementDefinition<Wi
     return this.sends(widget) !== null;
   }
 
-  /** Keep a value given from outside -- a person, a gui -- in *stored*, the block as the gui holds it. */
+  /** Keep a value given from outside -- a person, a GUI -- in *stored*, the block as the GUI holds it. */
   setValue(stored: RawConfig, value: unknown): void {
     stored.value = value;
   }

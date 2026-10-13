@@ -9,7 +9,8 @@
 // `backend/editor/project/folderCheck.ts`.
 
 import { isStruct, type Graph, type GraphEdge, type GraphNode } from '../../graph/graph.ts';
-import { loopNodes } from '../../graph/order.ts';
+import { loopNodes, readingWires } from '../../graph/order.ts';
+import { placesOf } from '../../graph/schedule.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
 import { widgetElement } from '../gui.ts';
 import { fieldSender, guiProblems, showsMemory } from './gui.ts';
@@ -53,14 +54,14 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
       problems.push({
         where,
         problem: 'It has no heading.',
-        fix: 'Give it one (its "label"): a few words saying what it does -- the canvas, its panel and every ✨ call it by that.',
+        fix: 'Give it one: a few words saying what it does -- the canvas and its panel call it by that.',
       });
     }
     if (designs.node(node.node_type)?.generation() && !node.description.trim()) {
       problems.push({
         where,
-        problem: 'Its text is empty: nothing says what it should do, and what ✨ writes for it is written from that text.',
-        fix: 'Write its text (its "description"): what it should do, in words.',
+        problem: 'Its text is empty: nothing says what it should do, and Auto generate writes from that text.',
+        fix: 'Say what it should do, in words, under "What it does".',
       });
     }
 
@@ -135,11 +136,30 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
           + 'that wire carries what the data node held when the round began. Or remove one of the edges.',
       });
     }
+
+    // What only reads a data node as it was before the round is not for any event
+    // that reaches it: it never runs and shows nothing, and the run does not say so.
+    // Said where a start point makes rounds, in the graph at the top: a run that nothing started runs
+    // everything, and inside a node the graph runs whole, its start points being its ports.
+    const reads = readingWires(graph.nodes, graph.edges, registry, placesOf(graph));
+    const hasStart = !inside && graph.nodes.some((one) => registry.node(one.node_type)?.eventPorts(one).length);
+    for (const node of hasStart ? graph.nodes : []) {
+      const wiredIn = graph.edges.filter((edge) => edge.target_node_id === node.id);
+      // A data node reading itself is its own loop, not a card waiting for an event.
+      if (!wiredIn.length || !wiredIn.every((edge) => reads.has(edge.id) && edge.source_node_id !== node.id)) continue;
+      const memory = graph.nodes.find((one) => one.id === wiredIn[0].source_node_id);
+      const name = memory?.label || memory?.id;
+      problems.push({
+        where: `${inside}node "${node.id}"`,
+        problem: `It only reads "${name}" as it was before the run, and that is no reason for it to run: it never runs, and shows nothing.`,
+        fix: `Put it in a step after "${name}" (drag its card to the right of that one), so that it takes what "${name}" holds after the run.`,
+      });
+    }
   }
 
-  // What a graph hands back leaves through its end points: a block on the gui
+  // What a graph hands back leaves through its end points: a block on the GUI
   // shows one, a script reads one, and a graph inside a node hands its answer
-  // up through them -- in there an end point *is* a port. A gui that shows
+  // up through them -- in there an end point *is* a port. A GUI that shows
   // what a memory node holds is something a person sees, with no end point.
   if (!graph.nodes.some((node) => registry.node(node.node_type)?.isResult) && (inside || !showsMemory(graph, registry))) {
     problems.push(inside ? {
@@ -149,7 +169,7 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
     } : {
       where: 'graph',
       problem: 'Nothing a person can see: there is no end point, so a run computes its answer and shows nobody.',
-      fix: 'End every branch in an "end" node -- an end point, what the graph hands back under its name, which a block on the gui can show; config.write_mode "file" or "directory" writes it too.',
+      fix: 'End every branch in an "end" node -- an end point, what the graph hands back under its name, which a block on the GUI can show; config.write_mode "file" or "directory" writes it too.',
     });
   }
   if (!inside) problems.push(...sharedResultLabels(graph), ...guiProblems(graph, registry));
@@ -266,7 +286,7 @@ function definitionProblems(node: GraphNode, where: string): Problem[] {
  * which what it is sent for example does not hold: a run of it on its own --
  * and every node written against that example -- is handed nothing there.
  * Only where there is an example: a start point that holds none says nothing
- * of what a call sends, and nothing can disagree with it. The gui's own
+ * of what a call sends, and nothing can disagree with it. The GUI's own
  * contract, what its blocks send, is `guiProblems`'.
  */
 function exampleMiss(graph: Graph, edge: GraphEdge): Omit<Problem, 'where'> | undefined {

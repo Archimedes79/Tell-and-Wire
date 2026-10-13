@@ -1,7 +1,7 @@
 // What a dropdown offers and what it stands at.
 //
-// Its own tiny module, like `text_io/role.ts`, because the gui imports it too:
-// a run emits the choice and the gui shows it in the dropdown, and the two
+// Its own tiny module, like `text_io/role.ts`, because the GUI imports it too:
+// a run emits the choice and the GUI shows it in the dropdown, and the two
 // must be the same option.
 
 /** One option per line; blank lines dropped, so a stray empty row is not a choice. */

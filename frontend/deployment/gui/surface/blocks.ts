@@ -1,4 +1,4 @@
-// What a block is, to the gui: the half of a widget that is delivered.
+// What a block is, to the GUI: the half of a widget that is delivered.
 //
 // A widget has several faces and they belong in different places. Its
 // `WidgetDefinition` is what it is and what it contributes to a *run* -- a

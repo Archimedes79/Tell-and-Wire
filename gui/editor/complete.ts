@@ -1,11 +1,11 @@
-// A gui written whole, with the start and end points its blocks need.
+// A GUI written whole, with the start and end points its blocks need.
 //
 // The designer connects each block as it is added (`frontend/editor/gui/guiWrite.ts`):
-// what a block sends goes to the gui's start point, one a person uses fires it,
+// what a block sends goes to the GUI's start point, one a person uses fires it,
 // what it shows is an end point -- and a point the graph lacks is made. A model
-// that writes a gui and a graph in one piece leaves out the same things, more
+// that writes a GUI and a graph in one piece leaves out the same things, more
 // often than anything else: the input field with no start point to send to, the
-// output with no end point to show. `completeGui` gives that gui what the
+// output with no end point to show. `completeGui` gives that GUI what the
 // designer would have, so a tool said in words has its start and its end.
 
 import type { Graph, GraphNode } from '../../graph/graph.ts';
@@ -28,15 +28,15 @@ const words = (id: string): string => {
 };
 
 /**
- * Give the gui of *graph* what it lacks, in place:
+ * Give the GUI of *graph* what it lacks, in place:
  * - a connection a block cannot make is taken off: a button "sends" to the start point it
  *   means to fire -- that is what it then fires --, a text that shows nothing "shows" nothing;
  * - a start or end point a block names (`sends_to`, `fires`, `shows`) that is no node of
  *   the graph is made, under that name;
- * - an input that sends nowhere sends to the start point the gui starts -- or to the one it
+ * - an input that sends nowhere sends to the start point the GUI starts -- or to the one it
  *   fires, or to one made for it -- and an output that shows nothing shows an end point no
  *   block shows yet, or one made for it;
- * - a start point the gui starts that nothing fires is fired by the one block that sends to
+ * - a start point the GUI starts that nothing fires is fired by the one block that sends to
  *   it, where that block can (with several, a button is the person's to add).
  * Points are made unwired and beside the graph; wiring them is the graph's author's.
  */
@@ -98,7 +98,7 @@ export function completeGui(graph: Graph, registry: Kinds): void {
     }
   }
 
-  // What starts the graph: a start point the gui starts, and nobody fires.
+  // What starts the graph: a start point the GUI starts, and nobody fires.
   const { starts } = points(graph, registry);
   for (const [name, by] of starts) {
     if (by !== 'gui' || guiBlocks(graph).some((stored) => stored.fires === name)) continue;

@@ -10,7 +10,7 @@ import { quietRuntime } from '../runtime/test/fakes.ts';
  * A graph used from outside, by name: what any frontend, script or model
  * calls -- a start point, an end point, each by its own id -- and never a
  * port. There is one kind of way in and one of way out: nothing else of the
- * graph is set from outside. The gui's blocks are not among the names: they
+ * graph is set from outside. The GUI's blocks are not among the names: they
  * connect themselves to them.
  */
 
@@ -49,7 +49,7 @@ const tool = (): Graph => parseGraph({
 const names = (entries: { name: string }[]) => entries.map((entry) => entry.name);
 
 describe('a graph used from outside', () => {
-  it('offers its start points and end points by their ids -- with what each reads and what the gui sends -- and no port', () => {
+  it('offers its start points and end points by their ids -- with what each reads and what the GUI sends -- and no port', () => {
     const offered = interfaceWithGui(tool(), registry);
     expect(names(offered.events)).toEqual(['ask', 'api', 'clock']);
     expect(offered.events.map((entry) => entry.started_by)).toEqual(['gui', 'call', 'itself']);
@@ -61,7 +61,7 @@ describe('a graph used from outside', () => {
       { name: 'topic', label: 'Topic', type: 'text' },
       { name: 'options.size', label: 'Size', type: 'number' },
     ]);
-    // A start point the gui starts: which blocks fire it, and what the gui sends with it.
+    // A start point the GUI starts: which blocks fire it, and what the GUI sends with it.
     expect(ask.fired_by).toEqual(['go', 'talk']);
     expect(ask.sends).toEqual([
       { name: 'length', label: 'Length', type: 'text', description: 'one of: short, long' },

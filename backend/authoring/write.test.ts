@@ -16,7 +16,7 @@ import { changesOnDisk, graphAt, saveGraph, writeProject } from './write.ts';
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 
-/** A code node and an ai node, which keep writing, beside a start point that reads a folder and an end point, which keep none -- and a gui with a chart. */
+/** A code node and an ai node, which keep writing, beside a start point that reads a folder and an end point, which keep none -- and a GUI with a chart. */
 function sample(): Graph {
   return parseGraph({
     metadata: { name: 'Sample', description: 'All the writing there is.' },
@@ -85,7 +85,7 @@ describe('a project folder', () => {
     // code.js runs on its own, on the example in input.js.
     const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes/count/code.js')], { cwd: dir });
     expect(JSON.parse(stdout)).toEqual({ total: 1 });
-    // A start point has no writing of its own, and a chart is one block of the gui's: no node, no folder.
+    // A start point has no writing of its own, and a chart is one block of the GUI's: no node, no folder.
     expect(existsSync(join(dir, 'nodes/pick'))).toBe(false);
     expect(existsSync(join(dir, 'nodes/told'))).toBe(false);
     expect(JSON.parse(await text('gui.json'))).toEqual([{ id: 'chart', kind: 'plot_window', label: 'Chart', shows: 'told' }]);
@@ -222,7 +222,7 @@ describe('a project folder', () => {
     expect(problemsIn(await readProject(dir)).some((problem) => /there is no such node/.test(problem.problem))).toBe(true);
   });
 
-  it('refuses to read a gui file that is no list of blocks as "no gui", which a save would delete, and to save over a .json file that holds no graph', async () => {
+  it('refuses to read a GUI file that is no list of blocks as "no GUI", which a save would delete, and to save over a .json file that holds no graph', async () => {
     await writeProject(dir, sample());
     for (const wrong of ['{"blocks": []}', '{}', 'null', '[1]']) {
       await writeFile(join(dir, 'gui.json'), wrong);
@@ -234,6 +234,17 @@ describe('a project folder', () => {
     expect(graphAt(other)).toBeNull();
     await expect(saveGraph(other, sample())).rejects.toThrow(/holds no graph/);
     expect(await text('package.json')).toBe('{"name": "not a graph"}');
+  });
+
+  it('does not save under "." or "..": those are folders, and the tool would land in the one it was meant to go into, or above', async () => {
+    // In a folder of its own, so that a name that got through would write into the test's folder and not above it.
+    const work = join(dir, 'work');
+    await mkdir(work);
+    for (const dots of [`${work}/..`, `${work}/.`, `${work}\\..\\`, `${work}/../`]) {
+      await expect(saveGraph(dots, sample()), dots).rejects.toThrow(/is a folder, not a name/);
+    }
+    expect(existsSync(join(dir, 'graph-flow.json'))).toBe(false);
+    expect(existsSync(join(work, 'graph-flow.json'))).toBe(false);
   });
 });
 
@@ -270,7 +281,7 @@ describe('two editors on one folder', () => {
     await rm(join(dir, 'nodes/count/output.js'));
     expect(await changesOnDisk(dir)).toEqual([{ node_id: 'count', field: 'output_definition', value: '' }]);
 
-    // The gui's blocks, edited in gui.json.
+    // The GUI's blocks, edited in gui.json.
     await touch(join(dir, 'gui.json'), '[{ "id": "chart", "kind": "plot_window", "label": "Sales" }]\n');
     expect(await changesOnDisk(dir)).toEqual([{ node_id: null, field: 'blocks', value: [{ id: 'chart', kind: 'plot_window', label: 'Sales' }] }]);
 

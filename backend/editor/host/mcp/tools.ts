@@ -164,7 +164,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
     }
     const blocks = graph.gui?.blocks ?? [];
     if (blocks.some((block) => !block || typeof block !== 'object' || Array.isArray(block))) {
-      throw new BadDocument(`The gui in "${argument}": every entry of gui.blocks must be a block object.`);
+      throw new BadDocument(`The GUI in "${argument}": every entry of gui.blocks must be a block object.`);
     }
     return graph;
   };
@@ -385,7 +385,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
       }
 
       const runtime = options.runtime();
-      // A run of everything starts the gui's start points on what the gui holds.
+      // A run of everything starts the GUI's start points on what the GUI holds.
       if (!trigger) await startFromGui(graph, runtime, registry);
       const { result } = await withCore((core) => core.round({ graph, trigger }));
       return json({
@@ -397,7 +397,7 @@ export function createGraphTools(options: GraphToolsOptions): GraphTools {
           ...(node.error ? { error: clip(node.error, ERROR_LIMIT) } : {}),
           outputs: briefAll(node.outputs),
         })),
-        // By name, as a gui or any frontend reads them (`graph/interface.ts`).
+        // By name, as a GUI or any frontend reads them (`graph/interface.ts`).
         outputs: briefAll(outputsOf(graph, result, registry)),
       });
     },

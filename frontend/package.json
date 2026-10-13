@@ -1,7 +1,7 @@
 {
   "name": "tell-and-wire-frontend",
   "private": true,
-  "version": "0.7.5",
+  "version": "0.7.6",
   "description": "The browser code of Tell & Wire: the editor (graph, GUI and node views) and the page a deployed tool serves.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",

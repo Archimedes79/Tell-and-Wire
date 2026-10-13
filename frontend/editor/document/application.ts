@@ -87,8 +87,12 @@ let generation = 0;
  * for a graph nothing else starts: the delivered tool's steps, which ask first
  * what the graph still needs (`useRound`). A step that fails ends the
  * application and is thrown: nothing stays running that is not.
+ *
+ * Says 'nothing' where it ended at once and nothing had been started: no start
+ * point to run at start, no GUI to use, no clock -- a ▶ Run that did nothing,
+ * which the person is told.
  */
-export async function startApplication(graph: Graph, runWhole: () => Promise<void>): Promise<void> {
+export async function startApplication(graph: Graph, runWhole: () => Promise<void>): Promise<'ran' | 'nothing'> {
   const stopping = stopApplication();
   const mine = (generation += 1);
   const current = () => generation === mine;
@@ -101,19 +105,24 @@ export async function startApplication(graph: Graph, runWhole: () => Promise<voi
   try {
     // The one before is stopped in the server first, or its stop could overtake this start.
     await stopping;
-    if (!current()) return;
+    if (!current()) return 'ran';
     await useGraphStore.getState().holdDocument();
     // ■ Stop pressed while the document was on its way: nothing starts after it.
-    if (!current()) return;
+    if (!current()) return 'ran';
     whileRunning = [followEdits(), stopWhenLeft()];
     const { ticks } = await call('startApplication', {});
     if (!current()) {
       await call('stopApplication', {}).catch(() => {});
-      return;
+      return 'ran';
     }
-    if (startEvents(graph, registry).includes(null)) await runWhole();
+    const events = startEvents(graph, registry);
+    if (events.includes(null)) await runWhole();
     // Nothing left to happen: no GUI to use, no call to make, no clock to tick.
-    if (current() && !opensApp(graph) && !ticks) await end();
+    if (current() && !opensApp(graph) && !ticks) {
+      await end();
+      return events.length ? 'ran' : 'nothing';
+    }
+    return 'ran';
   } catch (error) {
     if (current()) await end();
     throw error;

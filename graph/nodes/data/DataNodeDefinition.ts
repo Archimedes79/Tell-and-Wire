@@ -51,7 +51,7 @@ function exampleOf(node: Pick<GraphNode, 'config'>): Record<string, unknown> {
  * one that runs before it, what it held when the round began -- so a node that
  * reads the memory and writes it back stands before it, and the loop reads the
  * last round and writes this one (`readingWires`). Whoever reads
- * it from outside -- a gui, a script -- reads what the last round left
+ * it from outside -- a GUI, a script -- reads what the last round left
  * (`holds`), never a round half done.
  *
  * There is no code in it. Working out a new value -- a count plus one, the
@@ -92,7 +92,7 @@ export class DataNodeDefinition extends NodeDefinition<DataConfig> {
     if (hasField(held, portId) && !hasField(RESERVED, portId)) node.config.data_value = { ...held, [portId]: value } as never;
   }
 
-  /** Under its id with its whole content, and each field of it under the id and its name: what a session lets a gui or a script watch (`holds`). */
+  /** Under its id with its whole content, and each field of it under the id and its name: what a session lets a GUI or a script watch (`holds`). */
   override offers(node: GraphNode): Offer[] {
     const label = node.label || node.id;
     return [

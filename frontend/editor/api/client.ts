@@ -79,7 +79,7 @@ export async function watchGeneration<T>(
 }
 
 /** Save the deploy bundle the way a browser saves any download, under the name the server gave it. */
-export async function downloadBundle(asked: RequestOf<(typeof EDITOR_API)['bundle']>): Promise<void> {
+export async function downloadBundle(asked: RequestOf<(typeof EDITOR_API)['bundle']>): Promise<string> {
   const zip = await call('bundle', asked);
   const url = URL.createObjectURL(zip);
   const link = document.createElement('a');
@@ -87,4 +87,5 @@ export async function downloadBundle(asked: RequestOf<(typeof EDITOR_API)['bundl
   link.download = zip.name;
   link.click();
   URL.revokeObjectURL(url);
+  return zip.name;
 }

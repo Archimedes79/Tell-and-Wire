@@ -116,7 +116,7 @@ export default function Toolbar({
       say('run', '');
       return;
     }
-    const labels = useGraphStore.getState().rfNodes.map((item) => item.data.graphNode);
+    const labels = useGraphStore.getState().rootGraph().nodes;
     say('run', runReport(executionResult, labels).summary, {
       level: executionResult.status === 'error' ? 'error' : 'warning',
       action: { label: 'Report', run: onOpenReport },
@@ -152,6 +152,12 @@ export default function Toolbar({
     }
     say('run', '');
     startApplication(graph, () => delivered.run(null))
+      .then((started) => {
+        // ▶ Run that did nothing must not look like a button that is dead.
+        if (started === 'nothing') {
+          say('run', '⚠ Nothing started: its start points wait for a GUI block or a call, and there is no GUI. Add blocks on the GUI tab (From the graph does it for you), or set a start point to start when the tool starts.');
+        }
+      })
       .catch((error) => say('run', errorText(error, 'The tool could not be started.'), { level: 'error' }));
   };
   // Stopped -- by ■ Stop, or by itself, having nothing left to do -- or its
@@ -166,12 +172,12 @@ export default function Toolbar({
 
   // A busy state and the error, said: without them a slow or rejecting
   // backend looks exactly like a dead button.
-  const runDeployAction = async (label: string, action: () => Promise<void>) => {
+  const runDeployAction = async (label: string, action: () => Promise<string>) => {
     setDeployBusy(label);
     say('deploy', 'Making the zip…');
     try {
-      await action();
-      say('deploy', '');
+      // Said when it is done: the browser saves a download without a word, and nothing else says it came.
+      say('deploy', `✅ ${await action()} is made, as a program of its own: your browser has saved it with your downloads.`);
     } catch (error) {
       say('deploy', errorText(error, `${label} failed.`), { level: 'error' });
     } finally {
@@ -184,7 +190,7 @@ export default function Toolbar({
       // The tool someone is handed is the whole thing, not the level that is open.
       flushPanels();
       const { rootGraph, currentFilePath } = useGraphStore.getState();
-      await downloadBundle({ graph: rootGraph(), path: currentFilePath });
+      return downloadBundle({ graph: rootGraph(), path: currentFilePath });
     });
 
   const handleOpenDescribe = () => {
@@ -403,7 +409,7 @@ export default function Toolbar({
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg p-3 text-sm resize-y outline-none"
               style={{ ...FIELD, minHeight: 100 }}
-              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a gui."
+              placeholder="e.g. Read a text file, summarize it with AI, and show the result on a GUI."
               disabled={asking}
             />
             <p className="text-xs" style={{ color: DIM }}>

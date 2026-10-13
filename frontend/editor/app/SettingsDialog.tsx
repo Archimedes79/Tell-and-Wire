@@ -61,9 +61,20 @@ function Chosen({ purpose, provider, saved, probe, children }: {
   );
 }
 
+/** The providers a model may run on another computer: the hint about an address is for these, not for a cloud service. */
+const NETWORK_MODELS = new Set(['ollama', 'lmstudio', 'openai_compatible']);
+
+/**
+ * The model a provider chosen starts with: the one saved, where it is the provider saved -- else none, and
+ * the box names what to expect. A model name belongs to the provider it was typed for: "llama3" under Gemini is a mistake.
+ */
+function modelFor(provider: string, saved: { provider: string; model: string } | undefined): string {
+  return saved && provider === (saved.provider || 'default') ? saved.model : '';
+}
+
 /**
  * The AI the tool asks and what it needs to ask it, as one form with one Save:
- * the provider and model that ✨, ▶ Try and every run call wherever a node
+ * the provider and model that Auto generate, ▶ Try and every run call wherever a node
  * names none, the keys, and the servers' addresses. This machine's, saved in
  * `ai-settings.json` and never in a graph, so a graph handed to someone else
  * runs on whatever they chose.
@@ -195,7 +206,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
     return (
       <div className="mt-3 space-y-2">
         {rows}
-        {id in saved.endpoints && (
+        {NETWORK_MODELS.has(id) && id in saved.endpoints && (
           <p className="text-xs" style={{ color: DIM }}>
             A model on another computer works too: enter its address, for example <code>http://192.168.1.20:11434</code>. The computer that runs the editor must reach it.
           </p>
@@ -245,7 +256,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
           <ProviderModelSelect
             provider={provider}
             model={model}
-            onProviderChange={setProvider}
+            onProviderChange={(next) => { setModel(modelFor(next, saved?.ai)); setProvider(next); }}
             onModelChange={setModel}
             defaultLabel={() => 'Not set (a local model that is running, else Ollama)'}
           />
@@ -257,12 +268,12 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
         <section>
           <h3 className="text-sm font-semibold mb-1" style={{ color: TEXT }}>AI that writes</h3>
           <p className="text-xs mb-3" style={{ color: DIM }}>
-            What ✨ Code, ✨ Prompt, Generate all and the bar under the canvas call. A larger model than the nodes need may be worth it here.
+            What Auto generate, Generate all, Describe a graph and the bar under the canvas call. A larger model than the nodes need may be worth it here.
           </p>
           <ProviderModelSelect
             provider={writingProvider}
             model={writingModel}
-            onProviderChange={setWritingProvider}
+            onProviderChange={(next) => { setWritingModel(modelFor(next, saved?.writing)); setWritingProvider(next); }}
             onModelChange={setWritingModel}
             defaultLabel={() => 'Same as the AI that runs the nodes'}
             purpose="write"

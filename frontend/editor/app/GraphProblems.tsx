@@ -16,6 +16,18 @@ export function problemsOf(graph: Graph): Problem[] {
 }
 
 /**
+ * Where a problem is, as the person sees it: `node "code"` becomes the name on its card, “Code 1”.
+ * Only the node of the graph at the top -- the first, at the start -- is named so: one inside a node
+ * (`node "part", node "code"`) has an id of that graph's own, which another card up here may share.
+ */
+export function placeOf(where: string, graph: Pick<Graph, 'nodes'>): string {
+  return where.replace(/^node "([^"]+)"/, (whole, id: string) => {
+    const label = graph.nodes.find((node) => node.id === id)?.label;
+    return label ? `“${label}”` : whole;
+  });
+}
+
+/**
  * What `check` finds in a graph about to be taken in from outside -- one ✨ Describe
  * a graph designed or changed, one pasted as JSON -- said before the button
  * that takes it (*action*: Load, Apply). Loaded without a word, a graph whose
@@ -32,7 +44,7 @@ export default function GraphProblems({ graph, action = 'Load' }: { graph: Graph
       <ul className="space-y-1">
         {problems.map((problem, index) => (
           <li key={index}>
-            <span style={{ color: TEXT }}>{problem.where}</span>: {problem.problem} {problem.fix}
+            <span style={{ color: TEXT }}>{placeOf(problem.where, graph)}</span>: {problem.problem} {problem.fix}
           </li>
         ))}
       </ul>

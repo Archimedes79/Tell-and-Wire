@@ -74,6 +74,15 @@ describe('the application ▶ Run starts', () => {
     expect(server.asked[server.asked.length - 1]).toBe('stopApplication');
   });
 
+  it('says "nothing" where it ended at once with nothing started: a start point that waits for a GUI, and no GUI', async () => {
+    const waiting = open(graphOf(node('go', 'start', { started_by: 'gui' }), node('work', 'code')));
+    expect(await startApplication(waiting, runWhole)).toBe('nothing');
+    expect(whole).toBe(0);
+    expect(useApplication.getState().running).toBe(false);
+    // A graph that ran whole once did something.
+    expect(await startApplication(open(graphOf(node('work', 'code'), node('shown', 'end'))), runWhole)).toBe('ran');
+  });
+
   it('is not started by what comes after a ■ Stop pressed while the document is on its way -- and a document that cannot be handed over leaves it not running', async () => {
     const graph = open(withGui([button], node('work', 'code')));
     let release!: () => void;

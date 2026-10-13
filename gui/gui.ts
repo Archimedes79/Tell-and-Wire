@@ -1,6 +1,6 @@
-// The gui a graph is used through: its blocks, and how each connects itself.
+// The GUI a graph is used through: its blocks, and how each connects itself.
 //
-// A gui is not a node. Nothing is wired to it, and it is in neither the
+// A GUI is not a node. Nothing is wired to it, and it is in neither the
 // graph's order nor its rounds: a block connects itself by name -- its data
 // goes to start points (`sends_to`), its event fires one (`fires`), it shows
 // an end point (`shows`) -- and the graph owns those points. What a round the
@@ -8,7 +8,7 @@
 // that send to the start point it fires; what the round hands back reaches the
 // blocks that show its end points, settled here.
 //
-// The gui's own state -- what was typed or chosen, a conversation -- is kept
+// The GUI's own state -- what was typed or chosen, a conversation -- is kept
 // by whoever uses the graph: the session (`backend/deployment/host/session.ts`), as it keeps each
 // node's.
 
@@ -63,22 +63,22 @@ export function parseWidget(raw: unknown): Widget {
   };
 }
 
-/** The gui's blocks as the gui keeps them -- none, for a graph without a gui. */
+/** The GUI's blocks as the GUI keeps them -- none, for a graph without a GUI. */
 export function guiBlocks(graph: Graph): RawConfig[] {
   return graph.gui?.blocks ?? [];
 }
 
-/** The gui's blocks, read. */
+/** The GUI's blocks, read. */
 export function guiWidgets(graph: Graph): Widget[] {
   return guiBlocks(graph).map(parseWidget);
 }
 
-/** The block of the gui called *id*, as the gui keeps it. */
+/** The block of the GUI called *id*, as the GUI keeps it. */
 export function guiBlock(graph: Graph, id: string): RawConfig | undefined {
   return guiBlocks(graph).find((block) => block.id === id);
 }
 
-/** The blocks whose event fires start point *name*, in the gui's order. */
+/** The blocks whose event fires start point *name*, in the GUI's order. */
 export function firedBy(graph: Graph, name: string): Widget[] {
   return guiWidgets(graph).filter((widget) => widget.fires === name && !!widgetElement(widget.kind)?.event(widget));
 }
@@ -89,7 +89,7 @@ export function sentBy(graph: Graph, name: string): Widget[] {
 }
 
 /**
- * What the gui sends with start point *name*: the data of each block that
+ * What the GUI sends with start point *name*: the data of each block that
  * sends to it, under the block's id -- the values of the package the start
  * point hands on. A block that cannot say what it holds -- a folder that is
  * gone -- fails the round before it starts.
@@ -108,9 +108,9 @@ export async function guiSends(graph: Graph, name: string, runtime: Runtime): Pr
 
 /**
  * A run of everything -- the command line, a call that names no event --
- * counts every event as fired, the gui's too: each start point the gui
- * starts is sent what the gui holds now, as though the gui had fired it.
- * So a tool run from a terminal starts on what its gui starts on.
+ * counts every event as fired, the GUI's too: each start point the GUI
+ * starts is sent what the GUI holds now, as though the GUI had fired it.
+ * So a tool run from a terminal starts on what its GUI starts on.
  */
 export async function startFromGui(graph: Graph, runtime: Runtime, registry: Kinds): Promise<void> {
   if (!guiBlocks(graph).length) return;
@@ -142,14 +142,14 @@ export function pathBlocks(graph: Graph, ids: string[]): string[] {
   });
 }
 
-/** Whether *id* is a block of the gui a person sets: what a round the gui starts is sent by. */
+/** Whether *id* is a block of the GUI a person sets: what a round the GUI starts is sent by. */
 export function takesGuiValue(graph: Graph, id: string): boolean {
   const stored = guiBlock(graph, id);
   return !!stored && !!widgetElement(String(stored.kind))?.takesValue(parseWidget(stored));
 }
 
 /**
- * What the gui's blocks hold, each under its id: what was typed or chosen, a
+ * What the GUI's blocks hold, each under its id: what was typed or chosen, a
  * conversation, what an end point handed back. A block that keeps nothing is
  * its design.
  */
@@ -172,7 +172,7 @@ export function setGuiState(graph: Graph, kept: Record<string, unknown>): void {
   }
 }
 
-/** Empty what a block held only until a round delivered it (`clearsValueAfterRun`). *sent*: the gui's state as the round was handed it. */
+/** Empty what a block held only until a round delivered it (`clearsValueAfterRun`). *sent*: the GUI's state as the round was handed it. */
 export function clearDeliveredGui(graph: Graph, sent: Record<string, unknown>): void {
   for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
@@ -184,7 +184,7 @@ export function clearDeliveredGui(graph: Graph, sent: Record<string, unknown>): 
 /**
  * Settle what the end points handed back, by name, into the blocks that show
  * them -- each block decides what arriving means (`settle`): most become it, a
- * conversation adds a turn -- and say what each now shows, as the gui draws
+ * conversation adds a turn -- and say what each now shows, as the GUI draws
  * it (`displayValue`): an image's path read into the picture. A block whose
  * end point handed back nothing this round is left as it was, and out.
  */
@@ -217,9 +217,9 @@ export function shownFromState(graph: Graph, state: Record<string, unknown>): Re
 }
 
 /**
- * What the gui asks before a round of start point *name* runs: what the blocks
+ * What the GUI asks before a round of start point *name* runs: what the blocks
  * that send to it ask -- a picker with nothing chosen --, each under its block's
- * id. None for a round the gui does not send.
+ * id. None for a round the GUI does not send.
  */
 export function guiRequirements(graph: Graph, name: string | null): RuntimeRequirement[] {
   if (!name) return [];

@@ -8,7 +8,7 @@
 
 /** A piece of writing someone changed outside the editor. */
 export interface TextChange {
-  /** The node it is a node's; null for the graph's own -- its gui, `field` its blocks. */
+  /** The node it is a node's; null for the graph's own -- its GUI, `field` its blocks. */
   node_id: string | null;
   field: string;
   /** What the file says now; empty when it was deleted. */

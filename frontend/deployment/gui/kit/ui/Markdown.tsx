@@ -152,6 +152,18 @@ function Markdown({ source }: { source: string }): React.ReactElement {
       continue;
     }
 
+    // Quote: consecutive lines starting with ">", as one block set off by a rule at its side.
+    if (/^\s*>/.test(line)) {
+      const quoted: string[] = [];
+      while (index < lines.length && /^\s*>/.test(lines[index])) { quoted.push(lines[index].replace(/^\s*>\s?/, '')); index += 1; }
+      blocks.push(
+        <blockquote key={`q${index}`} style={{ margin: '4px 0', padding: '2px 0 2px 10px', borderLeft: `3px solid ${LINE}`, color: MUTED, lineHeight: 1.5 }}>
+          {inline(quoted.join(' '), `q${index}`)}
+        </blockquote>,
+      );
+      continue;
+    }
+
     if (/^\s*\d+[.)]\s+/.test(line)) {
       const items: string[] = [];
       while (index < lines.length && (/^\s*\d+[.)]\s+/.test(lines[index]) || continues(lines[index], items))) {
@@ -186,7 +198,7 @@ function Markdown({ source }: { source: string }): React.ReactElement {
     const paragraph: string[] = [];
     while (index < lines.length && lines[index].trim()
            && !/^(#{1,4})\s+/.test(lines[index]) && !/^\s*[-*]\s+/.test(lines[index])
-           && !/^\s*```/.test(lines[index]) && !/^\s*\d+[.)]\s+/.test(lines[index])) {
+           && !/^\s*```/.test(lines[index]) && !/^\s*\d+[.)]\s+/.test(lines[index]) && !/^\s*>/.test(lines[index])) {
       paragraph.push(lines[index]);
       index += 1;
     }

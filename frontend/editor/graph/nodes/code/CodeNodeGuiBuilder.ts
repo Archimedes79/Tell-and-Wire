@@ -12,7 +12,7 @@ export class CodeNodeGuiBuilder extends NodeGuiBuilder {
 
   readonly label = 'Code';
 
-  readonly hint = 'Run JavaScript -- say what it should do, and ✨ writes it';
+  readonly hint = 'Run JavaScript -- say what it should do, and Auto generate writes it';
 
   readonly example = 'e.g. Count the words in the text and return the number';
 

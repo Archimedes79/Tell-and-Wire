@@ -10,7 +10,7 @@
 //     node backend/cli/main.ts my_project/ --event go --keep  ...and keep the round as a test, in tests/
 //     node backend/cli/main.ts graph.json --every 5m           again, after each run
 //     node backend/cli/main.ts graph.json --bundle ./out       hand it to someone else
-//     node backend/cli/main.ts graph.json --serve             open its gui in a browser
+//     node backend/cli/main.ts graph.json --serve             open its GUI in a browser
 //     node backend/cli/main.ts --editor frontend/dist   the editor itself, on :8000
 //     node backend/cli/main.ts --mcp --mcp-root ./project     graph tools for an assistant, on stdio
 //
@@ -178,7 +178,7 @@ export function parseArgs(argv: string[]): CliOptions {
 }
 
 async function runOnce(graph: Graph, trigger: Trigger | null, options: CliOptions, core: GraphCore): Promise<number> {
-  // A run of everything starts the gui's start points on what the gui holds.
+  // A run of everything starts the GUI's start points on what the GUI holds.
   if (!trigger) await startFromGui(graph, nodeRuntime(), registry);
   // Where the memory stood when the round began: a round kept starts it there again.
   const before = memoryState(graph, registry);
@@ -225,9 +225,9 @@ async function runEvery(graph: Graph, trigger: Trigger | null, options: CliOptio
 }
 
 /**
- * Serve the gui and wait.
+ * Serve the GUI and wait.
  *
- * The gui is the one a bundle carries beside its graph (`web/`), else the
+ * The GUI is the one a bundle carries beside its graph (`web/`), else the
  * one this checkout built -- a project run with `--serve` has none of its own
  * -- and its absence is not an error: a graph with no interface, or a bundle
  * written without a build at hand, still serves its few endpoints, which is

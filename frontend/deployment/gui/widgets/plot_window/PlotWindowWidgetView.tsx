@@ -51,9 +51,14 @@ export default function PlotWindowWidgetView({ widget, value, incoming }: Widget
     if (svg) saveFile(fileName(widget.label, 'chart', 'svg'), drawnSvg(svg), 'image/svg+xml');
   };
 
+  // The chart is drawn at the box's size, so it must not size the box: out of the flow, the block is as
+  // large as its cells say -- and can be made smaller again, which a chart in the flow, held open by the
+  // size it was last drawn at, could not.
   return (
-    <div ref={containerRef} className="relative group w-full h-full flex items-center justify-center" style={{ minHeight: 60 }}>
-      <PlotChart data={data} width={size.width} height={size.height} />
+    <div ref={containerRef} className="relative group w-full h-full" style={{ minHeight: 60 }}>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <PlotChart data={data} width={size.width} height={size.height} />
+      </div>
       {drawsSomething(data) && <SaveButton title="Save this chart as an SVG file" onSave={save} />}
     </div>
   );

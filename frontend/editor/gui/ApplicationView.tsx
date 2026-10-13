@@ -148,7 +148,7 @@ export default function ApplicationView({ onShowNode }: { onShowNode: (nodeId: s
         </span>
         <span className="text-xs" style={{ color: DIMMER }}>
           {starts
-            ? 'As whoever gets it will use it: the graph runs when you use the gui. ■ Stop ends it.'
+            ? 'As whoever gets it will use it: the graph runs when you use the GUI. ■ Stop ends it.'
             : called
               ? 'As whoever gets it will use it: it runs when it is called -- here, as a script would call it. ■ Stop ends it.'
               : 'As whoever gets it will use it: what starts the graph starts it, and the GUI shows what it makes. ■ Stop ends it.'}

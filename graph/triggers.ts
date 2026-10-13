@@ -5,10 +5,10 @@
 //
 //   the graph itself  -- a start point set to start when the tool starts, or on a clock
 //   a call            -- a script, a model over MCP, the graph above
-//   the gui           -- a button pressed, a box submitted, a choice made
+//   the GUI           -- a button pressed, a box submitted, a choice made
 //
 // Each is an event, and an event starts the graph **where its start point is
-// wired to**. That is the part worth a file of its own: a gui with a
+// wired to**. That is the part worth a file of its own: a GUI with a
 // "Summarize" button and a "Plot" button is two tools sharing a window -- two
 // start points -- and pressing one should not run the other's model call.
 //
@@ -86,7 +86,7 @@ function startedBy(graph: Graph, elements: Kinds, who: readonly StartedBy[]): bo
   });
 }
 
-/** Whether the gui starts the graph when somebody uses it: a start point the gui starts. */
+/** Whether the GUI starts the graph when somebody uses it: a start point the GUI starts. */
 export function guiStarts(graph: Graph, elements: Kinds): boolean {
   return startedBy(graph, elements, ['gui']);
 }
@@ -94,7 +94,7 @@ export function guiStarts(graph: Graph, elements: Kinds): boolean {
 /**
  * What starting the application runs before anybody uses it -- ▶ Run in the
  * editor, a delivered tool opened: each start point set to start when the
- * tool starts. A graph somebody else starts -- a start point the gui or a
+ * tool starts. A graph somebody else starts -- a start point the GUI or a
  * call starts -- waits for them; one with no start point at all runs whole
  * once, as a program runs when it is started (`null` is "everything").
  */

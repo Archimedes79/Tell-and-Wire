@@ -7,7 +7,7 @@ function byWords(by: string, nameOf: (id: string) => string): string {
     case 'itself': return 'by itself';
     case 'graph': return 'by the graph above';
     case 'run': return 'in a run of everything';
-    case 'gui': return 'by the gui';
+    case 'gui': return 'by the GUI';
     default: return `from "${nameOf(by)}"`;
   }
 }

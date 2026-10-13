@@ -43,7 +43,7 @@ export interface Graph {
   gui?: Gui;
 }
 
-/** A gui: its blocks, in order. One with none is no gui. */
+/** A GUI: its blocks, in order. One with none is no GUI. */
 interface Gui {
   blocks: GuiWidget[];
 }

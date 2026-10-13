@@ -29,7 +29,7 @@
 
 import type { Graph, GraphEdge, GraphNode, ExecutionResult, NodeResult, Port } from '../../../graph/graph.ts';
 import { resultKeys, type Kinds, type NodeDefinition } from '../../../graph/nodes/NodeDefinition.ts';
-import type { Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { BlockWindow, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from '../../../graph/batching.ts';
 import { Unread, filePorts, readPorts } from '../../../graph/fileInputs.ts';
 import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
@@ -42,6 +42,7 @@ import { ERROR_PORT, NESTING_LIMIT, fatalProblems, fieldOf, unrunnable } from '.
 import { runners as realRunners } from './nodes/registry.ts';
 import type { NodeRunner, Runners } from './nodes/NodeRunner.ts';
 import { messageOf } from '../../../graph/errors.ts';
+import { windowsOf } from '../../../gui/windows.ts';
 
 /**
  * Gather what the wires deliver to *nodeId*.
@@ -353,7 +354,8 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         const arrived = await readInputs(element, node, inputs, runtime, registry);
         // An event is a moment: a package handed back from an earlier round
         // would say an event happened that is over.
-        const key = element.eventPorts(node).length ? undefined : options.reuse?.key(node, arrived, setting);
+        const windows = windowsOf(graph, node, registry);
+        const key = element.eventPorts(node).length ? undefined : options.reuse?.key(node, arrived, setting, windows);
         const kept = key && context(nodeId) ? options.reuse!.get(key) : undefined;
         if (kept) {
           outputs.set(nodeId, kept);
@@ -366,7 +368,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
           continue;
         }
         const { produced, failures } = await runNode(
-          runner, node, arrived, withSubgraph(atNode(runtime, nodeId), options, node, depth), signal,
+          runner, node, arrived, withSubgraph(atNode(runtime, nodeId), options, node, depth, windows), signal,
         );
         if (signal?.aborted) throw new Error('Stopped.');
         outputs.set(nodeId, produced);
@@ -422,27 +424,29 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
  * so no kind of node has to know that stopping exists -- the same place the graph's
  * AI default is applied, for the same reason.
  */
-function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
+export function stoppable(runtime: Runtime, signal: AbortSignal | undefined): Runtime {
   if (!signal) return runtime;
   const { tools } = runtime;
+  // A call's own signal -- a time limit on a body -- is kept beside the round's: either stops it.
+  const joined = (own: AbortSignal | undefined): AbortSignal => (own ? AbortSignal.any([signal, own]) : signal);
   return {
     ...runtime,
-    ai: { ...runtime.ai, complete: (request) => runtime.ai.complete({ ...request, signal }) },
-    code: { run: (body, inputs, _signal, context) => runtime.code.run(body, inputs, signal, context) },
+    ai: { ...runtime.ai, complete: (request) => runtime.ai.complete({ ...request, signal: joined(request.signal) }) },
+    code: { run: (body, inputs, own, context) => runtime.code.run(body, inputs, joined(own), context) },
     ...(tools ? { tools: { open: (servers) => tools.open(servers, signal) } } : {}),
   };
 }
 
 /**
- * The runtime a node that holds a graph is handed: the same one, plus the way
- * to run that graph.
+ * The runtime a node is handed: the same one, plus the way to run the graph
+ * it holds, if it holds one, and the blocks of the GUI that show what it hands on.
  *
  * Made per node rather than per run, because the inner run's progress is the
- * *outer* node's progress. A gui watching a run counts what it was told to
+ * *outer* node's progress. A GUI watching a run counts what it was told to
  * expect ("3 of 7"), and inner nodes it never heard of would count past the
  * end; they are forwarded as activity of the node they happened inside.
  */
-function withSubgraph(runtime: Runtime, options: NodeRunOptions, node: GraphNode, depth: number): Runtime {
+function withSubgraph(runtime: Runtime, options: NodeRunOptions, node: GraphNode, depth: number, windows: BlockWindow[]): Runtime {
   const inner: Runtime = {
     ...runtime,
     ...(runtime.report ? {
@@ -454,6 +458,7 @@ function withSubgraph(runtime: Runtime, options: NodeRunOptions, node: GraphNode
   };
   return {
     ...runtime,
+    ...(windows.length ? { windows } : {}),
     subgraph: {
       elements: options.registry,
       run: (graph, given) => {
@@ -576,7 +581,7 @@ export async function executeNode(
   try {
     const arrived = await readInputs(element, node, inputs, runtime, options.registry);
     const { produced, failures } = await runNode(
-      runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0), options.signal,
+      runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0, windowsOf(graph, node, options.registry)), options.signal,
     );
     return ranTo(element, node, inputs, produced, failures);
   } catch (error) {
@@ -604,7 +609,7 @@ export async function callNode(
     return { node_id: nodeId, status: 'error', inputs, outputs: {}, error: `No such node: ${nodeId}` };
   }
   try {
-    const runtime = withSubgraph(stoppable(options.runtime, options.signal), options, node, options.depth ?? 0);
+    const runtime = withSubgraph(stoppable(options.runtime, options.signal), options, node, options.depth ?? 0, windowsOf(graph, node, options.registry));
     const outputs = reconcileOutputs(node, await runner.execute(node, inputs, runtime));
     return { node_id: nodeId, status: 'success', inputs, outputs, error: null };
   } catch (error) {

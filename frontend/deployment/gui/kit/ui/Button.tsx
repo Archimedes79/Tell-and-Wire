@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { ACCENT, DANGER_TEXT, LINE, MUTED, ON_ACCENT, TEXT } from './theme';
 
 /**
- * The one button of dialogs, panels and the gui: every `<button>` that is not
+ * The one button of dialogs, panels and the GUI: every `<button>` that is not
  * a toolbar icon (`ToolbarButton`) or a palette row is this, so a size, a hover
  * or a disabled look is changed once.
  *

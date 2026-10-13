@@ -1,4 +1,4 @@
-// The design of each kind of block: what only building the gui asks of it. The
+// The design of each kind of block: what only building the GUI asks of it. The
 // kinds themselves are listed in `gui/widgets/roster.ts`; a kind with nothing of
 // its own to say here (a divider, a spacer) is designed by the default.
 

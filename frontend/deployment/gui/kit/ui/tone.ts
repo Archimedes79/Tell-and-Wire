@@ -13,7 +13,7 @@ import { ACCENT, ACCENT_FILL, LINE, RAISE, SUNKEN } from './theme';
 
 export type Tone = 'plain' | 'raised' | 'sunken' | 'accent';
 
-/** What lifts a block off the gui: a light edge along the top, which a shadow alone cannot give on a dark gui, and a close shadow and a soft one. */
+/** What lifts a block off the GUI: a light edge along the top, which a shadow alone cannot give on a dark gui, and a close shadow and a soft one. */
 const LIFT = 'inset 0 1px 0 color-mix(in srgb, white 7%, transparent), 0 1px 2px color-mix(in srgb, black 22%, transparent), 0 6px 16px -6px color-mix(in srgb, black 28%, transparent)';
 
 export const TONES: Tone[] = ['plain', 'raised', 'sunken', 'accent'];

@@ -7,7 +7,7 @@
 // where it came from.
 //
 // Editor-only: a deployed tool is configured through its environment, and a
-// gui that could write credentials into a file nobody asked for is not a gui
+// gui that could write credentials into a file nobody asked for is not a GUI
 // a recipient should be handed. Hence `backend/editor/`.
 
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
@@ -156,7 +156,7 @@ export async function setupLines(cwd = process.cwd(), env: Env = process.env): P
   const { target, problem, writing, writing_problem } = await providerStatus(cwd, env);
   const line = (what: string, chosen: Target, trouble: string) => `${what}: ${chosen.provider}/${chosen.model || '(no model)'}${trouble ? ` -- ${trouble}` : ''}`;
   const apart = writing.provider !== target.provider || writing.model !== target.model;
-  return [line(apart ? 'AI that runs the nodes' : 'AI (✨, ▶ Try, runs)', target, problem), ...(apart ? [line('AI that writes (✨)', writing, writing_problem)] : [])];
+  return [line(apart ? 'AI that runs the nodes' : 'AI (writing, ▶ Try, runs)', target, problem), ...(apart ? [line('AI that writes', writing, writing_problem)] : [])];
 }
 
 /** What a person calls each provider, in a sentence. */

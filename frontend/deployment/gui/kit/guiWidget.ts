@@ -3,7 +3,7 @@
 import type { WidgetKind } from '../../../../graph/graph.ts';
 
 /**
- * One block on a gui. Nothing is wired to it: it connects itself to the
+ * One block on a GUI. Nothing is wired to it: it connects itself to the
  * graph's start and end points by name (`sends_to`, `fires`, `shows`), and
  * its `id` is the name its data is sent under -- so it stays stable once
  * assigned, as what reads it reads it by that name.

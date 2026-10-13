@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
-import { DANGER_SOFT, FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
+import { DANGER_TEXT, FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
 import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
 import CodeField, { type CodeLanguage } from '../writing/CodeField';
 import { OpenInEditor } from '../writing/FileChip';
@@ -10,6 +10,7 @@ import { useTyped } from '../writing/useTyped';
 import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Part } from '../writing/generation';
 import { PaneHeader } from '../views/NodeViewLayout';
 import FilesLine from './FilesLine';
+import DataFieldsForm from './DataFieldsForm';
 
 /** What a file's editor is handed, whatever the file is kept as. */
 interface EditorProps {
@@ -55,7 +56,7 @@ function JsonEditor({ node, field, setConfig, ...editor }: Omit<EditorProps, 'va
   return (
     <>
       <Editor {...editor} value={typed} onChange={type} />
-      {problem && <p className="text-xs" style={{ color: DANGER_SOFT }}>Not JSON yet: {problem}. It is kept once it parses.</p>}
+      {problem && <p className="text-xs" style={{ color: DANGER_TEXT }}>Not JSON yet: {problem}. It is kept once it parses.</p>}
     </>
   );
 }
@@ -105,6 +106,8 @@ export default function FilePane({ node, write, setConfig, updateNode, flush, tr
       </PaneHeader>
 
       {(write === 'input' || write === 'output') && <FilesLine node={node} side={write} setConfig={setConfig} />}
+
+      {json && write === 'body' && <DataFieldsForm node={node} setConfig={setConfig} />}
 
       {json ? (
         <JsonEditor {...editor} node={node} field={field} setConfig={setConfig} />

@@ -1,4 +1,4 @@
-// What only building the gui asks of a widget: what to tell a neighbour, the
+// What only building the GUI asks of a widget: what to tell a neighbour, the
 // model that writes a graph, a package. A package carries none of it, so it
 // lives under `editor`; a kind that has something to say of its own overrides
 // a member in `<kind>/<Kind>WidgetDesign.ts`, the rest answer as here.
@@ -28,7 +28,7 @@ export class WidgetDesign<D extends WidgetDefinition = WidgetDefinition> {
   /**
    * This kind's settings and what it sends, fires and shows, in a line for the
    * model that designs a whole graph -- or nothing, for a kind that has none
-   * worth saying. The gui's note lists every kind with its line
+   * worth saying. The GUI's note lists every kind with its line
    * (`guiAuthorNote`), so a new kind is in the prompt by being written.
    */
   graphAuthorNote(): string | undefined {
@@ -41,8 +41,8 @@ export class WidgetDesign<D extends WidgetDefinition = WidgetDefinition> {
   }
 
   /**
-   * Whether what this block holds is part of the gui's design -- a choice, a
-   * text, a path to start on, set while the gui is built -- rather than only
+   * Whether what this block holds is part of the GUI's design -- a choice, a
+   * text, a path to start on, set while the GUI is built -- rather than only
    * ever what using it left: a conversation is what was said, never what a
    * gui starts with. The editor's GUI tab writes the first kind into the
    * design as it is set there; the second is the session's wherever it is set.

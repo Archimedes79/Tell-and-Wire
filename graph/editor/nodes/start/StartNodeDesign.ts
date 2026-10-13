@@ -10,7 +10,7 @@ import { messageOf } from '../../../errors.ts';
 export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
   override graphAuthorNote(): string {
     return `a named start point: where a round begins. Its id is its name; whoever uses the graph starts it by that name. `
-      + `config.started_by is "gui" (a block on the gui fires it: then the graph needs a gui), "call" (a script, a model over MCP, or the graph above starts it) `
+      + `config.started_by is "gui" (a block on the GUI fires it: then the graph needs a gui), "call" (a script, a model over MCP, or the graph above starts it) `
       + `or "itself" (config.on_start, true or false: when the tool starts; config.every, "" or "30s", "5m", "2h", "1d": again on that clock; `
       + `config.reads, "file" or "folder", with config.path: it then sends that file -- {path, content} -- or the paths of the files in that folder -- config.extensions, e.g. ".csv, .txt", `
       + `keeps only those types, config.recursive = true looks into subfolders too -- as "values" under its own id, read afresh each time it starts). `
@@ -20,7 +20,7 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
       + `"event" is null in a round this start point did not begin: "values" are then what it was sent last.`;
   }
 
-  /** A start point the gui starts makes a graph one that is used through its gui: a package carries the gui. */
+  /** A start point the GUI starts makes a graph one that is used through its GUI: a package carries the GUI. */
   override deployNeeds(node: GraphNode): DeployNeeds {
     return { needsInterface: this.kind.config(node).startedBy === 'gui', asksAi: false };
   }
@@ -53,7 +53,7 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
       }
     }
     if (!onStart && !every) {
-      found.push({ where, problem: 'This start point never starts: it starts itself, but neither when the tool starts nor on a clock.', fix: 'Tick "when the tool starts", give it an interval, or let the gui or a call start it.' });
+      found.push({ where, problem: 'This start point never starts: it starts itself, but neither when the tool starts nor on a clock.', fix: 'Tick "when the tool starts", give it an interval, or let the GUI or a call start it.' });
     }
     return found;
   }

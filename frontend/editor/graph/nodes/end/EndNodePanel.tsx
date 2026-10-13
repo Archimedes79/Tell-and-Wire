@@ -68,7 +68,7 @@ export default function EndNodePanel({ node, setConfig }: NodePanelProps) {
               placeholder={mode === 'file' ? 'output/result.txt' : 'output/results'}
             />
             <p className="text-xs mt-1" style={{ color: DIMMER }}
-              title={`${mode === 'file' ? 'A text is written as it is, anything else as JSON.' : 'Each value that arrives becomes a file of its own in this folder.'} Written every run, gui or no gui. A path wired into the “Path” port is used instead: one chosen on the GUI, or sent by a call.`}>
+              title={`${mode === 'file' ? 'A text is written as it is, anything else as JSON.' : 'Each value that arrives becomes a file of its own in this folder.'} Written every run, gui or no GUI. A path wired into the “Path” port is used instead: one chosen on the GUI, or sent by a call.`}>
               Written every run. A path wired into “Path” is used instead.
             </p>
           </div>

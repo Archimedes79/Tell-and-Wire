@@ -205,7 +205,7 @@ export function defaultField(blocks: GuiWidget[], start: GraphNode, port?: Port)
   return choice ? { choice, name: choice.label } : undefined;
 }
 
-/** The blocks of *blocks* that fire, send to and show the point *id* -- or a part of it: what that point's card says of the gui. */
+/** The blocks of *blocks* that fire, send to and show the point *id* -- or a part of it: what that point's card says of the GUI. */
 export function blocksAt(blocks: GuiWidget[], id: string): { fire: GuiWidget[]; send: GuiWidget[]; show: GuiWidget[] } {
   const named = new Set([id]);
   return {

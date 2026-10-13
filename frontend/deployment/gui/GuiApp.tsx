@@ -52,18 +52,22 @@ export default function GuiApp() {
 
   const load = useCallback(() => {
     Promise.all([call('gui'), call('interface')])
-      .then(([gui, offered]) => setDesign({
-        name: gui.name,
-        description: gui.description,
-        scheme: gui.scheme,
-        blocks: gui.blocks as unknown as GuiWidget[],
-        ...connectionsOf(offered.events),
-        outputs: offered.outputs.map(({ name, label }) => ({ name, label })),
-        startsWhole: gui.starts_whole,
-        usesModel: gui.uses_model,
-        drawn: designOf(gui.session, gui.design_revision),
-        events: offered.events,
-      }))
+      .then(([gui, offered]) => {
+        // A load that failed once and went through later leaves no banner above a GUI that works.
+        setLoadError('');
+        setDesign({
+          name: gui.name,
+          description: gui.description,
+          scheme: gui.scheme,
+          blocks: gui.blocks as unknown as GuiWidget[],
+          ...connectionsOf(offered.events),
+          outputs: offered.outputs.map(({ name, label }) => ({ name, label })),
+          startsWhole: gui.starts_whole,
+          usesModel: gui.uses_model,
+          drawn: designOf(gui.session, gui.design_revision),
+          events: offered.events,
+        });
+      })
       .catch((error) => setLoadError(errorText(error, 'Could not load the tool.')));
   }, []);
   useEffect(() => {
@@ -75,6 +79,11 @@ export default function GuiApp() {
   useEffect(() => {
     if (design && held && held !== design.drawn) load();
   }, [design, held, load]);
+  // The tab of a tool someone was handed is called what the tool is.
+  const toolName = design?.name;
+  useEffect(() => {
+    if (toolName) document.title = toolName;
+  }, [toolName]);
 
   // What the GUI still needs before a round it starts can run -- a file
   // nobody chose on a picker -- is asked for in the same window the editor

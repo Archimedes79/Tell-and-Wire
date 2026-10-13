@@ -2,14 +2,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RoundSnapshot, SessionView } from './client';
 
 // The server: each round started gets the next id; nothing else is asked.
-const server = vi.hoisted(() => ({ rounds: 0 }));
+const server = vi.hoisted(() => ({ rounds: 0, stopped: [] as string[], running: null as unknown, next: null as unknown }));
 vi.mock('./client', async (actual) => ({
   ...(await actual<typeof import('./client')>()),
-  call: vi.fn(async (route: string) => {
+  call: vi.fn(async (route: string, body?: { id?: string }) => {
     if (route === 'startRound') {
       server.rounds += 1;
       return { session: 's1', round_id: `r${server.rounds}`, total: 1 };
     }
+    if (route === 'stopRound') {
+      server.stopped.push(body!.id!);
+      // A round stopped is no longer the one going: the one queued behind it is.
+      if ((server.running as { round_id?: string } | null)?.round_id === body!.id) {
+        server.running = server.next ?? null;
+        server.next = null;
+      }
+    }
+    // What the session says is going: the round that runs, where others only wait.
+    if (route === 'session') return { round: server.running };
     return {};
   }),
 }));
@@ -24,7 +34,7 @@ class FakeStream {
 }
 vi.stubGlobal('EventSource', FakeStream);
 
-const { setEdit, startRound, useSession, watchSession } = await import('./session');
+const { setEdit, startRound, stopRound, useSession, watchSession } = await import('./session');
 const told = (type: 'session' | 'round', data: unknown) => streams[streams.length - 1].listeners[type]({ data: JSON.stringify(data) } as MessageEvent<string>);
 
 /** The session as the server tells it, *gui* what each block holds. */
@@ -42,7 +52,7 @@ beforeEach(() => {
   watchSession();
 });
 
-describe('what was set here on a gui', () => {
+describe('what was set here on a GUI', () => {
   const edits = () => useSession.getState().edits;
 
   it('goes with a round, and is let go of once the round has run to its end -- not when it was stopped, and not what was typed since', async () => {
@@ -64,5 +74,35 @@ describe('what was set here on a gui', () => {
     setEdit('say', 'next');
     told('round', round('r3'));
     expect(edits()).toEqual({ say: 'next' });
+  });
+});
+
+describe('Stop', () => {
+  const going = (id: string) => round(id, { done: false, result: null });
+
+  it('stops the round this page was told of, and follows the queue: the one that runs, and the next behind it', async () => {
+    server.stopped.length = 0;
+    // The page was told of r3, which only queued; r1 runs, r2 waits behind it.
+    server.running = going('r1');
+    server.next = going('r2');
+    useSession.setState({ round: going('r3') });
+    await stopRound();
+    expect(server.stopped).toEqual(['r3', 'r1', 'r2']);
+    expect(server.running).toBeNull();
+  });
+
+  it('stops one round once, however long it takes to wind down, and nothing where nothing is going', async () => {
+    server.stopped.length = 0;
+    server.next = null;
+    server.running = going('r1');
+    useSession.setState({ round: going('r1') });
+    await stopRound();
+    expect(server.stopped).toEqual(['r1']);
+
+    server.stopped.length = 0;
+    server.running = null;
+    useSession.setState({ round: round('r4') });
+    await stopRound();
+    expect(server.stopped).toEqual([]);
   });
 });

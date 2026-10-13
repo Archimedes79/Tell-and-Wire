@@ -8,7 +8,7 @@
 //
 // Only a node has writing: a body someone writes -- code, instructions --
 // with files of its own in a project folder, and a way for an AI to write it.
-// A block on a gui shows or hands on what it holds, and writes nothing.
+// A block on a GUI shows or hands on what it holds, and writes nothing.
 
 import type { DataType, Graph, GraphNode, NodeResult, NodeType, Port } from '../graph.ts';
 import { collectedInterface, type Schema } from '../schema.ts';
@@ -18,7 +18,7 @@ import { definitionShape, type Definitions } from '../files/definition.ts';
 import { ElementDefinition } from './ElementDefinition.ts';
 
 /**
- * Who starts an event: the gui -- one of its blocks, so the graph needs a
+ * Who starts an event: the GUI -- one of its blocks, so the graph needs a
  * gui --, a call from outside -- a script, a model over MCP, the graph
  * above --, or the graph itself, when the tool starts and on a clock.
  */
@@ -175,7 +175,7 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
    * Whether this node is where its graph meets whatever holds it: `'in'` for
    * where what the graph above hands down arrives, `'out'` for what it is
    * handed back up. A start point and an end point -- the same two ends a
-   * graph has for a gui and for a call: there is one kind of way in and one
+   * graph has for a GUI and for a call: there is one kind of way in and one
    * of way out.
    */
   boundaryRole(_node: GraphNode): 'in' | 'out' | null {
@@ -293,7 +293,7 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   readonly readsFileInputs: boolean = false;
 
   /**
-   * What this node offers whoever uses the graph from outside -- a gui, a
+   * What this node offers whoever uses the graph from outside -- a GUI, a
    * script, the graph above: an event that starts a round, or an output it
    * hands back. Each under a name a caller uses, never a port:
    * `graph/interface.ts` gathers them into the graph's own.
@@ -326,8 +326,8 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
-   * Who starts this node's events: the gui, a call from outside, or the
-   * graph itself -- none, for a node that starts nothing. A graph the gui or
+   * Who starts this node's events: the GUI, a call from outside, or the
+   * graph itself -- none, for a node that starts nothing. A graph the GUI or
    * a call starts waits for them when it starts; one that starts itself does
    * not wait for anybody (`triggers.ts`, `startEvents`).
    */

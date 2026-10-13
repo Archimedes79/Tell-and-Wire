@@ -9,10 +9,10 @@ const shown = () => store().gui;
 const nodes = () => store().rfNodes.map((n) => n.data.graphNode as GraphNode);
 const ofType = (type: string) => nodes().filter((node) => node.node_type === type);
 
-describe('the gui', () => {
+describe('the GUI', () => {
   beforeEach(() => store().newGraph());
 
-  it('is the document\'s own list of blocks, beside its nodes, saved and undone with the graph: no blocks, no gui', () => {
+  it('is the document\'s own list of blocks, beside its nodes, saved and undone with the graph: no blocks, no GUI', () => {
     insertBlock(WIDGET_BUILDERS.text.create('title', 'Title', 'heading'));
     insertBlock(WIDGET_BUILDERS.plot_window.create('chart', 'Chart'));
     expect(shown().map((w) => w.id)).toEqual(['title', 'chart']);

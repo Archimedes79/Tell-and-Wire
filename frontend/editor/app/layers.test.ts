@@ -100,8 +100,10 @@ describe('the GUI\'s layers', () => {
   it('are only imported from above', () => {
     const against: string[] = [];
     for (const [path, source] of FILES) {
-      for (const match of source.matchAll(/(?:from|import\()\s*'(\.[^']+)'/g)) {
-        const target = resolve(path, match[1]);
+      // `from 'x'`, `import('x')` and `import 'x'` (for its effect), in either kind of quote.
+      for (const match of source.matchAll(/(?:from|import\(|import)\s*(['"])(\.[^'"]+)\1/g)) {
+        const target = resolve(path, match[2]);
+        // What is not a file of these layers -- the other workspaces, a stylesheet -- is no layer's to rank.
         if (!target) continue;
         const [from, to] = [areaOf(path), areaOf(target)];
         if (from.area === to.area) continue;

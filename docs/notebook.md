@@ -75,6 +75,8 @@ same round.
 
 ### Code that draws knows its window
 
+Beside `node.windows` of every GUI (the blocks that show what a body hands on, with their size: main), a code cell of a notebook window has `node.window`: the window as it is laid out, the room of a drawing in it, and the scheme's colours.
+
 A code cell is `function run(inputs, node)`. Beside `node.llm`, a cell of a window has `node.window`: the window it is in
 (`id`, `title`, `span`, `rows`), the outputs it feeds (`shows`: for each, `kind`, `cells`, `rows` and `width` x `height`, the pixels a
 drawing has in that block on a full-width page, the block's card taken off) and the scheme as values (`scheme`: `background`,

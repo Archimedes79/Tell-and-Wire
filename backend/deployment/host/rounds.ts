@@ -1,10 +1,10 @@
 // The rounds of one session: one at a time, watched while they go, stopped when asked.
 //
 // Two runs at once would both read the graph as it was, both settle what they
-// remember, and leave the gui whichever finished last -- and with outputs that
+// remember, and leave the GUI whichever finished last -- and with outputs that
 // stand between rounds (`latch.ts`), a round would read what another is
 // halfway through replacing. So the rounds of a session queue, in the order they were
-// asked for, whoever asked: the gui, the clock, a script.
+// asked for, whoever asked: the GUI, the clock, a script.
 //
 // A round is started, reports as it goes, and is watched -- told to whoever
 // listens, or looked at by polling; Stop aborts it. That is a small state machine with one owner, so it is one class:
@@ -13,7 +13,7 @@
 //
 // A round that is waiting can still be stopped, and then it ends at once
 // rather than when the one ahead of it does. A shutdown counts on that: it
-// stops the clock's round queued behind a gui's before it stops the gui's.
+// stops the clock's round queued behind a GUI's before it stops the GUI's.
 
 import type { ExecutionResult } from '../../../graph/graph.ts';
 import type { CoreEvent } from '../runtime/protocol.ts';
@@ -196,6 +196,12 @@ export class Rounds {
     return this.kept.get(id)?.snapshot() ?? null;
   }
 
+  /** The round that has gone longest without ending -- the one running, where others wait behind it -- or null when none is going. */
+  oldestGoing(): string | null {
+    for (const [id, round] of this.kept) if (round.finishedAt === null) return id;
+    return null;
+  }
+
   /** Stop a round: the round is told, not just whoever was watching it. */
   stop(id: string): boolean {
     const round = this.kept.get(id);
@@ -206,7 +212,7 @@ export class Rounds {
    * Stop every round still going or waiting, and wait until each has wound down.
    *
    * For a server that is shutting down: a round left alone goes on calling
-   * models and running code for a gui that will never ask again, and its
+   * models and running code for a GUI that will never ask again, and its
    * children outlive the process that would have reaped them.
    */
   async stopAll(): Promise<number> {

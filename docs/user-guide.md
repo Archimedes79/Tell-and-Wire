@@ -5,7 +5,7 @@ How to build a tool in Tell & Wire, step by step. The running example is
 chart. `frontend/editor/app/masterExamples.test.ts` builds this example, folder_summaries and
 chat the way this guide does (blocks added, a node dropped, a wire dragged) and runs them.
 
-Start the editor and set up a model first, as the [README](../README.md) says. ✨ needs a
+Start the editor and set up a model first, as the [README](../README.md) says. Auto generate needs a
 model; a small, fast one (for example `gemini-flash-lite-latest`) writes a node's files in
 seconds. A local model costs nothing per call but can take minutes per answer.
 
@@ -20,7 +20,7 @@ seconds. A local model costs nothing per call but can take minutes per answer.
 | wire | Carries an output to an input. |
 | run | One run of the graph, from a start point to the end points it reaches. The API calls it a round. |
 | gui | The blocks a person uses: what the tool looks like (GUI tab). |
-| block | One thing on the gui: a picker, a button, a chart, a chat. |
+| block | One thing on the GUI: a picker, a button, a chart, a chat. |
 
 ## The node kinds
 
@@ -30,7 +30,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 |---|---|
 | **Start point** | Where a run begins. Started by the GUI (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. Started by itself, it can also read for the graph, as a file or folder block on a GUI does: one file (its path and content) or the paths of the files in a folder, filtered by file types, optionally with subfolders. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
-| **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
+| **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`, and `node.windows` tells it how large the GUI blocks are that show its result (`[{ port, block, kind, label, w, h, width, height }]`, cells and pixels), for code that draws. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
 | **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node. It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node: a wire from it to a card in an earlier column reads what it held when the round began. A GUI block can show a field, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
@@ -57,7 +57,7 @@ The first block that can fire a start point fires it, so choosing a file runs th
 button or a chat always fires its start point. A dropdown that only sends is a setting: it
 starts nothing, and the next run picks up its value.
 
-A graph built first can draw its own gui: **From the graph**, at the foot of the left
+A graph built first can draw its own GUI: **From the graph**, at the foot of the left
 column, adds a block for each start point and end point that has none -- an input for what
 a start point reads, a button that starts it, a text for what an end point hands back. They come
 laid out: inputs two to a row with the button beside the last, a rule, then the outputs in raised boxes,
@@ -105,7 +105,7 @@ key does: nothing is asked, and Ctrl+Z brings it back. A **⚠ N problems** chip
 under the canvas lists what `check` finds, for example a loop that no data node closes or
 a block connected to nothing.
 
-## 3. Say what the node does; ✨ writes its files
+## 3. Say what the node does; Auto generate writes its files
 
 Double-click a node (or press Enter on it) and it opens where the canvas was: **Esc**, or
 **← Graph**, goes back, and ‹ › step to the node before and the node after. On the left is
@@ -130,8 +130,8 @@ names other ports than the node has.
 | **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
 | **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
-| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. |
-| **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. ✨ writes it together with the fields; left empty, the start stands in. |
+| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat -- and above the file -- **Add field** takes a name and what it starts as, by hand, with no AI. |
+| **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. Auto generate writes it together with the fields; left empty, the start stands in. |
 
 - **Pull input** writes `input.js` from the graph, with no model: its types from the
   `output.js` of the node wired before it, its example from running what comes before it on
@@ -172,7 +172,7 @@ A start point, a folder, an end point and a subgraph have no files: they open on
 settings. **Edit the GUI** on a node a block uses goes to the GUI tab.
 
 Two things save the most time. Wire a node to what feeds it before **Pull input**, so the
-example is real data. And name inputs for what they hold (`story`, not `prompt`): ✨ reads the names.
+example is real data. And name inputs for what they hold (`story`, not `prompt`): Auto generate reads the names.
 
 **A data node is a struct.** Its **Fields** file, `data.json`, is an object: each key is a field,
 with its starting value. Each field is an input and an output of the node under its name. The node fills, then forwards: what arrives on a field
@@ -187,7 +187,9 @@ data node and writes the new value into the field; the field's output goes back 
 *field* can name a key of it), and that wire is the read. Drag the card across the data node and the same wire
 carries the current value instead. A wire to a card in the same column is a `check` problem, as is any wire
 that does not end in a later column, and a loop with no data node in it is a cycle, which `check` says too.
-Without a schedule the wire that closes a loop is the read. A GUI, or a script, reads what the last round
+A card fed by nothing but such reads has no event to run it: it never runs and shows nothing, and the problem
+list says so -- drag it to a later column than the data node (a **Text output** that stays left of the counter shows
+nothing). Without a schedule the wire that closes a loop is the read. A GUI, or a script, reads what the last round
 left, never a round half done. The node holds no code: working out a new value is a code node, and the button
 that makes it happen is wired to that code node, not to the memory. What the struct holds can be read without
 a run: a block of the GUI can show a field (`count`, or the node's name and a dot and the field), and the
@@ -411,9 +413,9 @@ open in the notebook. Details in [notebook.md](notebook.md).
 - **A run stopped and the GUI shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
   says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
-- **✨ does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
+- **Auto generate does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
   before anything is asked: a local server that is not running, a model it has not pulled, a key
-  not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (✨, the bar; the
+  not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (Auto generate, the bar; the
   nodes' until you set it apart), each says *Now: provider / model* and, under the provider chosen,
   where to get it and what it needs: the address of its server, or its key. A wrong key, a model name nobody knows and a free tier's
   limit come back with what to do. A small local model may be too small to write a whole graph:

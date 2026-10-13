@@ -1,4 +1,4 @@
-// Changing the gui: the one way a block is added, changed, moved or removed.
+// Changing the GUI: the one way a block is added, changed, moved or removed.
 //
 // The GUI is the document's list of blocks, beside its nodes -- a graph has
 // one GUI -- and every edit on it ends here.
@@ -91,7 +91,7 @@ export function moveBlock(widgetId: string, to: number | string): void {
   });
 }
 
-/** Take block *widgetId* off the gui. The points it connected to stay: they are the graph's. */
+/** Take block *widgetId* off the GUI. The points it connected to stay: they are the graph's. */
 export function removeBlock(widgetId: string): void {
   rewrite((widgets) => widgets.filter((w) => w.id !== widgetId));
 }

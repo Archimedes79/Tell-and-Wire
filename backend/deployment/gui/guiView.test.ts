@@ -6,7 +6,7 @@ const node = (id: string, node_type: string, config: Record<string, unknown> = {
   id, node_type, label: id, description: '', inputs: [], outputs: [], config,
 });
 
-describe('the gui a tool shows says whether the tool asks a model', () => {
+describe('the GUI a tool shows says whether the tool asks a model', () => {
   const view = (nodes: ReturnType<typeof node>[]) => guiPart.view({ id: 's', designRevision: 0, graph: parseGraph({ nodes, edges: [], metadata: { name: 'T', description: 'Does it.' } }) });
 
   it('does for a tool with an AI node, so its AI settings are offered -- and not for one without', () => {

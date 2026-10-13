@@ -39,6 +39,18 @@ const sameFolder = (a: string, b: string): boolean => {
 };
 
 /**
+ * Why *typed* cannot be a name to save under, or '': a step up ("..") or "." anywhere in it would put what is saved
+ * in another folder than the one shown, and a name keeps off the marks no file system takes.
+ */
+export function nameProblem(typed: string): string {
+  const name = typed.trim();
+  if (!name) return '';
+  if (name.split(/[\\/]/).some((part) => part === '.' || part === '..')) return '“.” and “..” are folders, not names: choose the folder above, and give the tool a name.';
+  if ([...name].some((char) => '<>:"|?*'.includes(char) || char.charCodeAt(0) < 32)) return 'A name cannot hold any of  < > : " | ? *';
+  return '';
+}
+
+/**
  * A file/directory picker that browses the machine the tool runs on.
  *
  * Not `<input type="file">`: a browser never reveals a chosen file's location,
@@ -111,9 +123,13 @@ export default function FileBrowserDialog({
   }, [extensions, mode]);
 
   // A folder remembered from before may be gone: then it starts where the server was started.
+  // Saving does not start in the program's own folder either -- its examples, where the folder
+  // last opened from is -- but where the server starts a person's: their home.
   useEffect(() => {
-    void load(initialPath || '').then((shown) => { if (!shown && initialPath) void load(''); });
-  }, [load, initialPath]);
+    void load(initialPath || '').then((shown) => {
+      if ((!shown || (shown.program && mode === 'save')) && initialPath) void load('');
+    });
+  }, [load, initialPath, mode]);
 
   /**
    * Go to what the person typed in the path box -- and where it names a file,
@@ -148,10 +164,11 @@ export default function FileBrowserDialog({
   // Opened inside a project with nothing selected, the project shown is what is chosen.
   const openShown = mode === 'file' && !!projects && inProject && !selected;
   const confirmLabel = mode === 'directory' ? 'Use this folder' : mode === 'save' ? 'Save here' : openShown ? 'Open this tool' : 'Select';
+  const badName = mode === 'save' ? nameProblem(fileName) : '';
   const canConfirm =
-    mode === 'directory' ? !!path : mode === 'save' ? !!path && !!fileName.trim() : !!selected || openShown;
+    mode === 'directory' ? !!path : mode === 'save' ? !!path && !!fileName.trim() && !badName : !!selected || openShown;
   const confirmTitle = !canConfirm
-    ? (mode === 'save' ? 'Give it a name first' : projects ? 'Select a graph file or a 📦 tool first' : 'Select a file first')
+    ? (mode === 'save' ? badName || 'Give it a name first' : projects ? 'Select a graph file or a 📦 tool first' : 'Select a file first')
     : openShown ? `Open the tool this folder is: ${path}`
       : mode === 'directory' ? `Use ${path}` : mode === 'save' ? `Save as ${fileName.trim()} in ${path}` : `Choose ${selected}`;
 
@@ -276,6 +293,7 @@ export default function FileBrowserDialog({
           </div>
         )}
 
+        {badName && <p className="text-xs" style={{ color: DANGER_TEXT }} role="alert">{badName}</p>}
         {pickError && <p className="text-xs" style={{ color: DANGER_TEXT }} role="alert">{pickError}</p>}
         <p className="text-xs" style={{ color: DIMMER }}>
           {mode === 'directory'

@@ -4,13 +4,13 @@ import { guiBlock, guiSends, settleGui } from '../../../gui/gui.ts';
 import { quietRuntime } from '../runtime/test/fakes.ts';
 
 /**
- * The gui a graph is used through: blocks that connect themselves to the
+ * The GUI a graph is used through: blocks that connect themselves to the
  * graph's start and end points by name. Nothing is wired to a block; what a
- * round the gui starts is sent is made here, and what it hands back is
+ * round the GUI starts is sent is made here, and what it hands back is
  * settled here.
  */
 
-/** A gui for a summarizer: a file, a length, a Go button, the summary shown, a chart. */
+/** A GUI for a summarizer: a file, a length, a Go button, the summary shown, a chart. */
 const tool = (): Graph => parseGraph({
   metadata: { name: 'tool' },
   nodes: [
@@ -32,7 +32,7 @@ const tool = (): Graph => parseGraph({
   },
 });
 
-describe('the gui, connected by name', () => {
+describe('the GUI, connected by name', () => {
   it('sends a start point the data of each block that sends to it, by id, and fails by the name of a block that cannot say what it holds', async () => {
     const graph = tool();
     guiBlock(graph, 'file')!.value = 'notes.txt';

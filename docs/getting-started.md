@@ -7,7 +7,7 @@ is the user guide: the same things, in depth.
 1. **Set up an AI.** Open **⚙ Settings** (the gear, top right). Pick where the AI comes from:
    a model on this computer or another one on your network (Ollama, LM Studio, any server that
    speaks the OpenAI API: enter its address), or a cloud model with a key (Google Gemini has a free
-   tier). *Now:* under the choice says whether it answers.
+   tier). Under the choice, the line beginning *Now:* says whether it answers.
 2. **Start a tool.** **File → New** gives an empty one. **File → ✨ Describe a graph…** builds one
    from a sentence, for example *Read a text file, summarize it and show the result.* Or open one
    that exists: **File → Open…** and choose a folder from the `examples` folder of this download.

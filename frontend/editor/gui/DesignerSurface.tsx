@@ -132,7 +132,7 @@ export default function DesignerSurface({
 
   return (
     <div onMouseDown={() => onSelect(null)}>
-      {/* An empty gui is still a gui: without a minimum height the grid is
+      {/* An empty gui is still a GUI: without a minimum height the grid is
           zero pixels tall and there is nothing to aim a first element at. */}
       <GuiGrid minRows={4} onCell={setCell}>
         {placements.map((placement, index) => {

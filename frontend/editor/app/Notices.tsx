@@ -50,8 +50,8 @@ function Card({ notice }: { notice: Notice }) {
  */
 export default function Notices() {
   const notices = useNotices((s) => s.notices);
-  const document = useGraphStore((s) => s.document);
-  const here = notices.filter((notice) => notice.document === document);
+  const opened = useGraphStore((s) => s.opened);
+  const here = notices.filter((notice) => notice.document === opened);
   if (!here.length) return null;
   return (
     <div className="pointer-events-none fixed right-4 top-16 z-40 flex w-[min(26rem,calc(100vw-2rem))] flex-col gap-2" aria-live="polite">

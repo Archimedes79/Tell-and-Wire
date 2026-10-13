@@ -1,6 +1,6 @@
 // Handing the graph to someone else.
 //
-// A bundle is the tool as its project folder -- graph-flow.json, graph-nodes.json, its gui
+// A bundle is the tool as its project folder -- graph-flow.json, graph-nodes.json, its GUI
 // in gui.json, a folder per node with writing, as it was built -- the code that runs it, and one
 // command. One format: what a recipient opens is what the editor opens. Nothing is
 // generated: the code is copied verbatim, so what a recipient runs is what was tested here, byte
@@ -37,15 +37,15 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
  * body is JavaScript, so no interpreter and no packages travel with it.
  */
 interface BundleNeeds {
-  /** The graph has an interface, so a bundle without a gui is only half of it. */
+  /** The graph has an interface, so a bundle without a GUI is only half of it. */
   interface: boolean;
   /** It asks a model, so the recipient needs a provider configured. */
   ai: boolean;
 }
 
 function bundleNeeds(graph: Graph, top = true): BundleNeeds {
-  // A gui with blocks is the gui a person uses the tool through; a start
-  // point the gui starts says the same of a graph whose gui is still to come.
+  // A GUI with blocks is the GUI a person uses the tool through; a start
+  // point the GUI starts says the same of a graph whose gui is still to come.
   const needs: BundleNeeds = { interface: guiBlocks(graph).length > 0, ai: false };
 
   for (const node of graph.nodes) {
@@ -55,7 +55,7 @@ function bundleNeeds(graph: Graph, top = true): BundleNeeds {
     const asked = designs.node(node.node_type)!.deployNeeds(node);
     if (asked.needsInterface) needs.interface = true;
     // A start point a call starts is called through a served tool -- a script,
-    // a frontend, its own gui's call forms -- at the top. In a graph a node
+    // a frontend, its own GUI's call forms -- at the top. In a graph a node
     // holds, the graph above is what calls it.
     if (top && element.startedBy(node) === 'call') needs.interface = true;
     if (asked.asksAi) needs.ai = true;
@@ -67,9 +67,9 @@ function bundleNeeds(graph: Graph, top = true): BundleNeeds {
     if (!held) continue;
     const inner = bundleNeeds(held, false);
     if (inner.ai) needs.ai = true;
-    // A gui in there is a check problem rather than a thing to carry, and a
+    // A GUI in there is a check problem rather than a thing to carry, and a
     // bundle is not the place to find out: it is followed all the same, so a
-    // graph that somehow has one is not shipped without its gui.
+    // graph that somehow has one is not shipped without its GUI.
     if (inner.interface) needs.interface = true;
   }
 
@@ -191,7 +191,7 @@ function moved(graph: Graph, carried: Carried[]): Graph {
   return {
     ...graph,
     nodes: graph.nodes.map((node) => ({ ...node, config: retold(node.config) as typeof node.config })),
-    // A picker on the gui starts on a file too.
+    // A picker on the GUI starts on a file too.
     ...(graph.gui ? { gui: { blocks: graph.gui.blocks.map((block) => retold(block) as typeof block) } } : {}),
   };
 }
@@ -263,7 +263,7 @@ export async function writeBundle(
   options: {
     guiDir?: string;
     dataFrom?: string;
-    /** The project's own gui, written by hand (`frontendOf`): carried whole, and served in place of the built one. */
+    /** The project's own GUI, written by hand (`frontendOf`): carried whole, and served in place of the built one. */
     frontend?: string | null;
   } = {},
 ): Promise<string[]> {
@@ -303,8 +303,8 @@ export async function writeBundle(
   // handed those with it (LICENSE, "Notices").
   await copy(join(installFolder(), 'LICENSE'), 'LICENSE');
 
-  // The gui, if this graph has one and a build is at hand. A bundle without
-  // it still runs -- once, on the terminal, the gui's start points sent what
+  // The GUI, if this graph has one and a build is at hand. A bundle without
+  // it still runs -- once, on the terminal, the GUI's start points sent what
   // its blocks hold -- which is why a missing build is not an error here.
   let servesGui = false;
   if (needs.interface && options.guiDir) {
@@ -321,7 +321,7 @@ export async function writeBundle(
     written.push(file.place);
   }
 
-  // A gui the project brings of its own: all of it, as it is.
+  // A GUI the project brings of its own: all of it, as it is.
   if (options.frontend) {
     await cp(options.frontend, resolve(target, FRONTEND_DIR), { recursive: true, filter: (path) => !notCarried(path) });
     written.push(...(await filesIn(options.frontend)).map((file) => `${FRONTEND_DIR}/${file}`));
@@ -352,7 +352,7 @@ function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carr
   const lines = [
     `# ${name}`,
     '',
-    'A tool, as the folder it was built as -- graph-flow.json and graph-nodes.json, its gui in',
+    'A tool, as the folder it was built as -- graph-flow.json and graph-nodes.json, its GUI in',
     'gui.json, a folder per node with its code -- and the code that runs it.',
     'Nothing here was generated: that code is a verbatim copy of the one the',
     'graph was built and tested on, so this runs what was tested rather than a',
@@ -366,14 +366,14 @@ function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carr
     '',
     ...(servesGui
       ? [
-        'That opens the tool in your browser, and its gui runs it: a button',
+        'That opens the tool in your browser, and its GUI runs it: a button',
         'pressed, a file chosen.',
         '',
         'It takes port 8000, or the next free one if something else is already',
         'there, and prints the address it settled on. `--port 9000` picks one.',
         '',
         'It listens on localhost only, so nothing on your network can reach it.',
-        'The gui it serves is the gui this graph was designed against, copied',
+        'The GUI it serves is the GUI this graph was designed against, copied',
         'rather than rebuilt.',
       ]
       : [
@@ -411,11 +411,11 @@ function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carr
   if (needs.interface) {
     lines.push(
       '',
-      '## The gui',
+      '## The GUI',
       '',
-      'This graph has a gui. Running it from the command line runs it once: the',
+      'This graph has a GUI. Running it from the command line runs it once: the',
       "gui's start points are sent what its blocks hold, and nothing is drawn.",
-      'To use it as it was built, serve it (run.sh / run.cmd) and open the gui.',
+      'To use it as it was built, serve it (run.sh / run.cmd) and open the GUI.',
     );
   }
 
@@ -433,8 +433,8 @@ function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carr
     '', '## Licence', '',
     ...(servesGui
       ? [
-        'The code in graph/, gui/ and backend/ and the gui in web/ come under the terms in LICENSE,',
-        'except the packages the gui is built from: web/licenses.txt names each,',
+        'The code in graph/, gui/ and backend/ and the GUI in web/ come under the terms in LICENSE,',
+        'except the packages the GUI is built from: web/licenses.txt names each,',
         'with its own licence.',
       ]
       : ['The code in graph/, gui/ and backend/ comes under the terms in LICENSE.']),

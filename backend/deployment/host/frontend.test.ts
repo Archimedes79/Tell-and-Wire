@@ -7,7 +7,7 @@ import { API, GUI_API } from './api.ts';
 import { guiPart } from '../gui/hooks.ts';
 
 /**
- * A gui of a project's own, written by hand against the runtime API: served
+ * A GUI of a project's own, written by hand against the runtime API: served
  * in place of the built gui -- and, in the example that has one, calling
  * nothing but what any frontend may call.
  */

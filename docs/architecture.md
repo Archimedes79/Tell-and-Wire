@@ -127,7 +127,7 @@ input_picker, text_io, select, slider, button, chat, plot_window, table, image_v
 - **The GUI is no node.** It is the graph's list of blocks (`graph.gui.blocks`, stored in
   `gui.json`). A block connects by name: the start points its data goes to (`sends_to`), the
   one using it fires (`fires`), the end point it shows (`shows`). `gui/gui.ts` holds what a round,
-  `check` and a package ask of the gui. The host reaches it only through the hooks of
+  `check` and a package ask of the GUI. The host reaches it only through the hooks of
   `backend/deployment/gui/hooks.ts`; a host composed without them is a graph in use, nothing more.
 
 ## How a round runs
@@ -191,7 +191,7 @@ my_tool/
   graph-flow.json      name, description, every wire as one line: "draw.data -> chart.csv", or "draw.data -> chart.csv via C2" when it is drawn through a cell
   graph-nodes.json     id -> { kind, label, description?, config?, inputs?, outputs? }: what each node is, as a person said it
   graph-schedule.json  { table, size? }: the order the nodes run in and where they stand (the schedule, below)
-  gui.json             the gui: a list of its blocks, each with sends_to / fires / shows
+  gui.json             the GUI: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
     input.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
     output.js          what one call returns, the same way; its keys are the outputs        (code, ai)
@@ -266,7 +266,7 @@ host. A **graph core** -- the runtime, in this process or a program of its own -
 ```
 
 The core is handed the graph definition as JSON (`Graph`, `graph/graph.ts`): the nodes with their
-settings, ports and files, and the wires, as the project folder holds them; not the gui. Today
+settings, ports and files, and the wires, as the project folder holds them; not the GUI. Today
 there is one core, in JavaScript.
 
 A server is **composed** by `backend/cli`: it answers the host's own routes, the GUI's route when it
@@ -455,7 +455,7 @@ that points at the settings file is followed anyway. A file elsewhere reaches it
 (`backend/deployment/runtime/services.ts`; `services.test.ts`, `sandbox.test.ts`):
 
 ```
-stdin   {"inputs": {…}, "calls": ["llm", …]}                  what it is handed
+stdin   {"inputs": {…}, "calls": ["llm", …], "windows": […]}   what it is handed
 stdout  ␞tell-and-wire:call {"id": 1, "name": "llm", "args": …}   a question (␞ is U+001E)
 stdin   {"id": 1, "result": …}  or  {"id": 1, "error": "…"}      its answer
 stdout  ␞tell-and-wire:result {…}                               what it made; the run is over
@@ -463,6 +463,8 @@ stdout  ␞tell-and-wire:result {…}                               what it made
 
 `node.llm` is answered by the process running the graph (`backend/deployment/runtime/nodes/ai/ask.ts`),
 at most 25 times per run (`TW_MAX_LLM_CALLS`).
+`windows` is what a body that draws needs to know and need not ask: the blocks of the GUI that show what its node hands on,
+each with its size in cells and in pixels (`gui/windows.ts`); the body has it as `node.windows`, empty without a GUI.
 
 ## The package
 

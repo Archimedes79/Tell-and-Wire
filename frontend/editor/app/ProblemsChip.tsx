@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGraphStore } from '../document/store/graphStore';
-import { problemsOf } from './GraphProblems';
+import { placeOf, problemsOf } from './GraphProblems';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { PANEL, TEXT, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
 
@@ -20,7 +20,10 @@ export default function ProblemsChip() {
   const [problems, setProblems] = useState<ReturnType<typeof problemsOf>>([]);
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    const timer = window.setTimeout(() => setProblems(problemsOf(rootGraph())), 400);
+    const timer = window.setTimeout(() => {
+      const graph = rootGraph();
+      setProblems(problemsOf(graph).map((problem) => ({ ...problem, where: placeOf(problem.where, graph) })));
+    }, 400);
     return () => window.clearTimeout(timer);
   }, [rootGraph, nodes, edges, gui, metadata]);
 

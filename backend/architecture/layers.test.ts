@@ -11,7 +11,7 @@
  * 2. `graph/` and `gui/` are neutral: they run in the browser and in Node, so they import no `node:*`,
  *    nothing of `backend/` or `frontend/`, and `graph/` nothing of `gui/`. Their tests too: a test that
  *    needs a run belongs to `backend/`, which runs.
- * 3. In `backend/`, a module imports only from below: project, then runtime and gui, then host, then
+ * 3. In `backend/`, a module imports only from below: project, then runtime and GUI, then host, then
  *    cli -- the editor's modules above the deployment's. Two modules of one rank do not import each
  *    other. The wire's files (`host/api.ts`) are types and tables for either end and rank with nothing.
  * 4. `frontend/` imports of `backend/` only the wire's files.
@@ -104,7 +104,7 @@ describe('the folders', () => {
     expect(show(against)).toEqual([]);
   });
 
-  it('keep graph/ and gui/ neutral: no Node, no backend, no frontend, and graph/ knows no gui', () => {
+  it('keep graph/ and gui/ neutral: no Node, no backend, no frontend, and graph/ knows no GUI', () => {
     const neutral = (path: string): boolean => path.startsWith('graph/') || path.startsWith('gui/');
     expect(BUILTINS.filter((one) => neutral(one.from)).map((one) => `${one.from} -> ${one.to}`)).toEqual([]);
     const imports = [...IMPORTS, ...NEUTRAL_TESTS.flatMap((path) => importsOf(path).found)];

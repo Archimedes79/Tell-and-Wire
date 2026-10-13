@@ -14,7 +14,7 @@ import { Latch } from './latch.ts';
  * is which nodes run and what reaches them, and a router has to compute.
  */
 
-/** A start point the gui starts, holding what the gui sent it last. */
+/** A start point the GUI starts, holding what the GUI sent it last. */
 const start = (id: string, values: Record<string, unknown> = {}) => node(id, 'start', { started_by: 'gui', values });
 
 let ran: string[] = [];
@@ -24,7 +24,7 @@ const runtime = quietRuntime({
 });
 
 /**
- * Read → Summarize, used through a gui: the Read button fires a start point
+ * Read → Summarize, used through a GUI: the Read button fires a start point
  * wired into the reader's ◆; choosing a length fires one wired into the
  * summarizer, sent the length.
  */

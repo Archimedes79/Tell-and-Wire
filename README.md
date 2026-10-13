@@ -26,9 +26,9 @@ A tool in Tell & Wire has two halves.
   and **subgraphs**, and ends at **end points**.
 - **The GUI** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
   button, a chart, a table or a chat. A block starts the graph at a start point and shows
-  what an end point hands back. It connects by name; nothing is wired to the gui.
+  what an end point hands back. It connects by name; nothing is wired to the GUI.
 
-A node is a heading and a short text that says what it should do. ✨ writes the node's
+A node is a heading and a short text that says what it should do. **Auto generate** writes the node's
 files from that text: `input.js` and `output.js` (what goes in and out, each with an
 example) and `code.js` or `prompt.md`. **Pull input** reads `input.js` off the graph, and a
 chat for each file changes it as you say. Every file is plain text in the tool's folder, so
@@ -41,7 +41,8 @@ the same project folder, so the graph editor opens it ([docs/notebook.md](docs/n
 
 **▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
 can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
-start. The editor and every deployed tool listen on `127.0.0.1` only, and there is no telemetry.
+start. The editor and every deployed tool listen on `127.0.0.1` unless you start one with another
+`--host` yourself, and there is no telemetry.
 A code node's JavaScript runs in a process of its own: it reads the working directory
 (not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
 The network stays open to it.
@@ -100,13 +101,13 @@ node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on
 
 ## Set up a model
 
-✨ asks a model to write a node's files, and an AI node asks one each time it runs.
+**Auto generate** asks a model to write a node's files, and an AI node asks one each time it runs.
 
 Open **⚙ Settings**, fill in what you need, press **Save**:
 
 - **AI that runs the nodes** and **AI that writes**: a provider and a model each. The first
   serves every AI node that does not name its own model, a code node's `node.llm`, ▶ Try and
-  every run, also in a delivered tool. The second serves ✨ (a node's code and prompt, a whole
+  every run, also in a delivered tool. The second serves Auto generate (a node's code and prompt, a whole
   graph, the bar under the canvas) and is the first one until you set it apart -- a larger
   model may be worth it for writing, a small one enough for the nodes, or the other way round.
 - Under the provider you choose, what it needs: **the address of its server** (Ollama, LM Studio

@@ -12,8 +12,9 @@
 // its inputs -- with wired files already read, so a file edited since is a
 // different input -- and the one AI setting, which answers every model call
 // that names no model of its own: after another model is chosen, a node that
-// asks one asks it. A node with no inputs at all reads the outside world
-// instead (a file, a gui, the clock) and is never reused; it is also what is
+// asks one asks it -- and the size of the block that shows what it hands on,
+// which a body that draws (`node.windows`) draws for. A node with no inputs at all reads the outside world
+// instead (a file, a GUI, the clock) and is never reused; it is also what is
 // cheap.
 //
 // What an event is for always runs fresh: pressing "Summarize" twice means
@@ -21,7 +22,7 @@
 
 import { createHash } from 'node:crypto';
 import type { GraphNode } from '../../../graph/graph.ts';
-import type { ModelChoice } from '../../../graph/nodes/Runtime.ts';
+import type { BlockWindow, ModelChoice } from '../../../graph/nodes/Runtime.ts';
 import { Lru } from './lru.ts';
 
 /** How many results are kept. A long session must not accumulate every one it ever saw. */
@@ -32,10 +33,10 @@ export class LastOutputs extends Lru<Record<string, unknown>> {
     super(LIMIT);
   }
 
-  /** One key for this node, as written, receiving these inputs, with *setting* the one AI setting. */
-  key(node: GraphNode, inputs: Record<string, unknown>, setting?: ModelChoice): string {
+  /** One key for this node, as written, receiving these inputs, with *setting* the one AI setting and *windows* the room its result is shown in. */
+  key(node: GraphNode, inputs: Record<string, unknown>, setting?: ModelChoice, windows: BlockWindow[] = []): string {
     // The words too: an AI node with no prompt file is told its label and description, so two of them that differ only there are two questions.
     const written = { id: node.id, type: node.node_type, label: node.label, description: node.description, config: node.config, inputs: node.inputs, outputs: node.outputs };
-    return createHash('sha256').update(JSON.stringify([written, inputs, setting ?? null])).digest('hex');
+    return createHash('sha256').update(JSON.stringify([written, inputs, setting ?? null, windows])).digest('hex');
   }
 }

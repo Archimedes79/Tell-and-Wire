@@ -174,7 +174,7 @@ export function normalizeGraph(graph: Graph): Graph {
     ? graph.edges.filter((edge) => nodeIds.has(edge.source_node_id) && nodeIds.has(edge.target_node_id))
     : [];
 
-  // A GUI is its blocks: one with none is no gui.
+  // A GUI is its blocks: one with none is no GUI.
   const blocks = Array.isArray(graph.gui?.blocks) ? graph.gui.blocks : [];
   return {
     metadata: normalizeMetadata(graph.metadata),

@@ -171,6 +171,6 @@ export function pullGap(node: GraphNode, ports: PulledPort[], edges: Wire[], arr
   const wired = new Set(edges.filter((edge) => edge.target === node.id).map((edge) => edge.targetHandle));
   const bare = ports.filter((port) => port.example === undefined && wired.has(port.id)).map((port) => `"${port.id}"`);
   if (!bare.length) return '';
-  const why = arrived.unread.length ? 'the file it reads could not be read' : 'nothing reached it when what feeds it ran';
-  return `there is no example for ${bare.join(', ')}: ${why} -- choose a file on the GUI, or give a start point an example, and pull again.`;
+  const why = arrived.unread.length ? 'the file it reads could not be read' : 'nothing has come through what feeds it yet';
+  return `there is no example for ${bare.join(', ')} yet: ${why}. Choose a file or type something on the GUI, or give the start point an example, then press Pull again.`;
 }
