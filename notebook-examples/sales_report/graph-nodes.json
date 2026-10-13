@@ -1,0 +1,197 @@
+{
+  "figures": {
+    "kind": "start",
+    "label": "Where the money went"
+  },
+  "figures_kpis": {
+    "kind": "code",
+    "label": "KPIs",
+    "description": "Read \"Sales\" and work out revenue, orders, the average order and the growth on the previous month for each region, with a total row.",
+    "config": {
+      "window": {
+        "id": "figures",
+        "title": "Where the money went",
+        "span": 16,
+        "rows": 11,
+        "page": {
+          "name": "Weekly sales report",
+          "columns": 16,
+          "cell": 56,
+          "gap": 14
+        },
+        "shows": [
+          {
+            "output": "Key figures",
+            "kind": "table",
+            "result": "KPIs",
+            "cells": 10,
+            "rows": 5,
+            "width": 640,
+            "height": 294
+          }
+        ],
+        "scheme": {
+          "id": "white",
+          "light": true,
+          "background": "#f4f5f7",
+          "surface": "#ffffff",
+          "line": "#d8dbe0",
+          "text": "#1a1d23",
+          "muted": "#4a515c",
+          "accent": "#2563eb",
+          "success": "#15803d",
+          "danger": "#b42318",
+          "warning": "#b45309",
+          "series": [
+            "#2563eb",
+            "#15803d",
+            "#b45309",
+            "#be185d",
+            "#0e7490",
+            "#6d28d9",
+            "#4d7c0f",
+            "#c2410c"
+          ]
+        }
+      }
+    },
+    "inputs": [
+      {
+        "port": "sales",
+        "name": "Sales",
+        "type": "text",
+        "description": "What goes into Sales",
+        "field": "figures_in_sales.content"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "kpis",
+        "name": "KPIs",
+        "type": "text"
+      }
+    ]
+  },
+  "figures_trend": {
+    "kind": "code",
+    "label": "Trend",
+    "description": "Sum the revenue of \"Sales\" for each month.",
+    "config": {
+      "window": {
+        "id": "figures",
+        "title": "Where the money went",
+        "span": 16,
+        "rows": 11,
+        "page": {
+          "name": "Weekly sales report",
+          "columns": 16,
+          "cell": 56,
+          "gap": 14
+        },
+        "shows": [
+          {
+            "output": "Revenue trend",
+            "kind": "chart",
+            "result": "Trend",
+            "cells": 6,
+            "rows": 5,
+            "width": 366,
+            "height": 294
+          }
+        ],
+        "scheme": {
+          "id": "white",
+          "light": true,
+          "background": "#f4f5f7",
+          "surface": "#ffffff",
+          "line": "#d8dbe0",
+          "text": "#1a1d23",
+          "muted": "#4a515c",
+          "accent": "#2563eb",
+          "success": "#15803d",
+          "danger": "#b42318",
+          "warning": "#b45309",
+          "series": [
+            "#2563eb",
+            "#15803d",
+            "#b45309",
+            "#be185d",
+            "#0e7490",
+            "#6d28d9",
+            "#4d7c0f",
+            "#c2410c"
+          ]
+        }
+      }
+    },
+    "inputs": [
+      {
+        "port": "sales",
+        "name": "Sales",
+        "type": "text",
+        "description": "What goes into Sales",
+        "field": "figures_in_sales.content"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "trend",
+        "name": "Trend",
+        "type": "text"
+      }
+    ]
+  },
+  "figures_comment": {
+    "kind": "ai",
+    "label": "Comment",
+    "description": "Say in two sentences which region is doing best and which needs attention, from \"KPIs\".",
+    "inputs": [
+      {
+        "port": "kpis",
+        "name": "KPIs",
+        "type": "text",
+        "description": "What goes into KPIs"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Comment",
+        "type": "text"
+      }
+    ]
+  },
+  "figures_out_key_figures": {
+    "kind": "end",
+    "label": "Key figures",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  },
+  "figures_out_revenue_trend": {
+    "kind": "end",
+    "label": "Revenue trend",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  },
+  "figures_out_in_short": {
+    "kind": "end",
+    "label": "In short",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

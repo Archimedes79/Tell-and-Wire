@@ -1,0 +1,144 @@
+[
+  {
+    "after": [],
+    "group": "figures",
+    "h": 1,
+    "id": "figures_title",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 3,
+    "span": 16,
+    "tone": "plain",
+    "value": "Where the money went",
+    "w": 16
+  },
+  {
+    "extensions": ".csv",
+    "group": "figures",
+    "h": 2,
+    "id": "figures_in_sales",
+    "kind": "input_picker",
+    "label": "Sales",
+    "mode": "file",
+    "sends_to": [
+      "figures"
+    ],
+    "tone": "sunken",
+    "value": "notebook-examples/data/sales.csv",
+    "w": 16
+  },
+  {
+    "fires": "figures",
+    "group": "figures",
+    "h": 1,
+    "id": "figures_run",
+    "kind": "button",
+    "label": "Calculate",
+    "tone": "plain",
+    "w": 4
+  },
+  {
+    "group": "figures",
+    "h": 5,
+    "id": "figures_out_key_figures",
+    "kind": "table",
+    "label": "Key figures",
+    "shows": "figures_out_key_figures",
+    "tone": "raised",
+    "w": 10
+  },
+  {
+    "group": "figures",
+    "h": 5,
+    "id": "figures_out_revenue_trend",
+    "kind": "plot_window",
+    "label": "Revenue trend",
+    "shows": "figures_out_revenue_trend",
+    "tone": "raised",
+    "w": 6
+  },
+  {
+    "group": "figures",
+    "h": 2,
+    "id": "figures_out_in_short",
+    "kind": "text_io",
+    "label": "In short",
+    "mode": "output",
+    "shows": "figures_out_in_short",
+    "tone": "raised",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b1",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 0,
+    "page_style": "h1",
+    "tone": "plain",
+    "value": "Weekly sales report",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b2",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 1,
+    "page_style": "p",
+    "tone": "plain",
+    "value": "Pick a **sales file** (month, region, orders, revenue), press *Calculate* and read the key figures for each region. The `Total` row is the sum.",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b3",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 2,
+    "page_style": "h2",
+    "tone": "plain",
+    "value": "Key figures",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b5",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 4,
+    "page_style": "h2",
+    "tone": "plain",
+    "value": "How it works",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b6",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 5,
+    "page_style": "ol",
+    "tone": "plain",
+    "value": "The table and the trend are made by two code cells, so they are the same every time.\nThe two sentences under them are written by a model from the table.",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b7",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 6,
+    "page_style": "quote",
+    "tone": "plain",
+    "value": "Numbers first, words second.",
+    "w": 16
+  }
+]

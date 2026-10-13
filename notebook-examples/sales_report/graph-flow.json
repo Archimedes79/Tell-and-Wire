@@ -1,0 +1,12 @@
+{
+  "name": "Weekly sales report",
+  "description": "Pick the sales file, press Calculate, read the key figures.",
+  "wires": [
+    "figures.data -> figures_kpis.sales",
+    "figures.data -> figures_trend.sales",
+    "figures_kpis.kpis -> figures_comment.kpis",
+    "figures_kpis.kpis -> figures_out_key_figures.value",
+    "figures_trend.trend -> figures_out_revenue_trend.value",
+    "figures_comment.output -> figures_out_in_short.value"
+  ]
+}

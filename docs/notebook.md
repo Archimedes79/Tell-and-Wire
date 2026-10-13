@@ -92,6 +92,19 @@ a signed percentage in green or red, a last row that says Total in bold. The sav
 up to a limit, instead of cutting its last row off; a chart's names are thinned to every other one where they would touch; a finished drawing keeps the proportions
 it was drawn for. A chart or a drawing a step handed on under a key of its own (`{ figure: … }`) is taken as the thing itself.
 
+### Writing the page, and the examples
+
+The page takes what Markdown takes, in the words and in the blocks: `**bold**`, `*italic*` (or `_italic_`), `` `code` `` and `[a link](https://…)` (http, https and mailto only),
+headings (`#`, `##`), bullets (`- `), numbered lists (`1. `) and quotations (`> `); typing the mark at the start of a text block makes the kind, and Ctrl+B / Ctrl+I put the marks round
+what is chosen. In **Write** the boxes show the marks as they are typed (a numbered list is drawn with its numbers only in **As app** and in the delivered tool); both draw them
+(`frontend/notebook/elements/inline.tsx` and `frontend/deployment/windows/inline.tsx`: two copies, the two products share no code). A window's outputs are text, a list, a table, a chart or a
+picture; a picture is a file, a data or http URL, or the markup of an SVG a code step drew.
+
+`notebook-examples/` holds four pages written by hand, as the notebook saves them: `sales_report` (a CSV, a key-figure table, a trend, a model's two sentences), `text_toolbox`
+(a pasted text: numbers by code, a summary by a model), `badge_maker` (a picture drawn by code for the room it has) and `tip_calculator` (a short page with a small calculator that runs
+when an input changes). Open one with **Open…**; the file inputs name `notebook-examples/data/…`, relative to where the notebook was started. `backend/notebook/examples.test.ts` opens each,
+checks that the graph on disk is what its windows make, and presses the buttons of the ones that need no file and no model.
+
 ## What a window cannot say yet
 
 A cell that runs several models in parallel (steps stand one under the other and run in turn; `paper_review_panel` is one cell

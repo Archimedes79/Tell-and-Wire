@@ -1,0 +1,99 @@
+[
+  {
+    "after": [],
+    "group": "toolbox",
+    "h": 1,
+    "id": "toolbox_title",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 2,
+    "span": 16,
+    "tone": "plain",
+    "value": "Look at a text",
+    "w": 16
+  },
+  {
+    "group": "toolbox",
+    "h": 4,
+    "id": "toolbox_in_text",
+    "kind": "text_io",
+    "label": "Text",
+    "mode": "input",
+    "sends_to": [
+      "toolbox"
+    ],
+    "tone": "sunken",
+    "value": "The lighthouse keeper counted the ships every evening. Most nights there were three or four; on stormy nights there were none, and he counted the waves instead. Nobody ever asked him why.",
+    "w": 16
+  },
+  {
+    "group": "toolbox",
+    "h": 2,
+    "id": "toolbox_in_length",
+    "kind": "select",
+    "label": "Length",
+    "options": "One sentence\nThree sentences\nFive bullet points",
+    "sends_to": [
+      "toolbox"
+    ],
+    "tone": "sunken",
+    "value": "One sentence",
+    "w": 6
+  },
+  {
+    "fires": "toolbox",
+    "group": "toolbox",
+    "h": 1,
+    "id": "toolbox_run",
+    "kind": "button",
+    "label": "Analyse",
+    "tone": "plain",
+    "w": 4
+  },
+  {
+    "group": "toolbox",
+    "h": 5,
+    "id": "toolbox_out_numbers",
+    "kind": "table",
+    "label": "Numbers",
+    "shows": "toolbox_out_numbers",
+    "tone": "raised",
+    "w": 8
+  },
+  {
+    "group": "toolbox",
+    "h": 5,
+    "id": "toolbox_out_summary",
+    "kind": "text_io",
+    "label": "Summary",
+    "mode": "output",
+    "shows": "toolbox_out_summary",
+    "tone": "raised",
+    "w": 8
+  },
+  {
+    "h": 1,
+    "id": "note_b1",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 0,
+    "page_style": "h1",
+    "tone": "plain",
+    "value": "Text toolbox",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b2",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 1,
+    "page_style": "p",
+    "tone": "plain",
+    "value": "Paste any text below. The **numbers** come from code; the **summary** from a model.",
+    "w": 16
+  }
+]

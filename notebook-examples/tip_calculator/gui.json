@@ -1,0 +1,133 @@
+[
+  {
+    "after": [],
+    "group": "split",
+    "h": 1,
+    "id": "split_title",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 2,
+    "span": 12,
+    "tone": "plain",
+    "value": "Who pays what",
+    "w": 12
+  },
+  {
+    "fires": "split",
+    "group": "split",
+    "h": 2,
+    "id": "split_in_bill",
+    "kind": "slider",
+    "label": "Bill",
+    "max": 1000,
+    "min": 0,
+    "sends_to": [
+      "split"
+    ],
+    "step": 0.5,
+    "tone": "sunken",
+    "value": 86.4,
+    "w": 5
+  },
+  {
+    "fires": "split",
+    "group": "split",
+    "h": 2,
+    "id": "split_in_tip",
+    "kind": "select",
+    "label": "Tip",
+    "options": "0 %\n5 %\n10 %\n15 %\n20 %",
+    "sends_to": [
+      "split"
+    ],
+    "tone": "sunken",
+    "value": "10 %",
+    "w": 4
+  },
+  {
+    "fires": "split",
+    "group": "split",
+    "h": 1,
+    "id": "split_in_people",
+    "kind": "slider",
+    "label": "People",
+    "max": 20,
+    "min": 1,
+    "sends_to": [
+      "split"
+    ],
+    "step": 1,
+    "tone": "sunken",
+    "value": 3,
+    "w": 4
+  },
+  {
+    "fires": "split",
+    "group": "split",
+    "h": 1,
+    "id": "split_run",
+    "kind": "button",
+    "label": "Split it",
+    "tone": "plain",
+    "w": 3
+  },
+  {
+    "group": "split",
+    "h": 4,
+    "id": "split_out_the_sum",
+    "kind": "table",
+    "label": "The sum",
+    "shows": "split_out_the_sum",
+    "tone": "raised",
+    "w": 12
+  },
+  {
+    "h": 1,
+    "id": "note_b1",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 0,
+    "page_style": "h1",
+    "tone": "plain",
+    "value": "Splitting a bill",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b2",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 1,
+    "page_style": "p",
+    "tone": "plain",
+    "value": "Restaurants differ, but the sum is always the same. Enter what the bill says, choose the tip and how many of you share it.",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b4",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 3,
+    "page_style": "h2",
+    "tone": "plain",
+    "value": "Good to know",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b5",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 4,
+    "page_style": "ul",
+    "tone": "plain",
+    "value": "A tip of 10 % is common in many countries; 15 % in others.\nRound up the share, not the tip.\nSplit unevenly? Run it again with the smaller group.",
+    "w": 16
+  }
+]

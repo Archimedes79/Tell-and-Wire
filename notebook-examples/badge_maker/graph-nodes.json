@@ -1,0 +1,100 @@
+{
+  "badge": {
+    "kind": "start",
+    "label": "Make a badge"
+  },
+  "badge_badge": {
+    "kind": "code",
+    "label": "Badge",
+    "description": "Draw a badge for \"Name\" in \"Colour\" with \"Level\" stars.",
+    "config": {
+      "window": {
+        "id": "badge",
+        "title": "Make a badge",
+        "span": 12,
+        "rows": 9,
+        "page": {
+          "name": "Badge maker",
+          "columns": 16,
+          "cell": 56,
+          "gap": 14
+        },
+        "shows": [
+          {
+            "output": "Badge",
+            "kind": "image",
+            "result": "Badge",
+            "cells": 12,
+            "rows": 5,
+            "width": 770,
+            "height": 294
+          }
+        ],
+        "scheme": {
+          "id": "white",
+          "light": true,
+          "background": "#f4f5f7",
+          "surface": "#ffffff",
+          "line": "#d8dbe0",
+          "text": "#1a1d23",
+          "muted": "#4a515c",
+          "accent": "#2563eb",
+          "success": "#15803d",
+          "danger": "#b42318",
+          "warning": "#b45309",
+          "series": [
+            "#2563eb",
+            "#15803d",
+            "#b45309",
+            "#be185d",
+            "#0e7490",
+            "#6d28d9",
+            "#4d7c0f",
+            "#c2410c"
+          ]
+        }
+      }
+    },
+    "inputs": [
+      {
+        "port": "name",
+        "name": "Name",
+        "type": "text",
+        "description": "What goes into Name",
+        "field": "badge_in_name"
+      },
+      {
+        "port": "colour",
+        "name": "Colour",
+        "type": "text",
+        "description": "What goes into Colour",
+        "field": "badge_in_colour"
+      },
+      {
+        "port": "level",
+        "name": "Level",
+        "type": "number",
+        "description": "What goes into Level",
+        "field": "badge_in_level"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "badge",
+        "name": "Badge",
+        "type": "text"
+      }
+    ]
+  },
+  "badge_out_badge": {
+    "kind": "end",
+    "label": "Badge",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

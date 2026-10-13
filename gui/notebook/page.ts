@@ -13,7 +13,10 @@ import type { BlockKind, PageBlock, Windows } from './windows.ts';
 export { BLOCK_KINDS, freshBlockId, introPage, pageOf };
 
 /** The kinds that hold text a person types. */
-export const TEXT_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul'];
+export const TEXT_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul', 'ol', 'quote'];
+
+/** The kinds whose text is lines, one item or one line of the quotation to a line. */
+export const LINE_KINDS: readonly BlockKind[] = ['ul', 'ol', 'quote'];
 
 /**
  * The document with *page* as its page -- and its windows in the order they stand in it, since that is the order
@@ -96,6 +99,8 @@ export function toMarkdown(doc: Windows): string {
       case 'h1': return `# ${block.text ?? ''}`;
       case 'h2': return `## ${block.text ?? ''}`;
       case 'ul': return (block.text ?? '').split('\n').map((line) => `- ${line}`).join('\n');
+      case 'ol': return (block.text ?? '').split('\n').map((line, at) => `${at + 1}. ${line}`).join('\n');
+      case 'quote': return (block.text ?? '').split('\n').map((line) => `> ${line}`).join('\n');
       case 'space': return '[space]';
       case 'window': return `[window: ${block.window}]`;
       default: return block.text ?? '';
@@ -112,12 +117,20 @@ export function fromMarkdown(doc: Windows, text: string): Windows {
   const blocks: PageBlock[] = [];
   const add = (kind: BlockKind, fields: Partial<PageBlock> = {}): void => { blocks.push({ id: `b${blocks.length + 1}`, kind, ...fields }); };
   let paragraph: string[] = [];
-  let list: string[] = [];
+  /** The lines of a list or a quotation being read, and which it is. */
+  let lines: string[] = [];
+  let lined: 'ul' | 'ol' | 'quote' = 'ul';
   const flush = (): void => {
     if (paragraph.length) add('p', { text: paragraph.join('\n') });
-    if (list.length) add('ul', { text: list.join('\n') });
+    if (lines.length) add(lined, { text: lines.join('\n') });
     paragraph = [];
-    list = [];
+    lines = [];
+  };
+  /** A line of a list or a quotation: it goes with the lines before it of the same kind, or begins a block of its own. */
+  const addLine = (kind: 'ul' | 'ol' | 'quote', text: string): void => {
+    if (paragraph.length || (lines.length && lined !== kind)) flush();
+    lined = kind;
+    lines.push(text);
   };
   for (const raw of text.replace(/\r\n?/g, '\n').split('\n')) {
     const line = raw.trimEnd();
@@ -127,8 +140,10 @@ export function fromMarkdown(doc: Windows, text: string): Windows {
     else if (/^#\s+/.test(line)) { flush(); add('h1', { text: line.replace(/^#\s+/, '') }); }
     else if (/^\s*\[space\]\s*$/.test(line)) { flush(); add('space'); }
     else if (window) { flush(); if (ids.has(window[1])) add('window', { window: window[1] }); }
-    else if (/^[-*]\s+/.test(line)) { if (paragraph.length) flush(); list.push(line.replace(/^[-*]\s+/, '')); }
-    else { if (list.length) flush(); paragraph.push(line); }
+    else if (/^[-*]\s+/.test(line)) addLine('ul', line.replace(/^[-*]\s+/, ''));
+    else if (/^\d+[.)]\s+/.test(line)) addLine('ol', line.replace(/^\d+[.)]\s+/, ''));
+    else if (/^>\s?/.test(line)) addLine('quote', line.replace(/^>\s?/, ''));
+    else { if (lines.length) flush(); paragraph.push(line); }
   }
   flush();
   return withPage(doc, pageOf({ ...doc, page: blocks }));

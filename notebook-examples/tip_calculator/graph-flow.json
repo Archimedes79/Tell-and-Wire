@@ -1,0 +1,10 @@
+{
+  "name": "Notes on splitting a bill",
+  "description": "A short page with a small calculator in it.",
+  "wires": [
+    "split.data -> split_split.bill",
+    "split.data -> split_split.tip",
+    "split.data -> split_split.people",
+    "split_split.split -> split_out_the_sum.value"
+  ]
+}

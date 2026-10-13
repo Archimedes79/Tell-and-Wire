@@ -27,11 +27,11 @@ export interface PageWindow extends Linked {
   at?: number;
 }
 
-/** A line of the page that is words: a heading, a paragraph, a list or a gap, and where it stands. */
+/** A line of the page that is words: a heading, a paragraph, a list (bullets or numbered), a quotation or a gap, and where it stands. */
 export interface PageNote {
   id: string;
   at: number;
-  style: 'h1' | 'h2' | 'p' | 'ul' | 'space';
+  style: 'h1' | 'h2' | 'p' | 'ul' | 'ol' | 'quote' | 'space';
   text: string;
 }
 
@@ -68,7 +68,7 @@ export function pageWindows(blocks: readonly GuiWidget[]): PageWindow[] {
 
 /** The words of the page, read off its blocks: the blocks that have no window and say where they stand. */
 export function pageNotes(blocks: readonly GuiWidget[]): PageNote[] {
-  const styles = ['h1', 'h2', 'p', 'ul', 'space'];
+  const styles = ['h1', 'h2', 'p', 'ul', 'ol', 'quote', 'space'];
   return (blocks as readonly WindowBlock[]).flatMap((block): PageNote[] => (typeof block.group !== 'string' && typeof block.page_at === 'number' && styles.includes(String(block.page_style))
     ? [{ id: block.id, at: block.page_at, style: block.page_style as PageNote['style'], text: String(block.value ?? '') }] : []));
 }

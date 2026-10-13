@@ -1,0 +1,94 @@
+{
+  "signature": "c4255e70d1747f05",
+  "windows": {
+    "name": "Notes on splitting a bill",
+    "description": "A short page with a small calculator in it.",
+    "windows": [
+      {
+        "id": "split",
+        "title": "Who pays what",
+        "span": 12,
+        "inputs": [
+          {
+            "name": "Bill",
+            "kind": "number",
+            "min": 0,
+            "max": 1000,
+            "step": 0.5,
+            "value": 86.4,
+            "width": 0.4
+          },
+          {
+            "name": "Tip",
+            "kind": "choice",
+            "options": [
+              "0 %",
+              "5 %",
+              "10 %",
+              "15 %",
+              "20 %"
+            ],
+            "value": "10 %",
+            "width": 0.3
+          },
+          {
+            "name": "People",
+            "kind": "number",
+            "min": 1,
+            "max": 20,
+            "step": 1,
+            "value": 3,
+            "width": 0.3
+          }
+        ],
+        "steps": [
+          {
+            "name": "Split",
+            "sentence": "Work out the tip, the total and each share from @Bill, @Tip and @People.",
+            "how": "code",
+            "code": "function run(inputs) {\n  const bill = Number(inputs.bill) || 0, share = Number(String(inputs.tip).replace('%', '')) || 0, people = Math.max(1, Math.round(Number(inputs.people) || 1));\n  const tip = Math.round(bill * share) / 100, total = Math.round((bill + tip) * 100) / 100;\n  return { split: [\n    { Item: 'Bill', Amount: bill },\n    { Item: 'Tip (' + share + ' %)', Amount: tip },\n    { Item: 'Total', Amount: total },\n    { Item: 'Each of ' + people, Amount: Math.round((total / people) * 100) / 100 },\n  ] };\n}\n"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "The sum",
+            "kind": "table",
+            "rows": 4,
+            "of": "Split"
+          }
+        ],
+        "trigger": {
+          "label": "Split it",
+          "onChange": true
+        }
+      }
+    ],
+    "page": [
+      {
+        "id": "b1",
+        "kind": "h1",
+        "text": "Splitting a bill"
+      },
+      {
+        "id": "b2",
+        "kind": "p",
+        "text": "Restaurants differ, but the sum is always the same. Enter what the bill says, choose the tip and how many of you share it."
+      },
+      {
+        "id": "b3",
+        "kind": "window",
+        "window": "split"
+      },
+      {
+        "id": "b4",
+        "kind": "h2",
+        "text": "Good to know"
+      },
+      {
+        "id": "b5",
+        "kind": "ul",
+        "text": "A tip of 10 % is common in many countries; 15 % in others.\nRound up the share, not the tip.\nSplit unevenly? Run it again with the smaller group."
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Badge maker",
+  "description": "A member badge, drawn by code for the room it has.",
+  "wires": [
+    "badge.data -> badge_badge.name",
+    "badge.data -> badge_badge.colour",
+    "badge.data -> badge_badge.level",
+    "badge_badge.badge -> badge_out_badge.value"
+  ]
+}

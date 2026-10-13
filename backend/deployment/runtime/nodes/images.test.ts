@@ -54,4 +54,16 @@ describe('a picture', () => {
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  it('may be the markup of an SVG a step drew: shown as a picture, saying it is SVG where it does not', async () => {
+    const block = widgetElement('image_view')!;
+    const widget = parseWidget({ id: 'w', kind: 'image_view', label: 'Picture' });
+    const drawn = '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>';
+    const shown = String(await block.displayValue(widget, `\n${drawn}`, runtime));
+    expect(shown.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
+    expect(decodeURIComponent(shown.slice(shown.indexOf(',') + 1))).toBe(drawn.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'));
+    // A list of them is a list of pictures; text that only begins like the tag is a path, and fails as one.
+    expect(await block.displayValue(widget, [drawn, drawn], runtime)).toHaveLength(2);
+    expect(String(await block.displayValue(widget, '<svgs.png', runtime)).startsWith('⚠')).toBe(true);
+  });
 });

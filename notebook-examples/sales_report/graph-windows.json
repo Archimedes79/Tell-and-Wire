@@ -1,0 +1,103 @@
+{
+  "signature": "0ef3a069117ee324",
+  "windows": {
+    "name": "Weekly sales report",
+    "description": "Pick the sales file, press Calculate, read the key figures.",
+    "windows": [
+      {
+        "id": "figures",
+        "title": "Where the money went",
+        "span": 16,
+        "inputs": [
+          {
+            "name": "Sales",
+            "kind": "file",
+            "extensions": ".csv",
+            "value": "notebook-examples/data/sales.csv"
+          }
+        ],
+        "steps": [
+          {
+            "name": "KPIs",
+            "sentence": "Read @Sales and work out revenue, orders, the average order and the growth on the previous month for each region, with a total row.",
+            "how": "code",
+            "code": "function run(inputs) {\n  const lines = String(inputs.sales ?? '').split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean);\n  const rows = lines.slice(1).map((line) => line.split(',')).map(([month, region, orders, revenue]) => ({ month, region, orders: Number(orders), revenue: Number(revenue) }));\n  if (!rows.length) return { kpis: [] };\n  const months = [...new Set(rows.map((row) => row.month))].sort();\n  const last = months[months.length - 1], before = months[months.length - 2];\n  const sum = (list, key) => list.reduce((total, row) => total + row[key], 0);\n  const percent = (now, then) => (then ? (now >= then ? '+' : '') + ((now / then - 1) * 100).toFixed(1) + ' %' : '-');\n  const line = (name, mine) => {\n    const orders = sum(mine, 'orders'), revenue = sum(mine, 'revenue');\n    return { Region: name, Revenue: Math.round(revenue), Orders: orders, 'Average order': Math.round((revenue / orders) * 100) / 100, 'Growth on previous month': percent(sum(mine.filter((row) => row.month === last), 'revenue'), sum(mine.filter((row) => row.month === before), 'revenue')) };\n  };\n  const regions = [...new Set(rows.map((row) => row.region))];\n  return { kpis: [...regions.map((name) => line(name, rows.filter((row) => row.region === name))), line('Total', rows)] };\n}\n"
+          },
+          {
+            "name": "Trend",
+            "sentence": "Sum the revenue of @Sales for each month.",
+            "how": "code",
+            "code": "function run(inputs) {\n  const lines = String(inputs.sales ?? '').split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean).slice(1).map((line) => line.split(','));\n  const byMonth = {};\n  for (const [month, , , revenue] of lines) byMonth[month] = (byMonth[month] || 0) + Number(revenue);\n  return { trend: { kind: 'line', title: 'Revenue per month', points: Object.entries(byMonth).sort().map(([label, value]) => ({ label, value: Math.round(value) })) } };\n}\n"
+          },
+          {
+            "name": "Comment",
+            "sentence": "Say in two sentences which region is doing best and which needs attention, from @KPIs.",
+            "how": "ai"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Key figures",
+            "kind": "table",
+            "rows": 5,
+            "width": 0.62,
+            "of": "KPIs"
+          },
+          {
+            "name": "Revenue trend",
+            "kind": "chart",
+            "rows": 5,
+            "width": 0.38,
+            "of": "Trend"
+          },
+          {
+            "name": "In short",
+            "kind": "text",
+            "rows": 2,
+            "of": "Comment"
+          }
+        ],
+        "trigger": {
+          "label": "Calculate"
+        }
+      }
+    ],
+    "page": [
+      {
+        "id": "b1",
+        "kind": "h1",
+        "text": "Weekly sales report"
+      },
+      {
+        "id": "b2",
+        "kind": "p",
+        "text": "Pick a **sales file** (month, region, orders, revenue), press *Calculate* and read the key figures for each region. The `Total` row is the sum."
+      },
+      {
+        "id": "b3",
+        "kind": "h2",
+        "text": "Key figures"
+      },
+      {
+        "id": "b4",
+        "kind": "window",
+        "window": "figures"
+      },
+      {
+        "id": "b5",
+        "kind": "h2",
+        "text": "How it works"
+      },
+      {
+        "id": "b6",
+        "kind": "ol",
+        "text": "The table and the trend are made by two code cells, so they are the same every time.\nThe two sentences under them are written by a model from the table."
+      },
+      {
+        "id": "b7",
+        "kind": "quote",
+        "text": "Numbers first, words second."
+      }
+    ]
+  }
+}

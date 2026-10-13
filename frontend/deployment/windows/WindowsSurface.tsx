@@ -6,6 +6,7 @@ import { GUI_GAP, GUI_GRID_COLUMNS, gridStyle, resolveWidgetLayout } from '../gu
 import { WINDOW_BORDER, WINDOW_PADDING } from '../../../gui/windows/grid.ts';
 import { LINE, MUTED, SUCCESS_FILL, SUCCESS_TEXT, SURFACE, TEXT, WARNING_FILL, WARNING_TEXT, ACCENT_FILL, ACCENT_TEXT, DANGER, DANGER_FILL, DANGER_TEXT, WARNING } from '../gui/kit/ui/theme';
 import { pageNotes, pageWindows, type PageNote, type PageWindow, type WindowBlock } from './windowsInUse';
+import { inline } from './inline';
 
 /** Where a window stands: what a person sees of it before reading its result. */
 export type WindowState = 'ready' | 'running' | 'waiting' | 'current' | 'stale' | 'failed' | 'empty';
@@ -177,10 +178,12 @@ function Note({ note }: { note: PageNote }) {
   const lines = note.text.split('\n').filter((line) => line.length > 0);
   return (
     <div style={{ gridColumn: '1 / -1', color: TEXT, minWidth: 0 }}>
-      {note.style === 'h1' && <h1 style={{ margin: '8px 0 0', fontSize: 30, lineHeight: 1.15, fontWeight: 650 }}>{note.text}</h1>}
-      {note.style === 'h2' && <h2 style={{ margin: '10px 0 0', fontSize: 20, lineHeight: 1.25, fontWeight: 600 }}>{note.text}</h2>}
-      {note.style === 'p' && <p style={{ margin: 0, fontSize: 16, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{note.text}</p>}
-      {note.style === 'ul' && <ul style={{ margin: 0, paddingLeft: 22, fontSize: 16, lineHeight: 1.55, listStyle: 'disc' }}>{lines.map((line, at) => <li key={at}>{line}</li>)}</ul>}
+      {note.style === 'h1' && <h1 style={{ margin: '8px 0 0', fontSize: 30, lineHeight: 1.15, fontWeight: 650 }}>{inline(note.text)}</h1>}
+      {note.style === 'h2' && <h2 style={{ margin: '10px 0 0', fontSize: 20, lineHeight: 1.25, fontWeight: 600 }}>{inline(note.text)}</h2>}
+      {note.style === 'p' && <p style={{ margin: 0, fontSize: 16, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{inline(note.text)}</p>}
+      {note.style === 'ul' && <ul style={{ margin: 0, paddingLeft: 22, fontSize: 16, lineHeight: 1.55, listStyle: 'disc' }}>{lines.map((line, at) => <li key={at}>{inline(line)}</li>)}</ul>}
+      {note.style === 'ol' && <ol style={{ margin: 0, paddingLeft: 24, fontSize: 16, lineHeight: 1.55, listStyle: 'decimal' }}>{lines.map((line, at) => <li key={at}>{inline(line)}</li>)}</ol>}
+      {note.style === 'quote' && <blockquote style={{ margin: '2px 0', padding: '0 0 0 16px', borderLeft: `3px solid ${LINE}`, color: MUTED, fontSize: 16, lineHeight: 1.55, fontStyle: 'italic' }}>{note.text.split('\n').map((line, at) => <p key={at} style={{ margin: 0 }}>{inline(line)}</p>)}</blockquote>}
       {note.style === 'space' && <div style={{ height: 20 }} aria-hidden />}
     </div>
   );

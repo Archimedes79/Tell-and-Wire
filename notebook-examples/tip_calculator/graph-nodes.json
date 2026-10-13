@@ -1,0 +1,100 @@
+{
+  "split": {
+    "kind": "start",
+    "label": "Who pays what"
+  },
+  "split_split": {
+    "kind": "code",
+    "label": "Split",
+    "description": "Work out the tip, the total and each share from \"Bill\", \"Tip\" and \"People\".",
+    "config": {
+      "window": {
+        "id": "split",
+        "title": "Who pays what",
+        "span": 12,
+        "rows": 9,
+        "page": {
+          "name": "Notes on splitting a bill",
+          "columns": 16,
+          "cell": 56,
+          "gap": 14
+        },
+        "shows": [
+          {
+            "output": "The sum",
+            "kind": "table",
+            "result": "Split",
+            "cells": 12,
+            "rows": 4,
+            "width": 770,
+            "height": 224
+          }
+        ],
+        "scheme": {
+          "id": "white",
+          "light": true,
+          "background": "#f4f5f7",
+          "surface": "#ffffff",
+          "line": "#d8dbe0",
+          "text": "#1a1d23",
+          "muted": "#4a515c",
+          "accent": "#2563eb",
+          "success": "#15803d",
+          "danger": "#b42318",
+          "warning": "#b45309",
+          "series": [
+            "#2563eb",
+            "#15803d",
+            "#b45309",
+            "#be185d",
+            "#0e7490",
+            "#6d28d9",
+            "#4d7c0f",
+            "#c2410c"
+          ]
+        }
+      }
+    },
+    "inputs": [
+      {
+        "port": "bill",
+        "name": "Bill",
+        "type": "number",
+        "description": "What goes into Bill",
+        "field": "split_in_bill"
+      },
+      {
+        "port": "tip",
+        "name": "Tip",
+        "type": "text",
+        "description": "What goes into Tip",
+        "field": "split_in_tip"
+      },
+      {
+        "port": "people",
+        "name": "People",
+        "type": "number",
+        "description": "What goes into People",
+        "field": "split_in_people"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "split",
+        "name": "Split",
+        "type": "text"
+      }
+    ]
+  },
+  "split_out_the_sum": {
+    "kind": "end",
+    "label": "The sum",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

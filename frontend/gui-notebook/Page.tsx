@@ -7,13 +7,16 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { patchWindow, removeWindow } from '../../gui/notebook/edit.ts';
-import { addBlock, fromMarkdown, freshBlockId, moveBlock, pageOf, patchBlock, removeBlock, setKind, toMarkdown } from '../../gui/notebook/page.ts';
+import { addBlock, fromMarkdown, freshBlockId, LINE_KINDS, moveBlock, pageOf, patchBlock, removeBlock, setKind, toMarkdown } from '../../gui/notebook/page.ts';
 import type { BlockKind, PageBlock, Windows } from '../../gui/notebook/windows.ts';
 import { useNotebook } from '../notebook/document/store';
+import { inline } from '../notebook/elements/inline';
 import WindowBox from './WindowBox';
 
-const PLACEHOLDER: Record<string, string> = { h1: 'Title', h2: 'Heading', p: 'Write something, or type # for a heading and - for a list', ul: 'List item' };
-const KIND_WORDS: [BlockKind, string][] = [['p', 'Text'], ['h1', 'Heading 1'], ['h2', 'Heading 2'], ['ul', 'Bullets'], ['space', 'Gap']];
+const PLACEHOLDER: Record<string, string> = {
+  h1: 'Title', h2: 'Heading', p: 'Write something, or type # for a heading, - for a list, 1. for a numbered one, > for a quotation', ul: 'List item', ol: 'List item', quote: 'Quotation',
+};
+const KIND_WORDS: [BlockKind, string][] = [['p', 'Text'], ['h1', 'Heading 1'], ['h2', 'Heading 2'], ['ul', 'Bullets'], ['ol', 'Numbered'], ['quote', 'Quote'], ['space', 'Gap']];
 const ADD_WORDS: [BlockKind, string][] = [...KIND_WORDS, ['window', 'Window']];
 
 /** A box of text as tall as its text. */
@@ -67,7 +70,8 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   const source = useNotebook((s) => s.source);
   const { edit, show } = useNotebook.getState();
   const page = pageOf(doc);
-  const focus = useRef<{ id: string; end: boolean } | null>(null);
+  /** Where the cursor goes after the next change: the end of a block, or a place in it (`at`, and `to` for a chosen stretch). */
+  const focus = useRef<{ id: string; end: boolean; at?: number; to?: number } | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
 
   // After a block is made or taken away, the cursor goes where the person is writing.
@@ -78,8 +82,8 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
     const node = document.querySelector<HTMLTextAreaElement>(`[data-block="${want.id}"] textarea`);
     if (!node) return;
     node.focus();
-    const at = want.end ? node.value.length : 0;
-    node.setSelectionRange(at, at);
+    const at = want.at ?? (want.end ? node.value.length : 0);
+    node.setSelectionRange(at, want.to ?? at);
   });
 
   if (!writing) {
@@ -93,7 +97,10 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   if (source) {
     return (
       <div className="nb-sheet">
-        <p className="nb-lead">The page as Markdown: <code># Title</code>, <code>## Heading</code>, <code>- bullet</code>, <code>[space]</code>, and <code>[window: id]</code> where a window stands.</p>
+        <p className="nb-lead">
+          The page as Markdown: <code># Title</code>, <code>## Heading</code>, <code>- bullet</code>, <code>1. numbered</code>, <code>&gt; quotation</code>, <code>[space]</code>, and <code>[window: id]</code> where a window stands;
+          in the words <code>**bold**</code>, <code>*italic*</code>, <code>`code`</code> and <code>[a link](https://…)</code>.
+        </p>
         <textarea
           className="nb-source" aria-label="Page as Markdown" spellCheck={false} value={draft ?? toMarkdown(doc)}
           onChange={(event) => setDraft(event.target.value)}
@@ -115,9 +122,9 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
 
   const type = (part: PageBlock, text: string): void => {
     // Markdown as it is typed: a heading or a bullet begins a line.
-    const made = part.kind === 'p' ? /^(#{1,2}) (.*)$/s.exec(text) ?? /^([-*]) (.*)$/s.exec(text) : null;
+    const made = part.kind === 'p' ? /^(#{1,2}) (.*)$/s.exec(text) ?? /^([-*]|1\.|>) (.*)$/s.exec(text) : null;
     if (made) {
-      const kind: BlockKind = made[1] === '#' ? 'h1' : made[1] === '##' ? 'h2' : 'ul';
+      const kind: BlockKind = made[1] === '#' ? 'h1' : made[1] === '##' ? 'h2' : made[1] === '1.' ? 'ol' : made[1] === '>' ? 'quote' : 'ul';
       focus.current = { id: part.id, end: true };
       edit((one) => patchBlock(setKind(one, part.id, kind), part.id, { text: made[2] }));
       return;
@@ -128,8 +135,18 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   const keys = (part: PageBlock, index: number) => (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     const box = event.currentTarget;
     const text = part.text ?? '';
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (event.key === 'b' || event.key === 'i') && part.kind !== 'h1' && part.kind !== 'h2') {
+      // The marks of Markdown round what is chosen, or round the place the cursor is in.
+      event.preventDefault();
+      const mark = event.key === 'b' ? '**' : '*';
+      const from = box.selectionStart;
+      const to = box.selectionEnd;
+      focus.current = { id: part.id, end: false, at: from + mark.length, to: to + mark.length };
+      edit((one) => patchBlock(one, part.id, { text: `${text.slice(0, from)}${mark}${text.slice(from, to)}${mark}${text.slice(to)}` }), `text-${part.id}`);
+      return;
+    }
     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
-      if (part.kind === 'ul') {
+      if (LINE_KINDS.includes(part.kind)) {
         const lines = text.split('\n');
         const line = text.slice(0, box.selectionStart).split('\n').length - 1;
         // An empty last item ends the list, as it does in every editor.
@@ -200,8 +217,11 @@ function Block({ part, index, doc, writing, last, onType, onKeys, onAdd, onAddAb
     const text = part.text ?? '';
     return (
       <div className="nb-block">
-        {part.kind === 'h1' ? <h1>{text}</h1> : part.kind === 'h2' ? <h2>{text}</h2>
-          : part.kind === 'ul' ? <ul>{text.split('\n').filter(Boolean).map((line, at) => <li key={at}>{line}</li>)}</ul> : <p>{text}</p>}
+        {part.kind === 'h1' ? <h1>{inline(text)}</h1> : part.kind === 'h2' ? <h2>{inline(text)}</h2>
+          : part.kind === 'ul' ? <ul>{text.split('\n').filter(Boolean).map((line, at) => <li key={at}>{inline(line)}</li>)}</ul>
+            : part.kind === 'ol' ? <ol>{text.split('\n').filter(Boolean).map((line, at) => <li key={at}>{inline(line)}</li>)}</ol>
+              : part.kind === 'quote' ? <blockquote>{text.split('\n').map((line, at) => <p key={at}>{inline(line)}</p>)}</blockquote>
+                : <p>{inline(text)}</p>}
       </div>
     );
   }

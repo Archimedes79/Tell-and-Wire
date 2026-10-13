@@ -4,7 +4,7 @@
 
 import type { BlockKind, PageBlock, Windows } from './windows.ts';
 
-export const BLOCK_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul', 'space', 'window'];
+export const BLOCK_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul', 'ol', 'quote', 'space', 'window'];
 
 const isKind = (value: unknown): value is BlockKind => BLOCK_KINDS.includes(value as BlockKind);
 

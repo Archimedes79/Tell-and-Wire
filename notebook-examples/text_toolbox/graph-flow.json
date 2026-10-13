@@ -1,0 +1,11 @@
+{
+  "name": "Text toolbox",
+  "description": "Paste a text: its numbers, and a summary.",
+  "wires": [
+    "toolbox.data -> toolbox_statistics.text",
+    "toolbox.data -> toolbox_summary.text",
+    "toolbox.data -> toolbox_summary.length",
+    "toolbox_statistics.statistics -> toolbox_out_numbers.value",
+    "toolbox_summary.output -> toolbox_out_summary.value"
+  ]
+}

@@ -4,6 +4,7 @@
 // default, a kind nobody knows means the plainest, a number out of range is brought into it. What
 // cannot be read at all is thrown as a `NotWindows`, saying what is wrong where.
 
+import { BLOCK_KINDS } from './pageModel.ts';
 import { SIZES, idOf, type BlockKind, type PageBlock, type InKind, type OutKind, type Step, type Trigger, type Window, type WindowIn, type WindowOut, type Windows } from './windows.ts';
 
 export class NotWindows extends Error {}
@@ -56,8 +57,6 @@ function outputOf(raw: unknown, where: string): WindowOut {
     ...(text(raw.of) ? { of: text(raw.of) } : {}),
   };
 }
-
-const BLOCK_KINDS: readonly BlockKind[] = ['h1', 'h2', 'p', 'ul', 'space', 'window'];
 
 function pageOf(raw: unknown): PageBlock[] | undefined {
   if (!Array.isArray(raw)) return undefined;

@@ -65,6 +65,19 @@ describe('the page of a notebook', () => {
     expect(kinds(fromMarkdown(doc, '# Only\n\n[window: nowhere]'))).toEqual(['h1', 'window']);
   });
 
+  it('has numbered lists and quotations: written as 1. and >, counted again on the way out, one block to each run of lines of a kind', () => {
+    const doc = startPage('Tool');
+    const read = fromMarkdown(doc, ['1. one', '2) two', '- apart', '> said', '> twice', '', 'then **bold** words'].join('\n'));
+    expect(pageOf(read).filter((block) => block.kind !== 'window').map((block) => [block.kind, block.text])).toEqual([
+      ['ol', 'one\ntwo'], ['ul', 'apart'], ['quote', 'said\ntwice'], ['p', 'then **bold** words'],
+    ]);
+    expect(toMarkdown(read)).toContain('1. one\n2. two\n\n- apart\n\n> said\n> twice\n\nthen **bold** words');
+    expect(setKind(read, pageOf(read)[0].id, 'ol')).toEqual(read);
+    // The file keeps them, and a kind nobody knows is still left out.
+    expect(parseWindows(JSON.parse(JSON.stringify(read))).page).toEqual(read.page);
+    expect(pageOf({ ...read, page: [{ id: 'x', kind: 'olive' as never, text: 'no' }] }).map((block) => block.kind)).toEqual(['window']);
+  });
+
   it('survives the file: the page and what a window asks are read back as they were written', () => {
     const doc = { ...addBlock(startPage('Tool'), 'ul'), windows: [{ ...startPage('Tool').windows[0], ask: 'Ask for a text.' }] };
     const back = parseWindows(JSON.parse(JSON.stringify(doc)));

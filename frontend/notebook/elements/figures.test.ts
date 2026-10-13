@@ -25,6 +25,13 @@ describe('the cells of a key-figure table', () => {
     expect(growth.show('+10.2 %')).toBe('+10.2 %');
   });
 
+  it('keep each number as it is in a column that is not all figures: a measure and its value', () => {
+    const rows = [{ Measure: 'Words', Value: 32 }, { Measure: 'Per sentence', Value: 10.7 }, { Measure: 'Longest', Value: 'lighthouse' }];
+    const value = columnsOf(rows, ['Measure', 'Value'])[1];
+    expect(value.numeric).toBe(false);
+    expect(rows.map((row) => value.show(row.Value))).toEqual(['32', '10.7', 'lighthouse']);
+  });
+
   it('colour a signed percentage: a rise and a fall, and nothing else', () => {
     expect([growth.tone('+10.2 %'), growth.tone('-1.8 %'), growth.tone('−3 %'), growth.tone('4 %'), growth.tone('–'), growth.tone(5)]).toEqual(['up', 'down', 'down', undefined, undefined, undefined]);
   });

@@ -1,0 +1,104 @@
+[
+  {
+    "after": [],
+    "group": "badge",
+    "h": 1,
+    "id": "badge_title",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 2,
+    "span": 12,
+    "tone": "plain",
+    "value": "Make a badge",
+    "w": 12
+  },
+  {
+    "group": "badge",
+    "h": 2,
+    "id": "badge_in_name",
+    "kind": "text_io",
+    "label": "Name",
+    "mode": "input",
+    "sends_to": [
+      "badge"
+    ],
+    "tone": "sunken",
+    "value": "Ada Lovelace",
+    "w": 6
+  },
+  {
+    "group": "badge",
+    "h": 2,
+    "id": "badge_in_colour",
+    "kind": "select",
+    "label": "Colour",
+    "options": "Blue\nGreen\nOrange",
+    "sends_to": [
+      "badge"
+    ],
+    "tone": "sunken",
+    "value": "Green",
+    "w": 3
+  },
+  {
+    "group": "badge",
+    "h": 2,
+    "id": "badge_in_level",
+    "kind": "slider",
+    "label": "Level",
+    "max": 5,
+    "min": 1,
+    "sends_to": [
+      "badge"
+    ],
+    "step": 1,
+    "tone": "sunken",
+    "value": 4,
+    "w": 3
+  },
+  {
+    "fires": "badge",
+    "group": "badge",
+    "h": 1,
+    "id": "badge_run",
+    "kind": "button",
+    "label": "Draw",
+    "tone": "plain",
+    "w": 3
+  },
+  {
+    "group": "badge",
+    "h": 5,
+    "id": "badge_out_badge",
+    "kind": "image_view",
+    "label": "Badge",
+    "shows": "badge_out_badge",
+    "tone": "raised",
+    "w": 12
+  },
+  {
+    "h": 1,
+    "id": "note_b1",
+    "kind": "text",
+    "label": "",
+    "mode": "heading",
+    "page_at": 0,
+    "page_style": "h1",
+    "tone": "plain",
+    "value": "Badge maker",
+    "w": 16
+  },
+  {
+    "h": 1,
+    "id": "note_b2",
+    "kind": "text",
+    "label": "",
+    "mode": "body",
+    "page_at": 1,
+    "page_style": "p",
+    "tone": "plain",
+    "value": "Type a name, choose a colour and a level. The badge is a picture drawn by a code cell that knows how large its box is.",
+    "w": 16
+  }
+]

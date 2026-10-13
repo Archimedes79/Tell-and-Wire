@@ -82,6 +82,8 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-text.h2 { font-size: 22px; line-height: 1.25; font-weight: 600; margin-top: 14px; }
 .nb-text.p { font-size: 17px; line-height: 1.55; }
 .nb-text.ul { font-size: 17px; line-height: 1.55; padding-left: 26px; background-image: radial-gradient(circle, var(--ink) 2px, transparent 2.5px); background-size: 20px 1.55em; background-repeat: repeat-y; background-position: 4px 3px; }
+.nb-text.ol { font-size: 17px; line-height: 1.55; padding-left: 26px; background-image: linear-gradient(to bottom, transparent 44%, var(--muted) 44% 56%, transparent 56%); background-size: 9px 1.55em; background-repeat: repeat-y; background-position: 5px 3px; }
+.nb-text.quote { font-size: 17px; line-height: 1.55; padding-left: 16px; border-left: 3px solid var(--line2); border-radius: 0 6px 6px 0; font-style: italic; color: var(--muted); }
 .nb-text::placeholder { color: var(--placeholder); }
 .nb-space { height: 28px; border-radius: 6px; }
 .nb-block:hover > .nb-space, .nb-block:focus-within > .nb-space { background: repeating-linear-gradient(135deg, var(--card) 0 6px, var(--hover) 6px 12px); }
@@ -89,6 +91,12 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-read h2 { font-size: 22px; line-height: 1.25; margin: 14px 0 2px; font-weight: 600; }
 .nb-read p { font-size: 17px; line-height: 1.55; margin: 0; white-space: pre-wrap; }
 .nb-read ul { font-size: 17px; line-height: 1.55; margin: 0; padding-left: 26px; }
+.nb-read ol { font-size: 17px; line-height: 1.55; margin: 0; padding-left: 26px; }
+.nb-read blockquote { margin: 2px 0; padding: 0 0 0 16px; border-left: 3px solid var(--line2); color: var(--muted); }
+.nb-read blockquote p { font-style: italic; }
+.nb-read a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
+.nb-read strong { font-weight: 650; }
+.nb-inline-code { font-family: var(--mono); font-size: 0.9em; padding: 1px 5px; border-radius: 5px; background: var(--chip); color: var(--ink); }
 .nb-add { position: absolute; left: 0; right: 0; height: 18px; display: flex; align-items: center; z-index: 4; }
 .nb-add.below { bottom: -10px; }
 .nb-add.above { top: -10px; }

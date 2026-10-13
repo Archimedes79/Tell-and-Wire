@@ -94,8 +94,8 @@ export interface WindowOut {
   of?: string;
 }
 
-/** What a block of the page is: a heading, a paragraph, a list, a gap, or a window standing in the text. */
-export type BlockKind = 'h1' | 'h2' | 'p' | 'ul' | 'space' | 'window';
+/** What a block of the page is: a heading, a paragraph, a list (bullets or numbered), a quotation, a gap, or a window standing in the text. */
+export type BlockKind = 'h1' | 'h2' | 'p' | 'ul' | 'ol' | 'quote' | 'space' | 'window';
 
 /** One block of the page, as an editor of pages has it. A list keeps its items one to a line in *text*; a window names itself by *window*. */
 export interface PageBlock {

@@ -1,0 +1,7 @@
+{
+  "table": [
+    "figures figures_kpis figures_trend figures_comment figures_out_key_figures",
+    ".       .            .             .               figures_out_revenue_trend",
+    ".       .            .             .               figures_out_in_short"
+  ]
+}

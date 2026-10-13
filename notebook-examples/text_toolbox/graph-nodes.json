@@ -1,0 +1,125 @@
+{
+  "toolbox": {
+    "kind": "start",
+    "label": "Look at a text"
+  },
+  "toolbox_statistics": {
+    "kind": "code",
+    "label": "Statistics",
+    "description": "Count the words, sentences and characters of \"Text\", find the longest word and the most used ones.",
+    "config": {
+      "window": {
+        "id": "toolbox",
+        "title": "Look at a text",
+        "span": 16,
+        "rows": 13,
+        "page": {
+          "name": "Text toolbox",
+          "columns": 16,
+          "cell": 56,
+          "gap": 14
+        },
+        "shows": [
+          {
+            "output": "Numbers",
+            "kind": "table",
+            "result": "Statistics",
+            "cells": 8,
+            "rows": 5,
+            "width": 503,
+            "height": 294
+          }
+        ],
+        "scheme": {
+          "id": "white",
+          "light": true,
+          "background": "#f4f5f7",
+          "surface": "#ffffff",
+          "line": "#d8dbe0",
+          "text": "#1a1d23",
+          "muted": "#4a515c",
+          "accent": "#2563eb",
+          "success": "#15803d",
+          "danger": "#b42318",
+          "warning": "#b45309",
+          "series": [
+            "#2563eb",
+            "#15803d",
+            "#b45309",
+            "#be185d",
+            "#0e7490",
+            "#6d28d9",
+            "#4d7c0f",
+            "#c2410c"
+          ]
+        }
+      }
+    },
+    "inputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "text",
+        "description": "What goes into Text",
+        "field": "toolbox_in_text"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "statistics",
+        "name": "Statistics",
+        "type": "text"
+      }
+    ]
+  },
+  "toolbox_summary": {
+    "kind": "ai",
+    "label": "Summary",
+    "description": "Summarize \"Text\" in \"Length\".",
+    "inputs": [
+      {
+        "port": "text",
+        "name": "Text",
+        "type": "text",
+        "description": "What goes into Text",
+        "field": "toolbox_in_text"
+      },
+      {
+        "port": "length",
+        "name": "Length",
+        "type": "text",
+        "description": "What goes into Length",
+        "field": "toolbox_in_length"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "output",
+        "name": "Summary",
+        "type": "text"
+      }
+    ]
+  },
+  "toolbox_out_numbers": {
+    "kind": "end",
+    "label": "Numbers",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  },
+  "toolbox_out_summary": {
+    "kind": "end",
+    "label": "Summary",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      }
+    ]
+  }
+}

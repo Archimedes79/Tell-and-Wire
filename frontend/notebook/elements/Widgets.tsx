@@ -65,13 +65,23 @@ function PathBox({ kind, value, extensions, onChange }: { kind: 'file' | 'folder
   );
 }
 
+const safeDecode = (text: string): string => {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+};
+
 /**
  * The proportions of a finished drawing -- width over height, from its viewBox or its width and height -- or none where it says neither.
  * What a step drew for its window's room (`node.window`) keeps that shape in the box it is shown in, instead of being fitted into a
  * flatter one with its letters shrunk to nothing.
  */
 export function drawingAspect(value: unknown): number | null {
-  const text = soleValue(Array.isArray(value) ? value[0] : value);
+  const given = soleValue(Array.isArray(value) ? value[0] : value);
+  // An image output gets what a step drew as a data URL (the host turned the markup into one); a chart gets the markup itself.
+  const text = typeof given === 'string' && given.startsWith('data:image/svg+xml;charset=utf-8,') ? safeDecode(given.slice(given.indexOf(',') + 1)) : given;
   if (typeof text !== 'string' || !/^\s*<svg[\s>]/i.test(text)) return null;
   const tag = text.slice(0, text.indexOf('>') + 1);
   const box = /viewBox\s*=\s*"\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)\s*"/i.exec(tag);
@@ -99,8 +109,8 @@ export function Output({ kind, value, rows }: { kind: OutKind; value: unknown; r
 
 const cell = (value: unknown): string => (typeof value === 'string' ? value : value === null || value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value));
 
-/** The height of a table of *count* rows and a header, in pixels. */
-export const tableHeight = (count: number): number => (count + 1) * 28 + 34;
+/** The height of a table of *count* rows: its rows (30 each), a header that may run to two lines (50) and the box's own padding. */
+export const tableHeight = (count: number): number => count * 30 + 50 + 24;
 const TABLE_LIMIT = 14 * ROW;
 
 function Table({ value }: { value: unknown }) {

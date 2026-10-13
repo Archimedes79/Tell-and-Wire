@@ -46,7 +46,8 @@ export function columnsFrom(names: string[], columns: unknown[][], locale = 'en-
     return {
       name,
       numeric,
-      show: (value) => (typeof value === 'number' && Number.isFinite(value) ? format.format(value) : text(value)),
+      // A column of figures is set evenly; one that mixes words and numbers (a name and its value) keeps each number as it is.
+      show: (value) => (typeof value === 'number' && Number.isFinite(value) ? (numeric ? format.format(value) : String(value)) : text(value)),
       tone: (value) => {
         if (typeof value !== 'string' || !/%\s*$/.test(value.trim())) return undefined;
         const one = value.trim();

@@ -1,0 +1,79 @@
+{
+  "signature": "8dd9e2a5c1b2a0f8",
+  "windows": {
+    "name": "Badge maker",
+    "description": "A member badge, drawn by code for the room it has.",
+    "windows": [
+      {
+        "id": "badge",
+        "title": "Make a badge",
+        "span": 12,
+        "inputs": [
+          {
+            "name": "Name",
+            "kind": "text",
+            "value": "Ada Lovelace",
+            "width": 0.5,
+            "rows": 1
+          },
+          {
+            "name": "Colour",
+            "kind": "choice",
+            "options": [
+              "Blue",
+              "Green",
+              "Orange"
+            ],
+            "value": "Green",
+            "width": 0.25
+          },
+          {
+            "name": "Level",
+            "kind": "number",
+            "min": 1,
+            "max": 5,
+            "step": 1,
+            "value": 4,
+            "width": 0.25
+          }
+        ],
+        "steps": [
+          {
+            "name": "Badge",
+            "sentence": "Draw a badge for @Name in @Colour with @Level stars.",
+            "how": "code",
+            "code": "function run(inputs, node) {\n  const palette = { Blue: ['#2563eb', '#dbeafe'], Green: ['#15803d', '#dcfce7'], Orange: ['#c2410c', '#ffedd5'] };\n  const [strong, soft] = palette[inputs.colour] ?? palette.Blue;\n  const room = node.window.shows[0];\n  const W = Math.max(240, room.width), H = Math.max(120, room.height);\n  const name = String(inputs.name || 'Your name').slice(0, 24).replace(/[<&>]/g, '');\n  const level = Math.max(1, Math.min(5, Math.round(Number(inputs.level) || 3)));\n  const stars = Array.from({ length: 5 }, (_, i) => '<text x=\"' + (W / 2 - 60 + i * 30) + '\" y=\"' + (H - 22) + '\" font-size=\"26\" text-anchor=\"middle\" fill=\"' + (i < level ? strong : '#cbd5e1') + '\">&#9733;</text>').join('');\n  return { badge: '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ' + W + ' ' + H + '\" font-family=\"Segoe UI, Arial, sans-serif\">'\n    + '<rect width=\"' + W + '\" height=\"' + H + '\" rx=\"18\" fill=\"' + soft + '\"/>'\n    + '<rect x=\"0\" y=\"0\" width=\"' + W + '\" height=\"34\" rx=\"18\" fill=\"' + strong + '\"/><rect x=\"0\" y=\"16\" width=\"' + W + '\" height=\"18\" fill=\"' + strong + '\"/>'\n    + '<text font-family=\"sans-serif\" x=\"' + (W / 2) + '\" y=\"23\" font-size=\"15\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#ffffff\">MEMBER</text>'\n    + '<text x=\"' + (W / 2) + '\" y=\"' + (H / 2 + 14) + '\" font-size=\"30\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#0f172a\">' + name + '</text>'\n    + stars + '</svg>' };\n}\n"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Badge",
+            "kind": "image",
+            "rows": 5,
+            "of": "Badge"
+          }
+        ],
+        "trigger": {
+          "label": "Draw"
+        }
+      }
+    ],
+    "page": [
+      {
+        "id": "b1",
+        "kind": "h1",
+        "text": "Badge maker"
+      },
+      {
+        "id": "b2",
+        "kind": "p",
+        "text": "Type a name, choose a colour and a level. The badge is a picture drawn by a code cell that knows how large its box is."
+      },
+      {
+        "id": "b3",
+        "kind": "window",
+        "window": "badge"
+      }
+    ]
+  }
+}
