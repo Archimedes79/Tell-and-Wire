@@ -84,7 +84,7 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
     };
   };
 
-  let written = 0;
+  const written: string[] = [];
   const held: string[] = [];
   try {
     for await (const step of sweep(nodesOf(), dslEdges(), { unitFor, stopped: () => stopped() || !stillOpen(), columns: columnsOf(live().table) })) {
@@ -93,7 +93,7 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
         return;
       }
       if (step.status === 'generated') {
-        written += 1;
+        written.push(step.label);
         say(`Generating… ${step.label} written`);
       }
       if (step.status === 'blocked') held.push(`${step.label} (${step.message})`);
@@ -103,7 +103,9 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
       return;
     }
     const rest = held.length ? ` ${held.length} left alone: ${held.join(', ')}` : '';
-    say(written ? `✅ ${written} written.${rest}` : `Nothing to generate.${rest}`);
+    // Which nodes, by their names: "1 written" says neither what nor where to look.
+    const shown = written.length > 4 ? `${written.slice(0, 4).join(', ')} and ${written.length - 4} more` : written.join(', ');
+    say(written.length ? `✅ Wrote the files of ${written.length} node${written.length === 1 ? '' : 's'}: ${shown}.${rest}` : `Nothing to generate.${rest}`);
   } catch (error) {
     say(`⚠️ ${messageOf(error)}`);
   }
