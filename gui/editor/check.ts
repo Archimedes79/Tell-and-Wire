@@ -139,12 +139,14 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
 
     // What only reads a data node as it was before the round is not for any event
     // that reaches it: it never runs and shows nothing, and the run does not say so.
-    // Said where a start point makes rounds: a run that nothing started runs everything.
+    // Said where a start point makes rounds, in the graph at the top: a run that nothing started runs
+    // everything, and inside a node the graph runs whole, its start points being its ports.
     const reads = readingWires(graph.nodes, graph.edges, registry, placesOf(graph));
-    const hasStart = graph.nodes.some((one) => registry.node(one.node_type)?.eventPorts(one).length);
+    const hasStart = !inside && graph.nodes.some((one) => registry.node(one.node_type)?.eventPorts(one).length);
     for (const node of hasStart ? graph.nodes : []) {
       const wiredIn = graph.edges.filter((edge) => edge.target_node_id === node.id);
-      if (!wiredIn.length || !wiredIn.every((edge) => reads.has(edge.id))) continue;
+      // A data node reading itself is its own loop, not a card waiting for an event.
+      if (!wiredIn.length || !wiredIn.every((edge) => reads.has(edge.id) && edge.source_node_id !== node.id)) continue;
       const memory = graph.nodes.find((one) => one.id === wiredIn[0].source_node_id);
       const name = memory?.label || memory?.id;
       problems.push({

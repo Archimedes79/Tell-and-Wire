@@ -53,7 +53,11 @@ describe('what the editor says', () => {
 
   it('forgets what was said in another document, which takes no room from this one', () => {
     say('old', '❌ said before');
+    // A step into a node's graph is the same document: what was said stays.
     useGraphStore.setState({ document: useGraphStore.getState().document + 1 });
+    say('inside', '❌ said inside');
+    expect(keys()).toEqual(['old', 'inside']);
+    useGraphStore.setState({ opened: useGraphStore.getState().opened + 1 });
     say('new', '❌ said now');
     expect(keys()).toEqual(['new']);
   });

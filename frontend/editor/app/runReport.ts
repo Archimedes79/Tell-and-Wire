@@ -41,19 +41,20 @@ const ERROR_LIMIT = 1500;
 const VALUE_LIMIT = 240;
 
 /**
- * The errors people meet, as what to do about them. The first that matches speaks,
- * so the specific come first and the words that turn up in anything -- a code
- * mistake that names "permission", a line "403" in a stack -- come after the rule
- * for a mistake in the code, which they must not be taken for.
+ * The errors people meet, as what to do about them. The first that matches speaks:
+ * the AI that cannot be reached, then what is wrong with the answer or with the
+ * code, and only then the words that turn up in anything -- "quota", "permission",
+ * a "403" -- which a mistake in the code that names them must not be taken for.
  */
 const KNOWN: { when: RegExp; plain: string }[] = [
   { when: /not running at|could not reach|cannot connect|connection refused|ECONNREFUSED|fetch failed|ENOTFOUND|EHOSTUNREACH/i, plain: 'The AI could not be reached. Is its server running, and is the address in ⚙ Settings right?' },
-  { when: /(?<!line\s)\b(401|403)\b|invalid api key|unauthori[sz]ed|incorrect api key|permission denied.*key/i, plain: 'The AI turned the key down. Check the key in ⚙ Settings.' },
-  { when: /(?<!line\s)\b429\b|rate limit|quota|too many requests/i, plain: 'The AI says there were too many requests, or the free allowance is used up. Wait a little, or choose another AI in ⚙ Settings.' },
-  { when: /model.*(not found|does not exist|unknown)|no such model|pull the model/i, plain: 'The AI does not know that model. Check its name in ⚙ Settings, or pull it first if it is a local one.' },
-  { when: /TW_MAX_TOKENS|cut off|max.?tokens|context length/i, plain: 'The answer was too long for what the AI may write, or the question for what it can read. Ask for a shorter answer, or use another model.' },
   { when: /is not valid JSON|JSON at position|unexpected (token|end).*JSON|JSON.*unexpected (token|end)|not (in )?JSON/i, plain: 'The answer was not in the form the next step expects (JSON). Open the node and press ✨ Fix, or ask for plain text.' },
   { when: /is not defined|is not a function|cannot read prop|unexpected token|syntax ?error|reference ?error|type ?error/i, plain: 'The code of this node has a mistake. Open the node and press ▶ Try, or ✨ Fix.' },
+  // A number that is a position in the code ("line 403", "x.js:403:5") is not a status.
+  { when: /(?<!line\s|column\s|:)\b(401|403)\b|invalid api key|unauthori[sz]ed|incorrect api key|permission denied.*key/i, plain: 'The AI turned the key down. Check the key in ⚙ Settings.' },
+  { when: /(?<!line\s|column\s|:)\b429\b|rate limit|quota|too many requests/i, plain: 'The AI says there were too many requests, or the free allowance is used up. Wait a little, or choose another AI in ⚙ Settings.' },
+  { when: /model.*(not found|does not exist|unknown)|no such model|pull the model/i, plain: 'The AI does not know that model. Check its name in ⚙ Settings, or pull it first if it is a local one.' },
+  { when: /TW_MAX_TOKENS|cut off|max.?tokens|context length/i, plain: 'The answer was too long for what the AI may write, or the question for what it can read. Ask for a shorter answer, or use another model.' },
   { when: /ENOENT|no such file|file or folder.*not found|path.*not found/i, plain: 'A file or folder was not found. Check the path it was given.' },
   { when: /EACCES|EPERM|permission denied|operation not permitted/i, plain: 'A file could not be read or written: no permission.' },
   { when: /time.?out|timed out|ETIMEDOUT/i, plain: 'It took too long and was stopped.' },

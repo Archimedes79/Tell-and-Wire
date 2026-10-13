@@ -34,6 +34,11 @@ describe('what an error comes to', () => {
     expect(explain('EACCES: permission denied, open x.txt')).toContain('no permission');
     expect(explain('TypeError: fetch failed')).toContain('could not be reached');
     expect(explain('SyntaxError: Unexpected token < in JSON at position 0')).toContain('JSON');
+    // Words that belong to an AI's complaint, named by a mistake in the code, and a position that looks like a status.
+    expect(explain('ReferenceError: maxTokens is not defined')).toContain('mistake');
+    expect(explain("TypeError: Cannot read properties of undefined (reading 'quota')")).toContain('mistake');
+    expect(explain('Error: boom at run (x.js:403:5)')).toBe('The node reported an error. The text below says which.');
+    expect(explain('Request failed with status 429 Too Many Requests')).toContain('too many requests');
   });
 });
 

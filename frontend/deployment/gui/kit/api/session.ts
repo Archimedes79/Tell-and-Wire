@@ -180,20 +180,36 @@ export async function startOver(): Promise<void> {
   }
 }
 
+/** How many rounds one press of Stop follows down the queue: more than a person starts in a moment. */
+const STOP_AT_MOST = 6;
+
 /**
- * Stop the round going, whoever started it -- and the one waiting behind it: the latest this page was
- * told of may be a round that only queued, and stopping that alone leaves the one that runs going.
+ * Stop the round going, whoever started it -- and the ones waiting behind it. The latest this page was
+ * told of may only have queued, and stopping that alone leaves the one that runs going; so what the
+ * server calls the round going (the one that runs) is stopped too, and asked for again until none is.
  */
 export async function stopRound(): Promise<void> {
   const { round } = useSession.getState();
-  const known = round && !round.done ? round.round_id : null;
-  // The one this page knows of is stopped at once; the server is asked for the one that runs besides.
-  const stops: Promise<unknown>[] = known ? [call('stopRound', { id: known })] : [];
-  try {
-    const { round: running } = await call('session', {});
-    if (running && !running.done && running.round_id !== known) stops.push(call('stopRound', { id: running.round_id }));
-  } catch {
-    // The server did not answer: what this page knows of is stopped.
+  const stopped = new Set<string>();
+  const stop = async (id: string): Promise<void> => {
+    stopped.add(id);
+    // A round that ended before it was told is no failure of this press.
+    await call('stopRound', { id }).catch(() => undefined);
+  };
+  // The one this page knows of is stopped at once.
+  const first = round && !round.done ? stop(round.round_id) : Promise.resolve();
+  for (let asked = 0; asked < STOP_AT_MOST; asked += 1) {
+    let going: string | null = null;
+    try {
+      const { round: running } = await call('session', {});
+      going = running && !running.done ? running.round_id : null;
+    } catch {
+      break; // The server did not answer: what this page knows of is stopped.
+    }
+    if (!going) break;
+    // Still winding down after its stop: given a moment, not told again.
+    if (stopped.has(going)) await new Promise((wait) => setTimeout(wait, 120));
+    else await stop(going);
   }
-  await Promise.all(stops);
+  await first;
 }

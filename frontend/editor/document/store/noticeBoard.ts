@@ -19,7 +19,7 @@ export interface Notice {
   key: string;
   level: NoticeLevel;
   text: string;
-  /** The document it was said in (`GraphStore.document`). */
+  /** The document it was said in (`GraphStore.opened`: not changed by a step into a node's graph and out). */
   document: number;
   /** A button on the card: what to do about it. */
   action?: { label: string; run: () => void };
@@ -55,7 +55,7 @@ export const useNotices = create<NoticeStore>()((set) => ({
   notify: ({ key, level, text, action, sticky }) => set((state) => {
     const made: Notice = {
       key, level, text, action,
-      document: useGraphStore.getState().document,
+      document: useGraphStore.getState().opened,
       sticky: sticky ?? (level === 'warning' || level === 'error'),
       at: Date.now() + Math.random(),
     };

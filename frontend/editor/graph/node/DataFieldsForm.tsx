@@ -63,7 +63,8 @@ export default function DataFieldsForm({ node, setConfig }: { node: GraphNode; s
         />
         <Button size="sm" type="submit" disabled={!key || taken}>Add field</Button>
       </form>
-      {taken && <p style={{ color: DANGER_TEXT }}>There is a field “{key}” already.</p>}
+      {taken && <p role="alert" style={{ color: DANGER_TEXT }}>There is a field “{key}” already.</p>}
+      {!taken && key && key !== name.trim() && <p>It will be called “{key}”: a name has letters, digits and “_”.</p>}
       {Object.keys(fields).length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Its fields">
           {Object.entries(fields).map(([name, value]) => (
