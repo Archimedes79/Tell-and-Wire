@@ -114,6 +114,13 @@ jobs:
       - name: Unzip it and start it
         run: node --test scripts/package.test.mjs
 
+      # The notebook is packed by a script of its own, so a test of its own tries it.
+      - name: Build the notebook
+        run: npm run build:notebook
+
+      - name: Unzip the notebook and start it
+        run: node --test scripts/package-notebook.test.mjs
+
   # The tests again where people work with this: on Windows, where names do not
   # tell letter case, paths have drive letters and a file in use cannot be
   # renamed. What only fails there is seen by no other job.
@@ -183,8 +190,13 @@ jobs:
       - name: Build the editor
         run: npm run build
 
+      - name: Build the notebook
+        run: npm run build:notebook
+
       # Windows and Linux, each with the Node it runs on, so nothing needs to
       # be installed first -- the two systems CI starts the download on.
+      # Two downloads per system: the full version, and the notebook alone
+      # (tell-and-wire-notebook-<system>.zip), the small one.
       # Named without the version, so the README's links to
       # releases/latest/download/<name> always mean the newest release.
       # Node is the official download of the very version this job ran the
@@ -204,6 +216,7 @@ jobs:
             grep " $file\$" SHASUMS256.txt | sha256sum -c -
             case $file in *.zip) unzip -q "$file" ;; *) tar -xzf "$file" ;; esac
             node scripts/package.mjs "tell-and-wire-$name.zip" --node "node-$v-$target"
+            node scripts/package-notebook.mjs "tell-and-wire-notebook-$name.zip" --node "node-$v-$target"
           done
           ls -la tell-and-wire-*.zip
 
@@ -249,10 +262,15 @@ jobs:
       - name: Build the editor
         run: npm run build
 
+      - name: Build the notebook
+        run: npm run build:notebook
+
       - name: Package
         env:
           TW_VERSION: latest (main @ ${{ github.sha }})
-        run: node scripts/package.mjs tell-and-wire-latest.zip
+        run: |
+          node scripts/package.mjs tell-and-wire-latest.zip
+          node scripts/package-notebook.mjs tell-and-wire-notebook-latest.zip
 
       # The tag is moved with the job's own token, and a push made with that
       # token starts no workflow -- so this cannot trigger itself.
@@ -264,16 +282,19 @@ jobs:
           git tag -f latest "$GITHUB_SHA"
           git push -f origin refs/tags/latest
           if gh release view latest >/dev/null 2>&1; then
-            gh release upload latest tell-and-wire-latest.zip --clobber
+            gh release upload latest tell-and-wire-latest.zip tell-and-wire-notebook-latest.zip --clobber
             gh release edit latest --prerelease --latest=false --title "Tell & Wire latest (main)" --notes "$notes"
           else
-            gh release create latest tell-and-wire-latest.zip --verify-tag --prerelease --latest=false \
+            gh release create latest tell-and-wire-latest.zip tell-and-wire-notebook-latest.zip --verify-tag --prerelease --latest=false \
               --title "Tell & Wire latest (main)" --notes "$notes"
           fi
           # The release holds this build and nothing else: a file an earlier
           # build left under another name does not stay behind to be downloaded.
           for stale in $(gh release view latest --json assets --jq '.assets[].name'); do
-            [ "$stale" = tell-and-wire-latest.zip ] || gh release delete-asset latest "$stale" --yes
+            case $stale in
+              tell-and-wire-latest.zip|tell-and-wire-notebook-latest.zip) ;;
+              *) gh release delete-asset latest "$stale" --yes ;;
+            esac
           done
 
   # Publishes the same one-process image README.md and docker-compose.yml
