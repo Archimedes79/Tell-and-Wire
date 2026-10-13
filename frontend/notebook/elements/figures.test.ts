@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { columnsOf, isTotal } from '../../../gui/widgets/table/figures.ts';
+import { columnsOf, isTotal } from './figures';
 
 const NAMES = ['Region', 'Revenue', 'Average order', 'Growth', 'Year'];
 const ROWS = [

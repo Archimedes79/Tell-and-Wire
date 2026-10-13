@@ -44,7 +44,7 @@ export default function Start({ onOpen }: { onOpen: () => void }) {
             </button>
           </footer>
         </div>
-        {error && <div className="nb-banner error" role="alert" style={{ borderRadius: 10 }}><span>{error}</span></div>}
+        {error && <div className="nb-banner error" role="alert" style={{ borderRadius: 10 }}><span>{error}</span><button className="nb-btn small quiet" onClick={() => useNotebook.getState().clearError()}>Dismiss</button></div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <span className="nb-note">Or start with an example</span>
           <div className="nb-examples">{EXAMPLES.map((one) => <button key={one} disabled={making} onClick={() => setSaid(one)}>{one}</button>)}</div>

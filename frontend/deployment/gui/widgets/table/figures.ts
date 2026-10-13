@@ -1,6 +1,7 @@
-// How the cells of a table are set -- in the notebook and in a delivered tool alike: a column of figures stands to the right, with the same decimals all the way down and thousands
+// How the cells of a table are set in a delivered tool: a column of figures stands to the right, with the same decimals all the way down and thousands
 // told apart; a signed percentage is green or red; a row that says Total is the sum, set apart. What a key-figure table needs, and
 // all of it read off the cells, so a table written by a code step needs nothing more than its rows.
+// (The notebook has a copy of its own, `frontend/notebook/elements/figures.ts`: the two products share no code; the test is the notebook's.)
 
 export interface Column {
   name: string;

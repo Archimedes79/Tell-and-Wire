@@ -8,7 +8,7 @@ import { asText } from '../../../gui/widgets/text_io/text.ts';
 import { chatValue } from '../../../gui/widgets/chat/value.ts';
 import type { InKind, OutKind, WindowIn } from '../../../gui/notebook/windows.ts';
 import Browse from './Browse';
-import { columnsOf, isTotal } from '../../../gui/widgets/table/figures.ts';
+import { columnsOf, isTotal } from './figures';
 import Chart, { soleValue } from './Chart';
 
 /** The height of a row of a window, in pixels: what an output is as tall as, in rows. */

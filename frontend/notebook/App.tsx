@@ -130,7 +130,7 @@ export default function App() {
         {doc && <button className="nb-btn quiet" onClick={() => { if (!dirty || window.confirm('Leave this page without saving it?')) start(startPage()); }}>New</button>}
       </header>
 
-      {error && <div className="nb-banner error" role="alert"><span>{error}</span><button className="nb-btn small quiet" onClick={clearError}>Dismiss</button></div>}
+      {error && doc && <div className="nb-banner error" role="alert"><span>{error}</span><button className="nb-btn small quiet" onClick={clearError}>Dismiss</button></div>}
       {taken && doc && (
         <div className="nb-banner warn" role="alert">
           <span>A project is already at {taken}. Replace it with this page, or save under another name.</span>

@@ -2,7 +2,7 @@ import type { WidgetViewProps } from '../WidgetView';
 import SaveButton from '../SaveButton';
 import { csvText, fileName, saveFile } from '../download';
 import { inlineText } from '../../../../../gui/widgets/text_io/text.ts';
-import { columnsFrom, isTotal } from '../../../../../gui/widgets/table/figures.ts';
+import { columnsFrom, isTotal } from './figures';
 import { DANGER_TEXT, DIMMER, LINE, MUTED, SUCCESS_TEXT, SUNKEN, TEXT } from '../../kit/ui/theme';
 
 /**
@@ -61,7 +61,7 @@ function toRows(value: unknown): { header: string[]; rows: string[][]; raw: unkn
 export default function TableWidgetView({ widget, value, incoming }: WidgetViewProps) {
   const data = incoming !== undefined ? incoming : value;
   const table = toRows(data);
-  // What is saved is what was read; what is shown is set as its cells say (`gui/widgets/table/figures.ts`): figures to the right,
+  // What is saved is what was read; what is shown is set as its cells say (`figures.ts`): figures to the right,
   // thousands told apart, a rise and a fall in colour.
   const columns = table ? columnsFrom(table.header, table.header.map((_, c) => table.raw.map((row) => row[c]))) : [];
 

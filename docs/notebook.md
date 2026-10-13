@@ -86,7 +86,7 @@ The top bar has **☾ Dark** / **☀ Light**: the notebook itself in a dark look
 and `data-look="dark"` gives them other values; kept in the browser, white by default). It is not the look of the delivered tool, which stays
 the document's own choice beside it. Every screen was checked for text contrast in both looks.
 
-A table is set as its cells say (`gui/widgets/table/figures.ts`, used by the notebook and by a delivered tool alike): a column of figures to the right with the
+A table is set as its cells say (`frontend/notebook/elements/figures.ts`; the delivered tool's table has a copy of its own, so the two share no code): a column of figures to the right with the
 same decimals all down and thousands told apart (174,898; always as English writes them, so a number and a "+10.2 %" a step wrote as text do not use two ways of writing one),
 a signed percentage in green or red, a last row that says Total in bold. The saved CSV keeps the raw values. In the notebook a table is as tall as its rows need,
 up to a limit, instead of cutting its last row off; a chart's names are thinned to every other one where they would touch; a finished drawing keeps the proportions
