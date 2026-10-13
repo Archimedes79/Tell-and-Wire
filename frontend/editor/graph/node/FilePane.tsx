@@ -10,6 +10,7 @@ import { useTyped } from '../writing/useTyped';
 import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Part } from '../writing/generation';
 import { PaneHeader } from '../views/NodeViewLayout';
 import FilesLine from './FilesLine';
+import DataFieldsForm from './DataFieldsForm';
 
 /** What a file's editor is handed, whatever the file is kept as. */
 interface EditorProps {
@@ -105,6 +106,8 @@ export default function FilePane({ node, write, setConfig, updateNode, flush, tr
       </PaneHeader>
 
       {(write === 'input' || write === 'output') && <FilesLine node={node} side={write} setConfig={setConfig} />}
+
+      {json && write === 'body' && <DataFieldsForm node={node} setConfig={setConfig} />}
 
       {json ? (
         <JsonEditor {...editor} node={node} field={field} setConfig={setConfig} />

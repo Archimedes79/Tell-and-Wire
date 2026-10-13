@@ -130,7 +130,7 @@ names other ports than the node has.
 | **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
 | **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
-| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat, **Add field** takes a name and what it starts as -- by hand, with no AI. |
+| **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat -- and above the file -- **Add field** takes a name and what it starts as, by hand, with no AI. |
 | **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. Auto generate writes it together with the fields; left empty, the start stands in. |
 
 - **Pull input** writes `input.js` from the graph, with no model: its types from the
