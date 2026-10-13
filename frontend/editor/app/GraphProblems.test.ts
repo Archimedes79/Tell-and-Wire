@@ -9,6 +9,11 @@ describe('where a problem is said to be', () => {
     expect(placeOf('node "code", output.js', graph)).toBe('“Add one”, output.js');
   });
 
+  it('names only the node of the top graph, never one inside a node, whose id another card may share', () => {
+    expect(placeOf('node "code", node "data"', graph)).toBe('“Add one”, node "data"');
+    expect(placeOf('node "data", node "code"', graph)).toBe('node "data", node "code"');
+  });
+
   it('leaves what it cannot name as it was: a node with no heading, one that is gone, an edge', () => {
     expect(placeOf('node "data"', graph)).toBe('node "data"');
     expect(placeOf('node "ghost"', graph)).toBe('node "ghost"');
