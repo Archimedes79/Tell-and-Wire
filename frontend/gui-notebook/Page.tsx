@@ -232,11 +232,21 @@ function BlockMenu({ part, index, last, windowId }: { part: PageBlock; index: nu
     document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', escape); };
   }, [open]);
+  // A window holds cells somebody wrote, so taking it out is asked once; a paragraph is taken out at once (both can be undone).
+  const [asking, setAsking] = useState(false);
+  useEffect(() => { if (!open) setAsking(false); }, [open]);
   const then = (change: (doc: Windows) => Windows) => (): void => { setOpen(false); edit(change); };
   return (
     <div className={`nb-grip${open ? ' open' : ''}`} ref={holder}>
       <button type="button" className="handle" aria-label="Block options" aria-expanded={open} title="Options of this block" onClick={() => setOpen(!open)}>⋮⋮</button>
-      {open && (
+      {open && asking && windowId && (
+        <div className="nb-tools" role="alertdialog" aria-label="Remove window">
+          <span className="ask">Remove this window and its cells? Undo brings it back.</span>
+          <button aria-label="Remove window" className="remove" onClick={then((one) => removeWindow(one, windowId))}>✕ Remove</button>
+          <button aria-label="Keep window" autoFocus onClick={() => setOpen(false)}>Keep it</button>
+        </div>
+      )}
+      {open && !asking && (
         <div className="nb-tools" role="toolbar" aria-label="Block">
           {part.kind !== 'window' && (
             <select aria-label="Kind of block" value={part.kind} onChange={(event) => { setOpen(false); edit((one) => setKind(one, part.id, event.target.value as BlockKind)); }}>
@@ -245,7 +255,7 @@ function BlockMenu({ part, index, last, windowId }: { part: PageBlock; index: nu
           )}
           <button aria-label="Move up" disabled={index === 0} onClick={then((one) => moveBlock(one, part.id, -1))}>▲ Move up</button>
           <button aria-label="Move down" disabled={last} onClick={then((one) => moveBlock(one, part.id, 1))}>▼ Move down</button>
-          <button aria-label={windowId ? 'Remove window' : 'Remove block'} className="remove" onClick={then((one) => (windowId ? removeWindow(one, windowId) : removeBlock(one, part.id)))}>✕ {windowId ? 'Remove window' : 'Remove'}</button>
+          <button aria-label={windowId ? 'Remove window' : 'Remove block'} className="remove" onClick={windowId ? () => setAsking(true) : then((one) => removeBlock(one, part.id))}>✕ {windowId ? 'Remove window' : 'Remove'}</button>
         </div>
       )}
     </div>
