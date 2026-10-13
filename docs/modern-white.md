@@ -1,9 +1,9 @@
 # Modern White
 
 The look of the editor on the branch `modern-white`: a scheme of its own, **Modern White**, as the
-default, and a few shapes that go with it. It was made on top of `main` at 0.7.5 (`814b9b1`). This
-file says what it is and what it touched, so it can be put on a newer `main` later, or rebuilt if
-the branch and `main` have drifted apart.
+default, and a few shapes that go with it. It was made on `main` at 0.7.5 (`814b9b1`) and is
+rebased on 0.7.6 (`db5de97`). This file says what it is and what it touched, so it can be put on a
+newer `main` later, or rebuilt if the branch and `main` have drifted apart.
 
 ## What it is
 
@@ -88,6 +88,7 @@ Elevation is two constants in `ui/theme.ts`: `SHADOW_SOFT` (`0 1px 2px` at 5 % a
 | `frontend/editor/gui/DesignerTab.tsx` | the GUI page is the surface, as a framed sheet (the element that scrolls and takes drops is unchanged) |
 | `frontend/editor/gui/ApplicationView.tsx`, `frontend/deployment/gui/GuiApp.tsx` | a GUI page is the surface |
 | `frontend/editor/app/ChangeBar.tsx`, `app/Notices.tsx`, `kit/index.css` (`.palette-tile`) | the bar, the notice, the palette tile |
+| `docs/user-guide.md` | the list of colour schemes names Modern White |
 | tests | `scheme.test.ts` (the pinned values, the default, the `ai` contrast), `editorScheme.test.ts` |
 
 An existing tool whose file names no scheme now opens in Modern White; a tool that names one keeps it.
