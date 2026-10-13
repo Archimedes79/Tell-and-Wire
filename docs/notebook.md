@@ -39,7 +39,8 @@ Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new fold
 | The page of a delivered tool | `frontend/deployment/windows/` | Shipped. The words and the framed windows, run in order; knows no editor. |
 | The notebook | `frontend/notebook/`, `frontend/gui-notebook/`, `frontend/graph-notebook/` | Written anew, a product of its own: the shell (`notebook/`: `document/` with its client, store and runner, `elements/` with the boxes, the chart and the file browser), the page and its windows (`gui-notebook/`), the list, under the hood and debug (`graph-notebook/`), and the stylesheet. It imports nothing of the graph editor. |
 | Its page | `frontend/notebook/index.html` | Built on its own (`npm run build:notebook`, `frontend/vite.notebook.config.ts`) into `frontend/notebook/dist`. |
-| Starting it | `start-notebook.cmd`, `.ps1`, `.sh`, `scripts/start-notebook.mjs` | The notebook has its own start and stop files (`stop-notebook.*`), its own port (8100), and runs beside the editor (8000) or without it. Neither names the other. |
+| Starting it | `start-notebook.cmd`, `.ps1`, `.sh`, `scripts/start-notebook.mjs` | The notebook has its own start and stop files (`stop-notebook.*`), its own port (8100), and runs beside the editor (8000) or without it. Neither starts the other; they know each other by a link only (below). |
+| Packing it | `scripts/package-notebook.mjs`, `npm run package:notebook` | A zip of the notebook alone: its page and server, what runs a graph, the examples; no editor, no tool servers (`run.cmd`, `run.sh`, optional `--node <folder>`). A copy in what it does of `scripts/package.mjs`, which packs the full version: the two are packed separately. |
 
 What the notebook takes of the folders named `editor` is two shared files both products write with, `gui/editor/check.ts` (the check of a gui) and `graph/editor/handedOn.ts` (a graph without
 the writing of its cells, as it is handed to the host); `backend/architecture/layers.test.ts` lists them and fails for a third. A package leaves `gui/notebook` behind with the rest of authoring.
@@ -63,6 +64,14 @@ my_tool/
 
 `graph-windows.json` carries a `signature` of what it made. When a project is opened and the graph on disk no longer matches
 (it was edited in the graph editor), the notebook says so and nothing is overwritten unasked. A graph that is not what the windows were saved with but is what they make today (saved by another version) is not a change.
+
+## Between the notebook and the full version
+
+The two are products of their own and know each other by a link and nothing else: a fixed port (the notebook looks for the editor on 8000, the editor for the notebook on 8100, on the same host) and a query, `/?open=<project folder>`, which the page opens once and takes off the address.
+In the notebook **Open in editor** (beside Open, when the page is kept somewhere) opens the saved project in the graph editor; in the editor **Notebook** (a project is open) opens it in the notebook. Neither starts the other: the one a link goes to has to be running.
+A project made in the notebook is a folder of graph files, so the editor opens it as a graph (the page itself stays in `graph-windows.json`, which the editor leaves alone). The other way round only works for a project the notebook made: a graph is not a page, and the notebook says so
+(it does not turn a graph into windows). Edit the graph in the editor and the notebook finds the project changed outside when it is opened again, and writes nothing over it unasked.
+Each side has a copy of the link's few lines (`frontend/notebook/document/links.ts`, `frontend/editor/app/notebookLink.ts`).
 
 ## Running
 

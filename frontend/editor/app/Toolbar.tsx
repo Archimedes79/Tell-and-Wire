@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { say } from '../document/store/noticeBoard';
 import { runReport } from './runReport';
-import { BookOpen, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
+import { BookOpen, FileText, Play, Redo2, Settings, Square, Undo2, Wand2 } from 'lucide-react';
 import ToolbarButton from '../../deployment/gui/kit/ui/ToolbarButton';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { useGoingRound, useGraphStore } from '../document/store/graphStore';
@@ -50,6 +50,8 @@ interface ToolbarProps {
   onInjectJson: () => void;
   onOpenSettings: () => void;
   onOpenHelp: () => void;
+  /** Open this project in the notebook, in a page of its own: given where the project is kept. */
+  onOpenNotebook?: () => void;
   /** What happened in the last run, node by node. */
   onOpenReport: () => void;
   /** Make the document the graph ✨ designed, after asking about unsaved work; whether it was. */
@@ -66,7 +68,7 @@ interface ToolbarProps {
  * Changing the graph as said is the bar under the canvas.
  */
 export default function Toolbar({
-  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, onOpenHelp, onOpenReport, onLoadDesigned,
+  onNewGraph, onSave, onSaveAs, onReloadProject, onLoad, onInjectJson, onOpenSettings, onOpenHelp, onOpenNotebook, onOpenReport, onLoadDesigned,
   view, onViewChange,
 }: ToolbarProps) {
   const metadata = useGraphStore((s) => s.metadata);
@@ -353,6 +355,15 @@ export default function Toolbar({
           onClick={sweep.busy ? sweep.stop : sweep.run}
           framed
         />
+
+        {onOpenNotebook && (
+          <ToolbarButton
+            icon={FileText}
+            label="Notebook"
+            title="Open this project in the notebook (the notebook must be running: start-notebook). Only a project made there opens."
+            onClick={onOpenNotebook}
+          />
+        )}
 
         <ToolbarButton
           icon={BookOpen}

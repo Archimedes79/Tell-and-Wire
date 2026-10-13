@@ -14,6 +14,7 @@ import { saveNote } from './document/status';
 import { folderName } from './document/values';
 import { isDirty, useNotebook } from './document/store';
 import { applyLook, savedLook, type Look } from './look';
+import { editorLink, projectAsked } from './document/links';
 import { startPage } from '../../gui/notebook/page.ts';
 import { DEFAULT_SCHEME, windowProblems } from '../../gui/notebook/windows.ts';
 
@@ -44,6 +45,14 @@ export default function App() {
   const problems = doc ? windowProblems(doc) : [];
   const writing = mode === 'write';
   const note = saveNote({ path, dirty, savedAt });
+
+  // A link from the graph editor names a project (`document/links.ts`): opened once, and the name taken off the address so a reload does not do it again.
+  useEffect(() => {
+    const asked = projectAsked(window.location.search);
+    if (!asked) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    void useNotebook.getState().open(asked);
+  }, []);
 
   // Ctrl+S saves; Ctrl+Z and Ctrl+Shift+Z step through what was done, outside the boxes whose own undo is the browser's.
   useEffect(() => {
@@ -129,6 +138,14 @@ export default function App() {
         {doc && <button className={`nb-btn${dirty ? ' attention' : ''}`} disabled={busy === 'saving' || problems.length > 0} onClick={saveHere} title="Save as a project folder (Ctrl+S)">{busy === 'saving' ? 'Saving…' : 'Save'}</button>}
         {doc && <button className="nb-btn" onClick={() => setBrowsing('save')}>Save as…</button>}
         <button className="nb-btn" disabled={going} title={going ? 'Stop the windows that run first' : undefined} onClick={() => setBrowsing('open')}>Open…</button>
+        {path && (
+          <button
+            className="nb-btn quiet" title="Open the saved project in the full version, the graph editor (it must be running: start). Save first to take over what changed."
+            onClick={() => { window.open(editorLink(path, window.location), '_blank', 'noopener'); }}
+          >
+            Open in editor
+          </button>
+        )}
         {doc && <button className="nb-btn quiet" disabled={going} title={going ? 'Stop the windows that run first' : undefined} onClick={() => { if (!dirty || window.confirm('Leave this page without saving it?')) start(startPage()); }}>New</button>}
       </header>
 

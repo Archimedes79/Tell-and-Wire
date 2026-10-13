@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Notices from './Notices';
+import { notebookLink, projectAsked } from './notebookLink';
 import { say as notice } from '../document/store/noticeBoard';
 import { slugOf } from '../document/model/ids';
 import { ReactFlowProvider } from 'reactflow';
@@ -142,6 +143,16 @@ export default function App() {
     const result = await call('openGraph', { path });
     replaceWith(result.graph, ok, { path: result.path, project: result.project });
   };
+
+  // A link from the notebook names a project (`notebookLink.ts`): opened once, and the name taken off the address so a reload does not do it again.
+  useEffect(() => {
+    const asked = projectAsked(window.location.search);
+    if (!asked) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    openPath(asked).catch((error: unknown) => say(`⚠ ${error instanceof Error ? error.message : String(error)}`, true));
+    // Once, when the page starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Write the tool to *path* -- where it is, without one. False where a save is going already; throws what the server refused. */
   const saving = useRef(false);
@@ -440,6 +451,7 @@ export default function App() {
           }}
           onOpenSettings={() => setShowSettings(true)}
           onOpenHelp={() => setShowHelp(true)}
+          onOpenNotebook={isProject && currentFilePath ? () => { window.open(notebookLink(currentFilePath, window.location), '_blank', 'noopener'); } : undefined}
           onOpenReport={openReport}
           onLoadDesigned={async (graph) => {
             if (!(await mayReplace())) return false;
