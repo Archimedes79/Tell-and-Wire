@@ -235,6 +235,17 @@ describe('a project folder', () => {
     await expect(saveGraph(other, sample())).rejects.toThrow(/holds no graph/);
     expect(await text('package.json')).toBe('{"name": "not a graph"}');
   });
+
+  it('does not save under "." or "..": those are folders, and the tool would land in the one it was meant to go into, or above', async () => {
+    // In a folder of its own, so that a name that got through would write into the test's folder and not above it.
+    const work = join(dir, 'work');
+    await mkdir(work);
+    for (const dots of [`${work}/..`, `${work}/.`, `${work}\\..\\`, `${work}/../`]) {
+      await expect(saveGraph(dots, sample()), dots).rejects.toThrow(/is a folder, not a name/);
+    }
+    expect(existsSync(join(dir, 'graph-flow.json'))).toBe(false);
+    expect(existsSync(join(work, 'graph-flow.json'))).toBe(false);
+  });
 });
 
 describe('two editors on one folder', () => {

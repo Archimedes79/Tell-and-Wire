@@ -228,6 +228,9 @@ export function graphAt(path: string): string | null {
  * `package.json` -- is nobody's to replace.
  */
 export async function saveGraph(path: string, graph: Graph, guard?: Guard): Promise<void> {
+  // "." and ".." are folders, not names: resolved, they would put the tool into the folder it was to be saved in, or above it.
+  const last = path.split(/[\\/]/).filter(Boolean).pop();
+  if (last === '.' || last === '..') throw new NotAGraph(`"${last}" is a folder, not a name: a tool is saved under a name of its own, in a folder.`);
   const full = resolve(path);
   const folder = projectFolderOf(full);
   if (folder) return writeProject(folder, graph, guard);
