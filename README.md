@@ -54,11 +54,15 @@ the graph behind it, offline.
 
 ### How it fits together
 
-<img src="docs/images/overview.svg" alt="The GUI editor and the graph editor design a project through the editor backend, with an AI that writes the code. The project is a folder of plain files: the GUI, the graph with its schedule, and a folder of files per node. A deployment runs it: a browser shows the GUI, a session host keeps state and starts rounds, and a language-specific execution engine runs the nodes and may ask a model or a tool server." width="100%">
+<img src="docs/images/overview.svg" alt="Two products design a project: the editor (a GUI editor and a graph editor, one editor backend) and the notebook (a page and its cells, one notebook backend), both resting on common code that an AI that writes the code uses. The project is one folder of plain files that both write: the GUI, the graph with its schedule, and a folder of files per node. A deployment runs it: a browser shows the GUI, a session host keeps state and starts rounds, and a language-specific execution engine runs the nodes and may ask a model or a tool server." width="100%">
 
 - **Design, files and execution are apart.** The editor only designs; what it makes is a folder;
   a deployment runs the folder. That is why a tool can be saved, versioned, handed on and run
   without the editor.
+- **Two products, one project format.** The editor and the notebook have their own pages, backends
+  and downloads, and import nothing of each other; what both need is common code underneath. They
+  write the same files, so what the notebook made opens in the editor (a graph is not always a
+  page, so the notebook opens only what it made).
 - **Built for more than one language.** Nodes, wires, schedule and the definitions of what goes
   in and out are language-neutral files, and the engine that executes them is a part of its own,
   spoken to through a documented core protocol ([docs/architecture.md](docs/architecture.md)).

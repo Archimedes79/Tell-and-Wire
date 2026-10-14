@@ -39,13 +39,19 @@ package with its own licence; a deployed tool carries none. Their checks (`npm t
 
 ## The picture to keep
 
-![Design, the project as plain files, and use: three bands, and only files and a few named things cross between them](docs/images/overview.svg)
+![Design by two products on common code, the project as plain files, and use: three bands, and only files and a few named things cross between them](docs/images/overview.svg)
 
 Code changes keep this layered modularity (`docs/images/overview.svg`, in the README):
 
 - **Three bands, files between them.** The editor designs and writes a project; a deployment reads
   it and runs it. What the editor knows must be in a file, in a plain format a person or git can
   read: the files are the contract, also for someone who edits them without the editor.
+- **Two products over common code.** The editor and the notebook have their own folders, page and
+  backend, and import nothing of each other (`backend/architecture/layers.test.ts`); what both
+  need is common code underneath (`graph/`, `gui/`, authoring, host, runtime) and the files. A
+  product's surface only *writes* the files -- an `@Name` is how the notebook writes a wire -- so
+  the notebook keeps no file of its own. Code both products use is tested in both; code one
+  product has its own copy of is tested in that product only.
 - **The engine is handed the graph, never the GUI.** Nodes, their files and the wires -- that is
   all a core gets, through the core protocol. Session, state, clock, queue of rounds and HTTP are
   the host's; running nodes is the language-specific engine's. What depends on the language lives in

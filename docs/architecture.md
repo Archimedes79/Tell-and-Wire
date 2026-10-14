@@ -14,8 +14,9 @@ because a package is nothing but files.
 
 ![Design in the editor, the project as plain files, use in a deployment: what crosses between the bands is files, and the graph is handed to the engine without the GUI](images/overview.svg)
 
-The picture to keep: the editor designs, the project is files, a deployment runs them, and the engine of a
-language is the one part that can be swapped (`CLAUDE.md`). The same, by folders:
+The picture to keep: the editor and the notebook design -- two products on common code, writing the same
+files -- the project is files, a deployment runs them, and the engine of a language is the one part that can
+be swapped (`CLAUDE.md`). The same, by folders:
 
 ![The editor designs a project, the deployment keeps one in use and executes it](images/architecture.svg)
 
