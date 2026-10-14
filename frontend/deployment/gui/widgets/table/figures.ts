@@ -43,7 +43,7 @@ export function columnsFrom(names: string[], columns: unknown[][], locale = 'en-
     const numeric = filled.length > 0 && filled.every(isFigure);
     const decimals = cells.some((one) => typeof one === 'number' && !Number.isInteger(one));
     const group = !NAMED.test(name);
-    const format = new Intl.NumberFormat(locale, { minimumFractionDigits: decimals ? 2 : 0, maximumFractionDigits: decimals ? 2 : 0, useGrouping: group });
+    const format = new Intl.NumberFormat(locale, { minimumFractionDigits: decimals ? 2 : 0, maximumFractionDigits: decimals ? 2 : 0, useGrouping: group, signDisplay: 'negative' } as unknown as Intl.NumberFormatOptions); // 'negative': no minus on what rounds to zero
     return {
       name,
       numeric,
