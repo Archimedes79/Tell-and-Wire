@@ -2,9 +2,9 @@
 
 # Tell & Wire
 
-**A visual node editor for AI workflows and small local tools: say in plain words what
-each node should do, wire the nodes into a graph, give it a GUI, and hand it on as a
-folder that runs wherever Node runs -- offline, with a local model, if you like.**
+**Tell each step what it should do. Wire the steps into a graph. Give it a GUI.**
+**AI writes the code -- or you do. What you build is a folder of plain files that runs
+wherever Node runs: offline, with a local model, if you like.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
 
@@ -14,33 +14,56 @@ folder that runs wherever Node runs -- offline, with a local model, if you like.
 
 ## What it is
 
-Tell & Wire is a node-based, no-code editor for AI workflows: you describe what each step
-should do, and a model writes it. The tools you build -- a chart from a CSV, a summary of
-every file in a folder, a chat, a panel of AI reviewers -- run on your own computer, with a
-local LLM (Ollama, LM Studio) or a model API of your choice.
+Tell & Wire is a visual editor for small software: a chart from a CSV, a summary of every
+file in a folder, a chat, a panel of AI reviewers -- anything you can draw as steps that hand
+data to each other. You design two things, each in its tab, and both end up as plain files:
 
-A tool in Tell & Wire has two halves.
+- **The graph** (Graph tab). Software as **nodes** wired together. A run begins at a **start
+  point**, passes through **code nodes**, **AI nodes**, **data nodes** (a struct the tool
+  remembers) and **subgraphs**, and ends at **end points**. Each node says what goes in and
+  what comes out, with an example each way. A schedule table says in which step each node runs
+  -- and which may run side by side.
+- **The GUI** (GUI tab). The page a person uses the tool through, in the browser: text, a file
+  picker, a dropdown, a slider, a button, a chart, a table, a chat. A block starts the graph at a
+  start point and shows what an end point hands back -- by name, nothing is wired to the GUI, so
+  either half can be redesigned without touching the other.
 
-- **The graph** (Graph tab): nodes wired together. A run begins at a **start point**,
-  runs through **code nodes**, **AI nodes**, **data nodes** (a struct kept between runs)
-  and **subgraphs**, and ends at **end points**.
-- **The GUI** (GUI tab): blocks such as text, a file picker, a dropdown, a slider, a
-  button, a chart, a table or a chat. A block starts the graph at a start point and shows
-  what an end point hands back. It connects by name; nothing is wired to the GUI.
+### Work the way you like
 
-A node is a heading and a short text that says what it should do. **Auto generate** writes the node's
-files from that text: `input.js` and `output.js` (what goes in and out, each with an
-example) and `code.js` or `prompt.md`. **Pull input** reads `input.js` off the graph, and a
-chat for each file changes it as you say. Every file is plain text in the tool's folder, so
-you can read it, change it and diff it.
+**No code: tell it.** A node is a heading and a few plain words about what it should do.
+**Auto generate** has a model write the node's files from them -- what goes in and out, then
+the code or the prompt -- and a chat for each file changes it as you say. A whole graph can be
+drawn from one description, too. A local model (Ollama, LM Studio) will do, or an API of your
+choice.
 
-**▶ Run** runs the tool in the App tab, as its user will see it. A run that went well
-can be kept as an offline test. **File → Deploy as zip** writes a zip that anyone with Node can unzip and
-start. The editor and every deployed tool listen on `127.0.0.1` unless you start one with another
-`--host` yourself, and there is no telemetry.
-A code node's JavaScript runs in a process of its own: it reads the working directory
-(not `ai-settings.json`), writes only its own folder, starts no program and holds no key.
-The network stays open to it.
+**Code first: it is all files.** Every node is a folder of plain text: `input.js` and
+`output.js`, and `code.js` or `prompt.md`. Open any of them in your own editor, change it, diff it in
+git; the editor follows the folder. Nothing the AI wrote is out of reach, and nothing hides in a
+format: a node's example is its test (▶ Try), and a run that went well can be kept as an offline test.
+
+**Then hand it on.** ▶ Run shows the tool in the App tab, as its user will see it. **File →
+Deploy as zip** writes a folder that anyone with Node can unzip and start: the GUI in a browser,
+the graph behind it, offline.
+
+### How it fits together
+
+<img src="docs/images/overview.svg" alt="The GUI editor and the graph editor design a project through the editor backend, with an AI that writes the code. The project is a folder of plain files: the GUI, the graph with its schedule, and a folder of files per node. A deployment runs it: a browser shows the GUI, a session host keeps state and starts rounds, and a language-specific execution engine runs the nodes and may ask a model or a tool server." width="100%">
+
+- **Design, files and execution are apart.** The editor only designs; what it makes is a folder;
+  a deployment runs the folder. That is why a tool can be saved, versioned, handed on and run
+  without the editor.
+- **The graph does not care what runs it.** Nodes, wires, schedule and the definitions of what
+  goes in and out are language-neutral files. The engine that executes them is a part you can
+  swap: JavaScript is the one that ships, and a core in another language can take over through the
+  documented core protocol ([docs/architecture.md](docs/architecture.md)).
+- **Two models, two jobs.** One writes, in the editor; one runs the AI nodes, in the editor and in a
+  delivered tool. Each can be a different model.
+- **Read without running.** A GUI block can show what a data node holds without starting a round.
+
+The editor and every deployed tool listen on `127.0.0.1` unless you start one with another
+`--host` yourself, and there is no telemetry. A code node's JavaScript runs in a process of its
+own: it reads the working directory (not `ai-settings.json`), writes only its own folder, starts
+no program and holds no key. The network stays open to it.
 
 ## Tell & Wire and MCP
 
