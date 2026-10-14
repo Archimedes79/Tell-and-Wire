@@ -54,6 +54,7 @@
     "id": "sheet_out_captions",
     "kind": "text_io",
     "label": "Captions",
+    "list": true,
     "mode": "output",
     "shows": "sheet_out_captions",
     "tone": "raised",

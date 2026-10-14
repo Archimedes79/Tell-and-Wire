@@ -35,7 +35,7 @@ Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new fold
 |---|---|---|
 | The model of windows and page; compiling to graph, schedule and gui | `gui/notebook/` | Neutral. `windows.ts` (windows), `page.ts` and `pageModel.ts` (the page, Markdown), `fromGraph.ts` (the windows read back from a graph and its gui), `edit.ts` (the edits, pure functions), `read.ts`. Only the notebook uses it; a package leaves it behind. |
 | The order to run windows in | `gui/windows/` | Neutral and shipped: the delivered page needs it. |
-| Reading and writing `graph-windows.json`; a window from a sentence; the notebook's own server | `backend/notebook/` | Authoring only. Four routes (`api.ts`), started by `main.ts`. What it writes a project with is `backend/authoring/` (shared with the graph editor). |
+| Reading the windows from the graph; a window from a sentence; the notebook's own server | `backend/notebook/` | Authoring only. Four routes (`api.ts`), started by `main.ts`. What it writes a project with is `backend/authoring/` (shared with the graph editor). |
 | The page of a delivered tool | `frontend/deployment/windows/` | Shipped. The words and the framed windows, run in order; knows no editor. |
 | The notebook | `frontend/notebook/`, `frontend/gui-notebook/`, `frontend/graph-notebook/` | Written anew, a product of its own: the shell (`notebook/`: `document/` with its client, store and runner, `elements/` with the boxes, the chart and the file browser), the page and its windows (`gui-notebook/`), the list, under the hood and debug (`graph-notebook/`), and the stylesheet. It imports nothing of the graph editor. |
 | Its page | `frontend/notebook/index.html` | Built on its own (`npm run build:notebook`, `frontend/vite.notebook.config.ts`) into `frontend/notebook/dist`. |
@@ -50,43 +50,48 @@ Code is doubled where the two products would otherwise share it (the table's fig
 
 ```
 my_tool/
-  graph-windows.json   the windows and the page as the notebook edits them (editor only; not in a package)
-  graph-flow.json      made from it: every wire
-  graph-nodes.json     made from it: every node
-  graph-schedule.json  made from it: one row for each window
-  gui.json             made from it: the blocks of the windows and the words of the page
+  graph-flow.json      every wire
+  graph-nodes.json     every node
+  graph-schedule.json  one row for each window
+  gui.json             the blocks of the windows and the words of the page
   nodes/<id>/          what a model wrote for a step (prompt, code); a new sentence keeps it
 ```
+
+These are the files the graph editor reads and writes, and the notebook keeps nothing of its own beside them. The page is *read* from them
+(`graphToWindows`, `gui/notebook/fromGraph.ts`) and saved by making them again (`windowsToGraph`, `gui/notebook/windows.ts`).
 
 `gui.json` carries what a delivered tool needs to draw the page: each window block has `group`, the heading `span` and
 `after` (the windows it takes from) and `page_at` (its place among the words); each word is a text block with `page_at` and
 `page_style`. A package therefore shows the page and runs the windows in order from the gui alone.
 
-`graph-windows.json` carries a `signature` of what it made. When a project is opened and the graph on disk no longer matches
-(it was edited in the graph editor), the notebook says so and nothing is overwritten unasked. A graph that is not what the windows were saved with but is what they make today (saved by another version) is not a change.
+### What the files say of a page
 
-### What the files keep of a page
+The principle (`docs/architecture.md`, *what runs and how it is written are apart*): what runs is the graph, what is shown is the gui, and the page is those two read as windows. The `@Name` of a sentence is only how the notebook *writes* a wire: the wire is stored as a wire, the sentence as the node's `description` (each mention as the name it points at, in quotes, which is what a model is told), and the chip "takes: File" is drawn from the ports the node has.
 
-The principle (`docs/architecture.md`, *what runs and how it is written are apart*): what runs is the graph, what is shown is the gui, and the page is those two read as windows. A window is a row of the schedule -- its start point, the cells that do something, what is shown. Its inputs and outputs are the gui's blocks that send to that start point and show those end points, and the words are text blocks with a `page_at`. The `@Name` of a sentence is only how the notebook *writes* a wire: the wire is stored as a wire, the sentence as the node's description (each mention as the name it points at, in quotes), and the chip "takes: File" is drawn from the ports the node has.
+| What a page says | Where the files say it |
+|---|---|
+| A window | a row of `graph-schedule.json`: its start point, the cells that do something, what is shown |
+| Its title, its width | the start point's label; the `span` of its heading block |
+| What it asks of the person (`ask`) | the `description` of its start point |
+| An input | a block that sends to the start point (`input_picker`, `text_io`, `slider`, `select`); one that takes another window's output is a caption block that names it (`from_window`, `from_output`). Rows it was given: `own_rows` |
+| A cell | an `ai` or `code` node: the sentence is its `description`, what it takes its ports and the wires into them, *for each file* its `batch_mode`, its code `code.js` |
+| What a cell says that its node has no place for | `config.notebook`: `sentence`, where the sentence would not come back from what a model is told (a quotation mark around an input's name), and `code`, which a model's cell was switched away from |
+| An output | an `end` node and the block that shows it. `list` says whether a text block shows a text or a list, `own_rows` the rows it was given where it stands in a taller line |
+| The words of the page, and where the windows stand | text blocks with `page_at` and `page_style`; the windows' heading blocks have `page_at` |
 
-`graphToWindows` (`gui/notebook/fromGraph.ts`) reads the windows back from the graph and the gui alone. `backend/notebook/fromGraph.test.ts` holds the round trip: each example, and a page that uses every kind of input, output and step, is made into files, read back and made again; the second set of files is the first, and the windows say the same. So for these `graph-windows.json` is a second copy. It is still written, and still what the notebook edits, because dropping it changes what a saved project is. What stands in the way is what a page says and the files do not keep. Each is a test in the same file, so that it is a decision and not a surprise:
+A width is kept in cells and read back as the nearest share the notebook offers that makes the same cells. The ids of the blocks of a page are only keys and are made again.
 
-| Not kept | Why | What would keep it |
-|---|---|---|
-| `ask`, what a window asks of the person | `windowsToGraph` does not write it anywhere | write it as the description of the start point, or drop the field |
-| The code of a cell a model does | the graph has no code for an `ai` node; the notebook keeps it to switch back | drop it on switching, or keep it in the node's `code.js` |
-| A text from a list, where a *model* does the cell for each file | both end in an end point that takes a list; for a cell of code the kind is kept (`config.window.shows`) | a field on the output's block |
-| A quotation mark around a name that is also an input (`"Tone"` for `@Tone`) | the description is told as a mention is, in quotes, and a quoted input name is read back as a mention | a mark of the notebook's own, not read by a model |
-| Which window an input takes from, where two have one title | the caption block names the window by its title; the wire says it exactly, but the caption is what is read | `from_window` and `from_output` on the caption block |
-| The ids of the page's blocks, and widths as shares | the gui keeps a place and a number of cells | nothing: the ids are only keys, and cells are what is drawn |
+`backend/notebook/fromGraph.test.ts` holds this: a page that uses every kind of input, output and step comes back from its files as it was, field for field, and each example is read from the files it is kept in and makes the same files again.
 
-Found on the way: a code cell's `code.js` ends in a footer, which the loader takes off by its exact text. A project written before the footer last changed keeps the old one in the code, and the next save adds the new one after it. The examples were saved before that change; they have been saved again.
+**A change made outside.** The graph editor opens a notebook's project as a graph, and what it changes is what the page says the next time the project is opened in the notebook -- a cell worded differently is that sentence. A change the windows cannot say, such as a node of its own, leaves the page as what could be read and marks the project *changed outside*: saving would write over the rest, so the notebook asks (**Save as…**, or **Write over it**). A project with no window's heading in its gui is a graph, not a page, and does not open.
+
+**Projects saved before.** The notebook used to keep the page in a file of its own, `graph-windows.json`, beside a signature of the graph it made. A project that still has one opens by it, as it always did (the page it holds, and *changed outside* when the graph is neither what it was saved with nor what the page makes today); saving it writes the project as above and takes the file away.
 
 ## Between the notebook and the full version
 
 The two are products of their own and know each other by a link and nothing else: a fixed port (the notebook looks for the editor on 8000, the editor for the notebook on 8100, on the same host) and a query, `/?open=<project folder>`, which the page opens once and takes off the address.
 In the notebook **Open in editor** (beside Open, when the page is kept somewhere) opens the saved project in the graph editor; in the editor **Notebook** (a project is open) opens it in the notebook. Neither starts the other: the one a link goes to has to be running.
-A project made in the notebook is a folder of graph files, so the editor opens it as a graph (the page itself stays in `graph-windows.json`, which the editor leaves alone). The other way round only works for a project the notebook made: a graph is not a page, and the notebook says so
+A project made in the notebook is a folder of graph files, so the editor opens it as a graph (the page is in the same files: the words in `gui.json`, the windows as the graph they make). The other way round only works for a project the notebook made: a graph is not a page, and the notebook says so
 (it does not turn a graph into windows). Edit the graph in the editor and the notebook finds the project changed outside when it is opened again, and writes nothing over it unasked.
 Each side has a copy of the link's few lines (`frontend/notebook/document/links.ts`, `frontend/editor/app/notebookLink.ts`).
 
@@ -146,6 +151,4 @@ to the model, and the delivered tool draws it. A tool that says no look is white
 
 ## Open
 
-- Whether `graph-windows.json` stays a file of its own or moves into `graph-flow.json`'s metadata (it would travel in a
-  package; the flow would stop being "wires only").
 - The delivered tool shows the tool's name above the page, so a page that begins with its name says it twice.

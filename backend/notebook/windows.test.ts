@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Windows } from '../../gui/notebook/windows.ts';
 import { Refusal } from '../deployment/host/http.ts';
 import { windowsRoutes } from './routes.ts';
-import { WINDOWS_FILE } from './files.ts';
+import { loadGraph } from '../deployment/project/folder.ts';
+import { WINDOWS_FILE, signatureOf } from './files.ts';
 
 /**
  * The notebook's routes: a project of windows is saved, opened, found changed when something else
@@ -39,7 +41,7 @@ function routes(answers: string[] = []) {
 const tmp = async () => join(await mkdtemp(join(tmpdir(), 'notebook-')), 'tool');
 
 describe('a notebook on disk', () => {
-  it('is saved with its windows, opens as they were, and is found changed when the graph beside them was', async () => {
+  it('is saved with its windows in the graph and the gui, and opens as they were', async () => {
     const path = await tmp();
     const { saveWindows, openWindows } = routes();
 
@@ -47,32 +49,75 @@ describe('a notebook on disk', () => {
     expect(saved.project).toBe(true);
     expect(saved.stale).toBe(false);
     expect(saved.graph.nodes.map((node) => node.id)).toEqual(['summarize', 'summarize_summary', 'summarize_out_summary']);
+    // The windows are the graph's and the gui's: no file of their own.
+    expect(existsSync(join(path, WINDOWS_FILE))).toBe(false);
 
     const again = await openWindows({ path });
     expect(again.windows).toEqual(DOC);
     expect(again.stale).toBe(false);
+  });
 
-    // Something else -- the graph editor, git -- words a cell differently: the notebook says so, and does not write over it.
+  it('takes what the graph editor changed, as long as the windows can say it, and is found changed where they cannot', async () => {
+    const path = await tmp();
+    const { saveWindows, openWindows } = routes();
+    await saveWindows({ path, windows: DOC });
+
+    // Something else -- the graph editor, git -- words a cell differently: it is what the page says now, and nothing is written over.
+    const nodes = join(path, 'graph-nodes.json');
+    const original = await readFile(nodes, 'utf8');
+    await writeFile(nodes, original.replace('Summarize \\"Text\\".', 'Sum up \\"Text\\".'), 'utf8');
+    const reworded = await openWindows({ path });
+    expect(reworded.stale).toBe(false);
+    expect(reworded.windows!.windows[0].steps[0].sentence).toBe('Sum up @Text.');
+
+    // A node the windows have no place for: the page is what can be read, and saving it would write over the rest, so it is asked.
+    const parsed = JSON.parse(original) as Record<string, Record<string, unknown>>;
+    parsed.extra = { ...parsed.summarize_summary, label: 'Extra' };
+    await writeFile(nodes, JSON.stringify(parsed), 'utf8');
+    const extra = await openWindows({ path });
+    expect(extra.windows!.windows).toHaveLength(1);
+    expect(extra.stale).toBe(true);
+  });
+
+  it('opens a project of an earlier version by the file it kept, as it always did, and saves it without', async () => {
+    const path = await tmp();
+    const { saveWindows, openWindows } = routes();
+    await saveWindows({ path, windows: { ...DOC, scheme: 'office' } });
+    const graph = await loadGraph(path);
+    const keep = async (signature: string, windows: Windows = DOC) => writeFile(join(path, WINDOWS_FILE), JSON.stringify({ signature, windows }), 'utf8');
+
+    await keep(signatureOf(graph));
+    expect((await openWindows({ path })).stale).toBe(false);
+
+    // Saved by another version, which made its files a little differently: the signature it kept is not the one of today,
+    // nobody changed anything, and the notebook does not say so.
+    await keep('0000000000000000', { ...DOC, scheme: 'office' });
+    expect((await openWindows({ path })).stale).toBe(false);
+
+    // A graph that is neither is found changed, and the page is the one that was kept.
     const nodes = join(path, 'graph-nodes.json');
     await writeFile(nodes, (await readFile(nodes, 'utf8')).replace('Summarize \\"Text\\".', 'Sum up \\"Text\\".'), 'utf8');
-    expect((await openWindows({ path })).stale).toBe(true);
+    const changed = await openWindows({ path });
+    expect(changed.stale).toBe(true);
+    expect(changed.windows!.windows[0].steps[0].sentence).toBe('Summarize @Text.');
 
-    // A project saved by another version made its files a little differently, so the signature it kept is not the one of today:
-    // nothing was changed by anyone, and the notebook does not say so. A graph that is neither is still found changed.
-    const old = await tmp();
-    await saveWindows({ path: old, windows: { ...DOC, scheme: 'office' } });
-    const kept = join(old, WINDOWS_FILE);
-    await writeFile(kept, (await readFile(kept, 'utf8')).replace(/"signature": "[0-9a-f]+"/, '"signature": "0000000000000000"'), 'utf8');
-    expect((await openWindows({ path: old })).stale).toBe(false);
-    const oldNodes = join(old, 'graph-nodes.json');
-    await writeFile(oldNodes, (await readFile(oldNodes, 'utf8')).replace('Summarize \\"Text\\".', 'Sum up \\"Text\\".'), 'utf8');
-    expect((await openWindows({ path: old })).stale).toBe(true);
+    // Saving writes the project as it is now made, without the file.
+    await saveWindows({ path, windows: changed.windows!, replace: true });
+    expect(existsSync(join(path, WINDOWS_FILE))).toBe(false);
+    expect((await openWindows({ path })).windows).toEqual(changed.windows);
 
-    // A project the notebook did not make has no windows.
-    const other = await tmp();
-    await saveWindows({ path: other, windows: DOC });
-    await writeFile(join(other, WINDOWS_FILE), '{ not json', 'utf8');
-    expect((await openWindows({ path: other })).windows).toBeNull();
+    // A file that cannot be read says nothing; the graph does.
+    await writeFile(join(path, WINDOWS_FILE), '{ not json', 'utf8');
+    expect((await openWindows({ path })).windows).toEqual(changed.windows);
+  });
+
+  it('has no windows in a project the notebook did not make', async () => {
+    const path = await tmp();
+    const { saveWindows, openWindows } = routes();
+    await saveWindows({ path, windows: DOC });
+    // What the graph editor makes has start points and no window's heading in the gui.
+    await rm(join(path, 'gui.json'));
+    expect((await openWindows({ path })).windows).toBeNull();
   });
 
   it('is written over only when told, and what a model wrote for a cell stays', async () => {

@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { problemsIn } from '../../gui/editor/check.ts';
+import { graphToWindows } from '../../gui/notebook/fromGraph.ts';
 import { windowProblems, windowsToGraph } from '../../gui/notebook/windows.ts';
 import { quietRuntime } from '../deployment/runtime/test/fakes.ts';
 import { nodeCode } from '../deployment/runtime/services.ts';
 import { Session } from '../deployment/host/session.ts';
 import { guiHooks } from '../deployment/gui/hooks.ts';
 import { loadGraph } from '../deployment/project/folder.ts';
-import { readKept, signatureOf } from './files.ts';
+import { signatureOf } from './files.ts';
 
 /**
  * The examples that come with the notebook (`notebook-examples/`): pages written by hand, each a project the notebook opens. They are
@@ -17,7 +18,7 @@ import { readKept, signatureOf } from './files.ts';
  */
 
 const ROOT = resolve(__dirname, '..', '..', 'notebook-examples');
-const NAMES = readdirSync(ROOT, { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync(join(ROOT, entry.name, 'graph-windows.json'))).map((entry) => entry.name);
+const NAMES = readdirSync(ROOT, { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync(join(ROOT, entry.name, 'gui.json'))).map((entry) => entry.name);
 
 describe('the notebook examples', () => {
   it('are there', () => {
@@ -26,13 +27,14 @@ describe('the notebook examples', () => {
 
   it.each(NAMES)('%s: sound windows, and a graph on disk that they make', async (name) => {
     const folder = join(ROOT, name);
-    const kept = await readKept(folder);
-    expect(kept, 'graph-windows.json').not.toBeNull();
-    expect(windowProblems(kept!.windows)).toEqual([]);
+    // The windows are read from the graph and the gui beside them, which is all a notebook is.
     const graph = await loadGraph(folder);
+    const windows = graphToWindows(graph);
+    expect(windows.windows.length).toBeGreaterThan(0);
+    expect(windowProblems(windows)).toEqual([]);
     expect(problemsIn(graph)).toEqual([]);
-    expect(signatureOf(graph)).toBe(signatureOf(windowsToGraph(kept!.windows, graph)));
-    expect(signatureOf(graph)).toBe(kept!.signature);
+    expect(signatureOf(graph)).toBe(signatureOf(windowsToGraph(windows, graph)));
+    expect(existsSync(join(folder, 'graph-windows.json'))).toBe(false);
   });
 
   /** Press the button of the window *id* of the example *name*, with code run as a graph runs it and a model that answers "said". */

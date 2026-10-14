@@ -1,20 +1,20 @@
-// The windows of a project, as a file of their own.
+// What the notebook reads and writes of a project besides the project's own files: nothing, any more.
 //
-// `graph-windows.json` is what the notebook edits; the graph, the schedule and the gui beside it are
-// made from it (`gui/notebook`) and are what runs. Only the editor reads and writes this file: a
-// package carries what was made, and a project opened in the graph editor still opens, with the file
-// beside it left alone.
+// The windows are read from the graph and the gui (`gui/notebook/fromGraph.ts`), and what they make is written as every graph is
+// (`backend/authoring`). Only a project the notebook saved before that has a file of its own, `graph-windows.json`: it is still read,
+// as it was, for as long as it is there, and the next save writes the project without it.
 //
-// It holds a `signature` of what was made. Open the project and make the signature again from the graph
-// on disk: where they differ, the graph was changed by something else (the graph editor, git), and the
-// notebook says so instead of writing over it.
+// Such a file holds a `signature` of what was made. Open the project and make the signature again from the graph on disk: where they
+// differ, the graph was changed by something else (the graph editor, git), and the notebook says so instead of writing over it.
+//
+// What a graph is, as far as the notebook is concerned, is `signatureOf` below: the nodes with their words and ports, the wires, the schedule
+// and the gui's blocks -- the same reading tells a graph that is what its windows make from one that is not.
 
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Graph } from '../../graph/graph.ts';
-import { sorted } from '../../graph/files/nodesFile.ts';
 import { scheme } from '../../gui/windows/scheme.ts';
 import { parseWindows } from '../../gui/notebook/read.ts';
 import type { Windows } from '../../gui/notebook/windows.ts';
@@ -64,8 +64,7 @@ export async function readKept(folder: string): Promise<Kept | null> {
   }
 }
 
-/** Keep *windows* in *folder*, with the signature of what they made. */
-export async function writeKept(folder: string, kept: Kept): Promise<void> {
-  const body = sorted({ signature: kept.signature, windows: JSON.parse(JSON.stringify(kept.windows)) });
-  await writeFile(join(folder, WINDOWS_FILE), `${JSON.stringify(body, null, 2)}\n`, 'utf8');
+/** The file of a project saved before the windows were read from its graph, taken away: what it held is in the graph's own files now. */
+export async function forgetKept(folder: string): Promise<void> {
+  await rm(join(folder, WINDOWS_FILE), { force: true });
 }

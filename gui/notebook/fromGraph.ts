@@ -6,32 +6,37 @@
 // blocks that say where they stand (`page_at`). The `@Name` of a sentence is no more than the way the notebook *writes* a wire: the wire
 // is stored as a wire, and the chip is drawn from the ports the node has. So nothing is kept twice, and a notebook has no file of its own.
 //
-// Authoring only, and the notebook's: it knows what the notebook's compiler writes. What it cannot read back is told in
-// `backend/notebook/fromGraph.test.ts`, which holds the round trip.
+// What a window says that a graph has no place for is kept beside the node or the block it belongs to, in a word of its own: the
+// window's `ask` is the words of its start point, `config.notebook` of a cell holds a sentence that would not come back from what a
+// model is told and the code a model's cell was switched away from, and a block keeps `own_rows`, `list`, `from_window` and
+// `from_output`. Reading prefers them where they still say what the node or the block says.
+//
+// Authoring only, and the notebook's: it knows what the notebook's compiler writes. `backend/notebook/fromGraph.test.ts` holds the round trip.
 
-import type { Graph, GraphNode, Port, RawConfig } from '../../graph/graph.ts';
+import type { Graph, GraphNode, RawConfig } from '../../graph/graph.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { parseTable } from '../../graph/schedule.ts';
-import { DEFAULT_SCHEME, type BlockKind, type OutKind, type PageBlock, type Step, type Trigger, type Window, type WindowIn, type WindowOut, type Windows } from './windows.ts';
+import { DEFAULT_SCHEME, spoken, unspoken, type BlockKind, type OutKind, type PageBlock, type Step, type Trigger, type Window, type WindowIn, type WindowOut, type Windows } from './windows.ts';
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 const count = (value: unknown, otherwise: number): number => (typeof value === 'number' && Number.isFinite(value) ? value : otherwise);
 
-/** A port's name as a mention: `File` is `@File`, `Chat message` is `@Chat.message` (a part of a thing, which a name never has a space for). */
-function mentionOf(port: Port): string {
-  const part = /^(\S+) (path|message|history)$/.exec(port.name);
-  return part ? `@${part[1]}.${part[2]}` : `@${port.name}`;
-}
+/** What the notebook keeps beside a cell (`stepNodeOf` in `windows.ts`). */
+const ownOf = (node: GraphNode): { sentence?: unknown; code?: unknown } => {
+  const own = node.config.notebook;
+  return own && typeof own === 'object' ? own : {};
+};
 
 /**
  * The sentence a cell was written as. The graph keeps what a model is told -- a mention as the name of what it points at, in quotes
- * (`spoken`) -- and the ports the cell takes; a quoted name that is one of those ports is the mention it came from. A cell that
- * took everything before it has ports and no quotes: its sentence is the description as it stands.
+ * (`spoken`) -- and the ports the cell takes; a quoted name that is one of those ports is the mention it came from. Where that does
+ * not give the sentence back, the node holds it as written -- and it is used while it still says what the node says, so a cell worded
+ * differently somewhere else is read as it is worded there.
  */
 function sentenceOf(node: GraphNode): string {
-  let sentence = node.description;
-  for (const port of node.inputs) sentence = sentence.split(`"${port.name}"`).join(mentionOf(port));
-  return sentence;
+  const kept = ownOf(node).sentence;
+  if (typeof kept === 'string' && spoken(kept) === node.description) return kept;
+  return unspoken(node.description, node.inputs.map((one) => one.name));
 }
 
 /** Who does a cell, by the type of the node that does it; a node of any other type is not a cell. */
@@ -43,65 +48,106 @@ const startsWindow = (node: GraphNode): boolean => registry.node(node.node_type)
 const endsWindow = (node: GraphNode): boolean => registry.node(node.node_type)?.isResult === true;
 
 function stepOf(node: GraphNode, how: Step['how']): Step {
-  const code = how === 'code';
   const results = node.outputs.map((one) => one.name);
+  // A model's cell has no code of its own in the graph; the one it was switched away from is kept beside it.
+  const code = how === 'code' ? text(node.config.code) : text(ownOf(node).code);
   return {
     name: node.label,
     sentence: sentenceOf(node),
     how,
-    ...(code ? { code: text(node.config.code) } : {}),
+    ...(code ? { code } : {}),
     ...(node.config.batch_mode === 'per_item' ? { each: true } : {}),
-    ...(code && (results.length !== 1 || results[0] !== node.label) ? { results } : {}),
+    ...(how === 'code' && (results.length !== 1 || results[0] !== node.label) ? { results } : {}),
   };
 }
 
-/** What a caption block of an input that takes another window's output says: `Name: “output” from “Title”`. */
+// ---- how wide, how tall ----------------------------------------------------
+
+/** The shares of a line the notebook offers a width as (`SHARES` of the list). */
+const SHARES = [1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4, 1];
+const cellsOf = (span: number, width: number): number => Math.min(span, Math.max(1, Math.round(width * span)));
+
+/**
+ * A width as the share of its line the cells say it is: the nearest one the notebook offers that makes the same cells, else the
+ * cells' own fraction; none for the whole line, which is what a width left out means.
+ */
+function shareOf(cells: number, span: number): number | undefined {
+  if (cells >= span) return undefined;
+  const near = SHARES.reduce((best, one) => (Math.abs(one - cells / span) < Math.abs(best - cells / span) ? one : best));
+  const share = cellsOf(span, near) === cells ? near : cells / span;
+  return share >= 1 ? undefined : share;
+}
+
+// ---- inputs ----------------------------------------------------------------
+
+/** What a caption block of an input that takes another window's output says: `Name: “output” from “Title”`. Read where the block says no more. */
 const FROM = /^(.*?): “(.*)” from “(.*)”$/s;
 
 function inputOf(block: RawConfig, span: number, windowOfTitle: (title: string) => string | undefined): WindowIn {
-  const common = { name: text(block.label), width: count(block.w, span) / span, rows: count(block.h, 1) };
+  const share = shareOf(count(block.w, span), span);
+  const common = { name: text(block.label), ...(share !== undefined ? { width: share } : {}), ...(typeof block.own_rows === 'number' ? { rows: block.own_rows } : {}) };
   const value = block.value;
   switch (block.kind) {
     case 'input_picker':
       return { ...common, kind: block.mode === 'directory' ? 'folder' : 'file', ...(text(value) ? { value: text(value) } : {}), ...(text(block.extensions) ? { extensions: text(block.extensions) } : {}) };
     case 'text_io':
       return { ...common, kind: 'text', ...(text(value) ? { value: text(value) } : {}) };
-    case 'slider':
-      return { ...common, kind: 'number', min: count(block.min, 0), max: count(block.max, 100), step: count(block.step, 1), value: count(value, 0) };
-    case 'select':
-      return { ...common, kind: 'choice', options: text(block.options).split('\n'), value: text(value) };
+    case 'slider': {
+      // What a number input says is what differs from the ordinary: from 0 to 100, by 1, starting at its lowest.
+      const min = count(block.min, 0);
+      const max = count(block.max, 100);
+      const step = count(block.step, 1);
+      const start = count(value, min);
+      return { ...common, kind: 'number', ...(min !== 0 ? { min } : {}), ...(max !== 100 ? { max } : {}), ...(step !== 1 ? { step } : {}), ...(start !== min ? { value: start } : {}) };
+    }
+    case 'select': {
+      const options = text(block.options).split('\n');
+      return { ...common, kind: 'choice', options, ...(text(value) && text(value) !== options[0] ? { value: text(value) } : {}) };
+    }
     default: {
       const said = FROM.exec(text(value));
-      const window = said ? windowOfTitle(said[3]) : undefined;
-      return { ...common, name: said?.[1] ?? common.name, kind: 'from', ...(said && window ? { from: { window, output: said[2] } } : {}) };
+      const window = text(block.from_window) || (said ? windowOfTitle(said[3]) : undefined);
+      const output = text(block.from_output) || said?.[2];
+      return { ...common, name: said?.[1] ?? common.name, kind: 'from', ...(window && output ? { from: { window, output } } : {}) };
     }
   }
 }
 
+// ---- outputs ---------------------------------------------------------------
+
 const OUT_KINDS: Record<string, OutKind> = { table: 'table', plot_window: 'chart', image_view: 'image', chat: 'chat' };
 
 /**
- * A text and a list are one block and one end point that takes a list where a window runs a cell for each file; what tells them apart is
- * what a cell that draws is told of the room it draws for (), and so only a cell of code says.
+ * Whether a text block shows a text or a list. The block says (`list`); for a block that does not, a text and a list are one block and
+ * one end point that takes a list where a window runs a cell for each file, and what tells them apart is what a cell of code that
+ * draws is told of the room it draws for (`node.window.shows`).
  */
-function toldKind(from: GraphNode | undefined, end: GraphNode): OutKind | undefined {
-  const shows = from && Array.isArray((from.config.window as { shows?: unknown } | undefined)?.shows) ? (from.config.window as { shows: { output?: unknown; kind?: unknown }[] }).shows : [];
-  const kind = shows.find((one) => one.output === end.label)?.kind;
-  return kind === 'text' || kind === 'list' ? kind : undefined;
+function textOrList(block: RawConfig | undefined, from: GraphNode | undefined, end: GraphNode): OutKind {
+  if (typeof block?.list === 'boolean') return block.list ? 'list' : 'text';
+  const shows = Array.isArray((from?.config.window as { shows?: unknown } | undefined)?.shows) ? (from!.config.window as { shows: { output?: unknown; kind?: unknown }[] }).shows : [];
+  const told = shows.find((one) => one.output === end.label)?.kind;
+  if (told === 'text' || told === 'list') return told;
+  return end.inputs[0]?.multi ? 'list' : 'text';
 }
 
 function outputOf(end: GraphNode, block: RawConfig | undefined, span: number, graph: Graph, steps: Map<string, Step>, last: Step | undefined): WindowOut {
   // The result an output shows is the node the wire into it starts at, by the name of the port it leaves: said only where it is not the last cell's first.
   const wire = graph.edges.find((edge) => edge.target_node_id === end.id && edge.target_port_id === 'value');
   const from = wire ? graph.nodes.find((node) => node.id === wire.source_node_id) : undefined;
-  const kind: OutKind = OUT_KINDS[text(block?.kind)] ?? toldKind(from, end) ?? (end.inputs[0]?.multi ? 'list' : 'text');
+  const kind: OutKind = OUT_KINDS[text(block?.kind)] ?? textOrList(block, from, end);
   const made = from && steps.has(from.id) ? from.outputs.find((one) => one.id === wire!.source_port_id)?.name : undefined;
   const usual = last ? (last.results?.[0] ?? last.name) : undefined;
+  const share = shareOf(count(block?.w, span), span);
   return {
-    name: end.label, kind, rows: count(block?.h, 1), width: count(block?.w, span) / span,
+    name: end.label, kind,
+    // As tall as the block, unless it stands in a taller line and says how tall it was made.
+    rows: typeof block?.own_rows === 'number' ? block.own_rows : count(block?.h, 1),
+    ...(share !== undefined ? { width: share } : {}),
     ...(made && made !== usual ? { of: made } : {}),
   };
 }
+
+// ---- the page --------------------------------------------------------------
 
 /** The words of the page and the windows among them, in the order `page_at` says; none where the gui says none. */
 function pageOf(graph: Graph): PageBlock[] | undefined {
@@ -119,32 +165,34 @@ function pageOf(graph: Graph): PageBlock[] | undefined {
   return placed.length ? placed.sort((a, b) => a.at - b.at).map((one) => one.block) : undefined;
 }
 
+// ---- the windows -----------------------------------------------------------
+
 /**
- * The windows of *graph*. Windows are the rows of its schedule that start at a start point; a row below it that starts none -- more
- * outputs than the window has rows -- is the same window's.
+ * The windows of *graph*: the rows of its schedule that start at a start point with a window's heading in the gui (a start point
+ * without one is some other graph's). A row below one that starts none -- more outputs than the window has rows -- is the same
+ * window's, and what it holds that is not shown is nobody's: a graph with more in it than the windows make is told by making it again.
  */
 export function graphToWindows(graph: Graph): Windows {
   const nodes = new Map(graph.nodes.map((node) => [node.id, node]));
   const blocks = graph.gui?.blocks ?? [];
-  const rows: string[][][] = [];
+  const headed = (node: GraphNode): boolean => startsWindow(node) && blocks.some((block) => block.id === `${node.id}_title`);
+  const groups: { start: GraphNode; first: GraphNode[]; below: GraphNode[][] }[] = [];
   for (const row of parseTable(graph.schedule ?? [])) {
-    const cells = row.filter((id): id is string => id !== null && nodes.has(id));
-    if (cells.some((id) => startsWindow(nodes.get(id)!))) rows.push([cells]);
-    else if (rows.length && cells.length) rows[rows.length - 1].push(cells);
+    const cells = row.flatMap((id) => (id !== null && nodes.has(id) ? [nodes.get(id)!] : []));
+    const start = cells.find(headed);
+    if (start) groups.push({ start, first: cells, below: [] });
+    else if (groups.length && cells.length && !cells.some(startsWindow)) groups[groups.length - 1].below.push(cells);
   }
-  const starts = rows.map((group) => nodes.get(group[0].find((id) => startsWindow(nodes.get(id)!))!)!);
-  const idOfTitle = (title: string): string | undefined => starts.find((start) => start.label === title)?.id;
+  const idOfTitle = (title: string): string | undefined => groups.find((group) => group.start.label === title)?.start.id;
 
-  const windows = rows.map((group, at): Window => {
-    const start = starts[at];
+  const windows = groups.map(({ start, first, below }): Window => {
     const mine = blocks.filter((block) => block.group === start.id);
     const span = count(mine.find((block) => block.id === `${start.id}_title`)?.span, 12);
-    const cells = group.flat().map((id) => nodes.get(id)!);
-    const steps = cells.filter((node) => HOW[node.node_type]);
+    const steps = first.filter((node) => HOW[node.node_type]);
     const made = steps.map((node) => stepOf(node, HOW[node.node_type]!));
     const byId = new Map(steps.map((node, k) => [node.id, made[k]]));
     const taking = mine.filter((block) => text(block.id).startsWith(`${start.id}_in_`));
-    const outputs = cells.filter(endsWindow)
+    const outputs = [...first, ...below.flat()].filter(endsWindow)
       .map((end) => outputOf(end, mine.find((block) => block.shows === end.id), span, graph, byId, made[made.length - 1]));
     const button = mine.find((block) => block.id === `${start.id}_run`);
     const trigger: Trigger = {
@@ -152,11 +200,13 @@ export function graphToWindows(graph: Graph): Windows {
       ...(taking.some((block) => block.fires === start.id) ? { onChange: true } : {}),
       ...(text(button?.label) && text(button?.label) !== 'Run' ? { label: text(button?.label) } : {}),
     };
+    const ask = start.description.trim();
     return {
       id: start.id, title: start.label, span,
       inputs: taking.map((block) => inputOf(block, span, idOfTitle)),
       steps: made, outputs,
       ...(Object.keys(trigger).length ? { trigger } : {}),
+      ...(ask ? { ask } : {}),
     };
   });
 
@@ -169,4 +219,3 @@ export function graphToWindows(graph: Graph): Windows {
     ...(page ? { page } : {}),
   };
 }
-

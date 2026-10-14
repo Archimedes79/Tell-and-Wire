@@ -20,6 +20,7 @@
     "kind": "text_io",
     "label": "Name",
     "mode": "input",
+    "own_rows": 1,
     "sends_to": [
       "badge"
     ],

@@ -75,7 +75,7 @@ test('the notebook zip holds the notebook and not the editor, and its launcher s
   const unpacked = unzip(zip, work);
   assert.equal(unpacked.status, 0, unpacked.stderr);
 
-  for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/notebook/main.ts', 'frontend/notebook/dist/index.html', 'notebook-examples/badge_maker/graph-windows.json']) {
+  for (const file of ['run.sh', 'run.cmd', 'README.md', 'VERSION', 'LICENSE', 'backend/notebook/main.ts', 'frontend/notebook/dist/index.html', 'notebook-examples/badge_maker/gui.json']) {
     assert.ok(existsSync(join(folder, file)), `${file} is in the zip`);
   }
   // The other product is not in it: no editor page, no editor server, no tool servers.

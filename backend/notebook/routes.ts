@@ -9,6 +9,7 @@ import { NotAGraph, NotFound, messageOf } from '../../graph/errors.ts';
 import { parseGraph, type Graph } from '../../graph/graph.ts';
 import { problemsIn } from '../../gui/editor/check.ts';
 import { withoutWriting } from '../../graph/editor/handedOn.ts';
+import { graphToWindows } from '../../gui/notebook/fromGraph.ts';
 import { parseWindows } from '../../gui/notebook/read.ts';
 import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
 import { expandHome } from '../deployment/host/browse.ts';
@@ -22,7 +23,7 @@ import { nodeRuntime } from '../deployment/runtime/services.ts';
 import { aiSetting } from '../deployment/runtime/ai/settings.ts';
 import { holderOf, type SessionHolder } from '../deployment/host/session.ts';
 import { describeWindows } from './describe.ts';
-import { readKept, signatureOf, writeKept } from './files.ts';
+import { forgetKept, readKept, signatureOf } from './files.ts';
 
 /** What the routes need of the server that answers them. */
 export interface WindowsDeps {
@@ -55,11 +56,29 @@ function changedOutside(kept: { windows: Windows; signature: string }, graph: Gr
   return kept.signature !== now && signatureOf(windowsToGraph(kept.windows, graph)) !== now;
 }
 
-/** The project at *full*, with the windows kept in it and whether the graph beside them is still what they made. */
+/**
+ * The windows a graph says, and whether it is what they make. A graph that has no window at all and no words of a page is none of the
+ * notebook's (a graph made in the graph editor): it has no windows. One that is a notebook's and has been changed into something the
+ * windows cannot say -- a node added in the graph editor -- has the windows it says and is `stale`, so that saving them, which would
+ * write over the rest, is asked.
+ */
+function windowsOf(graph: Graph): { windows: Windows | null; stale: boolean } {
+  const windows = graphToWindows(graph);
+  if (!windows.windows.length && !windows.page) return { windows: null, stale: false };
+  return { windows, stale: signatureOf(windowsToGraph(windows, graph)) !== signatureOf(graph) };
+}
+
+/**
+ * The project at *full*, with its windows and whether the graph is still what they make.
+ *
+ * The windows are read from the graph and the gui. A project saved before that has a file of its own, which is read as it always was
+ * for as long as it is there (`files.ts`): it says the windows, and whether the graph beside them was changed since.
+ */
 async function opened(full: string): Promise<WindowsFile> {
   const graph = await project.loadGraph(full);
   const folder = project.projectFolderOf(full);
   const kept = folder ? await readKept(folder) : null;
+  if (!kept) return { path: folder ?? full, project: folder !== null, graph: graph as never, ...windowsOf(graph) };
   return {
     path: folder ?? full, project: folder !== null, graph: graph as never,
     windows: kept?.windows ?? null,
@@ -92,9 +111,9 @@ export function windowsRoutes(deps: WindowsDeps) {
         const unfit = problemsIn(graph);
         if (unfit.length) throw new Refusal(422, `The windows make a graph that cannot run: ${unfit.slice(0, 3).map((one) => `${one.where}: ${one.problem}`).join(' ')}`);
         await write.saveGraph(full, parseGraph(graph));
-        // The signature of what is on disk, read back: the same reading `openWindows` makes.
+        // The windows are in the graph and the gui now: a file a project of an earlier version kept them in is no longer the truth.
         const folder = project.projectFolderOf(full) ?? full;
-        await writeKept(folder, { windows, signature: signatureOf(await project.loadGraph(folder)) });
+        await forgetKept(folder);
         return opened(folder);
       });
     },

@@ -73,7 +73,7 @@ either way. Set PORT to insist on one. It needs ${node ? 'nothing else: Node.js 
 Open the examples with Open... : notebook-examples/ holds five pages. They name their files relative to this folder, so start the notebook from here.
 
 VERSION says which build this is. This is the notebook alone; the full version, with the graph editor, is a package of its own, and a project
-saved here opens in it (a folder of graph files). The notebook's own page is stored beside them in graph-windows.json.
+saved here opens in it (a folder of graph files). The page is in those files too: the words in gui.json, the windows as the graph they make.
 
     LICENSE     the terms Tell & Wire comes under
 `;

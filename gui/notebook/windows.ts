@@ -380,6 +380,20 @@ export const afterRun = (doc: Windows, done: Done, id: string): Done => orderAft
 /** The sentence as the model reads it: a mention is the name of what it points at. */
 export const spoken = (sentence: string): string => sentence.replace(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu, (_, name: string, part?: string) => `"${name}${part && part !== 'content' ? ` ${part}` : ''}"`);
 
+/**
+ * `spoken` read backwards, as far as the ports a cell takes allow: a quoted name that is one of them is the mention it came from.
+ * A sentence that does not come back as it was (a quotation mark around an input's name, `@File.content` for `@File`) is kept as
+ * written beside the node (`config.notebook.sentence`), which the reading uses while it still says what the node says.
+ */
+export function unspoken(told: string, portNames: readonly string[]): string {
+  let sentence = told;
+  for (const name of portNames) {
+    const part = /^(\S+) (path|message|history)$/.exec(name);
+    sentence = sentence.split(`"${name}"`).join(part ? `@${part[1]}.${part[2]}` : `@${name}`);
+  }
+  return sentence;
+}
+
 /** What a port is called for the part of a thing a step takes: a file's `path`, a chat's `message` and `history`; the thing itself, nothing. */
 const partOf = (part?: string): string => (part && part !== 'content' ? `_${part}` : '');
 
@@ -398,6 +412,14 @@ function stepNodeOf(doc: Windows, window: Window, at: number, y: number): { node
   }
   const config: RawConfig = step.how === 'code' ? { code: step.code ?? '', window: windowFacts(doc, window, step) } : {};
   if (step.each) Object.assign(config, { batch_mode: 'per_item', batch_concurrency: 3 });
+  // What the notebook keeps of a step that the node itself has no place for: the sentence where it does not come back from what a
+  // model is told, and the code a model's step was switched away from.
+  const told = spoken(step.sentence);
+  const own: Record<string, string> = {
+    ...(unspoken(told, [...ports.values()].map((one) => one.name)) !== step.sentence ? { sentence: step.sentence } : {}),
+    ...(step.how === 'ai' && step.code ? { code: step.code } : {}),
+  };
+  if (Object.keys(own).length) config.notebook = own;
   const node: GraphNode = {
     id: stepNode(window, step), node_type: step.how, label: step.name, description: spoken(step.sentence),
     position: { x: 320 + at * 300, y }, inputs: [...ports.values()], config,
@@ -407,7 +429,8 @@ function stepNodeOf(doc: Windows, window: Window, at: number, y: number): { node
 }
 
 function startNode(window: Window, y: number): GraphNode {
-  const start: GraphNode = { id: window.id, node_type: 'start', label: window.title, description: '', position: { x: 0, y }, inputs: [], outputs: [], config: {} };
+  // What the window asks of the person is the words of its start point.
+  const start: GraphNode = { id: window.id, node_type: 'start', label: window.title, description: window.ask?.trim() ?? '', position: { x: 0, y }, inputs: [], outputs: [], config: {} };
   Object.assign(start, registry.node('start')!.derivedPorts(start, registry));
   return start;
 }
@@ -428,24 +451,34 @@ function blocksOf(doc: Windows, window: Window): RawConfig[] {
   const fires = trigger.onChange ? { fires: window.id } : {};
   const taking = (one: WindowIn, w: number, h: number): RawConfig => {
     const id = inBlock(window, one);
-    const common = { ...on, id, label: one.name, tone: 'sunken', sends_to: [window.id], ...fires, w, h };
+    // A block is as tall as its line (`h`); the rows an input was given are kept beside it, where it was given any.
+    const own = one.rows !== undefined ? { own_rows: one.rows } : {};
+    const common = { ...on, id, label: one.name, tone: 'sunken', sends_to: [window.id], ...fires, w, h, ...own };
     switch (one.kind) {
       case 'file': return { ...common, kind: 'input_picker', mode: 'file', value: one.value ?? '', extensions: one.extensions ?? '' };
       case 'folder': return { ...common, kind: 'input_picker', mode: 'directory', value: one.value ?? '', extensions: one.extensions ?? '' };
       case 'text': return { ...common, kind: 'text_io', mode: 'input', value: one.value ?? '' };
       case 'number': return { ...common, kind: 'slider', value: one.value ?? one.min ?? 0, min: one.min ?? 0, max: one.max ?? 100, step: one.step ?? 1 };
       case 'choice': return { ...common, kind: 'select', options: (one.options ?? []).join('\n'), value: one.value ?? one.options?.[0] ?? '' };
-      default: return { ...on, id, kind: 'text', mode: 'caption', label: '', w, h, tone: 'plain', value: `${one.name}: “${one.from?.output}” from “${doc.windows.find((other) => other.id === one.from?.window)?.title ?? one.from?.window}”` };
+      default: return {
+        ...on, id, kind: 'text', mode: 'caption', label: '', w, h, tone: 'plain', ...own,
+        value: `${one.name}: “${one.from?.output}” from “${doc.windows.find((other) => other.id === one.from?.window)?.title ?? one.from?.window}”`,
+        // Which window and which output, as the wire says it: the words above are only what a person reads.
+        ...(one.from ? { from_window: one.from.window, from_output: one.from.output } : {}),
+      };
     }
   };
   const showing = (one: WindowOut, w: number, h: number): RawConfig => {
-    const common = { ...on, id: outEnd(window, one), label: one.name, tone: 'raised', shows: outEnd(window, one), w, h };
+    // The rows an output was given, where the line it stands in is taller (`h`).
+    const own = one.rows !== h ? { own_rows: one.rows } : {};
+    const common = { ...on, id: outEnd(window, one), label: one.name, tone: 'raised', shows: outEnd(window, one), w, h, ...own };
     switch (one.kind) {
       case 'table': return { ...common, kind: 'table' };
       case 'chart': return { ...common, kind: 'plot_window' };
       case 'image': return { ...common, kind: 'image_view' };
       case 'chat': return { ...common, kind: 'chat', value: { messages: [], pending: '' }, sends_to: [window.id], fires: window.id };
-      default: return { ...common, kind: 'text_io', mode: 'output' };
+      // A text and a list are one block; which it was written as is said beside it (what shows them is the same end point).
+      default: return { ...common, kind: 'text_io', mode: 'output', list: one.kind === 'list' };
     }
   };
   const lay = <T>(items: T[], pieces: Piece[], make: (item: T, w: number, h: number) => RawConfig): RawConfig[] => {
