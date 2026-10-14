@@ -15,6 +15,7 @@ import { folderName } from './document/values';
 import { isDirty, useNotebook } from './document/store';
 import { applyLook, savedLook, type Look } from './look';
 import { editorLink, projectAsked } from './document/links';
+import { renameTool } from '../../gui/notebook/edit.ts';
 import { startPage } from '../../gui/notebook/page.ts';
 import { DEFAULT_SCHEME, windowProblems } from '../../gui/notebook/windows.ts';
 
@@ -101,7 +102,7 @@ export default function App() {
         {doc && (
           <>
             <span className="nb-note">/</span>
-            <input className="nb-name" aria-label="Name of the tool" value={doc.name} onChange={(event) => edit((one) => ({ ...one, name: event.target.value }), 'name')} />
+            <input className="nb-name" aria-label="Name of the tool" value={doc.name} onChange={(event) => edit((one) => renameTool(one, event.target.value), 'name')} />
             <div className="nb-seg" role="group" aria-label="View">
               <button aria-pressed={writing && !source} onClick={() => show({ mode: 'write', source: false })}>Write</button>
               <button aria-pressed={writing && source} onClick={() => show({ mode: 'write', source: true })} title="The page as Markdown to type">Markdown</button>

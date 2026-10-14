@@ -108,9 +108,26 @@ export function removeCell(doc: Windows, id: string, ref: CellRef): Windows {
   return inWindow(doc, id, (window) => {
     const without = <T,>(items: T[]): T[] => items.filter((_, at) => at !== ref.at);
     return ref.list === 'inputs' ? { ...window, inputs: without(window.inputs) }
-      : ref.list === 'steps' ? { ...window, steps: without(window.steps) }
+      : ref.list === 'steps' ? withoutStep(window, ref.at)
         : { ...window, outputs: without(window.outputs) };
   });
+}
+
+/**
+ * *window* without its step *at*. An output that showed one of the step's results shows what the last step makes instead, as an
+ * output that says nothing does -- not a result no cell makes any more.
+ */
+function withoutStep(window: Window, at: number): Window {
+  const gone = new Set(resultsOf(window.steps[at]).map(idOf));
+  return {
+    ...window,
+    steps: window.steps.filter((_, place) => place !== at),
+    outputs: window.outputs.map((out) => {
+      if (!out.of || !gone.has(idOf(out.of))) return out;
+      const { of: _of, ...rest } = out;
+      return rest;
+    }),
+  };
 }
 
 /** A cell moved one place up (-1) or down (+1) its list. Steps run in this order, so it matters. */
@@ -209,3 +226,13 @@ export function kindOfOutput(doc: Windows, id: string, at: number, kind: OutKind
 
 /** A new, empty page for a tool that is to be called *name*. */
 export const blankPage = (name = 'My tool'): Windows => addWindow({ name, description: '', windows: [] }, 'First window');
+
+/**
+ * The tool under another name. A page whose first heading is the name -- as a new page's is, and a page that has not changed it --
+ * keeps saying the name, so the page and the name at the top do not drift apart while one is typed.
+ */
+export function renameTool(doc: Windows, name: string): Windows {
+  const first = doc.page?.findIndex((block) => block.kind === 'h1');
+  if (!doc.page || first === undefined || first < 0 || doc.page[first].text !== doc.name) return { ...doc, name };
+  return { ...doc, name, page: doc.page.map((block, at) => (at === first ? { ...block, text: name } : block)) };
+}

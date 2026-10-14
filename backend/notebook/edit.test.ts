@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  addInput, addOutput, addStep, addWindow, blankPage, freshName, kindOfOutput, moveCell, patchOutput, removeCell, removeWindow, renameInput, renameStep, repoint,
+  addInput, addOutput, addStep, addWindow, blankPage, freshName, kindOfOutput, moveCell, patchOutput, removeCell, removeWindow, renameInput, renameStep, renameTool, repoint,
 } from '../../gui/notebook/edit.ts';
 import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
 import { owns } from '../../gui/windows/owns.ts';
@@ -77,8 +77,12 @@ describe('editing windows', () => {
     doc = moveCell(doc, 'summarize', { list: 'steps', at: 1 }, -1);
     expect(doc.windows[0].steps.map((step) => step.name)).toEqual([b, a]);
     expect(moveCell(doc, 'summarize', { list: 'steps', at: 0 }, -1)).toEqual(doc);
-    doc = removeCell(doc, 'summarize', { list: 'steps', at: 0 });
+    // The output showed the first step's result; with that step gone it shows what the last one makes, not a result nobody makes.
+    const first = doc.windows[0].steps[0].name;
+    doc = removeCell({ ...doc, windows: [{ ...doc.windows[0], outputs: [{ ...doc.windows[0].outputs[0], of: first }] }] }, 'summarize', { list: 'steps', at: 0 });
     expect(doc.windows[0].steps).toHaveLength(1);
+    expect(doc.windows[0].outputs[0].of).toBeUndefined();
+    expect(windowProblems(doc)).toEqual([]);
 
     let two = addWindow(page(), 'English');
     two = addInput(two, 'english', 'from');
@@ -169,5 +173,19 @@ describe('a window that is a chat', () => {
     expect(asked[1]).toContain('second question');
     expect(asked[1]).toContain('first question');
     expect(asked[1]).toContain('answer 1');
+  });
+});
+
+describe('the name of the tool', () => {
+  it('is the page\'s first heading too, as long as the page still says it', () => {
+    const doc: Windows = { name: 'My tool', description: '', windows: [], page: [{ id: 'b1', kind: 'h1', text: 'My tool' }, { id: 'b2', kind: 'p', text: 'Words.' }] };
+    const renamed = renameTool(doc, 'Expense check');
+    expect(renamed.name).toBe('Expense check');
+    expect(renamed.page![0].text).toBe('Expense check');
+    // A heading that was written over is the person's own and stays.
+    const own = renameTool({ ...doc, page: [{ id: 'b1', kind: 'h1', text: 'A title of mine' }, ...doc.page!.slice(1)] }, 'Expense check');
+    expect(own.page![0].text).toBe('A title of mine');
+    // No page of its own: the name is all there is.
+    expect(renameTool({ ...doc, page: undefined }, 'X').name).toBe('X');
   });
 });

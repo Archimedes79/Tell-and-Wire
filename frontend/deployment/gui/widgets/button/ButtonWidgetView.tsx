@@ -9,8 +9,10 @@ import Button from '../../kit/ui/Button';
  * package says (`event.by`).
  */
 export default function ButtonWidgetView({ widget, onTrigger, busy }: WidgetViewProps) {
+  // As tall as it can be, up to 34px: in a row of one cell -- a window's Run -- there is less room, and a button taller than its
+  // room is cut across its label.
   return (
-    <Button variant="primary" className="w-full h-[34px]" disabled={busy} onClick={() => onTrigger()}>
+    <Button variant="primary" className="w-full h-[34px] max-h-full !py-0" disabled={busy} onClick={() => onTrigger()}>
       {widget.label || 'Press'}
     </Button>
   );

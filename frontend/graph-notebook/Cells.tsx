@@ -326,7 +326,11 @@ function StepCell({ window, at, status, takes, bad, available, hasFolder, first,
       <div ref={area}><Sentence label="What should be done" value={step.sentence} onChange={onSentence} /></div>
       <div className="nb-chips">
         <Pill>takes: {takes.length ? takes.map((name, i) => <b key={name + i}>{i ? ', ' : ''}{name}</b>) : <b>nothing</b>}</Pill>
-        {bad.map((name) => <Pill key={name} bad>@{name}: nothing of that name before this</Pill>)}
+        {bad.map((name) => {
+          // A name of two words is pointed at with an underscore (`@Expenses_file`); a space ends the mention. Say so where that is the slip.
+          const meant = available.find((one) => tag(one).toLowerCase().startsWith(`${name.toLowerCase()}_`));
+          return <Pill key={name} bad>@{name}: nothing of that name before this{meant ? <> -- did you mean <b>@{tag(meant)}</b>?</> : null}</Pill>;
+        })}
         <Pill>gives: <input aria-label="Name of the result" value={step.name} onChange={(event) => onName(event.target.value)} /></Pill>
         <span className="nb-sp" />
         <span className="nb-note" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
