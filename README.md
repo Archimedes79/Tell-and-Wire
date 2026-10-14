@@ -2,7 +2,8 @@
 
 # Tell & Wire
 
-**Tell each step what it should do. Wire the steps into a graph. Give it a GUI.**
+**A visual node editor: tell each step what it should do, wire the steps into a graph,
+give it a GUI.**
 **AI writes the code -- or you do. What you build is a folder of plain files that runs
 wherever Node runs: offline, with a local model, if you like.**
 
@@ -14,7 +15,7 @@ wherever Node runs: offline, with a local model, if you like.**
 
 ## What it is
 
-Tell & Wire is a visual editor for small software: a chart from a CSV, a summary of every
+Tell & Wire is a visual node editor for small software: a chart from a CSV, a summary of every
 file in a folder, a chat, a panel of AI reviewers -- anything you can draw as steps that hand
 data to each other. You design two things, each in its tab, and both end up as plain files:
 
@@ -52,10 +53,11 @@ the graph behind it, offline.
 - **Design, files and execution are apart.** The editor only designs; what it makes is a folder;
   a deployment runs the folder. That is why a tool can be saved, versioned, handed on and run
   without the editor.
-- **The graph does not care what runs it.** Nodes, wires, schedule and the definitions of what
-  goes in and out are language-neutral files. The engine that executes them is a part you can
-  swap: JavaScript is the one that ships, and a core in another language can take over through the
-  documented core protocol ([docs/architecture.md](docs/architecture.md)).
+- **Built for more than one language.** Nodes, wires, schedule and the definitions of what goes
+  in and out are language-neutral files, and the engine that executes them is a part of its own,
+  spoken to through a documented core protocol ([docs/architecture.md](docs/architecture.md)).
+  JavaScript is the language that ships today; the design is made for language extensions, so
+  the same graph can one day run in another.
 - **Two models, two jobs.** One writes, in the editor; one runs the AI nodes, in the editor and in a
   delivered tool. Each can be a different model.
 - **Read without running.** A GUI block can show what a data node holds without starting a round.

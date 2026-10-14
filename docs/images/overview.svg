@@ -108,7 +108,7 @@
 <text class="s" x="453" y="452" text-anchor="middle">run</text>
 <text class="s" x="453" y="506" text-anchor="middle">result</text>
 <text class="s" x="568" y="532" text-anchor="middle" style="font-weight:600">language-specific</text>
-<text class="s" x="568" y="546" text-anchor="middle">JavaScript today</text>
+<text class="s" x="568" y="546" text-anchor="middle">JavaScript today, open to more</text>
 <text class="s" x="60" y="540">A block can also watch what a data node holds,</text>
 <text class="s" x="60" y="556">with no round started.</text>
 <rect x="40" y="572" width="12" height="12" rx="2" fill="var(--ship-fill)" stroke="var(--ship-edge)" stroke-width="0.8"/><text class="s" x="58" y="582">ships in a package</text>
