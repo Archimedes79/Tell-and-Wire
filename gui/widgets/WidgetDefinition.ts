@@ -1,6 +1,6 @@
 // A widget: the element branch that sits on the GUI a graph is used through.
 // This is what a package carries of it; what only building the GUI asks is the
-// widget's design (`gui/editor/widgets/WidgetDesign.ts`).
+// widget's design (`gui/authoring/widgets/WidgetDesign.ts`).
 
 import type { DataType, RawConfig, WidgetKind } from '../../graph/graph.ts';
 import { ElementDefinition } from '../../graph/nodes/ElementDefinition.ts';

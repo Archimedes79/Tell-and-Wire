@@ -7,7 +7,7 @@
 //
 // This file is the roster — the only place that knows the whole set, which is
 // the role `registry.ts` plays for the nodes. The editor's roster of what only
-// building asks of them is `gui/editor/widgets/roster.ts`.
+// building asks of them is `gui/authoring/widgets/roster.ts`.
 
 import { TextWidgetDefinition } from './text/TextWidgetDefinition.ts';
 import { DividerWidgetDefinition } from './divider/DividerWidgetDefinition.ts';

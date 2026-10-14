@@ -17,7 +17,7 @@ import { filesUnder } from './filesUnder.ts';
 
 /** The repository: the shells are graph/, gui/ and backend/, the elements the folders of the nodes' and widgets' definitions, runners and designs. */
 const ROOT = new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-const ELEMENTS = ['graph/nodes/', 'graph/editor/nodes/', 'backend/deployment/runtime/nodes/', 'gui/widgets/', 'gui/editor/widgets/'];
+const ELEMENTS = ['graph/nodes/', 'graph/authoring/nodes/', 'backend/deployment/runtime/nodes/', 'gui/widgets/', 'gui/authoring/widgets/'];
 const TYPE_SWITCH = /\b(node_type|nodeType)\s*[!=]==?\s*['"]/;
 
 const SHELLS = [...filesUnder(join(ROOT, 'graph')), ...filesUnder(join(ROOT, 'gui')), ...filesUnder(join(ROOT, 'backend'))]

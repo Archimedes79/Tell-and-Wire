@@ -21,7 +21,7 @@ import { graphEdge } from '../../document/model/wires';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import { ERROR_PORT, fieldOf } from '../../../../graph/wiring.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../../graph/authoring/nodes/registry.ts';
 import { firstPath } from './exampleFile';
 import { runsPerItem } from './perItem';
 import { textAsRun } from './readAsRun';

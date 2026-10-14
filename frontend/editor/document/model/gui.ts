@@ -10,7 +10,7 @@
 import type { DataType, GraphNode, GuiWidget, Port } from '../graph';
 import type { Sent } from '../../../../gui/widgets/WidgetDefinition.ts';
 import { parseWidget, widgetElement } from '../../../../gui/gui.ts';
-import { widgetDesign } from '../../../../gui/editor/widgets/roster.ts';
+import { widgetDesign } from '../../../../gui/authoring/widgets/roster.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 
 /** What *widget* can do with the graph: what it sends -- none, for a heading or a button --, whether using it is an event, whether it shows an end point. */

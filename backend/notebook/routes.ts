@@ -7,8 +7,8 @@
 import { resolve } from 'node:path';
 import { NotAGraph, NotFound, messageOf } from '../../graph/errors.ts';
 import { parseGraph, type Graph } from '../../graph/graph.ts';
-import { problemsIn } from '../../gui/editor/check.ts';
-import { withoutWriting } from '../../graph/editor/handedOn.ts';
+import { problemsIn } from '../../gui/authoring/check.ts';
+import { withoutWriting } from '../../graph/authoring/handedOn.ts';
 import { graphToWindows } from '../../gui/notebook/fromGraph.ts';
 import { parseWindows } from '../../gui/notebook/read.ts';
 import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';

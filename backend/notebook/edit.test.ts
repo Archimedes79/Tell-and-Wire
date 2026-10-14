@@ -4,7 +4,7 @@ import {
 } from '../../gui/notebook/edit.ts';
 import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
 import { owns } from '../../gui/windows/owns.ts';
-import { problemsIn } from '../../gui/editor/check.ts';
+import { problemsIn } from '../../gui/authoring/check.ts';
 
 /**
  * The edits of the notebook's buttons: each returns a new document, and the document is still one that

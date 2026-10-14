@@ -4,7 +4,7 @@
 // what should happen, an AI turns that into a body, and the body is what runs.
 // A node whose body runs as code hands that body out as a `Logic`, so no caller
 // names a config key or reaches into an untyped bag to find it. How an AI
-// writes a body, any kind of body, is `graph/editor/generation.ts`.
+// writes a body, any kind of body, is `graph/authoring/generation.ts`.
 
 /** Where a logic keeps its body inside an element's stored config. */
 export interface LogicFields {

@@ -3,7 +3,7 @@ import type { Graph, GraphNode } from '../../document/graph';
 import { call } from '../../api/client';
 import { errorText } from '../../../deployment/gui/kit/api/errorText';
 import type { ExampleRun } from '../../../../backend/editor/host/api.ts';
-import { WRITING_KEYS } from '../../../../graph/editor/handedOn.ts';
+import { WRITING_KEYS } from '../../../../graph/authoring/handedOn.ts';
 import type { Refine } from './generation';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { ACCENT_TEXT, DANGER_TEXT, DIMMER, SUCCESS, SUNKEN, TEXT } from '../../../deployment/gui/kit/ui/theme';

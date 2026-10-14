@@ -34,10 +34,10 @@ import type { AiService, CodeService, FileService, Runtime } from '../../../grap
 import { isStruct } from '../../../graph/graph.ts';
 import { RESERVED, hasField } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
-import { designs } from '../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../graph/authoring/nodes/registry.ts';
 import { PLAIN_ASK } from '../../deployment/runtime/nodes/ai/ask.ts';
 import { runBody } from '../../deployment/runtime/nodes/body.ts';
-import type { Generation } from '../../../graph/editor/generation.ts';
+import type { Generation } from '../../../graph/authoring/generation.ts';
 import { fillPrompt } from '../../../graph/files/prompts.ts';
 import { STANDARD_PROMPTS, type PromptKind } from '../../../graph/editor/prompts.ts';
 import { definitionExample, definitionKeys, misfits, typedefKeys, unreadableOutput, type Definitions } from '../../../graph/files/definition.ts';

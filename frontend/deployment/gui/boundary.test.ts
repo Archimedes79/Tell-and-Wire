@@ -118,8 +118,8 @@ describe('deployment boundary', () => {
     // Panels are registered with `lazy(() => import(…))`, which this walk --
     // like the bundler's static graph -- does not follow: a panel is a chunk
     // the editor fetches when an element is opened, and a tool never does.
-    // Everything only the editor uses sits in a folder named `editor`, and what only the notebook uses in one of its three.
-    expect(reaching((path) => path.split('/').some((part) => ['editor', 'notebook', 'gui-notebook', 'graph-notebook'].includes(part)))).toEqual([]);
+    // Everything only the editor uses sits in a folder named `editor`, what only the notebook uses in one of its three, and what both write with in one named `authoring`.
+    expect(reaching((path) => path.split('/').some((part) => ['editor', 'notebook', 'gui-notebook', 'graph-notebook', 'authoring'].includes(part)))).toEqual([]);
   });
 
   /**

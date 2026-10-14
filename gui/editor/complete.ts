@@ -11,7 +11,7 @@
 import type { Graph, GraphNode } from '../../graph/graph.ts';
 import type { Kinds } from '../../graph/nodes/NodeDefinition.ts';
 import { guiBlocks, parseWidget, widgetElement } from '../gui.ts';
-import { points } from './gui.ts';
+import { points } from '../authoring/gui.ts';
 
 /** The first of *base*, *base*_2, *base*_3 ... that is not in *taken*. */
 function free(base: string, taken: Iterable<string>): string {

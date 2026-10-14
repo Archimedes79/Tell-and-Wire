@@ -5,7 +5,7 @@ import { errorText } from '../../../deployment/gui/kit/api/errorText';
 import type { GraphNode } from '../../document/graph';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { MUTED } from '../../../deployment/gui/kit/ui/theme';
-import { partExchanges } from '../../../../graph/editor/history.ts';
+import { partExchanges } from '../../../../graph/authoring/history.ts';
 import { SENT_WITH } from '../../../../graph/editor/prompts.ts';
 import { Part } from '../writing/GenerationTranscript';
 import { whatCameOf, type useTryExample } from '../writing/TryExample';

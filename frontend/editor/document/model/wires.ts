@@ -7,7 +7,7 @@ import { wireOf } from '../../../../graph/files/flow.ts';
 import { RUN_PORT } from '../../../../graph/triggers.ts';
 import { WRITE_PATH_PORT } from '../../../../graph/nodes/end/EndNodeDefinition.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../../graph/authoring/nodes/registry.ts';
 import { derivedNodePorts } from './ports';
 import { defaultField, takenAs } from './gui';
 import { NODE_KINDS } from './nodeKinds';

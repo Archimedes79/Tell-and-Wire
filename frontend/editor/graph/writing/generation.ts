@@ -15,9 +15,9 @@ import type { Graph, GraphNode, GuiWidget, Port, Wire } from '../../document/gra
 import { call, type AICall, type GenerateRequest, type GenerateResponse, type ProbeReport } from '../../api/client';
 import type { Refine } from '../../../../backend/editor/host/api.ts';
 import { definitionExample, definitionKeys } from '../../../../graph/files/definition.ts';
-import { exchangeEntry, exchangeLabel, withExchange } from '../../../../graph/editor/history.ts';
+import { exchangeEntry, exchangeLabel, withExchange } from '../../../../graph/authoring/history.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../../graph/authoring/nodes/registry.ts';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { inputSources, outputTargets } from './generationContext';
 import { graphContext } from './graphContext';

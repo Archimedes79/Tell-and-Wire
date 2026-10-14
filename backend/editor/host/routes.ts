@@ -15,7 +15,7 @@ import { join, resolve } from 'node:path';
 import { parseGraph } from '../../../graph/graph.ts';
 import { chosenCore } from '../../deployment/runtime/stdio.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
-import { withoutWriting } from '../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../graph/authoring/handedOn.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { startFromGui } from '../../../gui/gui.ts';
 import { completeGui } from '../../../gui/editor/complete.ts';

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { GRAPH_SYSTEM } from './graphPrompt.ts';
 import { parseGraph } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import { problemsIn } from '../../../gui/editor/check.ts';
+import { problemsIn } from '../../../gui/authoring/check.ts';
 
 describe('the graph prompt', () => {
   it('teaches an example that is itself a valid graph, wired only to ports its elements really emit', () => {

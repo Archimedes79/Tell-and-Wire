@@ -8,8 +8,8 @@
 import type { AiService } from '../../../graph/nodes/Runtime.ts';
 import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import { WRITING_KEYS } from '../../../graph/editor/handedOn.ts';
-import { exchangeEntry, withExchange } from '../../../graph/editor/history.ts';
+import { WRITING_KEYS } from '../../../graph/authoring/handedOn.ts';
+import { exchangeEntry, withExchange } from '../../../graph/authoring/history.ts';
 import { GRAPH_SYSTEM } from './graphPrompt.ts';
 import { changePrompt } from './generatePrompts.ts';
 import { GenerationFailed, firstBlock, recording } from './generate.ts';

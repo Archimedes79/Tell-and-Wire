@@ -13,7 +13,7 @@ import { definitionExample } from '../../../graph/files/definition.ts';
 import { Session } from '../../../backend/deployment/host/session.ts';
 import { guiHooks } from '../../../backend/deployment/gui/hooks.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
-import { problemsIn } from '../../../gui/editor/check.ts';
+import { problemsIn } from '../../../gui/authoring/check.ts';
 import { readProject } from '../../../backend/deployment/project/folder.ts';
 import { parseGraph } from '../../../graph/graph.ts';
 import type { Runtime } from '../../../graph/nodes/Runtime.ts';

@@ -2,8 +2,9 @@
  * The folders are the architecture, asserted on the import graph.
  *
  * The code is cut by tier, then by role, then by module (`docs/architecture.md`). What ships in a
- * package is decided by one thing: a path with a folder named `editor` or `notebook` is only for
- * authoring, and the rest is carried (`backend/authoring` is not among the folders a package carries).
+ * package is decided by one thing: a path with a folder named `editor`, `notebook` or `authoring` is only for
+ * authoring, and the rest is carried. `authoring` is what both products write with (the designs of the nodes and
+ * blocks, the check of a graph, `backend/authoring`); `editor` and `notebook` are one product's each.
  * So the rules are few:
  *
  * 1. Nothing outside an authoring folder (`editor`, `notebook`, `authoring`) imports from one. (`backend/cli` may `import()` it: it
@@ -16,8 +17,9 @@
  *    other. The wire's files (`host/api.ts`) are types and tables for either end and rank with nothing.
  * 4. `frontend/` imports of `backend/` only the wire's files.
  * 5. The two products -- the graph editor and the notebook -- do not import each other, in any tier: each is started by a file of its
- *    own, and either can be taken away without the other noticing. What they share is below them: `graph/`, `gui/`, the deployment, and
- *    `backend/authoring`.
+ *    own, and either can be taken away without the other noticing. What they share is below them, as common code: `graph/`, `gui/`, the
+ *    deployment, and the `authoring` folders (`graph/authoring`, `gui/authoring`, `backend/authoring`).
+ * 6. Common code knows no product: nothing in an `authoring` folder imports from the editor's or the notebook's folders.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -68,7 +70,7 @@ const inAuthoring = (path: string): boolean => path.split('/').some((part) => AU
 
 /** The folders each product owns, in every tier. */
 const PRODUCTS: Record<string, string[]> = {
-  editor: ['backend/editor/', 'frontend/editor/'],
+  editor: ['backend/editor/', 'frontend/editor/', 'graph/editor/', 'gui/editor/'],
   notebook: ['backend/notebook/', 'frontend/notebook/', 'frontend/gui-notebook/', 'frontend/graph-notebook/', 'gui/notebook/'],
 };
 const productOf = (path: string): string | undefined => Object.keys(PRODUCTS).find((name) => PRODUCTS[name].some((prefix) => path.startsWith(prefix)));
@@ -130,10 +132,10 @@ describe('the folders', () => {
     expect(show(against)).toEqual([]);
   });
 
-  it('let the notebook use of the editor-named folders only what both write with: the check of a gui and the writing of a graph handed on', () => {
-    // graph/editor and gui/editor are shared, and neutral; these two files are all the notebook asks of them. Another one is the editor's, or goes beside them.
-    const BOTH_WRITE_WITH = new Set(['gui/editor/check.ts', 'graph/editor/handedOn.ts']);
-    const against = IMPORTS.filter((one) => productOf(one.from) === 'notebook' && /^(gui|graph)\/editor\//.test(one.to) && !BOTH_WRITE_WITH.has(one.to));
+  it('keep common code common: nothing in an authoring folder imports a product', () => {
+    // `authoring` is what both products write with -- the designs of the nodes and blocks, the check of a graph, the history of a writing,
+    // what a graph is handed on without. It rests on graph/, gui/ and the deployment, and knows neither the editor nor the notebook.
+    const against = IMPORTS.filter((one) => one.from.split('/').includes('authoring') && productOf(one.to) !== undefined);
     expect(show(against)).toEqual([]);
   });
 

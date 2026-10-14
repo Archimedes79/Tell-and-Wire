@@ -13,7 +13,7 @@
 // answer (`backend/editor/graph/generate.ts`).
 
 import type { Variable } from '../files/prompts.ts';
-import type { GenerationKind } from './generation.ts';
+import type { GenerationKind } from '../authoring/generation.ts';
 
 /** What every chat sends with what the person says, by the variable that carries it (`STANDARD_PROMPTS`). */
 export const SENT_WITH = {

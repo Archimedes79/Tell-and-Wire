@@ -4,7 +4,7 @@
 // definition -- what the node is: its ports, its settings, what the executor
 // asks of it before and after (`graph/nodes/NodeDefinition.ts`) -- and does what
 // the definition cannot, because it needs the services of a `Runtime`. A tool
-// carries runners and definitions; it carries no design (`graph/editor/nodes/`).
+// carries runners and definitions; it carries no design (`graph/authoring/nodes/`).
 
 import type { GraphNode } from '../../../../graph/graph.ts';
 import type { NodeDefinition } from '../../../../graph/nodes/NodeDefinition.ts';

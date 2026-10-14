@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { parseGraph, type Graph } from '../../../graph/graph.ts';
-import { problemsIn } from '../../../gui/editor/check.ts';
+import { problemsIn } from '../../../gui/authoring/check.ts';
 import { checkPath } from './folderCheck.ts';
 import { forgetSeen } from '../../deployment/project/folder.ts';
 import { writeProject } from '../../authoring/write.ts';

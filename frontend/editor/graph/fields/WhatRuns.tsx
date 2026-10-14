@@ -1,6 +1,6 @@
 import type { GraphNode } from '../../document/graph';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../../graph/authoring/nodes/registry.ts';
 import { DIMMER, LINE, MUTED } from '../../../deployment/gui/kit/ui/theme';
 
 /**

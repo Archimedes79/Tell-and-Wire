@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { Graph } from '../../graph/graph.ts';
 import { columnsOf, parseTable } from '../../graph/schedule.ts';
-import { problemsIn } from '../../gui/editor/check.ts';
+import { problemsIn } from '../../gui/authoring/check.ts';
 import {
   afterEdit, afterRun, runOrder, windowProblems, windowRows, windowsToGraph, type Done, type Window, type Windows,
 } from '../../gui/notebook/windows.ts';

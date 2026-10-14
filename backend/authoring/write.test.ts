@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { parseGraph, withoutDefaults, type Graph } from '../../graph/graph.ts';
-import { problemsIn } from '../../gui/editor/check.ts';
+import { problemsIn } from '../../gui/authoring/check.ts';
 import { folderName } from '../../graph/files/names.ts';
 import { RUN_ON_ITS_OWN } from '../../graph/nodes/code/CodeNodeDefinition.ts';
 import { registry } from '../../graph/nodes/registry.ts';

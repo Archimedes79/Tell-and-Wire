@@ -78,13 +78,16 @@ saved here opens in it (a folder of graph files). The page is in those files too
     LICENSE     the terms Tell & Wire comes under
 `;
 
+/** The editor's own: a folder named `editor`, in any tier. The notebook carries what both write with (`authoring`) and its own. */
+const notEditors = (path) => !path.split('/').includes('editor');
+
 const files = [
-  ...await walk('graph', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/')),
+  ...await walk('graph', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && notEditors(path)),
   'graph/package.json',
-  ...await walk('gui', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')),
+  ...await walk('gui', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && notEditors(path)),
   'gui/package.json',
   // The server, what runs a graph and what writes a project; not the editor's server, which nothing here imports.
-  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/') && !path.startsWith('backend/editor/')),
+  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/') && notEditors(path)),
   'backend/package.json',
   ...await walk('frontend/notebook/dist', (path) => !path.endsWith('/_audit.js')),
   ...await walk('notebook-examples', (path) => !/(^|\/)([^/]*\.)?state\.json$/.test(path)),

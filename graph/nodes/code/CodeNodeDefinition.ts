@@ -68,7 +68,7 @@ const CODE_TEXTS: readonly TextFile[] = [
  * already has once they can run the graph, so a package asks for Node and nothing
  * else — no interpreter to find, no packages to install, no second sandbox.
  * Everything that is JavaScript about writing and trying a body is its
- * language (`graph/editor/nodes/code/javascript.ts`): a node for another
+ * language (`graph/authoring/nodes/code/javascript.ts`): a node for another
  * language declares its own.
  */
 export class CodeNodeDefinition extends NodeDefinition {

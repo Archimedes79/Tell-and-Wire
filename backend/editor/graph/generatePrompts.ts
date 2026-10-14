@@ -7,12 +7,12 @@
 // how to answer, and what a change or a repair is shown.
 
 import type { PromptKind } from '../../../graph/editor/prompts.ts';
-import type { Language } from '../../../graph/editor/generation.ts';
+import type { Language } from '../../../graph/authoring/generation.ts';
 import { textOutput, type Definitions } from '../../../graph/files/definition.ts';
 import { names } from '../../../graph/wiring.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
 import type { Graph } from '../../../graph/graph.ts';
-import { withoutWriting } from '../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../graph/authoring/handedOn.ts';
 import { BUDGET, clip } from './brief.ts';
 import type { Refine } from '../host/api.ts';
 

@@ -6,7 +6,7 @@
 
 import type { Graph, GraphNode, NodeResult } from '../../../graph/graph.ts';
 import type { TextChange } from '../../../graph/files/changes.ts';
-import type { AICall } from '../../../graph/editor/history.ts';
+import type { AICall } from '../../../graph/authoring/history.ts';
 import type { ExampleRun } from '../../deployment/runtime/examples.ts';
 import { local, route, type InSession } from '../../deployment/host/api.ts';
 
@@ -227,7 +227,7 @@ export interface GraphFile {
   project: boolean;
 }
 
-/** One request to a model, as it happened (`graph/editor/history.ts`, which writes it into history.md). */
+/** One request to a model, as it happened (`graph/authoring/history.ts`, which writes it into history.md). */
 export type { AICall };
 
 // ---------------------------------------------------------------------------

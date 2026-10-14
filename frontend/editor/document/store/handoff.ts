@@ -5,7 +5,7 @@ import type { ExecutionResult } from '../graph';
 import { call, type RoundSnapshot } from '../../api/client';
 import { useSession, watchSession } from '../../../deployment/gui/kit/api/session';
 import { mergeResults } from '../../../../graph/graph.ts';
-import { withoutWriting } from '../../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../../graph/authoring/handedOn.ts';
 import type { GraphStore } from './graphStore';
 import { flushPanels } from './flushPanels';
 

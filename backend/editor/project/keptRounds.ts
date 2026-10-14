@@ -21,7 +21,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ExecutionResult, Graph } from '../../../graph/graph.ts';
 import type { Kinds } from '../../../graph/nodes/NodeDefinition.ts';
-import { designs } from '../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../graph/authoring/nodes/registry.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { eventOf, outputsOf } from '../../../graph/interface.ts';
 import { folderName } from '../../../graph/files/names.ts';

@@ -22,13 +22,13 @@ import { interfaceWithGui } from '../../../../gui/interface.ts';
 import { startFromGui } from '../../../../gui/gui.ts';
 import { clip } from '../../graph/brief.ts';
 import { generateGraph } from '../../graph/generateGraph.ts';
-import { WRITING_KEYS, withoutWriting } from '../../../../graph/editor/handedOn.ts';
+import { WRITING_KEYS, withoutWriting } from '../../../../graph/authoring/handedOn.ts';
 import {
   FileChanged, SCHEDULE_FILE, NODES_DIR, GUI_FILE, STATE_FILE, isProjectFolder, loadGraph as loadProject, looksLikeGraph, nestedGraphs,
   projectFolderOf, projectTexts, readStructure, type Guard,
 } from '../../../deployment/project/folder.ts';
 import { saveGraph as saveToDisk } from '../../../authoring/write.ts';
-import { problemsIn } from '../../../../gui/editor/check.ts';
+import { problemsIn } from '../../../../gui/authoring/check.ts';
 import { completeGui } from '../../../../gui/editor/complete.ts';
 import { tableFor, tableLines } from '../../../../graph/schedule.ts';
 import { folderProblems } from '../../project/folderCheck.ts';

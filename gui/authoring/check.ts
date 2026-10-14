@@ -16,7 +16,7 @@ import { widgetElement } from '../gui.ts';
 import { fieldSender, guiProblems, showsMemory } from './gui.ts';
 import { ERROR_PORT, NESTING_LIMIT, fieldOf, names, wiringProblems, type Problem } from '../../graph/wiring.ts';
 import { registry } from '../../graph/nodes/registry.ts';
-import { designs } from '../../graph/editor/nodes/registry.ts';
+import { designs } from '../../graph/authoring/nodes/registry.ts';
 import { resultKeys } from '../../graph/nodes/NodeDefinition.ts';
 import { portMisfit } from '../../graph/schema.ts';
 import { definitionExample } from '../../graph/files/definition.ts';

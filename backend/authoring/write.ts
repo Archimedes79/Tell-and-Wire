@@ -11,7 +11,7 @@ import { basename, dirname, extname, join, resolve } from 'node:path';
 import type { Graph } from '../../graph/graph.ts';
 import { NESTED_GRAPH_FIELD, type TextChange } from '../../graph/files/changes.ts';
 import { registry } from '../../graph/nodes/registry.ts';
-import { designs } from '../../graph/editor/nodes/registry.ts';
+import { designs } from '../../graph/authoring/nodes/registry.ts';
 import { describeNodes, NODES_FILE, sorted } from '../../graph/files/nodesFile.ts';
 import { FLOW_FILE, flowOf } from '../../graph/files/flow.ts';
 import { tableFor, tableLines } from '../../graph/schedule.ts';

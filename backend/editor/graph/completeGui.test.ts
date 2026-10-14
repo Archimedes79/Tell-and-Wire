@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parseGraph } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { completeGui } from '../../../gui/editor/complete.ts';
-import { guiProblems } from '../../../gui/editor/gui.ts';
+import { guiProblems } from '../../../gui/authoring/gui.ts';
 
 /** A GUI a model wrote with the blocks but not what they connect to: the points a person would have been given are made. */
 describe('a GUI written whole', () => {

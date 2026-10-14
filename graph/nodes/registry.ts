@@ -2,7 +2,7 @@
 //
 // One list, built from the definition classes themselves. It is what a tool
 // carries and what the editor asks; the runners (`backend/deployment/runtime/nodes/`)
-// and the designs (`graph/editor/nodes/`) are listed beside it, each by its
+// and the designs (`graph/authoring/nodes/`) are listed beside it, each by its
 // own registry. The blocks of a GUI are not nodes: the GUI asks them
 // (`gui/gui.ts`), and `gui/widgets/roster.ts` is their list.
 

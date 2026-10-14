@@ -9,8 +9,8 @@
 // from the document. So the facts below are the ones a graph is *wrong* without.
 
 import { registry } from '../../../graph/nodes/registry.ts';
-import { designs } from '../../../graph/editor/nodes/registry.ts';
-import { guiAuthorNote } from '../../../gui/editor/gui.ts';
+import { designs } from '../../../graph/authoring/nodes/registry.ts';
+import { guiAuthorNote } from '../../../gui/authoring/gui.ts';
 
 /**
  * The kinds a generated graph may use, each with what its own class says about

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { Graph } from '../document/graph';
 import { parseGraph } from '../../../graph/graph.ts';
 import type { Problem } from '../../../graph/wiring.ts';
-import { problemsIn } from '../../../gui/editor/check.ts';
+import { problemsIn } from '../../../gui/authoring/check.ts';
 import { TEXT, WARNING_FILL, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
 import { messageOf } from '../../../graph/errors.ts';
 

@@ -4,7 +4,7 @@
 // Not the editor's and not the notebook's: both import it, neither the other.
 
 import type { AiRequest, AiService } from '../../graph/nodes/Runtime.ts';
-import type { AICall } from '../../graph/editor/history.ts';
+import type { AICall } from '../../graph/authoring/history.ts';
 import { messageOf } from '../../graph/errors.ts';
 
 export type { AICall };

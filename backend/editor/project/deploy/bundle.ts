@@ -16,10 +16,10 @@ import { basename, dirname, extname, isAbsolute, join, normalize, relative, reso
 import { fileURLToPath } from 'node:url';
 import type { Graph } from '../../../../graph/graph.ts';
 import { guiBlocks } from '../../../../gui/gui.ts';
-import { guiReferencedPaths } from '../../../../gui/editor/gui.ts';
+import { guiReferencedPaths } from '../../../../gui/authoring/gui.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/editor/nodes/registry.ts';
-import { withoutWriting } from '../../../../graph/editor/handedOn.ts';
+import { designs } from '../../../../graph/authoring/nodes/registry.ts';
+import { withoutWriting } from '../../../../graph/authoring/handedOn.ts';
 import { FRONTEND_DIR } from '../../../deployment/project/folder.ts';
 import { sameFile } from '../../../deployment/runtime/confine.ts';
 import { writeProject } from '../../../authoring/write.ts';
@@ -211,11 +211,12 @@ export async function filesIn(dir: string, under = ''): Promise<string[]> {
  * What a package carries of the code, by folder: the neutral definitions, and the deployment's
  * command line and modules. A folder not named here -- `backend/editor`, the architecture
  * tests -- is not carried, and inside these a folder named `editor` (the editor's part of
- * `graph/` and `gui/`) or `notebook` (the notebook's: `gui/notebook`, which writes the files a package is), a test and its fixtures stay behind: a recipient runs the tool, not
+ * `graph/` and `gui/`), `notebook` (the notebook's: `gui/notebook`) or `authoring` (what both write with: the designs of
+ * the nodes and blocks, the check of a graph), a test and its fixtures stay behind: a recipient runs the tool, not
  * its test suite and not an editor. `bundle.test.ts` is the check that says so.
  */
 const CARRIED = ['graph', 'gui', 'backend/cli', 'backend/deployment'];
-const LEFT_BEHIND = new Set(['editor', 'notebook', 'test', 'node_modules']);
+const LEFT_BEHIND = new Set(['editor', 'notebook', 'authoring', 'test', 'node_modules']);
 
 /** The file that says what a package is and lists what is in it. */
 const MANIFEST = 'MANIFEST.json';

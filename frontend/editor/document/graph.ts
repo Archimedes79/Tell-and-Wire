@@ -78,7 +78,7 @@ export type NodeConfig = {
   input_definition?: string;
   /** What one call of a code or ai node returns: `output.js`. Its example's keys are the outputs. */
   output_definition?: string;
-  /** Every exchange with the model about the node: `history.md`. See `graph/editor/history.ts`. */
+  /** Every exchange with the model about the node: `history.md`. See `graph/authoring/history.ts`. */
   history?: string;
   /** The files the Input chat writes a code or ai node's input definition from -- examples, a spec; none: the one the graph hands it. */
   input_files?: string[];

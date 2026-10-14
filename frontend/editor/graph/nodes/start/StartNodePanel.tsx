@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { DANGER_TEXT, DIM, FIELD, MUTED, TEXT } from '../../../../deployment/gui/kit/ui/theme';
 import { parseInterval } from '../../../../../graph/triggers.ts';
-import { designs } from '../../../../../graph/editor/nodes/registry.ts';
+import { designs } from '../../../../../graph/authoring/nodes/registry.ts';
 import { useGraphStore } from '../../../document/store/graphStore';
 import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialogs/PathField';
 import FolderListing from '../../../app/fields/FolderListing';

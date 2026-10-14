@@ -11,8 +11,8 @@
 //   definition  what it is: neutral, shipped, here (`graph/nodes/`, `gui/widgets/`)
 //   runner      what a node does when the graph runs: shipped, Node only
 //               (`backend/deployment/runtime/nodes/`)
-//   design      what only building asks: not shipped (`graph/editor/nodes/`,
-//               `gui/editor/widgets/`)
+//   design      what only building asks: not shipped (`graph/authoring/nodes/`,
+//               `gui/authoring/widgets/`)
 //   builder     how a person edits it, in the browser: not shipped
 //               (`frontend/editor/`)
 //

@@ -9,7 +9,7 @@ import { compile, sameWindows as sameAnswers, useNotebook, type NodeState, type 
 import { NO_CHAT, chatsOf, inBlock, outEnd, sentBy, startValue, starterOf } from './values';
 import { afterRun, runOrder, type Window } from '../../../gui/notebook/windows.ts';
 import { owns } from '../../../gui/windows/owns.ts';
-import { withoutWriting } from '../../../graph/editor/handedOn.ts';
+import { withoutWriting } from '../../../graph/authoring/handedOn.ts';
 import type { RoundSnapshot } from '../../../backend/deployment/host/api.ts';
 
 /** The session the host holds for the open document: asked for again, from nothing, for each document opened (`epoch`). */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { problemsIn } from '../../gui/editor/check.ts';
+import { problemsIn } from '../../gui/authoring/check.ts';
 import { graphToWindows } from '../../gui/notebook/fromGraph.ts';
 import { windowProblems, windowsToGraph } from '../../gui/notebook/windows.ts';
 import { quietRuntime } from '../deployment/runtime/test/fakes.ts';

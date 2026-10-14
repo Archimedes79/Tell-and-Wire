@@ -19,7 +19,7 @@ export type GenerationKind = 'code' | 'prompt' | 'data';
  * The programming language a body of code is written in, as whoever writes it
  * needs it: what a model is told, and the function it completes. Declared by
  * the design of the node that runs the body (the code node's is
- * `graph/editor/nodes/code/javascript.ts`), so a node for another language
+ * `graph/authoring/nodes/code/javascript.ts`), so a node for another language
  * brings its own and the writer names none.
  */
 export interface Language {

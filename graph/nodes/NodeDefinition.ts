@@ -4,7 +4,7 @@
 // it keeps and offers, and the questions a run puts to it. Neutral -- it runs in
 // a browser tab as well as under Node -- and a package carries it. What the
 // node *does* when it runs is its runner (`backend/deployment/runtime/nodes/`),
-// what only building asks is its design (`graph/editor/nodes/`).
+// what only building asks is its design (`graph/authoring/nodes/`).
 //
 // Only a node has writing: a body someone writes -- code, instructions --
 // with files of its own in a project folder, and a way for an AI to write it.
