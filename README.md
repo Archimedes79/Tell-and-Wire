@@ -3,11 +3,13 @@
 # Tell & Wire
 
 **A visual node editor: tell each step what it should do, wire the steps into a graph,
-give it a GUI.**
+give it a GUI -- or write the tool as a notebook, a page with windows to use.**
 **AI writes the code -- or you do. What you build is a folder of plain files that runs
 wherever Node runs: offline, with a local model, if you like.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
+
+Notebook only, a smaller download: [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-notebook-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-notebook-linux.zip)
 
 <img src="docs/images/hero.png" alt="The Tell & Wire editor with a node opened in place of the canvas: its text on the left, the files AI wrote from it on the right -- and the same graph delivered as a tool that draws a bar chart" width="100%">
 
@@ -15,9 +17,11 @@ wherever Node runs: offline, with a local model, if you like.**
 
 ## What it is
 
-Tell & Wire is a visual node editor for small software: a chart from a CSV, a summary of every
-file in a folder, a chat, a panel of AI reviewers -- anything you can draw as steps that hand
-data to each other. You design two things, each in its tab, and both end up as plain files:
+Tell & Wire builds small software: a chart from a CSV, a summary of every file in a folder, a table of key
+figures, a chat, a panel of AI reviewers -- anything you can draw as steps that hand data to each other. Two
+products build it, on the same project format, and what one made the other opens.
+
+**The editor** is a visual node editor. You design two things, each in its tab, and both end up as plain files:
 
 - **The graph** (Graph tab). Software as **nodes** wired together. A run begins at a **start
   point**, passes through **code nodes**, **AI nodes**, **data nodes** (a struct the tool
@@ -29,19 +33,21 @@ data to each other. You design two things, each in its tab, and both end up as p
   start point and shows what an end point hands back -- by name, nothing is wired to the GUI, so
   either half can be redesigned without touching the other.
 
+**The notebook** is a page you write, like any web page, with windows standing in it to be used. A window takes what
+goes in -- text, a number, a choice, a file, a folder --, has a button, and shows what comes out: a table, text, a chart,
+a picture or a chat, at a size that never grows. What a window does is a few cells, each a sentence -- *Summarize
+@Text in @Length* -- done by a model or by code; the `@` names are the wires. Under the page are the open window's
+cells, the window as the graph it is, and a debug view of every round. The page can be written as Markdown and
+shown light or dark. It saves the same project files, so **Open in editor** shows its graph
+([docs/notebook.md](docs/notebook.md)).
+
 ### Work the way you like
 
 **No code: tell it.** A node is a heading and a few plain words about what it should do.
 **Auto generate** has a model write the node's files from them -- what goes in and out, then
 the code or the prompt -- and a chat for each file changes it as you say. A whole graph can be
-drawn from one description, too. A local model (Ollama, LM Studio) will do, or an API of your
-choice.
-
-**Notebook** is the other way to build the same tool: a page you write, like any web page, with windows standing in it to be
-used -- what goes in, a button, what comes out, at a size that never grows. Under the page, a list of cells (Ask, Do, Show)
-builds the open window, and a debug window shows every round. It is a product of its own, with its own start file
-(`start-notebook.cmd`, `.ps1`, `.sh`) and its own small download (`tell-and-wire-notebook-windows.zip`, `-linux.zip`, in the releases),
-and it saves the same project files, so the graph editor opens what it made ([docs/notebook.md](docs/notebook.md)).
+drawn from one description, too -- and in the notebook a page of windows. A local model (Ollama, LM Studio) will do,
+or an API of your choice.
 
 **Code first: it is all files.** Every node is a folder of plain text: `input.js` and
 `output.js`, and `code.js` or `prompt.md`. Open any of them in your own editor, change it, diff it in
@@ -50,19 +56,23 @@ format: a node's example is its test (▶ Try), and a run that went well can be 
 
 **Then hand it on.** ▶ Run shows the tool in the App tab, as its user will see it. **File →
 Deploy as zip** writes a folder that anyone with Node can unzip and start: the GUI in a browser,
-the graph behind it, offline.
+the graph behind it, offline. A tool made in the notebook is handed on the same way: open it in the editor and deploy it.
 
 ### How it fits together
 
 <img src="docs/images/overview.svg" alt="Two products design a project: the editor (a GUI editor and a graph editor, one editor backend) and the notebook (a page and its cells, one notebook backend), both resting on common code that an AI that writes the code uses. The project is one folder of plain files that both write: the GUI, the graph with its schedule, and a folder of files per node. A deployment runs it: a browser shows the GUI, a session host keeps state and starts rounds, and a language-specific execution engine runs the nodes and may ask a model or a tool server." width="100%">
 
-- **Design, files and execution are apart.** The editor only designs; what it makes is a folder;
+The picture is the architecture the software is cut by: every box is a folder or a few, and
+[docs/architecture.md](docs/architecture.md) takes it apart box by box.
+
+- **Design, files and execution are apart.** The editor and the notebook only design; what they make is a folder;
   a deployment runs the folder. That is why a tool can be saved, versioned, handed on and run
   without the editor.
-- **Two products, one project format.** The editor and the notebook have their own pages, backends
-  and downloads, and import nothing of each other; what both need is common code underneath. They
-  write the same files, so what the notebook made opens in the editor (a graph is not always a
-  page, so the notebook opens only what it made).
+- **Two products, one project format.** The editor and the notebook have their own pages, servers
+  (ports 8000 and 8100) and downloads, and import nothing of each other; what both need is common
+  code underneath, and each has a button that opens the project in the other. They write the same
+  files, so what the notebook made opens in the editor as a graph (a graph is not always a page, so
+  the notebook opens only what it made).
 - **Built for more than one language.** Nodes, wires, schedule and the definitions of what goes
   in and out are language-neutral files, and the engine that executes them is a part of its own,
   spoken to through a documented core protocol ([docs/architecture.md](docs/architecture.md)).
@@ -99,6 +109,12 @@ or [tell-and-wire-linux.zip](https://github.com/Archimedes79/Tell-and-Wire/relea
 editor opens in your browser on <http://127.0.0.1:8000>, or on the next free port. Older
 versions are on the [releases page](https://github.com/Archimedes79/Tell-and-Wire/releases).
 
+**Notebook only.** [tell-and-wire-notebook-windows.zip](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-notebook-windows.zip) or
+[tell-and-wire-notebook-linux.zip](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-notebook-linux.zip) is the smaller download: the
+notebook and its examples, without the graph editor and the tool servers. Unzip it and start `run.cmd` or `./run.sh`;
+the notebook opens on <http://127.0.0.1:8100>, or on the next free port. Open the examples with **Open…**
+(`notebook-examples/`). Both can run side by side.
+
 ## Run from source
 
 Node 24 or newer, on Windows, macOS or Linux:
@@ -117,6 +133,9 @@ editor already on the port and opens the browser; `stop.*` stops it. By hand it 
 `npm run dev` serves the page with live reload on <http://127.0.0.1:3000>. Keep a checkout
 out of folders that Dropbox or OneDrive sync: they lock files during `npm ci` and the build.
 
+The notebook starts the same way with `start-notebook.sh`, `start-notebook.ps1` or `start-notebook.cmd` (on
+<http://127.0.0.1:8100>; `stop-notebook.*` stops it), and `npm run package:notebook` writes its small zip.
+
 A graph also runs without the editor. Paths inside a graph resolve against the working
 directory, so run the examples from the repository root:
 
@@ -133,7 +152,8 @@ node backend/cli/main.ts --mcp --mcp-root ./tools             # an MCP server on
 
 **Auto generate** asks a model to write a node's files, and an AI node asks one each time it runs.
 
-Open **⚙ Settings**, fill in what you need, press **Save**:
+Open **⚙ Settings**, fill in what you need, press **Save** (the notebook has no settings dialog of its own: it reads
+the same `ai-settings.json` and variables, so set it up once, here, or by editing the file):
 
 - **AI that runs the nodes** and **AI that writes**: a provider and a model each. The first
   serves every AI node that does not name its own model, a code node's `node.llm`, ▶ Try and
@@ -210,13 +230,18 @@ file_summarizer starts one run from a picker, a dropdown and a button. nested_st
 shows a subgraph, a hand-written gui and a kept test. paper_review_panel and
 portfolio_review are teams of AI reviewers.
 
+[`notebook-examples/`](notebook-examples/) holds five notebook pages, each a project the notebook opens with **Open…**:
+sales_report (a CSV into a table of key figures and a chart), text_toolbox (numbers from code, a summary from a model),
+badge_maker (a picture a code cell draws for the room it has), picture_sheet (a folder of pictures side by side, each
+described by a model) and tip_calculator (a bill split, no model).
+
 ## Documentation
 
 - [docs/user-guide.md](docs/user-guide.md): how to build a tool, step by step.
 - [docs/notebook.md](docs/notebook.md): the notebook, a tool said as a page of windows.
-- [docs/architecture.md](docs/architecture.md): the parts and their folders, the rules
-  between them, the tool's folder format, the host's APIs and the core protocol, what a package
-  carries, and how to extend Tell & Wire.
+- [docs/architecture.md](docs/architecture.md): the overview picture taken apart box by box with
+  its folders, the rules between them, the tool's folder format, the host's APIs and the core
+  protocol, what a package carries, and how to extend Tell & Wire.
 - [mcp/](mcp/README.md): the tool servers that come with Tell & Wire -- they let an AI node read web
   pages and Word and PDF files -- and how a server brings its own settings.
 

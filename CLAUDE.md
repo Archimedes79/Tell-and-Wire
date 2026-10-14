@@ -8,22 +8,27 @@
 
 ## The parts
 
-The editor designs a project (files); a deployment keeps one in use and executes it; a package is
-a project with the deployment's code. Graph and gui are apart all the way. Tier first, then role.
+Two products -- the editor and the notebook -- design a project (files) on common code; a deployment keeps one in use and
+executes it; a package is a project with the deployment's code. The picture below is the target, and the folders follow it box by
+box (`docs/architecture.md`, "The overview, block by block"; `backend/architecture/blocks.test.ts` keeps the two in step). Graph and
+gui are apart all the way. Tier first, then role.
 
-| Part | Folder |
+| Box of the picture | Folders |
 |---|---|
-| The graph's definition (format, node kinds, rules), neutral | `graph/`; the editor's part `graph/editor/` |
-| The gui's definition (blocks), neutral | `gui/`; the editor's part `gui/editor/` |
-| Deployment, Node: project, runtime, host, gui hooks | `backend/deployment/{project,runtime,host,gui}/` |
-| Editor, Node: project, graph, runtime, host | `backend/editor/{project,graph,runtime,host}/` |
-| Composition root (command line), structure tests | `backend/cli/`, `backend/architecture/` |
-| Deployment, browser: a deployed tool's gui | `frontend/deployment/gui/` |
-| Editor, browser: graph, gui, document, app | `frontend/editor/{graph,gui,document,app}/` |
-| Optional tool servers (MCP) | `mcp/web/`, `mcp/documents/` |
+| Editor: GUI editor, graph editor, their shell | `frontend/editor/{gui,graph,document,app,api}/` |
+| Editor backend, and its part of the definitions | `backend/editor/{project,graph,runtime,host}/`; `graph/editor/`, `gui/editor/` |
+| Notebook: page, cells, shell | `frontend/{gui-notebook,graph-notebook,notebook}/` |
+| Notebook backend, and its model | `backend/notebook/`; `gui/notebook/` |
+| Common code: the definitions of graph and gui, neutral | `graph/`, `gui/` |
+| Common code: authoring, what both products write with | `graph/authoring/`, `gui/authoring/`, `backend/authoring/` |
+| Common code: start-up, structure tests | `backend/cli/`, `backend/architecture/` |
+| Use: browser | `frontend/deployment/{gui,windows}/` |
+| Use: session host, engine, the project folder | `backend/deployment/{host,gui,runtime,project}/` |
+| AI at run time: tool servers (MCP) | `mcp/web/`, `mcp/documents/` |
 
-One rule: a package carries every path except those with a folder named `editor`, and nothing
-outside an `editor` folder imports from one (`backend/architecture/layers.test.ts`). `graph/` and
+One rule: a package carries every path except those with a folder named `editor`, `notebook` or
+`authoring`, and nothing outside such a folder imports from one; `authoring` (common to both products) imports
+no product (`backend/architecture/layers.test.ts`). `graph/` and
 `gui/` also import no Node and nothing of `backend/` or `frontend/`. Imports are relative. More in
 `docs/architecture.md`.
 
@@ -41,7 +46,7 @@ package with its own licence; a deployed tool carries none. Their checks (`npm t
 
 ![Design by two products on common code, the project as plain files, and use: three bands, and only files and a few named things cross between them](docs/images/overview.svg)
 
-Code changes keep this layered modularity (`docs/images/overview.svg`, in the README):
+The picture (`docs/images/overview.svg`, in the README) is the target architecture, and the software is cut the same way: `docs/architecture.md` takes it apart box by box, and `backend/architecture/blocks.test.ts` holds the folders to it. Code changes keep this layered modularity:
 
 - **Three bands, files between them.** The editor designs and writes a project; a deployment reads
   it and runs it. What the editor knows must be in a file, in a plain format a person or git can

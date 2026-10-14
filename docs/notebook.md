@@ -1,10 +1,13 @@
 # Notebook: a page you write, with windows you use
 
-A second way to build and use a tool, on the same graph, runtime, host and package. It does not replace the graph
-editor: the notebook writes the files the graph editor reads, and a project made in the notebook opens in the graph editor
-(the other way round it does not: a graph is not a page).
+The notebook is one of the two products in the overview picture (`docs/images/overview.svg`): the green boxes -- **Page**, **Cells**
+and the **Notebook backend** -- standing on the common code, writing the same project files as the graph editor. It is a second way to
+build and use a tool, on the same graph, runtime, host and package. It does not replace the graph editor: the notebook
+writes the files the graph editor reads, and a project made in the notebook opens in the graph editor (the other way round it does
+not: a graph is not a page, except one the notebook made).
 
-Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new folders, started by files of its own; the graph editor does not know it is there.
+A product of its own, with its own folders (`docs/architecture.md`, "Design: the notebook"), its own start files, its own port (8100) and
+its own small download; the graph editor does not know it is there, and the two meet only in a link. Branch `tell-and-wire-notebook`, built on `main`.
 
 ## The idea
 
@@ -42,8 +45,7 @@ Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new fold
 | Starting it | `start-notebook.cmd`, `.ps1`, `.sh`, `scripts/start-notebook.mjs` | The notebook has its own start and stop files (`stop-notebook.*`), its own port (8100), and runs beside the editor (8000) or without it. Neither starts the other; they know each other by a link only (below). |
 | Packing it | `scripts/package-notebook.mjs`, `npm run package:notebook` | A zip of the notebook alone: its page and server, what runs a graph, the examples; no editor, no tool servers (`run.cmd`, `run.sh`, optional `--node <folder>`). A copy in what it does of `scripts/package.mjs`, which packs the full version: the two are packed separately, and CI tries each unzipped (`scripts/package-notebook.test.mjs`). On a `vX.Y.Z` tag and on `latest` (main) CI publishes both: `tell-and-wire-<system>.zip` and the small `tell-and-wire-notebook-<system>.zip` (`-latest` for main). |
 
-What the notebook takes of the folders named `editor` is two shared files both products write with, `gui/editor/check.ts` (the check of a gui) and `graph/editor/handedOn.ts` (a graph without
-the writing of its cells, as it is handed to the host); `backend/architecture/layers.test.ts` lists them and fails for a third. A package leaves `gui/notebook` behind with the rest of authoring.
+The notebook takes nothing from a folder named `editor`. What it shares with the graph editor is common code: `graph/`, `gui/`, the deployment, and the `authoring` folders -- `gui/authoring/check.ts` (the check of a gui), `graph/authoring/handedOn.ts` (a graph without what only writing it needs), the designs of the nodes and blocks, `backend/authoring`. `backend/architecture/layers.test.ts` holds both sides: the notebook imports no editor folder, and `authoring` imports no product. A package leaves `gui/notebook` behind with the rest of authoring.
 Code is doubled where the two products would otherwise share it (the table's figures, the words of the page): a copy is tested in the product it is in.
 
 ## The files of a project

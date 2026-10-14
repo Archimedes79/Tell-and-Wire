@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="732" viewBox="0 0 900 732" role="img" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
 <title>Tell &amp; Wire: you design in the editor or the notebook, what you make is saved as plain files, and a deployment runs them</title>
-<desc>Three bands from top to bottom. Design: two products, each with its own backend and both resting on common code -- the editor (a GUI editor and a graph editor, one editor backend) and the notebook (a page and its cells, one notebook backend); the common code holds the definitions of graph and GUI, authoring, host and runtime, and an AI that writes uses it. The project: one folder of plain files that both products write and that any text editor or git can read too -- the GUI (which also holds the notebook's page), the graph with its schedule, and one folder of files per node. Use: a browser shows the GUI, a session host keeps state and runs rounds, a language-specific execution engine runs the nodes and may ask an AI or a tool server. The editor and the notebook are two downloads.</desc>
+<desc>Three bands from top to bottom. Design: two products, each with its own backend and both resting on common code -- the editor (a GUI editor and a graph editor, one editor backend) and the notebook (a page and its cells, one notebook backend); the common code holds the definitions of graph and GUI, authoring, host and runtime, and an AI that writes uses it. The project: one folder of plain files that both products write and that any text editor or git can read too -- the GUI (which also holds the notebook's page), the graph with its schedule, and one folder of files per node. Use: a browser shows the GUI, a session host keeps state and runs rounds, a language-specific execution engine runs the nodes and may ask an AI or a tool server. The editor and the notebook are two downloads, and each has a link that opens the project in the other.</desc>
 <style>
   :root { --bg: #ffffff; --ink: #1f2937; --soft: #6b7280; --line: #9ca3af; --band: #f6f7f9; --ship-fill: #ccebe5; --ship-edge: #0f766e; --ship-ink: #064e3b; --deep-fill: #0f766e; --deep-ink: #ffffff; --note-fill: #fde9a8; --note-ink: #4a3b05; --ai-fill: #ddd0f2; --ai-edge: #6d3fb5; --ai-ink: #2e1065; --lang: #dbeafe; --edit-fill: #eceff3; --nb-fill: #dcebd8; --nb-edge: #4d7c4a; --nb-ink: #1f3b1d; --arrow: #3b6e8f; }
   @media (prefers-color-scheme: dark) { :root { --bg: #0f172a; --ink: #e5e7eb; --soft: #9ca3af; --line: #4b5563; --band: #162033; --ship-fill: #134e4a; --ship-edge: #5eead4; --ship-ink: #ccfbf1; --deep-fill: #2dd4bf; --deep-ink: #042f2e; --note-fill: #5b4a12; --note-ink: #fef3c7; --ai-fill: #3b2766; --ai-edge: #b79cf0; --ai-ink: #ede9fe; --lang: #1e3a5f; --edit-fill: #1f2937; --nb-fill: #1f3a28; --nb-edge: #86b99a; --nb-ink: #d9f0df; --arrow: #7fb3d5; } }
@@ -67,12 +67,12 @@
 <path class="arr" d="M563 118 V142"/><path class="arr" d="M583 142 V118"/>
 <path class="arr" d="M752 118 V142"/><path class="arr" d="M772 142 V118"/>
 
-<path class="dash2" d="M452 165 H484"/>
-<text class="s" x="468" y="157" text-anchor="middle">link</text>
+<path class="dash2" d="M352 93 H480"/>
+<text class="s" x="416" y="85" text-anchor="middle">open in the other</text>
 
 <rect class="common" x="50" y="214" width="630" height="46" rx="8"/>
 <text class="t" x="365" y="234" text-anchor="middle">Common code</text>
-<text class="s" x="365" y="251" text-anchor="middle">graph and GUI definitions · authoring · host and runtime</text>
+<text class="s" x="365" y="251" text-anchor="middle">graph and GUI definitions · authoring · host and runtime · start-up</text>
 <path class="arr2" d="M250 190 V212"/>
 <path class="arr2" d="M668 190 V212"/>
 <rect class="ai" x="720" y="210" width="130" height="54" rx="8"/>
