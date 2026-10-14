@@ -96,8 +96,9 @@
 <text class="ai-t" x="786" y="466" text-anchor="middle">AI at run time</text>
 <text class="ai-s" x="786" y="486" text-anchor="middle">a model, tool servers</text>
 <path class="arr" d="M135 346 V436"/>
-<path class="arr" d="M335 346 V436" transform="translate(27 0)"/>
-<path class="arr" d="M595 346 V436" transform="translate(-27 0)"/>
+<path class="arr" d="M440 346 V398 H528 V436"/>
+<path class="arr" d="M606 346 V436"/>
+<text class="s" x="616" y="372">graph and node files, not the GUI</text>
 <path class="arr" d="M212 458 H248"/>
 <path class="arr" d="M248 490 H212"/>
 <path class="arr" d="M422 458 H484"/>
