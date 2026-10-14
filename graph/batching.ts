@@ -111,6 +111,24 @@ export function mergeBatchOutputs(
 }
 
 /**
+ * Which keys a body returned, when none of them is a port of a node with exactly one output -- a body that meant the whole object, which
+ * `reconcileOutputs` takes as the result. Null when it is something else. (`wrappedNote` says it.)
+ */
+export function wrappedKeys(node: GraphNode, result: Record<string, unknown>): string[] | null {
+  const portIds = node.outputs.map((p) => p.id);
+  if (!result || typeof result !== 'object' || Array.isArray(result) || !portIds.length) return null;
+  if (portIds.some((id) => id in result)) return null;
+  const keys = Object.keys(result);
+  return keys.length && portIds.filter((id) => id !== ERROR_PORT).length === 1 ? keys : null;
+}
+
+/** What a node that handed on the whole object, because none of its keys is a port, is told: which it returned, and which it was to. */
+export function wrappedNote(node: GraphNode, keys: string[]): string {
+  const port = node.outputs.find((p) => p.id !== ERROR_PORT)!;
+  return `It returned ${keys.map((key) => `"${key}"`).join(', ')}, but its result is called "${port.id}": the whole of what it returned was taken as the result. Return { ${port.id}: ... } to say what it is.`;
+}
+
+/**
  * Line a body's return value up with the ports the node declares.
  *
  * A body that returns keys matching none of them, on a node with exactly one

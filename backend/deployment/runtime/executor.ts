@@ -30,7 +30,7 @@
 import type { Graph, GraphEdge, GraphNode, ExecutionResult, NodeResult, Port } from '../../../graph/graph.ts';
 import { resultKeys, type Kinds, type NodeDefinition } from '../../../graph/nodes/NodeDefinition.ts';
 import type { BlockWindow, Runtime } from '../../../graph/nodes/Runtime.ts';
-import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs } from '../../../graph/batching.ts';
+import { atMost, batchItems, mergeBatchOutputs, reconcileOutputs, wrappedKeys, wrappedNote } from '../../../graph/batching.ts';
 import { Unread, filePorts, readPorts } from '../../../graph/fileInputs.ts';
 import { RUN_PORT, firedNodes, neededFor, triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
 import { readingWires, nodeName, topologicalLevels } from '../../../graph/order.ts';
@@ -367,7 +367,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
           });
           continue;
         }
-        const { produced, failures } = await runNode(
+        const { produced, failures, notes } = await runNode(
           runner, node, arrived, withSubgraph(atNode(runtime, nodeId), options, node, depth, windows), signal,
         );
         if (signal?.aborted) throw new Error('Stopped.');
@@ -375,7 +375,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         if (!failures.length) options.latch?.set(latchKey(node), produced);
         // Kept only when it went through whole: a partial result is not one to hand back.
         if (key && !failures.length) options.reuse!.set(key, produced);
-        const result = ranTo(element, node, inputs, produced, failures);
+        const result = ranTo(element, node, inputs, produced, failures, notes);
         if (result.status === 'partial') partial.add(nodeId);
         finish(result);
       } catch (error) {
@@ -580,10 +580,10 @@ export async function executeNode(
   const runtime = stoppable(options.runtime, options.signal);
   try {
     const arrived = await readInputs(element, node, inputs, runtime, options.registry);
-    const { produced, failures } = await runNode(
+    const { produced, failures, notes } = await runNode(
       runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0, windowsOf(graph, node, options.registry)), options.signal,
     );
-    return ranTo(element, node, inputs, produced, failures);
+    return ranTo(element, node, inputs, produced, failures, notes);
   } catch (error) {
     return failedWith(element, node, inputs, error);
   }
@@ -630,13 +630,15 @@ function ranTo(
   inputs: Record<string, unknown>,
   produced: Record<string, unknown>,
   failures: string[] & { total: number },
+  notes: string[] = [],
 ): NodeResult {
   const iface = element.outputInterface(node);
   const broken = iface ? mismatches(produced, iface) : [];
+  const said = [...notes, ...broken.map((line) => `Does not fit its output.js: ${line}`)];
   return {
     node_id: node.id, status: failures.length ? 'partial' : 'success', inputs, outputs: produced,
     error: failures.length ? itemFailures(failures) : null,
-    ...(broken.length ? { messages: broken.map((line) => `Does not fit its output.js: ${line}`) } : {}),
+    ...(said.length ? { messages: said } : {}),
   };
 }
 
@@ -778,11 +780,14 @@ async function runNode(
   inputs: Record<string, unknown>,
   runtime: Runtime,
   signal?: AbortSignal,
-): Promise<{ produced: Record<string, unknown>; failures: string[] & { total: number } }> {
+): Promise<{ produced: Record<string, unknown>; failures: string[] & { total: number }; notes: string[] }> {
   const element = runner.kind;
   if (element.batchMode(node) !== 'per_item') {
-    const produced = reconcileOutputs(node, await runner.execute(node, inputs, runtime));
-    return { produced, failures: Object.assign([] as string[], { total: 1 }) };
+    const returned = await runner.execute(node, inputs, runtime);
+    // Said only of a cell of a window, whose code is written to name its result (the seeded code does): elsewhere a body that returns the
+    // whole object is a way to write it, and means it.
+    const wrapped = node.config.window ? wrappedKeys(node, returned) : null;
+    return { produced: reconcileOutputs(node, returned), failures: Object.assign([] as string[], { total: 1 }), notes: wrapped ? [wrappedNote(node, wrapped)] : [] };
   }
 
   const { items, fanned } = batchItems(node, inputs);
@@ -817,7 +822,7 @@ async function runNode(
   if (items.length && failed.length === items.length) throw new Error(failed[0].message);
   const merged = mergeBatchOutputs(node, produced, fanned);
   if (catches && failures.length) merged[ERROR_PORT] = itemFailures(failures);
-  return { produced: merged, failures };
+  return { produced: merged, failures, notes: [] };
 }
 
 /**

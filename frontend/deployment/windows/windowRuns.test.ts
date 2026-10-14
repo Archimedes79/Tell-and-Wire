@@ -139,6 +139,25 @@ describe('running a window', () => {
     expect(succeeded(snapshot('e', { result: { status: 'success', node_results: [next], outputs: {} } }), 'summarize_2', ['summarize', 'summarize_2'])).toBe(false);
   });
 
+  it('does not start a window that reads a file, with none chosen: it says so', async () => {
+    const reading: Windows = {
+      name: 'Reader', description: '',
+      windows: [{
+        id: 'read', title: 'Read', span: 8,
+        inputs: [{ name: 'File', kind: 'file' }],
+        steps: [{ name: 'Words', sentence: 'Count the words of @File.', how: 'code', code: 'function run() { return { words: 1 }; }' }],
+        outputs: [{ name: 'Words', kind: 'text', rows: 2 }],
+      }],
+    };
+    const pages = pageWindows(windowsToGraph(reading).gui!.blocks as never[]);
+    const { started, run } = host();
+    expect(await runWindows({ windows: pages, id: 'read', held: () => '', run })).toEqual([]);
+    expect(started).toEqual([]);
+    expect(useWindowRuns.getState().problems.read).toEqual({ state: 'empty', message: 'Nothing to do: choose a file for "File" first.' });
+    // With one chosen it starts.
+    expect(await runWindows({ windows: pages, id: 'read', held: () => 'data/x.csv', run })).toEqual(['read']);
+  });
+
   it('stops where a question is waiting, and where no round began', async () => {
     const asked = host();
     expect(await runWindows({ windows, id: 'english', held, run: asked.run, asking: () => true })).toEqual([]);

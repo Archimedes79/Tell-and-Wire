@@ -33,7 +33,7 @@ export interface NodeState {
 
 export interface WindowResult {
   outcome: Outcome;
-  /** Why it did not come to anything, in the host's words; empty for a window that did. */
+  /** Why it did not come to anything, in the host's words; for a window that did, a word about how, or empty. */
   message: string;
   /** What each output block of the window shows, by block id. */
   shown: Record<string, unknown>;
@@ -124,6 +124,29 @@ const answers = (windows: Windows['windows']): unknown => windows.map(({ span: _
 }));
 export const sameWindows = (a: Windows, b: Windows): boolean => JSON.stringify(answers(a.windows)) === JSON.stringify(answers(b.windows));
 
+/**
+ * The windows whose answers still stand after the document went from *before* to *after*: those written the same, that take from no window
+ * that was not. Adding a window, or editing one, leaves what the others made where it is.
+ */
+export function standing(before: Windows, after: Windows): Set<string> {
+  const was = new Map(before.windows.map((window) => [window.id, JSON.stringify(answers([window]))]));
+  const kept = new Set(after.windows.filter((window) => was.get(window.id) === JSON.stringify(answers([window]))).map((window) => window.id));
+  // One that takes from a window that does not stand does not either, however far back.
+  for (let again = true; again;) {
+    again = false;
+    for (const window of after.windows) {
+      if (kept.has(window.id) && window.inputs.some((input) => input.from && !kept.has(input.from.window))) { kept.delete(window.id); again = true; }
+    }
+  }
+  return kept;
+}
+
+/** What of the run state stands after an edit: the answers of the windows in *ids*, and what is recorded of their runs. */
+const keptAfter = (state: Pick<NotebookState, 'results' | 'done'>, ids: ReadonlySet<string>): Pick<NotebookState, 'results' | 'done'> => ({
+  results: Object.fromEntries(Object.entries(state.results).filter(([id]) => ids.has(id))),
+  done: { ran: new Set([...state.done.ran].filter((id) => ids.has(id))), changed: new Set([...state.done.changed].filter((id) => ids.has(id))) },
+});
+
 export const useNotebook = create<NotebookState>((set, get) => ({
   doc: null, graph: null, path: '', saved: '', savedAt: 0, stale: false, past: [], future: [], epoch: 0,
   mode: 'write', source: false, window: null, tab: 'cells', dockOpen: false, hot: null,
@@ -155,7 +178,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
       // A window that is gone has no cells open.
       window: next.windows.some((one) => one.id === state.window) ? state.window : null,
       // What the windows made answers to the windows as they were; the text of the page changes nothing of it.
-      ...(sameWindows(doc, next) ? {} : { results: {}, done: NOTHING_RAN }),
+      ...(sameWindows(doc, next) ? {} : keptAfter(state, standing(doc, next))),
     }));
   },
 
@@ -244,7 +267,7 @@ function step(from: 'past' | 'future', to: 'past' | 'future'): void {
     doc: target, [from]: stack.slice(0, -1), [to]: [...state[to], doc],
     // A window that no longer exists has no cells open.
     window: target.windows.some((one) => one.id === state.window) ? state.window : null,
-    ...(sameWindows(doc, target) ? {} : { results: {}, done: NOTHING_RAN }),
+    ...(sameWindows(doc, target) ? {} : keptAfter(state, standing(doc, target))),
   }) as Partial<NotebookState>);
 }
 

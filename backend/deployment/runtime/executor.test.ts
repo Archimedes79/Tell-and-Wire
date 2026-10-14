@@ -359,3 +359,19 @@ describe('the room a result is shown in', () => {
     expect(reuse.key(make, {})).toBe(reuse.key(make, {}, undefined, []));
   });
 });
+
+describe('a cell of a window that returns another key than its result', () => {
+  it('says which it returned and which it was to, and still takes the whole as its result', async () => {
+    const cell = (window: boolean): GraphNode => ({
+      ...node('a', 'code', { code: 'x', ...(window ? { window: { id: 'w' } } : {}) }),
+      outputs: [{ id: 'totals', name: 'Totals', kind: 'output', data_type: 'any', multi: false, required: false, description: '' }],
+    });
+    const runtime = { ...nowhere, code: { run: async () => ({ total: [1] }) } };
+    const run = async (window: boolean) => (await executeGraph(graphOf([cell(window)], []), { runtime, registry })).node_results.find((one) => one.node_id === 'a')!;
+    const told = await run(true);
+    expect(told.outputs).toEqual({ totals: { total: [1] } });
+    expect(told.messages?.[0]).toMatch(/returned "total", but its result is called "totals"/);
+    // Anywhere else returning the whole object is a way to write it, and means it.
+    expect((await run(false)).messages).toBeUndefined();
+  });
+});

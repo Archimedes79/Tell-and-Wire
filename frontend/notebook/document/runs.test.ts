@@ -92,7 +92,8 @@ describe('running windows', () => {
     expect(events().slice(-1)).toEqual(['first']);
     expect(useNotebook.getState().results.first).toMatchObject({ outcome: 'empty' });
     expect(useNotebook.getState().results.first.message).toMatch(/nothing to ask/);
-    expect(useNotebook.getState().results.second).toBeUndefined();
+    // ...and says so, rather than standing there as if nothing had been asked of it.
+    expect(useNotebook.getState().results.second).toMatchObject({ outcome: 'empty', message: expect.stringMatching(/^Not run:/) });
   });
 
   it('says why a round failed, on the window, and stops there', async () => {
@@ -100,6 +101,8 @@ describe('running windows', () => {
     await runWindow('second');
     expect(events()).toEqual(['first']);
     expect(useNotebook.getState().results.first).toMatchObject({ outcome: 'failed', message: 'Could not reach the model.' });
+    // The one behind it was to run and did not: it says so, and why.
+    expect(useNotebook.getState().results.second).toMatchObject({ outcome: 'empty', message: expect.stringMatching(/^Not run: .* did not come to anything.$/) });
   });
 
   it('says so when the host could not be reached at all', async () => {

@@ -116,6 +116,13 @@ export async function runWindows(args: {
     for (const one of plan) {
       const window = windows.find((candidate) => candidate.id === one);
       if (!window?.starter) break;
+      // A window that reads files, with none chosen, has nothing to do -- not a round whose code runs on nothing and ends in an empty "Done".
+      const reads = window.blocks.filter((block) => block.kind === 'input_picker' && window.inputs.includes(block.id));
+      if (reads.length && reads.every((block) => !String(held(block.id) ?? '').trim())) {
+        const what = reads.length === 1 ? `a ${reads[0].mode === 'directory' ? 'folder' : 'file'} for "${reads[0].label || reads[0].id}"` : 'what to read';
+        useWindowRuns.setState((state) => ({ problems: { ...state.problems, [window.id]: { state: 'empty', message: `Nothing to do: choose ${what} first.` } } }));
+        break;
+      }
       const before = useSession.getState().round?.round_id ?? null;
       // What its blocks held when it was started: a change made while it runs is for the next round.
       const used = Object.fromEntries(window.inputs.map((blockId) => [blockId, held(blockId)]));

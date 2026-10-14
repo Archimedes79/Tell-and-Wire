@@ -58,7 +58,9 @@ function outcomeOf(round: RoundSnapshot, id: string, ids: readonly string[]): { 
   // A node with nothing to do: an input left empty is a window that did nothing, and the one after it would only be handed that.
   const idle = nodes.find((node) => node.status === 'skipped' && !node.held);
   if (idle) return { outcome: 'empty', message: idle.messages?.[0] ?? 'Nothing arrived, so there was nothing to do.' };
-  return { outcome: 'done', message: '' };
+  // A window that came to something, with a word about it: a cell returned another key than its result, and the whole of it was taken.
+  const told = nodes.map((node) => node.messages?.[0]).find((line) => line?.startsWith('It returned '));
+  return { outcome: 'done', message: told ?? '' };
 }
 
 const nodesOf = (round: RoundSnapshot): Record<string, NodeState> => Object.fromEntries((round.result?.node_results ?? []).map((node) => [node.node_id, {
@@ -115,6 +117,23 @@ async function runOne(id: string, epoch: number): Promise<boolean> {
   return outcome === 'done';
 }
 
+/**
+ * The windows that were to run after window *failed* and did not, said on them: not run, and why -- they would only have been handed what it
+ * did not make. Left unsaid where the document was changed meanwhile: what was to run is not what is there.
+ */
+function saySkipped(ids: readonly string[], failed: string, epoch: number): void {
+  const { doc, epoch: now } = useNotebook.getState();
+  if (!doc || now !== epoch || !ids.length) return;
+  const title = doc.windows.find((one) => one.id === failed)?.title ?? failed;
+  const result = (message: string, outcome: Outcome): WindowResult => ({ outcome, message, shown: {}, nodes: {} });
+  useNotebook.setState((state) => ({
+    results: {
+      ...state.results,
+      ...Object.fromEntries(ids.map((id) => [id, stopping ? result('', 'stopped') : result(`Not run: "${title}" did not come to anything.`, 'empty')])),
+    },
+  }));
+}
+
 /** Run window *id*, after the windows before it that are not current. */
 export async function runWindow(id: string): Promise<void> {
   stopping = false;
@@ -129,8 +148,10 @@ async function runChain(id: string): Promise<void> {
   useNotebook.setState({ going: order, error: '' });
   try {
     await hold();
-    for (const one of order) {
-      if (stopping || !(await runOne(one, epoch))) break;
+    for (const [at, one] of order.entries()) {
+      if (!stopping && await runOne(one, epoch)) continue;
+      saySkipped(order.slice(at + 1), one, epoch);
+      break;
     }
   } catch (error) {
     // The host could not be reached, or turned the round down: said on the window whose round it was, as a round that failed, and the round

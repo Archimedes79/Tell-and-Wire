@@ -125,6 +125,8 @@ export default function WindowBox({ window, writing }: { window: Window; writing
           })}
         </div>
       )}
+
+      {state === 'done' && result?.message && <div className="nb-hint">{result.message}</div>}
     </section>
   );
 }

@@ -572,7 +572,7 @@ everything, with Node.
   sandboxed frame with no network and talks to the editor through three messages (`pageDocument.ts`,
   `ServerPage.tsx`).
 - Word and PDF files are the `documents` tool server's (`mcp/documents`): the nodes hand a Word file
-  on as its path, a PDF or a picture as itself for a model, a text file as text, and refuse a file
+  on as its path, a PDF or a picture as itself for a model, a text file as text (of any size), and refuse a picture or PDF
   over 8 MB unread (`graph/nodes/fileContent.ts`).
 - A code body runs in a sandbox of its own: see "A language" above (`sandbox.test.ts`).
 

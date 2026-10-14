@@ -20,7 +20,7 @@ export function isInlineFile(value: unknown): boolean {
   return typeof value === 'string' && /^data:(image\/[\w.+-]+|application\/pdf);base64,/.test(value);
 }
 
-/** What is in the file at *path*, as a node reading it is handed it. A file over 8 MB is refused unread. */
+/** What is in the file at *path*, as a node reading it is handed it. A picture or a PDF over 8 MB is refused unread; text has no limit. */
 export async function fileContent(path: string, files: FileService): Promise<string> {
   if (/\.docx$/i.test(path)) return path;
   const mediaType = inlineMediaType(path);

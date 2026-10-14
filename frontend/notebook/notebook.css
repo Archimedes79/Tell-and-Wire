@@ -131,6 +131,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-run { display: flex; align-items: center; gap: 10px; }
 .nb-out { border: 1px solid var(--line); background: var(--soft); border-radius: 10px; padding: 10px 12px; overflow: auto; font-size: 15px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .nb-out.waiting { display: flex; align-items: center; justify-content: center; border-style: dashed; color: var(--muted); }
+.nb-hint { font-size: 13px; color: var(--amber); background: var(--amber-bg); border-radius: 8px; padding: 6px 10px; margin-top: 8px; }
 .nb-out.msg { color: var(--amber); background: var(--amber-bg); border-color: transparent; }
 .nb-out.msg.failed { color: var(--red); background: var(--red-bg); }
 .nb-out.msg .nb-link { color: inherit; text-decoration: underline; padding: 6px 0 0; }
