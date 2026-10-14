@@ -70,6 +70,14 @@ async function runOne(id: string, epoch: number): Promise<boolean> {
   const { doc } = useNotebook.getState();
   const window = doc?.windows.find((one) => one.id === id);
   if (!doc || !window) return false;
+  // A window that reads files, with none chosen, has nothing to do -- not a round whose code runs on nothing and "comes to" an empty answer.
+  const reads = window.inputs.filter((one) => one.kind === 'file' || one.kind === 'folder');
+  const chosen = reads.filter((one) => String(heldValue(window, inBlock(window, one)) ?? '').trim());
+  if (reads.length && !chosen.length) {
+    const message = `Nothing to do: choose ${reads.length === 1 ? `a ${reads[0].kind === 'folder' ? 'folder' : 'file'} for "${reads[0].name}"` : 'what to read'} first.`;
+    useNotebook.setState((state) => ({ results: { ...state.results, [id]: { outcome: 'empty', message, shown: {}, nodes: {} } } }));
+    return false;
+  }
   running = id;
   const session = held.session ?? undefined;
   const { round_id: roundId } = await call('startRound', {
