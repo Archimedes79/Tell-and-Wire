@@ -37,10 +37,32 @@ servers with their packages, installed by `scripts/package.mjs` (it has Node and
 package with its own licence; a deployed tool carries none. Their checks (`npm test`,
 `typecheck`, `licenses`) run inside each folder, in `.github/workflows/mcp.yml`.
 
+## The picture to keep
+
+![Design, the project as plain files, and use: three bands, and only files and a few named things cross between them](docs/images/overview.svg)
+
+Code changes keep this layered modularity (`docs/images/overview.svg`, in the README):
+
+- **Three bands, files between them.** The editor designs and writes a project; a deployment reads
+  it and runs it. What the editor knows must be in a file, in a plain format a person or git can
+  read: the files are the contract, also for someone who edits them without the editor.
+- **The engine is handed the graph, never the GUI.** Nodes, their files and the wires -- that is
+  all a core gets, through the core protocol. Session, state, clock, queue of rounds and HTTP are
+  the host's; running nodes is the language-specific engine's. What depends on the language lives in
+  the runtime, what does not in `graph/`, `gui/` or the host, so another language can be added
+  without touching the rest.
+- **Graph and GUI meet by name only**: a block fires a start point, shows an end point or a memory
+  node. A block never reaches a node, and a block can read what a data node holds with no round.
+- **Two models, two jobs**: the one that writes belongs to the editor; the one that runs the AI
+  nodes is asked by the engine. Neither side imports the other's.
+- A change that has to cross one of these lines the wrong way -- the editor into a deployment, the
+  engine into the session or the GUI, a node into a block -- is a sign to move it, not to add the
+  import. Say so in the plan.
+
 ## How a change is made
 
 1. **Plan** the architecture for bigger changes, as modules: where it lives, what it
-   replaces, what goes.
+   replaces, what goes. Check it against the picture above.
 2. **Code**: high-quality code whose working you understand. Simplify; remove what is not
    needed.
 3. **Test**: write and run automated tests. Keep their number low; remove the least

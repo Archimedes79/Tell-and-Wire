@@ -12,6 +12,11 @@ and executes it. A **package** is a project together with the deployment's code:
 writes, a folder that runs wherever Node runs. The system can save and transfer what is deployed
 because a package is nothing but files.
 
+![Design in the editor, the project as plain files, use in a deployment: what crosses between the bands is files, and the graph is handed to the engine without the GUI](images/overview.svg)
+
+The picture to keep: the editor designs, the project is files, a deployment runs them, and the engine of a
+language is the one part that can be swapped (`CLAUDE.md`). The same, by folders:
+
 ![The editor designs a project, the deployment keeps one in use and executes it](images/architecture.svg)
 
 Teal ships in a package, grey dashed is only the editor. Three cuts run through everything:
