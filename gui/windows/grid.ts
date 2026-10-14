@@ -11,3 +11,10 @@ export const WINDOW_BORDER = 1;
  * line that names it (`frontend/deployment/gui/surface/GuiSurface.tsx`). What is drawn in a block has the rest.
  */
 export const BLOCK_CHROME = { width: 30, height: 42 };
+
+/**
+ * What an image block keeps of its room for the picture's own setting, in pixels across and down: the delivered image view sets a picture in 8px
+ * of padding on each side (`frontend/deployment/gui/widgets/image_view/ImageViewWidgetView.tsx`), so a picture drawn for the whole content
+ * of the block is that much too large and is scrolled.
+ */
+export const IMAGE_PADDING = 16;

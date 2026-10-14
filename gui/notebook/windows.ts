@@ -28,7 +28,7 @@
 import type { DataType, Graph, GraphEdge, GraphNode, Port, RawConfig } from '../../graph/graph.ts';
 import { wireOf } from '../../graph/files/flow.ts';
 import { GUI_GAP, GUI_MAX_CELL } from '../size.ts';
-import { BLOCK_CHROME, WINDOW_BORDER, WINDOW_PADDING } from '../windows/grid.ts';
+import { BLOCK_CHROME, IMAGE_PADDING, WINDOW_BORDER, WINDOW_PADDING } from '../windows/grid.ts';
 import { plotColours, scheme } from '../windows/scheme.ts';
 import { pageOf } from './pageModel.ts';
 import { registry } from '../../graph/nodes/registry.ts';
@@ -521,7 +521,9 @@ export function windowFacts(doc: Windows, window: Window, step: Step): Record<st
     const made = shownResult(window, one);
     if (!made || producer(window, made)?.step !== step) return [];
     const piece = outPiece(window, one);
-    return [{ output: one.name, kind: one.kind, result: made, cells: piece.cells, rows: piece.rows, width: wide(piece.cells), height: high(piece.rows) }];
+    // A picture has the block's content less the setting the image view gives it (`IMAGE_PADDING`).
+    const pad = one.kind === 'image' ? IMAGE_PADDING : 0;
+    return [{ output: one.name, kind: one.kind, result: made, cells: piece.cells, rows: piece.rows, width: wide(piece.cells) - pad, height: high(piece.rows) - pad }];
   });
   return {
     id: window.id, title: window.title, span: window.span, rows: windowRows(window),

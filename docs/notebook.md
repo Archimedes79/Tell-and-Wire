@@ -113,7 +113,7 @@ Beside `node.windows` of every GUI (the blocks that show what a body hands on, w
 
 A code cell is `function run(inputs, node)`. Beside `node.llm`, a cell of a window has `node.window`: the window it is in
 (`id`, `title`, `span`, `rows`), the outputs it feeds (`shows`: for each, `kind`, `cells`, `rows` and `width` x `height`, the pixels a
-drawing has in that block on a full-width page, the block's card taken off) and the scheme as values (`scheme`: `background`,
+drawing has in that block on a full-width page, the block's card taken off, and for an image the setting the picture is given in it) and the scheme as values (`scheme`: `background`,
 `surface`, `text`, `muted`, `accent`, `series` for chart series). A chart takes a figure (`{kind, title, points}`) and draws it to fit;
 a cell that draws SVG itself, which is shown as a picture where the scheme's CSS variables do not reach, reads its room and its colours from here. The facts are written into the settings of the code node
 (`config.window`, `windowFacts` in `gui/notebook/windows.ts`) and made again with every graph, so a changed width or scheme reaches the code on its next run. On a narrower page everything scales alike, so text in a drawing
