@@ -33,7 +33,7 @@ Branch `tell-and-wire-notebook`, built on `main`. A product of its own: new fold
 
 | Part | Folder | Notes |
 |---|---|---|
-| The model of windows and page; compiling to graph, schedule and gui | `gui/notebook/` | Neutral. `windows.ts` (windows), `page.ts` and `pageModel.ts` (the page, Markdown), `edit.ts` (the edits, pure functions), `read.ts`. Only the notebook uses it; a package leaves it behind. |
+| The model of windows and page; compiling to graph, schedule and gui | `gui/notebook/` | Neutral. `windows.ts` (windows), `page.ts` and `pageModel.ts` (the page, Markdown), `fromGraph.ts` (the windows read back from a graph and its gui), `edit.ts` (the edits, pure functions), `read.ts`. Only the notebook uses it; a package leaves it behind. |
 | The order to run windows in | `gui/windows/` | Neutral and shipped: the delivered page needs it. |
 | Reading and writing `graph-windows.json`; a window from a sentence; the notebook's own server | `backend/notebook/` | Authoring only. Four routes (`api.ts`), started by `main.ts`. What it writes a project with is `backend/authoring/` (shared with the graph editor). |
 | The page of a delivered tool | `frontend/deployment/windows/` | Shipped. The words and the framed windows, run in order; knows no editor. |
@@ -64,6 +64,23 @@ my_tool/
 
 `graph-windows.json` carries a `signature` of what it made. When a project is opened and the graph on disk no longer matches
 (it was edited in the graph editor), the notebook says so and nothing is overwritten unasked. A graph that is not what the windows were saved with but is what they make today (saved by another version) is not a change.
+
+### What the files keep of a page
+
+The principle (`docs/architecture.md`, *what runs and how it is written are apart*): what runs is the graph, what is shown is the gui, and the page is those two read as windows. A window is a row of the schedule -- its start point, the cells that do something, what is shown. Its inputs and outputs are the gui's blocks that send to that start point and show those end points, and the words are text blocks with a `page_at`. The `@Name` of a sentence is only how the notebook *writes* a wire: the wire is stored as a wire, the sentence as the node's description (each mention as the name it points at, in quotes), and the chip "takes: File" is drawn from the ports the node has.
+
+`graphToWindows` (`gui/notebook/fromGraph.ts`) reads the windows back from the graph and the gui alone. `backend/notebook/fromGraph.test.ts` holds the round trip: each example, and a page that uses every kind of input, output and step, is made into files, read back and made again; the second set of files is the first, and the windows say the same. So for these `graph-windows.json` is a second copy. It is still written, and still what the notebook edits, because dropping it changes what a saved project is. What stands in the way is what a page says and the files do not keep. Each is a test in the same file, so that it is a decision and not a surprise:
+
+| Not kept | Why | What would keep it |
+|---|---|---|
+| `ask`, what a window asks of the person | `windowsToGraph` does not write it anywhere | write it as the description of the start point, or drop the field |
+| The code of a cell a model does | the graph has no code for an `ai` node; the notebook keeps it to switch back | drop it on switching, or keep it in the node's `code.js` |
+| A text from a list, where a *model* does the cell for each file | both end in an end point that takes a list; for a cell of code the kind is kept (`config.window.shows`) | a field on the output's block |
+| A quotation mark around a name that is also an input (`"Tone"` for `@Tone`) | the description is told as a mention is, in quotes, and a quoted input name is read back as a mention | a mark of the notebook's own, not read by a model |
+| Which window an input takes from, where two have one title | the caption block names the window by its title; the wire says it exactly, but the caption is what is read | `from_window` and `from_output` on the caption block |
+| The ids of the page's blocks, and widths as shares | the gui keeps a place and a number of cells | nothing: the ids are only keys, and cells are what is drawn |
+
+Found on the way: a code cell's `code.js` ends in a footer, which the loader takes off by its exact text. A project written before the footer last changed keeps the old one in the code, and the next save adds the new one after it. The examples were saved before that change; they have been saved again.
 
 ## Between the notebook and the full version
 
