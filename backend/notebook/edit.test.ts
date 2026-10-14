@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   addInput, addOutput, addStep, addWindow, blankPage, freshName, kindOfOutput, moveCell, patchOutput, removeCell, removeWindow, renameInput, renameStep, renameTool, repoint,
 } from '../../gui/notebook/edit.ts';
-import { windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
+import { idOf, mentionOf, windowProblems, windowsToGraph, type Windows } from '../../gui/notebook/windows.ts';
 import { owns } from '../../gui/windows/owns.ts';
 import { problemsIn } from '../../gui/authoring/check.ts';
 
@@ -187,5 +187,18 @@ describe('the name of the tool', () => {
     expect(own.page![0].text).toBe('A title of mine');
     // No page of its own: the name is all there is.
     expect(renameTool({ ...doc, page: undefined }, 'X').name).toBe('X');
+  });
+});
+
+describe('names with more than letters', () => {
+  it('are pointed at by what a mention can hold, and a rename follows them there', () => {
+    expect(mentionOf('Bill (EUR)')).toBe('Bill_EUR');
+    expect(mentionOf('  Size in m²  ')).toBe('Size_in_m²');
+    expect(mentionOf('R&D')).toBe('R_D');
+    // `idOf` reads the mention back as the name it came from, so a sentence finds its input.
+    expect(idOf(mentionOf('Bill (EUR)'))).toBe(idOf('Bill (EUR)'));
+    const doc = renameInput(page(), 'summarize', 0, 'Weight (kg)');
+    expect(doc.windows[0].steps[0].sentence).toBe('Say it more simply: @Weight_kg');
+    expect(windowProblems(doc)).toEqual([]);
   });
 });

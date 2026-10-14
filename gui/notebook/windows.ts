@@ -212,6 +212,12 @@ export function windowRows(window: Window): number {
 /** One `@Name` of a sentence, or `@Name.part` for one part of what it is: a file's `path`. */
 export interface Mention { name: string; part?: string }
 
+/**
+ * A name as a sentence points at it: a mention holds letters, digits, `_` and `-`, so anything else in a name -- a space, a bracket, a
+ * sign -- is `_`: `Bill (EUR)` is `@Bill_EUR`. `idOf` reads it back as the same name, so the mention finds what it was made from.
+ */
+export const mentionOf = (name: string): string => name.trim().replace(/[^\p{L}\p{N}_-]+/gu, '_').replace(/^_+|_+$/g, '') || 'x';
+
 /** The mentions of a sentence, in the order they stand. */
 export function mentions(sentence: string): Mention[] {
   return [...sentence.matchAll(/@([\p{L}\p{N}_-]+)(?:\.(path|content|message|history))?/gu)].map((found) => ({ name: found[1], ...(found[2] ? { part: found[2] } : {}) }));

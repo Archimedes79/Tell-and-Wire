@@ -3,7 +3,7 @@
 // Pure, so the editor's buttons are a line each and what they do is tested without a page. Nothing here
 // changes its argument: an edit returns the document it made, which is what makes undo a list of them.
 
-import { idOf, resultsOf, taken, type InKind, type OutKind, type Step, type Window, type WindowIn, type WindowOut, type Windows, SIZES } from './windows.ts';
+import { idOf, mentionOf, resultsOf, taken, type InKind, type OutKind, type Step, type Window, type WindowIn, type WindowOut, type Windows, SIZES } from './windows.ts';
 
 /** A name that is not in *taken*: *base*, else *base 2*, *base 3* ... (ids are made of names, so alike means the same). */
 export function freshName(base: string, taken: readonly string[]): string {
@@ -82,7 +82,7 @@ export function seedCode(window: Window, at: number): string {
 export const addStep = (doc: Windows, id: string, how: Step['how'] = 'ai'): Windows => inWindow(doc, id, (window) => {
   const last = window.steps[window.steps.length - 1];
   const name = freshName(how === 'ai' ? 'Step' : 'Code', namesIn(window));
-  const sentence = last ? `Continue with @${last.name}` : (window.inputs[0] ? `Do something with @${window.inputs[0].name}` : 'Say what should be done');
+  const sentence = last ? `Continue with @${mentionOf(last.name)}` : (window.inputs[0] ? `Do something with @${mentionOf(window.inputs[0].name)}` : 'Say what should be done');
   const made = { ...window, steps: [...window.steps, { name, sentence, how } as Step] };
   return how === 'code' ? { ...made, steps: made.steps.map((step, at) => (at === made.steps.length - 1 ? { ...step, code: seedCode(made, at) } : step)) } : made;
 });
@@ -185,7 +185,7 @@ export function renameStep(doc: Windows, id: string, at: number, name: string): 
 /** *sentence* with every `@old` made `@new` -- a mention's part (`@File.path`) stays, and a longer name that starts alike does not change. */
 export function repoint(sentence: string, old: string, name: string): string {
   const wanted = idOf(old);
-  const tag = name.trim().replace(/\s+/g, '_');
+  const tag = mentionOf(name);
   return sentence.replace(/@([\p{L}\p{N}_-]+)/gu, (whole, found: string) => (idOf(found) === wanted ? `@${tag}` : whole));
 }
 

@@ -1,6 +1,6 @@
 // What a window's inputs hold to begin with, and the ids the page and the graph share.
 
-import { inBlock, outEnd, type Window, type WindowIn, type WindowOut } from '../../../gui/notebook/windows.ts';
+import { inBlock, mentionOf, outEnd, type Window, type WindowIn, type WindowOut } from '../../../gui/notebook/windows.ts';
 
 export { inBlock, outEnd };
 
@@ -45,7 +45,7 @@ export function numbering(window: Window): Map<string, number> {
 }
 
 /** The name a sentence points at *name* by: a mention has no spaces. */
-export const tag = (name: string): string => name.trim().replace(/\s+/g, '_');
+export const tag = (name: string): string => mentionOf(name);
 
 /** What a sentence says to the model it is done by: each `@Name` as the name in quotes -- the one made from the windows (`gui/notebook/windows.ts`), so what is shown here is what is sent. */
 export { spoken } from '../../../gui/notebook/windows.ts';

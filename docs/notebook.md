@@ -15,7 +15,8 @@ its own small download; the graph editor does not know it is there, and the two 
 - A **window** stands in the page: a small box to use, with what goes in, a button, and what comes out. It never grows when a
   result arrives.
 - Under the page is **the list** of the open window (design A2): Ask, Do, Show, one card each, a sentence in each. A step
-  takes what its sentence points at with `@Name`; those chips are the wires, and no wire is drawn. Beside it
+  takes what its sentence points at with `@Name`; those chips are the wires, and no wire is drawn. A name of several words, or
+  with a bracket or a sign in it, is pointed at with underscores (`Bill (EUR)` is `@Bill_EUR`): the chips under a sentence put it in. Beside it
   **Under the hood** (the window as the graph it is) and **Debug** (every round, node by node).
 
 ## The screen
