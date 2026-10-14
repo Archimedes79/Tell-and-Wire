@@ -42,12 +42,21 @@ function Text({ part, onChange, onKeyDown }: {
     observer.observe(node);
     return () => observer.disconnect();
   }, [part.text, part.kind]);
-  return (
+  const area = (
     <textarea
       ref={box} rows={1} className={`nb-text ${part.kind}`} value={part.text ?? ''} placeholder={PLACEHOLDER[part.kind]} spellCheck
       aria-label={KIND_WORDS.find(([kind]) => kind === part.kind)?.[1] ?? 'Text'}
       onChange={(event) => onChange(event.target.value)} onKeyDown={onKeyDown}
     />
+  );
+  // A box cannot number its lines. The numbers are set under it, by a list of the same words at the same width whose own text is not
+  // shown, so each stands at the start of its item however the items wrap.
+  if (part.kind !== 'ol') return area;
+  return (
+    <div className="nb-ol">
+      <ol className="nb-ol-numbers" aria-hidden="true">{(part.text ?? '').split('\n').map((line, at) => <li key={at}>{line || '\u00a0'}</li>)}</ol>
+      {area}
+    </div>
   );
 }
 

@@ -82,7 +82,16 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-text.h2 { font-size: 22px; line-height: 1.25; font-weight: 600; margin-top: 14px; }
 .nb-text.p { font-size: 17px; line-height: 1.55; }
 .nb-text.ul { font-size: 17px; line-height: 1.55; padding-left: 26px; background-image: radial-gradient(circle, var(--ink) 2px, transparent 2.5px); background-size: 20px 1.55em; background-repeat: repeat-y; background-position: 4px 3px; }
-.nb-text.ol { font-size: 17px; line-height: 1.55; padding-left: 26px; background-image: linear-gradient(to bottom, transparent 44%, var(--muted) 44% 56%, transparent 56%); background-size: 9px 1.55em; background-repeat: repeat-y; background-position: 5px 3px; }
+.nb-text.ol { font-size: 17px; line-height: 1.55; padding-left: 26px; }
+.nb-ol { position: relative; border-radius: 6px; }
+.nb-ol:hover { background: var(--faint); }
+.nb-ol:focus-within { background: var(--faint2); }
+.nb-ol .nb-text.ol, .nb-ol .nb-text.ol:hover, .nb-ol .nb-text.ol:focus { position: relative; background: transparent; }
+.nb-ol-numbers { position: absolute; inset: 0; margin: 0; padding: 3px 4px 3px 26px; font-size: 17px; line-height: 1.55; font-family: inherit; pointer-events: none; overflow: hidden; }
+.nb-ol-numbers li { color: transparent; white-space: pre-wrap; overflow-wrap: break-word; }
+.nb-ol-numbers li::marker { color: var(--muted); }
+/* An empty line is no item (the page reads it so): it has no number, and the next is not one further. */
+.nb-ol-numbers li.blank { list-style: none; counter-increment: list-item 0; }
 .nb-text.quote { font-size: 17px; line-height: 1.55; padding-left: 16px; border-left: 3px solid var(--line2); border-radius: 0 6px 6px 0; font-style: italic; color: var(--muted); }
 .nb-text::placeholder { color: var(--placeholder); }
 .nb-space { height: 28px; border-radius: 6px; }
