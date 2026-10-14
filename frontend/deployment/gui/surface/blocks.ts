@@ -58,6 +58,8 @@ interface BlockKind {
    * sections do. Not said: it has the whole height it is given.
    */
   sits?: (widget: GuiWidget) => 'center' | undefined;
+  /** It chooses a file or a folder, and which: what a window that reads has nothing to do without. */
+  choosesPath?: (widget: GuiWidget) => 'file' | 'folder';
   /** It shows what a run hands back and nothing has yet: it stands as one line until something does. */
   waits?: (widget: GuiWidget, value: unknown) => boolean;
 }
@@ -66,7 +68,7 @@ export const BLOCKS: Record<WidgetKind, BlockKind> = {
   text: { View: TextWidgetView, sits: (widget) => (isHeadingRole(textRole(widget.mode)) ? 'center' : undefined) },
   divider: { View: DividerWidgetView, sits: () => 'center' },
   spacer: { View: SpacerWidgetView },
-  input_picker: { View: InputPickerWidgetView, labelsControl: true },
+  input_picker: { View: InputPickerWidgetView, labelsControl: true, choosesPath: (widget) => (widget.mode === 'directory' ? 'folder' : 'file') },
   // The box a person types into holds what they typed, which is what a run
   // sends; the reply is shown above it from what arrived. A box that only
   // shows is what arrived.

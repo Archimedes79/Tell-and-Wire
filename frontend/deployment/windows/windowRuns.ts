@@ -10,6 +10,7 @@ import { create } from 'zustand';
 import type { RoundSnapshot } from '../gui/kit/api/client';
 import { useSession } from '../gui/kit/api/session';
 import { owns } from '../../../gui/windows/owns.ts';
+import { BLOCKS } from '../gui/surface/blocks';
 import { planFor, recorded, type PageWindow, type RunOf } from './windowsInUse';
 
 /** A window whose last round came to nothing: why, in the words a person can read. */
@@ -117,9 +118,9 @@ export async function runWindows(args: {
       const window = windows.find((candidate) => candidate.id === one);
       if (!window?.starter) break;
       // A window that reads files, with none chosen, has nothing to do -- not a round whose code runs on nothing and ends in an empty "Done".
-      const reads = window.blocks.filter((block) => block.kind === 'input_picker' && window.inputs.includes(block.id));
+      const reads = window.blocks.filter((block) => BLOCKS[block.kind]?.choosesPath && window.inputs.includes(block.id));
       if (reads.length && reads.every((block) => !String(held(block.id) ?? '').trim())) {
-        const what = reads.length === 1 ? `a ${reads[0].mode === 'directory' ? 'folder' : 'file'} for "${reads[0].label || reads[0].id}"` : 'what to read';
+        const what = reads.length === 1 ? `a ${BLOCKS[reads[0].kind]!.choosesPath!(reads[0])} for "${reads[0].label || reads[0].id}"` : 'what to read';
         useWindowRuns.setState((state) => ({ problems: { ...state.problems, [window.id]: { state: 'empty', message: `Nothing to do: choose ${what} first.` } } }));
         break;
       }
