@@ -107,7 +107,7 @@ export function toMarkdown(doc: Windows): string {
 
 /**
  * The document with the page *text* says. A window it names that the document has stands where it is named; a name
- * it does not have is left out, and a window it does not name goes to the end.
+ * it does not have stays in the text as it was typed (so a slip is seen, not lost), and a window it does not name goes to the end.
  */
 export function fromMarkdown(doc: Windows, text: string): Windows {
   const ids = new Set(doc.windows.map((window) => window.id));
@@ -137,7 +137,7 @@ export function fromMarkdown(doc: Windows, text: string): Windows {
     else if (/^##(\s+|$)/.test(line)) { flush(); add('h2', { text: line.replace(/^##\s*/, '') }); }
     else if (/^#(\s+|$)/.test(line)) { flush(); add('h1', { text: line.replace(/^#\s*/, '') }); }
     else if (/^\s*\[space\]\s*$/.test(line)) { flush(); add('space'); }
-    else if (window) { flush(); if (ids.has(window[1])) add('window', { window: window[1] }); }
+    else if (window && ids.has(window[1])) { flush(); add('window', { window: window[1] }); }
     else if (/^[-*](\s+|$)/.test(line)) addLine('ul', line.replace(/^[-*]\s*/, ''));
     else if (/^\d+[.)](\s+|$)/.test(line)) addLine('ol', line.replace(/^\d+[.)]\s*/, ''));
     else if (/^>\s?/.test(line)) addLine('quote', line.replace(/^>\s?/, ''));

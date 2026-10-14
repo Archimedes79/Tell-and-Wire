@@ -91,3 +91,11 @@ describe('what a step hands on under a key of its own', () => {
     expect(toFigure({ figure: 1, other: 2 })).toBeNull();
   });
 });
+
+describe('a row of a name and a number', () => {
+  it('is a point, as a table row is: {word, count} needs no renaming', () => {
+    expect(toFigure([{ word: 'the', count: 8 }, { word: 'and', count: 2 }])?.points).toEqual([{ label: 'the', value: 8 }, { label: 'and', value: 2 }]);
+    expect(toFigure([{ a: 1, b: 2 }])).toBeNull();
+    expect(toFigure([{ word: 'the' }])).toBeNull();
+  });
+});

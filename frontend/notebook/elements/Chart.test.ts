@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { labelStep } from './Chart';
+import { figureOf, labelStep } from './Chart';
 import { drawingAspect, tableHeight } from './Widgets';
 
 describe('the names under a chart and the height of a table', () => {
@@ -24,5 +24,16 @@ describe('a finished drawing', () => {
     expect(drawingAspect('<svg><rect/></svg>')).toBeNull();
     expect(drawingAspect('just words')).toBeNull();
     expect(drawingAspect([{ label: 'a', value: 1 }])).toBeNull();
+  });
+});
+
+describe('what a chart takes', () => {
+  it('a row of a name and a number is a point, as a table row is: {word, count} needs no renaming', () => {
+    expect(figureOf([{ word: 'the', count: 8 }, { word: 'and', count: 2 }])?.points).toEqual([{ label: 'the', value: 8 }, { label: 'and', value: 2 }]);
+    // Not a point: two numbers (which is the value?), no number, or a value that is not one.
+    expect(figureOf([{ a: 1, b: 2 }])).toBeNull();
+    expect(figureOf([{ word: 'the' }])).toBeNull();
+    expect(figureOf([{ label: 'a', value: 'lots' }])).toBeNull();
+    expect(figureOf([{ label: 'a', value: 3 }])?.points).toEqual([{ label: 'a', value: 3 }]);
   });
 });

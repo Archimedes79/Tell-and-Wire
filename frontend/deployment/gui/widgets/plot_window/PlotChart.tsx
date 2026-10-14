@@ -67,13 +67,31 @@ function toPoints(value: unknown): PlotPoint[] | null {
 
   const points: PlotPoint[] = [];
   for (let i = 0; i < value.length; i++) {
-    const item = value[i];
-    const obj = item && typeof item === 'object' ? item as Record<string, unknown> : undefined;
-    const number = numberOf(obj ? obj.y ?? obj.value : item);
-    if (number === null) return null;
-    points.push({ label: String(obj ? obj.x ?? obj.label ?? i : i), value: number });
+    const point = toPoint(value[i], i);
+    if (!point) return null;
+    points.push(point);
   }
   return points;
+}
+
+/**
+ * One thing of a list as a point: a number, `{ label, value }` or `{ x, y }` -- or a row of one number and its name, `{ word, count }`,
+ * which is what a table's row is and so what a step has at hand: the number is the value and the first text the label.
+ */
+function toPoint(item: unknown, at: number): PlotPoint | null {
+  const obj = item && typeof item === 'object' ? item as Record<string, unknown> : undefined;
+  if (!obj) {
+    const number = numberOf(item);
+    return number === null ? null : { label: String(at), value: number };
+  }
+  if ('y' in obj || 'value' in obj) {
+    const number = numberOf(obj.y ?? obj.value);
+    return number === null ? null : { label: String(obj.x ?? obj.label ?? at), value: number };
+  }
+  const numbers = Object.values(obj).filter((one) => typeof one === 'number');
+  if (numbers.length !== 1) return null;
+  const name = Object.values(obj).find((one) => typeof one === 'string');
+  return { label: String(obj.x ?? obj.label ?? name ?? at), value: numbers[0] as number };
 }
 
 /**

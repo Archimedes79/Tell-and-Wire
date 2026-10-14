@@ -42,19 +42,37 @@ export function soleValue(data: unknown): unknown {
   return keys.length === 1 && !['points', 'values', 'data'].includes(keys[0]) ? soleValue((data as Record<string, unknown>)[keys[0]]) : data;
 }
 
+/**
+ * One thing of a list as a point: a number, `{ label, value }` or `{ x, y }` -- or a row of one number and its name, `{ word, count }`,
+ * which is what a table's row is and so what a step has at hand: the number is the value and the first text the label.
+ */
+function pointOf(item: unknown, at: number): Point | null {
+  const object = item && typeof item === 'object' ? item as Record<string, unknown> : undefined;
+  if (!object) {
+    const value = numberOf(item);
+    return value === null ? null : { label: String(at), value };
+  }
+  if ('y' in object || 'value' in object) {
+    const value = numberOf(object.y ?? object.value);
+    return value === null ? null : { label: String(object.x ?? object.label ?? at), value };
+  }
+  const numbers = Object.values(object).filter((one) => typeof one === 'number');
+  if (numbers.length !== 1) return null;
+  const name = Object.values(object).find((one) => typeof one === 'string');
+  return { label: String(object.x ?? object.label ?? name ?? at), value: numbers[0] as number };
+}
+
 /** What arrived at a chart, as a figure: a figure itself, or a list of numbers or of `{ label, value }`. */
-function figureOf(given: unknown): Figure | null {
+export function figureOf(given: unknown): Figure | null {
   const data = soleValue(given);
   const raw = data && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, unknown> : null;
   const list = raw ? raw.points : data;
   if (!Array.isArray(list)) return null;
   const points: Point[] = [];
   for (let at = 0; at < list.length; at += 1) {
-    const item = list[at];
-    const object = item && typeof item === 'object' ? item as Record<string, unknown> : undefined;
-    const value = numberOf(object ? object.y ?? object.value : item);
-    if (value === null) return null;
-    points.push({ label: String(object ? object.x ?? object.label ?? at : at), value });
+    const point = pointOf(list[at], at);
+    if (!point) return null;
+    points.push(point);
   }
   // A model says "pie" as often as "donut", and "bar" for bars.
   const said = String(raw?.kind ?? '').toLowerCase();

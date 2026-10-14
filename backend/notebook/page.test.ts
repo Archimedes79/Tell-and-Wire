@@ -61,8 +61,8 @@ describe('the page of a notebook', () => {
     ]);
     expect(toMarkdown(read)).toBe(`${written}\n`);
     expect(fromMarkdown(read, toMarkdown(read)).page).toEqual(read.page);
-    // A name the document does not have is left out; a window the text does not name stands at the end.
-    expect(kinds(fromMarkdown(doc, '# Only\n\n[window: nowhere]'))).toEqual(['h1', 'window']);
+    // A name the document does not have stays as the words it was typed in; a window the text does not name stands at the end.
+    expect(kinds(fromMarkdown(doc, '# Only\n\n[window: nowhere]'))).toEqual(['h1', 'p', 'window']);
   });
 
   it('has numbered lists and quotations: written as 1. and >, counted again on the way out, one block to each run of lines of a kind', () => {
