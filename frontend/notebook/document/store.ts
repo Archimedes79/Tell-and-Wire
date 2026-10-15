@@ -95,6 +95,8 @@ export interface NotebookState {
   taken: string;
   /** What the model said about what it made. */
   explanation: string;
+  /** What the model sent back when its answer was not windows: the words it answered, to be read beside the error. */
+  said: string;
 
   /** A document, new or opened: nothing of the one before is left. */
   start: (doc: Windows, from?: { path: string; graph: Graph | null; stale: boolean }) => void;
@@ -151,7 +153,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
   doc: null, graph: null, path: '', saved: '', savedAt: 0, stale: false, past: [], future: [], epoch: 0,
   mode: 'write', source: false, window: null, tab: 'cells', dockOpen: false, hot: null,
   values: {}, results: {}, done: NOTHING_RAN, going: [], log: [],
-  busy: '', error: '', taken: '', explanation: '',
+  busy: '', error: '', taken: '', explanation: '', said: '',
 
   start: (opened, from) => {
     coalescing = null;
@@ -160,7 +162,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
     set({
       epoch: get().epoch + 1, doc, graph: from?.graph ?? null, path: from?.path ?? '', stale: from?.stale ?? false, saved: from ? JSON.stringify(doc) : '', savedAt: from ? Date.now() : 0,
       past: [], future: [], mode: 'write', source: false, window: null, tab: 'cells', dockOpen: false, hot: null,
-      values: {}, results: {}, done: NOTHING_RAN, going: [], log: [], error: '', taken: '', explanation: '',
+      values: {}, results: {}, done: NOTHING_RAN, going: [], log: [], error: '', taken: '', explanation: '', said: '',
     });
   },
 
@@ -237,7 +239,7 @@ export const useNotebook = create<NotebookState>((set, get) => ({
 
   describe: async (description) => {
     const { doc } = get();
-    set({ busy: 'describing', error: '', explanation: '' });
+    set({ busy: 'describing', error: '', explanation: '', said: '' });
     try {
       // The model is told the windows, not the text around them; it answers with windows, and the text stays.
       const made = await call('describeWindows', { description, ...(doc ? { windows: { ...doc, page: undefined } } : {}) });
@@ -246,15 +248,25 @@ export const useNotebook = create<NotebookState>((set, get) => ({
       set({ explanation: made.explanation, window: null });
       return true;
     } catch (error) {
-      set({ error: wordsOf(error, 'The model could not make windows of that.') });
+      set({ error: wordsOf(error, 'The model could not make windows of that.'), said: modelSaid(error) });
       return false;
     } finally {
       set({ busy: '' });
     }
   },
 
-  clearError: () => set({ error: '', taken: '' }),
+  clearError: () => set({ error: '', taken: '', said: '' }),
 }));
+
+/** How much of a model's answer is kept to be read: more than a page of it is not a thing to read in a banner. */
+const SAID_LIMIT = 6000;
+
+/** What the model answered in the call that failed (the server sends the calls that led to a failure), or nothing. */
+export function modelSaid(error: unknown): string {
+  const calls = error instanceof CallFailed && Array.isArray(error.body.calls) ? error.body.calls as { reply?: unknown }[] : [];
+  const reply = [...calls].reverse().map((one) => one.reply).find((words) => typeof words === 'string' && words.trim());
+  return typeof reply === 'string' ? reply.slice(0, SAID_LIMIT) + (reply.length > SAID_LIMIT ? ' …' : '') : '';
+}
 
 /** Undo and redo: the last document of *from* is the document, and the one there was goes onto *to*. */
 function step(from: 'past' | 'future', to: 'past' | 'future'): void {

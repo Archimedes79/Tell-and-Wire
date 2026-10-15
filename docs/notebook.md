@@ -159,3 +159,7 @@ to the model, and the delivered tool draws it. A tool that says no look is white
 ### A file dropped on a file box
 
 A file input takes **Browse…**, a typed path, or a file dropped on the box (the notebook and the delivered tool alike). A browser gives a page a dropped file's name and size, never where it is; so the path is the one the drop names where it names one (a `file:` address), and otherwise the one file of that name and size the host finds under the tool's own folder, three levels down (`GET /api/files/find`, `backend/deployment/host/find.ts`; the editor's drop onto a node uses the same). Where none is found, or several, the box says so and what to do: choose it with Browse…. A folder is only chosen with Browse…. A file dropped anywhere else on the page does nothing, rather than leaving the page for the file. The reading is `gui/widgets/input_picker/dropped.ts`, drawn twice (the notebook's own box, and `PathField` of the delivered tool).
+
+### When the model's answer is not windows
+
+The error says what was wrong with the page the model wrote (a mention that is no input, an output of nothing), and under it **What the model sent** holds the words it answered -- the last reply of the calls that led to the failure, which the server sends with the failure -- so the sentence can be said again in other words, one window at a time, or the answer taken as a start. Dismissing the error takes it away (`modelSaid` in `frontend/notebook/document/store.ts`).

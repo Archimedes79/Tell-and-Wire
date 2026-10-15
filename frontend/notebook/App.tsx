@@ -9,6 +9,7 @@ import Browse from './elements/Browse';
 import Dock from '../graph-notebook/Dock';
 import Page from '../gui-notebook/Page';
 import Start from './Start';
+import ModelSaid from './elements/ModelSaid';
 import { runAll, stopRuns } from './document/runs';
 import { saveNote } from './document/status';
 import { folderName } from './document/values';
@@ -166,6 +167,7 @@ export default function App() {
       </header>
 
       {error && doc && <div className="nb-banner error" role="alert"><span>{error}</span><button className="nb-btn small quiet" onClick={clearError}>Dismiss</button></div>}
+      {error && doc && <ModelSaid />}
       {taken && doc && (
         <div className="nb-banner warn" role="alert">
           <span>A project is already at {taken}. Replace it with this page, or save under another name.</span>

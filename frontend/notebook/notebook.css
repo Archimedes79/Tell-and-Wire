@@ -49,6 +49,9 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-banner.error { background: var(--red-bg); color: var(--red); }
 .nb-banner.warn { background: var(--amber-bg); color: var(--amber); }
 .nb-banner > span { flex: 1; min-width: 0; }
+.nb-said { margin: 0 20px; padding: 6px 10px; border: 1px solid var(--line2); border-radius: 8px; background: var(--card); font-size: 13px; }
+.nb-said summary { cursor: pointer; }
+.nb-said pre { max-height: 240px; overflow: auto; white-space: pre-wrap; margin: 8px 0; font-size: 12px; }
 
 /* the page */
 .nb-doc { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 24px 16px 48px; }
