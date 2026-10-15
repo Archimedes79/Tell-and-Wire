@@ -21,6 +21,13 @@ const STATE_WORDS: Record<WindowState, string> = {
  */
 const needsPixels = (label: string): number => Math.ceil(label.length * 7 + 28);
 
+/**
+ * Below this a cell cannot hold a block: a block keeps its padding and its label whatever the cell, so a row of cells this small is less than
+ * a field is tall, and the window is cut. A page that gives its cells less than this -- a tablet, a window half a small screen wide -- stacks its
+ * windows' blocks, one under the other, as a phone's does.
+ */
+const TOO_SMALL_A_CELL = 46;
+
 /** The block that runs a window and is nothing else: its button (a window started by a change of an input has none). */
 const isRun = (window: PageWindow, block: GuiWidget): boolean => block.id === window.starter && !(block as WindowBlock).sends_to?.length;
 
@@ -94,7 +101,7 @@ export function WindowsSurface({ gui, onValue, onEvent, states, problems, cell: 
           if ('note' in item) return <Note key={item.note.id} note={item.note} />;
           const { window } = item;
           // A window is as wide as its cells make it, not as the page is: on a tablet two side by side have cells too small for a button.
-          const compact = narrow || (fixedCell === undefined && cramped(window, cell));
+          const compact = narrow || (fixedCell === undefined && (cell < TOO_SMALL_A_CELL || cramped(window, cell)));
           const state = states?.[window.id] ?? 'ready';
           const problem = problems?.[window.id]?.state === state ? problems[window.id] : undefined;
           // The first thing the window shows is where it says what went wrong: in the place of its result, as the notebook does.
