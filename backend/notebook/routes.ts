@@ -19,6 +19,7 @@ import { GenerationFailed, GenerationRefused, type AICall, type Target } from '.
 import type { AiService } from '../../graph/nodes/Runtime.ts';
 import { NOTEBOOK_API, type WindowsFile } from './api.ts';
 import * as write from '../authoring/write.ts';
+import { productRoutes } from '../authoring/product.ts';
 import { nodeRuntime } from '../deployment/runtime/services.ts';
 import { aiSetting } from '../deployment/runtime/ai/settings.ts';
 import { holderOf, type SessionHolder } from '../deployment/host/session.ts';
@@ -164,5 +165,5 @@ export function notebookRoutes(held: SessionHolder = holderOf()): HandlersOf<typ
 
 /** The notebook as a part of a server (`serve`): the page it serves, the routes it adds, and what answers them. */
 export function notebookPart(dist: string) {
-  return { dist, api: NOTEBOOK_API, handlers: notebookRoutes };
+  return { dist, api: NOTEBOOK_API, handlers: (held?: SessionHolder) => ({ ...productRoutes('notebook'), ...notebookRoutes(held) }) };
 }

@@ -38,6 +38,7 @@ import { keptRound, writeKeptRound, TESTS_DIR } from '../project/keptRounds.ts';
 import * as gen from '../graph/generate.ts';
 import { generateGraph } from '../graph/generateGraph.ts';
 import { zip } from '../project/deploy/zip.ts';
+import { productRoutes } from '../../authoring/product.ts';
 
 /**
  * @param held the session this server holds, and how a graph is handed to it
@@ -253,5 +254,5 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
 
 /** The editor as a part of a server (`serve`): the page it serves, the routes it adds, and what answers them. */
 export function editorPart(dist: string) {
-  return { dist, api: EDITOR_API, handlers: editorRoutes };
+  return { dist, api: EDITOR_API, handlers: (held?: SessionHolder) => ({ ...productRoutes('editor'), ...editorRoutes(held) }) };
 }

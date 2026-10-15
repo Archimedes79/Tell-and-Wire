@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Notices from './Notices';
-import { notebookLink, projectAsked } from './notebookLink';
+import { projectAsked, switchTab } from './notebookLink';
 import { say as notice } from '../document/store/noticeBoard';
 import { slugOf } from '../document/model/ids';
 import { ReactFlowProvider } from 'reactflow';
@@ -152,6 +152,12 @@ export default function App() {
     openPath(asked).catch((error: unknown) => say(`⚠ ${error instanceof Error ? error.message : String(error)}`, true));
     // Once, when the page starts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Whether the notebook can be reached from here (running, or in this install to start): the button is shown only then.
+  const [canSwitch, setCanSwitch] = useState(false);
+  useEffect(() => {
+    call('product').then((who) => { setCanSwitch(who.can_switch); }, () => undefined);
   }, []);
 
   /** Write the tool to *path* -- where it is, without one. False where a save is going already; throws what the server refused. */
@@ -451,7 +457,7 @@ export default function App() {
           }}
           onOpenSettings={() => setShowSettings(true)}
           onOpenHelp={() => setShowHelp(true)}
-          onOpenNotebook={isProject && currentFilePath ? () => { window.open(notebookLink(currentFilePath, window.location), '_blank', 'noopener'); } : undefined}
+          onOpenNotebook={isProject && currentFilePath && canSwitch ? () => { switchTab(async () => (await call('switchProduct', { path: currentFilePath })).url).catch((error: unknown) => say(`⚠ ${error instanceof Error ? error.message : String(error)}`, true)); } : undefined}
           onOpenReport={openReport}
           onLoadDesigned={async (graph) => {
             if (!(await mayReplace())) return false;

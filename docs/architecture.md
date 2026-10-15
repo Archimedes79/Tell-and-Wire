@@ -72,7 +72,7 @@ One server, `node backend/cli/main.ts --editor frontend/dist` (`start.cmd`, `sta
 ### Design: the notebook
 
 Its own server, `node backend/notebook/main.ts` (`start-notebook.cmd`, `.ps1`, `.sh`), on :8100, and its own page, built apart.
-It imports nothing of the editor; the two know each other by a link only (`docs/notebook.md`).
+It imports nothing of the editor; the two know each other by a route and a query only (`docs/notebook.md`).
 
 | Box | Folders | Sub-blocks and what they hold |
 |---|---|---|
@@ -374,6 +374,7 @@ For the editor only; a package leaves `backend/editor/` behind, so it answers no
 | `GET /api/mcp/servers`, `POST /api/mcp/servers/:name` | The tool servers in `mcp/` and what this machine has set up; set one up (install its packages, write its entry, start it once) (loopback only) |
 | `POST /api/deploy/bundle` | Write the tool as a package zip |
 | `POST /api/files/open-external` | Open a node's file in the person's own editor (loopback only) |
+| `GET /api/product`, `POST /api/switch` | Both products answer these (`backend/authoring/product.ts`): who this is and whether the other can be reached from this install; and the way to the other -- it is found where it runs (the ports it may have taken), else started from the same install, and the person is sent to its address with the project to open (loopback only) |
 
 Types and table: `backend/editor/host/api.ts`; handlers: `editorRoutes` in
 `backend/editor/host/routes.ts`.

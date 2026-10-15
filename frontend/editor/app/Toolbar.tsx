@@ -360,7 +360,7 @@ export default function Toolbar({
           <ToolbarButton
             icon={FileText}
             label="Notebook"
-            title="Open this project in the notebook (the notebook must be running: start-notebook). Only a project made there opens."
+            title="Open this project in the notebook (started if it is not running). Only a project made there opens."
             onClick={onOpenNotebook}
           />
         )}

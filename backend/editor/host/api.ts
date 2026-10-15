@@ -4,6 +4,7 @@
 // machinery both are made with). A package does not carry this file: a deployed tool answers
 // none of these with anything but a 404.
 
+import { PRODUCT_API } from '../../authoring/productApi.ts';
 import type { Graph, GraphNode, NodeResult } from '../../../graph/graph.ts';
 import type { TextChange } from '../../../graph/files/changes.ts';
 import type { AICall } from '../../../graph/authoring/history.ts';
@@ -238,6 +239,9 @@ type OnNode = Graph & { node_id: string };
 
 /** What only the editor serves. */
 export const EDITOR_API = {
+  /** Who this is, and the way to the notebook (`backend/authoring/productApi.ts`). */
+  ...PRODUCT_API,
+
   /** One node on the inputs given, as a run runs it: files read, lists fanned out. How the editor reads a file the way a run does. */
   runNode: route<OnNode & { inputs: Record<string, unknown> }, NodeResult>('POST', '/api/execute/node'),
 

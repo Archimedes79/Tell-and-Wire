@@ -14,7 +14,8 @@ import { saveNote } from './document/status';
 import { folderName } from './document/values';
 import { isDirty, useNotebook } from './document/store';
 import { applyLook, savedLook, type Look } from './look';
-import { editorLink, projectAsked } from './document/links';
+import { call, wordsOf } from './document/api';
+import { projectAsked, switchTab } from './document/links';
 import { renameTool } from '../../gui/notebook/edit.ts';
 import { startPage } from '../../gui/notebook/page.ts';
 import { DEFAULT_SCHEME, windowProblems } from '../../gui/notebook/windows.ts';
@@ -53,6 +54,12 @@ export default function App() {
     if (!asked) return;
     window.history.replaceState(null, '', window.location.pathname);
     void useNotebook.getState().open(asked);
+  }, []);
+
+  // Whether the editor can be reached from here (running, or in this install to start): the button is shown only then.
+  const [canSwitch, setCanSwitch] = useState(false);
+  useEffect(() => {
+    call('product').then((who) => { setCanSwitch(who.can_switch); }, () => undefined);
   }, []);
 
   // Ctrl+S saves; Ctrl+Z and Ctrl+Shift+Z step through what was done, outside the boxes whose own undo is the browser's.
@@ -139,10 +146,10 @@ export default function App() {
         {doc && <button className={`nb-btn${dirty ? ' attention' : ''}`} disabled={busy === 'saving' || problems.length > 0} onClick={saveHere} title="Save as a project folder (Ctrl+S)">{busy === 'saving' ? 'Saving…' : 'Save'}</button>}
         {doc && <button className="nb-btn" onClick={() => setBrowsing('save')}>Save as…</button>}
         <button className="nb-btn" disabled={going} title={going ? 'Stop the windows that run first' : undefined} onClick={() => setBrowsing('open')}>Open…</button>
-        {path && (
+        {path && canSwitch && (
           <button
-            className="nb-btn quiet" title="Open the saved project in the full version, the graph editor (it must be running: start). Save first to take over what changed."
-            onClick={() => { window.open(editorLink(path, window.location), '_blank', 'noopener'); }}
+            className="nb-btn quiet" title="Open the saved project in the full version, the graph editor (started if it is not running). Save first to take over what changed."
+            onClick={() => { switchTab(async () => (await call('switchProduct', { path })).url).catch((failed: unknown) => { useNotebook.setState({ error: wordsOf(failed, 'The editor could not be opened.') }); }); }}
           >
             Open in editor
           </button>

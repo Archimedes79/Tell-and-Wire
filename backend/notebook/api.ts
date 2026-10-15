@@ -6,6 +6,7 @@
 import type { Graph } from '../../graph/graph.ts';
 import type { Windows } from '../../gui/notebook/windows.ts';
 import { route } from '../deployment/host/api.ts';
+import { PRODUCT_API } from '../authoring/productApi.ts';
 
 /** The page being made, handed to the server's session: what its rounds run (`holdGraph`). */
 interface HeldGraph {
@@ -32,6 +33,9 @@ export interface WindowsFile {
 
 /** What only the notebook's server answers. */
 export const NOTEBOOK_API = {
+  /** Who this is, and the way to the editor (`backend/authoring/productApi.ts`). */
+  ...PRODUCT_API,
+
   /** A project folder, with the windows it was made from. */
   openWindows: route<{ path: string }, WindowsFile>('POST', '/api/windows/load'),
 
