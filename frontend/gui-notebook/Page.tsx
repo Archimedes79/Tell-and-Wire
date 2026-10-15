@@ -54,7 +54,7 @@ function Text({ part, onChange, onKeyDown }: {
   if (part.kind !== 'ol') return area;
   return (
     <div className="nb-ol">
-      <ol className="nb-ol-numbers" aria-hidden="true">{(part.text ?? '').split('\n').map((line, at) => <li key={at}>{line || '\u00a0'}</li>)}</ol>
+      <ol className="nb-ol-numbers" aria-hidden="true">{(part.text ?? '').split('\n').map((line, at) => <li key={at} className={line ? undefined : 'blank'}>{line || '\u00a0'}</li>)}</ol>
       {area}
     </div>
   );
