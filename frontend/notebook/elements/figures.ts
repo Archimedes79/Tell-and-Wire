@@ -57,6 +57,32 @@ export function columnsFrom(names: string[], columns: unknown[][], locale = 'en-
   });
 }
 
+/** A cell as a number to sort by: a number, or a figure written as text ("+10.2 %", "1,200.50", "€ 3"); none for a word. */
+const sortKey = (value: unknown): number | null => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string' || !FIGURE.test(value.trim())) return null;
+  const number = Number(value.replace(/−/g, '-').replace(/[^0-9.\-+eE]/g, ''));
+  return Number.isFinite(number) ? number : null;
+};
+
+/**
+ * The order the rows go in when a table is sorted by one column: the indices of *cells*, figures by their size and words as a person reads
+ * them (a2 before a10), empty cells last whichever way it goes, and a row *apart* -- the Total -- where it was, at the end.
+ */
+export function rowOrder(cells: unknown[], descending: boolean, apart: boolean[] = []): number[] {
+  const rows = cells.map((_, at) => at);
+  const moving = rows.filter((at) => !apart[at]);
+  const sign = descending ? -1 : 1;
+  moving.sort((a, b) => {
+    const [x, y] = [cells[a], cells[b]];
+    if (blank(x) || blank(y)) return blank(x) === blank(y) ? a - b : blank(x) ? 1 : -1;
+    const [m, n] = [sortKey(x), sortKey(y)];
+    const order = m !== null && n !== null ? m - n : text(x).localeCompare(text(y), undefined, { numeric: true, sensitivity: 'base' });
+    return order === 0 ? a - b : sign * order;
+  });
+  return [...moving, ...rows.filter((at) => apart[at])];
+}
+
 /** Whether a row is the sum of the others, by what its first cell says. */
 export function isTotal(row: Record<string, unknown>, names: string[]): boolean {
   const first = row[names[0]];

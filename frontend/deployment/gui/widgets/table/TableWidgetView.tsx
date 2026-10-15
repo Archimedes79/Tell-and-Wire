@@ -2,7 +2,8 @@ import type { WidgetViewProps } from '../WidgetView';
 import SaveButton from '../SaveButton';
 import { csvText, fileName, saveFile } from '../download';
 import { inlineText } from '../../../../../gui/widgets/text_io/text.ts';
-import { columnsFrom, isTotal } from './figures';
+import { useState } from 'react';
+import { columnsFrom, isTotal, rowOrder } from './figures';
 import { DANGER_TEXT, DIMMER, LINE, MUTED, SUCCESS_TEXT, SUNKEN, TEXT } from '../../kit/ui/theme';
 
 /**
@@ -60,6 +61,8 @@ function toRows(value: unknown): { header: string[]; rows: string[][]; raw: unkn
  */
 export default function TableWidgetView({ widget, value, incoming }: WidgetViewProps) {
   const data = incoming !== undefined ? incoming : value;
+  // Sorted by a column when its name is pressed: once one way, again the other, again as it came.
+  const [sorted, sortBy] = useState<{ column: number; descending: boolean } | null>(null);
   const table = toRows(data);
   // What is saved is what was read; what is shown is set as its cells say (`figures.ts`): figures to the right,
   // thousands told apart, a rise and a fall in colour.
@@ -76,6 +79,11 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
     );
   }
 
+  const shown = sorted && sorted.column < table.header.length
+    ? rowOrder(table.raw.map((row) => row[sorted.column]), sorted.descending, table.raw.map((row) => isTotal({ first: row[0] }, ['first'])))
+    : table.rows.map((_, r) => r);
+  const press = (column: number): void => sortBy(sorted?.column !== column ? { column, descending: false } : sorted.descending ? null : { column, descending: true });
+
   // The columns and the cells as shown here, so what a spreadsheet opens is what was read.
   const save = () => saveFile(fileName(widget.label, 'table', 'csv'), csvText(table.header, table.rows), 'text/csv');
 
@@ -88,7 +96,11 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
               {table.header.map((cell, i) => (
                 <th
                   key={i}
+                  onClick={() => press(i)}
+                  title="Sort by this column"
+                  aria-sort={sorted?.column === i ? (sorted.descending ? 'descending' : 'ascending') : undefined}
                   style={{
+                    cursor: 'pointer', userSelect: 'none',
                     textAlign: columns[i]?.numeric ? 'right' : 'left', padding: '3px 8px', position: 'sticky', top: 0,
                     borderBottom: `1px solid ${LINE}`, color: MUTED, fontWeight: 600,
                     // The GUI's own recessed colour, so the header follows its
@@ -97,13 +109,13 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
                     background: SUNKEN,
                   }}
                 >
-                  {cell}
+                  {cell}{sorted?.column === i ? (sorted.descending ? ' ▼' : ' ▲') : ''}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {table.rows.map((row, r) => (
+            {shown.map((r) => [table.rows[r], r] as const).map(([row, r]) => (
               <tr key={r} style={isTotal({ first: table.raw[r][0] }, ['first']) ? { fontWeight: 600 } : undefined}>
                 {row.map((cell, c) => {
                   const column = columns[c];

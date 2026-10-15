@@ -8,7 +8,7 @@ import { asText } from '../../../gui/widgets/text_io/text.ts';
 import { chatValue } from '../../../gui/widgets/chat/value.ts';
 import type { InKind, OutKind, WindowIn } from '../../../gui/notebook/windows.ts';
 import Browse from './Browse';
-import { columnsOf, isTotal } from './figures';
+import { columnsOf, isTotal, rowOrder } from './figures';
 import Chart, { soleValue } from './Chart';
 
 /** The height of a row of a window, in pixels: what an output is as tall as, in rows. */
@@ -114,6 +114,8 @@ export const tableHeight = (count: number): number => count * 30 + 50 + 24;
 const TABLE_LIMIT = 14 * ROW;
 
 function Table({ value }: { value: unknown }) {
+  // Sorted by a column when its name is pressed: once one way, again the other, again as it came.
+  const [sorted, sortBy] = useState<{ name: string; descending: boolean } | null>(null);
   const rows = Array.isArray(value) ? value : null;
   if (!rows || !rows.length) return <>{asText(value)}</>;
   if (rows.every((row) => Array.isArray(row))) {
@@ -125,12 +127,24 @@ function Table({ value }: { value: unknown }) {
   // A row that is nothing (a code step may hand on a null among the rows) is an empty one.
   const objects = rows.map((row) => (row && typeof row === 'object' ? row : {})) as Record<string, unknown>[];
   const set = columnsOf(objects, columns);
+  const shown = sorted && columns.includes(sorted.name)
+    ? rowOrder(objects.map((row) => row[sorted.name]), sorted.descending, objects.map((row) => isTotal(row, columns)))
+    : objects.map((_, at) => at);
+  const press = (name: string): void => sortBy(sorted?.name !== name ? { name, descending: false } : sorted.descending ? null : { name, descending: true });
   return (
     <table>
-      <thead><tr>{set.map((one) => <th key={one.name} className={one.numeric ? 'num' : undefined}>{one.name}</th>)}</tr></thead>
+      <thead>
+        <tr>
+          {set.map((one) => (
+            <th key={one.name} className={`sortable${one.numeric ? ' num' : ''}`} aria-sort={sorted?.name === one.name ? (sorted.descending ? 'descending' : 'ascending') : undefined} onClick={() => press(one.name)} title="Sort by this column">
+              {one.name}{sorted?.name === one.name ? (sorted.descending ? ' ▼' : ' ▲') : ''}
+            </th>
+          ))}
+        </tr>
+      </thead>
       <tbody>
-        {objects.map((row, r) => (
-          <tr key={r} className={isTotal(row, columns) ? 'total' : undefined}>
+        {shown.map((r) => objects[r]).map((row, at) => (
+          <tr key={shown[at]} className={isTotal(row, columns) ? 'total' : undefined}>
             {set.map((one) => <td key={one.name} className={[one.numeric ? 'num' : '', one.tone(row[one.name]) ?? ''].filter(Boolean).join(' ') || undefined}>{one.show(row[one.name])}</td>)}
           </tr>
         ))}
