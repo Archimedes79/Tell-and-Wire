@@ -1,5 +1,8 @@
 import React, { useId, useLayoutEffect, useRef, useState } from 'react';
 import FileBrowserDialog from './FileBrowserDialog';
+import { call } from '../api/client';
+import { errorText } from '../api/errorText';
+import { carriesFiles, droppedFile, droppedPath } from '../../../../../gui/widgets/input_picker/dropped.ts';
 import Button from '../ui/Button';
 import { FIELD, FIELD_ON_SURFACE, MUTED } from '../ui/theme';
 
@@ -56,7 +59,20 @@ export default function PathField({
   onSurface, compact, mono, autoFocus, readOnly, disabled, onPicked, onKeyDown, children,
 }: PathFieldProps) {
   const [browsing, setBrowsing] = useState(false);
+  // A file dropped on the box: taken as its path (`droppedPath`), said when it cannot be. Only where a file is chosen.
+  const takesDrops = mode === 'file' && !disabled && !readOnly;
+  const [over, setOver] = useState(false);
+  const [dropError, setDropError] = useState('');
   const box = useRef<HTMLInputElement>(null);
+  const drop = (event: React.DragEvent): void => {
+    event.preventDefault();
+    setOver(false);
+    const file = droppedFile(event.dataTransfer);
+    if (!file) return;
+    setDropError('');
+    droppedPath(file, (name, size) => call('findFile', { name, size: String(size) }))
+      .then((path) => { onChange(path); onPicked?.(path); }, (error: unknown) => { setDropError(errorText(error, 'That file could not be taken.')); });
+  };
   // A path longer than the box shows its end, the name of the file, until it is clicked into -- not the folders it begins with.
   const showEnd = (): void => { const node = box.current; if (node && document.activeElement !== node) node.scrollLeft = node.scrollWidth; };
   useLayoutEffect(showEnd, [value]);
@@ -64,7 +80,13 @@ export default function PathField({
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div
+        className="flex items-center gap-2"
+        style={over ? { outline: '2px dashed currentColor', outlineOffset: 2, borderRadius: 8 } : undefined}
+        onDragOver={takesDrops ? (event) => { if (carriesFiles(event.dataTransfer)) { event.preventDefault(); setOver(true); } } : undefined}
+        onDragLeave={takesDrops ? () => { setOver(false); } : undefined}
+        onDrop={takesDrops ? drop : undefined}
+      >
         <input
           id={id}
           ref={box}
@@ -92,6 +114,7 @@ export default function PathField({
         </Button>
         {children}
       </div>
+      {dropError && <p role="alert" className="text-xs mt-1" style={{ color: MUTED }}>{dropError}</p>}
       {browsing && (
         <FileBrowserDialog
           mode={mode}

@@ -48,6 +48,14 @@ export default function App() {
   const writing = mode === 'write';
   const note = saveNote({ path, dirty, savedAt });
 
+  // A file dropped beside a file box would be opened by the browser in place of the page: a drop is the page's to take or to refuse.
+  useEffect(() => {
+    const refuse = (event: DragEvent): void => { if (event.dataTransfer?.types.includes('Files')) event.preventDefault(); };
+    window.addEventListener('dragover', refuse);
+    window.addEventListener('drop', refuse);
+    return () => { window.removeEventListener('dragover', refuse); window.removeEventListener('drop', refuse); };
+  }, []);
+
   // A link from the graph editor names a project (`document/links.ts`): opened once, and the name taken off the address so a reload does not do it again.
   useEffect(() => {
     const asked = projectAsked(window.location.search);

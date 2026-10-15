@@ -136,6 +136,7 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-path { display: flex; align-items: center; gap: 8px; padding: 0 0 0 11px; overflow: hidden; }
 .nb-path > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
 .nb-path > span.empty { color: var(--dim); }
+.nb-path.over { outline: 2px dashed var(--blue); outline-offset: 0; }
 .nb-path button { border: 0; border-left: 1px solid var(--line2); background: var(--soft2); min-height: 36px; padding: 0 12px; }
 .nb-run { display: flex; align-items: center; gap: 10px; }
 .nb-out { border: 1px solid var(--line); background: var(--soft); border-radius: 10px; padding: 10px 12px; overflow: auto; font-size: 15px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }

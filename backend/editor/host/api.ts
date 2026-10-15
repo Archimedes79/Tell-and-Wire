@@ -279,13 +279,6 @@ export const EDITOR_API = {
    */
   findProjects: local(route<{ name: string }, { paths: string[]; searched: string }>('GET', '/api/graphs/find')),
 
-  /**
-   * Files of this name and size under where the editor runs: for a file
-   * dropped onto a node, whose path a browser never says -- and where that
-   * search looked, in words, for a drop that finds none to say.
-   */
-  findFile: local(route<{ name: string; size: string }, { paths: string[]; searched: string }>('GET', '/api/files/find')),
-
   /** The code and prompts of an open project that changed on disk since last asked. */
   projectChanges: route<{ path: string }, { changes: TextChange[] }>('GET', '/api/graphs/file/changes'),
 

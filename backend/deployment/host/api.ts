@@ -294,6 +294,12 @@ export const API = {
 
   /** Listing directories is for the person at the keyboard. */
   browse: local(route<{ path: string; extensions?: string }, BrowsePage>('POST', '/api/files/browse')),
+
+  /**
+   * Files of this name and size under the tool's own folder (where the editor was started, for the editor): for a file dropped onto a file
+   * picker, whose path a browser never says -- and where the search looked, in words, for a drop that finds none to say.
+   */
+  findFile: local(route<{ name: string; size: string }, { paths: string[]; searched: string }>('GET', '/api/files/find')),
 } as const;
 
 /** What a host with a GUI answers besides: the GUI as it was designed. */

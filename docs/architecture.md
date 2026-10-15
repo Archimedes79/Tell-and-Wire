@@ -345,6 +345,7 @@ except the stream; a refusal is `{ "detail": "…" }`.
 | `GET /api/runtime/gui` | The gui: its blocks as designed, and how they connect by name (answered when the tool has a GUI) |
 | `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
+| `GET /api/files/find` | Files of a name and size under the tool's own folder: for a file dropped onto a picker, whose path a browser never says (loopback only) |
 
 With `by` (a block id) a round is one the GUI starts, refused unless that block fires the start
 point; without it, a call, and `values` are the package as sent. Types and tables:
@@ -358,7 +359,7 @@ For the editor only; a package leaves `backend/editor/` behind, so it answers no
 | Route | What it does |
 |---|---|
 | `POST /api/graphs/file/load`, `POST /api/graphs/file/save` | Open and save a graph file or a project folder (save replaces one only when told) |
-| `GET /api/graphs/find`, `GET /api/files/find` | Find projects and files that a drop names (loopback only) |
+| `GET /api/graphs/find` | Find project folders that a drop names (loopback only) |
 | `GET /api/graphs/file/changes` | What changed on disk since the editor last asked |
 | `POST /api/runtime/hold` | Hand the document being edited to the session, which goes on with it |
 | `POST /api/runtime/application/start`, `POST /api/runtime/application/stop` | ▶ Run and ■ Stop: the clock and what starts by itself |

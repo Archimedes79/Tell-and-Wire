@@ -39,6 +39,7 @@ import * as gen from '../graph/generate.ts';
 import { generateGraph } from '../graph/generateGraph.ts';
 import { zip } from '../project/deploy/zip.ts';
 import { productRoutes } from '../../authoring/product.ts';
+import { searchedIn } from '../../deployment/host/find.ts';
 
 /**
  * @param held the session this server holds, and how a graph is handed to it
@@ -138,15 +139,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
     }),
 
     findProjects: async (asked) => {
-      return { paths: asked.name ? await files.findProjects(String(asked.name)) : [], searched: files.fileSearch() };
-    },
-
-    findFile: async (asked) => {
-      const size = Number(asked.size);
-      return {
-        paths: asked.name && Number.isFinite(size) ? await files.findFiles(String(asked.name), size) : [],
-        searched: files.fileSearch(),
-      };
+      return { paths: asked.name ? await files.findProjects(String(asked.name)) : [], searched: searchedIn(process.cwd()) };
     },
 
     async projectChanges(asked) {

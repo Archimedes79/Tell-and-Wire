@@ -25,6 +25,7 @@ import { API, GUI_API, matchRoute, type RequestOf, type Routes } from './api.ts'
 import { Download, EventStream, Refusal, foreignRequest, hostnameOf, namesFor, readJson, sendDownload, sendEvents, sendFailure, sendJson, servePage, type Exchange, type HandlersOf } from './http.ts';
 import { NotOffered, eventOf, outputsOf } from '../../../graph/interface.ts';
 import { browse, startFolder } from './browse.ts';
+import { findFiles, searchedIn } from './find.ts';
 import { extensionFilter } from '../../../graph/nodes/folderListing.ts';
 import { NotFound, messageOf } from '../../../graph/errors.ts';
 import { NO_GUI, Session, holderOf, type SessionHolder } from './session.ts';
@@ -347,6 +348,15 @@ function toolRoutes(
       } catch (error) {
         throw new Refusal(error instanceof NotFound ? 404 : 400, messageOf(error));
       }
+    },
+
+    // A file dropped onto a picker: a browser says its name and size, not where it is.
+    async findFile(asked) {
+      const size = Number(asked.size);
+      return {
+        paths: asked.name && Number.isFinite(size) ? await findFiles(toolRoot, String(asked.name), size) : [],
+        searched: searchedIn(toolRoot),
+      };
     },
   };
 }

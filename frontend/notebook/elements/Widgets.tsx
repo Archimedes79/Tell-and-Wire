@@ -3,10 +3,12 @@
 // Each is a few lines of HTML; none of the gui's blocks. A box of a window has the size the window gave it and keeps it,
 // whatever arrives (it scrolls inside itself).
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { asText } from '../../../gui/widgets/text_io/text.ts';
 import { chatValue } from '../../../gui/widgets/chat/value.ts';
 import type { InKind, OutKind, WindowIn } from '../../../gui/notebook/windows.ts';
+import { call, wordsOf } from '../document/api';
+import { carriesFiles, droppedFile, droppedPath } from '../../../gui/widgets/input_picker/dropped.ts';
 import Browse from './Browse';
 import { columnsOf, isTotal, rowOrder } from './figures';
 import Chart, { soleValue } from './Chart';
@@ -50,8 +52,27 @@ const nameOf = (path: string): string => path.replace(/[\\/]+$/, '').split(/[\\/
 
 function PathBox({ kind, value, extensions, onChange }: { kind: 'file' | 'folder'; value: string; extensions?: string; onChange: (value: string) => void }) {
   const [browsing, setBrowsing] = useState(false);
+  const [over, setOver] = useState(false);
+  const [told, setTold] = useState('');
+  // A file dropped on the box is taken as its path (`droppedPath`), said when it cannot be; a folder is chosen with Browse.
+  const drop = (event: DragEvent): void => {
+    event.preventDefault();
+    setOver(false);
+    const file = droppedFile(event.dataTransfer);
+    if (!file) return;
+    if (kind === 'folder') { setTold('A browser does not say where a dropped folder is: choose it with Browse….'); return; }
+    setTold('');
+    droppedPath(file, (name, size) => call('findFile', { name, size: String(size) }))
+      .then(onChange, (error: unknown) => { setTold(wordsOf(error, 'That file could not be taken.')); });
+  };
   return (
-    <div className="nb-path">
+    <>
+    <div
+      className={`nb-path${over ? ' over' : ''}`}
+      onDragOver={(event) => { if (carriesFiles(event.dataTransfer)) { event.preventDefault(); setOver(true); } }}
+      onDragLeave={() => setOver(false)}
+      onDrop={drop}
+    >
       <span className={value ? '' : 'empty'} title={value}>{nameOf(value) || (kind === 'file' ? 'Choose a file…' : 'Choose a folder…')}</span>
       {value && <button type="button" aria-label="Clear" title="Clear" onClick={() => onChange('')}>✕</button>}
       <button type="button" onClick={() => setBrowsing(true)}>Browse…</button>
@@ -62,6 +83,8 @@ function PathBox({ kind, value, extensions, onChange }: { kind: 'file' | 'folder
         />
       )}
     </div>
+    {told && <div className="nb-hint" role="alert">{told}</div>}
+    </>
   );
 }
 

@@ -155,3 +155,7 @@ to the model, and the delivered tool draws it. A tool that says no look is white
 ## Open
 
 - The delivered tool shows the tool's name above the page, so a page that begins with its name says it twice.
+
+### A file dropped on a file box
+
+A file input takes **Browse…**, a typed path, or a file dropped on the box (the notebook and the delivered tool alike). A browser gives a page a dropped file's name and size, never where it is; so the path is the one the drop names where it names one (a `file:` address), and otherwise the one file of that name and size the host finds under the tool's own folder, three levels down (`GET /api/files/find`, `backend/deployment/host/find.ts`; the editor's drop onto a node uses the same). Where none is found, or several, the box says so and what to do: choose it with Browse…. A folder is only chosen with Browse…. A file dropped anywhere else on the page does nothing, rather than leaving the page for the file. The reading is `gui/widgets/input_picker/dropped.ts`, drawn twice (the notebook's own box, and `PathField` of the delivered tool).

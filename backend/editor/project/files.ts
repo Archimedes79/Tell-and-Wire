@@ -5,75 +5,22 @@
 // `editor` folder. Browsing is not here: a deployed tool needs a file picker that
 // can be navigated too, so it is `backend/deployment/host/browse.ts`, which a package carries.
 
-import { existsSync, type Dirent } from 'node:fs';
-import { readdir, stat } from 'node:fs/promises';
-import { basename, extname, join, resolve, sep } from 'node:path';
+import { existsSync } from 'node:fs';
+import { basename, extname, resolve, sep } from 'node:path';
 import { platform } from 'node:os';
 
 import { isProjectFolder } from '../../deployment/project/folder.ts';
+import { walkUnder } from '../../deployment/host/find.ts';
 // One "there is nothing there" for everything on this side of the wire, so a
 // route that turns it into a 404 needs one check rather than a list.
 import { NotFound } from '../../../graph/errors.ts';
 import { NODES } from '../../../graph/nodes/registry.ts';
 
-/** Folders a search passes over: dependencies and build output -- and every name that begins with a dot. */
-const SKIPPED = new Set(['node_modules', 'dist', 'build']);
-
-/** How many levels of folders below the one it starts in a search looks into. */
-const FOLDERS_BELOW = 3;
-
-/**
- * What is in the folder the editor was started in and the folders below it, as
- * far down as `fileSearch` says: each entry is handed to *take*, and the paths it
- * takes are the answer. A folder it takes is not looked into.
- *
- * For what is dropped onto the editor: a browser hands a page the name of a
- * file or folder, never where it is, and what someone drops is almost always
- * in the folder the editor was started in.
- */
-async function walkUnder(take: (path: string, entry: Dirent) => boolean | Promise<boolean>): Promise<string[]> {
-  const found: string[] = [];
-  const walk = async (directory: string, below: number): Promise<void> => {
-    let entries;
-    try {
-      entries = await readdir(directory, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      if (entry.name.startsWith('.') || (entry.isDirectory() && SKIPPED.has(entry.name))) continue;
-      const path = join(directory, entry.name);
-      if (await take(path, entry)) found.push(path);
-      else if (entry.isDirectory() && below < FOLDERS_BELOW) await walk(path, below + 1);
-    }
-  };
-  await walk(process.cwd(), 0);
-  return found;
-}
-
 /** Project folders named *name* under where the editor runs (`walkUnder`): for a folder dropped onto the editor. */
 export async function findProjects(name: string): Promise<string[]> {
   const root = process.cwd();
   if (basename(root) === name && isProjectFolder(root)) return [root];
-  return walkUnder((path, entry) => entry.isDirectory() && entry.name === name && isProjectFolder(path));
-}
-
-/**
- * Files named *name*, of *size* bytes, under where the editor runs (`walkUnder`): for a file
- * dropped onto a node, or onto its example -- a node that reads the file at a
- * path needs the path. The size tells two of one name apart.
- */
-export async function findFiles(name: string, size: number): Promise<string[]> {
-  return walkUnder(async (path, entry) => !entry.isDirectory() && entry.name === name
-    && (await stat(path).catch(() => null))?.size === size);
-}
-
-/**
- * Where a search for what was dropped looks (`walkUnder`), in words: what a
- * drop that found nothing says.
- */
-export function fileSearch(): string {
-  return `${process.cwd()} and ${FOLDERS_BELOW} levels of folders below it, leaving out ${[...SKIPPED].join(', ')} and every name that begins with a dot`;
+  return walkUnder(root, (path, entry) => entry.isDirectory() && entry.name === name && isProjectFolder(path));
 }
 
 // ---------------------------------------------------------------------------
