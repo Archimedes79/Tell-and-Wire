@@ -223,9 +223,14 @@ the editor or a served tool, and what using it leaves behind. The rules are held
    or could not start commits nothing.
 4. **The design wins.** A kept value is held with the design value it started from. When its node
    or block is gone, or its design changed, that value is dropped and said.
-5. **Start over.** **↺ Start over** (`POST /api/runtime/reset`) empties the session and deletes the
+5. **Saved states.** Besides `state.json`, which a session writes by itself, a person can save what is kept
+   under a name and load it again (`states/<name>.json`, plain JSON beside `state.json`): the same
+   rules as for a design that changed (a value with no place any more is dropped and said), a load
+   waits for the round that goes, and nothing else is in it -- no latch, no results. The GUI offers it
+   (**State** in the header of a delivered tool); a site of its own calls the same routes.
+6. **Start over.** **↺ Start over** (`POST /api/runtime/reset`) empties the session and deletes the
    file; the App tab lists what it forgets under *What using it keeps*.
-6. **One session per server**, its id in every runtime route
+7. **One session per server**, its id in every runtime route
    (`backend/deployment/host/runtimeApi.test.ts`). The command line and `run_graph` keep nothing:
    they start from the design.
 
@@ -350,6 +355,7 @@ except the stream; a refusal is `{ "detail": "…" }`.
 | `GET /api/runtime/gui` | The gui: its blocks as designed, and how they connect by name (answered when the tool has a GUI) |
 | `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
+| `GET /api/runtime/states`, `POST /api/runtime/states/save`, `POST /api/runtime/states/load` | States saved under a name (`states/` beside `state.json`; `backend/deployment/host/states.ts`): list them; save what a person or a memory node keeps now (the memory nodes' fields, what the start points were sent, what the GUI's blocks hold and show -- never the latch or the results); take one back in place of what is kept (saving and loading are loopback only) |
 | `GET /api/files/find` | Files of a name and size under the tool's own folder: for a file dropped onto a picker, whose path a browser never says (loopback only) |
 
 With `by` (a block id) a round is one the GUI starts, refused unless that block fires the start

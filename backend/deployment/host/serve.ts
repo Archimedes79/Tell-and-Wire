@@ -26,6 +26,7 @@ import { Download, EventStream, Refusal, foreignRequest, hostnameOf, namesFor, r
 import { NotOffered, eventOf, outputsOf } from '../../../graph/interface.ts';
 import { browse, startFolder } from './browse.ts';
 import { findFiles, searchedIn } from './find.ts';
+import { BadStateName, listStates, loadState, saveState, statesFolderOf } from './states.ts';
 import { extensionFilter } from '../../../graph/nodes/folderListing.ts';
 import { NotFound, messageOf } from '../../../graph/errors.ts';
 import { NO_GUI, Session, holderOf, type SessionHolder } from './session.ts';
@@ -251,6 +252,23 @@ function toolRoutes(
     }
   };
 
+  /** Where the states of *session* are kept, if it keeps a file. */
+  const statesFolder = (session: Session): string | null => (session.stateFile ? statesFolderOf(session.stateFile) : null);
+  const requiredFolder = (session: Session): string => {
+    const folder = statesFolder(session);
+    if (!folder) throw new Refusal(409, 'This graph is not saved anywhere yet, so there is no folder to keep states in: save the project first.');
+    return folder;
+  };
+  /** A state that cannot be named, found or read is the caller's to be told, in words. */
+  const inStates = async <T>(work: () => Promise<T>): Promise<T> => {
+    try {
+      return await work();
+    } catch (error) {
+      if (error instanceof BadStateName) throw new Refusal(error.message.startsWith('No state') ? 404 : 400, error.message);
+      throw error;
+    }
+  };
+
   return {
     // -- the runtime API: what any frontend uses, by name ---------------------
 
@@ -348,6 +366,23 @@ function toolRoutes(
       } catch (error) {
         throw new Refusal(error instanceof NotFound ? 404 : 400, messageOf(error));
       }
+    },
+
+    // States saved under a name, beside the session's own file. A session with no file -- a graph never saved -- has no folder to keep them in.
+    async states(asked) {
+      const folder = statesFolder(sessionAsked(asked));
+      return { states: folder ? await listStates(folder) : [] };
+    },
+
+    async saveState(asked) {
+      const session = sessionAsked(asked);
+      return await inStates(() => saveState(requiredFolder(session), asked.name, session.exportState()));
+    },
+
+    async loadState(asked) {
+      const session = sessionAsked(asked);
+      const state = await inStates(() => loadState(requiredFolder(session), asked.name));
+      return { dropped: await session.importState(state) };
     },
 
     // A file dropped onto a picker: a browser says its name and size, not where it is.

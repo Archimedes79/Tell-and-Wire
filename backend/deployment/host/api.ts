@@ -295,6 +295,18 @@ export const API = {
   /** Listing directories is for the person at the keyboard. */
   browse: local(route<{ path: string; extensions?: string }, BrowsePage>('POST', '/api/files/browse')),
 
+  /** The states saved under a name for this tool (`states/` beside its state.json), the newest first: what a GUI offers to load. */
+  states: route<InSession, { states: { name: string; saved_at: string }[] }>('GET', '/api/runtime/states'),
+
+  /**
+   * Save what a person or a memory node keeps -- the memory nodes' fields, what the start points were sent, what the GUI's blocks hold and show --
+   * under *name*, replacing one of that name. Not the latch, not the results. Writes a file: for the person at the keyboard.
+   */
+  saveState: local(route<InSession & { name: string }, { name: string; saved_at: string }>('POST', '/api/runtime/states/save')),
+
+  /** Take a saved state back, in place of what is kept now; what the design has no place for any more is dropped, and said. */
+  loadState: local(route<InSession & { name: string }, { dropped: string[] }>('POST', '/api/runtime/states/load')),
+
   /**
    * Files of this name and size under the tool's own folder (where the editor was started, for the editor): for a file dropped onto a file
    * picker, whose path a browser never says -- and where the search looked, in words, for a drop that finds none to say.

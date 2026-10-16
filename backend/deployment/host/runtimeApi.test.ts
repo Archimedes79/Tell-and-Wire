@@ -116,4 +116,42 @@ describe('the runtime API', () => {
     expect((await post(`${there.url}/api/runtime/run`, choose)).status).toBe(403);
     expect((await post(`${there.url}/api/files/browse`, { path: '' })).status).toBe(403);
   }, 30_000);
+
+  it('saves what is kept under a name and loads it again: memory and the GUI, never the latch or the results', async () => {
+    const { url, graphPath } = await tool();
+    const A = { event: 'picked', values: { pick: 'a' }, by: 'pick' };
+    expect((await post(`${url}/api/runtime/run`, PICK_B)).status).toBe(200);
+    expect((await get(`${url}/api/runtime/states`)).body).toEqual({ states: [] });
+
+    const saved = await post(`${url}/api/runtime/states/save`, { name: 'Tuesday evening' });
+    expect(saved.status).toBe(200);
+    expect(saved.body.name).toBe('Tuesday evening');
+    const file = JSON.parse(await readFile(join(`${graphPath}.states`, 'Tuesday evening.json'), 'utf8')) as Record<string, unknown>;
+    expect(Object.keys(file).sort()).toEqual(['graph', 'gui', 'gui_shown', 'nodes', 'saved_at']);
+    expect(file.gui).toMatchObject({ pick: { value: 'b' } });
+    expect((await get(`${url}/api/runtime/states`)).body).toMatchObject({ states: [{ name: 'Tuesday evening' }] });
+
+    // Another choice is made, and the saved state brings the first back.
+    expect((await post(`${url}/api/runtime/run`, A)).status).toBe(200);
+    expect((await get(`${url}/api/runtime/session`)).body).toMatchObject({ gui: { pick: 'a' } });
+    const loaded = await post(`${url}/api/runtime/states/load`, { name: 'Tuesday evening' });
+    expect(loaded.status).toBe(200);
+    expect(loaded.body).toEqual({ dropped: [] });
+    expect((await get(`${url}/api/runtime/session`)).body).toMatchObject({ gui: { pick: 'b' }, shown: { shown: 'picked b' } });
+
+    // What cannot be named or found is said.
+    const bad = await post(`${url}/api/runtime/states/save`, { name: '../outside' });
+    expect(bad.status).toBe(400);
+    expect(bad.body.detail).toMatch(/named with letters, digits/);
+    const none = await post(`${url}/api/runtime/states/load`, { name: 'nothing' });
+    expect(none.status).toBe(404);
+    expect(none.body.detail).toBe('No state called "nothing" is saved here.');
+  }, 30_000);
+
+  it('keeps states for a tool beyond this machine to the person at the keyboard: no saving, no loading from elsewhere', async () => {
+    const there = await tool(ECHO, '0.0.0.0');
+    expect((await post(`${there.url}/api/runtime/states/save`, { name: 'x' })).status).toBe(403);
+    expect((await post(`${there.url}/api/runtime/states/load`, { name: 'x' })).status).toBe(403);
+    expect((await get(`${there.url}/api/runtime/states`)).status).toBe(200);
+  }, 30_000);
 });

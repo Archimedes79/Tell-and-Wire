@@ -95,6 +95,26 @@ describe('state', () => {
     expect(session.view()).toMatchObject({ state: { count: { total: 2 } }, shown: { total: { total: 2 } } });
   });
 
+  it('is saved as a state of its own -- the memory and the GUI, nothing a node made -- and taken back in place of what is kept', async () => {
+    const session = await open({ ...counter(), gui: { blocks: [{ id: 'total', kind: 'text_io', mode: 'output', shows: 'count' }] } });
+    await session.run(null);
+    await session.run(null);
+    const two = session.exportState();
+    expect(Object.keys(two).sort()).toEqual(['graph', 'gui', 'gui_shown', 'nodes', 'saved_at']);
+    expect(two.nodes).toEqual({ count: { total: { value: 2, default: 0 } } });
+
+    await session.run(null);
+    expect(session.kept().nodes).toEqual({ count: { total: 3 } });
+    expect(await session.importState(two)).toEqual([]);
+    expect(session.kept().nodes).toEqual({ count: { total: 2 } });
+    expect(session.view()).toMatchObject({ state: { count: { total: 2 } } });
+
+    // What the design has no place for any more is dropped, and said, as when a design changes.
+    const dropped = await session.importState({ ...two, nodes: { ...two.nodes, gone: { x: { value: 1, default: 0 } } } });
+    expect(dropped).toEqual(['What "gone" kept was dropped: it is no longer in the graph.']);
+    expect(session.kept().nodes).toEqual({ count: { total: 2 } });
+  });
+
   it('is committed only by a round that ran to its end: a stopped one or one that could not start commits nothing', async () => {
     const session = await open(counter());
     await session.run(null);

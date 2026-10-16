@@ -10,6 +10,7 @@ import { connectionsOf, type GuiDesign } from './surface/guiInUse';
 import RequirementsDialog from './kit/dialogs/RequirementsDialog';
 import DeliveredHeader from './surface/DeliveredHeader';
 import GuiAISettings from './GuiAISettings';
+import GuiStates from './GuiStates';
 import { call } from './kit/api/client';
 import { roundGoing, startOver, useSession, watchSession } from './kit/api/session';
 import { errorText } from './kit/api/errorText';
@@ -46,6 +47,7 @@ export default function GuiApp() {
   const [design, setDesign] = useState<(GuiDesign & { scheme: string; startsWhole: boolean; usesModel: boolean; drawn: string; events: InterfaceEntry[] }) | null>(null);
   const [loadError, setLoadError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [showStates, setShowStates] = useState(false);
   const view = useSession((s) => s.view);
   const current = useSession((s) => s.round);
   const busy = useSession(roundGoing);
@@ -129,6 +131,15 @@ export default function GuiApp() {
             >
               ↺ Start over
             </Button>
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => setShowStates(true)}
+              disabled={busy}
+              title="Save what this tool keeps under a name, or load a saved state"
+            >
+              State
+            </Button>
             {/* Only a tool that asks a model has any use for choosing one. */}
             {design?.usesModel && (
               <Button
@@ -178,6 +189,7 @@ export default function GuiApp() {
       </div>
 
       {showSettings && <GuiAISettings onClose={() => setShowSettings(false)} />}
+      {showStates && <GuiStates onClose={() => setShowStates(false)} />}
     </div>
   );
 }

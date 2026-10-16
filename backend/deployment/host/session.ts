@@ -52,7 +52,7 @@ import type { GraphCore } from '../runtime/protocol.ts';
 import type { RoundSnapshot, SessionView } from './api.ts';
 
 /** One value a node keeps: what it holds now, and what its design held when that was kept. A data node keeps each field as one. */
-interface Kept {
+export interface Kept {
   value: unknown;
   default: unknown;
 }
@@ -62,6 +62,22 @@ type KeptNodes = Map<string, Map<string, Kept>>;
 
 /** The GUI's blocks that hold what differs from their design, by block id. */
 type KeptBlocks = Map<string, Kept>;
+
+/**
+ * What a person or a memory node keeps, as a document of its own, apart from the rest of the session (`exportState`): what a GUI saves
+ * under a name and loads again. Not what the nodes made last, nor the results of rounds.
+ */
+export interface StateDocument {
+  /** The graph's name, for whoever opens the file to see whose it is. */
+  graph: string;
+  saved_at: string;
+  /** What the nodes that keep anything hold, by node id and name: a memory node's fields, what a start point was sent. */
+  nodes: Record<string, Record<string, Kept>>;
+  /** What the GUI's blocks hold, by block id. */
+  gui: Record<string, Kept>;
+  /** What each block that shows an end point shows, by block id. */
+  gui_shown: Record<string, unknown>;
+}
 
 /** What `state.json` holds: written after every round that commits, and never part of the project. */
 interface StateFile {
@@ -559,6 +575,32 @@ export class Session {
     }
     this.keptBlocks = fitting(gui, this.gui.state(this.design), notes, (id) => `What the block "${id}" held`, () => 'it is no longer on the GUI');
     this.notes = notes;
+  }
+
+  /** What is kept, as a document of its own (`StateDocument`): the memory nodes', the start points' and the GUI's. */
+  exportState(): StateDocument {
+    return {
+      graph: this.design.metadata?.name ?? '',
+      saved_at: new Date().toISOString(),
+      nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries(values)])),
+      gui: Object.fromEntries(this.keptBlocks),
+      gui_shown: this.guiShown,
+    };
+  }
+
+  /**
+   * Replace what is kept by *state*, as far as the design still has a place for it: the rest is dropped, and said, as it is when a design
+   * changes (`fit`). It waits for the round that goes, and what the file keeps is written at once. Resolves to what was dropped, in words.
+   */
+  importState(state: StateDocument): Promise<string[]> {
+    return this.rounds.exclusive(async () => {
+      const nodes: KeptNodes = new Map(Object.entries(state.nodes ?? {}).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
+      this.fit(nodes, new Map(Object.entries(state.gui ?? {})));
+      this.guiShown = state.gui_shown ?? {};
+      await this.save();
+      this.tell({ type: 'session', session: this.view() });
+      return this.notes;
+    });
   }
 
   /** Take back what the file kept, as far as the design still has a place for it. */
