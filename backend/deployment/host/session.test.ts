@@ -421,6 +421,34 @@ describe('a gate, round by round', () => {
     expect(after.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', outputs: {} });
     expect(after.node_results.find((r) => r.node_id === 'reader')!.held).toBeUndefined();
   });
+
+  it('keeps what a node made in memory only for a tool in use, and writes it for a graph being made', async () => {
+    const written = async (file: string) => JSON.parse(await readFile(file, 'utf8')) as { held: Record<string, unknown>; shown: unknown; gui: Record<string, unknown> };
+    const asTool = await scratch();
+    const tool = await Session.open(reader(), { runtime: fake, file: asTool, gui: guiHooks, keeps: 'run' });
+    await tool.run(READ, { by: 'read' });
+    // It stands for the rounds that follow in this process ...
+    const same = await tool.run(LENGTH, { by: 'length' });
+    expect(same.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', held: true, outputs: { text: 'the file' } });
+    // ... and is not in the file, which holds what the GUI's blocks hold and show.
+    const file = await written(asTool);
+    expect(file.held).toEqual({});
+    expect(file.shown).toBeNull();
+    expect(file.gui).toHaveProperty('shown');
+    // After a restart nothing stands on the wire: the gate has to be opened again.
+    const again = await Session.open(reader(), { runtime: fake, file: asTool, gui: guiHooks, keeps: 'run' });
+    const restarted = await again.run(LENGTH, { by: 'length' });
+    expect(restarted.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ status: 'skipped', outputs: {} });
+    expect(restarted.node_results.find((r) => r.node_id === 'reader')!.held).toBeUndefined();
+
+    const asDraft = await scratch();
+    const draft = await Session.open(reader(), { runtime: fake, file: asDraft, gui: guiHooks });
+    await draft.run(READ, { by: 'read' });
+    expect(Object.keys((await written(asDraft)).held)).toContain('reader');
+    const resumed = await Session.open(reader(), { runtime: fake, file: asDraft, gui: guiHooks });
+    const kept = await resumed.run(LENGTH, { by: 'length' });
+    expect(kept.node_results.find((r) => r.node_id === 'reader')).toMatchObject({ held: true, outputs: { text: 'the file' } });
+  });
 });
 
 describe('a session whose rounds run in a graph core of its own process', () => {

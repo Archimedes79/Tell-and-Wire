@@ -102,7 +102,18 @@ type SessionEvent =
   | { type: 'round'; round: RoundSnapshot }
   | { type: 'session'; session: SessionView };
 
+/**
+ * What a session writes to its file. A *draft* is a graph being made -- the editor, the notebook, ▶ Try -- and writes everything: what every
+ * node made last (the latch) and the last results go into state.json, so a restart goes on where it was. A *run* is a tool in use: code and
+ * AI nodes keep nothing of their own, so what stands on a wire between two rounds (a gate that stayed shut) lives in memory, until the
+ * node runs again or the session ends, and the file holds only what a person or a memory node keeps -- the memory nodes' fields, what
+ * the start points were sent, what the GUI's blocks hold and show.
+ */
+export type Keeps = 'draft' | 'run';
+
 export interface SessionOptions {
+  /** What it writes to its file: everything, for a graph being made (the default), or only memory and the GUI's, for a tool in use (`Keeps`). */
+  keeps?: Keeps;
   /** Where its state is kept (`stateFileOf`). None: a graph never saved, whose state lives as long as the session. */
   file?: string | null;
   /** The services a round runs with, told where to say how far it is. A test hands in fakes. */
@@ -162,6 +173,7 @@ export class Session {
   /** The clock, while the application runs, and what stops the rounds it started. */
   private application: { clock: Clock; stop: AbortController } | null = null;
   private file: string | null;
+  private readonly keeps: Keeps;
   private readonly runtime: (report: (event: ProgressEvent) => void) => Runtime;
   private readonly watchers = new Set<(event: SessionEvent) => void>();
   /** When each round's watchers were last told how far it is. */
@@ -174,6 +186,7 @@ export class Session {
     this.design = design;
     this.designText = designText(design);
     this.file = options.file ?? null;
+    this.keeps = options.keeps ?? 'draft';
     this.runtime = options.runtime ?? ((report) => nodeRuntime({ report }));
     this.core = options.core?.() ?? chosenCore({ runtime: options.runtime });
     this.gui = options.gui ?? NO_GUI;
@@ -553,8 +566,9 @@ export class Session {
     const nodes: KeptNodes = new Map(Object.entries(kept.nodes ?? {}).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
     this.fit(nodes, new Map(Object.entries(kept.gui ?? {})));
     this.guiShown = kept.gui_shown ?? {};
-    this.held = kept.held ?? {};
-    this.shown = kept.shown ?? null;
+    // What a tool in use does not write is not taken back either, whatever an older file of the same folder holds.
+    this.held = this.keeps === 'draft' ? kept.held ?? {} : {};
+    this.shown = this.keeps === 'draft' ? kept.shown ?? null : null;
     this.count = Number(kept.rounds) || 0;
     this.finishedAt = kept.finished_at ?? null;
   }
@@ -573,8 +587,8 @@ export class Session {
           nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries(values)])),
           gui: Object.fromEntries(this.keptBlocks),
           gui_shown: this.guiShown,
-          held: Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))),
-          shown: this.shown,
+          held: this.keeps === 'draft' ? Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))) : {},
+          shown: this.keeps === 'draft' ? this.shown : null,
           rounds: this.count,
           finished_at: this.finishedAt,
         };

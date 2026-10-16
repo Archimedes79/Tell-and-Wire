@@ -213,7 +213,7 @@ session answers by name. The **Example** file is what a node before it is shaped
 - **The ◆ gate.** Every node but a start point has a ◆ on its top edge. Unwired, the node
   runs whenever a run reaches it. Wired, it runs only when the run began at a start
   point wired to it, or a node put `true` on it. A code node that returns booleans is the
-  filter and the router. A node whose gate stays shut keeps what it made last.
+  filter and the router. A node whose gate stays shut keeps what it made last, until it runs again; a tool in use keeps that in memory only, so after a restart the gate has to be opened once more.
 - **Failures.** A failed node skips what depends on it. **Catch failures** (in the node's
   settings) puts the reason on an `error` output instead; a data node it feeds keeps what it held.
 - **A model that slips.** A small or cheap model now and then answers with a sentence where the

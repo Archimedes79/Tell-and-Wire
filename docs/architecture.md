@@ -213,7 +213,12 @@ the editor or a served tool, and what using it leaves behind. The rules are held
    state: the reuse cache, a round in flight.
 2. **Where.** In the session, and in `state.json` beside `graph-flow.json` (`<file>.state.json`
    beside a single graph file). Not part of the project: a save and `check` leave it alone, a
-   package does not carry it.
+   package does not carry it. **What is written depends on the session** (`Keeps` in `session.ts`): a
+   graph being made (the editor, the notebook, ▶ Try) writes everything, so a restart goes on where it
+   was; a tool in use (a served package) writes only what a person or a memory node keeps -- the
+   memory nodes' fields, what the start points were sent, what the GUI's blocks hold and show -- and
+   never the latch or the last results. Code and AI nodes remember nothing of their own: what a node made
+   last stands on its wire in memory until the node runs again or the session ends, and is not saved.
 3. **When.** A round runs on a working copy. One that ran to its end commits; one that was stopped
    or could not start commits nothing.
 4. **The design wins.** A kept value is held with the design value it started from. When its node

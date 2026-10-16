@@ -91,7 +91,7 @@ export async function serve(options: ServeOptions): Promise<Served> {
   // begins with the graph it hands over, and its clock runs from ▶ Run to ■ Stop.
   const gui = options.gui?.hooks ?? NO_GUI;
   const held = holderOf(options.graphPath
-    ? await Session.open(await loadGraph(options.graphPath), { file: stateFileOf(options.graphPath), gui })
+    ? await Session.open(await loadGraph(options.graphPath), { file: stateFileOf(options.graphPath), gui, keeps: 'run' })
     : null, { gui });
   const frontend = options.graphPath ? frontendOf(options.graphPath) : null;
   lifecycle.own('the clock', async () => { await held.session?.stopApplication(); });
