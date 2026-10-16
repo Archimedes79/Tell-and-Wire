@@ -149,6 +149,11 @@ export class StartNodeDefinition extends NodeDefinition<StartConfig> {
     return { values: node.config.values ?? {} };
   }
 
+  /** What it was sent is for the rounds of this session; the GUI's blocks hold what a person set, and that is what is written. */
+  override writtenToFile(): boolean {
+    return false;
+  }
+
   override setState(node: GraphNode, kept: Record<string, unknown>): void {
     if (!('values' in kept)) return;
     if (kept.values === null) delete node.config.values;

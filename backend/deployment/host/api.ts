@@ -299,7 +299,7 @@ export const API = {
   states: route<InSession, { states: { name: string; saved_at: string }[] }>('GET', '/api/runtime/states'),
 
   /**
-   * Save what a person or a memory node keeps -- the memory nodes' fields, what the start points were sent, what the GUI's blocks hold and show --
+   * Save what a person or a memory node keeps -- the memory nodes' fields and what the GUI's blocks hold and show --
    * under *name*, replacing one of that name. Not the latch, not the results. Writes a file: for the person at the keyboard.
    */
   saveState: local(route<InSession & { name: string }, { name: string; saved_at: string }>('POST', '/api/runtime/states/save')),

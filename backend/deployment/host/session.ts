@@ -122,8 +122,8 @@ type SessionEvent =
  * What a session writes to its file. A *draft* is a graph being made -- the editor, the notebook, ▶ Try -- and writes everything: what every
  * node made last (the latch) and the last results go into state.json, so a restart goes on where it was. A *run* is a tool in use: code and
  * AI nodes keep nothing of their own, so what stands on a wire between two rounds (a gate that stayed shut) lives in memory, until the
- * node runs again or the session ends, and the file holds only what a person or a memory node keeps -- the memory nodes' fields, what
- * the start points were sent, what the GUI's blocks hold and show.
+ * node runs again or the session ends, and the file holds only what a person or a memory node keeps -- the memory nodes' fields and what
+ * the GUI's blocks hold and show. In both, what a start point was sent stays in memory (`NodeDefinition.writtenToFile`).
  */
 export type Keeps = 'draft' | 'run';
 
@@ -577,12 +577,28 @@ export class Session {
     this.notes = notes;
   }
 
-  /** What is kept, as a document of its own (`StateDocument`): the memory nodes', the start points' and the GUI's. */
+  /** Whether what node *id* keeps goes into a file (`NodeDefinition.writtenToFile`); a node the design does not have goes in, to be dropped and said. */
+  private writes(id: string): boolean {
+    const node = this.design.nodes.find((one) => one.id === id);
+    return !node || registry.node(node.node_type)?.writtenToFile(node) !== false;
+  }
+
+  /** What the nodes keep that is written to a file, by node id and name. */
+  private writtenNodes(): Record<string, Record<string, Kept>> {
+    return Object.fromEntries([...this.keptNodes].filter(([id]) => this.writes(id)).map(([node, values]) => [node, Object.fromEntries(values)]));
+  }
+
+  /** What a file says the nodes kept, without what a node keeps only in memory -- whatever an older file holds of it. */
+  private fromFile(nodes: Record<string, Record<string, Kept>> | undefined): KeptNodes {
+    return new Map(Object.entries(nodes ?? {}).filter(([id]) => this.writes(id)).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
+  }
+
+  /** What is kept, as a document of its own (`StateDocument`): the memory nodes' and the GUI's. */
   exportState(): StateDocument {
     return {
       graph: this.design.metadata?.name ?? '',
       saved_at: new Date().toISOString(),
-      nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries(values)])),
+      nodes: this.writtenNodes(),
       gui: Object.fromEntries(this.keptBlocks),
       gui_shown: this.guiShown,
     };
@@ -594,8 +610,10 @@ export class Session {
    */
   importState(state: StateDocument): Promise<string[]> {
     return this.rounds.exclusive(async () => {
-      const nodes: KeptNodes = new Map(Object.entries(state.nodes ?? {}).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
-      this.fit(nodes, new Map(Object.entries(state.gui ?? {})));
+      // What a node keeps only in memory (what a start point was sent) is not in a state, and a state does not take it away.
+      const standing = [...this.keptNodes].filter(([id]) => !this.writes(id));
+      this.fit(this.fromFile(state.nodes), new Map(Object.entries(state.gui ?? {})));
+      for (const [id, values] of standing) if (this.design.nodes.some((node) => node.id === id)) this.keptNodes.set(id, values);
       this.guiShown = state.gui_shown ?? {};
       await this.save();
       this.tell({ type: 'session', session: this.view() });
@@ -605,8 +623,7 @@ export class Session {
 
   /** Take back what the file kept, as far as the design still has a place for it. */
   private recall(kept: StateFile): void {
-    const nodes: KeptNodes = new Map(Object.entries(kept.nodes ?? {}).map(([node, held]) => [node, new Map(Object.entries(held ?? {}))]));
-    this.fit(nodes, new Map(Object.entries(kept.gui ?? {})));
+    this.fit(this.fromFile(kept.nodes), new Map(Object.entries(kept.gui ?? {})));
     this.guiShown = kept.gui_shown ?? {};
     // What a tool in use does not write is not taken back either, whatever an older file of the same folder holds.
     this.held = this.keeps === 'draft' ? kept.held ?? {} : {};
@@ -626,7 +643,7 @@ export class Session {
           session: this.id,
           graph: this.design.metadata?.name ?? '',
           saved_at: new Date().toISOString(),
-          nodes: Object.fromEntries([...this.keptNodes].map(([node, values]) => [node, Object.fromEntries(values)])),
+          nodes: this.writtenNodes(),
           gui: Object.fromEntries(this.keptBlocks),
           gui_shown: this.guiShown,
           held: this.keeps === 'draft' ? Object.fromEntries(Object.entries(this.held).filter(([node]) => this.design.nodes.some((one) => one.id === node))) : {},

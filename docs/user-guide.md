@@ -320,7 +320,7 @@ it; the delivered GUI has a Stop of its own while a run goes.
 - *What using it keeps* lists what the session holds: what each start point was sent, what
   data nodes hold, what each block holds. **↺ Start over** forgets it. None of it changes
   the saved design.
-- **State** (in the header of a delivered tool) saves what the tool keeps -- what it remembers and what its
+- **State** (in the header of a delivered tool) saves what the tool keeps -- what its memory nodes hold and what its
   blocks hold and show -- under a name, and loads it again, also after the tool was started anew. A
   state is a plain file in `states/` beside the tool; what the steps made last is not in it, and a
   tool in use saves nothing of that by itself.

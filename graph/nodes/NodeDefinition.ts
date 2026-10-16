@@ -393,6 +393,15 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
 
   /** Put the values `state` read back where this element keeps them. */
   setState(_node: GraphNode, _kept: Record<string, unknown>): void {}
+
+  /**
+   * Whether what this node keeps (`state`) is written to a file -- the session's state.json and a state saved under a name. A node
+   * whose values only say how it was last used -- what a start point was sent, which a GUI's blocks hold already -- says no: it keeps them
+   * in memory for as long as the session lives, and a restart or a loaded state starts from its design.
+   */
+  writtenToFile(_node: GraphNode): boolean {
+    return true;
+  }
 }
 
 /**

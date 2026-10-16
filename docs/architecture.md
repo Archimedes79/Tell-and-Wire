@@ -216,8 +216,9 @@ the editor or a served tool, and what using it leaves behind. The rules are held
    package does not carry it. **What is written depends on the session** (`Keeps` in `session.ts`): a
    graph being made (the editor, the notebook, ▶ Try) writes everything, so a restart goes on where it
    was; a tool in use (a served package) writes only what a person or a memory node keeps -- the
-   memory nodes' fields, what the start points were sent, what the GUI's blocks hold and show -- and
-   never the latch or the last results. Code and AI nodes remember nothing of their own: what a node made
+   memory nodes' fields and what the GUI's blocks hold and show -- and never the latch or the last
+   results. What a start point was sent is kept in memory for the session and is in no file
+   (`NodeDefinition.writtenToFile`): the blocks hold what a person set, and a restart starts from the design. Code and AI nodes remember nothing of their own: what a node made
    last stands on its wire in memory until the node runs again or the session ends, and is not saved.
 3. **When.** A round runs on a working copy. One that ran to its end commits; one that was stopped
    or could not start commits nothing.
@@ -355,7 +356,7 @@ except the stream; a refusal is `{ "detail": "…" }`.
 | `GET /api/runtime/gui` | The gui: its blocks as designed, and how they connect by name (answered when the tool has a GUI) |
 | `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
-| `GET /api/runtime/states`, `POST /api/runtime/states/save`, `POST /api/runtime/states/load` | States saved under a name (`states/` beside `state.json`; `backend/deployment/host/states.ts`): list them; save what a person or a memory node keeps now (the memory nodes' fields, what the start points were sent, what the GUI's blocks hold and show -- never the latch or the results); take one back in place of what is kept (saving and loading are loopback only) |
+| `GET /api/runtime/states`, `POST /api/runtime/states/save`, `POST /api/runtime/states/load` | States saved under a name (`states/` beside `state.json`; `backend/deployment/host/states.ts`): list them; save what a person or a memory node keeps now (the memory nodes' fields, what the GUI's blocks hold and show -- never the latch, the results or what a start point was sent); take one back in place of what is kept (saving and loading are loopback only) |
 | `GET /api/files/find` | Files of a name and size under the tool's own folder: for a file dropped onto a picker, whose path a browser never says (loopback only) |
 
 With `by` (a block id) a round is one the GUI starts, refused unless that block fires the start

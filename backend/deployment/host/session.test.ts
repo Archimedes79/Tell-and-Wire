@@ -115,6 +115,26 @@ describe('state', () => {
     expect(session.kept().nodes).toEqual({ count: { total: 2 } });
   });
 
+  it('keeps what a start point was sent in memory only: not in state.json, not in a saved state, and a loaded state leaves it', async () => {
+    const file = await scratch();
+    const session = await open(echo(), file);
+    await picked(session, { pick: 'b' });
+    expect(session.view().sent.picked).toEqual({ pick: 'b' });
+    const written = JSON.parse(await readFile(file, 'utf8')) as { nodes: Record<string, unknown>; gui: Record<string, unknown> };
+    expect(written.nodes).toEqual({});
+    expect(written.gui).toHaveProperty('pick');
+    const saved = session.exportState();
+    expect(saved.nodes).toEqual({});
+
+    // Still there for the rounds of this session, when a state is loaded ...
+    await session.importState({ ...saved, nodes: { picked: { values: { value: { pick: 'x' }, default: {} } } } });
+    expect(session.view().sent.picked).toEqual({ pick: 'b' });
+    // ... and gone after a restart, which starts from the design.
+    const again = await open(echo(), file);
+    expect(again.view().sent.picked).toEqual({});
+    expect(again.view().gui.pick).toBe('b');
+  });
+
   it('is committed only by a round that ran to its end: a stopped one or one that could not start commits nothing', async () => {
     const session = await open(counter());
     await session.run(null);
