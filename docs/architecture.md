@@ -122,6 +122,8 @@ tests share).
 
 ## The files
 
+Drawn by area, one box a directory with each file and its role: [definitions](images/architecture-files-1-definitions.svg), [backend](images/architecture-files-2-backend.svg), [pages of a tool, the notebook and the build](images/architecture-files-3-frontend-tool.svg), [the editor's page](images/architecture-files-4-frontend-editor.svg), [tool servers and root](images/architecture-files-5-mcp-root.svg); how the layers stand on one another is in [architecture-detail.svg](images/architecture-detail.svg).
+
 Where each source file is and what it does: one row a file, by area. A kind of node or block has the same set of files in several
 places (the faces under "Elements"); those are one row each, written as a pattern -- `<kind>` is the kind's folder name
 (`start`, `input_picker`), `<Kind>` its class prefix, `*` anything in a name. Tests sit beside what they test, as
