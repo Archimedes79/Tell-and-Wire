@@ -63,15 +63,15 @@ for (const from of SOURCES) {
 /** The tests of graph/ and gui/ are not carried, but they sit in the neutral folders and import like them. */
 const NEUTRAL_TESTS = ['graph', 'gui'].flatMap((dir) => walk(join(ROOT, dir))).map(rel).filter((path) => /\.test\.tsx?$/.test(path));
 
-/** The folders only authoring uses: the editor's, the notebook's (its frontend is in three), and what both write with. */
-const AUTHORING = new Set(['editor', 'notebook', 'gui-notebook', 'graph-notebook', 'authoring']);
+/** The folders only authoring uses: the editor's, the notebook's, and what both write with. */
+const AUTHORING = new Set(['editor', 'notebook', 'authoring']);
 /** A path only authoring uses: the editor's, the notebook's, or what both write with (`backend/authoring`). */
 const inAuthoring = (path: string): boolean => path.split('/').some((part) => AUTHORING.has(part));
 
 /** The folders each product owns, in every tier. */
 const PRODUCTS: Record<string, string[]> = {
   editor: ['backend/editor/', 'frontend/editor/', 'graph/editor/', 'gui/editor/'],
-  notebook: ['backend/notebook/', 'frontend/notebook/', 'frontend/gui-notebook/', 'frontend/graph-notebook/', 'gui/notebook/'],
+  notebook: ['backend/notebook/', 'frontend/notebook/', 'gui/notebook/'],
 };
 const productOf = (path: string): string | undefined => Object.keys(PRODUCTS).find((name) => PRODUCTS[name].some((prefix) => path.startsWith(prefix)));
 const show = (found: Import[]): string[] => found.map((one) => `${one.from} -> ${one.to}`).sort();

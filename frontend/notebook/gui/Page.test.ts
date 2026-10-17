@@ -2,9 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { addBlock, pageOf, startPage } from '../../gui/notebook/page.ts';
+import { addBlock, pageOf, startPage } from '../../../gui/notebook/page.ts';
 import Page, { spanAt } from './Page';
-import { useNotebook } from '../notebook/document/store';
+import { useNotebook } from '../document/store';
 
 /**
  * The page used as it is: typed into, with Enter, Backspace and the first characters of a line, in blocks, as Markdown, and

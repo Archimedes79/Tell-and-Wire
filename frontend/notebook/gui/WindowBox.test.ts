@@ -2,15 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { Window, Windows } from '../../gui/notebook/windows.ts';
-import { outEnd } from '../../gui/notebook/windows.ts';
-import { tableHeight } from '../notebook/elements/Widgets';
+import type { Window, Windows } from '../../../gui/notebook/windows.ts';
+import { outEnd } from '../../../gui/notebook/windows.ts';
+import { tableHeight } from '../elements/Widgets';
 
 const run = vi.fn(async (_id: string) => undefined);
-vi.mock('../notebook/document/runs', () => ({ runWindow: (id: string) => run(id), stopRuns: vi.fn(async () => undefined) }));
+vi.mock('../document/runs', () => ({ runWindow: (id: string) => run(id), stopRuns: vi.fn(async () => undefined) }));
 
 const { default: WindowBox } = await import('./WindowBox');
-const { useNotebook } = await import('../notebook/document/store');
+const { useNotebook } = await import('../document/store');
 
 /**
  * A window to be used: what it takes in, a button, and each kind of thing that comes out -- in boxes that keep the size the

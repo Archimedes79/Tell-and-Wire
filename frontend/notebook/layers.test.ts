@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
  *   1 document    what the page holds and does: the store, the runs, the client, and what an input holds
  *     look        light or dark, kept in the browser
  *   2 elements    the boxes a window is made of: the inputs and outputs, the chart, the file browser
- *   3 gui-notebook   the page and its windows, to be used
- *     graph-notebook the list of cells, under the hood, and the debug window: the windows seen as a graph
+ *   3 gui            the page and its windows, to be used
+ *     graph          the list of cells, under the hood, and the debug window: the windows seen as a graph
  *   4 the shell   the top bar, the first page
  *   5 main        the entry
  *
@@ -18,13 +18,13 @@ const AREAS: [string, number, ...string[]][] = [
   ['document', 1, 'notebook/document/'],
   ['look', 1, 'notebook/look.ts'],
   ['elements', 2, 'notebook/elements/'],
-  ['gui-notebook', 3, 'gui-notebook/'],
-  ['graph-notebook', 3, 'graph-notebook/'],
+  ['gui', 3, 'notebook/gui/'],
+  ['graph', 3, 'notebook/graph/'],
   ['shell', 4, 'notebook/App.tsx', 'notebook/Start.tsx'],
   ['main', 5, 'notebook/main.tsx'],
 ];
 
-const SOURCES = import.meta.glob('/{notebook,gui-notebook,graph-notebook}/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const SOURCES = import.meta.glob('/notebook/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const FILES = new Map(
   Object.entries(SOURCES)
     .filter(([path]) => !/\.(test|d)\.tsx?$/.test(path) && !path.startsWith('/notebook/dist/'))

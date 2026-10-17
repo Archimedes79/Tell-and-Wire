@@ -6,12 +6,12 @@
 // web page the tool is (`As app`).
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { patchWindow, removeWindow } from '../../gui/notebook/edit.ts';
-import { addBlock, fromMarkdown, freshBlockId, LINE_KINDS, moveBlock, pageOf, patchBlock, removeBlock, setKind, toMarkdown } from '../../gui/notebook/page.ts';
-import { DEFAULT_SCHEME, type BlockKind, type PageBlock, type Windows } from '../../gui/notebook/windows.ts';
-import { schemeVariables } from '../../gui/scheme.ts';
-import { useNotebook } from '../notebook/document/store';
-import { inline } from '../notebook/elements/inline';
+import { patchWindow, removeWindow } from '../../../gui/notebook/edit.ts';
+import { addBlock, fromMarkdown, freshBlockId, LINE_KINDS, moveBlock, pageOf, patchBlock, removeBlock, setKind, toMarkdown } from '../../../gui/notebook/page.ts';
+import { DEFAULT_SCHEME, type BlockKind, type PageBlock, type Windows } from '../../../gui/notebook/windows.ts';
+import { schemeVariables } from '../../../gui/scheme.ts';
+import { useNotebook } from '../document/store';
+import { inline } from '../elements/inline';
 import WindowBox from './WindowBox';
 
 const PLACEHOLDER: Record<string, string> = {

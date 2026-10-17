@@ -1,7 +1,7 @@
 // The debug window: every round the notebook ran, node by node -- what each got, what it made, why one did nothing.
 
-import { forgetRuns, stopRuns } from '../notebook/document/runs';
-import { useNotebook, type Outcome } from '../notebook/document/store';
+import { forgetRuns, stopRuns } from '../document/runs';
+import { useNotebook, type Outcome } from '../document/store';
 
 const WORDS: Record<Outcome, string> = { done: 'Done', empty: 'Nothing to do', failed: 'Failed', stopped: 'Stopped' };
 

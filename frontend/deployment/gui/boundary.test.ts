@@ -25,7 +25,7 @@ import { describe, it, expect } from 'vitest';
 
 // Rooted at the frontend's root, not relative: a relative pattern from inside
 // deployment/gui silently omits the folder itself, and the walker then starts nowhere.
-const SOURCES = import.meta.glob('/{editor,notebook,gui-notebook,graph-notebook,deployment}/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const SOURCES = import.meta.glob('/{editor,notebook,deployment}/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 // The neutral definitions and the backend, beside the frontend rather than inside it.
 const OUTSIDE = import.meta.glob(['../../../{graph,gui,backend}/**/*.ts', '!**/node_modules/**'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
@@ -119,7 +119,7 @@ describe('deployment boundary', () => {
     // like the bundler's static graph -- does not follow: a panel is a chunk
     // the editor fetches when an element is opened, and a tool never does.
     // Everything only the editor uses sits in a folder named `editor`, what only the notebook uses in one of its three, and what both write with in one named `authoring`.
-    expect(reaching((path) => path.split('/').some((part) => ['editor', 'notebook', 'gui-notebook', 'graph-notebook', 'authoring'].includes(part)))).toEqual([]);
+    expect(reaching((path) => path.split('/').some((part) => ['editor', 'notebook', 'authoring'].includes(part)))).toEqual([]);
   });
 
   /**

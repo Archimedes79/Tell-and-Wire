@@ -6,8 +6,8 @@ import { useRef, useState } from 'react';
 import Cells from './Cells';
 import Debug from './Debug';
 import Haube from './Haube';
-import { useNotebook, type DockTab } from '../notebook/document/store';
-import type { Windows } from '../../gui/notebook/windows.ts';
+import { useNotebook, type DockTab } from '../document/store';
+import type { Windows } from '../../../gui/notebook/windows.ts';
 
 const TABS: [DockTab, string][] = [['cells', 'List'], ['hood', 'Under the hood'], ['debug', 'Debug']];
 

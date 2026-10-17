@@ -8,17 +8,17 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import {
   addInput, addOutput, addStep, kindOfOutput, moveCell, patchInput, patchOutput, patchStep, patchWindow, removeCell, renameInput, renameStep, setHow,
   type CellRef,
-} from '../../gui/notebook/edit.ts';
+} from '../../../gui/notebook/edit.ts';
 import {
   SIZES, idOf, mentions, resultsOf, taken, windowProblems,
   type InKind, type OutKind, type Window, type WindowIn, type WindowOut, type Windows,
-} from '../../gui/notebook/windows.ts';
-import { chipClass, STATE_WORDS, stepStatus, windowState } from '../notebook/document/status';
-import { runWindow } from '../notebook/document/runs';
-import { useNotebook } from '../notebook/document/store';
-import { inBlock, outEnd, spoken, tag } from '../notebook/document/values';
-import { Output } from '../notebook/elements/Widgets';
-import Browse from '../notebook/elements/Browse';
+} from '../../../gui/notebook/windows.ts';
+import { chipClass, STATE_WORDS, stepStatus, windowState } from '../document/status';
+import { runWindow } from '../document/runs';
+import { useNotebook } from '../document/store';
+import { inBlock, outEnd, spoken, tag } from '../document/values';
+import { Output } from '../elements/Widgets';
+import Browse from '../elements/Browse';
 
 const IN_KINDS: [InKind, string][] = [['text', 'Text'], ['file', 'File'], ['folder', 'Folder'], ['number', 'Number'], ['choice', 'Choice'], ['from', 'From window']];
 const OUT_KINDS: [OutKind, string][] = [['text', 'Text'], ['list', 'List'], ['table', 'Table'], ['chart', 'Chart'], ['image', 'Image'], ['chat', 'Chat']];

@@ -2,10 +2,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { startPage } from '../../gui/notebook/page.ts';
-import { inBlock } from '../../gui/notebook/windows.ts';
+import { startPage } from '../../../gui/notebook/page.ts';
+import { inBlock } from '../../../gui/notebook/windows.ts';
 import Cells from './Cells';
-import { useNotebook } from '../notebook/document/store';
+import { useNotebook } from '../document/store';
 
 /**
  * The list of a window's cells, used as it is: what a click on a button and a word typed into a box do to the page -- through

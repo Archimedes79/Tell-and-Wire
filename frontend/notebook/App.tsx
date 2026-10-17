@@ -6,8 +6,8 @@
 import { useEffect, useState } from 'react';
 import './notebook.css';
 import Browse from './elements/Browse';
-import Dock from '../graph-notebook/Dock';
-import Page from '../gui-notebook/Page';
+import Dock from './graph/Dock';
+import Page from './gui/Page';
 import Start from './Start';
 import ModelSaid from './elements/ModelSaid';
 import { runAll, stopRuns } from './document/runs';

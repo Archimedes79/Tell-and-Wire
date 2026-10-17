@@ -40,7 +40,7 @@ Four cuts run through everything:
 | **gui** | The blocks a tool is used through (text, picker, button, chart, chat ...). No node: a block connects to the graph by name, to the start points it sends to and fires and the end point it shows. |
 | **project** | The folder of files a tool is saved as. |
 | **editor** | One of the two products that design a project: the canvas, the GUI designer, saving, packing, the MCP server for assistants. Its own folders are named `editor`. |
-| **notebook** | The other product: a page you write, with windows in it. Its own folders are named `notebook` (and `gui-notebook`, `graph-notebook` in the browser). It imports nothing of the editor. |
+| **notebook** | The other product: a page you write, with windows in it. Its own folders are named `notebook`. It imports nothing of the editor. |
 | **authoring** | What both products write with, and no package carries: the designs of the nodes and blocks (how an AI writes them), the check of a graph, the record of a writing, what a graph is handed on without. Its folders are named `authoring`: `graph/authoring`, `gui/authoring`, `backend/authoring`. It is common code, and knows neither product. |
 | **deployment** | Everything a package carries. |
 | **runtime** | Execution for one programming language (JavaScript today): runs a round, a node, a node's example, asks the model, runs a code body in a sandbox. |
@@ -76,8 +76,8 @@ It imports nothing of the editor; the two know each other by a route and a query
 
 | Box | Folders | Sub-blocks and what they hold |
 |---|---|---|
-| **Page** | `frontend/gui-notebook/` | The page and its windows: the blocks you type in and the three views Write, Markdown and As app (`Page.tsx`), a window with its inputs, its button and its outputs, a table, a text, a chart or a picture (`WindowBox.tsx`). |
-| **Cells** | `frontend/graph-notebook/` | The list of the open window, Ask, Do and Show (`Cells.tsx`), the window as the graph it is (`Haube.tsx`), the debug of every round (`Debug.tsx`), in a dock under the page (`Dock.tsx`). |
+| **Page** | `frontend/notebook/gui/` | The page and its windows: the blocks you type in and the three views Write, Markdown and As app (`Page.tsx`), a window with its inputs, its button and its outputs, a table, a text, a chart or a picture (`WindowBox.tsx`). |
+| **Cells** | `frontend/notebook/graph/` | The list of the open window, Ask, Do and Show (`Cells.tsx`), the window as the graph it is (`Haube.tsx`), the debug of every round (`Debug.tsx`), in a dock under the page (`Dock.tsx`). |
 | (shell of both) | `frontend/notebook/`, `frontend/notebook/document/`, `frontend/notebook/elements/` | The notebook's page around the two: `document/` the open page -- store, undo, saving, running the windows in order (`runs.ts`), the link to the editor (`links.ts`); `elements/` the boxes a window shows (table, chart, picture, the file browser); the look (`look.ts`, `notebook.css`). Built by `vite.notebook.config.ts`. |
 | **Notebook backend** | `backend/notebook/` | `main.ts` (its start file), `api.ts` and `routes.ts` (open and save a page, hand it to the session), `describe.ts` (windows from a sentence), `files.ts` (a project saved before the page was read from its graph). |
 | (its model) | `gui/notebook/` | Windows and the page as data, neutral so that the browser and Node share them: `windows.ts` (windows, and compiling them to a graph, a schedule and a GUI), `fromGraph.ts` (reading them back from those), `page.ts`, `pageModel.ts`, `edit.ts` (the edits, pure functions), `read.ts`. |
@@ -519,16 +519,16 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/editor/gui/widgets/roster.ts` | The widgets a GUI is built from: the mirror of `gui/widgets/roster.ts`, and the only place that knows the whole set |
 | `frontend/editor/gui/widgets/text/TextInPlace.tsx` | A heading or a paragraph typed where it stands on the GUI. |
 
-### `frontend/notebook/`, `frontend/gui-notebook/`, `frontend/graph-notebook/`
+### `frontend/notebook/`, `frontend/notebook/gui/`, `frontend/notebook/graph/`
 
 | File | What it does |
 |---|---|
-| `frontend/graph-notebook/Cells.tsx` | The cells of a window, as the design of the list (A2) has them: Ask, Do, Show, one white card each, a sentence in each |
-| `frontend/graph-notebook/Debug.tsx` | The debug window: every round the notebook ran, node by node -- what each got, what it made, why one did nothing |
-| `frontend/graph-notebook/Dock.tsx` | Under the page: the cells of the open window (the list, A2), the window as a graph, and the debug window |
-| `frontend/graph-notebook/Haube.tsx` | Under the hood: the window as the graph it is, left to right, with what runs between written on the wires. |
-| `frontend/gui-notebook/Page.tsx` | The page: written like any page -- headings, text, bullets, gaps -- with windows standing in it to be used |
-| `frontend/gui-notebook/WindowBox.tsx` | A window on the page, to be used: its inputs, a button, and what came out -- at the size its elements give it |
+| `frontend/notebook/graph/Cells.tsx` | The cells of a window, as the design of the list (A2) has them: Ask, Do, Show, one white card each, a sentence in each |
+| `frontend/notebook/graph/Debug.tsx` | The debug window: every round the notebook ran, node by node -- what each got, what it made, why one did nothing |
+| `frontend/notebook/graph/Dock.tsx` | Under the page: the cells of the open window (the list, A2), the window as a graph, and the debug window |
+| `frontend/notebook/graph/Haube.tsx` | Under the hood: the window as the graph it is, left to right, with what runs between written on the wires. |
+| `frontend/notebook/gui/Page.tsx` | The page: written like any page -- headings, text, bullets, gaps -- with windows standing in it to be used |
+| `frontend/notebook/gui/WindowBox.tsx` | A window on the page, to be used: its inputs, a button, and what came out -- at the size its elements give it |
 | `frontend/notebook/App.tsx` | The notebook: a page to write on and use, and under it the cells of a window, the window as a graph, and the debug window |
 | `frontend/notebook/Start.tsx` | The first page (A1): one sentence about what the tool should do, and the tool is built from it |
 | `frontend/notebook/document/api.ts` | The notebook's own end of the wire: the host's routes called by name, with nothing of the graph editor's client in it |
@@ -607,7 +607,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | A deployed tool's browser loads nothing of an `editor` folder or of the notebook's three, no panel, and of `graph/`, `gui/` and `backend/` only the wire and the shapes its views read. | `frontend/deployment/gui/boundary.test.ts` |
 | The editor's page imports only downward through its layers: `ui`, `layout` · graph types · `model`, `api` · editor `api` · `store`, `views` · `dialogs` · deployed `widgets`, `surface` · the elements · `gui`, `canvas`, `node` · the app · `App` · `main`. | `frontend/editor/app/layers.test.ts` |
 | The notebook's page is read back from the project's own files (`gui/notebook/fromGraph.ts`): every example and a page that uses every kind of input, output and step is made into files, read back and made again, giving the same files and the same windows -- and every feature of a window has its place in them (`docs/notebook.md`). | `backend/notebook/fromGraph.test.ts` |
-| The notebook's page the same way: `document` · `elements` · `gui-notebook`, `graph-notebook` (siblings, which do not import each other) · the shell · `main`. | `frontend/notebook/layers.test.ts` |
+| The notebook's page the same way: `document` · `elements` · `gui`, `graph` (siblings, which do not import each other) · the shell · `main`. | `frontend/notebook/layers.test.ts` |
 | A deployed tool answers only the routes of the tables it is composed of; an editor route is a 404. | `backend/deployment/host/serve.test.ts` |
 | A package runs from a folder of its own, carries `MANIFEST.json` listing exactly its files, and nothing of the editor. | `backend/editor/project/deploy/bundle.test.ts` |
 | Every kind of node and block has all its faces, under the same name, and the registries list the same kinds. | `frontend/editor/elements/symmetry.test.ts` |

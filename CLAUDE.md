@@ -17,7 +17,7 @@ gui are apart all the way. Tier first, then role.
 |---|---|
 | Editor: GUI editor, graph editor, their shell | `frontend/editor/{gui,graph,document,app,api}/` |
 | Editor backend, and its part of the definitions | `backend/editor/{project,graph,settings,assistant,host}/`; `graph/editor/`, `gui/editor/` |
-| Notebook: page, cells, shell | `frontend/{gui-notebook,graph-notebook,notebook}/` |
+| Notebook: page, cells, shell | `frontend/notebook/{gui,graph,document,elements}/` |
 | Notebook backend, and its model | `backend/notebook/`; `gui/notebook/` |
 | Common code: the definitions of graph and gui, neutral | `graph/`, `gui/` |
 | Common code: authoring, what both products write with | `graph/authoring/`, `gui/authoring/`, `backend/authoring/` |

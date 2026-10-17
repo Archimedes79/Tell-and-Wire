@@ -2,10 +2,10 @@
 // what runs between them written on the wires. Nothing here is edited; the cells are where a window changes.
 
 import { useMemo } from 'react';
-import { columnsOf, parseTable } from '../../graph/schedule.ts';
-import { resultsOf, taken, type Window, type Windows } from '../../gui/notebook/windows.ts';
-import { owns } from '../../gui/windows/owns.ts';
-import { compile, useNotebook } from '../notebook/document/store';
+import { columnsOf, parseTable } from '../../../graph/schedule.ts';
+import { resultsOf, taken, type Window, type Windows } from '../../../gui/notebook/windows.ts';
+import { owns } from '../../../gui/windows/owns.ts';
+import { compile, useNotebook } from '../document/store';
 
 export default function Haube({ doc, window }: { doc: Windows; window: Window }) {
   const graph = useNotebook((s) => s.graph);

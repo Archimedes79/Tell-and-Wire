@@ -3,14 +3,14 @@
 // It never grows. An output has the height of its rows whatever arrives in it; a message about a run that came to
 // nothing stands in the first output's place, not under it.
 
-import { NO_CHAT, chatsOf, numbering, inBlock, outEnd, startValue } from '../notebook/document/values';
-import { runWindow, stopRuns } from '../notebook/document/runs';
-import { useNotebook } from '../notebook/document/store';
-import { chipClass, STATE_WORDS, windowState } from '../notebook/document/status';
-import Boundary from '../notebook/elements/Boundary';
-import { ChatBox, Input, Output } from '../notebook/elements/Widgets';
-import { chatValue } from '../../gui/widgets/chat/value.ts';
-import type { Window } from '../../gui/notebook/windows.ts';
+import { NO_CHAT, chatsOf, numbering, inBlock, outEnd, startValue } from '../document/values';
+import { runWindow, stopRuns } from '../document/runs';
+import { useNotebook } from '../document/store';
+import { chipClass, STATE_WORDS, windowState } from '../document/status';
+import Boundary from '../elements/Boundary';
+import { ChatBox, Input, Output } from '../elements/Widgets';
+import { chatValue } from '../../../gui/widgets/chat/value.ts';
+import type { Window } from '../../../gui/notebook/windows.ts';
 
 /** The share of a line an element takes, as a flex basis that leaves room for the gap between elements. */
 const basis = (share: number | undefined): React.CSSProperties => {

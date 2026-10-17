@@ -13,7 +13,7 @@ await launch({
     'package.json', 'package-lock.json', 'frontend/package.json', 'frontend/notebook/index.html',
     'frontend/tsconfig.json', 'frontend/tsconfig.node.json', 'frontend/vite.notebook.config.ts', 'frontend/vite.licenses.ts', 'frontend/tailwind.config.js', 'frontend/postcss.config.js',
   ],
-  sources: ['frontend/notebook', 'frontend/gui-notebook', 'frontend/graph-notebook', 'graph', 'gui', 'backend'],
+  sources: ['frontend/notebook', 'graph', 'gui', 'backend'],
   buildScript: 'build:notebook',
   server: ['backend/notebook/main.ts'],
 }, process.argv.slice(2));
