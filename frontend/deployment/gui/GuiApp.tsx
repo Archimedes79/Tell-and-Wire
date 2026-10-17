@@ -17,7 +17,7 @@ import { startOver } from './kit/api/start';
 import { errorText } from './kit/api/errorText';
 import Button from './kit/ui/Button';
 import { schemeVars } from './kit/ui/scheme';
-import { DANGER_FILL, DANGER_TEXT, DIM, SUNKEN } from './kit/ui/theme';
+import { DANGER_FILL, DANGER_TEXT, DIM, SURFACE } from './kit/ui/theme';
 
 /** The blocks of a tool whose design is not loaded yet. */
 const NO_BLOCKS = { blocks: [] as GuiWidget[] };
@@ -116,7 +116,7 @@ export default function GuiApp() {
 
   return (
     // A deployed tool looks like the thing that was designed, scheme included.
-    <div className="flex flex-col h-screen overflow-hidden" style={{ ...schemeVars(design?.scheme), background: SUNKEN }}>
+    <div className="flex flex-col h-screen overflow-hidden" style={{ ...schemeVars(design?.scheme), background: SURFACE }}>
       <DeliveredHeader
         name={worded ? '' : design?.name ?? ''}
         description={worded ? '' : design?.description ?? ''}

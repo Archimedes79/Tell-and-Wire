@@ -26,6 +26,7 @@ export function schemeVars(id: string | undefined): React.CSSProperties {
     '--ui-raise': s.raise,
     '--ui-hover': s.hover,
     '--ui-scrim': s.scrim,
+    '--ui-shadow-soft': s.shadowSoft,
     '--ui-text': s.text,
     '--ui-muted': s.muted,
     '--ui-dim': s.dim,

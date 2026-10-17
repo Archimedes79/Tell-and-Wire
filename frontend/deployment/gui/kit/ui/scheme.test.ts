@@ -88,4 +88,11 @@ describe('colour schemes', () => {
     expect(new Set(grounds).size).toBe(SCHEMES.length);
     expect(SCHEMES.map((s) => s.id)).toEqual(['night', 'paper', 'white', 'graphite']);
   });
+
+  it('lift a card by two layers each, and a dark ground also by a lit edge, since a shadow alone is lost on it', () => {
+    for (const s of SCHEMES) {
+      expect(s.shadowSoft.split('rgba(').length - 1).toBeGreaterThanOrEqual(2);
+      expect(s.shadowSoft.includes('inset')).toBe(!s.light && s.id !== 'paper');
+    }
+  });
 });

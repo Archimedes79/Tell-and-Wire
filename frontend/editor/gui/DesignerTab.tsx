@@ -15,7 +15,7 @@ import GuiHeading from './GuiHeading';
 import WidgetEditor from './WidgetEditor';
 import GuiSettings from './GuiSettings';
 import { schemeVars } from '../../deployment/gui/kit/ui/scheme';
-import { ACCENT, LINE, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
+import { ACCENT, LINE, SHADOW_SOFT, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * The graph's gui, built on the GUI itself. One graph, one tool, one GUI --
@@ -227,13 +227,19 @@ export default function DesignerTab() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <GuiHeading name={metadata.name} description={metadata.description} onChange={setMetadata} />
+        {/* The page as a sheet on the editor's own ground: the element that scrolls and takes the
+            drops is the sheet itself, so nothing about how a block is dropped or measured moves. */}
+        <div className="flex-1 min-h-0 flex flex-col p-4">
         <div
           data-gui-dropzone
-          className="flex-1 overflow-auto px-8 py-6"
+          className="flex-1 overflow-auto px-8 py-6 rounded-xl"
           // The GUI, in its own colour scheme: the editor around it keeps its own.
           style={{
             ...schemeVars(metadata.gui_scheme),
-            background: SUNKEN,
+            // The page is a surface, so its fields (sunken) sit in it, as they do in a deployed tool.
+            background: SURFACE,
+            border: `1px solid ${LINE}`,
+            boxShadow: SHADOW_SOFT,
             ...(dragEntry ? { outline: `2px dashed ${ACCENT}`, outlineOffset: -6 } : {}),
           }}
         >
@@ -250,6 +256,7 @@ export default function DesignerTab() {
             onInsertAt={setInsertAt}
             onInsert={(entry, index) => { setInsertAt(null); addWidget(entry.kind, entry.mode, index); }}
           />
+        </div>
         </div>
       </div>
 
