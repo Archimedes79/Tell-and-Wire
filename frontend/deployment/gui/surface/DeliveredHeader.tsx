@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { RoundSnapshot } from '../kit/api/client';
-import { stopRound } from '../kit/api/session';
+import { stopRound } from '../kit/api/start';
 import Button from '../kit/ui/Button';
 import { DANGER_TEXT, DIM, LINE, MUTED, SURFACE, TEXT } from '../kit/ui/theme';
 

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
-import { call, type Requirement } from '../kit/api/client';
-import { roundRefused, startRound, useSession, type RoundAsk } from '../kit/api/session';
+import type { Requirement } from '../kit/api/client';
+import { port } from '../kit/api/port';
+import { roundRefused, useSession } from '../kit/api/session';
+import { startRound, type RoundAsk } from '../kit/api/start';
 
 /**
  * Starting a round the way every GUI starts one.
@@ -50,7 +52,7 @@ export function useRound(before?: () => Promise<void>, values?: () => Record<str
     const ask: RoundAsk = by ? { values: { ...values?.(), ...useSession.getState().edits }, by } : sent ? { values: sent } : {};
     try {
       // The "before running" questions, for this event: what it does not run is not asked about.
-      const needed = await call('requirements', { event, ...ask });
+      const needed = await port().start.requirements(event, ask);
       if (needed.length > 0) {
         pending.current = { event, ask };
         setRequirements(needed);

@@ -87,7 +87,7 @@ const files = [
   ...await walk('gui', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && notEditors(path)),
   'gui/package.json',
   // The server, what runs a graph and what writes a project; not the editor's server, which nothing here imports.
-  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/') && notEditors(path)),
+  ...await walk('backend', (path) => (path.endsWith('.ts') || path.endsWith('.js')) && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/') && notEditors(path)),
   'backend/package.json',
   ...await walk('frontend/notebook/dist', (path) => !path.endsWith('/_audit.js')),
   ...await walk('notebook-examples', (path) => !/(^|\/)([^/]*\.)?state\.json$/.test(path)),

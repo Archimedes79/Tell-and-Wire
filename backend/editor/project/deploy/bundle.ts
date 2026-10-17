@@ -228,7 +228,7 @@ async function sourceFiles(dir: string): Promise<string[]> {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
       if (!LEFT_BEHIND.has(entry.name)) found.push(...await sourceFiles(full));
-    } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) {
+    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.js')) && !entry.name.endsWith('.test.ts')) {
       found.push(full);
     }
   }

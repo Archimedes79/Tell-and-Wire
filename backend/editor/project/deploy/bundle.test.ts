@@ -119,6 +119,8 @@ describe('a bundle', () => {
       });
       const written = await writeBundle(graph, dir, { guiDir: built });
       expect(written).toEqual(expect.arrayContaining(['web/gui.html', 'web/assets/app.js', 'web/licenses.txt']));
+      // The client a page of its own imports (`/tw/port.js`) is code the host serves: it goes along with the host.
+      expect(await readFile(join(dir, 'backend', 'deployment', 'host', 'port.js'), 'utf8')).toContain('export async function connect');
       expect(written).not.toContain('web/unlinked.txt');
       expect(await readFile(join(dir, 'run.sh'), 'utf8')).toContain('--serve');
     } finally {

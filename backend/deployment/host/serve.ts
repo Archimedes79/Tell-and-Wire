@@ -16,6 +16,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { names } from '../../../graph/wiring.ts';
@@ -26,6 +27,7 @@ import { Download, EventStream, Refusal, foreignRequest, hostnameOf, namesFor, r
 import { NotOffered, eventOf, outputsOf } from '../../../graph/interface.ts';
 import { browse, startFolder } from './browse.ts';
 import { findFiles, searchedIn } from './find.ts';
+import { portView } from './port.ts';
 import { BadStateName, listStates, loadState, saveState, statesFolderOf } from './states.ts';
 import { extensionFilter } from '../../../graph/nodes/folderListing.ts';
 import { NotFound, messageOf } from '../../../graph/errors.ts';
@@ -163,6 +165,11 @@ export async function serve(options: ServeOptions): Promise<Served> {
       }
     }
 
+    // The reference client of the GUI port, for a page of one's own to import (`port.js`).
+    if (path === '/tw/port.js' && request.method === 'GET') {
+      response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache' });
+      return void response.end(await readFile(new URL('./port.js', import.meta.url)));
+    }
     if (options.editor) return servePage(response, path, options.editor.dist, 'index.html');
     // A GUI of the project's own, written by hand against the runtime API, wins over the built one.
     if (frontend) return servePage(response, path, frontend, 'index.html');
@@ -271,6 +278,8 @@ function toolRoutes(
 
   return {
     // -- the runtime API: what any frontend uses, by name ---------------------
+
+    port: () => portView(!!part),
 
     interface(asked) {
       const session = sessionAsked(asked);

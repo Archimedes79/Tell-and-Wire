@@ -344,6 +344,7 @@ except the stream; a refusal is `{ "detail": "…" }`.
 
 | Route | What it does |
 |---|---|
+| `GET /api/runtime/port` | The GUI port: every connection point by name, with its role, method, path and what it is for (see "The GUI port") |
 | `GET /api/runtime/interface` | What the graph offers: its start points (who starts each, what the graph reads of what it is sent, which blocks fire it), its end points, and its memory nodes (`state`: what can be watched without a round) |
 | `GET /api/runtime/session` | The session now: what each start point was sent, what the end points handed back, what each memory node holds (`state`, by name, from the design's values on), what each block holds and shows, what a reset forgets (`kept`), the round, the clock |
 | `GET /api/runtime/stream` | Server-sent events: `session` on connect and after every change, `round` as each round starts, goes and ends |
@@ -363,6 +364,50 @@ With `by` (a block id) a round is one the GUI starts, refused unless that block 
 point; without it, a call, and `values` are the package as sent. Types and tables:
 `backend/deployment/host/api.ts`; handlers: `toolRoutes` in `backend/deployment/host/serve.ts`;
 tests: `backend/deployment/host/runtimeApi.test.ts`, `frontend.test.ts`.
+
+### The GUI port
+
+A tool's page -- the built-in GUI, a hand-written `frontend/index.html` in the project, a more sophisticated site, a test, a phone
+app -- is a different program from the tool. It meets the tool at **connection points**, which are routes of the runtime API sorted by
+what a page does there (`backend/deployment/host/port.ts`, `GUI_PORT`; the compiler holds that every route is placed):
+
+| Role | Points | What a page does there |
+|---|---|---|
+| **describe** | `interface`, `gui`, `toolAiSettings` | Ask what the tool offers by name -- start points, end points, memory nodes -- and, if it has a GUI, the GUI as designed (its blocks, and how they connect by name). |
+| **start** | `requirements`, `startRound`, `runRound`, `stopRound`, `reset` | Do something to the tool: ask what a round still needs, begin it (or begin it and wait for its answer: a call), stop it, start over. |
+| **return** | `session`, `stream`, `round` | Hear what the tool tells: the session now and after every change, each round as it starts, goes and ends -- whoever began it. |
+| **state** | `states`, `saveState`, `loadState` | Keep what the tool keeps under a name, and take it back. |
+| **files** | `browse`, `findFile` | Name a file or folder on the machine the tool runs on. |
+
+*Start* and *return* are apart on purpose. A round a page begins answers with its id at once; what comes of it arrives on the stream
+like any other round, so a page is built as two halves that know nothing of each other and meet only in what they show.
+
+**The server says what the points are.** `GET /api/runtime/port` answers `{ version, points }`: each point by name with its role,
+method, path (with its `:params`), a line of what it is for, and whether only the person at the keyboard may call it (`local`). A page
+that reads its paths there hard-codes none, and `version` says when a point changed in a way an old page would not survive.
+
+**A page of one's own** needs no build. Every tool serves a plain-JavaScript client of the port at `/tw/port.js`
+(`backend/deployment/host/port.js`, carried by every package):
+
+```html
+<script type="module">
+  import { connect } from '/tw/port.js';
+  const tool = await connect();
+  const { interface: what } = await tool.describe();          // describe
+  tool.watch({ round: (round) => show(round), session: (view) => draw(view) });   // return
+  await tool.start('picked', { values: { pick: 'b' } });      // start
+  await tool.states.save('Tuesday');                          // state
+</script>
+```
+
+Put the page in the project as `frontend/index.html` (`frontendOf`): a served project shows it in place of the built-in GUI, and a
+bundle carries the folder whole. The client is the port's other end, nothing more: `connect({ base })` meets a tool on another origin,
+and `connect({ fetch })` takes another transport. `backend/deployment/host/port.test.ts` runs a tool through it.
+
+**The built-in GUI** is one page on the same port, and splits the same way (`frontend/deployment/gui/kit/api/`): `port.ts` is its end
+of the points (`StartPort`, `ReturnPort`, the HTTP implementation, `setPort` to plug another in), `start.ts` what it does to the tool
+(`startRound`, `startOver`, `stopRound`), `session.ts` the store the return half feeds. Nothing else of the GUI reaches the wire of a
+round -- `port.test.ts` scans for it -- so replacing the transport, or the whole page, touches no widget.
 
 ### The editor API
 

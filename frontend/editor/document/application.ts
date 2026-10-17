@@ -26,7 +26,7 @@ import { create } from 'zustand';
 import type { Graph } from './graph';
 import { goingRound, useGraphStore } from './store/graphStore';
 import { call } from '../api/client';
-import { stopRound } from '../../deployment/gui/kit/api/session';
+import { stopRound } from '../../deployment/gui/kit/api/start';
 import { startEvents } from '../../../graph/triggers.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 

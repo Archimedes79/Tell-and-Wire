@@ -6,7 +6,8 @@ import type { Graph, GraphNode, GraphMetadata, ExecutionResult, GuiWidget, NodeT
 import type { RFNodeData } from './nodeData';
 import type { PortRenames } from './portRenames';
 import { call, type RoundSnapshot } from '../../api/client';
-import { forgetSession, stopRound, useSession } from '../../../deployment/gui/kit/api/session';
+import { forgetSession, useSession } from '../../../deployment/gui/kit/api/session';
+import { stopRound } from '../../../deployment/gui/kit/api/start';
 import {
   buildReactFlowGraph, defaultMetadata, exported, normalizeGraph,
 } from '../model/graphDoc';

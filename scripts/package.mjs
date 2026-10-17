@@ -187,7 +187,7 @@ const files = [
   'graph/package.json',
   ...await walk('gui', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')),
   'gui/package.json',
-  ...await walk('backend', (path) => path.endsWith('.ts') && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/')),
+  ...await walk('backend', (path) => (path.endsWith('.ts') || path.endsWith('.js')) && !path.endsWith('.test.ts') && !path.includes('/test/') && !path.includes('/architecture/')),
   'backend/package.json',
   ...await walk('frontend/dist'),
   // Not what a session left beside an example (state.json, .gitignore'd): a download starts every example as it was written.

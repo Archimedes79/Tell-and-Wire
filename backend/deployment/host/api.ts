@@ -182,6 +182,22 @@ interface RoundOutcome {
   outputs: Record<string, unknown>;
 }
 
+/** The GUI port as a page is told it (`port.ts`): every connection point by name. */
+export interface PortView {
+  /** What a page may rely on: raised when a point changes in a way an old page would not survive. */
+  version: number;
+  points: Record<string, {
+    /** What a page does there: describe, start, return, state or files. */
+    role: string;
+    method: string;
+    /** With its `:params`, as `pathFor` fills them. */
+    path: string;
+    summary: string;
+    /** Answered only to the person at the keyboard (loopback). */
+    local: boolean;
+  }>;
+}
+
 /** A question about the session: this server's, when it names none. */
 export interface InSession {
   session?: string;
@@ -261,6 +277,9 @@ export function local<Req, Res>(one: Route<Req, Res>): Route<Req, Res> {
 /** What any host answers: a graph used by name, by any frontend. */
 export const API = {
   /** What the graph offers by name: its start points -- each with what the graph reads of what it is sent -- and its end points. */
+  /** The connection points a page has to this tool, by name, with their roles and paths: so that a page of its own hard-codes none (`port.ts`). */
+  port: route<void, PortView>('GET', '/api/runtime/port'),
+
   interface: route<InSession, InterfaceView>('GET', '/api/runtime/interface'),
 
   /** The session now: what each start point was sent, what the outputs showed, the GUI, the round going or gone, the clock. */

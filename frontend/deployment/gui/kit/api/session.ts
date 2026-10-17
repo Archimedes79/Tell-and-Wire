@@ -14,9 +14,9 @@
 // the message still in hand.
 
 import { create } from 'zustand';
-import { API, pathFor } from '../../../../../backend/deployment/host/api.ts';
-import { call, type RoundSnapshot, type SessionView } from './client';
+import type { RoundSnapshot, SessionView } from './client';
 import { errorText } from './errorText';
+import { port } from './port';
 
 export interface GuiSession {
   /** The session as the server last told it; none before it has. */
@@ -72,8 +72,8 @@ function roundTold(round: RoundSnapshot): void {
   });
 }
 
-/** The stream listened to now. */
-let listening: EventSource | null = null;
+/** How to stop listening to what is listened to now. */
+let listening: (() => void) | null = null;
 
 /**
  * Listen to the session the server holds now, until the returned function is
@@ -81,14 +81,12 @@ let listening: EventSource | null = null;
  * replaces what was listened to before.
  */
 export function watchSession(): () => void {
-  listening?.close();
-  const stream = new EventSource(pathFor(API.stream).path);
-  stream.addEventListener('session', (event) => sessionTold(JSON.parse((event as MessageEvent<string>).data) as SessionView));
-  stream.addEventListener('round', (event) => roundTold(JSON.parse((event as MessageEvent<string>).data) as RoundSnapshot));
-  listening = stream;
+  listening?.();
+  const stop = port().back.watch({ session: sessionTold, round: roundTold });
+  listening = stop;
   return () => {
-    stream.close();
-    if (listening === stream) listening = null;
+    stop();
+    if (listening === stop) listening = null;
   };
 }
 
@@ -98,7 +96,7 @@ export function watchSession(): () => void {
  * it is handed over (`holdDocument`).
  */
 export function forgetSession(): void {
-  listening?.close();
+  listening?.();
   listening = null;
   useSession.setState({ view: null, round: null, edits: {}, sent: {} });
 }
@@ -118,13 +116,6 @@ export function heldValue(state: Pick<GuiSession, 'view' | 'edits'>, id: string,
 /** Whether a round is going: the GUI's, another tab's, the clock's. */
 export const roundGoing = (state: GuiSession): boolean => !!state.round && !state.round.done;
 
-/** What a round is asked with, beside its event: what it is sent, what it asked, who sends it (`RoundRequest`). */
-export interface RoundAsk {
-  values?: Record<string, unknown>;
-  answers?: Record<string, unknown>;
-  by?: string;
-}
-
 /** How many rounds the server turned down here: each said as a round of its own. */
 let refusals = 0;
 
@@ -137,27 +128,16 @@ function refused(reason: string, started: RoundSnapshot['started']): RoundSnapsh
   };
 }
 
-/** Say that a round for *event* could not start, as every failed round is said. */
-export function roundRefused(error: unknown, event: string | null, by?: string): void {
-  useSession.setState({ round: refused(errorText(error, 'The run could not start.'), event ? { event, by: by ?? 'call' } : null) });
+/** Say that a round for *event* could not start, as every failed round is said. *fallback*: the words where the failure has none. */
+export function roundRefused(error: unknown, event: string | null, by?: string, fallback = 'The run could not start.'): void {
+  useSession.setState({ round: refused(errorText(error, fallback), event ? { event, by: by ?? 'call' } : null) });
 }
 
 /**
- * Start a round for *event* -- the whole graph for none -- asked with *ask*:
- * one the GUI starts is `by` the block that fired it, and sent what the
- * gui set, by block id. One the server turns down -- a name the graph does
- * not offer, another session's id -- is said where every failed round is,
- * and what was set here stays in hand.
+ * Round *id* was started here, sent *values*: what was set on the GUI is let go of once the round has run to its end and the session
+ * keeps it. A round that already ended before this was told (a quick one beats its own answer) is settled at once.
  */
-export async function startRound(event: string | null, ask: RoundAsk = {}): Promise<void> {
-  const values = ask.values ?? {};
-  let id: string;
-  try {
-    ({ round_id: id } = await call('startRound', { event, ...ask }));
-  } catch (error) {
-    roundRefused(error, event, ask.by);
-    return;
-  }
+export function roundStarted(id: string, values: Record<string, unknown>): void {
   const early = endedEarly.get(id);
   endedEarly.delete(id);
   useSession.setState((state) => (early === undefined
@@ -165,51 +145,12 @@ export async function startRound(event: string | null, ask: RoundAsk = {}): Prom
     : { edits: early ? kept(state.edits, values) : state.edits }));
 }
 
-/**
- * Start over: the session forgets what using the graph left behind -- what
- * its start points were sent, what its memory holds, what the GUI holds --
- * and so does this GUI, what was set on it and not sent yet.
- */
-export async function startOver(): Promise<void> {
+/** What was set on this GUI and not sent, and what rounds were sent, is forgotten: the tool started over. */
+export function forgetEdits(): void {
   useSession.setState({ edits: {}, sent: {} });
-  try {
-    const view = await call('reset', {});
-    useSession.setState({ view, round: null });
-  } catch (error) {
-    useSession.setState({ round: refused(errorText(error, 'It could not start over.'), null) });
-  }
 }
 
-/** How many rounds one press of Stop follows down the queue: more than a person starts in a moment. */
-const STOP_AT_MOST = 6;
-
-/**
- * Stop the round going, whoever started it -- and the ones waiting behind it. The latest this page was
- * told of may only have queued, and stopping that alone leaves the one that runs going; so what the
- * server calls the round going (the one that runs) is stopped too, and asked for again until none is.
- */
-export async function stopRound(): Promise<void> {
-  const { round } = useSession.getState();
-  const stopped = new Set<string>();
-  const stop = async (id: string): Promise<void> => {
-    stopped.add(id);
-    // A round that ended before it was told is no failure of this press.
-    await call('stopRound', { id }).catch(() => undefined);
-  };
-  // The one this page knows of is stopped at once.
-  const first = round && !round.done ? stop(round.round_id) : Promise.resolve();
-  for (let asked = 0; asked < STOP_AT_MOST; asked += 1) {
-    let going: string | null = null;
-    try {
-      const { round: running } = await call('session', {});
-      going = running && !running.done ? running.round_id : null;
-    } catch {
-      break; // The server did not answer: what this page knows of is stopped.
-    }
-    if (!going) break;
-    // Still winding down after its stop: given a moment, not told again.
-    if (stopped.has(going)) await new Promise((wait) => setTimeout(wait, 120));
-    else await stop(going);
-  }
-  await first;
+/** The tool started over and told the session it is now. */
+export function sessionReset(view: SessionView): void {
+  useSession.setState({ view, round: null });
 }

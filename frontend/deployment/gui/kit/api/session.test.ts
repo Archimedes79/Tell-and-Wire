@@ -34,7 +34,8 @@ class FakeStream {
 }
 vi.stubGlobal('EventSource', FakeStream);
 
-const { setEdit, startRound, stopRound, useSession, watchSession } = await import('./session');
+const { setEdit, useSession, watchSession } = await import('./session');
+const { startRound, stopRound } = await import('./start');
 const told = (type: 'session' | 'round', data: unknown) => streams[streams.length - 1].listeners[type]({ data: JSON.stringify(data) } as MessageEvent<string>);
 
 /** The session as the server tells it, *gui* what each block holds. */

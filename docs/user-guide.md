@@ -376,8 +376,9 @@ graph starts on (one from outside the tool goes to `data/`; a file or folder ove
 one that is missing, stops Deploy) and the licence. It leaves out the editor, the tests,
 each node's `history.md` and `state.json`. A tool that asks a model reads
 `ai-settings.json` beside `run.sh`, or the `TW_AI_*` variables. A tool can also bring a
-gui of its own in `frontend/index.html`, which uses the runtime API by name (see
-`examples/nested_statistics/frontend/`).
+gui of its own in `frontend/index.html`, which meets the tool at its connection points -- the
+"GUI port" in `docs/architecture.md`; every tool serves a small client for it at `/tw/port.js` (see
+`examples/nested_statistics/frontend/` for a page that calls the routes directly).
 
 ## 11. The MCP server
 
