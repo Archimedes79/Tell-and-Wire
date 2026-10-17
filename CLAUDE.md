@@ -46,7 +46,7 @@ package with its own licence; a deployed tool carries none. Their checks (`npm t
 
 ![Design by two products on common code, the project as plain files, and use: three bands, and only files and a few named things cross between them](docs/images/overview.svg)
 
-The picture (`docs/images/overview.svg`, in the README) is the target architecture, and the software is cut the same way: `docs/architecture.md` takes it apart box by box, and `backend/architecture/blocks.test.ts` holds the folders to it. Code changes keep this layered modularity:
+The picture (`docs/images/overview.svg`, in the README) is the target architecture, and the software is cut the same way: `docs/architecture.md` takes it apart box by box, and `backend/architecture/blocks.test.ts` holds the folders to it. "The files" in the same document says where each source file is and what it does, and `files.test.ts` fails on a file added, moved or removed without a row there. Code changes keep this layered modularity:
 
 - **Three bands, files between them.** The editor designs and writes a project; a deployment reads
   it and runs it. What the editor knows must be in a file, in a plain format a person or git can

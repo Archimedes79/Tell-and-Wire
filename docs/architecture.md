@@ -120,6 +120,475 @@ Everything a package carries, and what runs a tool in the editor and in the note
 Beside the blocks: `scripts/` (the launchers, packaging, the licence check), `docs/`, and `frontend/test/` (what the page's
 tests share).
 
+## The files
+
+Where each source file is and what it does: one row a file, by area. A kind of node or block has the same set of files in several
+places (the faces under "Elements"); those are one row each, written as a pattern -- `<kind>` is the kind's folder name
+(`start`, `input_picker`), `<Kind>` its class prefix, `*` anything in a name. Tests sit beside what they test, as
+`<name>.test.ts`, and are not listed; the project files a tool is made of are under "The project folder".
+`backend/architecture/files.test.ts` holds this section to the tree: every source file is in it, and every row is a file there is.
+
+### The root and its scripts
+
+| File | What it does |
+|---|---|
+| `.eslintrc.node.cjs` | The lint rules of `graph/`, `gui/` and `backend/` (`npm run lint`); the page has its own, `frontend/.eslintrc.cjs`. |
+| `scripts/dev.mjs` | Development: the backend on :8000 and Vite on :3000, in one terminal |
+| `scripts/editorProcess.mjs` | The editor as a process on a port: which one it is, and how to stop it |
+| `scripts/launch.mjs` | What every product's start file does once: stop the one running on the port, install on first use, build a stale page, start the server, open the browser. |
+| `scripts/licenses.mjs` | Every package this workspace installs, held to the licences it may come under |
+| `scripts/package-notebook.mjs` | Build the downloadable package of the notebook alone: `npm run package:notebook`, after `npm run build:notebook` |
+| `scripts/package.mjs` | Build the downloadable package: Tell & Wire, ready to run, nothing to install |
+| `scripts/start-notebook.mjs` | Start the notebook: `node scripts/start-notebook.mjs [--port 8100]`, which start-notebook.cmd, .ps1 and .sh call |
+| `scripts/start.mjs` | Start the editor: `node scripts/start.mjs [--port 8000]`, which start.cmd, start.ps1 and start.sh call |
+| `scripts/stop-notebook.mjs` | Stop the notebook: `node scripts/stop-notebook.mjs [--port 8100]`, which stop-notebook.cmd, .ps1 and .sh call |
+| `scripts/stop.mjs` | Stop the editor: `node scripts/stop.mjs [--port 8000]`, which stop.cmd, stop.ps1 and stop.sh call |
+| `start-notebook.cmd`, `start-notebook.ps1`, `start-notebook.sh` | Start the notebook (:8100), the same way (`scripts/start-notebook.mjs`). |
+| `start.cmd`, `start.ps1`, `start.sh` | Start the editor (:8000): install on first use, build what is stale, restart one that runs, open the page. All three call `scripts/start.mjs`. |
+| `stop-notebook.cmd`, `stop-notebook.ps1`, `stop-notebook.sh` | Stop the notebook (`scripts/stop-notebook.mjs`). |
+| `stop.cmd`, `stop.ps1`, `stop.sh` | Stop the editor, and only a Tell & Wire server (`scripts/stop.mjs`). |
+
+### `graph/`: the graph definition
+
+| File | What it does |
+|---|---|
+| `graph/authoring/generation.ts` | How an AI writes an element's body, declared by the element |
+| `graph/authoring/handedOn.ts` | A graph without what only writing it needs, for what leaves the project: a deployed tool, a served GUI, a run, an MCP answer, a model asked to change it. |
+| `graph/authoring/history.ts` | history.md: the whole conversation with the model about one node |
+| `graph/authoring/nodes/NodeDesign.ts` | What only building a node asks |
+| `graph/authoring/nodes/<kind>/<Kind>NodeDesign.ts` | The **design** of each node kind: how an AI writes it, what `check` says about it, what a package must carry for it. |
+| `graph/authoring/nodes/code/javascript.ts` | The language a code node's body is written in, as whoever writes and tries it needs it said: JavaScript, run by the Node the graph runs on |
+| `graph/authoring/nodes/registry.ts` | The registry of designs: what the editor asks of each kind of node |
+| `graph/batching.ts` | Running a node once per item instead of once for the list |
+| `graph/editor/prompts.ts` | The prompts a node is written with: the standard texts of each chat, and what every one sends |
+| `graph/editor/pull.ts` | Pull: the definition a node's wires imply |
+| `graph/editor/scheduleEdit.ts` | Changing a schedule (`graph/schedule.ts`): where a card may be put, and putting it |
+| `graph/endpoints.ts` | Where each model provider is, unless a person says otherwise |
+| `graph/errors.ts` | What more than one layer says, said once: two answers and what an error says |
+| `graph/fileInputs.ts` | Handing an element a file's content instead of its name |
+| `graph/files/changes.ts` | What changed in a project folder, as whoever has it open is told |
+| `graph/files/definition.ts` | A node's two definitions, as the files its folder keeps them in: what comes in (`input.js`) and what goes out (`output.js`) |
+| `graph/files/flow.ts` | `graph-flow.json`: the graph's name and every wire -- nothing about any node |
+| `graph/files/logic.ts` | What a node does, as an object rather than as a field name |
+| `graph/files/names.ts` | What an id is called on disk |
+| `graph/files/nodesFile.ts` | `graph-nodes.json`: the list of a graph's nodes -- what each one is |
+| `graph/files/prompts.ts` | The prompt an ai node runs with, and the variables a prompt names |
+| `graph/graph.ts` | The graph as it is stored and as a run sees it |
+| `graph/interface.ts` | What a graph offers whoever uses it from outside, under names |
+| `graph/nodes/ElementDefinition.ts` | What an element is: the half every package carries |
+| `graph/nodes/NodeDefinition.ts` | A node: the element branch that sits on the canvas and runs in the graph |
+| `graph/nodes/Runtime.ts` | The world an element is allowed to touch |
+| `graph/nodes/<kind>/<Kind>NodeDefinition.ts` | The **definition** of each node kind (start, ai, code, data, end, subgraph): what it is, whatever the language -- see "Elements". |
+| `graph/nodes/fileContent.ts` | What a node that reads a file is handed |
+| `graph/nodes/folderListing.ts` | Reading a file or a folder: the start point's and the file-picker block's, one behaviour at two levels, implemented once |
+| `graph/nodes/images.ts` | Turning a picture on disk into something that can be looked at or sent, and the one place where the size of a picture or a PDF read is limited |
+| `graph/nodes/ownPath.ts` | A path written in a graph file -- a start point's, an end point's -- is the graph's, and a graph may come from a stranger |
+| `graph/nodes/port.ts` | How a port is written: its id, name, type and what it reads of a package. |
+| `graph/nodes/registry.ts` | The registry of node kinds: every node a graph can hold, as its definition |
+| `graph/nodes/subgraph/boundary.ts` | Where a graph inside a node meets the node that holds it |
+| `graph/order.ts` | The order a graph runs in: levels over the wires, and how a loop may pass through a data node. |
+| `graph/schedule.ts` | The schedule: the order a graph runs in, and where its nodes stand |
+| `graph/schema.ts` | What a node's outputs look like, written down: its output interface |
+| `graph/triggers.ts` | What starts a graph: start points, started by a GUI, a call or by themselves; and which nodes a start point runs. |
+| `graph/usesModel.ts` | Whether running a graph needs an AI: one node of it asks a model |
+| `graph/wiring.ts` | Whether a graph's wiring holds together: every node its own id, every edge between two nodes that exist, on ports those nodes have |
+
+### `gui/`: the GUI definition
+
+| File | What it does |
+|---|---|
+| `gui/authoring/check.ts` | What is wrong with a graph: the one list of problems that `check`, CI, the MCP server and the editor all read. |
+| `gui/authoring/gui.ts` | What only the editor asks of the GUI: whether it is sound, what to tell the model that writes one, what a package carries |
+| `gui/authoring/widgets/DisplayWidgetDesign.ts` | The design of a block that only shows an end point's value. |
+| `gui/authoring/widgets/WidgetDesign.ts` | What only building the GUI asks of a widget: what to tell a neighbour, the model that writes a graph, a package |
+| `gui/authoring/widgets/<kind>/<Kind>WidgetDesign.ts` | The **design** of each block kind: what only building the GUI asks of it. |
+| `gui/authoring/widgets/roster.ts` | The design of each kind of block: what only building the GUI asks of it |
+| `gui/editor/complete.ts` | A GUI written whole, with the start and end points its blocks need |
+| `gui/gui.ts` | The GUI a graph is used through: its blocks, and how each connects itself |
+| `gui/interface.ts` | What a GUI adds to a graph's interface: which blocks fire a start point and what the GUI sends with it. |
+| `gui/notebook/edit.ts` | Changing windows: the small edits a person makes to a page, each one a function from windows to windows |
+| `gui/notebook/fromGraph.ts` | The windows a graph says: `windowsToGraph` (`windows.ts`) read backwards |
+| `gui/notebook/page.ts` | The page: headings, text, lists and gaps as in the plainest editor of pages, with the windows standing in them |
+| `gui/notebook/pageModel.ts` | What a page is made of, before anything is done to it: which blocks it has, and the one a tool without a page of its own gets |
+| `gui/notebook/read.ts` | Windows read from JSON: a file, or a model's answer |
+| `gui/notebook/windows.ts` | Windows: a tool said as a page of fixed windows, each one a short list of cells |
+| `gui/size.ts` | How large a block of the GUI is, in cells and in pixels |
+| `gui/widgets/DisplayWidgetDefinition.ts` | The definition of a block that only shows the end point it shows hands back. |
+| `gui/widgets/StaticWidgetDefinition.ts` | The definition of a block that is part of the GUI, not of the graph: a heading, a divider, a gap. |
+| `gui/widgets/WidgetDefinition.ts` | A widget: the element branch that sits on the GUI a graph is used through |
+| `gui/widgets/<kind>/<Kind>WidgetDefinition.ts` | The **definition** of each block kind (text, divider, spacer, input_picker, text_io, select, slider, button, chat, plot_window, table, image_view). |
+| `gui/widgets/chat/value.ts` | What a chat block holds: the conversation so far and the message in hand |
+| `gui/widgets/input_picker/dropped.ts` | A file dropped onto a file picker: where it is on the machine the tool runs on |
+| `gui/widgets/roster.ts` | The blocks a GUI is built from |
+| `gui/widgets/select/choice.ts` | What a dropdown offers and what it stands at |
+| `gui/widgets/slider/range.ts` | What a slider's stored settings mean: its range, its step and the number it stands at |
+| `gui/widgets/text/role.ts` | How a piece of prose is set: a first-level heading, a second-level heading, a paragraph or a caption |
+| `gui/widgets/text_io/role.ts` | What a box of text is for: typed into, shown in, or both |
+| `gui/widgets/text_io/text.ts` | A value, as a box of text reads it |
+| `gui/windows.ts` | The room what a node hands on is shown in |
+| `gui/windows/grid.ts` | What a window and the block in it keep of their room, in pixels: the numbers a drawing function is told and the delivered page draws with. |
+| `gui/windows/order.ts` | Which windows to run, and in what order |
+| `gui/windows/owns.ts` | Whose a node of a round is: a window's nodes are named after it. |
+| `gui/windows/scheme.ts` | The colour scheme: one choice for the whole tool, from a closed set |
+
+### `backend/deployment/`: host, runtime and what a package carries
+
+| File | What it does |
+|---|---|
+| `backend/deployment/gui/hooks.ts` | What a GUI does around the graph in use, as the host asks it |
+| `backend/deployment/host/api.ts` | The wire between a GUI and the server: the host's routes, and what travels each way |
+| `backend/deployment/host/browse.ts` | Walking the machine's files, for a picker |
+| `backend/deployment/host/find.ts` | Finding a file that was dropped onto a page: a browser hands a page the name and size of a dropped file, never where it is |
+| `backend/deployment/host/http.ts` | The few HTTP things a route handler needs, and nothing that knows a route |
+| `backend/deployment/host/lifecycle.ts` | What a served tool holds while it runs, and how it lets go of it |
+| `backend/deployment/host/port.js` | The reference client of the GUI port (`port.ts`, "The GUI port" in docs/architecture.md): what a page written by hand uses to meet its tool |
+| `backend/deployment/host/port.ts` | The GUI port: the connection points a page has to the tool it shows |
+| `backend/deployment/host/rounds.ts` | The rounds of one session: one at a time, watched while they go, stopped when asked |
+| `backend/deployment/host/serve.ts` | The server: the built gui or editor, and the routes of `api.ts` |
+| `backend/deployment/host/session.ts` | The graph in use, and what using it leaves behind |
+| `backend/deployment/host/states.ts` | States saved under a name: what a person or a memory node keeps, written out on request and read back on request |
+| `backend/deployment/project/folder.ts` | A graph as a folder: the project |
+| `backend/deployment/project/layout.ts` | Where things are in an install, and where a package keeps what is not the project's own |
+| `backend/deployment/runtime/ai/fixtures/echo-mcp-server.mjs` | A tool server small enough to read in one go, for `mcp.test.ts` |
+| `backend/deployment/runtime/ai/mcp.ts` | Tools for a model, from MCP servers |
+| `backend/deployment/runtime/ai/providers.ts` | The model clients: a table of OpenAI-compatible providers, plus those with a shape of their own. |
+| `backend/deployment/runtime/ai/settings.ts` | Where the model configuration comes from |
+| `backend/deployment/runtime/clock.ts` | The clock of a tool that runs by itself: what its start points start by themselves, one round after another |
+| `backend/deployment/runtime/confine.ts` | Which files a graph may reach |
+| `backend/deployment/runtime/examples.ts` | A node's example: what its input.js gives one call, held to its output.js |
+| `backend/deployment/runtime/executor.ts` | Running a graph: initialise, wire, order, execute |
+| `backend/deployment/runtime/latch.ts` | What every node last produced, held until it runs again |
+| `backend/deployment/runtime/localCore.ts` | The JavaScript graph core, in the host's own process: the executor and the runners, behind the protocol (`protocol.ts`) |
+| `backend/deployment/runtime/lru.ts` | A map that keeps the *limit* most recently used entries: reading one counts as using it |
+| `backend/deployment/runtime/nodes/NodeRunner.ts` | What a node does when the graph runs |
+| `backend/deployment/runtime/nodes/<kind>/<Kind>NodeRunner.ts` | The **runner** of each node kind: what executes it in a round. |
+| `backend/deployment/runtime/nodes/ai/ask.ts` | Asking a model, as a node does it -- and as a body may ask for it to be done |
+| `backend/deployment/runtime/nodes/ai/prompt.ts` | What an ai node actually sends, put together in one place |
+| `backend/deployment/runtime/nodes/body.ts` | How a body -- the JavaScript of a code node, written by a person or a model -- is run. |
+| `backend/deployment/runtime/nodes/registry.ts` | The registry of runners: what runs each kind of node in a deployed tool |
+| `backend/deployment/runtime/offline.ts` | A run that asks no model: the services as they are, and a model that says so when it is asked |
+| `backend/deployment/runtime/protocol.ts` | What the host asks of a graph core, and what a core answers |
+| `backend/deployment/runtime/reuse.ts` | What a node produced last time, for a run that only needs it as context |
+| `backend/deployment/runtime/services.ts` | The runtime's services on a machine with a filesystem: Node today, Deno unchanged |
+| `backend/deployment/runtime/stdio.ts` | A graph core as a program of its own: the protocol (`protocol.ts`) over stdin and stdout, one JSON object per line |
+| `backend/deployment/runtime/test/fakes.ts` | What tests stand a run on when the world it runs in is not what they are about |
+
+### `backend/authoring/`, `backend/cli/`, `backend/architecture/`
+
+| File | What it does |
+|---|---|
+| `backend/architecture/filesUnder.ts` | Every file under a folder, for the structure tests: no hidden names, no links followed, nothing that vanishes mid-read. |
+| `backend/authoring/ask.ts` | What writing with a model has in common: the transcript of its calls, how a fenced answer is read, how a writing fails. |
+| `backend/authoring/product.ts` | Switching from one product to the other: find the one that is running, or start it, and say where it is |
+| `backend/authoring/productApi.ts` | The wire between a product and the page it serves, for the way to the other product: who this is, and a switch to the other |
+| `backend/authoring/write.ts` | A graph written as a folder: the project, saved |
+| `backend/cli/cli.ts` | Running a graph from a command line |
+| `backend/cli/main.ts` | The executable entry point: `node backend/cli/main.ts graph.json` |
+
+### `backend/editor/`
+
+| File | What it does |
+|---|---|
+| `backend/editor/graph/brief.ts` | The variables of a node's prompts, filled from what the node and the graph hold. |
+| `backend/editor/graph/generate.ts` | Writing a node's files with a model |
+| `backend/editor/graph/generateGraph.ts` | Writing a whole graph with a model: one designed from a description, or the graph there is, changed as asked |
+| `backend/editor/graph/generatePrompts.ts` | What the model is told when ✨ writes a node's files, and when it designs or changes a whole graph: the prose around what the node and the graph hold |
+| `backend/editor/graph/graphPrompt.ts` | What the model is told before it designs a whole graph |
+| `backend/editor/host/api.ts` | The wire between the editor and the server: the routes only the editor serves, and what travels |
+| `backend/editor/host/commands.ts` | The commands only the editor has: `check`, `test`, one node, `--bundle`, `--mcp`. |
+| `backend/editor/host/mcp/confine.ts` | What the MCP server's tools may touch, and what they may say |
+| `backend/editor/host/mcp/spec.ts` | What the MCP server's nine tools say of themselves: limits, descriptions, and the guide to writing a graph. |
+| `backend/editor/host/mcp/tools.ts` | The nine tools, over one folder: what each does, and nothing of how it is reached |
+| `backend/editor/host/mcp/transport.ts` | stdio: JSON-RPC, one message per line |
+| `backend/editor/host/mcpServer.ts` | Tell & Wire, offered to an assistant outside it |
+| `backend/editor/host/routes.ts` | What the server answers only while a graph is being built |
+| `backend/editor/project/deploy/bundle.ts` | Handing the graph to someone else |
+| `backend/editor/project/deploy/launchers.ts` | The two files that start something from the folder they sit in: run.sh and run.cmd |
+| `backend/editor/project/deploy/zip.ts` | A zip archive, written by hand |
+| `backend/editor/project/files.ts` | The editor's view of the machine's files: finding projects and dropped files, and handing a node's file to the editor the person works in |
+| `backend/editor/project/folderCheck.ts` | What is wrong with a project folder, and the `check` command's answer |
+| `backend/editor/project/keptRounds.ts` | A round kept as a test: what it was started with and what it handed back, run again without asking a model |
+| `backend/editor/runtime/mcpServers.ts` | The tool servers that come with this installation, for the editor |
+| `backend/editor/runtime/settings.ts` | The editor's settings dialog, and the one file behind it |
+
+### `backend/notebook/`
+
+| File | What it does |
+|---|---|
+| `backend/notebook/api.ts` | The wire between the notebook and its server: the routes only the notebook's server answers, and what travels |
+| `backend/notebook/describe.ts` | Windows from a sentence: a tool said in words, or the windows there are changed as asked |
+| `backend/notebook/files.ts` | What the notebook reads and writes of a project besides the project's own files: nothing, any more |
+| `backend/notebook/main.ts` | The notebook's start file: `node backend/notebook/main.ts [--port 8100] [--host 127.0.0.1]` |
+| `backend/notebook/routes.ts` | The routes of the notebook: open and save a project made of windows, and make windows from a sentence |
+
+### `frontend/deployment/`: what a delivered tool's browser loads
+
+| File | What it does |
+|---|---|
+| `frontend/deployment/gui/GuiAISettings.tsx` | The read-only dialog that says which model a delivered tool calls and where to change that. |
+| `frontend/deployment/gui/GuiApp.tsx` | The delivered tool's page: loads the GUI design, listens to the session, draws the header, the GUI or the windows, and the dialogs. |
+| `frontend/deployment/gui/GuiStates.tsx` | The State dialog: save what the tool keeps under a name, load or replace a saved state. |
+| `frontend/deployment/gui/kit/api/client.ts` | A GUI's end of the wire: the routes of `backend/deployment/host/api.ts`, called by name |
+| `frontend/deployment/gui/kit/api/errorText.ts` | The message to show a user for a failed request |
+| `frontend/deployment/gui/kit/api/port.ts` | The built-in GUI's end of the GUI port (`backend/deployment/host/port.ts`, "The GUI port" in docs/architecture.md) |
+| `frontend/deployment/gui/kit/api/session.ts` | The session as a GUI sees it: what its start points were sent, what its outputs showed, the round going or gone -- as the server tells it, by name |
+| `frontend/deployment/gui/kit/api/start.ts` | What the GUI does to its tool: begin a round, stop it, start over |
+| `frontend/deployment/gui/kit/dialogs/FileBrowserDialog.tsx` | The file browser: choose a file, a folder or a name to save under, on the machine the tool runs on. |
+| `frontend/deployment/gui/kit/dialogs/PathField.tsx` | A path box with Browse beside it, which takes a dropped file too; and the file-types field. |
+| `frontend/deployment/gui/kit/dialogs/RequirementsDialog.tsx` | The "before running" window: the file or folder a run still needs from each picker. |
+| `frontend/deployment/gui/kit/guiWidget.ts` | One block of a GUI, as the GUI holds it |
+| `frontend/deployment/gui/kit/index.css` | The stylesheet of a delivered tool and of the editor: base rules, the scheme's variables, the grid. |
+| `frontend/deployment/gui/kit/layout.ts` | The GUI a graph is used through, as a document rather than a canvas |
+| `frontend/deployment/gui/kit/ui/Button.tsx` | The one button of dialogs, panels and the GUI. |
+| `frontend/deployment/gui/kit/ui/Chip.tsx` | A small pill that names one thing: a start point a block sends to, an end point it shows. |
+| `frontend/deployment/gui/kit/ui/ErrorBoundary.tsx` | Catches a module that did not load (a page older than its server) and says so instead of a blank page. |
+| `frontend/deployment/gui/kit/ui/Markdown.tsx` | A small Markdown renderer built as React elements, not a library. |
+| `frontend/deployment/gui/kit/ui/Modal.tsx` | The one modal shell: backdrop, panel, header, footer, Escape and focus kept inside. |
+| `frontend/deployment/gui/kit/ui/QuickPick.tsx` | A searchable pick list with icons, for the palette and quick insert. |
+| `frontend/deployment/gui/kit/ui/Toggle.tsx` | An on/off switch with its label read aloud. |
+| `frontend/deployment/gui/kit/ui/ToolbarButton.tsx` | An icon button of a toolbar, with its words in the tooltip and for screen readers. |
+| `frontend/deployment/gui/kit/ui/cut.ts` | *text*, or its first *max* characters and an ellipsis: a value said in a line, cut short |
+| `frontend/deployment/gui/kit/ui/scheme.ts` | The colour scheme as the frontend uses it: the scheme's data (`gui/windows/scheme.ts`) as CSS variables |
+| `frontend/deployment/gui/kit/ui/theme.ts` | The editor's colour vocabulary, and the few style objects built from it |
+| `frontend/deployment/gui/kit/ui/tone.ts` | How a block sits on the GUI, chosen from a closed set rather than picked from a colour wheel |
+| `frontend/deployment/gui/main.tsx` | The entry of a delivered tool's page (`gui.html`): refuses a file dropped beside a picker, mounts `GuiApp`. |
+| `frontend/deployment/gui/surface/CallForms.tsx` | A form for each start point a call starts, prefilled with what it was sent last: the GUI of a tool that has no blocks. |
+| `frontend/deployment/gui/surface/DeliveredHeader.tsx` | The bar above a delivered tool: its name, how the last run went, Stop; the host adds its own buttons. |
+| `frontend/deployment/gui/surface/GuiSurface.tsx` | The GUI a graph shows: its blocks on one grid. The deployment boundary: what a delivered tool can reach is decided by what this imports. |
+| `frontend/deployment/gui/surface/LiveGui.tsx` | The GUI in use: the design with what the session holds, listening to the session for itself. |
+| `frontend/deployment/gui/surface/RunResult.tsx` | One output of the graph as a GUI shows it, for a tool with no block for it. |
+| `frontend/deployment/gui/surface/blocks.ts` | What a block is, to the GUI: the half of a widget that is delivered |
+| `frontend/deployment/gui/surface/guiInUse.ts` | The GUI as designed and how it connects to the graph by name: what a host knows before anything is used. |
+| `frontend/deployment/gui/surface/useContainerCell.ts` | The current square-cell size of whatever element a ref is on (a sixteenth of its width, capped). |
+| `frontend/deployment/gui/surface/useRound.ts` | Starting a round the way every GUI does: ask what it needs, then begin it with what the GUI holds. |
+| `frontend/deployment/gui/widgets/SaveButton.tsx` | "Save" in the corner of what a block shows: a text, a chart, rows as a file of their own. |
+| `frontend/deployment/gui/widgets/WidgetView.ts` | What a view of a block is handed, and the registry of views by block kind. |
+| `frontend/deployment/gui/widgets/<kind>/<Kind>WidgetView.tsx` | The **view** of each block kind: how a delivered tool draws it. |
+| `frontend/deployment/gui/widgets/download.ts` | Saving what a block shows as a file: a text as .txt, a chart as .svg, rows as .csv. |
+| `frontend/deployment/gui/widgets/plot_window/PlotChart.tsx` | The chart a plot block draws, as SVG, from the figure a node made. |
+| `frontend/deployment/gui/widgets/table/figures.ts` | How a delivered tool sets the cells of a table: figures to the right, equal decimals, thousands told. |
+| `frontend/deployment/windows/LiveWindows.tsx` | The page of windows in use: design with what the session holds, and how a window's button runs the ones before it. |
+| `frontend/deployment/windows/WindowsSurface.tsx` | The page of framed windows a tool made of windows shows, stacked where a window is too narrow. |
+| `frontend/deployment/windows/inline.tsx` | The words of a delivered page as they are read: bold, italic, code and links. |
+| `frontend/deployment/windows/windowRuns.ts` | Running a window: the ones before it first, each as a round of its own |
+| `frontend/deployment/windows/windowsInUse.ts` | The windows of a gui, read off its blocks, and which of them are current |
+
+### `frontend/editor/`
+
+| File | What it does |
+|---|---|
+| `frontend/editor/api/client.ts` | The editor's end of the wire: the host's routes and the editor's own, called by name |
+| `frontend/editor/app/App.tsx` | The editor's page: documents, menus, tabs, dialogs, the open and save of projects, and the link to the notebook. |
+| `frontend/editor/app/ChangeBar.tsx` | The bar under the canvas: say what to change in the graph, and a model changes it. |
+| `frontend/editor/app/FileMenu.tsx` | The File menu: its entries, whether each can be chosen now and, if not, why. |
+| `frontend/editor/app/GraphProblems.tsx` | What `check` says of the open graph, as a list to read and to jump from. |
+| `frontend/editor/app/HelpDialog.tsx` | Help: getting started and the user guide, a chapter at a time. |
+| `frontend/editor/app/JsonDialog.tsx` | Paste or read a graph as JSON, and say what is wrong with it. |
+| `frontend/editor/app/Notices.tsx` | The cards the editor tells the person things on: saved, failed, written, stopped. |
+| `frontend/editor/app/ProblemsChip.tsx` | "N problems" in the bottom bar: what `check` says of the graph being built. |
+| `frontend/editor/app/RunReportDialog.tsx` | The report of a run, in words, with a way to copy it. |
+| `frontend/editor/app/SettingsDialog.tsx` | The settings dialog: each provider's endpoint and key, and which AI runs and which writes. |
+| `frontend/editor/app/Sidebar.tsx` | The palette: each node kind under the heading it says it goes under. |
+| `frontend/editor/app/SubgraphTrail.tsx` | Where you are among nested graphs, and the way back out. |
+| `frontend/editor/app/Toolbar.tsx` | The toolbar: save, run, generate all, the notebook, help and settings. |
+| `frontend/editor/app/ViewTabs.tsx` | The views by one word each: the graph (nodes and wires) and the GUI (blocks). |
+| `frontend/editor/app/browseStart.ts` | Where a file browser opens: the folder a path is in. |
+| `frontend/editor/app/dialogs/Question.tsx` | A question with its answers, asked of the person in a dialog. |
+| `frontend/editor/app/dialogs/useDialogs.tsx` | Dialogs asked from code and answered as a promise: "may this graph be replaced?" is a question to await. |
+| `frontend/editor/app/fields/FolderListing.tsx` | How a start point's folder listing is set and shown: types, subfolders and what it found. |
+| `frontend/editor/app/fields/ProviderModelSelect.tsx` | The provider and model pickers, with what each costs and whether it is set up. |
+| `frontend/editor/app/help.ts` | The help: the getting-started page and the user guide, cut into chapters |
+| `frontend/editor/app/main.tsx` | The entry of the editor's page. |
+| `frontend/editor/app/notebookLink.ts` | The way from the editor to the notebook: a switch to it (`switchTab`), and the project a link names. |
+| `frontend/editor/app/runReport.ts` | The report of a run in words anybody can read, and as plain text to send. |
+| `frontend/editor/app/windowDrops.ts` | What is dropped anywhere on the editor's window: a graph to open |
+| `frontend/editor/document/application.ts` | The application ▶ Run starts, as an IDE runs the program it builds |
+| `frontend/editor/document/diskChanges.ts` | What the server said changed in the project on disk, held until the open graph can take it. |
+| `frontend/editor/document/elements/ElementGuiBuilder.ts` | The face of an element that exists so a person can build with it |
+| `frontend/editor/document/elements/registry.ts` | Every element's GuiBuilder, by the name the file format gives it: the mirror of `graph/nodes/registry.ts` |
+| `frontend/editor/document/elements/resultPreview.ts` | What a value looks like, small, on a node's card: a line, a count, a sketch or a picture. |
+| `frontend/editor/document/graph.ts` | The graph as the editor sees it |
+| `frontend/editor/document/graphAsk.ts` | Asking the model to design a graph or change the open one: the one request the File menu and the bar under the canvas make. |
+| `frontend/editor/document/graphChange.ts` | What a change of the whole graph would change: the rule part of the bar under the canvas. |
+| `frontend/editor/document/model/baseNodeConfig.ts` | Every setting's one default, as the editor's typed node config. |
+| `frontend/editor/document/model/givenFiles.ts` | The files a code or an ai node is given to write its definitions from |
+| `frontend/editor/document/model/graphDoc.ts` | A graph as the editor holds it, as pure functions: read from a file, a paste or a model; laid out for the canvas. |
+| `frontend/editor/document/model/gui.ts` | The GUI of the document: blocks that connect themselves to the graph's start and end points by name |
+| `frontend/editor/document/model/heading.ts` | A node's heading: never empty |
+| `frontend/editor/document/model/ids.ts` | The id something new is given: what it is, and a number only when that is taken |
+| `frontend/editor/document/model/nodeKinds.ts` | What a node of each type *is* when it is made, and what a file keeps of it |
+| `frontend/editor/document/model/placement.ts` | Where a node stands on the canvas, read off the node. |
+| `frontend/editor/document/model/ports.ts` | The ports a node has, where they follow from its settings |
+| `frontend/editor/document/model/scheduleLayout.ts` | Where a schedule (`graph/schedule.ts`) puts the cards on the canvas, and where a card being dragged would land |
+| `frontend/editor/document/model/wires.ts` | A wire as the canvas holds it, turned into the edge a graph file saves -- and what wiring does to the ports it joins, a port renamed or gone |
+| `frontend/editor/document/store/diskActions.ts` | Taking in what another editor changed in the project folder on disk |
+| `frontend/editor/document/store/editorScheme.ts` | The editor's own colour scheme: the four the GUI has, or whichever the system is in |
+| `frontend/editor/document/store/executionStatus.ts` | Whether a node result carries usable output, and the tone its status is shown in. |
+| `frontend/editor/document/store/flushPanels.ts` | What a node panel has typed and not yet written (400 ms after the last key) is written before anything that saves, runs, undoes or leaves the graph |
+| `frontend/editor/document/store/graphStore.ts` | The editor's store: the open graph and its views, composed of the actions in this folder. |
+| `frontend/editor/document/store/handoff.ts` | The document handed to the server's session, and the rounds of that session shown on the canvas. |
+| `frontend/editor/document/store/history.ts` | The open document's undo history: whole serialised graphs, oldest first, and what makes a named change one step (`commit`) |
+| `frontend/editor/document/store/nodeData.ts` | What ReactFlow carries per node on the canvas: the graph node |
+| `frontend/editor/document/store/nodeEdits.ts` | Adding, wiring, changing and deleting nodes: the store's editing actions |
+| `frontend/editor/document/store/noticeBoard.ts` | What the editor tells the person, in one place: saved, opened, failed, written, stopped |
+| `frontend/editor/document/store/portRenames.ts` | Which port became which, across an edit of a node's ports |
+| `frontend/editor/document/store/scheduleActions.ts` | The schedule in the store: where the cards stand, where a card held would land, and the routes of wires |
+| `frontend/editor/document/store/subgraphs.ts` | Going into the graph a node holds, and out again: the frames of the levels the canvas is inside, each with the undo history of its own level |
+| `frontend/editor/graph/canvas/GraphCanvas.tsx` | The canvas: the schedule's cells, the cards and wires, drag, drop and what a wire let go on empty canvas offers. |
+| `frontend/editor/graph/canvas/GraphNodeView.tsx` | A node's card on the canvas: a header and one row per port. |
+| `frontend/editor/graph/canvas/ResultPreview.tsx` | What a node made last, small, on its card: a line, a count, a sketch or a picture. |
+| `frontend/editor/graph/canvas/RoutedEdge.tsx` | A wire drawn through the cells the schedule routes it through. |
+| `frontend/editor/graph/canvas/ScheduleLayer.tsx` | The table behind the cards: columns, rows and the plus of each cell. |
+| `frontend/editor/graph/canvas/ThinOut.tsx` | The button that moves every card to the earliest column its wires allow. |
+| `frontend/editor/graph/canvas/inView.ts` | A box on screen, in pixels: where it starts and how big it is |
+| `frontend/editor/graph/canvas/nodeRemoval.ts` | Whether Delete or Backspace on the canvas removes what is selected. |
+| `frontend/editor/graph/canvas/useGlide.ts` | Cards that are put somewhere else glide there instead of jumping. |
+| `frontend/editor/graph/canvas/wireLook.ts` | How a wire is drawn: soft grey, in the accent where it touches what is selected. |
+| `frontend/editor/graph/fields/RunOncePerItem.tsx` | The setting that runs a node once per item of a list, and how many at once. |
+| `frontend/editor/graph/fields/RunOptions.tsx` | The run settings of a node: catch failures and the like. |
+| `frontend/editor/graph/fields/WhatRuns.tsx` | Says what runs when a node runs: its file or its runner, in a sentence. |
+| `frontend/editor/graph/node/DataFieldsForm.tsx` | The fields of a data node: their names and starting values. |
+| `frontend/editor/graph/node/FilePane.tsx` | The pane that edits one file of a node, whatever the file is kept as. |
+| `frontend/editor/graph/node/FilesLine.tsx` | The files a definition is written from, folded under their file, a chip each. |
+| `frontend/editor/graph/node/LastRun.tsx` | What a node made in its last run, for reading. |
+| `frontend/editor/graph/node/NodeView.tsx` | A node opened in place: its files, their chats and its settings. |
+| `frontend/editor/graph/node/PartChat.tsx` | The chat of one file of a node: what was typed, what was asked, what came of it. |
+| `frontend/editor/graph/node/PortsEditor.tsx` | The ports of a node, named by the person who wrote it. |
+| `frontend/editor/graph/node/SettingsPane.tsx` | Everything about a node that is set and not written: its kind's settings, its ports, its run options. |
+| `frontend/editor/graph/node/WritingStatus.tsx` | What the model is doing for the node and what it last said. |
+| `frontend/editor/graph/node/nodeDraft.ts` | A node's edits as they reach the graph: a setting, ports, and what an output that catches failures says. |
+| `frontend/editor/graph/node/nodePanel.ts` | A node's panel, as its changes reach the graph |
+| `frontend/editor/graph/node/portIds.ts` | What a node's port ids must be, for the node panel to store them |
+| `frontend/editor/graph/node/useGraphSweep.ts` | The toolbar's Generate: every node of the graph written, front to back |
+| `frontend/editor/graph/node/usePartGenerate.ts` | Everything the node view asks of the model, once: one state machine for the whole node. |
+| `frontend/editor/graph/node/writeFile.ts` | Writing one file of a node (input, output or body) the way the node view and the toolbar's Generate do. |
+| `frontend/editor/graph/nodes/NodeGuiBuilder.ts` | How a person edits a node, in the browser: the mirror of `graph/nodes/NodeDefinition.ts` |
+| `frontend/editor/graph/nodes/<kind>/<Kind>NodeGuiBuilder.ts`, `frontend/editor/graph/nodes/<kind>/<Kind>Node*Panel.tsx` | The **builder** of each node kind -- how a person edits it -- and the panels its settings are drawn in. |
+| `frontend/editor/graph/nodes/ai/ServerPage.tsx` | The settings page a tool server brings for itself, in a sandboxed frame. |
+| `frontend/editor/graph/nodes/ai/ToolServerDialogs.tsx` | Add and set up a tool server: install, write its entry, start it once. |
+| `frontend/editor/graph/nodes/ai/ToolServers.tsx` | The tool servers an AI node may use: which are set up on this machine and how each stands. |
+| `frontend/editor/graph/nodes/ai/pageDocument.ts` | The document a tool server's page stands on: the editor's colours and form controls. |
+| `frontend/editor/graph/views/ChatPane.tsx` | One chat: the exchanges, the words said and what came of them. |
+| `frontend/editor/graph/views/NodeHeader.tsx` | The header of an opened node: its heading and a step to a neighbour. |
+| `frontend/editor/graph/views/NodeViewLayout.tsx` | The layout of an opened node: panes with their headers. |
+| `frontend/editor/graph/views/RowList.tsx` | The list of a node's files, each with whether anything is written in it yet. |
+| `frontend/editor/graph/writing/CodeField.tsx` | The code box (CodeMirror) a body or a definition is written in. |
+| `frontend/editor/graph/writing/CodeSurface.tsx` | The look of the code box for the editor's scheme. |
+| `frontend/editor/graph/writing/FileChip.tsx` | A file's chip: whether it is written, and a way to open it in the person's own editor. |
+| `frontend/editor/graph/writing/GenerationTranscript.tsx` | The transcript of a writing: what was asked and what came back, for the writing that ran and the one that runs. |
+| `frontend/editor/graph/writing/HeadingField.tsx` | A node's heading, which is never empty. |
+| `frontend/editor/graph/writing/LiveGeneration.tsx` | What is happening while a generate button is busy: the prompt, the context, whether the model has answered. |
+| `frontend/editor/graph/writing/TryExample.tsx` | Try: run a node on the example its input definition holds, and say what came of it. |
+| `frontend/editor/graph/writing/definitionPorts.ts` | A node's definitions, following its ports as they are renamed and removed |
+| `frontend/editor/graph/writing/droppedFile.ts` | A file dropped onto a node: taken as its path or its content, with no browse dialog. |
+| `frontend/editor/graph/writing/exampleFile.ts` | The files a node's input definition is written from |
+| `frontend/editor/graph/writing/generation.ts` | ✨ for one node: what its chats ask the backend, and what comes back, written in |
+| `frontend/editor/graph/writing/generationContext.ts` | What generation tells the model of the world around a node: its inputs' sources, its outputs' targets, the block that shows it. |
+| `frontend/editor/graph/writing/graphContext.ts` | {Context}: the graph around a node, in words, as ✨ is told it |
+| `frontend/editor/graph/writing/graphSweep.ts` | Generating a whole graph, front to back |
+| `frontend/editor/graph/writing/perItem.ts` | "Run once per item", and "whole list" beside it: how a node takes the lists that arrive, set on its ports and its settings together |
+| `frontend/editor/graph/writing/pull.ts` | Pull as the editor does it: what feeds each input of a node and where each output is written, read off the graph. |
+| `frontend/editor/graph/writing/readAsRun.ts` | Files, read the way a run reads them |
+| `frontend/editor/graph/writing/useGenerate.ts` | Run a generation and keep what is being written, and said when it was stopped. |
+| `frontend/editor/graph/writing/useTyped.ts` | The text of a box whose stored form comes back tidied, kept as it is typed. |
+| `frontend/editor/gui/ApplicationView.tsx` | The application Run starts, shown: the tool as its recipient gets it, on the document being edited. |
+| `frontend/editor/gui/DesignerPalette.tsx` | The block palette of the GUI tab. |
+| `frontend/editor/gui/DesignerSurface.tsx` | The GUI plus the few affordances needed to build one: select, move, resize, drop. |
+| `frontend/editor/gui/DesignerTab.tsx` | The GUI tab: palette, surface, the heading and the panel of the selected block. |
+| `frontend/editor/gui/GuiHeading.tsx` | The tool's name and description, edited above the GUI. |
+| `frontend/editor/gui/GuiSettings.tsx` | What the right panel shows while no block is selected: the GUI's colour scheme. |
+| `frontend/editor/gui/KeptFold.tsx` | What a block holds in the session, folded under it, one line. |
+| `frontend/editor/gui/OnTheGraph.tsx` | How a block meets the graph: which start point it sends to, which end point it shows. |
+| `frontend/editor/gui/QuickInsert.tsx` | "/" on the GUI: type what you want, press Enter, keep going. |
+| `frontend/editor/gui/TopGraphOnly.tsx` | Shows the GUI only where a GUI can be: in the graph at the top. |
+| `frontend/editor/gui/WidgetEditor.tsx` | The panel of the selected block: its label, how it meets the graph, its own settings. |
+| `frontend/editor/gui/guiFromGraph.ts` | A GUI drawn from the graph: the blocks it still lacks |
+| `frontend/editor/gui/guiWrite.ts` | Changing the GUI: the one way a block is added, changed, moved or removed |
+| `frontend/editor/gui/roundWords.ts` | Who sent what began a round, in words. |
+| `frontend/editor/gui/typedValues.ts` | What the designer shows in a block somebody has typed into |
+| `frontend/editor/gui/widgets/DisplayWidgetGuiBuilder.ts` | The mirror of `gui/widgets/DisplayWidgetDefinition.ts`: a block that only shows what the end point it shows hands back -- a chart, a table, an image |
+| `frontend/editor/gui/widgets/DisplayWidgetPanel.tsx` | The panel of a block that only shows an end point's value. |
+| `frontend/editor/gui/widgets/StaticWidgetGuiBuilder.ts` | The mirror of `gui/widgets/StaticWidgetDefinition.ts`: a widget that is part of the GUI rather than part of the graph -- a heading, a rule, a gap |
+| `frontend/editor/gui/widgets/WidgetGuiBuilder.ts` | How a person edits a block, in the browser: the mirror of `gui/widgets/WidgetDefinition.ts` |
+| `frontend/editor/gui/widgets/<kind>/<Kind>WidgetGuiBuilder.ts`, `frontend/editor/gui/widgets/<kind>/<Kind>Widget*Panel.tsx` | The **builder** of each block kind -- how a person edits it on the GUI tab -- and the panel of its own settings. |
+| `frontend/editor/gui/widgets/roster.ts` | The widgets a GUI is built from: the mirror of `gui/widgets/roster.ts`, and the only place that knows the whole set |
+| `frontend/editor/gui/widgets/text/TextInPlace.tsx` | A heading or a paragraph typed where it stands on the GUI. |
+
+### `frontend/notebook/`, `frontend/gui-notebook/`, `frontend/graph-notebook/`
+
+| File | What it does |
+|---|---|
+| `frontend/graph-notebook/Cells.tsx` | The cells of a window, as the design of the list (A2) has them: Ask, Do, Show, one white card each, a sentence in each |
+| `frontend/graph-notebook/Debug.tsx` | The debug window: every round the notebook ran, node by node -- what each got, what it made, why one did nothing |
+| `frontend/graph-notebook/Dock.tsx` | Under the page: the cells of the open window (the list, A2), the window as a graph, and the debug window |
+| `frontend/graph-notebook/Haube.tsx` | Under the hood: the window as the graph it is, left to right, with what runs between written on the wires. |
+| `frontend/gui-notebook/Page.tsx` | The page: written like any page -- headings, text, bullets, gaps -- with windows standing in it to be used |
+| `frontend/gui-notebook/WindowBox.tsx` | A window on the page, to be used: its inputs, a button, and what came out -- at the size its elements give it |
+| `frontend/notebook/App.tsx` | The notebook: a page to write on and use, and under it the cells of a window, the window as a graph, and the debug window |
+| `frontend/notebook/Start.tsx` | The first page (A1): one sentence about what the tool should do, and the tool is built from it |
+| `frontend/notebook/document/api.ts` | The notebook's own end of the wire: the host's routes called by name, with nothing of the graph editor's client in it |
+| `frontend/notebook/document/links.ts` | The way from the notebook to the editor: a switch to it (`switchTab`), and the project a link names. |
+| `frontend/notebook/document/runs.ts` | Running windows: the notebook hands the windows, as the graph they are, to the host, and runs a window by a round |
+| `frontend/notebook/document/status.ts` | Where a window stands, in a word, for the chip on it and the status of its cells |
+| `frontend/notebook/document/store.ts` | The open notebook: the document, where it is kept, undo, what its windows made, and what is asked of the server. |
+| `frontend/notebook/document/values.ts` | What a window's inputs hold to begin with, and the ids the page and the graph share |
+| `frontend/notebook/elements/Boundary.tsx` | A box that shows what a step made and cannot be taken down by it. |
+| `frontend/notebook/elements/Browse.tsx` | Choosing a file or a folder on the machine the notebook runs on, and where a project is kept |
+| `frontend/notebook/elements/Chart.tsx` | The notebook's own charts: bars, lines, points, with their labels. |
+| `frontend/notebook/elements/ModelSaid.tsx` | What the model sent back when its answer could not be made into windows, beside the error. |
+| `frontend/notebook/elements/Widgets.tsx` | What a window is made of, drawn the notebook's own way: boxes to put something in and boxes to show what came out |
+| `frontend/notebook/elements/figures.ts` | How the notebook sets the cells of a table: figures to the right, equal decimals, thousands told. |
+| `frontend/notebook/elements/inline.tsx` | The words of the page as a web page reads them: bold, italic, code and links. |
+| `frontend/notebook/index.html` | The notebook's page. |
+| `frontend/notebook/look.ts` | How the notebook itself looks, light or dark: its own choice, kept in the browser (not in any file: it is the person's, not the tool's) |
+| `frontend/notebook/main.tsx` | The entry of the notebook's page. |
+| `frontend/notebook/notebook.css` | The notebook's own look: a page to write on, windows to use, and the cells of one beneath it |
+
+### `frontend/`: the build and the page entries
+
+| File | What it does |
+|---|---|
+| `frontend/.eslintrc.cjs` | The lint rules of the page (`npm run lint --workspace frontend`): above all the rules of hooks. |
+| `frontend/gui.html` | The page of a delivered tool; built next to `index.html`. |
+| `frontend/index.html` | The editor's page. |
+| `frontend/postcss.config.js` | PostCSS for the page's styles (Tailwind). |
+| `frontend/tailwind.config.js` | Tailwind for the page: no colours here, every colour is a token in `deployment/gui/kit/ui/theme.ts`. |
+| `frontend/test/runAnswers.ts` | What the definitions make of a node, as the editor's tests compare it |
+| `frontend/vite.config.ts` | The build of the editor's and the delivered tool's pages (two entries, shared chunks). |
+| `frontend/vite.licenses.ts` | Writes the licences of what the build bundles next to the page. |
+| `frontend/vite.notebook.config.ts` | The build of the notebook's page, apart from the editor's. |
+
+### `mcp/`: the tool servers that come with it
+
+| File | What it does |
+|---|---|
+| `mcp/documents/scripts/licenses.mjs` | Every package this folder installs, held to the licences it may come under |
+| `mcp/documents/settings.html` | The settings page this server brings for the editor to show. |
+| `mcp/documents/src/chunk.ts` | A long Markdown text, cut into chunks that each stand on their own |
+| `mcp/documents/src/documents.ts` | Reading a file: find it (inside the folders it was given), take its text out, hand it over in pieces |
+| `mcp/documents/src/docx.ts` | A Word document's text as Markdown: headings, lists, bold and italic, tables |
+| `mcp/documents/src/errors.ts` | Something that went wrong in a way worth telling the person, in words they can act on |
+| `mcp/documents/src/info.ts` | What this server calls itself |
+| `mcp/documents/src/main.ts` | Starts the server on stdin and stdout, for the folders given as arguments (or listed in TW_DOCS_ROOTS) |
+| `mcp/documents/src/paging.ts` | A long text in pieces that end where a person would stop. |
+| `mcp/documents/src/pdf.ts` | The text layer of a PDF, a page at a time |
+| `mcp/documents/src/roots.ts` | Which files this server may read: those inside the folders it was started with, and no others |
+| `mcp/documents/src/server.ts` | The MCP server: `read_document` and `list_documents` |
+| `mcp/documents/src/testFiles.ts` | Files for the tests to read, written by hand: a PDF, a Word document, a zip |
+| `mcp/web/scripts/licenses.mjs` | Every package this folder installs, held to the licences it may come under |
+| `mcp/web/settings.html` | The settings page this server brings for the editor to show. |
+| `mcp/web/src/chunk.ts` | A long Markdown text, cut into chunks that each stand on their own |
+| `mcp/web/src/extract.ts` | The readable part of a web page, as Markdown, with what the page says about itself |
+| `mcp/web/src/info.ts` | What this server calls itself, and the product token a site's robots.txt can name |
+| `mcp/web/src/ip.ts` | Whether an address is one a public web server can have |
+| `mcp/web/src/main.ts` | Starts the server on stdin and stdout |
+| `mcp/web/src/page.ts` | Reading a page: fetch it (politely, and only the public web), take out what is worth reading, hand it over in pieces |
+| `mcp/web/src/paging.ts` | A long text in pieces that end where a person would stop. |
+| `mcp/web/src/robots.ts` | robots.txt read as RFC 9309 says, so the server reads only what a site allows. |
+| `mcp/web/src/safeFetch.ts` | One GET of a public web address, with what a tool that reads other people's pages on someone's own machine must not do without |
+| `mcp/web/src/server.ts` | The MCP server: one tool, `read_page` |
+| `mcp/web/src/testServer.ts` | A web server on this machine for the tests to read from -- the one place the private-address rule is switched off, and only by the test that says so |
+
 ## Rules
 
 | Rule | Held by |
