@@ -64,8 +64,8 @@ One server, `node backend/cli/main.ts --editor frontend/dist` (`start.cmd`, `sta
 | Box | Folders | Sub-blocks and what they hold |
 |---|---|---|
 | **GUI editor** | `frontend/editor/gui/` | The GUI designer: the surface blocks are laid out on, the palette, a block's own editor (`widgets/`), what a block sends, fires and shows (`guiWrite.ts`), a GUI drawn from a graph (`guiFromGraph.ts`). |
-| **Graph editor** | `frontend/editor/graph/` | The canvas (`canvas/`), a node opened in place (`node/`), the views of a graph (`views/`), the builder and the panels of every node kind (`nodes/<kind>/`), the fields of a node's settings (`fields/`), and writing: ▶ Try, ✨ Generate, the chat for each file (`writing/`). |
-| (shell of both) | `frontend/editor/`, `frontend/editor/document/`, `frontend/editor/app/`, `frontend/editor/api/` | `document/`: the open project -- store, undo, model, and the builders of each element kind (`elements/`). `app/`: menus, tabs, toolbar, dialogs, settings, Help, the link to the notebook (`notebookLink.ts`). `api/`: the editor's client of its backend. |
+| **Graph editor** | `frontend/editor/graph/` | The canvas (`canvas/`), a node opened in place (`node/`), the views of a graph (`views/`), the builder and the panels of every node kind (`nodes/<kind>/`), and writing: ▶ Try, ✨ Generate, the chat for each file (`writing/`). |
+| (shell of both) | `frontend/editor/`, `frontend/editor/app/`, `frontend/editor/api/`, `frontend/editor/document/`, `frontend/editor/elements/`, `frontend/editor/fields/`, `frontend/editor/dialogs/` | One folder for each rank the layer test holds (`app/layers.test.ts`). `document/`: the open project -- the graph as the editor sees it, its model, store and undo. `elements/`: the builders of each element kind, by name (`registry.ts`). `fields/`: the fields the panels of the elements are made of. `dialogs/`: small dialogs that ask the person or the server something. `app/`: menus, tabs, toolbar, settings, Help, the application ▶ Run starts (`application.ts`), the link to the notebook (`notebookLink.ts`). `api/`: the editor's client of its backend. |
 | **Editor backend** | `backend/editor/`, `backend/editor/project/`, `backend/editor/graph/`, `backend/editor/settings/`, `backend/editor/assistant/`, `backend/editor/host/` | `project/`: finds and checks projects, keeps rounds (`keptRounds.ts`) and packs (`deploy/`: `bundle.ts`, `launchers.ts`, `zip.ts`). `graph/`: the AI that writes nodes and whole graphs (`generate.ts`, `generateGraph.ts`, `generatePrompts.ts`, `graphPrompt.ts`). `settings/`: the model and tool-server setup done for the person (`settings.ts`, `mcpServers.ts`). `assistant/`: Tell & Wire offered to an assistant outside it, an MCP server on stdio (`server.ts`, the nine `tools.ts`, `spec.ts`, `confine.ts`, `transport.ts`). `host/`: what only the editor's server answers (`api.ts`, `routes.ts`, `commands.ts`: `check`, `test`, `--bundle`, `--mcp`). |
 | (the editor's part of the definitions) | `graph/editor/`, `gui/editor/` | What only the editor adds to graph and GUI, neutral so that the browser and Node share it: `prompts.ts` (the prompts that write a node and a whole graph), `pull.ts` (the files a node's Input and Output chats make), `scheduleEdit.ts` (where a card may be put in the table), `complete.ts` (a GUI written whole, with the start and end points its blocks need). |
 
@@ -397,24 +397,19 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/editor/app/SubgraphTrail.tsx` | Where you are among nested graphs, and the way back out. |
 | `frontend/editor/app/Toolbar.tsx` | The toolbar: save, run, generate all, the notebook, help and settings. |
 | `frontend/editor/app/ViewTabs.tsx` | The views by one word each: the graph (nodes and wires) and the GUI (blocks). |
+| `frontend/editor/app/application.ts` | The application ▶ Run starts, as an IDE runs the program it builds |
 | `frontend/editor/app/browseStart.ts` | Where a file browser opens: the folder a path is in. |
-| `frontend/editor/app/dialogs/Question.tsx` | A question with its answers, asked of the person in a dialog. |
-| `frontend/editor/app/dialogs/useDialogs.tsx` | Dialogs asked from code and answered as a promise: "may this graph be replaced?" is a question to await. |
-| `frontend/editor/app/fields/FolderListing.tsx` | How a start point's folder listing is set and shown: types, subfolders and what it found. |
-| `frontend/editor/app/fields/ProviderModelSelect.tsx` | The provider and model pickers, with what each costs and whether it is set up. |
+| `frontend/editor/app/diskChanges.ts` | What the server said changed in the project on disk, held until the open graph can take it. |
+| `frontend/editor/app/graphAsk.ts` | Asking the model to design a graph or change the open one: the one request the File menu and the bar under the canvas make. |
+| `frontend/editor/app/graphChange.ts` | What a change of the whole graph would change: the rule part of the bar under the canvas. |
 | `frontend/editor/app/help.ts` | The help: the getting-started page and the user guide, cut into chapters |
 | `frontend/editor/app/main.tsx` | The entry of the editor's page. |
 | `frontend/editor/app/notebookLink.ts` | The way from the editor to the notebook: a switch to it (`switchTab`), and the project a link names. |
 | `frontend/editor/app/runReport.ts` | The report of a run in words anybody can read, and as plain text to send. |
 | `frontend/editor/app/windowDrops.ts` | What is dropped anywhere on the editor's window: a graph to open |
-| `frontend/editor/document/application.ts` | The application ▶ Run starts, as an IDE runs the program it builds |
-| `frontend/editor/document/diskChanges.ts` | What the server said changed in the project on disk, held until the open graph can take it. |
-| `frontend/editor/document/elements/ElementGuiBuilder.ts` | The face of an element that exists so a person can build with it |
-| `frontend/editor/document/elements/registry.ts` | Every element's GuiBuilder, by the name the file format gives it: the mirror of `graph/nodes/registry.ts` |
-| `frontend/editor/document/elements/resultPreview.ts` | What a value looks like, small, on a node's card: a line, a count, a sketch or a picture. |
+| `frontend/editor/dialogs/Question.tsx` | A question with its answers, asked of the person in a dialog. |
+| `frontend/editor/dialogs/useDialogs.tsx` | Dialogs asked from code and answered as a promise: "may this graph be replaced?" is a question to await. |
 | `frontend/editor/document/graph.ts` | The graph as the editor sees it |
-| `frontend/editor/document/graphAsk.ts` | Asking the model to design a graph or change the open one: the one request the File menu and the bar under the canvas make. |
-| `frontend/editor/document/graphChange.ts` | What a change of the whole graph would change: the rule part of the bar under the canvas. |
 | `frontend/editor/document/model/baseNodeConfig.ts` | Every setting's one default, as the editor's typed node config. |
 | `frontend/editor/document/model/givenFiles.ts` | The files a code or an ai node is given to write its definitions from |
 | `frontend/editor/document/model/graphDoc.ts` | A graph as the editor holds it, as pure functions: read from a file, a paste or a model; laid out for the canvas. |
@@ -439,6 +434,14 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/editor/document/store/portRenames.ts` | Which port became which, across an edit of a node's ports |
 | `frontend/editor/document/store/scheduleActions.ts` | The schedule in the store: where the cards stand, where a card held would land, and the routes of wires |
 | `frontend/editor/document/store/subgraphs.ts` | Going into the graph a node holds, and out again: the frames of the levels the canvas is inside, each with the undo history of its own level |
+| `frontend/editor/elements/ElementGuiBuilder.ts` | The face of an element that exists so a person can build with it |
+| `frontend/editor/elements/registry.ts` | Every element's GuiBuilder, by the name the file format gives it: the mirror of `graph/nodes/registry.ts` |
+| `frontend/editor/elements/resultPreview.ts` | What a value looks like, small, on a node's card: a line, a count, a sketch or a picture. |
+| `frontend/editor/fields/FolderListing.tsx` | How a start point's folder listing is set and shown: types, subfolders and what it found. |
+| `frontend/editor/fields/ProviderModelSelect.tsx` | The provider and model pickers, with what each costs and whether it is set up. |
+| `frontend/editor/fields/RunOncePerItem.tsx` | The setting that runs a node once per item of a list, and how many at once. |
+| `frontend/editor/fields/RunOptions.tsx` | The run settings of a node: catch failures and the like. |
+| `frontend/editor/fields/WhatRuns.tsx` | Says what runs when a node runs: its file or its runner, in a sentence. |
 | `frontend/editor/graph/canvas/GraphCanvas.tsx` | The canvas: the schedule's cells, the cards and wires, drag, drop and what a wire let go on empty canvas offers. |
 | `frontend/editor/graph/canvas/GraphNodeView.tsx` | A node's card on the canvas: a header and one row per port. |
 | `frontend/editor/graph/canvas/ResultPreview.tsx` | What a node made last, small, on its card: a line, a count, a sketch or a picture. |
@@ -449,9 +452,6 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/editor/graph/canvas/nodeRemoval.ts` | Whether Delete or Backspace on the canvas removes what is selected. |
 | `frontend/editor/graph/canvas/useGlide.ts` | Cards that are put somewhere else glide there instead of jumping. |
 | `frontend/editor/graph/canvas/wireLook.ts` | How a wire is drawn: soft grey, in the accent where it touches what is selected. |
-| `frontend/editor/graph/fields/RunOncePerItem.tsx` | The setting that runs a node once per item of a list, and how many at once. |
-| `frontend/editor/graph/fields/RunOptions.tsx` | The run settings of a node: catch failures and the like. |
-| `frontend/editor/graph/fields/WhatRuns.tsx` | Says what runs when a node runs: its file or its runner, in a sentence. |
 | `frontend/editor/graph/node/DataFieldsForm.tsx` | The fields of a data node: their names and starting values. |
 | `frontend/editor/graph/node/FilePane.tsx` | The pane that edits one file of a node, whatever the file is kept as. |
 | `frontend/editor/graph/node/FilesLine.tsx` | The files a definition is written from, folded under their file, a chip each. |
@@ -610,7 +610,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | The notebook's page the same way: `document` · `elements` · `gui-notebook`, `graph-notebook` (siblings, which do not import each other) · the shell · `main`. | `frontend/notebook/layers.test.ts` |
 | A deployed tool answers only the routes of the tables it is composed of; an editor route is a 404. | `backend/deployment/host/serve.test.ts` |
 | A package runs from a folder of its own, carries `MANIFEST.json` listing exactly its files, and nothing of the editor. | `backend/editor/project/deploy/bundle.test.ts` |
-| Every kind of node and block has all its faces, under the same name, and the registries list the same kinds. | `frontend/editor/document/elements/symmetry.test.ts` |
+| Every kind of node and block has all its faces, under the same name, and the registries list the same kinds. | `frontend/editor/elements/symmetry.test.ts` |
 | No shell compares a node type or block kind with a literal. | both `shells.test.ts` |
 | `graph/`, `gui/` and `backend/` use no TypeScript that needs a compiler (enums, parameter properties, namespaces, decorators). | `backend/architecture/strippable.test.ts` |
 | All imports are relative; there are no aliases. | read off the imports |
@@ -630,7 +630,7 @@ each tier it has a part in.
 
 Registries: `graph/nodes/registry.ts` (`registry`, definitions), `backend/deployment/runtime/nodes/registry.ts`
 (`runners`), `graph/authoring/nodes/registry.ts` (`designs`), `gui/widgets/roster.ts` and
-`gui/authoring/widgets/roster.ts`, and `frontend/editor/document/elements/registry.ts` (builders).
+`gui/authoring/widgets/roster.ts`, and `frontend/editor/elements/registry.ts` (builders).
 
 Node kinds: start, ai, code, data, end, subgraph. Block kinds: text, divider, spacer,
 input_picker, text_io, select, slider, button, chat, plot_window, table, image_view.
@@ -995,7 +995,7 @@ match.
    says); add it to `graph/authoring/nodes/registry.ts`. If ✨ Describe a graph should offer it: a
    `graphAuthorNote` (`backend/editor/graph/graphPrompt.test.ts`).
 4. `frontend/editor/graph/nodes/csv/CsvNodeGuiBuilder.ts` and its panel: add it to `NODE_BUILDERS`
-   (`frontend/editor/document/elements/registry.ts`); the compiler then asks for its entry in
+   (`frontend/editor/elements/registry.ts`); the compiler then asks for its entry in
    `NODE_KINDS` (`frontend/editor/document/model/nodeKinds.ts`).
 
 Checked by `symmetry.test.ts`, `layers.test.ts` and both `shells.test.ts`.

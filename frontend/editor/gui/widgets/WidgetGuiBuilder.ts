@@ -9,7 +9,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { GuiWidget, WidgetKind } from '../../document/graph';
 import { BOX_TEXT, DEFAULT_WIDGET_SPAN } from '../../../deployment/gui/kit/layout';
 import type { Tone } from '../../../deployment/gui/kit/ui/tone';
-import { ElementGuiBuilder } from '../../document/elements/ElementGuiBuilder';
+import { ElementGuiBuilder } from '../../elements/ElementGuiBuilder';
 
 /** What the widget editor hands every widget panel: a block has settings, and no body to write. */
 export interface WidgetPanelProps {

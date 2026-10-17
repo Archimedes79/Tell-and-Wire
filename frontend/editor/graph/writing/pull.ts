@@ -12,7 +12,7 @@
 
 import type { Graph, GraphNode, Wire } from '../../document/graph';
 import { call } from '../../api/client';
-import { NODE_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS } from '../../elements/registry';
 import { definitionExample, definitionsIn, typedefProperties } from '../../../../graph/files/definition.ts';
 import { typeOfValue, type PulledPort } from '../../../../graph/editor/pull.ts';
 import { filePorts } from '../../../../graph/fileInputs.ts';

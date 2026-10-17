@@ -1,7 +1,7 @@
 import React from 'react';
-import { errorText } from '../../../deployment/gui/kit/api/errorText';
-import Button from '../../../deployment/gui/kit/ui/Button';
-import { DANGER_TEXT, DIMMER, MUTED, SUNKEN, TEXT } from '../../../deployment/gui/kit/ui/theme';
+import { errorText } from '../../deployment/gui/kit/api/errorText';
+import Button from '../../deployment/gui/kit/ui/Button';
+import { DANGER_TEXT, DIMMER, MUTED, SUNKEN, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /** How many paths of a listing are shown; the rest are counted. */
 const SHOWN = 40;

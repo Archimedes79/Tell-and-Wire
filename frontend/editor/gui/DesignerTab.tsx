@@ -9,7 +9,7 @@ import { roundGoing, setEdit, useSession } from '../../deployment/gui/kit/api/se
 import { blockCan, widgetTakesValue, widgetValueIsDesign } from '../document/model/gui';
 import { addBlocks, insertBlock, moveBlock, patchBlock, removeBlock } from './guiWrite';
 import { guiFromGraph } from './guiFromGraph';
-import { useDialogs } from '../app/dialogs/useDialogs';
+import { useDialogs } from '../dialogs/useDialogs';
 import { liveTypedValues } from './typedValues';
 import GuiHeading from './GuiHeading';
 import WidgetEditor from './WidgetEditor';

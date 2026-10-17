@@ -1,7 +1,7 @@
 /**
  * The shells ask the element; they never switch on its name.
  *
- * Code outside the elements (`document/elements/`, `graph/nodes/`,
+ * Code outside the elements (`elements/`, `graph/nodes/`,
  * `gui/widgets/` and the fields their panels are made of) -- the canvas,
  * the GUI designer, the toolbar, the generation sweep -- may not compare a node's type or a widget's kind with a
  * literal. What such a comparison would decide belongs to the element's class

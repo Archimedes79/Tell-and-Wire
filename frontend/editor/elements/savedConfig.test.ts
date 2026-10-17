@@ -9,9 +9,9 @@
  * lean node to the full node's answers.
  */
 import { describe, it, expect } from 'vitest';
-import { NODE_KINDS, savedNode } from '../model/nodeKinds';
-import type { GraphNode, NodeConfig } from '../graph';
-import { answers as runAnswers } from '../../../test/runAnswers';
+import { NODE_KINDS, savedNode } from '../document/model/nodeKinds';
+import type { GraphNode, NodeConfig } from '../document/graph';
+import { answers as runAnswers } from '../../test/runAnswers';
 
 /**
  * The definition's answers, with an ai node's provider as a run takes it: left out

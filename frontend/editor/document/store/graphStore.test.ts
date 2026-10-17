@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { useGraphStore } from './graphStore';
 import type { Graph, GraphNode } from '../graph';
 import { baseNodeConfig } from '../model/baseNodeConfig';
-import { WIDGET_BUILDERS } from '../elements/registry';
+import { WIDGET_BUILDERS } from '../../elements/registry';
 import { NESTED_GRAPH_FIELD } from '../../../../graph/files/changes.ts';
 import { NODE_KINDS } from '../model/nodeKinds';
 import { answers as runAnswers } from '../../../test/runAnswers';

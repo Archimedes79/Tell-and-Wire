@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from 'react';
-import type { AIProvider } from '../../document/graph';
-import { call, type ProviderStatus } from '../../api/client';
-import { FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
-import { lent } from '../../../../graph/nodes/Runtime.ts';
+import type { AIProvider } from '../document/graph';
+import { call, type ProviderStatus } from '../api/client';
+import { FIELD, MUTED } from '../../deployment/gui/kit/ui/theme';
+import { lent } from '../../../graph/nodes/Runtime.ts';
 
 // The provider dropdown's labels, once.
 export const AI_PROVIDER_LABELS: Record<AIProvider, string> = {

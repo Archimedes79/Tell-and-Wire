@@ -13,7 +13,7 @@
 
 import { call } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
-import { NODE_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS } from '../../elements/registry';
 import { fileValue } from './readAsRun';
 
 /** A dropped file, as far as a browser says what it is. */

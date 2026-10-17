@@ -1,11 +1,11 @@
 import { useRef } from 'react';
-import type { GraphNode } from '../../document/graph';
-import { useGraphNodes, useGraphStore } from '../../document/store/graphStore';
-import { listPorts, runsPerItem, withPerItem } from '../writing/perItem';
-import { hasDefinitions } from '../writing/generation';
-import { definitionExample, definitionsIn } from '../../../../graph/files/definition.ts';
-import { ONCE, type NodePanelProps } from '../nodes/NodeGuiBuilder';
-import { DIMMER, MUTED } from '../../../deployment/gui/kit/ui/theme';
+import type { GraphNode } from '../document/graph';
+import { useGraphNodes, useGraphStore } from '../document/store/graphStore';
+import { listPorts, runsPerItem, withPerItem } from '../graph/writing/perItem';
+import { hasDefinitions } from '../graph/writing/generation';
+import { definitionExample, definitionsIn } from '../../../graph/files/definition.ts';
+import { ONCE, type NodePanelProps } from '../graph/nodes/NodeGuiBuilder';
+import { DIMMER, MUTED } from '../../deployment/gui/kit/ui/theme';
 
 /** The example in *node*'s input.js, where it has one that can be read. */
 function exampleOf(node: GraphNode): Record<string, unknown> | undefined {

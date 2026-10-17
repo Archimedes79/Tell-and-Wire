@@ -23,8 +23,8 @@
 // would otherwise tick on with nobody there.
 
 import { create } from 'zustand';
-import type { Graph } from './graph';
-import { goingRound, useGraphStore } from './store/graphStore';
+import type { Graph } from '../document/graph';
+import { goingRound, useGraphStore } from '../document/store/graphStore';
 import { call } from '../api/client';
 import { stopRound } from '../../deployment/gui/kit/api/start';
 import { startEvents } from '../../../graph/triggers.ts';

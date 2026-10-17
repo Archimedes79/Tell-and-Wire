@@ -5,8 +5,8 @@
 // Read by the value's shape -- a text, a number, a list of rows, a chart's
 // figure, a picture -- because that is what a person recognises at a glance.
 
-import type { GraphNode, NodeResult } from '../graph';
-import { asDrawing, drawingSource, toFigure, type Figure } from '../../../deployment/gui/widgets/plot_window/PlotChart';
+import type { GraphNode, NodeResult } from '../document/graph';
+import { asDrawing, drawingSource, toFigure, type Figure } from '../../deployment/gui/widgets/plot_window/PlotChart';
 
 export type Preview =
   /** A text on one line: a text, a number, a record's first fields. */

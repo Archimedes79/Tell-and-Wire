@@ -18,7 +18,7 @@ const VIEW_TABS: { id: EditorView; label: string; hint: string }[] = [
  * connected to the graph's start and end points by name -- a button that
  * fires one is a run that begins there.
  *
- * The third is there while the tool runs (▶ Run, `document/application.ts`):
+ * The third is there while the tool runs (▶ Run, `app/application.ts`):
  * its GUI, the component a deployed tool runs -- to go back to from the graph,
  * whose cards light up as the GUI is used. Stopped, it goes.
  */

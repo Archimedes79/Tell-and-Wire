@@ -20,7 +20,7 @@ import { useGraphStore } from '../document/store/graphStore';
 import { NODE_KINDS } from '../document/model/nodeKinds';
 import { freeId, slugOf } from '../document/model/ids';
 import { blockCan, blocksAt, endPoints, guiStartPoints } from '../document/model/gui';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 
 /**
  * The GUI's blocks as the store holds them now, rewritten by *edit* and

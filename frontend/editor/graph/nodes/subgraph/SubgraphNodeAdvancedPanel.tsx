@@ -1,8 +1,8 @@
 import { DIMMER, MUTED } from '../../../../deployment/gui/kit/ui/theme';
 import { SubgraphNodeDefinition } from '../../../../../graph/nodes/subgraph/SubgraphNodeDefinition.ts';
 import { registry } from '../../../../../graph/nodes/registry.ts';
-import { CatchFailures } from '../../fields/RunOptions';
-import RunOncePerItem from '../../fields/RunOncePerItem';
+import { CatchFailures } from '../../../fields/RunOptions';
+import RunOncePerItem from '../../../fields/RunOncePerItem';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
 const ELEMENT = new SubgraphNodeDefinition();

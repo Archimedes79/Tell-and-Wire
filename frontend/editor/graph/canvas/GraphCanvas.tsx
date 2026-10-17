@@ -20,7 +20,7 @@ import 'reactflow/dist/style.css';
 
 import { useGraphStore } from '../../document/store/graphStore';
 import { useEditorScheme } from '../../document/store/editorScheme';
-import { NODE_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS } from '../../elements/registry';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
 import QuickPick from '../../../deployment/gui/kit/ui/QuickPick';
 import GraphNodeView from './GraphNodeView';

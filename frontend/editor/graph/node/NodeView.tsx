@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useGraphNodes, useGraphStore } from '../../document/store/graphStore';
 import ErrorBoundary from '../../../deployment/gui/kit/ui/ErrorBoundary';
-import { NODE_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS } from '../../elements/registry';
 import { derivedNodePorts } from '../../document/model/ports';
 import { neighbours } from '../../document/model/wires';
 import { columnsOf } from '../../../../graph/schedule.ts';

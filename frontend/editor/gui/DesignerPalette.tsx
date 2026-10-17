@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { GuiWidget, WidgetKind } from '../document/graph';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 import { freeId } from '../document/model/ids';
 import type { PaletteEntry as KindEntry } from './widgets/WidgetGuiBuilder';
 import { Wand2 } from 'lucide-react';

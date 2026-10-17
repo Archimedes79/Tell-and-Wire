@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { WidgetKind } from '../../document/graph';
-import { WIDGET_BUILDERS } from '../../document/elements/registry';
+import { WIDGET_BUILDERS } from '../../elements/registry';
 
 /** What every block holds: who it is, and how it is drawn. */
 const COMMON = ['id', 'kind', 'label', 'mode', 'w', 'h', 'tone'];

@@ -19,11 +19,11 @@ import SettingsDialog from './SettingsDialog';
 import HelpDialog from './HelpDialog';
 import RunReportDialog from './RunReportDialog';
 import JsonDialog, { parseGraphJson } from './JsonDialog';
-import { DiskChanges } from '../document/diskChanges';
+import { DiskChanges } from './diskChanges';
 import { droppedProject, landedInCodeField } from './windowDrops';
 import { browseStart, folderOf } from './browseStart';
 import FileBrowserDialog from '../../deployment/gui/kit/dialogs/FileBrowserDialog';
-import { useDialogs } from './dialogs/useDialogs';
+import { useDialogs } from '../dialogs/useDialogs';
 
 import { useGraphStore } from '../document/store/graphStore';
 import { placement } from '../document/model/placement';

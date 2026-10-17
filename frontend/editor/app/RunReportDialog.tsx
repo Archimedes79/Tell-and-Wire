@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { useGraphStore } from '../document/store/graphStore';
-import { nowText, useProviderStatus } from './fields/ProviderModelSelect';
+import { nowText, useProviderStatus } from '../fields/ProviderModelSelect';
 import { reportText, runReport, type ReportStatus } from './runReport';
 import {
   DANGER, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, LINE, MUTED, ON_SIGNAL, SUCCESS, SUCCESS_FILL, SUNKEN, TEXT, WARNING,

@@ -3,7 +3,7 @@
 import type { ComponentType } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { GraphNode, NodeType } from '../../document/graph';
-import { ElementGuiBuilder } from '../../document/elements/ElementGuiBuilder';
+import { ElementGuiBuilder } from '../../elements/ElementGuiBuilder';
 
 /**
  * Which undo step a change made in a node's panel is (`node/nodePanel.ts`).

@@ -1,7 +1,7 @@
-import type { GraphNode } from '../../document/graph';
-import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/authoring/nodes/registry.ts';
-import { DIMMER, LINE, MUTED } from '../../../deployment/gui/kit/ui/theme';
+import type { GraphNode } from '../document/graph';
+import { registry } from '../../../graph/nodes/registry.ts';
+import { designs } from '../../../graph/authoring/nodes/registry.ts';
+import { DIMMER, LINE, MUTED } from '../../deployment/gui/kit/ui/theme';
 
 /**
  * What runs when this node runs: the file in its folder, or the runner class

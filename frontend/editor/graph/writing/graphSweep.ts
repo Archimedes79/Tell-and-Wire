@@ -21,7 +21,7 @@
 import { topologicalLevels } from '../../../../graph/order.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import type { GraphEdge, GraphNode, GuiWidget } from '../../document/graph';
-import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../elements/registry';
 import { messageOf } from '../../../../graph/errors.ts';
 
 /** What happened to one node. */

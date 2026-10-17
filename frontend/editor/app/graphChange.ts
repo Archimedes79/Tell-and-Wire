@@ -2,10 +2,10 @@
 // change -- the part of the bar that is a rule rather than drawing, so a test
 // can hold it. A change to one node is said in that node's chats.
 
-import type { Graph, GraphNode, GuiWidget, Port } from './graph';
-import { baseNodeConfig } from './model/baseNodeConfig';
-import { derivedNodePorts } from './model/ports';
-import { savedNode } from './model/nodeKinds';
+import type { Graph, GraphNode, GuiWidget, Port } from '../document/graph';
+import { baseNodeConfig } from '../document/model/baseNodeConfig';
+import { derivedNodePorts } from '../document/model/ports';
+import { savedNode } from '../document/model/nodeKinds';
 import { wireOf } from '../../../graph/files/flow.ts';
 
 /** What a change of the whole graph changes: nodes by id, wires by what they join, and the GUI's blocks by id. */

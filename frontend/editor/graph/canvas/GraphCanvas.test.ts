@@ -6,7 +6,7 @@ import { ReactFlowProvider } from 'reactflow';
 import type { GraphNode } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
-import { WIDGET_BUILDERS } from '../../document/elements/registry';
+import { WIDGET_BUILDERS } from '../../elements/registry';
 import GraphCanvas from './GraphCanvas';
 
 /**

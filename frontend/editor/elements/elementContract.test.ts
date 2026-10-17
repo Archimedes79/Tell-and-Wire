@@ -6,10 +6,10 @@
  * runs is the runner's to test, beside it (`backend/deployment/runtime/nodes/`).
  */
 import { describe, it, expect } from 'vitest';
-import { NODE_KINDS } from '../model/nodeKinds';
+import { NODE_KINDS } from '../document/model/nodeKinds';
 import { NODE_BUILDERS } from './registry';
-import type { GraphNode } from '../graph';
-import { hasDefinitions } from '../../graph/writing/generation';
+import type { GraphNode } from '../document/graph';
+import { hasDefinitions } from '../graph/writing/generation';
 
 describe('node elements', () => {
   it('define themselves exactly where their definition keeps its definitions', () => {

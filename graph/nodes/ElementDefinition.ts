@@ -17,7 +17,7 @@
 //               (`frontend/editor/`)
 //
 // A face is named after its kind: `AiNodeDefinition`, `AiNodeRunner`,
-// `AiNodeDesign`, `AiNodeGuiBuilder`. `frontend/editor/document/elements/symmetry.test.ts`
+// `AiNodeDesign`, `AiNodeGuiBuilder`. `frontend/editor/elements/symmetry.test.ts`
 // holds the lists to each other, kind for kind.
 //
 // **The element owns its config.** `config(subject)` reads the stored record

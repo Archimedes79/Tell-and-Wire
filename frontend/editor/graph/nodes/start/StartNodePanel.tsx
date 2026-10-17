@@ -4,7 +4,7 @@ import { parseInterval } from '../../../../../graph/triggers.ts';
 import { designs } from '../../../../../graph/authoring/nodes/registry.ts';
 import { useGraphStore } from '../../../document/store/graphStore';
 import PathField, { FileTypesField } from '../../../../deployment/gui/kit/dialogs/PathField';
-import FolderListing from '../../../app/fields/FolderListing';
+import FolderListing from '../../../fields/FolderListing';
 import { listAsRun } from '../../writing/readAsRun';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 import { messageOf } from '../../../../../graph/errors.ts';

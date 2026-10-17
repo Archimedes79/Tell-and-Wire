@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import type { GraphNode } from '../../document/graph';
-import { DIMMER, FIELD, MUTED } from '../../../deployment/gui/kit/ui/theme';
+import type { GraphNode } from '../document/graph';
+import { DIMMER, FIELD, MUTED } from '../../deployment/gui/kit/ui/theme';
 
 interface Props {
   node: GraphNode;

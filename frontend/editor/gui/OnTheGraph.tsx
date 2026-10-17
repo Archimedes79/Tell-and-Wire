@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { GuiWidget } from '../document/graph';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 import { useGraphNodes } from '../document/store/graphStore';
 import { blockCan, endPoints, memoryPoints, guiStartPoints, type Point } from '../document/model/gui';
 import { connectToNewPoint } from './guiWrite';

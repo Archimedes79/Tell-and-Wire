@@ -18,14 +18,14 @@
  * than a blank panel, a node nobody can run or a widget missing on someone's gui.
  */
 import { describe, expect, it } from 'vitest';
-import type { NodeType } from '../graph';
-import { registry } from '../../../../graph/nodes/registry.ts';
-import { designs } from '../../../../graph/authoring/nodes/registry.ts';
-import { runners } from '../../../../backend/deployment/runtime/nodes/registry.ts';
-import { WIDGETS } from '../../../../gui/widgets/roster.ts';
-import { widgetElement } from '../../../../gui/gui.ts';
-import { WidgetDesign } from '../../../../gui/authoring/widgets/WidgetDesign.ts';
-import { widgetDesign } from '../../../../gui/authoring/widgets/roster.ts';
+import type { NodeType } from '../document/graph';
+import { registry } from '../../../graph/nodes/registry.ts';
+import { designs } from '../../../graph/authoring/nodes/registry.ts';
+import { runners } from '../../../backend/deployment/runtime/nodes/registry.ts';
+import { WIDGETS } from '../../../gui/widgets/roster.ts';
+import { widgetElement } from '../../../gui/gui.ts';
+import { WidgetDesign } from '../../../gui/authoring/widgets/WidgetDesign.ts';
+import { widgetDesign } from '../../../gui/authoring/widgets/roster.ts';
 import { NODE_BUILDERS, WIDGET_BUILDERS } from './registry';
 
 type Exports = Record<string, Record<string, unknown>>;
@@ -34,17 +34,17 @@ type Exports = Record<string, Record<string, unknown>>;
 const faces = (modules: Record<string, unknown>, root: string): Exports =>
   Object.fromEntries(Object.entries(modules).map(([path, module]) => [path.slice(path.indexOf(root) + root.length), module])) as Exports;
 
-const DEFINITIONS = faces(import.meta.glob('../../../../graph/nodes/*/*NodeDefinition.ts', { eager: true }), 'graph/nodes/');
-const RUNNERS = faces(import.meta.glob('../../../../backend/deployment/runtime/nodes/*/*NodeRunner.ts', { eager: true }), 'runtime/nodes/');
-const DESIGNS = faces(import.meta.glob('../../../../graph/authoring/nodes/*/*NodeDesign.ts', { eager: true }), 'authoring/nodes/');
-const NODE_GUI_BUILDERS = faces(import.meta.glob('../../graph/nodes/*/*NodeGuiBuilder.ts', { eager: true }), 'graph/nodes/');
-const WIDGET_DESIGNS = faces(import.meta.glob('../../../../gui/authoring/widgets/*/*WidgetDesign.ts', { eager: true }), 'authoring/widgets/');
-const WIDGET_GUI_BUILDERS = faces(import.meta.glob('../../gui/widgets/*/*GuiBuilder.ts', { eager: true }), 'gui/widgets/');
+const DEFINITIONS = faces(import.meta.glob('../../../graph/nodes/*/*NodeDefinition.ts', { eager: true }), 'graph/nodes/');
+const RUNNERS = faces(import.meta.glob('../../../backend/deployment/runtime/nodes/*/*NodeRunner.ts', { eager: true }), 'runtime/nodes/');
+const DESIGNS = faces(import.meta.glob('../../../graph/authoring/nodes/*/*NodeDesign.ts', { eager: true }), 'authoring/nodes/');
+const NODE_GUI_BUILDERS = faces(import.meta.glob('../graph/nodes/*/*NodeGuiBuilder.ts', { eager: true }), 'graph/nodes/');
+const WIDGET_DESIGNS = faces(import.meta.glob('../../../gui/authoring/widgets/*/*WidgetDesign.ts', { eager: true }), 'authoring/widgets/');
+const WIDGET_GUI_BUILDERS = faces(import.meta.glob('../gui/widgets/*/*GuiBuilder.ts', { eager: true }), 'gui/widgets/');
 /** Every file under a kind's folder, in the definitions of widgets and in the two places a widget's browser half lives. */
-const WIDGET_DEFINITION_FILES = Object.keys(import.meta.glob('../../../../gui/widgets/*/*.ts'));
+const WIDGET_DEFINITION_FILES = Object.keys(import.meta.glob('../../../gui/widgets/*/*.ts'));
 const WIDGET_EDITOR_FILES = Object.keys({
-  ...import.meta.glob('../../gui/widgets/*/*.{ts,tsx}'),
-  ...import.meta.glob('../../../deployment/gui/widgets/*/*.tsx'),
+  ...import.meta.glob('../gui/widgets/*/*.{ts,tsx}'),
+  ...import.meta.glob('../../deployment/gui/widgets/*/*.tsx'),
 });
 
 const pascal = (kind: string) => kind.split('_').map((word) => word[0].toUpperCase() + word.slice(1)).join('');

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { connectToNewPoint, insertBlock, removeBlock } from './guiWrite';
 import type { GraphNode } from '../document/graph';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 import { useGraphStore } from '../document/store/graphStore';
 
 const store = () => useGraphStore.getState();

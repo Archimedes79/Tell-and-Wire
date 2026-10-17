@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 import { BLOCKS } from '../../deployment/gui/surface/blocks';
 
 /**

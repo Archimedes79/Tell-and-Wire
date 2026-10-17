@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { GuiWidget } from '../document/graph';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 import { entryOf } from './DesignerPalette';
 import OnTheGraph from './OnTheGraph';
 import { blockSize, GUI_GRID_COLUMNS } from '../../deployment/gui/kit/layout';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { AIProvider } from '../document/graph';
 import { call, type SettingsPatch, type SettingsStatus } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
-import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus, useProviderStatus, type Purpose } from './fields/ProviderModelSelect';
+import ProviderModelSelect, { AI_PROVIDER_LABELS, nowText, refreshProviderStatus, useProviderStatus, type Purpose } from '../fields/ProviderModelSelect';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { DEFAULT_ENDPOINTS } from '../../../graph/endpoints.ts';

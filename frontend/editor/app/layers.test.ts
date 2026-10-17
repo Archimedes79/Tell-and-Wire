@@ -17,7 +17,7 @@ import { describe, expect, it } from 'vitest';
  *   4 dialogs           small dialogs that ask the server something
  *     deployed widgets  the views of the blocks, drawn alike in the editor and in a tool
  *     surface           the GUI a tool renders, and the editor draws the same way
- *   5 the elements      document/elements (the registry), graph/nodes, gui/widgets,
+ *   5 the elements      elements (the registry), graph/nodes, gui/widgets,
  *                       the fields their panels are made of, and graph/writing
  *   6 gui               a GUI, designed
  *     canvas            the graph, drawn
@@ -39,7 +39,7 @@ import { describe, expect, it } from 'vitest';
  * reached, not on one import, so `deployment/gui/boundary.test.ts` holds it.
  */
 const ELEMENTS = [
-  'editor/document/elements/', 'editor/app/fields/', 'editor/graph/nodes/', 'editor/graph/fields/', 'editor/graph/writing/', 'editor/gui/widgets/',
+  'editor/elements/', 'editor/fields/', 'editor/graph/nodes/', 'editor/graph/writing/', 'editor/gui/widgets/',
 ];
 /** [area, rank, the folders and files it is made of]; the longest path a file starts with decides. */
 const AREAS: [string, number, ...string[]][] = [
@@ -52,7 +52,7 @@ const AREAS: [string, number, ...string[]][] = [
   ['editor api', 2.5, 'editor/api/'],
   ['store', 3, 'editor/document/store/'],
   ['views', 3, 'editor/graph/views/'],
-  ['dialogs', 4, 'deployment/gui/kit/dialogs/', 'editor/app/dialogs/'],
+  ['dialogs', 4, 'deployment/gui/kit/dialogs/', 'editor/dialogs/'],
   ['deployed widgets', 4.2, 'deployment/gui/widgets/'],
   ['surface', 4.5, 'deployment/gui/surface/'],
   ['windows', 4.6, 'deployment/windows/'],
@@ -60,7 +60,7 @@ const AREAS: [string, number, ...string[]][] = [
   ['gui', 6, 'editor/gui/'],
   ['canvas', 6, 'editor/graph/canvas/'],
   ['node', 6, 'editor/graph/node/'],
-  ['the app', 7, 'editor/app/', 'editor/document/'],
+  ['the app', 7, 'editor/app/'],
   ['App', 8, 'editor/app/App.tsx'],
   ['deployed app', 8, 'deployment/gui/'],
   ['main', 9, 'editor/app/main.tsx'],

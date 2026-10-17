@@ -1,8 +1,8 @@
 import { useId } from 'react';
 import type { AIProvider } from '../../../document/graph';
-import RunOptions from '../../fields/RunOptions';
-import RunOncePerItem from '../../fields/RunOncePerItem';
-import ProviderModelSelect from '../../../app/fields/ProviderModelSelect';
+import RunOptions from '../../../fields/RunOptions';
+import RunOncePerItem from '../../../fields/RunOncePerItem';
+import ProviderModelSelect from '../../../fields/ProviderModelSelect';
 import Button from '../../../../deployment/gui/kit/ui/Button';
 import { DIMMER, FIELD, MUTED } from '../../../../deployment/gui/kit/ui/theme';
 import { ONCE, type NodePanelProps } from '../NodeGuiBuilder';

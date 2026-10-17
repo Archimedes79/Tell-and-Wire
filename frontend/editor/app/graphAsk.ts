@@ -3,7 +3,7 @@
 // the same steps -- asked, back, or failed -- and one place that holds them.
 
 import { useCallback, useRef, useState } from 'react';
-import type { Graph } from './graph';
+import type { Graph } from '../document/graph';
 import { ApiError, call, watchGeneration, type AICall } from '../api/client';
 import { errorText } from '../../deployment/gui/kit/api/errorText';
 

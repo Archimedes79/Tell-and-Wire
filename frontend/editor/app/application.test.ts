@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Graph, GraphNode } from './graph';
+import type { Graph, GraphNode } from '../document/graph';
 
 // What ▶ Run starts: the application, as whoever gets the tool runs it -- its
 // clock kept by the server's session, the document handed to it first.
@@ -28,7 +28,7 @@ const listening = new Map<string, () => void>();
 vi.stubGlobal('addEventListener', (type: string, listener: () => void) => { listening.set(type, listener); });
 vi.stubGlobal('removeEventListener', (type: string, listener: () => void) => { if (listening.get(type) === listener) listening.delete(type); });
 
-const { useGraphStore } = await import('./store/graphStore');
+const { useGraphStore } = await import('../document/store/graphStore');
 const { startApplication, stopApplication, useApplication } = await import('./application');
 
 const node = (id: string, node_type: string, config: Record<string, unknown> = {}): GraphNode => ({

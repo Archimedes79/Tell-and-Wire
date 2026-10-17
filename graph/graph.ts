@@ -178,7 +178,7 @@ export function defaultMetadata(): GraphMetadata {
  *
  * One default per key: a second one, for what a *loaded* node lacks, is what
  * turned a graph written by hand into a different graph after one Save. Each
- * element reads a missing key as this says (`frontend/editor/document/elements/savedConfig.test.ts`
+ * element reads a missing key as this says (`frontend/editor/elements/savedConfig.test.ts`
  * asks every kind).
  */
 export function defaultNodeConfig(): RawConfig {

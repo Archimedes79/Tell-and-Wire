@@ -1,5 +1,5 @@
 import type { ExecutionStatus } from '../../document/graph';
-import type { Preview } from '../../document/elements/resultPreview';
+import type { Preview } from '../../elements/resultPreview';
 import { computeAxisRange } from '../../../deployment/gui/widgets/plot_window/PlotChart';
 import { statusTone } from '../../document/store/executionStatus';
 
@@ -8,7 +8,7 @@ import { statusTone } from '../../document/store/executionStatus';
  * card, under its block's row: a line, a count and its first row, a sketch, or
  * a thumbnail -- never more than a small picture high, so a run does not push
  * the graph apart. What the value *is* was decided
- * before this (`document/elements/resultPreview.ts`);
+ * before this (`elements/resultPreview.ts`);
  * this only draws it, in the colours of the run that made it (`statusTone`):
  * green, or amber where it lost items. Faded when the node stood still this
  * run, and what stands is what it made before.

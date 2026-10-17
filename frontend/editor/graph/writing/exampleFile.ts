@@ -10,7 +10,7 @@
 // block of the GUI that sends into it starts on.
 
 import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document/graph';
-import { NODE_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS } from '../../elements/registry';
 import { filesOf } from '../../document/model/givenFiles';
 import { blockCan, blocksAt, startsOn } from '../../document/model/gui';
 import { lastRunInputs } from './generationContext';

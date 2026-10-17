@@ -25,7 +25,7 @@ import { DANGER_TEXT, DIMMER, LINE, MUTED, SURFACE } from '../../deployment/gui/
 const holdDocument = () => useGraphStore.getState().holdDocument();
 
 /**
- * The application, running (▶ Run, `document/application.ts`): its GUI, as the
+ * The application, running (▶ Run, `app/application.ts`): its GUI, as the
  * deployed tool draws it -- the same component, not a rendition.
  *
  * `GuiSurface` is what `deployment/gui/GuiApp.tsx` renders when a bundle is

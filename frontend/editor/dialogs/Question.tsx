@@ -1,6 +1,6 @@
-import Modal from '../../../deployment/gui/kit/ui/Modal';
-import Button, { type ButtonVariant } from '../../../deployment/gui/kit/ui/Button';
-import { TEXT } from '../../../deployment/gui/kit/ui/theme';
+import Modal from '../../deployment/gui/kit/ui/Modal';
+import Button, { type ButtonVariant } from '../../deployment/gui/kit/ui/Button';
+import { TEXT } from '../../deployment/gui/kit/ui/theme';
 
 export interface Asked<T> {
   title: string;

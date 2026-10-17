@@ -1,7 +1,7 @@
 import type { ExecutionResult, GraphNode, GuiWidget, Wire } from '../../document/graph';
 // This module reads the element registry, so no element's `…GuiBuilder.ts` may import
 // it: that would be a cycle through the registry (see `document/model/givenFiles.ts`).
-import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../document/elements/registry';
+import { NODE_BUILDERS, WIDGET_BUILDERS } from '../../elements/registry';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { fieldOf } from '../../../../graph/wiring.ts';
 import { blockCan, blockReceives, blocksAt } from '../../document/model/gui';

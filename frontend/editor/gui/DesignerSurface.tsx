@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import type { GuiWidget } from '../document/graph';
-import { WIDGET_BUILDERS } from '../document/elements/registry';
+import { WIDGET_BUILDERS } from '../elements/registry';
 import { blockValue, GuiBlock, GuiGrid } from '../../deployment/gui/surface/GuiSurface';
 import { heldValue, roundGoing, useSession } from '../../deployment/gui/kit/api/session';
 import { moveBlock, patchBlock } from './guiWrite';

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { NodeType } from '../document/graph';
-import { NODE_BUILDERS } from '../document/elements/registry';
+import { NODE_BUILDERS } from '../elements/registry';
 import type { NodeGuiBuilder } from '../graph/nodes/NodeGuiBuilder';
 import { DIMMER, LINE, SURFACE } from '../../deployment/gui/kit/ui/theme';
 

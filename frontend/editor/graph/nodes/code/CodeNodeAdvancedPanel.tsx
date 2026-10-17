@@ -1,5 +1,5 @@
-import RunOptions from '../../fields/RunOptions';
-import RunOncePerItem from '../../fields/RunOncePerItem';
+import RunOptions from '../../../fields/RunOptions';
+import RunOncePerItem from '../../../fields/RunOncePerItem';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 
 /** The switches with good defaults, after its ports: see `AdvancedPanel`. */

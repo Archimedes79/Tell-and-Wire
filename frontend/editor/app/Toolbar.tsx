@@ -14,11 +14,11 @@ import { flushPanels } from '../document/store/flushPanels';
 import { useGraphSweep } from '../graph/node/useGraphSweep';
 import Modal from '../../deployment/gui/kit/ui/Modal';
 import LiveGeneration from '../graph/writing/LiveGeneration';
-import { useGraphAsk } from '../document/graphAsk';
+import { useGraphAsk } from './graphAsk';
 import SubgraphTrail from './SubgraphTrail';
 import GraphProblems from './GraphProblems';
 import ViewTabs, { type EditorView } from './ViewTabs';
-import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from '../document/application';
+import { opensApp, startApplication, stopApplication, useApplication, useTopOpensApp } from './application';
 import FileMenu, { fileActions } from './FileMenu';
 import { ACCENT_FILL, ACCENT_TEXT, DANGER_FILL, DANGER_TEXT, DIM, DIMMER, FIELD, LINE, MUTED, SUCCESS_TEXT, SURFACE } from '../../deployment/gui/kit/ui/theme';
 
@@ -130,7 +130,7 @@ export default function Toolbar({
 
   /**
    * ▶ Run: the tool, run as whoever gets it will run it -- one button,
-   * the same on every tab (`document/application.ts`). With a GUI, the GUI opens
+   * the same on every tab (`app/application.ts`). With a GUI, the GUI opens
    * (the App tab) and the graph runs when it is used; without one, what starts
    * the graph starts it. While it runs the button is ■ Stop, which ends it.
    *

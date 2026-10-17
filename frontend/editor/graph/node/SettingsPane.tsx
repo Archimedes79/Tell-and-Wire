@@ -11,7 +11,7 @@ import { inputSources, outputTargets } from '../writing/generationContext';
 import { bodyOf } from '../writing/generation';
 import { runsPerItem } from '../writing/perItem';
 import FileChip from '../writing/FileChip';
-import WhatRuns from '../fields/WhatRuns';
+import WhatRuns from '../../fields/WhatRuns';
 import { PaneHeader } from '../views/NodeViewLayout';
 import PortsEditor, { TakesSelect } from './PortsEditor';
 import { withPorts } from './nodeDraft';

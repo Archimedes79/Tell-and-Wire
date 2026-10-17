@@ -6,9 +6,9 @@ import Button from '../../deployment/gui/kit/ui/Button';
 import LiveGeneration from '../graph/writing/LiveGeneration';
 import GraphProblems from './GraphProblems';
 import ProblemsChip from './ProblemsChip';
-import { useGraphAsk, type GraphAsk } from '../document/graphAsk';
-import { refreshProviderStatus, useProviderStatus } from './fields/ProviderModelSelect';
-import { describeChange, graphChange } from '../document/graphChange';
+import { useGraphAsk, type GraphAsk } from './graphAsk';
+import { refreshProviderStatus, useProviderStatus } from '../fields/ProviderModelSelect';
+import { describeChange, graphChange } from './graphChange';
 import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
