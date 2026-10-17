@@ -55,9 +55,14 @@ export const ACCENT_FILL = 'var(--ui-accent-fill, rgba(99,102,241,0.10))';
 export const ON_ACCENT = 'var(--ui-on-accent, #ffffff)';
 /**
  * The accent as a soft glow around what is selected: mixed from the scheme's
- * own accent, so it is that accent's glow in every scheme.
+ * own accent, so it is that accent's glow in every scheme. Faint -- the ring does the work.
  */
-export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 30%, transparent)`;
+export const ACCENT_GLOW = `color-mix(in srgb, ${ACCENT} 18%, transparent)`;
+/**
+ * Elevation, as two thin layers rather than one heavy one, tuned to each scheme's ground: a card is
+ * lifted by what is just under it and by what is further away.
+ */
+export const SHADOW_SOFT = 'var(--ui-shadow-soft, 0 1px 2px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.28))';
 
 /**
  * An event: the ◆ a run begins at, and a wire into one. Amber whatever the

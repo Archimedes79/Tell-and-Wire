@@ -54,6 +54,8 @@ interface Scheme {
   hover: string;
   /** Behind a modal. */
   scrim: string;
+  /** The lift of a card off its ground: two thin layers, tuned to the ground (a dark one hides a shadow, so it also gets a lit edge). */
+  shadowSoft: string;
 
   // ---- text -----------------------------------------------------------------
   text: string;
@@ -98,6 +100,7 @@ export const SCHEMES: Scheme[] = [
     sunken: '#0f1117', surface: '#1a1d2e', line: '#2d3148',
     raise: 'rgba(255,255,255,0.03)', hover: 'rgba(255,255,255,0.06)',
     scrim: 'rgba(0,0,0,0.70)',
+    shadowSoft: 'inset 0 1px 0 rgba(255,255,255,0.045), 0 1px 2px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.28)',
     text: '#e2e8f0', muted: '#a5b2c3', dim: '#96a0b0', dimmer: '#8c95a1',
     accent: '#6164ec', accentText: '#a5b4fc', accentFill: 'rgba(99,102,241,0.10)', onAccent: '#ffffff',
     success: '#22c55e', successText: '#86efac', danger: '#ef4444', dangerText: '#fca5a5',
@@ -116,6 +119,7 @@ export const SCHEMES: Scheme[] = [
     sunken: '#efece3', surface: '#faf9f5', line: '#dcd8cb',
     raise: 'rgba(60,50,30,0.035)', hover: 'rgba(60,50,30,0.06)',
     scrim: 'rgba(35,32,26,0.45)',
+    shadowSoft: '0 1px 2px rgba(60,50,30,0.07), 0 6px 16px rgba(60,50,30,0.07)',
     text: '#22201c', muted: '#4e4b46', dim: '#5b5853', dimmer: '#64615b',
     accent: '#b85b36', accentText: '#8f4526', accentFill: 'rgba(192,95,56,0.10)', onAccent: '#ffffff',
     success: '#2f7d32', successText: '#25652a', danger: '#b3261e', dangerText: '#8c1d18',
@@ -134,6 +138,7 @@ export const SCHEMES: Scheme[] = [
     sunken: '#f4f5f7', surface: '#ffffff', line: '#d8dbe0',
     raise: 'rgba(16,24,40,0.03)', hover: 'rgba(16,24,40,0.06)',
     scrim: 'rgba(16,24,40,0.45)',
+    shadowSoft: '0 1px 2px rgba(16,24,40,0.05), 0 6px 16px rgba(16,24,40,0.06)',
     text: '#1a1d23', muted: '#4a515c', dim: '#585e6a', dimmer: '#63676f',
     accent: '#2563eb', accentText: '#1d4ed8', accentFill: 'rgba(37,99,235,0.08)', onAccent: '#ffffff',
     success: '#15803d', successText: '#166534', danger: '#b42318', dangerText: '#912018',
@@ -150,6 +155,7 @@ export const SCHEMES: Scheme[] = [
     sunken: '#111113', surface: '#1b1b1f', line: '#33333a',
     raise: 'rgba(255,255,255,0.04)', hover: 'rgba(255,255,255,0.07)',
     scrim: 'rgba(0,0,0,0.70)',
+    shadowSoft: 'inset 0 1px 0 rgba(255,255,255,0.045), 0 1px 2px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.28)',
     text: '#e8e8ea', muted: '#b3b3b9', dim: '#a1a1a5', dimmer: '#96969a',
     accent: '#2dd4bf', accentText: '#5eead4', accentFill: 'rgba(45,212,191,0.12)', onAccent: '#06231f',
     success: '#34d399', successText: '#86efac', danger: '#f87171', dangerText: '#fca5a5',
@@ -201,6 +207,7 @@ export function schemeVars(id: string | undefined): React.CSSProperties {
     '--ui-raise': s.raise,
     '--ui-hover': s.hover,
     '--ui-scrim': s.scrim,
+    '--ui-shadow-soft': s.shadowSoft,
     '--ui-text': s.text,
     '--ui-muted': s.muted,
     '--ui-dim': s.dim,

@@ -13,7 +13,7 @@ import { roundGoing, startOver, useSession, watchSession } from './kit/api/sessi
 import { errorText } from './kit/api/errorText';
 import Button from './kit/ui/Button';
 import { schemeVars } from './kit/ui/scheme';
-import { DANGER_FILL, DANGER_TEXT, DIM, SUNKEN } from './kit/ui/theme';
+import { DANGER_FILL, DANGER_TEXT, DIM, SURFACE } from './kit/ui/theme';
 
 /** Which design of which session: what a drawn gui was drawn from. */
 const designOf = (session: string, revision: number): string => `${session}#${revision}`;
@@ -104,7 +104,7 @@ export default function GuiApp() {
 
   return (
     // A deployed tool looks like the thing that was designed, scheme included.
-    <div className="flex flex-col h-screen overflow-hidden" style={{ ...schemeVars(design?.scheme), background: SUNKEN }}>
+    <div className="flex flex-col h-screen overflow-hidden" style={{ ...schemeVars(design?.scheme), background: SURFACE }}>
       <DeliveredHeader
         name={design?.name ?? ''}
         description={design?.description ?? ''}
