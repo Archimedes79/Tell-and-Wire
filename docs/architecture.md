@@ -53,6 +53,8 @@ Four cuts run through everything:
 folders it is and its sub-blocks. `backend/architecture/blocks.test.ts` holds this section to the software: every box of the
 picture is described here, every folder named here exists, and no folder of the source is left out.
 
+The same picture with each box's folders and key files, box for box and in the same places: [overview-detail.svg](images/overview-detail.svg).
+
 `graph/`, `gui/` and `backend/` are TypeScript that Node 24 runs as it is: no build, no runtime dependencies. `frontend/` is
 React and Vite: `npm run build` writes the editor's page (`frontend/dist`), `npm run build:notebook` the notebook's
 (`frontend/notebook/dist`).
@@ -122,7 +124,7 @@ tests share).
 
 ## The files
 
-The main drawing with the most important files in each box, and where a round and a writing with the model take place: [architecture-key-files.svg](images/architecture-key-files.svg). Drawn by area, one box a directory with each file and its role: [definitions](images/architecture-files-1-definitions.svg), [backend](images/architecture-files-2-backend.svg), [pages of a tool, the notebook and the build](images/architecture-files-3-frontend-tool.svg), [the editor's page](images/architecture-files-4-frontend-editor.svg), [tool servers and root](images/architecture-files-5-mcp-root.svg); how the layers stand on one another is in [architecture-detail.svg](images/architecture-detail.svg).
+The picture of the overview with the folders and key files of each box: [overview-detail.svg](images/overview-detail.svg). Drawn by area, one box a directory with each file and its role: [definitions](images/architecture-files-1-definitions.svg), [backend](images/architecture-files-2-backend.svg), [pages of a tool, the notebook and the build](images/architecture-files-3-frontend-tool.svg), [the editor's page](images/architecture-files-4-frontend-editor.svg), [tool servers and root](images/architecture-files-5-mcp-root.svg); how the layers stand on one another is under "Rules".
 
 Where each source file is and what it does: one row a file, by area. A kind of node or block has the same set of files in several
 places (the faces under "Elements"); those are one row each, written as a pattern -- `<kind>` is the kind's folder name

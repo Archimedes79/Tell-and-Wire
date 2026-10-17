@@ -1,1 +1,359 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1392" viewBox="0 0 1392 1687.5" role="img"><title>The pages: frontend/ (a delivered tool, the notebook, the build)</title><desc>deployment/ is what a delivered tool's browser loads and is also the kit the editor and notebook build on. 81 rows: each file with what it does.</desc><style>svg{font-family:Segoe UI,Helvetica,Arial,sans-serif}.bg{fill:#ffffff}.h{font-size:19px;font-weight:600;fill:#1f1e1d}.n{font-size:12.5px;fill:#5f5e5a}.d{font-size:13px;font-weight:600;fill:#085041}.f{font-family:Consolas,Menlo,monospace;font-size:11.5px;font-weight:600;fill:#1f1e1d}.r{font-size:11px;fill:#5f5e5a}.box{fill:#E1F5EE;stroke:#0F6E56;stroke-width:.6}.row{stroke:#0F6E56;stroke-opacity:.25}@media (prefers-color-scheme:dark){.bg{fill:#1c1c1a}.h,.f{fill:#e8e6dc}.n,.r{fill:#b4b2a9}.d{fill:#9FE1CB}.box{fill:#262624;stroke:#5DCAA5}.row{stroke:#5DCAA5}}</style><rect class="bg" width="1392" height="1687.5"/><text class="h" x="20" y="34">The pages: frontend/ (a delivered tool, the notebook, the build)</text><text class="n" x="20" y="54">deployment/ is what a delivered tool's browser loads and is also the kit the editor and notebook build on. (81 rows)</text><g><rect class="box" x="20" y="78" width="440" height="379.5" rx="9"/><text class="d" x="34" y="100">frontend/</text><text class="f" x="34" y="125">.eslintrc.cjs</text><text class="r" x="42" y="139.5">The lint rules of the page (npm run lint --workspace frontend): above all the</text><text class="r" x="42" y="154">rules of hooks.</text><line class="row" x1="34" x2="446" y1="160.5" y2="160.5"/><text class="f" x="34" y="176.5">gui.html</text><text class="r" x="42" y="191">The page of a delivered tool; built next to index.html.</text><line class="row" x1="34" x2="446" y1="197.5" y2="197.5"/><text class="f" x="34" y="213.5">index.html</text><text class="r" x="42" y="228">The editor's page.</text><line class="row" x1="34" x2="446" y1="234.5" y2="234.5"/><text class="f" x="34" y="250.5">postcss.config.js</text><text class="r" x="42" y="265">PostCSS for the page's styles (Tailwind).</text><line class="row" x1="34" x2="446" y1="271.5" y2="271.5"/><text class="f" x="34" y="287.5">tailwind.config.js</text><text class="r" x="42" y="302">Tailwind for the page: no colours here, every colour is a token in</text><text class="r" x="42" y="316.5">deployment/gui/kit/ui/theme.ts.</text><line class="row" x1="34" x2="446" y1="323" y2="323"/><text class="f" x="34" y="339">vite.config.ts</text><text class="r" x="42" y="353.5">The build of the editor's and the delivered tool's pages (two entries, shared</text><text class="r" x="42" y="368">chunks).</text><line class="row" x1="34" x2="446" y1="374.5" y2="374.5"/><text class="f" x="34" y="390.5">vite.licenses.ts</text><text class="r" x="42" y="405">Writes the licences of what the build bundles next to the page.</text><line class="row" x1="34" x2="446" y1="411.5" y2="411.5"/><text class="f" x="34" y="427.5">vite.notebook.config.ts</text><text class="r" x="42" y="442">The build of the notebook's page, apart from the editor's.</text></g><g><rect class="box" x="476" y="78" width="440" height="246" rx="9"/><text class="d" x="490" y="100">frontend/deployment/gui/</text><text class="f" x="490" y="125">GuiAISettings.tsx</text><text class="r" x="498" y="139.5">The read-only dialog that says which model a delivered tool calls and where to</text><text class="r" x="498" y="154">change that.</text><line class="row" x1="490" x2="902" y1="160.5" y2="160.5"/><text class="f" x="490" y="176.5">GuiApp.tsx</text><text class="r" x="498" y="191">The delivered tool's page: loads the GUI design, listens to the session, draws the</text><text class="r" x="498" y="205.5">header, the GUI or the windows, and the dialogs.</text><line class="row" x1="490" x2="902" y1="212" y2="212"/><text class="f" x="490" y="228">GuiStates.tsx</text><text class="r" x="498" y="242.5">The State dialog: save what the tool keeps under a name, load or replace a saved</text><text class="r" x="498" y="257">state.</text><line class="row" x1="490" x2="902" y1="263.5" y2="263.5"/><text class="f" x="490" y="279.5">main.tsx</text><text class="r" x="498" y="294">The entry of a delivered tool's page (gui.html): refuses a file dropped beside a</text><text class="r" x="498" y="308.5">picker, mounts GuiApp.</text></g><g><rect class="box" x="932" y="78" width="440" height="165.5" rx="9"/><text class="d" x="946" y="100">frontend/deployment/gui/kit/</text><text class="f" x="946" y="125">guiWidget.ts</text><text class="r" x="954" y="139.5">One block of a GUI, as the GUI holds it</text><line class="row" x1="946" x2="1358" y1="146" y2="146"/><text class="f" x="946" y="162">index.css</text><text class="r" x="954" y="176.5">The stylesheet of a delivered tool and of the editor: base rules, the scheme's</text><text class="r" x="954" y="191">variables, the grid.</text><line class="row" x1="946" x2="1358" y1="197.5" y2="197.5"/><text class="f" x="946" y="213.5">layout.ts</text><text class="r" x="954" y="228">The GUI a graph is used through, as a document rather than a canvas</text></g><g><rect class="box" x="932" y="259.5" width="440" height="268.5" rx="9"/><text class="d" x="946" y="281.5">frontend/deployment/gui/kit/api/</text><text class="f" x="946" y="306.5">client.ts</text><text class="r" x="954" y="321">A GUI's end of the wire: the routes of backend/deployment/host/api.ts, called by</text><text class="r" x="954" y="335.5">name</text><line class="row" x1="946" x2="1358" y1="342" y2="342"/><text class="f" x="946" y="358">errorText.ts</text><text class="r" x="954" y="372.5">The message to show a user for a failed request</text><line class="row" x1="946" x2="1358" y1="379" y2="379"/><text class="f" x="946" y="395">port.ts</text><text class="r" x="954" y="409.5">The built-in GUI's end of the GUI port (backend/deployment/host/port.ts, "The GUI</text><text class="r" x="954" y="424">port" in docs/architecture.md)</text><line class="row" x1="946" x2="1358" y1="430.5" y2="430.5"/><text class="f" x="946" y="446.5">session.ts</text><text class="r" x="954" y="461">The session as a GUI sees it: what its start points were sent, what its outputs</text><text class="r" x="954" y="475.5">showed, the round going or gone -- as the server tells it, by name</text><line class="row" x1="946" x2="1358" y1="482" y2="482"/><text class="f" x="946" y="498">start.ts</text><text class="r" x="954" y="512.5">What the GUI does to its tool: begin a round, stop it, start over</text></g><g><rect class="box" x="476" y="340" width="440" height="194.5" rx="9"/><text class="d" x="490" y="362">frontend/deployment/gui/kit/dialogs/</text><text class="f" x="490" y="387">FileBrowserDialog.tsx</text><text class="r" x="498" y="401.5">The file browser: choose a file, a folder or a name to save under, on the machine</text><text class="r" x="498" y="416">the tool runs on.</text><line class="row" x1="490" x2="902" y1="422.5" y2="422.5"/><text class="f" x="490" y="438.5">PathField.tsx</text><text class="r" x="498" y="453">A path box with Browse beside it, which takes a dropped file too; and the</text><text class="r" x="498" y="467.5">file-types field.</text><line class="row" x1="490" x2="902" y1="474" y2="474"/><text class="f" x="490" y="490">RequirementsDialog.tsx</text><text class="r" x="498" y="504.5">The "before running" window: the file or folder a run still needs from each</text><text class="r" x="498" y="519">picker.</text></g><g><rect class="box" x="20" y="473.5" width="440" height="571" rx="9"/><text class="d" x="34" y="495.5">frontend/deployment/gui/kit/ui/</text><text class="f" x="34" y="520.5">Button.tsx</text><text class="r" x="42" y="535">The one button of dialogs, panels and the GUI.</text><line class="row" x1="34" x2="446" y1="541.5" y2="541.5"/><text class="f" x="34" y="557.5">Chip.tsx</text><text class="r" x="42" y="572">A small pill that names one thing: a start point a block sends to, an end point it</text><text class="r" x="42" y="586.5">shows.</text><line class="row" x1="34" x2="446" y1="593" y2="593"/><text class="f" x="34" y="609">ErrorBoundary.tsx</text><text class="r" x="42" y="623.5">Catches a module that did not load (a page older than its server) and says so</text><text class="r" x="42" y="638">instead of a blank page.</text><line class="row" x1="34" x2="446" y1="644.5" y2="644.5"/><text class="f" x="34" y="660.5">Markdown.tsx</text><text class="r" x="42" y="675">A small Markdown renderer built as React elements, not a library.</text><line class="row" x1="34" x2="446" y1="681.5" y2="681.5"/><text class="f" x="34" y="697.5">Modal.tsx</text><text class="r" x="42" y="712">The one modal shell: backdrop, panel, header, footer, Escape and focus kept</text><text class="r" x="42" y="726.5">inside.</text><line class="row" x1="34" x2="446" y1="733" y2="733"/><text class="f" x="34" y="749">QuickPick.tsx</text><text class="r" x="42" y="763.5">A searchable pick list with icons, for the palette and quick insert.</text><line class="row" x1="34" x2="446" y1="770" y2="770"/><text class="f" x="34" y="786">Toggle.tsx</text><text class="r" x="42" y="800.5">An on/off switch with its label read aloud.</text><line class="row" x1="34" x2="446" y1="807" y2="807"/><text class="f" x="34" y="823">ToolbarButton.tsx</text><text class="r" x="42" y="837.5">An icon button of a toolbar, with its words in the tooltip and for screen readers.</text><line class="row" x1="34" x2="446" y1="844" y2="844"/><text class="f" x="34" y="860">cut.ts</text><text class="r" x="42" y="874.5">*text*, or its first *max* characters and an ellipsis: a value said in a line, cut</text><text class="r" x="42" y="889">short</text><line class="row" x1="34" x2="446" y1="895.5" y2="895.5"/><text class="f" x="34" y="911.5">scheme.ts</text><text class="r" x="42" y="926">The colour scheme as the frontend uses it: the scheme's data</text><text class="r" x="42" y="940.5">(gui/windows/scheme.ts) as CSS variables</text><line class="row" x1="34" x2="446" y1="947" y2="947"/><text class="f" x="34" y="963">theme.ts</text><text class="r" x="42" y="977.5">The editor's colour vocabulary, and the few style objects built from it</text><line class="row" x1="34" x2="446" y1="984" y2="984"/><text class="f" x="34" y="1000">tone.ts</text><text class="r" x="42" y="1014.5">How a block sits on the GUI, chosen from a closed set rather than picked from a</text><text class="r" x="42" y="1029">colour wheel</text></g><g><rect class="box" x="932" y="544" width="440" height="474.5" rx="9"/><text class="d" x="946" y="566">frontend/deployment/gui/surface/</text><text class="f" x="946" y="591">CallForms.tsx</text><text class="r" x="954" y="605.5">A form for each start point a call starts, prefilled with what it was sent last:</text><text class="r" x="954" y="620">the GUI of a tool that has no blocks.</text><line class="row" x1="946" x2="1358" y1="626.5" y2="626.5"/><text class="f" x="946" y="642.5">DeliveredHeader.tsx</text><text class="r" x="954" y="657">The bar above a delivered tool: its name, how the last run went, Stop; the host</text><text class="r" x="954" y="671.5">adds its own buttons.</text><line class="row" x1="946" x2="1358" y1="678" y2="678"/><text class="f" x="946" y="694">GuiSurface.tsx</text><text class="r" x="954" y="708.5">The GUI a graph shows: its blocks on one grid. The deployment boundary: what a</text><text class="r" x="954" y="723">delivered tool can reach is decided by what this imports.</text><line class="row" x1="946" x2="1358" y1="729.5" y2="729.5"/><text class="f" x="946" y="745.5">LiveGui.tsx</text><text class="r" x="954" y="760">The GUI in use: the design with what the session holds, listening to the session</text><text class="r" x="954" y="774.5">for itself.</text><line class="row" x1="946" x2="1358" y1="781" y2="781"/><text class="f" x="946" y="797">RunResult.tsx</text><text class="r" x="954" y="811.5">One output of the graph as a GUI shows it, for a tool with no block for it.</text><line class="row" x1="946" x2="1358" y1="818" y2="818"/><text class="f" x="946" y="834">blocks.ts</text><text class="r" x="954" y="848.5">What a block is, to the GUI: the half of a widget that is delivered</text><line class="row" x1="946" x2="1358" y1="855" y2="855"/><text class="f" x="946" y="871">guiInUse.ts</text><text class="r" x="954" y="885.5">The GUI as designed and how it connects to the graph by name: what a host knows</text><text class="r" x="954" y="900">before anything is used.</text><line class="row" x1="946" x2="1358" y1="906.5" y2="906.5"/><text class="f" x="946" y="922.5">useContainerCell.ts</text><text class="r" x="954" y="937">The current square-cell size of whatever element a ref is on (a sixteenth of its</text><text class="r" x="954" y="951.5">width, capped).</text><line class="row" x1="946" x2="1358" y1="958" y2="958"/><text class="f" x="946" y="974">useRound.ts</text><text class="r" x="954" y="988.5">Starting a round the way every GUI does: ask what it needs, then begin it with</text><text class="r" x="954" y="1003">what the GUI holds.</text></g><g><rect class="box" x="476" y="550.5" width="440" height="180" rx="9"/><text class="d" x="490" y="572.5">frontend/deployment/gui/widgets/</text><text class="f" x="490" y="597.5">SaveButton.tsx</text><text class="r" x="498" y="612">"Save" in the corner of what a block shows: a text, a chart, rows as a file of</text><text class="r" x="498" y="626.5">their own.</text><line class="row" x1="490" x2="902" y1="633" y2="633"/><text class="f" x="490" y="649">WidgetView.ts</text><text class="r" x="498" y="663.5">What a view of a block is handed, and the registry of views by block kind.</text><line class="row" x1="490" x2="902" y1="670" y2="670"/><text class="f" x="490" y="686">download.ts</text><text class="r" x="498" y="700.5">Saving what a block shows as a file: a text as .txt, a chart as .svg, rows as</text><text class="r" x="498" y="715">.csv.</text></g><g><rect class="box" x="476" y="746.5" width="440" height="77" rx="9"/><text class="d" x="490" y="768.5">frontend/deployment/gui/widgets/&lt;kind&gt;/</text><text class="f" x="490" y="793.5">&lt;Kind&gt;WidgetView.tsx</text><text class="r" x="498" y="808">The view of each block kind: how a delivered tool draws it.</text></g><g><rect class="box" x="476" y="839.5" width="440" height="77" rx="9"/><text class="d" x="490" y="861.5">frontend/deployment/gui/widgets/plot_window/</text><text class="f" x="490" y="886.5">PlotChart.tsx</text><text class="r" x="498" y="901">The chart a plot block draws, as SVG, from the figure a node made.</text></g><g><rect class="box" x="476" y="932.5" width="440" height="91.5" rx="9"/><text class="d" x="490" y="954.5">frontend/deployment/gui/widgets/table/</text><text class="f" x="490" y="979.5">figures.ts</text><text class="r" x="498" y="994">How a delivered tool sets the cells of a table: figures to the right, equal</text><text class="r" x="498" y="1008.5">decimals, thousands told.</text></g><g><rect class="box" x="932" y="1034.5" width="440" height="254" rx="9"/><text class="d" x="946" y="1056.5">frontend/deployment/windows/</text><text class="f" x="946" y="1081.5">LiveWindows.tsx</text><text class="r" x="954" y="1096">The page of windows in use: design with what the session holds, and how a window's</text><text class="r" x="954" y="1110.5">button runs the ones before it.</text><line class="row" x1="946" x2="1358" y1="1117" y2="1117"/><text class="f" x="946" y="1133">WindowsSurface.tsx</text><text class="r" x="954" y="1147.5">The page of framed windows a tool made of windows shows, stacked where a window is</text><text class="r" x="954" y="1162">too narrow.</text><line class="row" x1="946" x2="1358" y1="1168.5" y2="1168.5"/><text class="f" x="946" y="1184.5">inline.tsx</text><text class="r" x="954" y="1199">The words of a delivered page as they are read: bold, italic, code and links.</text><line class="row" x1="946" x2="1358" y1="1205.5" y2="1205.5"/><text class="f" x="946" y="1221.5">windowRuns.ts</text><text class="r" x="954" y="1236">Running a window: the ones before it first, each as a round of its own</text><line class="row" x1="946" x2="1358" y1="1242.5" y2="1242.5"/><text class="f" x="946" y="1258.5">windowsInUse.ts</text><text class="r" x="954" y="1273">The windows of a gui, read off its blocks, and which of them are current</text></g><g><rect class="box" x="476" y="1040" width="440" height="246" rx="9"/><text class="d" x="490" y="1062">frontend/graph-notebook/</text><text class="f" x="490" y="1087">Cells.tsx</text><text class="r" x="498" y="1101.5">The cells of a window, as the design of the list (A2) has them: Ask, Do, Show, one</text><text class="r" x="498" y="1116">white card each, a sentence in each</text><line class="row" x1="490" x2="902" y1="1122.5" y2="1122.5"/><text class="f" x="490" y="1138.5">Debug.tsx</text><text class="r" x="498" y="1153">The debug window: every round the notebook ran, node by node -- what each got,</text><text class="r" x="498" y="1167.5">what it made, why one did nothing</text><line class="row" x1="490" x2="902" y1="1174" y2="1174"/><text class="f" x="490" y="1190">Dock.tsx</text><text class="r" x="498" y="1204.5">Under the page: the cells of the open window (the list, A2), the window as a</text><text class="r" x="498" y="1219">graph, and the debug window</text><line class="row" x1="490" x2="902" y1="1225.5" y2="1225.5"/><text class="f" x="490" y="1241.5">Haube.tsx</text><text class="r" x="498" y="1256">Under the hood: the window as the graph it is, left to right, with what runs</text><text class="r" x="498" y="1270.5">between written on the wires.</text></g><g><rect class="box" x="20" y="1060.5" width="440" height="143" rx="9"/><text class="d" x="34" y="1082.5">frontend/gui-notebook/</text><text class="f" x="34" y="1107.5">Page.tsx</text><text class="r" x="42" y="1122">The page: written like any page -- headings, text, bullets, gaps -- with windows</text><text class="r" x="42" y="1136.5">standing in it to be used</text><line class="row" x1="34" x2="446" y1="1143" y2="1143"/><text class="f" x="34" y="1159">WindowBox.tsx</text><text class="r" x="42" y="1173.5">A window on the page, to be used: its inputs, a button, and what came out -- at</text><text class="r" x="42" y="1188">the size its elements give it</text></g><g><rect class="box" x="20" y="1219.5" width="440" height="320" rx="9"/><text class="d" x="34" y="1241.5">frontend/notebook/</text><text class="f" x="34" y="1266.5">App.tsx</text><text class="r" x="42" y="1281">The notebook: a page to write on and use, and under it the cells of a window, the</text><text class="r" x="42" y="1295.5">window as a graph, and the debug window</text><line class="row" x1="34" x2="446" y1="1302" y2="1302"/><text class="f" x="34" y="1318">Start.tsx</text><text class="r" x="42" y="1332.5">The first page (A1): one sentence about what the tool should do, and the tool is</text><text class="r" x="42" y="1347">built from it</text><line class="row" x1="34" x2="446" y1="1353.5" y2="1353.5"/><text class="f" x="34" y="1369.5">index.html</text><text class="r" x="42" y="1384">The notebook's page.</text><line class="row" x1="34" x2="446" y1="1390.5" y2="1390.5"/><text class="f" x="34" y="1406.5">look.ts</text><text class="r" x="42" y="1421">How the notebook itself looks, light or dark: its own choice, kept in the browser</text><text class="r" x="42" y="1435.5">(not in any file: it is the person's, not the tool's)</text><line class="row" x1="34" x2="446" y1="1442" y2="1442"/><text class="f" x="34" y="1458">main.tsx</text><text class="r" x="42" y="1472.5">The entry of the notebook's page.</text><line class="row" x1="34" x2="446" y1="1479" y2="1479"/><text class="f" x="34" y="1495">notebook.css</text><text class="r" x="42" y="1509.5">The notebook's own look: a page to write on, windows to use, and the cells of one</text><text class="r" x="42" y="1524">beneath it</text></g><g><rect class="box" x="476" y="1302" width="440" height="334.5" rx="9"/><text class="d" x="490" y="1324">frontend/notebook/document/</text><text class="f" x="490" y="1349">api.ts</text><text class="r" x="498" y="1363.5">The notebook's own end of the wire: the host's routes called by name, with nothing</text><text class="r" x="498" y="1378">of the graph editor's client in it</text><line class="row" x1="490" x2="902" y1="1384.5" y2="1384.5"/><text class="f" x="490" y="1400.5">links.ts</text><text class="r" x="498" y="1415">The way from the notebook to the editor: a switch to it (switchTab), and the</text><text class="r" x="498" y="1429.5">project a link names.</text><line class="row" x1="490" x2="902" y1="1436" y2="1436"/><text class="f" x="490" y="1452">runs.ts</text><text class="r" x="498" y="1466.5">Running windows: the notebook hands the windows, as the graph they are, to the</text><text class="r" x="498" y="1481">host, and runs a window by a round</text><line class="row" x1="490" x2="902" y1="1487.5" y2="1487.5"/><text class="f" x="490" y="1503.5">status.ts</text><text class="r" x="498" y="1518">Where a window stands, in a word, for the chip on it and the status of its cells</text><line class="row" x1="490" x2="902" y1="1524.5" y2="1524.5"/><text class="f" x="490" y="1540.5">store.ts</text><text class="r" x="498" y="1555">The open notebook: the document, where it is kept, undo, what its windows made,</text><text class="r" x="498" y="1569.5">and what is asked of the server.</text><line class="row" x1="490" x2="902" y1="1576" y2="1576"/><text class="f" x="490" y="1592">values.ts</text><text class="r" x="498" y="1606.5">What a window's inputs hold to begin with, and the ids the page and the graph</text><text class="r" x="498" y="1621">share</text></g><g><rect class="box" x="932" y="1304.5" width="440" height="357" rx="9"/><text class="d" x="946" y="1326.5">frontend/notebook/elements/</text><text class="f" x="946" y="1351.5">Boundary.tsx</text><text class="r" x="954" y="1366">A box that shows what a step made and cannot be taken down by it.</text><line class="row" x1="946" x2="1358" y1="1372.5" y2="1372.5"/><text class="f" x="946" y="1388.5">Browse.tsx</text><text class="r" x="954" y="1403">Choosing a file or a folder on the machine the notebook runs on, and where a</text><text class="r" x="954" y="1417.5">project is kept</text><line class="row" x1="946" x2="1358" y1="1424" y2="1424"/><text class="f" x="946" y="1440">Chart.tsx</text><text class="r" x="954" y="1454.5">The notebook's own charts: bars, lines, points, with their labels.</text><line class="row" x1="946" x2="1358" y1="1461" y2="1461"/><text class="f" x="946" y="1477">ModelSaid.tsx</text><text class="r" x="954" y="1491.5">What the model sent back when its answer could not be made into windows, beside</text><text class="r" x="954" y="1506">the error.</text><line class="row" x1="946" x2="1358" y1="1512.5" y2="1512.5"/><text class="f" x="946" y="1528.5">Widgets.tsx</text><text class="r" x="954" y="1543">What a window is made of, drawn the notebook's own way: boxes to put something in</text><text class="r" x="954" y="1557.5">and boxes to show what came out</text><line class="row" x1="946" x2="1358" y1="1564" y2="1564"/><text class="f" x="946" y="1580">figures.ts</text><text class="r" x="954" y="1594.5">How the notebook sets the cells of a table: figures to the right, equal decimals,</text><text class="r" x="954" y="1609">thousands told.</text><line class="row" x1="946" x2="1358" y1="1615.5" y2="1615.5"/><text class="f" x="946" y="1631.5">inline.tsx</text><text class="r" x="954" y="1646">The words of the page as a web page reads them: bold, italic, code and links.</text></g><g><rect class="box" x="20" y="1555.5" width="440" height="77" rx="9"/><text class="d" x="34" y="1577.5">frontend/test/</text><text class="f" x="34" y="1602.5">runAnswers.ts</text><text class="r" x="42" y="1617">What the definitions make of a node, as the editor's tests compare it</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1392" viewBox="0 0 1392 1723" role="img">
+<title>The pages: frontend/ (a delivered tool, the notebook, the build)</title>
+<desc>deployment/ is what a delivered tool's browser loads and is also the kit the editor and notebook build on. 81 rows: each file with what it does.</desc>
+<style>svg{font-family:Segoe UI,Helvetica,Arial,sans-serif}.bg{fill:#ffffff}.h{font-size:19px;font-weight:600;fill:#1f1e1d}.n{font-size:12.5px;fill:#5f5e5a}.d{font-size:13px;font-weight:600;fill:#085041}.f{font-family:Consolas,Menlo,monospace;font-size:11.5px;font-weight:600;fill:#1f1e1d}.r{font-size:11px;fill:#5f5e5a}.box{fill:#E1F5EE;stroke:#0F6E56;stroke-width:.6}.row{stroke:#0F6E56;stroke-opacity:.25}@media (prefers-color-scheme:dark){.bg{fill:#1c1c1a}.h,.f{fill:#e8e6dc}.n,.r{fill:#b4b2a9}.d{fill:#9FE1CB}.box{fill:#262624;stroke:#5DCAA5}.row{stroke:#5DCAA5}}</style>
+<rect class="bg" width="1392" height="1723"/>
+<text class="h" x="20" y="34">The pages: frontend/ (a delivered tool, the notebook, the build)</text>
+<text class="n" x="20" y="54">deployment/ is what a delivered tool's browser loads and is also the kit the editor and notebook build on. (81 rows)</text>
+<g>
+<rect class="box" x="20" y="78" width="440" height="379.5" rx="9"/>
+<text class="d" x="34" y="100">frontend/</text>
+<text class="f" x="34" y="125">.eslintrc.cjs</text>
+<text class="r" x="42" y="139.5">The lint rules of the page (npm run lint --workspace frontend): above all the</text>
+<text class="r" x="42" y="154">rules of hooks.</text>
+<line class="row" x1="34" x2="446" y1="160.5" y2="160.5"/>
+<text class="f" x="34" y="176.5">gui.html</text>
+<text class="r" x="42" y="191">The page of a delivered tool; built next to index.html.</text>
+<line class="row" x1="34" x2="446" y1="197.5" y2="197.5"/>
+<text class="f" x="34" y="213.5">index.html</text>
+<text class="r" x="42" y="228">The editor's page.</text>
+<line class="row" x1="34" x2="446" y1="234.5" y2="234.5"/>
+<text class="f" x="34" y="250.5">postcss.config.js</text>
+<text class="r" x="42" y="265">PostCSS for the page's styles (Tailwind).</text>
+<line class="row" x1="34" x2="446" y1="271.5" y2="271.5"/>
+<text class="f" x="34" y="287.5">tailwind.config.js</text>
+<text class="r" x="42" y="302">Tailwind for the page: no colours here, every colour is a token in</text>
+<text class="r" x="42" y="316.5">deployment/gui/kit/ui/theme.ts.</text>
+<line class="row" x1="34" x2="446" y1="323" y2="323"/>
+<text class="f" x="34" y="339">vite.config.ts</text>
+<text class="r" x="42" y="353.5">The build of the editor's and the delivered tool's pages (two entries, shared</text>
+<text class="r" x="42" y="368">chunks).</text>
+<line class="row" x1="34" x2="446" y1="374.5" y2="374.5"/>
+<text class="f" x="34" y="390.5">vite.licenses.ts</text>
+<text class="r" x="42" y="405">Writes the licences of what the build bundles next to the page.</text>
+<line class="row" x1="34" x2="446" y1="411.5" y2="411.5"/>
+<text class="f" x="34" y="427.5">vite.notebook.config.ts</text>
+<text class="r" x="42" y="442">The build of the notebook's page, apart from the editor's.</text>
+</g>
+<g>
+<rect class="box" x="476" y="78" width="440" height="246" rx="9"/>
+<text class="d" x="490" y="100">frontend/deployment/gui/</text>
+<text class="f" x="490" y="125">GuiAISettings.tsx</text>
+<text class="r" x="498" y="139.5">The read-only dialog that says which model a delivered tool calls and where to</text>
+<text class="r" x="498" y="154">change that.</text>
+<line class="row" x1="490" x2="902" y1="160.5" y2="160.5"/>
+<text class="f" x="490" y="176.5">GuiApp.tsx</text>
+<text class="r" x="498" y="191">The delivered tool's page: loads the GUI design, listens to the session, draws the</text>
+<text class="r" x="498" y="205.5">header, the GUI or the windows, and the dialogs.</text>
+<line class="row" x1="490" x2="902" y1="212" y2="212"/>
+<text class="f" x="490" y="228">GuiStates.tsx</text>
+<text class="r" x="498" y="242.5">The State dialog: save what the tool keeps under a name, load or replace a saved</text>
+<text class="r" x="498" y="257">state.</text>
+<line class="row" x1="490" x2="902" y1="263.5" y2="263.5"/>
+<text class="f" x="490" y="279.5">main.tsx</text>
+<text class="r" x="498" y="294">The entry of a delivered tool's page (gui.html): refuses a file dropped beside a</text>
+<text class="r" x="498" y="308.5">picker, mounts GuiApp.</text>
+</g>
+<g>
+<rect class="box" x="932" y="78" width="440" height="165.5" rx="9"/>
+<text class="d" x="946" y="100">frontend/deployment/gui/kit/</text>
+<text class="f" x="946" y="125">guiWidget.ts</text>
+<text class="r" x="954" y="139.5">One block of a GUI, as the GUI holds it</text>
+<line class="row" x1="946" x2="1358" y1="146" y2="146"/>
+<text class="f" x="946" y="162">index.css</text>
+<text class="r" x="954" y="176.5">The stylesheet of a delivered tool and of the editor: base rules, the scheme's</text>
+<text class="r" x="954" y="191">variables, the grid.</text>
+<line class="row" x1="946" x2="1358" y1="197.5" y2="197.5"/>
+<text class="f" x="946" y="213.5">layout.ts</text>
+<text class="r" x="954" y="228">The GUI a graph is used through, as a document rather than a canvas</text>
+</g>
+<g>
+<rect class="box" x="932" y="259.5" width="440" height="268.5" rx="9"/>
+<text class="d" x="946" y="281.5">frontend/deployment/gui/kit/api/</text>
+<text class="f" x="946" y="306.5">client.ts</text>
+<text class="r" x="954" y="321">A GUI's end of the wire: the routes of backend/deployment/host/api.ts, called by</text>
+<text class="r" x="954" y="335.5">name</text>
+<line class="row" x1="946" x2="1358" y1="342" y2="342"/>
+<text class="f" x="946" y="358">errorText.ts</text>
+<text class="r" x="954" y="372.5">The message to show a user for a failed request</text>
+<line class="row" x1="946" x2="1358" y1="379" y2="379"/>
+<text class="f" x="946" y="395">port.ts</text>
+<text class="r" x="954" y="409.5">The built-in GUI's end of the GUI port (backend/deployment/host/port.ts, "The GUI</text>
+<text class="r" x="954" y="424">port" in docs/architecture.md)</text>
+<line class="row" x1="946" x2="1358" y1="430.5" y2="430.5"/>
+<text class="f" x="946" y="446.5">session.ts</text>
+<text class="r" x="954" y="461">The session as a GUI sees it: what its start points were sent, what its outputs</text>
+<text class="r" x="954" y="475.5">showed, the round going or gone -- as the server tells it, by name</text>
+<line class="row" x1="946" x2="1358" y1="482" y2="482"/>
+<text class="f" x="946" y="498">start.ts</text>
+<text class="r" x="954" y="512.5">What the GUI does to its tool: begin a round, stop it, start over</text>
+</g>
+<g>
+<rect class="box" x="476" y="340" width="440" height="194.5" rx="9"/>
+<text class="d" x="490" y="362">frontend/deployment/gui/kit/dialogs/</text>
+<text class="f" x="490" y="387">FileBrowserDialog.tsx</text>
+<text class="r" x="498" y="401.5">The file browser: choose a file, a folder or a name to save under, on the machine</text>
+<text class="r" x="498" y="416">the tool runs on.</text>
+<line class="row" x1="490" x2="902" y1="422.5" y2="422.5"/>
+<text class="f" x="490" y="438.5">PathField.tsx</text>
+<text class="r" x="498" y="453">A path box with Browse beside it, which takes a dropped file too; and the</text>
+<text class="r" x="498" y="467.5">file-types field.</text>
+<line class="row" x1="490" x2="902" y1="474" y2="474"/>
+<text class="f" x="490" y="490">RequirementsDialog.tsx</text>
+<text class="r" x="498" y="504.5">The "before running" window: the file or folder a run still needs from each</text>
+<text class="r" x="498" y="519">picker.</text>
+</g>
+<g>
+<rect class="box" x="20" y="473.5" width="440" height="519.5" rx="9"/>
+<text class="d" x="34" y="495.5">frontend/deployment/gui/kit/ui/</text>
+<text class="f" x="34" y="520.5">Button.tsx</text>
+<text class="r" x="42" y="535">The one button of dialogs, panels and the GUI.</text>
+<line class="row" x1="34" x2="446" y1="541.5" y2="541.5"/>
+<text class="f" x="34" y="557.5">Chip.tsx</text>
+<text class="r" x="42" y="572">A small pill that names one thing: a start point a block sends to, an end point it</text>
+<text class="r" x="42" y="586.5">shows.</text>
+<line class="row" x1="34" x2="446" y1="593" y2="593"/>
+<text class="f" x="34" y="609">ErrorBoundary.tsx</text>
+<text class="r" x="42" y="623.5">Catches a module that did not load (a page older than its server) and says so</text>
+<text class="r" x="42" y="638">instead of a blank page.</text>
+<line class="row" x1="34" x2="446" y1="644.5" y2="644.5"/>
+<text class="f" x="34" y="660.5">Markdown.tsx</text>
+<text class="r" x="42" y="675">A small Markdown renderer built as React elements, not a library.</text>
+<line class="row" x1="34" x2="446" y1="681.5" y2="681.5"/>
+<text class="f" x="34" y="697.5">Modal.tsx</text>
+<text class="r" x="42" y="712">The one modal shell: backdrop, panel, header, footer, Escape and focus kept</text>
+<text class="r" x="42" y="726.5">inside.</text>
+<line class="row" x1="34" x2="446" y1="733" y2="733"/>
+<text class="f" x="34" y="749">QuickPick.tsx</text>
+<text class="r" x="42" y="763.5">A searchable pick list with icons, for the palette and quick insert.</text>
+<line class="row" x1="34" x2="446" y1="770" y2="770"/>
+<text class="f" x="34" y="786">Toggle.tsx</text>
+<text class="r" x="42" y="800.5">An on/off switch with its label read aloud.</text>
+<line class="row" x1="34" x2="446" y1="807" y2="807"/>
+<text class="f" x="34" y="823">ToolbarButton.tsx</text>
+<text class="r" x="42" y="837.5">An icon button of a toolbar, with its words in the tooltip and for screen readers.</text>
+<line class="row" x1="34" x2="446" y1="844" y2="844"/>
+<text class="f" x="34" y="860">cut.ts</text>
+<text class="r" x="42" y="874.5">*text*, or its first *max* characters and an ellipsis: a value said in a line, cut</text>
+<text class="r" x="42" y="889">short</text>
+<line class="row" x1="34" x2="446" y1="895.5" y2="895.5"/>
+<text class="f" x="34" y="911.5">scheme.ts</text>
+<text class="r" x="42" y="926">The colour scheme as the frontend uses it: the scheme's data (gui/scheme.ts) as</text>
+<text class="r" x="42" y="940.5">CSS variables</text>
+<line class="row" x1="34" x2="446" y1="947" y2="947"/>
+<text class="f" x="34" y="963">theme.ts</text>
+<text class="r" x="42" y="977.5">The editor's colour vocabulary, and the few style objects built from it</text>
+</g>
+<g>
+<rect class="box" x="932" y="544" width="440" height="91.5" rx="9"/>
+<text class="d" x="946" y="566">frontend/deployment/gui/kit/ui (cont.)/</text>
+<text class="f" x="946" y="591">tone.ts</text>
+<text class="r" x="954" y="605.5">How a block sits on the GUI, chosen from a closed set rather than picked from a</text>
+<text class="r" x="954" y="620">colour wheel</text>
+</g>
+<g>
+<rect class="box" x="476" y="550.5" width="440" height="474.5" rx="9"/>
+<text class="d" x="490" y="572.5">frontend/deployment/gui/surface/</text>
+<text class="f" x="490" y="597.5">CallForms.tsx</text>
+<text class="r" x="498" y="612">A form for each start point a call starts, prefilled with what it was sent last:</text>
+<text class="r" x="498" y="626.5">the GUI of a tool that has no blocks.</text>
+<line class="row" x1="490" x2="902" y1="633" y2="633"/>
+<text class="f" x="490" y="649">DeliveredHeader.tsx</text>
+<text class="r" x="498" y="663.5">The bar above a delivered tool: its name, how the last run went, Stop; the host</text>
+<text class="r" x="498" y="678">adds its own buttons.</text>
+<line class="row" x1="490" x2="902" y1="684.5" y2="684.5"/>
+<text class="f" x="490" y="700.5">GuiSurface.tsx</text>
+<text class="r" x="498" y="715">The GUI a graph shows: its blocks on one grid. The deployment boundary: what a</text>
+<text class="r" x="498" y="729.5">delivered tool can reach is decided by what this imports.</text>
+<line class="row" x1="490" x2="902" y1="736" y2="736"/>
+<text class="f" x="490" y="752">LiveGui.tsx</text>
+<text class="r" x="498" y="766.5">The GUI in use: the design with what the session holds, listening to the session</text>
+<text class="r" x="498" y="781">for itself.</text>
+<line class="row" x1="490" x2="902" y1="787.5" y2="787.5"/>
+<text class="f" x="490" y="803.5">RunResult.tsx</text>
+<text class="r" x="498" y="818">One output of the graph as a GUI shows it, for a tool with no block for it.</text>
+<line class="row" x1="490" x2="902" y1="824.5" y2="824.5"/>
+<text class="f" x="490" y="840.5">blocks.ts</text>
+<text class="r" x="498" y="855">What a block is, to the GUI: the half of a widget that is delivered</text>
+<line class="row" x1="490" x2="902" y1="861.5" y2="861.5"/>
+<text class="f" x="490" y="877.5">guiInUse.ts</text>
+<text class="r" x="498" y="892">The GUI as designed and how it connects to the graph by name: what a host knows</text>
+<text class="r" x="498" y="906.5">before anything is used.</text>
+<line class="row" x1="490" x2="902" y1="913" y2="913"/>
+<text class="f" x="490" y="929">useContainerCell.ts</text>
+<text class="r" x="498" y="943.5">The current square-cell size of whatever element a ref is on (a sixteenth of its</text>
+<text class="r" x="498" y="958">width, capped).</text>
+<line class="row" x1="490" x2="902" y1="964.5" y2="964.5"/>
+<text class="f" x="490" y="980.5">useRound.ts</text>
+<text class="r" x="498" y="995">Starting a round the way every GUI does: ask what it needs, then begin it with</text>
+<text class="r" x="498" y="1009.5">what the GUI holds.</text>
+</g>
+<g>
+<rect class="box" x="932" y="651.5" width="440" height="180" rx="9"/>
+<text class="d" x="946" y="673.5">frontend/deployment/gui/widgets/</text>
+<text class="f" x="946" y="698.5">SaveButton.tsx</text>
+<text class="r" x="954" y="713">"Save" in the corner of what a block shows: a text, a chart, rows as a file of</text>
+<text class="r" x="954" y="727.5">their own.</text>
+<line class="row" x1="946" x2="1358" y1="734" y2="734"/>
+<text class="f" x="946" y="750">WidgetView.ts</text>
+<text class="r" x="954" y="764.5">What a view of a block is handed, and the registry of views by block kind.</text>
+<line class="row" x1="946" x2="1358" y1="771" y2="771"/>
+<text class="f" x="946" y="787">download.ts</text>
+<text class="r" x="954" y="801.5">Saving what a block shows as a file: a text as .txt, a chart as .svg, rows as</text>
+<text class="r" x="954" y="816">.csv.</text>
+</g>
+<g>
+<rect class="box" x="932" y="847.5" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="869.5">frontend/deployment/gui/widgets/&lt;kind&gt;/</text>
+<text class="f" x="946" y="894.5">&lt;Kind&gt;WidgetView.tsx</text>
+<text class="r" x="954" y="909">The view of each block kind: how a delivered tool draws it.</text>
+</g>
+<g>
+<rect class="box" x="932" y="940.5" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="962.5">frontend/deployment/gui/widgets/plot_window/</text>
+<text class="f" x="946" y="987.5">PlotChart.tsx</text>
+<text class="r" x="954" y="1002">The chart a plot block draws, as SVG, from the figure a node made.</text>
+</g>
+<g>
+<rect class="box" x="20" y="1009" width="440" height="91.5" rx="9"/>
+<text class="d" x="34" y="1031">frontend/deployment/gui/widgets/table/</text>
+<text class="f" x="34" y="1056">figures.ts</text>
+<text class="r" x="42" y="1070.5">How a delivered tool sets the cells of a table: figures to the right, equal</text>
+<text class="r" x="42" y="1085">decimals, thousands told.</text>
+</g>
+<g>
+<rect class="box" x="932" y="1033.5" width="440" height="254" rx="9"/>
+<text class="d" x="946" y="1055.5">frontend/deployment/windows/</text>
+<text class="f" x="946" y="1080.5">LiveWindows.tsx</text>
+<text class="r" x="954" y="1095">The page of windows in use: design with what the session holds, and how a window's</text>
+<text class="r" x="954" y="1109.5">button runs the ones before it.</text>
+<line class="row" x1="946" x2="1358" y1="1116" y2="1116"/>
+<text class="f" x="946" y="1132">WindowsSurface.tsx</text>
+<text class="r" x="954" y="1146.5">The page of framed windows a tool made of windows shows, stacked where a window is</text>
+<text class="r" x="954" y="1161">too narrow.</text>
+<line class="row" x1="946" x2="1358" y1="1167.5" y2="1167.5"/>
+<text class="f" x="946" y="1183.5">inline.tsx</text>
+<text class="r" x="954" y="1198">The words of a delivered page as they are read: bold, italic, code and links.</text>
+<line class="row" x1="946" x2="1358" y1="1204.5" y2="1204.5"/>
+<text class="f" x="946" y="1220.5">windowRuns.ts</text>
+<text class="r" x="954" y="1235">Running a window: the ones before it first, each as a round of its own</text>
+<line class="row" x1="946" x2="1358" y1="1241.5" y2="1241.5"/>
+<text class="f" x="946" y="1257.5">windowsInUse.ts</text>
+<text class="r" x="954" y="1272">The windows of a gui, read off its blocks, and which of them are current</text>
+</g>
+<g>
+<rect class="box" x="476" y="1041" width="440" height="320" rx="9"/>
+<text class="d" x="490" y="1063">frontend/notebook/</text>
+<text class="f" x="490" y="1088">App.tsx</text>
+<text class="r" x="498" y="1102.5">The notebook: a page to write on and use, and under it the cells of a window, the</text>
+<text class="r" x="498" y="1117">window as a graph, and the debug window</text>
+<line class="row" x1="490" x2="902" y1="1123.5" y2="1123.5"/>
+<text class="f" x="490" y="1139.5">Start.tsx</text>
+<text class="r" x="498" y="1154">The first page (A1): one sentence about what the tool should do, and the tool is</text>
+<text class="r" x="498" y="1168.5">built from it</text>
+<line class="row" x1="490" x2="902" y1="1175" y2="1175"/>
+<text class="f" x="490" y="1191">index.html</text>
+<text class="r" x="498" y="1205.5">The notebook's page.</text>
+<line class="row" x1="490" x2="902" y1="1212" y2="1212"/>
+<text class="f" x="490" y="1228">look.ts</text>
+<text class="r" x="498" y="1242.5">How the notebook itself looks, light or dark: its own choice, kept in the browser</text>
+<text class="r" x="498" y="1257">(not in any file: it is the person's, not the tool's)</text>
+<line class="row" x1="490" x2="902" y1="1263.5" y2="1263.5"/>
+<text class="f" x="490" y="1279.5">main.tsx</text>
+<text class="r" x="498" y="1294">The entry of the notebook's page.</text>
+<line class="row" x1="490" x2="902" y1="1300.5" y2="1300.5"/>
+<text class="f" x="490" y="1316.5">notebook.css</text>
+<text class="r" x="498" y="1331">The notebook's own look: a page to write on, windows to use, and the cells of one</text>
+<text class="r" x="498" y="1345.5">beneath it</text>
+</g>
+<g>
+<rect class="box" x="20" y="1116.5" width="440" height="334.5" rx="9"/>
+<text class="d" x="34" y="1138.5">frontend/notebook/document/</text>
+<text class="f" x="34" y="1163.5">api.ts</text>
+<text class="r" x="42" y="1178">The notebook's own end of the wire: the host's routes called by name, with nothing</text>
+<text class="r" x="42" y="1192.5">of the graph editor's client in it</text>
+<line class="row" x1="34" x2="446" y1="1199" y2="1199"/>
+<text class="f" x="34" y="1215">links.ts</text>
+<text class="r" x="42" y="1229.5">The way from the notebook to the editor: a switch to it (switchTab), and the</text>
+<text class="r" x="42" y="1244">project a link names.</text>
+<line class="row" x1="34" x2="446" y1="1250.5" y2="1250.5"/>
+<text class="f" x="34" y="1266.5">runs.ts</text>
+<text class="r" x="42" y="1281">Running windows: the notebook hands the windows, as the graph they are, to the</text>
+<text class="r" x="42" y="1295.5">host, and runs a window by a round</text>
+<line class="row" x1="34" x2="446" y1="1302" y2="1302"/>
+<text class="f" x="34" y="1318">status.ts</text>
+<text class="r" x="42" y="1332.5">Where a window stands, in a word, for the chip on it and the status of its cells</text>
+<line class="row" x1="34" x2="446" y1="1339" y2="1339"/>
+<text class="f" x="34" y="1355">store.ts</text>
+<text class="r" x="42" y="1369.5">The open notebook: the document, where it is kept, undo, what its windows made,</text>
+<text class="r" x="42" y="1384">and what is asked of the server.</text>
+<line class="row" x1="34" x2="446" y1="1390.5" y2="1390.5"/>
+<text class="f" x="34" y="1406.5">values.ts</text>
+<text class="r" x="42" y="1421">What a window's inputs hold to begin with, and the ids the page and the graph</text>
+<text class="r" x="42" y="1435.5">share</text>
+</g>
+<g>
+<rect class="box" x="932" y="1303.5" width="440" height="357" rx="9"/>
+<text class="d" x="946" y="1325.5">frontend/notebook/elements/</text>
+<text class="f" x="946" y="1350.5">Boundary.tsx</text>
+<text class="r" x="954" y="1365">A box that shows what a step made and cannot be taken down by it.</text>
+<line class="row" x1="946" x2="1358" y1="1371.5" y2="1371.5"/>
+<text class="f" x="946" y="1387.5">Browse.tsx</text>
+<text class="r" x="954" y="1402">Choosing a file or a folder on the machine the notebook runs on, and where a</text>
+<text class="r" x="954" y="1416.5">project is kept</text>
+<line class="row" x1="946" x2="1358" y1="1423" y2="1423"/>
+<text class="f" x="946" y="1439">Chart.tsx</text>
+<text class="r" x="954" y="1453.5">The notebook's own charts: bars, lines, points, with their labels.</text>
+<line class="row" x1="946" x2="1358" y1="1460" y2="1460"/>
+<text class="f" x="946" y="1476">ModelSaid.tsx</text>
+<text class="r" x="954" y="1490.5">What the model sent back when its answer could not be made into windows, beside</text>
+<text class="r" x="954" y="1505">the error.</text>
+<line class="row" x1="946" x2="1358" y1="1511.5" y2="1511.5"/>
+<text class="f" x="946" y="1527.5">Widgets.tsx</text>
+<text class="r" x="954" y="1542">What a window is made of, drawn the notebook's own way: boxes to put something in</text>
+<text class="r" x="954" y="1556.5">and boxes to show what came out</text>
+<line class="row" x1="946" x2="1358" y1="1563" y2="1563"/>
+<text class="f" x="946" y="1579">figures.ts</text>
+<text class="r" x="954" y="1593.5">How the notebook sets the cells of a table: figures to the right, equal decimals,</text>
+<text class="r" x="954" y="1608">thousands told.</text>
+<line class="row" x1="946" x2="1358" y1="1614.5" y2="1614.5"/>
+<text class="f" x="946" y="1630.5">inline.tsx</text>
+<text class="r" x="954" y="1645">The words of the page as a web page reads them: bold, italic, code and links.</text>
+</g>
+<g>
+<rect class="box" x="476" y="1377" width="440" height="246" rx="9"/>
+<text class="d" x="490" y="1399">frontend/notebook/graph/</text>
+<text class="f" x="490" y="1424">Cells.tsx</text>
+<text class="r" x="498" y="1438.5">The cells of a window, as the design of the list (A2) has them: Ask, Do, Show, one</text>
+<text class="r" x="498" y="1453">white card each, a sentence in each</text>
+<line class="row" x1="490" x2="902" y1="1459.5" y2="1459.5"/>
+<text class="f" x="490" y="1475.5">Debug.tsx</text>
+<text class="r" x="498" y="1490">The debug window: every round the notebook ran, node by node -- what each got,</text>
+<text class="r" x="498" y="1504.5">what it made, why one did nothing</text>
+<line class="row" x1="490" x2="902" y1="1511" y2="1511"/>
+<text class="f" x="490" y="1527">Dock.tsx</text>
+<text class="r" x="498" y="1541.5">Under the page: the cells of the open window (the list, A2), the window as a</text>
+<text class="r" x="498" y="1556">graph, and the debug window</text>
+<line class="row" x1="490" x2="902" y1="1562.5" y2="1562.5"/>
+<text class="f" x="490" y="1578.5">Haube.tsx</text>
+<text class="r" x="498" y="1593">Under the hood: the window as the graph it is, left to right, with what runs</text>
+<text class="r" x="498" y="1607.5">between written on the wires.</text>
+</g>
+<g>
+<rect class="box" x="20" y="1467" width="440" height="143" rx="9"/>
+<text class="d" x="34" y="1489">frontend/notebook/gui/</text>
+<text class="f" x="34" y="1514">Page.tsx</text>
+<text class="r" x="42" y="1528.5">The page: written like any page -- headings, text, bullets, gaps -- with windows</text>
+<text class="r" x="42" y="1543">standing in it to be used</text>
+<line class="row" x1="34" x2="446" y1="1549.5" y2="1549.5"/>
+<text class="f" x="34" y="1565.5">WindowBox.tsx</text>
+<text class="r" x="42" y="1580">A window on the page, to be used: its inputs, a button, and what came out -- at</text>
+<text class="r" x="42" y="1594.5">the size its elements give it</text>
+</g>
+<g>
+<rect class="box" x="20" y="1626" width="440" height="77" rx="9"/>
+<text class="d" x="34" y="1648">frontend/test/</text>
+<text class="f" x="34" y="1673">runAnswers.ts</text>
+<text class="r" x="42" y="1687.5">What the definitions make of a node, as the editor's tests compare it</text>
+</g>
+</svg>
