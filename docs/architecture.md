@@ -218,6 +218,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `gui/widgets/WidgetDefinition.ts` | A widget: the element branch that sits on the GUI a graph is used through |
 | `gui/widgets/<kind>/<Kind>WidgetDefinition.ts` | The **definition** of each block kind (text, divider, spacer, input_picker, text_io, select, slider, button, chat, plot_window, table, image_view). |
 | `gui/widgets/chat/value.ts` | What a chat block holds: the conversation so far and the message in hand |
+| `gui/widgets/chat/compact.ts` | A long conversation, shortened by the model: what a chat block sends of it, how much that is, and what is asked to shorten it |
 | `gui/widgets/input_picker/dropped.ts` | A file dropped onto a file picker: where it is on the machine the tool runs on |
 | `gui/widgets/roster.ts` | The blocks a GUI is built from |
 | `gui/widgets/select/choice.ts` | What a dropdown offers and what it stands at |
@@ -238,6 +239,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/deployment/gui/hooks.ts` | What a GUI does around the graph in use, as the host asks it |
 | `backend/deployment/host/api.ts` | The wire between a GUI and the server: the host's routes, and what travels each way |
 | `backend/deployment/host/browse.ts` | Walking the machine's files, for a picker |
+| `backend/deployment/host/chat.ts` | A chat block's two asks of the model besides a round: the window it has, and a long conversation shortened |
 | `backend/deployment/host/find.ts` | Finding a file that was dropped onto a page: a browser hands a page the name and size of a dropped file, never where it is |
 | `backend/deployment/host/http.ts` | The few HTTP things a route handler needs, and nothing that knows a route |
 | `backend/deployment/host/lifecycle.ts` | What a served tool holds while it runs, and how it lets go of it |
@@ -253,6 +255,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/deployment/runtime/ai/mcp.ts` | Tools for a model, from MCP servers |
 | `backend/deployment/runtime/ai/providers.ts` | The model clients: a table of OpenAI-compatible providers, plus those with a shape of their own. |
 | `backend/deployment/runtime/ai/settings.ts` | Where the model configuration comes from |
+| `backend/deployment/runtime/ai/window.ts` | How much a model takes in at once, and where that is known from: the person, the provider, or a guess |
 | `backend/deployment/runtime/clock.ts` | The clock of a tool that runs by itself: what its start points start by themselves, one round after another |
 | `backend/deployment/runtime/confine.ts` | Which files a graph may reach |
 | `backend/deployment/runtime/examples.ts` | A node's example: what its input.js gives one call, held to its output.js |
@@ -827,6 +830,7 @@ except the stream; a refusal is `{ "detail": "…" }`.
 | `GET /api/runtime/ai-settings` | Which model the tool asks, and whether its settings file is there; no key, no path |
 | `POST /api/files/browse` | A folder's entries, for a file picker (loopback only) |
 | `GET /api/runtime/states`, `POST /api/runtime/states/save`, `POST /api/runtime/states/load` | States saved under a name (`states/` beside `state.json`; `backend/deployment/host/states.ts`): list them; save what a person or a memory node keeps now (the memory nodes' fields, what the GUI's blocks hold and show -- never the latch, the results or what a start point was sent); take one back in place of what is kept (saving and loading are loopback only) |
+| `GET /api/runtime/chat/context`, `POST /api/runtime/chat/compact` | What a chat block asks of the model besides a round: the window of the model the tool runs on and how that is known (`set`, `provider`, `assumed`), and the oldest turns of a conversation shortened into one summary by that model (one call) |
 | `GET /api/files/find` | Files of a name and size under the tool's own folder: for a file dropped onto a picker, whose path a browser never says (loopback only) |
 
 With `by` (a block id) a round is one the GUI starts, refused unless that block fires the start
@@ -847,6 +851,7 @@ what a page does there (`backend/deployment/host/port.ts`, `GUI_PORT`; the compi
 | **return** | `session`, `stream`, `round` | Hear what the tool tells: the session now and after every change, each round as it starts, goes and ends -- whoever began it. |
 | **state** | `states`, `saveState`, `loadState` | Keep what the tool keeps under a name, and take it back. |
 | **files** | `browse`, `findFile` | Name a file or folder on the machine the tool runs on. |
+| **model** | `chatContext`, `compactChat` | Ask the tool's model for what is not a round: the window it has, and a long conversation shortened. |
 
 *Start* and *return* are apart on purpose. A round a page begins answers with its id at once; what comes of it arrives on the stream
 like any other round, so a page is built as two halves that know nothing of each other and meet only in what they show.
@@ -1112,6 +1117,7 @@ Besides the provider keys and addresses in the README:
 |---|---|
 | `TW_SETTINGS` | The one settings file, instead of looking for `ai-settings.json` |
 | `TW_AI_PROVIDER`, `TW_AI_MODEL` | The AI the nodes run on, over the file |
+| `TW_CONTEXT_TOKENS` | How many tokens the AI the nodes run on takes in at once, over `context_tokens` in the file; a chat block counts against it |
 | `TW_WRITING_PROVIDER`, `TW_WRITING_MODEL` | The AI that writes (✨), over the file; the nodes' where unset |
 | `TW_CORE` | A graph core program to run rounds in |
 | `TW_ALLOWED_HOSTS` | Host names a server bound wider than loopback answers to, comma-separated |

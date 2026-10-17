@@ -154,4 +154,15 @@ describe('the runtime API', () => {
     expect((await post(`${there.url}/api/runtime/states/load`, { name: 'x' })).status).toBe(403);
     expect((await get(`${there.url}/api/runtime/states`)).status).toBe(200);
   }, 30_000);
+
+  it('tells a chat block the window of the model, and refuses to shorten what is no conversation', async () => {
+    const { url } = await tool();
+    const window = await get(`${url}/api/runtime/chat/context`);
+    expect(window.status).toBe(200);
+    expect(window.body).toMatchObject({ tokens: expect.any(Number), source: expect.stringMatching(/^(set|provider|assumed)$/) });
+    // Nothing reaches the model before the request is a conversation.
+    const bad = await post(`${url}/api/runtime/chat/compact`, { messages: [] });
+    expect(bad.status).toBe(400);
+    expect(bad.body.detail).toMatch(/turns to shorten/);
+  }, 30_000);
 });

@@ -42,7 +42,7 @@ import { startClock, type Clock } from '../runtime/clock.ts';
 import type { Held } from '../runtime/latch.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import type { GuiHooks } from '../gui/hooks.ts';
-import type { ProgressEvent, Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { AiService, ProgressEvent, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { stateFileOf } from '../project/folder.ts';
 import { NotFound } from '../../../graph/errors.ts';
 import { nodeRuntime } from '../runtime/services.ts';
@@ -429,6 +429,11 @@ export class Session {
 
   stop(id: string): boolean {
     return this.rounds.stop(id);
+  }
+
+  /** The model this session's graph runs on, as a node reaches it: for a call that is no node's (shortening a chat). */
+  ai(): AiService {
+    return this.runtime(() => undefined).ai;
   }
 
   /** Stop every round going or waiting and wait for each to end (`Rounds.stopAll`), and let the graph core go: a core of its own process ends. */

@@ -23,6 +23,10 @@ function fake() {
       stop: async (id) => { calls.push(`stop ${id}`); },
       reset: async () => { calls.push('reset'); return view('s2'); },
     },
+    model: {
+      context: async () => ({ provider: 'p', model: 'm', tokens: 100_000, source: 'assumed' }),
+      compact: async () => 'short',
+    },
     back: {
       session: async () => view('s1'),
       watch(listeners) { on = listeners; calls.push('watch'); return () => { calls.push('unwatch'); on = null; }; },

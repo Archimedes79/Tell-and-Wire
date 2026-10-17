@@ -13,6 +13,7 @@
 //     const stop = tool.watch({ session, round });                  // return: ... and hear what comes of it, whoever began it
 //     const answer = await tool.call('picked', { values: { pick: 'b' } });     // or start and wait: a function call
 //     await tool.states.save('Tuesday');                            // state: keep it for later
+//     const { tokens } = await tool.model.context();                // model: the window of the model the tool runs on
 //
 // Plain JavaScript on `fetch` (and `EventSource` where there is one: where not, the session is asked for every half second).
 
@@ -126,6 +127,12 @@ export async function connect(options = {}) {
       list: async () => (await at('states')).states,
       save: (name) => at('saveState', { name }),
       load: (name) => at('loadState', { name }),
+    },
+
+    // -- model ----------------------------------------------------------------
+    model: {
+      context: () => at('chatContext'),
+      compact: async (summary, messages) => (await at('compactChat', { summary, messages })).summary,
     },
 
     // -- files ----------------------------------------------------------------

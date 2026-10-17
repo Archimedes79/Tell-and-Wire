@@ -280,6 +280,16 @@ button pressed here runs the graph.
 | Chart, Table, Image | | | what arrives |
 | Heading, Text, Caption, Divider, Gap | | | (the GUI's own design) |
 
+A chat sends the whole conversation with every message, so it grows. Under the turns a small counter says about how many tokens the
+next message sends, against the window of the model the tool runs on; it turns amber from 70 %. **Compact**, beside **Send**, has
+the model write the oldest turns down shorter (one call, and it costs what a call costs): the turns stay on screen, and what the
+model is sent is that summary and the last four turns. The summary can be read under the divider it leaves. **New chat** forgets all
+of it. Nothing compacts by itself.
+
+Where the window comes from is told in the counter's tooltip: Anthropic and Google say it of the model; for any other provider it is a
+guess of 128 000 tokens, and the counter says "window assumed" until `context_tokens` in `ai-settings.json` (or `TW_CONTEXT_TOKENS`) says
+the real one.
+
 A block runs no code. A node shapes the data first. A chart draws a **figure**:
 
 ```json

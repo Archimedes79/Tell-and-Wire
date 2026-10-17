@@ -8,7 +8,7 @@
 // through `/tw/port.js` (`backend/deployment/host/port.js`).
 
 import { API, pathFor } from '../../../../../backend/deployment/host/api.ts';
-import { call, type Requirement, type RoundSnapshot, type SessionView } from './client';
+import { call, type ChatContext, type Requirement, type RoundSnapshot, type SessionView } from './client';
 
 /** What a round is asked with, beside its event: what it is sent, what it asked, who sends it (`RoundRequest`). */
 export interface RoundAsk {
@@ -36,9 +36,18 @@ export interface ReturnPort {
   watch(on: { session: (view: SessionView) => void; round: (round: RoundSnapshot) => void }): () => void;
 }
 
+/** What the page asks of the tool's model besides a round. */
+export interface ModelPort {
+  /** The window of the model the tool runs on, and how that is known. */
+  context(): Promise<ChatContext>;
+  /** The oldest turns of a conversation, with the summary there is already, shortened into one summary: one call to the model. */
+  compact(summary: string, messages: { role: string; text: string }[]): Promise<string>;
+}
+
 export interface GuiPort {
   start: StartPort;
   back: ReturnPort;
+  model: ModelPort;
 }
 
 /** The port over HTTP, as every tool answers it: the routes of the runtime API, called by name, and its stream. */
@@ -48,6 +57,10 @@ export const httpPort: GuiPort = {
     start: (event, ask) => call('startRound', { event, ...ask }),
     stop: async (id) => { await call('stopRound', { id }); },
     reset: () => call('reset', {}),
+  },
+  model: {
+    context: () => call('chatContext', {}),
+    compact: async (summary, messages) => (await call('compactChat', { summary, messages })).summary,
   },
   back: {
     session: () => call('session', {}),

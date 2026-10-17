@@ -73,6 +73,8 @@ export interface SettingsFile {
   ai?: { provider?: string; model?: string };
   /** The AI that writes -- ✨ and the bar under the canvas --, where it is not the same one (`aiSetting`, 'write'). */
   writing_ai?: { provider?: string; model?: string };
+  /** How many tokens the AI the nodes run on takes in at once, where it cannot be asked (`contextWindow`). */
+  context_tokens?: number;
   api_keys?: Record<string, string>;
   /** Keyed by provider name: `endpoints.lmstudio`. */
   endpoints?: Record<string, string>;

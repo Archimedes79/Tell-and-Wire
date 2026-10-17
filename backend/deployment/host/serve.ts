@@ -27,6 +27,7 @@ import { Download, EventStream, Refusal, foreignRequest, hostnameOf, namesFor, r
 import { NotOffered, eventOf, outputsOf } from '../../../graph/interface.ts';
 import { browse, startFolder } from './browse.ts';
 import { findFiles, searchedIn } from './find.ts';
+import { BadChat, chatContext, compactChat } from './chat.ts';
 import { portView } from './port.ts';
 import { BadStateName, listStates, loadState, saveState, statesFolderOf } from './states.ts';
 import { extensionFilter } from '../../../graph/nodes/folderListing.ts';
@@ -351,7 +352,19 @@ function toolRoutes(
 
     // The GUI as it was designed, and no more of the graph: its blocks are
     // what it draws, by the names they are called by.
-    ...(part ? { gui: (asked: { session?: string }) => part.view(sessionAsked(asked)) } : {}),
+    ...(part ? {
+      gui: (asked: { session?: string }) => part.view(sessionAsked(asked)),
+      // The window of the model, and a conversation shortened by it: what a chat block asks besides a round.
+      chatContext: (asked: { session?: string }) => chatContext(sessionAsked(asked)),
+      compactChat: async (asked: { session?: string; summary?: string; messages: { role: string; text: string }[] }) => {
+        try {
+          return await compactChat(sessionAsked(asked), asked);
+        } catch (error) {
+          if (error instanceof BadChat) throw new Refusal(400, error.message);
+          throw error;
+        }
+      },
+    } : {}),
 
     // Read-only on purpose: a deployed tool is configured by whoever runs it,
     // in the file beside it or its environment. A GUI that wrote credentials

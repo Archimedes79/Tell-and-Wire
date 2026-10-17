@@ -9,6 +9,7 @@
 //   return    what the tool tells the page: the session, every round as it goes, the answer
 //   state     what a page may keep for later: states saved under a name
 //   files     what a page needs to name a file on the machine the tool runs on
+//   model     what a page asks of the tool's model besides a round: the window it has, and a long conversation shortened
 //
 // *Start* and *return* are apart on purpose: a page that starts a round does not wait for its answer where it started it -- the answer is
 // a round on the stream, whoever began it (this page, another tab, the clock) -- so a page can be built as two halves that know nothing
@@ -18,7 +19,7 @@
 import { API, GUI_API, type PortView } from './api.ts';
 
 /** What a page does at a connection point. */
-export type Role = 'describe' | 'start' | 'return' | 'state' | 'files';
+export type Role = 'describe' | 'start' | 'return' | 'state' | 'files' | 'model';
 
 /** The version of the port a page may rely on: raised when a point changes in a way an old page would not survive. */
 export const PORT_VERSION = 1;
@@ -47,6 +48,8 @@ export const GUI_PORT = {
   saveState: { role: 'state', summary: 'save what is kept under a name (the person at the keyboard only)' },
   loadState: { role: 'state', summary: 'take a saved state back (the person at the keyboard only)' },
   browse: { role: 'files', summary: 'the entries of a folder, for a picker (the person at the keyboard only)' },
+  chatContext: { role: 'model', summary: 'how much the model the tool runs on takes in at once, and how that is known' },
+  compactChat: { role: 'model', summary: 'the oldest turns of a conversation shortened into a summary by the model the tool runs on: one call' },
   findFile: { role: 'files', summary: 'where a dropped file of this name and size is (the person at the keyboard only)' },
 } as const satisfies Record<Exclude<keyof typeof ROUTES, 'port'>, Point>;
 
@@ -54,7 +57,7 @@ export const GUI_PORT = {
 export function portView(withGui: boolean): PortView {
   const points: PortView['points'] = {};
   for (const [name, point] of Object.entries(GUI_PORT) as [keyof typeof GUI_PORT, Point][]) {
-    if (name === 'gui' && !withGui) continue;
+    if (!withGui && name in GUI_API) continue;
     const route = ROUTES[name];
     points[name] = { role: point.role, method: route.method, path: route.path, summary: point.summary, local: !!route.local };
   }

@@ -172,7 +172,7 @@ folder that holds `graph/` (beside `run.sh` in a download or a bundle), then as
 `~/.tell-and-wire/settings.json`; `TW_SETTINGS` names one file instead. The file is
 gitignored; `ai-settings.example.json` shows its shape. Environment variables win over the
 file: `TW_AI_PROVIDER`, `TW_AI_MODEL` (the nodes), `TW_WRITING_PROVIDER`, `TW_WRITING_MODEL`
-(writing), and the key and address variables below.
+(writing), `TW_CONTEXT_TOKENS` (how much the nodes' model takes in at once, for a chat block's counter), and the key and address variables below.
 
 | Provider (id) | Cost | Key or address |
 |---|---|---|

@@ -187,7 +187,7 @@ export interface PortView {
   /** What a page may rely on: raised when a point changes in a way an old page would not survive. */
   version: number;
   points: Record<string, {
-    /** What a page does there: describe, start, return, state or files. */
+    /** What a page does there: describe, start, return, state, files or model. */
     role: string;
     method: string;
     /** With its `:params`, as `pathFor` fills them. */
@@ -224,6 +224,14 @@ export interface ToolAiSettings {
   provider: string;
   model: string;
   settings_file_exists: boolean;
+}
+
+/** How much the model the tool runs on takes in at once, and how that is known: told by the person, by the provider, or guessed. */
+export interface ChatContext {
+  provider: string;
+  model: string;
+  tokens: number;
+  source: 'set' | 'provider' | 'assumed';
 }
 
 /** A failed call's body: its `detail`, and whatever more the route that failed had to say. */
@@ -337,6 +345,15 @@ export const API = {
 export const GUI_API = {
   /** The GUI as it was designed: what the built-in GUI draws, by the names its blocks are called. */
   gui: route<InSession, GuiView>('GET', '/api/runtime/gui'),
+
+  /** The window of the model the tool runs on: what a chat block counts a conversation against. */
+  chatContext: route<InSession, ChatContext>('GET', '/api/runtime/chat/context'),
+
+  /**
+   * Shorten the oldest turns of a conversation into a summary, by the model the tool runs on: one call, made when a person asks for it.
+   * Given the summary there is already and the turns after it, it answers the one summary of both.
+   */
+  compactChat: route<InSession & { summary?: string; messages: { role: string; text: string }[] }, { summary: string }>('POST', '/api/runtime/chat/compact'),
 } as const;
 
 /**

@@ -12,6 +12,8 @@
 
   "_mcp_servers": "Tool (MCP) servers are not set here: a project may ship an ai-settings.json, and a command in it would be a program started by opening a graph. They live in this machine's settings file (~/.tell-and-wire/settings.json, or the file TW_SETTINGS names), where an AI node's Add MCP server writes the ones that come with Tell & Wire (mcp/). See mcp/README.md.",
 
+  "_context_tokens": "Optional: how many tokens the model above takes in at once, as a chat block's counter counts against. Anthropic and Google say it themselves; for any other provider it is guessed (128000) until you set it: \"context_tokens\": 128000",
+
   "_writing_ai": "Optional: a second model for writing -- the \u2728 buttons and the bar under the canvas. Left out, the AI above writes too. Example: \"writing_ai\": {\"provider\": \"google\", \"model\": \"gemini-pro-latest\"}",
 
   "_providers": "google | openai | anthropic | ollama | lmstudio | openai_compatible | github_copilot",

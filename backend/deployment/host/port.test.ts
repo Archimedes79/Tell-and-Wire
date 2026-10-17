@@ -65,7 +65,7 @@ describe('the GUI port', () => {
     const routes = Object.keys({ ...API, ...GUI_API }).filter((name) => name !== 'port').sort();
     expect(Object.keys(GUI_PORT).sort()).toEqual(routes);
     const roles = new Set(Object.values(GUI_PORT).map((point) => point.role));
-    expect([...roles].sort()).toEqual(['describe', 'files', 'return', 'start', 'state']);
+    expect([...roles].sort()).toEqual(['describe', 'files', 'model', 'return', 'start', 'state']);
   });
 
   it('is told by the tool, by name -- the GUI route only where there is a GUI to describe', async () => {
@@ -75,8 +75,11 @@ describe('the GUI port', () => {
     expect(view.points.round).toMatchObject({ role: 'return', method: 'GET', path: '/api/runtime/rounds/:id' });
     expect(view.points.saveState).toMatchObject({ role: 'state', local: true });
     expect(view.points.gui).toBeDefined();
+    expect(view.points.compactChat).toMatchObject({ role: 'model', method: 'POST', local: false });
+    expect(view.points.chatContext).toMatchObject({ role: 'model', method: 'GET' });
     const bare = await (await fetch(`${await tool(false)}/api/runtime/port`)).json() as ReturnType<typeof portView>;
     expect(bare.points.gui).toBeUndefined();
+    expect(bare.points.chatContext).toBeUndefined();
   });
 
   it('is met by a page of its own through /tw/port.js, which knows no path of the runtime API', async () => {

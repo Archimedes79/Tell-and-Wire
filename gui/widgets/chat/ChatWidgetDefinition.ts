@@ -1,20 +1,14 @@
 import { WidgetDefinition, partsSaid, type Sent, type Widget } from '../WidgetDefinition.ts';
 import type { RawConfig } from '../../../graph/graph.ts';
-import { chatValue, type ChatMessage, type ChatValue } from './value.ts';
+import { chatValue, type ChatValue } from './value.ts';
+import { forModel } from './compact.ts';
 import { asText } from '../text_io/text.ts';
 
 /** What a chat sends as it sends: the message, and what was said before it. */
 const CHAT_PARTS: NonNullable<Sent['keys']> = {
   message: { type: 'text', description: 'what the person just said' },
-  history: { type: 'text', description: 'everything said before it, one turn per paragraph' },
+  history: { type: 'text', description: 'everything said before it, one turn per paragraph; the oldest turns shortened once the chat was compacted' },
 };
-
-/** The conversation as a model reads it: one turn per paragraph, who said it in front. */
-function transcript(messages: ChatMessage[]): string {
-  return messages
-    .map((message) => `${message.role === 'assistant' ? 'Assistant' : 'User'}: ${message.text}`)
-    .join('\n\n');
-}
 
 /**
  * A conversation: what was said, a box to say the next thing, and the answer
@@ -52,8 +46,8 @@ export class ChatWidgetDefinition extends WidgetDefinition<ChatValue> {
   }
 
   override async data(widget: Widget): Promise<unknown> {
-    const { messages, pending } = this.config(widget);
-    return { message: pending, history: transcript(messages) };
+    const chat = this.config(widget);
+    return { message: chat.pending, history: forModel(chat) };
   }
 
   /**
@@ -66,12 +60,12 @@ export class ChatWidgetDefinition extends WidgetDefinition<ChatValue> {
       stored.value = chatValue(value);
       return;
     }
-    stored.value = { messages: chatValue(stored.value).messages, pending: String(value ?? '') };
+    stored.value = { ...chatValue(stored.value), pending: String(value ?? '') };
   }
 
   /** The reply closes the turn: question and answer go into the transcript together. */
   override settle(stored: RawConfig, value: unknown): void {
-    const { messages, pending } = chatValue(stored.value);
+    const { messages, pending, ...shortened } = chatValue(stored.value);
     // As a box shows it: `String()` of a record is "[object Object]", and that went into the transcript the model reads next.
     const reply = asText(value);
     if (!reply.trim()) return;
@@ -82,6 +76,8 @@ export class ChatWidgetDefinition extends WidgetDefinition<ChatValue> {
         { role: 'assistant', text: reply },
       ],
       pending: '',
+      // What was folded stays folded: the turn after it is the model's to read in full.
+      ...shortened,
     };
   }
 }
