@@ -120,11 +120,22 @@ a cell that draws SVG itself, which is shown as a picture where the scheme's CSS
 should be 14 px or more (run on its own, `node code.js`, a cell has no `node.window`); the notebook shows the same picture scaled to its own, flatter block, and the delivered tool is the one that is exact.
 The numbers the facts rest on, the grid and the schemes' colours, are in `gui/windows/grid.ts` and `gui/windows/scheme.ts` (a delivered tool loads both).
 
+### The page looks as the tool looks
+
+The page is the tool, so it is painted in the look chosen at the top (White, Paper, Night or Graphite), not in the notebook's own: a sheet in that scheme,
+lifted off the notebook's ground by the scheme's shadow, with the words of the page set as the delivered page sets them (30, 20 and 16 px) and each window drawn
+as the delivered tool draws one -- a frame, its title, a sunken box for what is put in, a raised box for what comes out, the scheme's accent on the button that
+runs it, a chat in the accent's tint. **As app** and the delivered tool therefore look alike in every scheme; what differs is only what the page does not
+carry: a window's cells are laid out by the notebook's own flow (a quarter, a half of the line), where the delivered tool lays them on its grid, and a file is
+named by its file name, where the tool shows the path. The scheme reaches the page as the same CSS variables the built-in GUI uses (`schemeVariables` in
+`gui/windows/scheme.ts`; `notebook.css` binds its own names to them on the sheet, and `frontend/notebook/look.test.ts` holds that it asks only for names the
+scheme makes). The notebook imports nothing of the GUI's kit: the two draw the same things twice, from the same palette.
+
 ### A dark notebook, and key-figure tables
 
 The top bar has **☾ Dark** / **☀ Light**: the notebook itself in a dark look (`frontend/notebook/look.ts`; every colour of `notebook.css` is a variable
 and `data-look="dark"` gives them other values; kept in the browser, white by default). It is not the look of the delivered tool, which stays
-the document's own choice beside it. Every screen was checked for text contrast in both looks.
+the document's own choice beside it, and the page is painted in that one: see "The page looks as the tool looks". Every screen was checked for text contrast in both looks.
 
 A table is set as its cells say (`frontend/notebook/elements/figures.ts`; the delivered tool's table has a copy of its own, so the two share no code): a column of figures to the right with the
 same decimals all down and thousands told apart (174,898; always as English writes them, so a number and a "+10.2 %" a step wrote as text do not use two ways of writing one),
@@ -149,7 +160,7 @@ checks that the graph on disk is what its windows make, and presses the buttons 
 
 A cell that runs several models in parallel (steps stand one under the other and run in turn; `paper_review_panel` is one cell
 for each reviewer), a memory that lasts between rounds (the counter), and starting by itself (when the tool starts, every few minutes).
-The editor's own look follows the design (A2), a pale page with white cards, not the colour scheme of the tool; the scheme is kept in the document and told
+The notebook's own look -- the bar, the dock, the ground -- follows the design (A2), a pale ground with white cards; the scheme of the tool is kept in the document and told
 to the model, and the delivered tool draws it. A tool that says no look is white (`office`); the others are chosen at the top. The graph editor has a look of its own too (toolbar, beside Help; white by default), kept in the browser and not in any file.
 
 ## Open

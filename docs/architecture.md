@@ -232,7 +232,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `gui/windows/grid.ts` | What a window and the block in it keep of their room, in pixels: the numbers a drawing function is told and the delivered page draws with. |
 | `gui/windows/order.ts` | Which windows to run, and in what order |
 | `gui/windows/owns.ts` | Whose a node of a round is: a window's nodes are named after it. |
-| `gui/windows/scheme.ts` | The colour scheme: one choice for the whole tool, from a closed set |
+| `gui/windows/scheme.ts` | The colour scheme: one choice for the whole tool, from a closed set, and the CSS variables a frontend paints it with |
 
 ### `backend/deployment/`: host, runtime and what a package carries
 

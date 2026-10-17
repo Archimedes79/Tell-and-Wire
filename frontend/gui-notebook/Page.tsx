@@ -8,7 +8,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { patchWindow, removeWindow } from '../../gui/notebook/edit.ts';
 import { addBlock, fromMarkdown, freshBlockId, LINE_KINDS, moveBlock, pageOf, patchBlock, removeBlock, setKind, toMarkdown } from '../../gui/notebook/page.ts';
-import type { BlockKind, PageBlock, Windows } from '../../gui/notebook/windows.ts';
+import { DEFAULT_SCHEME, type BlockKind, type PageBlock, type Windows } from '../../gui/notebook/windows.ts';
+import { schemeVariables } from '../../gui/windows/scheme.ts';
 import { useNotebook } from '../notebook/document/store';
 import { inline } from '../notebook/elements/inline';
 import WindowBox from './WindowBox';
@@ -79,6 +80,8 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   const source = useNotebook((s) => s.source);
   const { edit, show } = useNotebook.getState();
   const page = pageOf(doc);
+  /** The page is the tool, painted in the colour scheme the tool is delivered in. */
+  const tool = schemeVariables(doc.scheme ?? DEFAULT_SCHEME) as React.CSSProperties;
   /** Where the cursor goes after the next change: the end of a block, or a place in it (`at`, and `to` for a chosen stretch). */
   const focus = useRef<{ id: string; end: boolean; at?: number; to?: number } | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
@@ -104,7 +107,7 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
 
   if (!writing) {
     return (
-      <div className="nb-sheet nb-read">
+      <div className="nb-sheet nb-read" style={tool}>
         <div className="nb-flow">{page.map((part) => <Block key={part.id} part={part} index={0} doc={doc} writing={false} />)}</div>
       </div>
     );
@@ -112,7 +115,7 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
 
   if (source) {
     return (
-      <div className="nb-sheet">
+      <div className="nb-sheet" style={tool}>
         <p className="nb-lead">
           The page as Markdown: <code># Title</code>, <code>## Heading</code>, <code>- bullet</code>, <code>1. numbered</code>, <code>&gt; quotation</code>, <code>[space]</code>, and <code>[window: id]</code> where a window stands;
           in the words <code>**bold**</code>, <code>*italic*</code>, <code>`code`</code> and <code>[a link](https://…)</code>.
@@ -189,7 +192,7 @@ export default function Page({ doc, writing }: { doc: Windows; writing: boolean 
   };
 
   return (
-    <div className="nb-sheet">
+    <div className="nb-sheet" style={tool}>
       <div className="nb-flow">
         {page.map((part, index) => (
           <Block

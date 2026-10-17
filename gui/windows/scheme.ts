@@ -27,8 +27,9 @@
 // and each of these was balanced as a whole rather than picked as a hue. An accent that reads on
 // white would vanish on Night, which is why a scheme is a palette and not a colour.
 //
-// The data only, in `gui/windows` (a delivered tool loads it too) so that what knows a window (`gui/notebook`) can tell a drawing function the colours it
-// draws in; the CSS variables made from it are the frontend's (`frontend/deployment/gui/kit/ui/scheme.ts`).
+// The data, and the CSS variables made from it (`schemeVariables`), in `gui/windows` (a delivered tool loads it too) so that what knows a window
+// (`gui/notebook`) can tell a drawing function the colours it draws in, and so that the built-in GUI and the notebook's page, which draws its
+// windows on its own, paint with one palette under one set of names.
 //
 // Stored on `metadata.gui_scheme`: presentation of the graph as a whole, so it
 // travels with the file and a deployed tool looks like what was designed.
@@ -190,4 +191,42 @@ export function plotColours(id: string | undefined): string[] {
 export function scheme(id: string | undefined): Scheme {
   const named = LEGACY[id ?? ''] ?? id;
   return SCHEMES.find((s) => s.id === named) ?? SCHEMES[0];
+}
+
+/**
+ * The scheme as CSS variables: the names every frontend paints a gui in (`--ui-surface`, `--ui-text`, ... and `--plot-1` ...), so that the
+ * built-in GUI (`frontend/deployment/gui/kit/ui/scheme.ts`) and the notebook's page, which draws its windows on its own, have one palette
+ * and one set of names. `colorScheme` makes scrollbars and form controls follow, so a light scheme is light to the edges.
+ */
+export function schemeVariables(id: string | undefined): Record<string, string> {
+  const s = scheme(id);
+  return {
+    '--ui-sunken': s.sunken,
+    '--ui-surface': s.surface,
+    '--ui-line': s.line,
+    '--ui-raise': s.raise,
+    '--ui-hover': s.hover,
+    '--ui-scrim': s.scrim,
+    '--ui-shadow-soft': s.shadowSoft,
+    '--ui-text': s.text,
+    '--ui-muted': s.muted,
+    '--ui-dim': s.dim,
+    '--ui-dimmer': s.dimmer,
+    '--ui-accent': s.accent,
+    '--ui-accent-text': s.accentText,
+    '--ui-accent-fill': s.accentFill,
+    '--ui-on-accent': s.onAccent,
+    '--ui-success': s.success,
+    '--ui-success-text': s.successText,
+    '--ui-danger': s.danger,
+    '--ui-danger-text': s.dangerText,
+    '--ui-warning': s.warning,
+    '--ui-warning-text': s.warningText,
+    '--ui-purple-text': s.purpleText,
+    '--ui-event': s.event,
+    '--ui-on-signal': s.onSignal,
+    ...Object.fromEntries(Object.entries(s.ink).map(([kind, colour]) => [`--ui-ink-${kind}`, colour])),
+    ...Object.fromEntries(plotColours(id).map((colour, index) => [`--plot-${index + 1}`, colour])),
+    colorScheme: s.light ? 'light' : 'dark',
+  };
 }

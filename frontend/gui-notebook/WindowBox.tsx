@@ -76,7 +76,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
           {window.inputs.map((one) => {
             const id = inBlock(window, one);
             return (
-              <div key={id} className={`nb-field${lit(id)}`} style={basis(one.width)} {...pointing(id)}>
+              <div key={id} className={`nb-field in${lit(id)}`} style={basis(one.width)} {...pointing(id)}>
                 <label htmlFor={id}>{one.kind === 'from' ? 'Takes' : one.name}</label>
                 <Input id={id} one={one} fromTitle={titles?.find((other) => other.id === one.from?.window)?.title} value={id in values ? values[id] : startValue(one)} onChange={(value) => set(id, value)} onRun={() => { void runWindow(window.id); }} />
                 {mark(id)}
@@ -101,7 +101,7 @@ export default function WindowBox({ window, writing }: { window: Window; writing
             const shown = result?.shown[id];
             const height = Math.max(1, out.rows) * 30 + 12;
             return (
-              <div key={id} className={`nb-field${lit(id)}${failed && at > 0 && out.kind !== 'chat' ? ' old' : ''}`} style={basis(out.width)} {...pointing(id)}>
+              <div key={id} className={`nb-field res${lit(id)}${failed && at > 0 && out.kind !== 'chat' ? ' old' : ''}`} style={basis(out.width)} {...pointing(id)}>
                 <span className="nb-label">{out.name}</span>
                 {out.kind === 'chat'
                   ? (

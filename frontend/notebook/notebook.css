@@ -55,7 +55,24 @@ button:disabled { cursor: default; opacity: 0.45; }
 
 /* the page */
 .nb-doc { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 24px 16px 48px; }
-.nb-sheet { --m: clamp(16px, 5vw, 56px); position: relative; max-width: 920px; margin: 0 auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 36px clamp(16px, 5vw, 56px) 40px; box-shadow: 0 1px 2px rgba(var(--shade), 0.05); }
+/* The page is the tool, and the tool looks as it is delivered: the sheet is painted in the document's own colour scheme (`--ui-*`, set on it from
+   the document, as the editor paints the GUI page), lifted off the notebook's ground by the scheme's own shadow. Everything on it takes the scheme's
+   colours by the names the notebook's boxes already use; the bar, the dock and the ground keep the notebook's look. */
+.nb-sheet {
+  --m: clamp(16px, 5vw, 56px); position: relative; max-width: 920px; margin: 0 auto; padding: 36px clamp(16px, 5vw, 56px) 40px;
+  background: var(--ui-surface); color: var(--ui-text); border: 1px solid var(--ui-line); border-radius: 16px; box-shadow: var(--ui-shadow-soft);
+  --card: var(--ui-surface); --bg: var(--ui-sunken); --line: var(--ui-line); --line2: var(--ui-line);
+  --ink: var(--ui-text); --muted: var(--ui-muted); --dim: var(--ui-dim); --placeholder: var(--ui-dimmer); --on-ink: var(--ui-surface);
+  --blue: var(--ui-accent-text); --blue-bg: var(--ui-accent-fill);
+  --green: var(--ui-success-text); --green-bg: color-mix(in srgb, var(--ui-success) 14%, transparent);
+  --red: var(--ui-danger-text); --red-bg: color-mix(in srgb, var(--ui-danger) 14%, transparent);
+  --amber: var(--ui-warning-text); --amber-bg: color-mix(in srgb, var(--ui-warning) 16%, transparent);
+  --purple: var(--ui-purple-text); --purple-bg: color-mix(in srgb, var(--ui-purple-text) 14%, transparent);
+  --chip: var(--ui-line); --hover: var(--ui-hover); --soft: var(--ui-sunken); --soft2: var(--ui-sunken); --faint: var(--ui-raise); --faint2: var(--ui-hover); --dash: var(--ui-dim);
+  --series-1: var(--plot-1); --series-2: var(--plot-2); --series-3: var(--plot-3); --series-4: var(--plot-4); --series-5: var(--plot-5); --series-6: var(--plot-6); --series-7: var(--plot-7); --series-8: var(--plot-8);
+  /* what lifts a block off the page, as the delivered tool's raised blocks are (`ui/tone.ts`) */
+  --lift: inset 0 1px 0 color-mix(in srgb, white 7%, transparent), 0 1px 2px color-mix(in srgb, black 22%, transparent), 0 6px 16px -6px color-mix(in srgb, black 28%, transparent);
+}
 .nb-flow { display: flex; flex-wrap: wrap; gap: 0 16px; align-items: flex-start; }
 .nb-block { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding: 2px 0; }
 .nb-block.win { flex: 0 0 auto; padding: 8px 0; }
@@ -81,29 +98,29 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-text { display: block; width: 100%; border: 0; outline: none; resize: none; overflow: hidden; background: transparent; padding: 3px 4px; border-radius: 6px; font-family: inherit; color: var(--ink); }
 .nb-text:hover { background: var(--faint); }
 .nb-text:focus { background: var(--faint2); }
-.nb-text.h1 { font-size: 34px; line-height: 1.15; font-weight: 650; letter-spacing: -0.01em; margin-top: 6px; }
-.nb-text.h2 { font-size: 22px; line-height: 1.25; font-weight: 600; margin-top: 14px; }
-.nb-text.p { font-size: 17px; line-height: 1.55; }
-.nb-text.ul { font-size: 17px; line-height: 1.55; padding-left: 26px; background-image: radial-gradient(circle, var(--ink) 2px, transparent 2.5px); background-size: 20px 1.55em; background-repeat: repeat-y; background-position: 4px 3px; }
-.nb-text.ol { font-size: 17px; line-height: 1.55; padding-left: 26px; }
+.nb-text.h1 { font-size: 30px; line-height: 1.15; font-weight: 650; margin-top: 6px; }
+.nb-text.h2 { font-size: 20px; line-height: 1.25; font-weight: 600; margin-top: 14px; }
+.nb-text.p { font-size: 16px; line-height: 1.55; }
+.nb-text.ul { font-size: 16px; line-height: 1.55; padding-left: 26px; background-image: radial-gradient(circle, var(--ink) 2px, transparent 2.5px); background-size: 20px 1.55em; background-repeat: repeat-y; background-position: 4px 3px; }
+.nb-text.ol { font-size: 16px; line-height: 1.55; padding-left: 26px; }
 .nb-ol { position: relative; border-radius: 6px; }
 .nb-ol:hover { background: var(--faint); }
 .nb-ol:focus-within { background: var(--faint2); }
 .nb-ol .nb-text.ol, .nb-ol .nb-text.ol:hover, .nb-ol .nb-text.ol:focus { position: relative; background: transparent; }
-.nb-ol-numbers { position: absolute; inset: 0; margin: 0; padding: 3px 4px 3px 26px; font-size: 17px; line-height: 1.55; font-family: inherit; pointer-events: none; overflow: hidden; }
+.nb-ol-numbers { position: absolute; inset: 0; margin: 0; padding: 3px 4px 3px 26px; font-size: 16px; line-height: 1.55; font-family: inherit; pointer-events: none; overflow: hidden; }
 .nb-ol-numbers li { color: transparent; white-space: pre-wrap; overflow-wrap: break-word; }
 .nb-ol-numbers li::marker { color: var(--muted); }
 /* An empty line is no item (the page reads it so): it has no number, and the next is not one further. */
 .nb-ol-numbers li.blank { list-style: none; counter-increment: list-item 0; }
-.nb-text.quote { font-size: 17px; line-height: 1.55; padding-left: 16px; border-left: 3px solid var(--line2); border-radius: 0 6px 6px 0; font-style: italic; color: var(--muted); }
+.nb-text.quote { font-size: 16px; line-height: 1.55; padding-left: 16px; border-left: 3px solid var(--line2); border-radius: 0 6px 6px 0; font-style: italic; color: var(--muted); }
 .nb-text::placeholder { color: var(--placeholder); }
 .nb-space { height: 28px; border-radius: 6px; }
 .nb-block:hover > .nb-space, .nb-block:focus-within > .nb-space { background: repeating-linear-gradient(135deg, var(--card) 0 6px, var(--hover) 6px 12px); }
-.nb-read h1 { font-size: 34px; line-height: 1.15; margin: 6px 0 4px; font-weight: 650; letter-spacing: -0.01em; }
-.nb-read h2 { font-size: 22px; line-height: 1.25; margin: 14px 0 2px; font-weight: 600; }
-.nb-read p { font-size: 17px; line-height: 1.55; margin: 0; white-space: pre-wrap; }
-.nb-read ul { font-size: 17px; line-height: 1.55; margin: 0; padding-left: 26px; }
-.nb-read ol { font-size: 17px; line-height: 1.55; margin: 0; padding-left: 26px; }
+.nb-read h1 { font-size: 30px; line-height: 1.15; margin: 6px 0 4px; font-weight: 650; }
+.nb-read h2 { font-size: 20px; line-height: 1.25; margin: 14px 0 2px; font-weight: 600; }
+.nb-read p { font-size: 16px; line-height: 1.55; margin: 0; white-space: pre-wrap; }
+.nb-read ul { font-size: 16px; line-height: 1.55; margin: 0; padding-left: 26px; }
+.nb-read ol { font-size: 16px; line-height: 1.55; margin: 0; padding-left: 26px; }
 .nb-read blockquote { margin: 2px 0; padding: 0 0 0 16px; border-left: 3px solid var(--line2); color: var(--muted); }
 .nb-read blockquote p { font-style: italic; }
 .nb-read a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
@@ -119,41 +136,61 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-add .menu { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 18px rgba(var(--shade), 0.14); z-index: 20; }
 .nb-source { width: 100%; min-height: 60vh; font-family: var(--mono); font-size: 14px; line-height: 1.6; border: 1px solid var(--line2); border-radius: 10px; padding: 14px 16px; resize: vertical; background: var(--soft); }
 
-/* a window on the page */
-.nb-win { min-width: 0; background: var(--card); border: 1px solid var(--line2); border-radius: 14px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(var(--shade), 0.06); position: relative; }
+/* a window on the page, drawn as the delivered tool draws it: a frame, its title, a box sunken to put something in and a box raised to show what came out */
+.nb-win { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 14px; position: relative; }
 .nb-win.open { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-bg); }
-.nb-win-head { display: flex; align-items: center; gap: 10px; min-height: 28px; }
-.nb-win-title { width: auto; flex: 1 1 auto; min-width: 0; font-size: 17px; }
+.nb-win-head { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 0 2px; }
+.nb-win-title { width: auto; flex: 1 1 auto; min-width: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
 .nb-win-head .nb-btn, .nb-win-head .nb-chip { flex: 0 0 auto; white-space: nowrap; }
-.nb-win-head h3 { margin: 0; font-size: 17px; font-weight: 600; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nb-chip { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--chip); color: var(--muted); white-space: nowrap; }
+.nb-win-head h3 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--chip); color: var(--muted); white-space: nowrap; }
 .nb-chip.running { background: var(--blue-bg); color: var(--blue); }
 .nb-chip.done { background: var(--green-bg); color: var(--green); }
 .nb-chip.stale, .nb-chip.empty { background: var(--amber-bg); color: var(--amber); }
 .nb-chip.failed { background: var(--red-bg); color: var(--red); }
-.nb-inputs, .nb-outputs { display: flex; flex-wrap: wrap; gap: 10px; }
-.nb-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; }
-.nb-field > label, .nb-label { font-size: 13px; color: var(--muted); }
-.nb-field input[type="text"], .nb-field input[type="number"], .nb-field select, .nb-field textarea, .nb-path { width: 100%; min-height: 38px; padding: 7px 11px; border: 1px solid var(--line2); border-radius: 8px; background: var(--card); }
+/* A window that has not run says "Ready" in plain words, as the delivered tool does. */
+.nb-win .nb-chip.ready { background: transparent; }
+.nb-inputs, .nb-outputs { display: flex; flex-wrap: wrap; gap: 14px; }
+.nb-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; position: relative; }
+.nb-field.in, .nb-field.res { padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.nb-field.in { background: var(--ui-sunken); }
+.nb-field.res { background: var(--ui-raise); box-shadow: var(--lift); }
+.nb-field > label, .nb-label { font-size: 12px; font-weight: 500; color: var(--muted); }
+.nb-field input[type="text"], .nb-field input[type="number"], .nb-field select, .nb-field textarea { width: 100%; min-height: 0; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--ui-sunken); font-size: 14px; color: var(--ink); }
 .nb-field textarea { resize: none; line-height: 1.45; }
-.nb-path { display: flex; align-items: center; gap: 8px; padding: 0 0 0 11px; overflow: hidden; }
-.nb-path > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.nb-path { display: flex; align-items: center; gap: 8px; }
+.nb-path > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--ui-sunken); font-family: var(--mono); font-size: 14px; color: var(--ink); }
 .nb-path > span.empty { color: var(--dim); }
-.nb-path.over { outline: 2px dashed var(--blue); outline-offset: 0; }
-.nb-path button { border: 0; border-left: 1px solid var(--line2); background: var(--soft2); min-height: 36px; padding: 0 12px; }
+.nb-path.over > span { outline: 2px dashed var(--blue); outline-offset: 0; }
+.nb-path button { flex: 0 0 auto; border: 0; border-radius: 8px; background: var(--line); color: var(--ink); min-height: 0; padding: 4px 10px; font-size: 12px; font-weight: 500; }
+.nb-path button:hover:not(:disabled) { filter: brightness(1.12); }
+.nb-path button[aria-label="Clear"] { background: transparent; color: var(--muted); }
+/* the buttons of a window: neutral and filled, the one that runs it in the scheme's accent */
+.nb-win .nb-btn { min-height: 0; padding: 4px 10px; border: 0; border-radius: 8px; background: var(--line); color: var(--ink); font-size: 12px; font-weight: 500; }
+.nb-win .nb-btn:hover:not(:disabled) { background: var(--line); filter: brightness(1.12); }
+.nb-win .nb-run .nb-btn { padding: 7px 16px; font-size: 14px; }
+.nb-win .nb-btn.primary { background: var(--ui-accent); color: var(--ui-on-accent); font-weight: 600; }
+.nb-win .nb-btn.primary:hover:not(:disabled) { opacity: 1; filter: brightness(1.12); }
 .nb-run { display: flex; align-items: center; gap: 10px; }
 .nb-out { border: 1px solid var(--line); background: var(--soft); border-radius: 10px; padding: 10px 12px; overflow: auto; font-size: 15px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.nb-field > .nb-out { border: 0; background: transparent; border-radius: 0; padding: 0; font-size: 14px; }
 .nb-out.waiting { display: flex; align-items: center; justify-content: center; border-style: dashed; color: var(--muted); }
+.nb-field > .nb-out.waiting { border: 0; }
 .nb-hint { font-size: 13px; color: var(--amber); background: var(--amber-bg); border-radius: 8px; padding: 6px 10px; margin-top: 8px; }
 .nb-out.msg { color: var(--amber); background: var(--amber-bg); border-color: transparent; }
+.nb-field > .nb-out.msg { padding: 10px 12px; border-radius: 8px; }
 .nb-out.msg.failed { color: var(--red); background: var(--red-bg); }
 .nb-out.msg .nb-link { color: inherit; text-decoration: underline; padding: 6px 0 0; }
 .nb-out table { border-collapse: collapse; font-size: 13.5px; white-space: normal; }
 .nb-out th, .nb-out td { padding: 4px 10px; border-bottom: 1px solid var(--line); text-align: left; word-break: normal; overflow-wrap: normal; }
+.nb-field > .nb-out table { width: 100%; font-size: 12px; }
+.nb-field > .nb-out th, .nb-field > .nb-out td { padding: 5px 8px; }
+.nb-field > .nb-out th { color: var(--muted); }
 .nb-out td.num, .nb-out th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .nb-out th.sortable { cursor: pointer; user-select: none; }
 .nb-out th.sortable:hover { color: var(--ink); }
 .nb-out th { position: sticky; top: -10px; background: var(--soft); font-weight: 600; }
+.nb-field > .nb-out th { top: 0; }
 .nb-out td.up { color: var(--green); }
 .nb-out td.down { color: var(--red); }
 .nb-out tr.total td { font-weight: 600; border-top: 2px solid var(--line2); }
@@ -162,12 +199,15 @@ button:disabled { cursor: default; opacity: 0.45; }
 .nb-contact { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; align-items: start; }
 .nb-contact img { width: 100%; height: auto; max-height: none; border-radius: 6px; }
 .nb-out.chart { padding: 6px; display: block; overflow: auto; }
+.nb-field > .nb-out.chart { padding: 0; }
 .nb-from { padding: 6px 11px; border: 1px dashed var(--dash); border-radius: 8px; color: var(--muted); font-size: 13.5px; background: var(--faint); }
 .nb-out.chart svg { display: block; }
-.nb-field.old > .nb-out { opacity: 0.7; border-style: dashed; }
+.nb-field.old > .nb-out { opacity: 0.7; }
 .nb-mark { position: absolute; top: -8px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--blue-bg); color: var(--blue); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border: 0; z-index: 3; }
 .lit > .nb-mark { background: var(--blue); color: var(--on-ink); }
 .lit > input, .lit > select, .lit > textarea, .lit > .nb-path, .lit > .nb-out { outline: 2px solid var(--blue); outline-offset: 0; }
+.nb-field.lit { outline: 2px solid var(--blue); outline-offset: 0; }
+.nb-field.lit > input, .nb-field.lit > select, .nb-field.lit > textarea, .nb-field.lit > .nb-path, .nb-field.lit > .nb-out { outline: none; }
 
 /* the dock under the page: the cells (A2), under the hood, debug */
 .nb-dock { flex: 0 0 auto; display: flex; flex-direction: column; background: var(--bg); border-top: 1px solid var(--line2); box-shadow: 0 -4px 14px rgba(var(--shade), 0.06); min-height: 0; }
@@ -309,16 +349,17 @@ textarea.nb-pre { width: 100%; min-height: 150px; resize: vertical; border: 0; }
   .nb-ask textarea { font-size: 17px; }
 }
 
-/* a chat in a window */
+/* a chat in a window, as the delivered chat block draws it: the person's words in the accent's tint, the answer in a sunken bubble */
 .nb-chat { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); background: var(--soft); border-radius: 10px; padding: 8px; min-height: 0; }
+.nb-field > .nb-chat { border: 0; background: transparent; padding: 0; }
 .nb-chat-log { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px; }
 .nb-chat-none { margin: auto; color: var(--dim); font-size: 14px; text-align: center; }
-.nb-bubble { max-width: 82%; padding: 8px 12px; border-radius: 14px; font-size: 15px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
-.nb-bubble.user { align-self: flex-end; background: var(--ink); color: var(--on-ink); border-bottom-right-radius: 4px; }
-.nb-bubble.assistant { align-self: flex-start; background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.nb-bubble { max-width: 82%; padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.nb-bubble.user { align-self: flex-end; background: var(--ui-accent-fill); color: var(--ink); border-bottom-right-radius: 4px; }
+.nb-bubble.assistant { align-self: flex-start; background: var(--ui-sunken); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
 .nb-bubble.waiting { color: var(--dim); letter-spacing: 2px; }
 .nb-chat-send { flex: 0 0 auto; display: flex; gap: 8px; align-items: flex-end; }
-.nb-chat-send textarea { flex: 1 1 auto; min-width: 0; height: 52px; resize: none; padding: 7px 11px; border: 1px solid var(--line2); border-radius: 10px; background: var(--card); line-height: 1.4; }
+.nb-chat-send textarea { flex: 1 1 auto; min-width: 0; height: 52px; resize: none; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--ui-sunken); font-size: 14px; line-height: 1.4; }
 
 .nb-select { min-height: 34px; padding: 0 8px; border: 1px solid var(--line2); border-radius: 9px; background: var(--card); font-size: 14px; }
 @media (max-width: 720px) { .nb-select { display: none; } }
