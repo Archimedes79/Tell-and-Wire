@@ -10,7 +10,7 @@
 // Setting one up writes an entry into the machine's settings file (`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`), the
 // same entry a person would write by hand: a command, its arguments, its
 // folder, its environment. A graph still only *names* the server (see
-// `backend/deployment/runtime/ai/mcp.ts`); this is the one place a command line is written for it,
+// `backend/deployment/runtime/ai/tools.ts`); this is the one place a command line is written for it,
 // from a file in the installation -- never from a request's own words, which
 // can only fill in the variables the server's config lists. Hence
 // `backend/editor/`, and routes that only a server bound to this machine
@@ -21,7 +21,7 @@ import { readdir, readFile, rm, stat } from 'node:fs/promises';
 import { delimiter, join, resolve } from 'node:path';
 import { configuredMcpServers, machineSettingsPath } from '../../deployment/runtime/ai/settings.ts';
 import { installFolder } from '../../deployment/project/layout.ts';
-import { mcpToolService, type McpServerConfig } from '../../deployment/runtime/ai/mcp.ts';
+import { mcpToolService, type McpServerConfig } from '../../deployment/runtime/ai/tools.ts';
 import { Refusal } from '../../deployment/host/http.ts';
 import type { McpSaved, McpServerView, McpServersView } from '../host/api.ts';
 import { edit } from './settings.ts';

@@ -1,12 +1,12 @@
-// The colour scheme as the frontend uses it: the scheme's data (`gui/windows/scheme.ts`) as CSS variables.
+// The colour scheme as the frontend uses it: the scheme's data (`gui/scheme.ts`) as CSS variables.
 //
 // Every colour in `ui/theme.ts` is a `var()` pointing at one of them, so a block asks for SURFACE and needs to know nothing about
 // schemes; the editor paints the same variables on the page's root (`editor/document/store/editorScheme.ts`), under whatever a gui
 // sets on its own container.
 
-import { schemeVariables } from '../../../../../gui/windows/scheme.ts';
+import { schemeVariables } from '../../../../../gui/scheme.ts';
 
-export * from '../../../../../gui/windows/scheme.ts';
+export * from '../../../../../gui/scheme.ts';
 
 /**
  * The scheme as CSS variables, for the container of a gui: the GUI tab's

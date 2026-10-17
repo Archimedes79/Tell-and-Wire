@@ -12,7 +12,7 @@
 //   its environment, and not in the settings file, which it may not read
 //   (`../services.ts`).
 // - `node.windows` lists the blocks of the GUI that show what the body hands
-//   on, each with its size (`gui/windows.ts`): code that draws draws for the
+//   on, each with its size (`gui/room.ts`): code that draws draws for the
 //   room there is, whenever the block was last resized. Empty where none does.
 // - It runs in a process of its own (`../services.ts`: no child processes, no
 //   addons, no workers; it reads the working directory and writes its own

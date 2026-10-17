@@ -1,4 +1,4 @@
-// A tool server small enough to read in one go, for `mcp.test.ts`.
+// A tool server small enough to read in one go, for `tools.test.ts`.
 //
 // Plain Node and no SDK, for the same reason the client has none: the test
 // should fail because the client is wrong, not because a package moved. It

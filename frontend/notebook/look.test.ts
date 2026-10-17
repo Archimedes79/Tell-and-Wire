@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseLook } from './look';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { SCHEMES, schemeVariables } from '../../gui/windows/scheme.ts';
+import { SCHEMES, schemeVariables } from '../../gui/scheme.ts';
 
 /** The notebook's stylesheet as written: Vite hands a stylesheet imported in a test over as nothing. */
 const css = readFileSync(fileURLToPath(new URL('./notebook.css', import.meta.url)), 'utf8');

@@ -42,7 +42,7 @@ import { ERROR_PORT, NESTING_LIMIT, fatalProblems, fieldOf, unrunnable } from '.
 import { runners as realRunners } from './nodes/registry.ts';
 import type { NodeRunner, Runners } from './nodes/NodeRunner.ts';
 import { messageOf } from '../../../graph/errors.ts';
-import { windowsOf } from '../../../gui/windows.ts';
+import { windowsOf } from '../../../gui/room.ts';
 
 /**
  * Gather what the wires deliver to *nodeId*.

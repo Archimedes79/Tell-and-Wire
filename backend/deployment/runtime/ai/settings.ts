@@ -23,7 +23,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { installFolder } from '../../project/layout.ts';
 import { DEFAULT_SETTINGS, settingsFromEnv, type ProviderSettings } from './providers.ts';
-import type { McpServerConfig } from './mcp.ts';
+import type { McpServerConfig } from './tools.ts';
 import type { ModelChoice } from '../../../../graph/nodes/Runtime.ts';
 
 const FILENAME = 'ai-settings.json';

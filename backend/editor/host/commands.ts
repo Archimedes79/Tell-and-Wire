@@ -14,7 +14,7 @@ import { keptRound, replayKeptRounds, writeKeptRound, TESTS_DIR } from '../proje
 import { checkPath } from '../project/folderCheck.ts';
 import { writeBundle } from '../project/deploy/bundle.ts';
 import { builtGui } from '../../deployment/project/layout.ts';
-import { runMcpServer } from './mcpServer.ts';
+import { runMcpServer } from '../assistant/server.ts';
 
 /**
  * Keep a round that ran through as a test of the project it came from: `tests/<name>.json`, which `test` runs again

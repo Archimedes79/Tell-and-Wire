@@ -2,11 +2,11 @@
 //
 // A Model Context Protocol server over stdio: Claude Code, Claude Desktop or any
 // other MCP client can have a graph designed, check one, save it and run it.
-// `backend/deployment/runtime/ai/mcp.ts` is the other direction -- a graph's model
+// `backend/deployment/runtime/ai/tools.ts` is the other direction -- a graph's model
 // calling out to somebody's tools. This is somebody's model calling in.
 //
 // **One folder, one door.** Everything the outside can reach is the nine tools,
-// and everything they can reach is one folder. Four files in `mcp/`, so each can be
+// and everything they can reach is one folder. Four more files beside this one, so each can be
 // read and tested without the others:
 //
 //   spec.ts       what the tools say of themselves: their descriptions, limits, guide
@@ -29,8 +29,8 @@ import { aiSetting, configuredMcpServers, configuredSettings } from '../../deplo
 import { SECRET_NAME } from '../../deployment/runtime/ai/providers.ts';
 import { nodeRuntime } from '../../deployment/runtime/services.ts';
 import { chosenCore } from '../../deployment/runtime/stdio.ts';
-import { createGraphTools } from './mcp/tools.ts';
-import { serveStdio } from './mcp/transport.ts';
+import { createGraphTools } from './tools.ts';
+import { serveStdio } from './transport.ts';
 import { messageOf } from '../../../graph/errors.ts';
 
 /** Every string on this machine that a result must not contain (`scrubber` skips the short ones). Read fresh each time: keys change while a server runs. */

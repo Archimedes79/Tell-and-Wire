@@ -5,11 +5,11 @@ import { PassThrough } from 'node:stream';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { AiService, Runtime } from '../../../graph/nodes/Runtime.ts';
-import { mcpToolService } from '../../deployment/runtime/ai/mcp.ts';
+import { mcpToolService } from '../../deployment/runtime/ai/tools.ts';
 import { forgetSeen } from '../../deployment/project/folder.ts';
 import type { Problem } from '../../../graph/wiring.ts';
-import { createGraphTools, type GraphTools } from './mcp/tools.ts';
-import { serveStdio } from './mcp/transport.ts';
+import { createGraphTools, type GraphTools } from './tools.ts';
+import { serveStdio } from './transport.ts';
 
 const MAIN = resolve(__dirname, '..', '..', 'cli', 'main.ts');
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseGraph, type Graph } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { blockSize, cellsOf } from '../../../gui/size.ts';
-import { windowsOf } from '../../../gui/windows.ts';
+import { windowsOf } from '../../../gui/room.ts';
 
 describe('how large a block is', () => {
   it('is its cells, kept on the grid, and the pixels they and the gaps between them come to at most', () => {

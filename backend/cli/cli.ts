@@ -66,7 +66,7 @@ interface CliOptions {
   /** Bind address. Loopback unless said otherwise; the `local` routes of the host's `api.ts` are off for any other. */
   host?: string;
   port?: number;
-  /** Be an MCP server on stdio instead of running anything: see `backend/editor/host/mcpServer.ts`. */
+  /** Be an MCP server on stdio instead of running anything: see `backend/editor/assistant/server.ts`. */
   mcp?: boolean;
   /** The one folder that server may touch. Where it was started, unless said otherwise. */
   mcpRoot?: string;
@@ -331,7 +331,7 @@ async function editorProduct(dist: string): Promise<Product> {
   return {
     part: (await import('../editor/host/routes.ts')).editorPart(dist),
     name: 'editor',
-    setup: async () => (await import('../editor/runtime/settings.ts')).setupLines(),
+    setup: async () => (await import('../editor/settings/settings.ts')).setupLines(),
   };
 }
 

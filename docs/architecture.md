@@ -66,7 +66,7 @@ One server, `node backend/cli/main.ts --editor frontend/dist` (`start.cmd`, `sta
 | **GUI editor** | `frontend/editor/gui/` | The GUI designer: the surface blocks are laid out on, the palette, a block's own editor (`widgets/`), what a block sends, fires and shows (`guiWrite.ts`), a GUI drawn from a graph (`guiFromGraph.ts`). |
 | **Graph editor** | `frontend/editor/graph/` | The canvas (`canvas/`), a node opened in place (`node/`), the views of a graph (`views/`), the builder and the panels of every node kind (`nodes/<kind>/`), the fields of a node's settings (`fields/`), and writing: ▶ Try, ✨ Generate, the chat for each file (`writing/`). |
 | (shell of both) | `frontend/editor/`, `frontend/editor/document/`, `frontend/editor/app/`, `frontend/editor/api/` | `document/`: the open project -- store, undo, model, and the builders of each element kind (`elements/`). `app/`: menus, tabs, toolbar, dialogs, settings, Help, the link to the notebook (`notebookLink.ts`). `api/`: the editor's client of its backend. |
-| **Editor backend** | `backend/editor/`, `backend/editor/project/`, `backend/editor/graph/`, `backend/editor/runtime/`, `backend/editor/host/` | `project/`: finds and checks projects, keeps rounds (`keptRounds.ts`) and packs (`deploy/`: `bundle.ts`, `launchers.ts`, `zip.ts`). `graph/`: the AI that writes nodes and whole graphs (`generate.ts`, `generateGraph.ts`, `generatePrompts.ts`, `graphPrompt.ts`). `runtime/`: the model and tool-server setup done for the person (`settings.ts`, `mcpServers.ts`). `host/`: what only the editor's server answers (`api.ts`, `routes.ts`, `commands.ts`: `check`, `test`, `--bundle`, `--mcp`; `mcpServer.ts` with `mcp/`). |
+| **Editor backend** | `backend/editor/`, `backend/editor/project/`, `backend/editor/graph/`, `backend/editor/settings/`, `backend/editor/assistant/`, `backend/editor/host/` | `project/`: finds and checks projects, keeps rounds (`keptRounds.ts`) and packs (`deploy/`: `bundle.ts`, `launchers.ts`, `zip.ts`). `graph/`: the AI that writes nodes and whole graphs (`generate.ts`, `generateGraph.ts`, `generatePrompts.ts`, `graphPrompt.ts`). `settings/`: the model and tool-server setup done for the person (`settings.ts`, `mcpServers.ts`). `assistant/`: Tell & Wire offered to an assistant outside it, an MCP server on stdio (`server.ts`, the nine `tools.ts`, `spec.ts`, `confine.ts`, `transport.ts`). `host/`: what only the editor's server answers (`api.ts`, `routes.ts`, `commands.ts`: `check`, `test`, `--bundle`, `--mcp`). |
 | (the editor's part of the definitions) | `graph/editor/`, `gui/editor/` | What only the editor adds to graph and GUI, neutral so that the browser and Node share it: `prompts.ts` (the prompts that write a node and a whole graph), `pull.ts` (the files a node's Input and Output chats make), `scheduleEdit.ts` (where a card may be put in the table), `complete.ts` (a GUI written whole, with the start and end points its blocks need). |
 
 ### Design: the notebook
@@ -214,6 +214,8 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `gui/notebook/pageModel.ts` | What a page is made of, before anything is done to it: which blocks it has, and the one a tool without a page of its own gets |
 | `gui/notebook/read.ts` | Windows read from JSON: a file, or a model's answer |
 | `gui/notebook/windows.ts` | Windows: a tool said as a page of fixed windows, each one a short list of cells |
+| `gui/room.ts` | The room what a node hands on is shown in |
+| `gui/scheme.ts` | The colour scheme: one choice for the whole tool, from a closed set, and the CSS variables a frontend paints it with |
 | `gui/size.ts` | How large a block of the GUI is, in cells and in pixels |
 | `gui/widgets/DisplayWidgetDefinition.ts` | The definition of a block that only shows the end point it shows hands back. |
 | `gui/widgets/StaticWidgetDefinition.ts` | The definition of a block that is part of the GUI, not of the graph: a heading, a divider, a gap. |
@@ -228,11 +230,9 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `gui/widgets/text/role.ts` | How a piece of prose is set: a first-level heading, a second-level heading, a paragraph or a caption |
 | `gui/widgets/text_io/role.ts` | What a box of text is for: typed into, shown in, or both |
 | `gui/widgets/text_io/text.ts` | A value, as a box of text reads it |
-| `gui/windows.ts` | The room what a node hands on is shown in |
 | `gui/windows/grid.ts` | What a window and the block in it keep of their room, in pixels: the numbers a drawing function is told and the delivered page draws with. |
 | `gui/windows/order.ts` | Which windows to run, and in what order |
 | `gui/windows/owns.ts` | Whose a node of a round is: a window's nodes are named after it. |
-| `gui/windows/scheme.ts` | The colour scheme: one choice for the whole tool, from a closed set, and the CSS variables a frontend paints it with |
 
 ### `backend/deployment/`: host, runtime and what a package carries
 
@@ -242,6 +242,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/deployment/host/api.ts` | The wire between a GUI and the server: the host's routes, and what travels each way |
 | `backend/deployment/host/browse.ts` | Walking the machine's files, for a picker |
 | `backend/deployment/host/chat.ts` | A chat block's two asks of the model besides a round: the window it has, and a long conversation shortened |
+| `backend/deployment/host/clock.ts` | The clock of a tool that runs by itself: what its start points start by themselves, one round after another |
 | `backend/deployment/host/find.ts` | Finding a file that was dropped onto a page: a browser hands a page the name and size of a dropped file, never where it is |
 | `backend/deployment/host/http.ts` | The few HTTP things a route handler needs, and nothing that knows a route |
 | `backend/deployment/host/lifecycle.ts` | What a served tool holds while it runs, and how it lets go of it |
@@ -253,12 +254,11 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/deployment/host/states.ts` | States saved under a name: what a person or a memory node keeps, written out on request and read back on request |
 | `backend/deployment/project/folder.ts` | A graph as a folder: the project |
 | `backend/deployment/project/layout.ts` | Where things are in an install, and where a package keeps what is not the project's own |
-| `backend/deployment/runtime/ai/fixtures/echo-mcp-server.mjs` | A tool server small enough to read in one go, for `mcp.test.ts` |
-| `backend/deployment/runtime/ai/mcp.ts` | Tools for a model, from MCP servers |
+| `backend/deployment/runtime/ai/fixtures/echo-mcp-server.mjs` | A tool server small enough to read in one go, for `tools.test.ts` |
 | `backend/deployment/runtime/ai/providers.ts` | The model clients: a table of OpenAI-compatible providers, plus those with a shape of their own. |
 | `backend/deployment/runtime/ai/settings.ts` | Where the model configuration comes from |
+| `backend/deployment/runtime/ai/tools.ts` | Tools for a model, from MCP servers |
 | `backend/deployment/runtime/ai/window.ts` | How much a model takes in at once, and where that is known from: the person, the provider, or a guess |
-| `backend/deployment/runtime/clock.ts` | The clock of a tool that runs by itself: what its start points start by themselves, one round after another |
 | `backend/deployment/runtime/confine.ts` | Which files a graph may reach |
 | `backend/deployment/runtime/examples.ts` | A node's example: what its input.js gives one call, held to its output.js |
 | `backend/deployment/runtime/executor.ts` | Running a graph: initialise, wire, order, execute |
@@ -294,6 +294,11 @@ places (the faces under "Elements"); those are one row each, written as a patter
 
 | File | What it does |
 |---|---|
+| `backend/editor/assistant/confine.ts` | What the MCP server's tools may touch, and what they may say |
+| `backend/editor/assistant/server.ts` | Tell & Wire, offered to an assistant outside it |
+| `backend/editor/assistant/spec.ts` | What the MCP server's nine tools say of themselves: limits, descriptions, and the guide to writing a graph. |
+| `backend/editor/assistant/tools.ts` | The nine tools, over one folder: what each does, and nothing of how it is reached |
+| `backend/editor/assistant/transport.ts` | stdio: JSON-RPC, one message per line |
 | `backend/editor/graph/brief.ts` | The variables of a node's prompts, filled from what the node and the graph hold. |
 | `backend/editor/graph/generate.ts` | Writing a node's files with a model |
 | `backend/editor/graph/generateGraph.ts` | Writing a whole graph with a model: one designed from a description, or the graph there is, changed as asked |
@@ -301,11 +306,6 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/editor/graph/graphPrompt.ts` | What the model is told before it designs a whole graph |
 | `backend/editor/host/api.ts` | The wire between the editor and the server: the routes only the editor serves, and what travels |
 | `backend/editor/host/commands.ts` | The commands only the editor has: `check`, `test`, one node, `--bundle`, `--mcp`. |
-| `backend/editor/host/mcp/confine.ts` | What the MCP server's tools may touch, and what they may say |
-| `backend/editor/host/mcp/spec.ts` | What the MCP server's nine tools say of themselves: limits, descriptions, and the guide to writing a graph. |
-| `backend/editor/host/mcp/tools.ts` | The nine tools, over one folder: what each does, and nothing of how it is reached |
-| `backend/editor/host/mcp/transport.ts` | stdio: JSON-RPC, one message per line |
-| `backend/editor/host/mcpServer.ts` | Tell & Wire, offered to an assistant outside it |
 | `backend/editor/host/routes.ts` | What the server answers only while a graph is being built |
 | `backend/editor/project/deploy/bundle.ts` | Handing the graph to someone else |
 | `backend/editor/project/deploy/launchers.ts` | The two files that start something from the folder they sit in: run.sh and run.cmd |
@@ -313,8 +313,8 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/editor/project/files.ts` | The editor's view of the machine's files: finding projects and dropped files, and handing a node's file to the editor the person works in |
 | `backend/editor/project/folderCheck.ts` | What is wrong with a project folder, and the `check` command's answer |
 | `backend/editor/project/keptRounds.ts` | A round kept as a test: what it was started with and what it handed back, run again without asking a model |
-| `backend/editor/runtime/mcpServers.ts` | The tool servers that come with this installation, for the editor |
-| `backend/editor/runtime/settings.ts` | The editor's settings dialog, and the one file behind it |
+| `backend/editor/settings/mcpServers.ts` | The tool servers that come with this installation, for the editor |
+| `backend/editor/settings/settings.ts` | The editor's settings dialog, and the one file behind it |
 
 ### `backend/notebook/`
 
@@ -353,7 +353,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/deployment/gui/kit/ui/Toggle.tsx` | An on/off switch with its label read aloud. |
 | `frontend/deployment/gui/kit/ui/ToolbarButton.tsx` | An icon button of a toolbar, with its words in the tooltip and for screen readers. |
 | `frontend/deployment/gui/kit/ui/cut.ts` | *text*, or its first *max* characters and an ellipsis: a value said in a line, cut short |
-| `frontend/deployment/gui/kit/ui/scheme.ts` | The colour scheme as the frontend uses it: the scheme's data (`gui/windows/scheme.ts`) as CSS variables |
+| `frontend/deployment/gui/kit/ui/scheme.ts` | The colour scheme as the frontend uses it: the scheme's data (`gui/scheme.ts`) as CSS variables |
 | `frontend/deployment/gui/kit/ui/theme.ts` | The editor's colour vocabulary, and the few style objects built from it |
 | `frontend/deployment/gui/kit/ui/tone.ts` | How a block sits on the GUI, chosen from a closed set rather than picked from a colour wheel |
 | `frontend/deployment/gui/main.tsx` | The entry of a delivered tool's page (`gui.html`): refuses a file dropped beside a picker, mounts `GuiApp`. |
@@ -1047,7 +1047,7 @@ stdout  ␞tell-and-wire:result {…}                               what it made
 `node.llm` is answered by the process running the graph (`backend/deployment/runtime/nodes/ai/ask.ts`),
 at most 25 times per run (`TW_MAX_LLM_CALLS`).
 `windows` is what a body that draws needs to know and need not ask: the blocks of the GUI that show what its node hands on,
-each with its size in cells and in pixels (`gui/windows.ts`); the body has it as `node.windows`, empty without a GUI.
+each with its size in cells and in pixels (`gui/room.ts`); the body has it as `node.windows`, empty without a GUI.
 
 ## The package
 
@@ -1096,10 +1096,10 @@ everything, with Node.
 - A graph can name an MCP tool server by name only. What a name starts, or calls, is written on this
   machine, under `mcp_servers` in the machine's settings file (`TW_SETTINGS`, else
   `~/.tell-and-wire/settings.json`): not in a settings file in the working directory or the project
-  folder, and a URL is never written in a graph (`settings.test.ts`, `mcp.test.ts`). A server starts
+  folder, and a URL is never written in a graph (`settings.test.ts`, `tools.test.ts`). A server starts
   without this process's keys and tokens (its own `env` gives what it needs). The MCP server confines
   paths to `--mcp-root`, never opens a file that holds keys and filters keys from its answers
-  (`mcpServer.test.ts`, "confinement").
+  (`server.test.ts`, "confinement").
 - The editor sets up the tool servers in `mcp/` (`mcpServers.ts`, `local` routes): the command it
   writes into the machine's settings file comes from the server's own `config.json` and the Node that
   runs it, never from a request, and a request can fill in only the environment variables that config

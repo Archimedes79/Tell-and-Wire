@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import type { ToolSession } from '../../../../graph/nodes/Runtime.ts';
-import { mcpToolService, type McpServerConfig } from './mcp.ts';
+import { mcpToolService, type McpServerConfig } from './tools.ts';
 import { executeGraph } from '../executor.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { graphOf, quietRuntime } from '../test/fakes.ts';

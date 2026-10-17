@@ -80,7 +80,7 @@ const show = (found: Import[]): string[] => found.map((one) => `${one.from} -> $
 const RANK: Record<string, number> = {
   'deployment/project': 1, 'deployment/runtime': 2, 'deployment/gui': 2, 'deployment/host': 3,
   authoring: 3.5,
-  'editor/project': 4, 'editor/graph': 4, 'editor/runtime': 4, 'editor/host': 5, notebook: 5, cli: 6, 'notebook/main': 7,
+  'editor/project': 4, 'editor/graph': 4, 'editor/settings': 4, 'editor/assistant': 4.5, 'editor/host': 5, notebook: 5, cli: 6, 'notebook/main': 7,
 };
 const moduleOf = (path: string): string | undefined => {
   const found = /^backend\/(deployment|editor)\/([a-z]+)\//.exec(path);

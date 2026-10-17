@@ -2,7 +2,7 @@
 //
 // Here, in the neutral folder, because two ends ask: the page that draws the
 // grid (`frontend/deployment/gui/kit/layout.ts`) and a run that tells a body
-// the room its result has (`windows.ts`).
+// the room its result has (`room.ts`).
 
 /** Cells across the GUI. Square, so `w` and `h` are one unit, not two. */
 export const GUI_GRID_COLUMNS = 16;
@@ -43,7 +43,7 @@ export function cellsOf(block: { w?: number; h?: number }): { w: number; h: numb
  * gaps between them -- and the cells it spans. The GUI never needs the sum,
  * since the browser's grid does it; a node wired into the end point the
  * block shows does, to write -- or at run time to draw -- what it sends for the
- * room there is (`editor/graph/writing/generationContext.ts`, `windows.ts`). On
+ * room there is (`editor/graph/writing/generationContext.ts`, `room.ts`). On
  * a narrower gui every cell shrinks alike (`cellSize`), so this is the most the
  * block gets.
  */

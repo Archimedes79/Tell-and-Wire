@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { lent, type CodeService, type FileService, type Runtime } from '../../../graph/nodes/Runtime.ts';
 import { aiService, withoutKeys } from './ai/providers.ts';
-import { mcpToolService } from './ai/mcp.ts';
+import { mcpToolService } from './ai/tools.ts';
 import { inProject, inside, reachable } from './confine.ts';
 import { aiSetting, configuredMcpServers, configuredSettings, candidatePaths } from './ai/settings.ts';
 import { messageOf } from '../../../graph/errors.ts';
@@ -322,7 +322,7 @@ function converse(
  *
  * Tool servers come from the settings file and from nowhere else. A graph
  * names the servers it wants; which program a name starts is this machine's
- * decision, never the graph's -- `ai/mcp.ts` is where that line is held.
+ * decision, never the graph's -- `ai/tools.ts` is where that line is held.
  * Nothing is started here: a server runs for the length of one node's run.
  */
 export function nodeRuntime(overrides: Partial<Runtime> = {}): Runtime {

@@ -38,7 +38,7 @@ import { triggeredNodes, type Trigger } from '../../../graph/triggers.ts';
 import { NotOffered, applySent, checkSent, interfaceOf, memoryState, outputsOf, sentOf, stateOf } from '../../../graph/interface.ts';
 import { names } from '../../../graph/wiring.ts';
 import type { RuntimeRequirement } from '../../../gui/widgets/WidgetDefinition.ts';
-import { startClock, type Clock } from '../runtime/clock.ts';
+import { startClock, type Clock } from './clock.ts';
 import type { Held } from '../runtime/latch.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import type { GuiHooks } from '../gui/hooks.ts';
@@ -445,7 +445,7 @@ export class Session {
 
   /**
    * Start what runs by itself: each start point set to start when the tool starts starts,
-   * and each with an interval keeps its time (`../runtime/clock.ts`) -- the one
+   * and each with an interval keeps its time (`./clock.ts`) -- the one
    * clock a served tool and the editor's ▶ Run keep alike, in the server, so
    * it goes on whether or not a GUI is open. Its rounds are rounds like any
    * other. Resolves once the rounds starting it have run, with whether a

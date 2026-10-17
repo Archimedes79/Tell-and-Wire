@@ -118,7 +118,7 @@ drawing has in that block on a full-width page, the block's card taken off, and 
 a cell that draws SVG itself, which is shown as a picture where the scheme's CSS variables do not reach, reads its room and its colours from here. The facts are written into the settings of the code node
 (`config.window`, `windowFacts` in `gui/notebook/windows.ts`) and made again with every graph, so a changed width or scheme reaches the code on its next run. On a narrower page everything scales alike, so text in a drawing
 should be 14 px or more (run on its own, `node code.js`, a cell has no `node.window`); the notebook shows the same picture scaled to its own, flatter block, and the delivered tool is the one that is exact.
-The numbers the facts rest on, the grid and the schemes' colours, are in `gui/windows/grid.ts` and `gui/windows/scheme.ts` (a delivered tool loads both).
+The numbers the facts rest on, the grid and the schemes' colours, are in `gui/windows/grid.ts` and `gui/scheme.ts` (a delivered tool loads both).
 
 ### The page looks as the tool looks
 
@@ -128,7 +128,7 @@ as the delivered tool draws one -- a frame, its title, a sunken box for what is 
 runs it, a chat in the accent's tint. **As app** and the delivered tool therefore look alike in every scheme; what differs is only what the page does not
 carry: a window's cells are laid out by the notebook's own flow (a quarter, a half of the line), where the delivered tool lays them on its grid, and a file is
 named by its file name, where the tool shows the path. The scheme reaches the page as the same CSS variables the built-in GUI uses (`schemeVariables` in
-`gui/windows/scheme.ts`; `notebook.css` binds its own names to them on the sheet, and `frontend/notebook/look.test.ts` holds that it asks only for names the
+`gui/scheme.ts`; `notebook.css` binds its own names to them on the sheet, and `frontend/notebook/look.test.ts` holds that it asks only for names the
 scheme makes). The notebook imports nothing of the GUI's kit: the two draw the same things twice, from the same palette.
 
 ### A dark notebook, and key-figure tables

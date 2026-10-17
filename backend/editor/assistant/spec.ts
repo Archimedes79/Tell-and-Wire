@@ -5,11 +5,11 @@
 // Prose, so that it can be read and corrected apart from the code that keeps its
 // promises (`tools.ts`).
 
-import type { ToolSpec } from '../../../../graph/nodes/Runtime.ts';
-import { ERROR_PORT } from '../../../../graph/wiring.ts';
-import { RUN_PORT } from '../../../../graph/triggers.ts';
-import { registry } from '../../../../graph/nodes/registry.ts';
-import { GRAPH_SYSTEM } from '../../graph/graphPrompt.ts';
+import type { ToolSpec } from '../../../graph/nodes/Runtime.ts';
+import { ERROR_PORT } from '../../../graph/wiring.ts';
+import { RUN_PORT } from '../../../graph/triggers.ts';
+import { registry } from '../../../graph/nodes/registry.ts';
+import { GRAPH_SYSTEM } from '../graph/graphPrompt.ts';
 
 // ---------------------------------------------------------------------------
 // Limits

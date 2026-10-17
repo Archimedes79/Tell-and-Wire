@@ -2,7 +2,7 @@
 //
 // THE CONFINEMENT RULES. The caller is a model acting on text it read somewhere,
 // so every argument is treated as written by a stranger. Each rule has a test
-// (`mcpServer.test.ts`, "confinement").
+// (`server.test.ts`, "confinement").
 //
 //   1. Every path argument is resolved against the root and must stay inside
 //      it -- `..`, an absolute path elsewhere and another drive are all the same
@@ -40,7 +40,7 @@
 
 import { realpath } from 'node:fs/promises';
 import { basename, dirname, extname, join, resolve, sep } from 'node:path';
-import { candidatePaths, SETTINGS_FILENAME } from '../../../deployment/runtime/ai/settings.ts';
+import { candidatePaths, SETTINGS_FILENAME } from '../../deployment/runtime/ai/settings.ts';
 
 /** Folders no tool goes into, besides the dot-folders: `list_graphs` leaves them out as well. */
 export const SKIPPED_FOLDERS = new Set(['node_modules', 'dist']);

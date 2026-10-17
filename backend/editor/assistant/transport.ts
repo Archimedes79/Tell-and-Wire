@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { INSTRUCTIONS, MAX_GRAPH_BYTES } from './spec.ts';
 import type { GraphTools, ToolResult } from './tools.ts';
-import { messageOf } from '../../../../graph/errors.ts';
+import { messageOf } from '../../../graph/errors.ts';
 
 /** One protocol line: the largest graph, plus room for JSON's own escaping around it. */
 const MAX_LINE_CHARS = 2 * MAX_GRAPH_BYTES;
@@ -17,7 +17,7 @@ const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 /** The version of Tell & Wire this is, as its packages say: the zip carries `graph/package.json`, and so does a checkout. '0' where it cannot be read. */
 function appVersion(): string {
   try {
-    return (JSON.parse(readFileSync(new URL('../../../../graph/package.json', import.meta.url), 'utf8')) as { version?: string }).version ?? '0';
+    return (JSON.parse(readFileSync(new URL('../../../graph/package.json', import.meta.url), 'utf8')) as { version?: string }).version ?? '0';
   } catch {
     return '0';
   }

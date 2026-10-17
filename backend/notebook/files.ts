@@ -15,7 +15,7 @@ import { existsSync } from 'node:fs';
 import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Graph } from '../../graph/graph.ts';
-import { scheme } from '../../gui/windows/scheme.ts';
+import { scheme } from '../../gui/scheme.ts';
 import { parseWindows } from '../../gui/notebook/read.ts';
 import type { Windows } from '../../gui/notebook/windows.ts';
 

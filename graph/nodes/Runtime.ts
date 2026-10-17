@@ -58,7 +58,7 @@ interface BodyContext {
 
 /**
  * One block of the GUI that shows what a node hands on, and how large it is
- * drawn at most (`gui/windows.ts`): a body that draws is told it as `node.windows`.
+ * drawn at most (`gui/room.ts`): a body that draws is told it as `node.windows`.
  */
 export interface BlockWindow {
   /** The output port of the node whose result is shown there. */
