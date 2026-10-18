@@ -1,6 +1,6 @@
 {
   "name": "tell-and-wire-graph",
-  "version": "0.7.6",
+  "version": "0.7.8",
   "private": true,
   "type": "module",
   "description": "What a graph is, for the browser and for Node alike: its format, its node kinds and their rules, its files. No build, no dependencies.",
