@@ -164,6 +164,8 @@ function Opened({ node, panel, onClose, onOpenGui }: {
       delete config[ASIDE_PREFIX + name];
       return { ...current, config: config as GraphNode['config'] };
     }, ONCE);
+    // The one that was open goes: the code that loads it is what is looked at next.
+    if (open.part === 'aside' && open.name === name) setOpen({ part: 'body', how: 'file' });
   };
 
   const ownPorts = derivedNodePorts(node) === null;

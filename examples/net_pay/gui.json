@@ -1,0 +1,44 @@
+[
+  {
+    "h": 1,
+    "id": "gross",
+    "kind": "text_io",
+    "label": "Gross pay",
+    "mode": "input",
+    "sends_to": [
+      "start"
+    ],
+    "tone": "plain",
+    "value": "200",
+    "w": 8
+  },
+  {
+    "fires": "start",
+    "h": 1,
+    "id": "button",
+    "kind": "button",
+    "label": "Calculate",
+    "tone": "plain",
+    "w": 8
+  },
+  {
+    "h": 1,
+    "id": "divider",
+    "kind": "divider",
+    "label": "",
+    "mode": "horizontal",
+    "tone": "plain",
+    "w": 16
+  },
+  {
+    "h": 2,
+    "id": "text_io",
+    "kind": "text_io",
+    "label": "Net pay",
+    "mode": "output",
+    "shows": "end",
+    "tone": "raised",
+    "value": "",
+    "w": 16
+  }
+]

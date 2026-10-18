@@ -49,3 +49,6 @@ tell-and-wire*.zip
 /backend/.tell-and-wire-listing-*
 /backend/.confine-probe-link
 /backend/.sandbox-probe-*
+
+# A Node.js with its LICENSE here (as the download carries it) is what Deploy puts into a bundle: a local copy is not the project's.
+/node/

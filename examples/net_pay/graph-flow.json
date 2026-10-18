@@ -1,0 +1,8 @@
+{
+  "name": "Net pay",
+  "description": "Gross pay in, net pay out. A code node of more than one file: tax.js holds the tax rule and rates.json the bonus, both beside code.js and loaded from it.",
+  "wires": [
+    "code.net -> end.value",
+    "start.data -> code.gross"
+  ]
+}

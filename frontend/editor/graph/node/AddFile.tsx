@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { Plus } from 'lucide-react';
 import Button from '../../../deployment/gui/kit/ui/Button';
 import { DANGER_TEXT, DIMMER, FIELD } from '../../../deployment/gui/kit/ui/theme';
@@ -34,14 +34,13 @@ export default function AddFile({ taken, accepts, onAdd }: {
   onAdd: (name: string) => void;
 }) {
   const [name, setName] = useState<string | null>(null);
-  const field = useRef<HTMLInputElement>(null);
   const described = useId();
 
   if (name === null) {
     return (
       <Button
         size="sm"
-        onClick={() => { setName(freeName(taken)); requestAnimationFrame(() => field.current?.select()); }}
+        onClick={() => setName(freeName(taken))}
         title="Add a file beside code.js: code it loads, or the data it reads"
       >
         <span className="inline-flex items-center gap-1.5"><Plus size={13} strokeWidth={2.4} aria-hidden="true" /> Add file</span>
@@ -59,8 +58,9 @@ export default function AddFile({ taken, accepts, onAdd }: {
   return (
     <div className="flex flex-col gap-1">
       <input
-        ref={field}
         autoFocus
+        // The suggestion is selected as the field takes the focus, so what is typed replaces it.
+        onFocus={(event) => event.target.select()}
         value={name}
         onChange={(event) => setName(event.target.value.trim())}
         onKeyDown={(event) => {

@@ -181,6 +181,8 @@ describe('what check finds', () => {
     await mkdir(join(dir, 'nodes', 'old_step'));
     await writeFile(join(dir, 'nodes', 'old_step', 'code.js'), '');
     await writeFile(join(dir, 'nodes', 'say', 'instructions.md'), 'Written, never sent.');
+    // A file beside a code node's code.js is read by it; the same file beside an AI node is read by nobody.
+    await writeFile(join(dir, 'nodes', 'count', 'tax.js'), 'module.exports = {};');
     const { problems } = await checkPath(dir);
     expect(problems.map((p) => [p.where, p.problem])).toEqual([
       ['nodes/old_step', 'This folder belongs to no node in graph-nodes.json.'],

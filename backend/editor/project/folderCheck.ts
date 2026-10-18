@@ -14,7 +14,7 @@ import { names, type Problem } from '../../../graph/wiring.ts';
 import { FLOW_FILE } from '../../../graph/files/flow.ts';
 import { NODES_FILE } from '../../../graph/files/nodesFile.ts';
 import {
-  SCHEDULE_FILE, NODES_DIR, isProjectFolder, loadGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  SCHEDULE_FILE, NODES_DIR, addFilesBeside, isProjectFolder, loadGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readStructure,
 } from '../../deployment/project/folder.ts';
 import { problemsIn } from '../../../gui/authoring/check.ts';
@@ -28,6 +28,8 @@ import { problemsIn } from '../../../gui/authoring/check.ts';
  */
 export async function folderProblems(folder: string): Promise<Problem[]> {
   const { graph } = await readStructure(folder);
+  // The files a code node keeps beside its code are read, by it.
+  await addFilesBeside(folder, graph);
   const found: Problem[] = [];
   const expected = new Map<string, Set<string>>();
   for (const text of projectTexts(graph)) {

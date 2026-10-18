@@ -1,0 +1,47 @@
+{
+  "code": {
+    "kind": "code",
+    "label": "Net pay",
+    "inputs": [
+      {
+        "port": "gross",
+        "name": "Gross pay",
+        "type": "text",
+        "description": "Gross pay, before tax, as typed",
+        "field": "gross"
+      }
+    ],
+    "outputs": [
+      {
+        "port": "net",
+        "name": "Net pay",
+        "type": "any",
+        "description": "After tax, with the bonus"
+      }
+    ],
+    "description": "Net pay from gross pay: the tax rule is in tax.js and the bonus in rates.json, which stand beside code.js and are loaded from it."
+  },
+  "end": {
+    "kind": "end",
+    "label": "Net pay",
+    "inputs": [
+      {
+        "port": "value",
+        "name": "Value",
+        "type": "any"
+      },
+      {
+        "port": "path",
+        "name": "Path",
+        "type": "file_path",
+        "description": "Optional: a wired file or folder path, used instead of the one set above."
+      }
+    ],
+    "description": "The net pay."
+  },
+  "start": {
+    "kind": "start",
+    "label": "Calculate",
+    "description": "Pressed by the button: sends the gross pay typed above."
+  }
+}
