@@ -124,7 +124,7 @@ tests share).
 
 ## The files
 
-The picture of the overview with the folders and key files of each box: [overview-detail.svg](images/overview-detail.svg). Drawn by area, one box a directory with each file and its role: [definitions](images/architecture-files-1-definitions.svg), [backend](images/architecture-files-2-backend.svg), [pages of a tool, the notebook and the build](images/architecture-files-3-frontend-tool.svg), [the editor's page](images/architecture-files-4-frontend-editor.svg), [tool servers and root](images/architecture-files-5-mcp-root.svg); how the layers stand on one another is under "Rules".
+The detailed architecture is drawn, and kept in step with what it shows. [overview-detail.svg](images/overview-detail.svg) is the README's picture box for box with the folders and key files each box is. Five pages show the file map by area, one box a directory with each file and its role: [definitions](images/architecture-files-1-definitions.svg), [backend](images/architecture-files-2-backend.svg), [pages of a tool, the notebook and the build](images/architecture-files-3-frontend-tool.svg), [the editor's page](images/architecture-files-4-frontend-editor.svg), [tool servers and root](images/architecture-files-5-mcp-root.svg). They are made, not drawn: `node backend/architecture/draw.ts` writes them -- the pages from the rows below (`filePages.ts`), the overview from the boxes written down in `overviewDetail.ts` and the README's picture -- and `backend/architecture/drawings.test.ts` holds that each is what that makes now. So a row added, moved or reworded below, a folder of a box, or a change of the README's colours fails there until `draw.ts` has been run; the test also holds every folder and key file the overview names to the tree, and the folders of each box to the table of that box under "The overview, block by block". How the layers stand on one another is under "Rules".
 
 Where each source file is and what it does: one row a file, by area. A kind of node or block has the same set of files in several
 places (the faces under "Elements"); those are one row each, written as a pattern -- `<kind>` is the kind's folder name
@@ -284,7 +284,10 @@ places (the faces under "Elements"); those are one row each, written as a patter
 
 | File | What it does |
 |---|---|
+| `backend/architecture/draw.ts` | Draws the detailed architecture: `node backend/architecture/draw.ts` writes `docs/images/overview-detail.svg` and the five file pages, `--check` only says which are out of date. |
+| `backend/architecture/filePages.ts` | The five file pages, drawn from the rows of "The files": one box a directory, each file with its role. |
 | `backend/architecture/filesUnder.ts` | Every file under a folder, for the structure tests: no hidden names, no links followed, nothing that vanishes mid-read. |
+| `backend/architecture/overviewDetail.ts` | The README's picture with the folders and key files of each box: the boxes written down as paths, and how they are drawn. |
 | `backend/authoring/ask.ts` | What writing with a model has in common: the transcript of its calls, how a fenced answer is read, how a writing fails. |
 | `backend/authoring/product.ts` | Switching from one product to the other: find the one that is running, or start it, and say where it is |
 | `backend/authoring/productApi.ts` | The wire between a product and the page it serves, for the way to the other product: who this is, and a switch to the other |
@@ -616,6 +619,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | No shell compares a node type or block kind with a literal. | both `shells.test.ts` |
 | `graph/`, `gui/` and `backend/` use no TypeScript that needs a compiler (enums, parameter properties, namespaces, decorators). | `backend/architecture/strippable.test.ts` |
 | All imports are relative; there are no aliases. | read off the imports |
+| The detailed drawings (`images/overview-detail.svg`, `images/architecture-files-*.svg`) are what the document, the tree and the README's picture make of them, and name only folders and files that exist. | `backend/architecture/drawings.test.ts` |
 
 ## Elements
 

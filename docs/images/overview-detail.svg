@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1640" height="1447" viewBox="0 0 1640 1447" role="img" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><title>Tell &amp; Wire: the README's picture with the folders and key files of each box</title><desc>The same three bands as the README's overview: design (the editor and the notebook over common code, with an AI that writes), the project as plain files, and use (a browser, a session host, a graph execution engine, an AI at run time). Each box carries the folders it is and its key files.</desc><style>
-  :root { --chg: #b45309; --bg: #ffffff; --ink: #1f2937; --soft: #6b7280; --line: #9ca3af; --band: #f6f7f9; --ship-fill: #ccebe5; --ship-edge: #0f766e; --ship-ink: #064e3b; --deep-fill: #0f766e; --deep-ink: #ffffff; --note-fill: #fde9a8; --note-ink: #4a3b05; --ai-fill: #ddd0f2; --ai-edge: #6d3fb5; --ai-ink: #2e1065; --lang: #dbeafe; --edit-fill: #eceff3; --nb-fill: #dcebd8; --nb-edge: #4d7c4a; --nb-ink: #1f3b1d; --arrow: #3b6e8f; }
-  @media (prefers-color-scheme: dark) { :root { --chg: #fbbf24; --bg: #0f172a; --ink: #e5e7eb; --soft: #9ca3af; --line: #4b5563; --band: #162033; --ship-fill: #134e4a; --ship-edge: #5eead4; --ship-ink: #ccfbf1; --deep-fill: #2dd4bf; --deep-ink: #042f2e; --note-fill: #5b4a12; --note-ink: #fef3c7; --ai-fill: #3b2766; --ai-edge: #b79cf0; --ai-ink: #ede9fe; --lang: #1e3a5f; --edit-fill: #1f2937; --nb-fill: #1f3a28; --nb-edge: #86b99a; --nb-ink: #d9f0df; --arrow: #7fb3d5; } }
+  :root { --bg: #ffffff; --ink: #1f2937; --soft: #6b7280; --line: #9ca3af; --band: #f6f7f9; --ship-fill: #ccebe5; --ship-edge: #0f766e; --ship-ink: #064e3b; --deep-fill: #0f766e; --deep-ink: #ffffff; --note-fill: #fde9a8; --note-ink: #4a3b05; --ai-fill: #ddd0f2; --ai-edge: #6d3fb5; --ai-ink: #2e1065; --lang: #dbeafe; --edit-fill: #eceff3; --nb-fill: #dcebd8; --nb-edge: #4d7c4a; --nb-ink: #1f3b1d; --arrow: #3b6e8f; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f172a; --ink: #e5e7eb; --soft: #9ca3af; --line: #4b5563; --band: #162033; --ship-fill: #134e4a; --ship-edge: #5eead4; --ship-ink: #ccfbf1; --deep-fill: #2dd4bf; --deep-ink: #042f2e; --note-fill: #5b4a12; --note-ink: #fef3c7; --ai-fill: #3b2766; --ai-edge: #b79cf0; --ai-ink: #ede9fe; --lang: #1e3a5f; --edit-fill: #1f2937; --nb-fill: #1f3a28; --nb-edge: #86b99a; --nb-ink: #d9f0df; --arrow: #7fb3d5; } }
   .bg { fill: var(--bg); }
   .band { fill: var(--band); stroke: var(--line); stroke-width: 0.6; }
   .editband { stroke-dasharray: 5 4; }
@@ -31,10 +31,8 @@
   .pth { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; font-weight: 700; fill: var(--ink); }
   .fil { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; fill: var(--ink); }
   .rol { font-size: 11px; fill: var(--soft); }
-  .chg { font-size: 11px; font-weight: 600; fill: var(--chg); }
   .on-deep { fill: var(--deep-ink); }
-  .sub { fill: #ffffff; stroke: var(--soft); stroke-width: 0.6; }
-  @media (prefers-color-scheme: dark) { .sub { fill: #0f172a; } }
+  .sub { fill: #ffffff; stroke: var(--soft); stroke-width: 0.6; } @media (prefers-color-scheme: dark) { .sub { fill: #0f172a; } }
 </style><defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9 z" fill="var(--arrow)"/></marker><marker id="b" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M9 1 L1 5 L9 9 z" fill="var(--arrow)"/></marker></defs><rect class="bg" x="0" y="0" width="1640" height="1447"/><rect class="band editband" x="20" y="16" width="1600" height="886" rx="12"/>
 <rect class="band" x="20" y="924" width="1600" height="174" rx="12"/>
 <rect class="band" x="20" y="1122" width="1600" height="283" rx="12"/>
@@ -142,19 +140,20 @@
 <text class="rol" x="668" y="839">switching products</text>
 <rect class="sub" x="938" y="672" width="280" height="176" rx="8"/>
 <text class="t" x="949" y="699">Start-up, structure</text>
-<text class="pth" x="949" y="718">backend/cli/  backend/architecture/</text>
+<text class="pth" x="949" y="718">backend/{cli,architecture}/</text>
 <text class="fil" x="949" y="734">cli/cli.ts, main.ts</text>
 <text class="rol" x="960" y="749">run a graph, or serve it</text>
 <text class="fil" x="949" y="764">architecture/*.test.ts</text>
 <text class="rol" x="960" y="779">the picture, held by tests</text>
 <text class="s" x="62" y="868">host and runtime: the code of the USE band below, carried by every package</text>
-<rect class="ai" x="1290" y="706.5" width="300" height="99" rx="8"/>
-<text class="ai-t" x="1301" y="733.5">AI that writes</text>
-<text class="ai-s" x="1301" y="750.5">local model or API</text>
-<text class="fil" x="1301" y="766.5">asked through</text><text class="rol" x="1396.1" y="766.5">authoring/ask.ts</text>
-<text class="fil" x="1301" y="781.5">and the one client</text><text class="rol" x="1429.6" y="781.5">runtime/ai/providers.ts</text>
-<text class="fil" x="1301" y="796.5">written into</text><text class="rol" x="1389.4" y="796.5">nodes/&lt;id&gt;/ and history.md</text>
-<text class="s" x="1440" y="698.5" text-anchor="middle">writes code and prompts</text>
+<rect class="ai" x="1290" y="699" width="300" height="114" rx="8"/>
+<text class="ai-t" x="1301" y="726">AI that writes</text>
+<text class="ai-s" x="1301" y="743">local model or API</text>
+<text class="fil" x="1301" y="759">asked through</text><text class="rol" x="1396.1" y="759">backend/authoring/ask.ts</text>
+<text class="fil" x="1301" y="774">and the one client</text>
+<text class="rol" x="1312" y="789">backend/deployment/runtime/ai/providers.ts</text>
+<text class="fil" x="1301" y="804">written into</text><text class="rol" x="1389.4" y="804">nodes/&lt;id&gt;/ and history.md</text>
+<text class="s" x="1440" y="691" text-anchor="middle">writes code and prompts</text>
 <path class="arr" d="M1290 754 H1234"/>
 <path class="arr" d="M205 220 V250"/><path class="arr" d="M225 250 V220"/>
 <path class="arr" d="M547 220 V250"/><path class="arr" d="M567 250 V220"/>
@@ -178,7 +177,7 @@
 <text class="note-t" x="871" y="985">One folder per node</text>
 <text class="note-s" x="871" y="1002">what it does  input.js  output.js  code.js or prompt.md</text>
 <text class="fil" x="871" y="1018">format: graph/files/definition.ts, logic.ts,</text><text class="rol" x="1173.8" y="1018"></text>
-<text class="fil" x="871" y="1033">prompts.ts; history.md: authoring/history.ts</text><text class="rol" x="1173.8" y="1033"></text>
+<text class="fil" x="871" y="1033">prompts.ts; history.md: graph/authoring/history.ts</text><text class="rol" x="1214" y="1033"></text>
 <rect class="edit" x="1350" y="958" width="240" height="84" rx="8"/>
 <text class="t" x="1361" y="985">Your editor, git</text>
 <text class="s" x="1361" y="1002">read, change, diff any file</text>
@@ -234,7 +233,6 @@
 <path class="arr" d="M792 1218 H838"/><path class="arr" d="M838 1244 H792"/>
 <text class="s" x="818" y="1212" text-anchor="middle">run</text><text class="s" x="818" y="1262" text-anchor="middle">result</text>
 <path class="arr2" d="M1202 1230 H1248"/>
-<path class="arr" d="M225 1042 V1166" style="display:none"/>
 <path class="arr" d="M75 1042 V1166"/>
 <path class="arr" d="M960 1042 V1166"/>
 <path class="arr" d="M1090 1042 V1166"/>
