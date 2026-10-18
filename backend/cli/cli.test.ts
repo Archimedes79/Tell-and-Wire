@@ -5,6 +5,7 @@ import { isAbsolute, join } from 'node:path';
 import { parseGraph } from '../../graph/graph.ts';
 import { writeProject } from '../authoring/write.ts';
 import { main, parseArgs } from './cli.ts';
+import { appWindowCommands } from './appWindow.ts';
 
 describe('parseArgs', () => {
   it('takes the graph, repeats --value into values by name (a dotted name inside another), takes an --event, and refuses a flag it does not know', () => {
@@ -85,4 +86,21 @@ describe('run-node', () => {
       await rm(dir, { recursive: true, force: true });
     }
   }, 30_000);
+});
+
+describe('showing a tool as a program', () => {
+  const none = () => false;
+  it('opens Edge, then Chrome, as a window of its own where they are, and names no browser where none is', () => {
+    // Folders without separators of their own: the path is joined as the system running the test joins it.
+    const env = { 'ProgramFiles(x86)': 'pf86', ProgramFiles: 'pf', LOCALAPPDATA: 'local' };
+    const there = (path: string) => (path.endsWith('msedge.exe') && path.includes('pf86')) || (path.endsWith('chrome.exe') && path.includes('local'));
+    const windows = appWindowCommands('http://127.0.0.1:8000', 'win32', env, there);
+    expect(windows.map((one) => /(msedge|chrome)\.exe$/.exec(one.command)?.[1])).toEqual(['msedge', 'chrome']);
+    expect(windows[0].args).toEqual(['--app=http://127.0.0.1:8000']);
+    expect(appWindowCommands('http://x', 'win32', env, none)).toEqual([]);
+    expect(appWindowCommands('http://x', 'darwin', {}, (path) => path === '/Applications/Google Chrome.app')).toEqual([
+      { command: 'open', args: ['-na', 'Google Chrome', '--args', '--app=http://x'] },
+    ]);
+    expect(appWindowCommands('http://x', 'linux', {}, none).map((one) => one.command)).toContain('chromium');
+  });
 });

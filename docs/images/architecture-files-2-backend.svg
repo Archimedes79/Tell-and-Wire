@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1392" viewBox="0 0 1392 1760" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1392" viewBox="0 0 1392 1779" role="img">
 <title>The backend: backend/</title>
-<desc>deployment/ runs a tool and is carried by every package; authoring/, cli/ and architecture/ write and check; editor/ and notebook/ are the two products' servers. 75 rows: each file with what it does.</desc>
+<desc>deployment/ runs a tool and is carried by every package; authoring/, cli/ and architecture/ write and check; editor/ and notebook/ are the two products' servers. 76 rows: each file with what it does.</desc>
 <style>svg{font-family:Segoe UI,Helvetica,Arial,sans-serif}.bg{fill:#ffffff}.h{font-size:19px;font-weight:600;fill:#1f1e1d}.n{font-size:12.5px;fill:#5f5e5a}.d{font-size:13px;font-weight:600;fill:#712B13}.f{font-family:Consolas,Menlo,monospace;font-size:11.5px;font-weight:600;fill:#1f1e1d}.r{font-size:11px;fill:#5f5e5a}.box{fill:#FAECE7;stroke:#993C1D;stroke-width:.6}.row{stroke:#993C1D;stroke-opacity:.25}@media (prefers-color-scheme:dark){.bg{fill:#1c1c1a}.h,.f{fill:#e8e6dc}.n,.r{fill:#b4b2a9}.d{fill:#F5C4B3}.box{fill:#262624;stroke:#F0997B}.row{stroke:#F0997B}}</style>
-<rect class="bg" width="1392" height="1760"/>
+<rect class="bg" width="1392" height="1779"/>
 <text class="h" x="20" y="34">The backend: backend/</text>
-<text class="n" x="20" y="54">deployment/ runs a tool and is carried by every package; authoring/, cli/ and architecture/ write and check; editor/ and notebook/ are the two products' servers. (75 rows)</text>
+<text class="n" x="20" y="54">deployment/ runs a tool and is carried by every package; authoring/, cli/ and architecture/ write and check; editor/ and notebook/ are the two products' servers. (76 rows)</text>
 <g>
 <rect class="box" x="20" y="78" width="440" height="260.5" rx="9"/>
 <text class="d" x="34" y="100">backend/architecture/</text>
@@ -44,71 +44,75 @@
 <text class="r" x="498" y="294">A graph written as a folder: the project, saved</text>
 </g>
 <g>
-<rect class="box" x="932" y="78" width="440" height="114" rx="9"/>
+<rect class="box" x="932" y="78" width="440" height="165.5" rx="9"/>
 <text class="d" x="946" y="100">backend/cli/</text>
-<text class="f" x="946" y="125">cli.ts</text>
-<text class="r" x="954" y="139.5">Running a graph from a command line</text>
-<line class="row" x1="946" x2="1358" y1="146" y2="146"/>
-<text class="f" x="946" y="162">main.ts</text>
-<text class="r" x="954" y="176.5">The executable entry point: node backend/cli/main.ts graph.json</text>
+<text class="f" x="946" y="125">appWindow.ts</text>
+<text class="r" x="954" y="139.5">Shows a served tool as a window of its own (Edge or Chrome, --app), else in the</text>
+<text class="r" x="954" y="154">default browser</text>
+<line class="row" x1="946" x2="1358" y1="160.5" y2="160.5"/>
+<text class="f" x="946" y="176.5">cli.ts</text>
+<text class="r" x="954" y="191">Running a graph from a command line</text>
+<line class="row" x1="946" x2="1358" y1="197.5" y2="197.5"/>
+<text class="f" x="946" y="213.5">main.ts</text>
+<text class="r" x="954" y="228">The executable entry point: node backend/cli/main.ts graph.json</text>
 </g>
 <g>
-<rect class="box" x="932" y="208" width="440" height="77" rx="9"/>
-<text class="d" x="946" y="230">backend/deployment/gui/</text>
-<text class="f" x="946" y="255">hooks.ts</text>
-<text class="r" x="954" y="269.5">What a GUI does around the graph in use, as the host asks it</text>
+<rect class="box" x="932" y="259.5" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="281.5">backend/deployment/gui/</text>
+<text class="f" x="946" y="306.5">hooks.ts</text>
+<text class="r" x="954" y="321">What a GUI does around the graph in use, as the host asks it</text>
 </g>
 <g>
-<rect class="box" x="932" y="301" width="440" height="497" rx="9"/>
-<text class="d" x="946" y="323">backend/deployment/host/</text>
-<text class="f" x="946" y="348">api.ts</text>
-<text class="r" x="954" y="362.5">The wire between a GUI and the server: the host's routes, and what travels each</text>
-<text class="r" x="954" y="377">way</text>
-<line class="row" x1="946" x2="1358" y1="383.5" y2="383.5"/>
-<text class="f" x="946" y="399.5">browse.ts</text>
-<text class="r" x="954" y="414">Walking the machine's files, for a picker</text>
+<rect class="box" x="476" y="325.5" width="440" height="497" rx="9"/>
+<text class="d" x="490" y="347.5">backend/deployment/host/</text>
+<text class="f" x="490" y="372.5">api.ts</text>
+<text class="r" x="498" y="387">The wire between a GUI and the server: the host's routes, and what travels each</text>
+<text class="r" x="498" y="401.5">way</text>
+<line class="row" x1="490" x2="902" y1="408" y2="408"/>
+<text class="f" x="490" y="424">browse.ts</text>
+<text class="r" x="498" y="438.5">Walking the machine's files, for a picker</text>
+<line class="row" x1="490" x2="902" y1="445" y2="445"/>
+<text class="f" x="490" y="461">chat.ts</text>
+<text class="r" x="498" y="475.5">A chat block's two asks of the model besides a round: the window it has, and a</text>
+<text class="r" x="498" y="490">long conversation shortened</text>
+<line class="row" x1="490" x2="902" y1="496.5" y2="496.5"/>
+<text class="f" x="490" y="512.5">clock.ts</text>
+<text class="r" x="498" y="527">The clock of a tool that runs by itself: what its start points start by</text>
+<text class="r" x="498" y="541.5">themselves, one round after another</text>
+<line class="row" x1="490" x2="902" y1="548" y2="548"/>
+<text class="f" x="490" y="564">find.ts</text>
+<text class="r" x="498" y="578.5">Finding a file that was dropped onto a page: a browser hands a page the name and</text>
+<text class="r" x="498" y="593">size of a dropped file, never where it is</text>
+<line class="row" x1="490" x2="902" y1="599.5" y2="599.5"/>
+<text class="f" x="490" y="615.5">http.ts</text>
+<text class="r" x="498" y="630">The few HTTP things a route handler needs, and nothing that knows a route</text>
+<line class="row" x1="490" x2="902" y1="636.5" y2="636.5"/>
+<text class="f" x="490" y="652.5">lifecycle.ts</text>
+<text class="r" x="498" y="667">What a served tool holds while it runs, and how it lets go of it</text>
+<line class="row" x1="490" x2="902" y1="673.5" y2="673.5"/>
+<text class="f" x="490" y="689.5">port.js</text>
+<text class="r" x="498" y="704">The reference client of the GUI port (port.ts, "The GUI port" in</text>
+<text class="r" x="498" y="718.5">docs/architecture.md): what a page written by hand uses to meet its tool</text>
+<line class="row" x1="490" x2="902" y1="725" y2="725"/>
+<text class="f" x="490" y="741">port.ts</text>
+<text class="r" x="498" y="755.5">The GUI port: the connection points a page has to the tool it shows</text>
+<line class="row" x1="490" x2="902" y1="762" y2="762"/>
+<text class="f" x="490" y="778">rounds.ts</text>
+<text class="r" x="498" y="792.5">The rounds of one session: one at a time, watched while they go, stopped when</text>
+<text class="r" x="498" y="807">asked</text>
+</g>
+<g>
+<rect class="box" x="932" y="352.5" width="440" height="165.5" rx="9"/>
+<text class="d" x="946" y="374.5">backend/deployment/host (cont.)/</text>
+<text class="f" x="946" y="399.5">serve.ts</text>
+<text class="r" x="954" y="414">The server: the built gui or editor, and the routes of api.ts</text>
 <line class="row" x1="946" x2="1358" y1="420.5" y2="420.5"/>
-<text class="f" x="946" y="436.5">chat.ts</text>
-<text class="r" x="954" y="451">A chat block's two asks of the model besides a round: the window it has, and a</text>
-<text class="r" x="954" y="465.5">long conversation shortened</text>
-<line class="row" x1="946" x2="1358" y1="472" y2="472"/>
-<text class="f" x="946" y="488">clock.ts</text>
-<text class="r" x="954" y="502.5">The clock of a tool that runs by itself: what its start points start by</text>
-<text class="r" x="954" y="517">themselves, one round after another</text>
-<line class="row" x1="946" x2="1358" y1="523.5" y2="523.5"/>
-<text class="f" x="946" y="539.5">find.ts</text>
-<text class="r" x="954" y="554">Finding a file that was dropped onto a page: a browser hands a page the name and</text>
-<text class="r" x="954" y="568.5">size of a dropped file, never where it is</text>
-<line class="row" x1="946" x2="1358" y1="575" y2="575"/>
-<text class="f" x="946" y="591">http.ts</text>
-<text class="r" x="954" y="605.5">The few HTTP things a route handler needs, and nothing that knows a route</text>
-<line class="row" x1="946" x2="1358" y1="612" y2="612"/>
-<text class="f" x="946" y="628">lifecycle.ts</text>
-<text class="r" x="954" y="642.5">What a served tool holds while it runs, and how it lets go of it</text>
-<line class="row" x1="946" x2="1358" y1="649" y2="649"/>
-<text class="f" x="946" y="665">port.js</text>
-<text class="r" x="954" y="679.5">The reference client of the GUI port (port.ts, "The GUI port" in</text>
-<text class="r" x="954" y="694">docs/architecture.md): what a page written by hand uses to meet its tool</text>
-<line class="row" x1="946" x2="1358" y1="700.5" y2="700.5"/>
-<text class="f" x="946" y="716.5">port.ts</text>
-<text class="r" x="954" y="731">The GUI port: the connection points a page has to the tool it shows</text>
-<line class="row" x1="946" x2="1358" y1="737.5" y2="737.5"/>
-<text class="f" x="946" y="753.5">rounds.ts</text>
-<text class="r" x="954" y="768">The rounds of one session: one at a time, watched while they go, stopped when</text>
-<text class="r" x="954" y="782.5">asked</text>
-</g>
-<g>
-<rect class="box" x="476" y="325.5" width="440" height="165.5" rx="9"/>
-<text class="d" x="490" y="347.5">backend/deployment/host (cont.)/</text>
-<text class="f" x="490" y="372.5">serve.ts</text>
-<text class="r" x="498" y="387">The server: the built gui or editor, and the routes of api.ts</text>
-<line class="row" x1="490" x2="902" y1="393.5" y2="393.5"/>
-<text class="f" x="490" y="409.5">session.ts</text>
-<text class="r" x="498" y="424">The graph in use, and what using it leaves behind</text>
-<line class="row" x1="490" x2="902" y1="430.5" y2="430.5"/>
-<text class="f" x="490" y="446.5">states.ts</text>
-<text class="r" x="498" y="461">States saved under a name: what a person or a memory node keeps, written out on</text>
-<text class="r" x="498" y="475.5">request and read back on request</text>
+<text class="f" x="946" y="436.5">session.ts</text>
+<text class="r" x="954" y="451">The graph in use, and what using it leaves behind</text>
+<line class="row" x1="946" x2="1358" y1="457.5" y2="457.5"/>
+<text class="f" x="946" y="473.5">states.ts</text>
+<text class="r" x="954" y="488">States saved under a name: what a person or a memory node keeps, written out on</text>
+<text class="r" x="954" y="502.5">request and read back on request</text>
 </g>
 <g>
 <rect class="box" x="20" y="354.5" width="440" height="128.5" rx="9"/>
@@ -161,170 +165,170 @@
 <text class="r" x="42" y="988.5">stdout, one JSON object per line</text>
 </g>
 <g>
-<rect class="box" x="476" y="507" width="440" height="217" rx="9"/>
-<text class="d" x="490" y="529">backend/deployment/runtime/ai/</text>
-<text class="f" x="490" y="554">providers.ts</text>
-<text class="r" x="498" y="568.5">The model clients: a table of OpenAI-compatible providers, plus those with a shape</text>
-<text class="r" x="498" y="583">of their own.</text>
-<line class="row" x1="490" x2="902" y1="589.5" y2="589.5"/>
-<text class="f" x="490" y="605.5">settings.ts</text>
-<text class="r" x="498" y="620">Where the model configuration comes from</text>
-<line class="row" x1="490" x2="902" y1="626.5" y2="626.5"/>
-<text class="f" x="490" y="642.5">tools.ts</text>
-<text class="r" x="498" y="657">Tools for a model, from MCP servers</text>
-<line class="row" x1="490" x2="902" y1="663.5" y2="663.5"/>
-<text class="f" x="490" y="679.5">window.ts</text>
-<text class="r" x="498" y="694">How much a model takes in at once, and where that is known from: the person, the</text>
-<text class="r" x="498" y="708.5">provider, or a guess</text>
+<rect class="box" x="932" y="534" width="440" height="217" rx="9"/>
+<text class="d" x="946" y="556">backend/deployment/runtime/ai/</text>
+<text class="f" x="946" y="581">providers.ts</text>
+<text class="r" x="954" y="595.5">The model clients: a table of OpenAI-compatible providers, plus those with a shape</text>
+<text class="r" x="954" y="610">of their own.</text>
+<line class="row" x1="946" x2="1358" y1="616.5" y2="616.5"/>
+<text class="f" x="946" y="632.5">settings.ts</text>
+<text class="r" x="954" y="647">Where the model configuration comes from</text>
+<line class="row" x1="946" x2="1358" y1="653.5" y2="653.5"/>
+<text class="f" x="946" y="669.5">tools.ts</text>
+<text class="r" x="954" y="684">Tools for a model, from MCP servers</text>
+<line class="row" x1="946" x2="1358" y1="690.5" y2="690.5"/>
+<text class="f" x="946" y="706.5">window.ts</text>
+<text class="r" x="954" y="721">How much a model takes in at once, and where that is known from: the person, the</text>
+<text class="r" x="954" y="735.5">provider, or a guess</text>
 </g>
 <g>
-<rect class="box" x="476" y="740" width="440" height="77" rx="9"/>
-<text class="d" x="490" y="762">backend/deployment/runtime/ai/fixtures/</text>
-<text class="f" x="490" y="787">echo-mcp-server.mjs</text>
-<text class="r" x="498" y="801.5">A tool server small enough to read in one go, for tools.test.ts</text>
+<rect class="box" x="932" y="767" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="789">backend/deployment/runtime/ai/fixtures/</text>
+<text class="f" x="946" y="814">echo-mcp-server.mjs</text>
+<text class="r" x="954" y="828.5">A tool server small enough to read in one go, for tools.test.ts</text>
 </g>
 <g>
-<rect class="box" x="932" y="814" width="440" height="165.5" rx="9"/>
-<text class="d" x="946" y="836">backend/deployment/runtime/nodes/</text>
-<text class="f" x="946" y="861">NodeRunner.ts</text>
-<text class="r" x="954" y="875.5">What a node does when the graph runs</text>
-<line class="row" x1="946" x2="1358" y1="882" y2="882"/>
-<text class="f" x="946" y="898">body.ts</text>
-<text class="r" x="954" y="912.5">How a body -- the JavaScript of a code node, written by a person or a model -- is</text>
-<text class="r" x="954" y="927">run.</text>
-<line class="row" x1="946" x2="1358" y1="933.5" y2="933.5"/>
-<text class="f" x="946" y="949.5">registry.ts</text>
-<text class="r" x="954" y="964">The registry of runners: what runs each kind of node in a deployed tool</text>
+<rect class="box" x="476" y="838.5" width="440" height="165.5" rx="9"/>
+<text class="d" x="490" y="860.5">backend/deployment/runtime/nodes/</text>
+<text class="f" x="490" y="885.5">NodeRunner.ts</text>
+<text class="r" x="498" y="900">What a node does when the graph runs</text>
+<line class="row" x1="490" x2="902" y1="906.5" y2="906.5"/>
+<text class="f" x="490" y="922.5">body.ts</text>
+<text class="r" x="498" y="937">How a body -- the JavaScript of a code node, written by a person or a model -- is</text>
+<text class="r" x="498" y="951.5">run.</text>
+<line class="row" x1="490" x2="902" y1="958" y2="958"/>
+<text class="f" x="490" y="974">registry.ts</text>
+<text class="r" x="498" y="988.5">The registry of runners: what runs each kind of node in a deployed tool</text>
 </g>
 <g>
-<rect class="box" x="476" y="833" width="440" height="77" rx="9"/>
-<text class="d" x="490" y="855">backend/deployment/runtime/nodes/&lt;kind&gt;/</text>
-<text class="f" x="490" y="880">&lt;Kind&gt;NodeRunner.ts</text>
-<text class="r" x="498" y="894.5">The runner of each node kind: what executes it in a round.</text>
+<rect class="box" x="932" y="860" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="882">backend/deployment/runtime/nodes/&lt;kind&gt;/</text>
+<text class="f" x="946" y="907">&lt;Kind&gt;NodeRunner.ts</text>
+<text class="r" x="954" y="921.5">The runner of each node kind: what executes it in a round.</text>
 </g>
 <g>
-<rect class="box" x="476" y="926" width="440" height="114" rx="9"/>
-<text class="d" x="490" y="948">backend/deployment/runtime/nodes/ai/</text>
-<text class="f" x="490" y="973">ask.ts</text>
-<text class="r" x="498" y="987.5">Asking a model, as a node does it -- and as a body may ask for it to be done</text>
-<line class="row" x1="490" x2="902" y1="994" y2="994"/>
-<text class="f" x="490" y="1010">prompt.ts</text>
-<text class="r" x="498" y="1024.5">What an ai node actually sends, put together in one place</text>
+<rect class="box" x="932" y="953" width="440" height="114" rx="9"/>
+<text class="d" x="946" y="975">backend/deployment/runtime/nodes/ai/</text>
+<text class="f" x="946" y="1000">ask.ts</text>
+<text class="r" x="954" y="1014.5">Asking a model, as a node does it -- and as a body may ask for it to be done</text>
+<line class="row" x1="946" x2="1358" y1="1021" y2="1021"/>
+<text class="f" x="946" y="1037">prompt.ts</text>
+<text class="r" x="954" y="1051.5">What an ai node actually sends, put together in one place</text>
 </g>
 <g>
-<rect class="box" x="932" y="995.5" width="440" height="77" rx="9"/>
-<text class="d" x="946" y="1017.5">backend/deployment/runtime/test/</text>
-<text class="f" x="946" y="1042.5">fakes.ts</text>
-<text class="r" x="954" y="1057">What tests stand a run on when the world it runs in is not what they are about</text>
+<rect class="box" x="20" y="1020" width="440" height="77" rx="9"/>
+<text class="d" x="34" y="1042">backend/deployment/runtime/test/</text>
+<text class="f" x="34" y="1067">fakes.ts</text>
+<text class="r" x="42" y="1081.5">What tests stand a run on when the world it runs in is not what they are about</text>
 </g>
 <g>
-<rect class="box" x="20" y="1020" width="440" height="239.5" rx="9"/>
-<text class="d" x="34" y="1042">backend/editor/assistant/</text>
-<text class="f" x="34" y="1067">confine.ts</text>
-<text class="r" x="42" y="1081.5">What the MCP server's tools may touch, and what they may say</text>
-<line class="row" x1="34" x2="446" y1="1088" y2="1088"/>
-<text class="f" x="34" y="1104">server.ts</text>
-<text class="r" x="42" y="1118.5">Tell &amp; Wire, offered to an assistant outside it</text>
-<line class="row" x1="34" x2="446" y1="1125" y2="1125"/>
-<text class="f" x="34" y="1141">spec.ts</text>
-<text class="r" x="42" y="1155.5">What the MCP server's nine tools say of themselves: limits, descriptions, and the</text>
-<text class="r" x="42" y="1170">guide to writing a graph.</text>
-<line class="row" x1="34" x2="446" y1="1176.5" y2="1176.5"/>
-<text class="f" x="34" y="1192.5">tools.ts</text>
-<text class="r" x="42" y="1207">The nine tools, over one folder: what each does, and nothing of how it is reached</text>
-<line class="row" x1="34" x2="446" y1="1213.5" y2="1213.5"/>
-<text class="f" x="34" y="1229.5">transport.ts</text>
-<text class="r" x="42" y="1244">stdio: JSON-RPC, one message per line</text>
+<rect class="box" x="476" y="1020" width="440" height="239.5" rx="9"/>
+<text class="d" x="490" y="1042">backend/editor/assistant/</text>
+<text class="f" x="490" y="1067">confine.ts</text>
+<text class="r" x="498" y="1081.5">What the MCP server's tools may touch, and what they may say</text>
+<line class="row" x1="490" x2="902" y1="1088" y2="1088"/>
+<text class="f" x="490" y="1104">server.ts</text>
+<text class="r" x="498" y="1118.5">Tell &amp; Wire, offered to an assistant outside it</text>
+<line class="row" x1="490" x2="902" y1="1125" y2="1125"/>
+<text class="f" x="490" y="1141">spec.ts</text>
+<text class="r" x="498" y="1155.5">What the MCP server's nine tools say of themselves: limits, descriptions, and the</text>
+<text class="r" x="498" y="1170">guide to writing a graph.</text>
+<line class="row" x1="490" x2="902" y1="1176.5" y2="1176.5"/>
+<text class="f" x="490" y="1192.5">tools.ts</text>
+<text class="r" x="498" y="1207">The nine tools, over one folder: what each does, and nothing of how it is reached</text>
+<line class="row" x1="490" x2="902" y1="1213.5" y2="1213.5"/>
+<text class="f" x="490" y="1229.5">transport.ts</text>
+<text class="r" x="498" y="1244">stdio: JSON-RPC, one message per line</text>
 </g>
 <g>
-<rect class="box" x="476" y="1056" width="440" height="254" rx="9"/>
-<text class="d" x="490" y="1078">backend/editor/graph/</text>
-<text class="f" x="490" y="1103">brief.ts</text>
-<text class="r" x="498" y="1117.5">The variables of a node's prompts, filled from what the node and the graph hold.</text>
-<line class="row" x1="490" x2="902" y1="1124" y2="1124"/>
-<text class="f" x="490" y="1140">generate.ts</text>
-<text class="r" x="498" y="1154.5">Writing a node's files with a model</text>
-<line class="row" x1="490" x2="902" y1="1161" y2="1161"/>
-<text class="f" x="490" y="1177">generateGraph.ts</text>
-<text class="r" x="498" y="1191.5">Writing a whole graph with a model: one designed from a description, or the graph</text>
-<text class="r" x="498" y="1206">there is, changed as asked</text>
-<line class="row" x1="490" x2="902" y1="1212.5" y2="1212.5"/>
-<text class="f" x="490" y="1228.5">generatePrompts.ts</text>
-<text class="r" x="498" y="1243">What the model is told when ✨ writes a node's files, and when it designs or</text>
-<text class="r" x="498" y="1257.5">changes a whole graph: the prose around what the node and the graph hold</text>
-<line class="row" x1="490" x2="902" y1="1264" y2="1264"/>
-<text class="f" x="490" y="1280">graphPrompt.ts</text>
-<text class="r" x="498" y="1294.5">What the model is told before it designs a whole graph</text>
+<rect class="box" x="932" y="1083" width="440" height="254" rx="9"/>
+<text class="d" x="946" y="1105">backend/editor/graph/</text>
+<text class="f" x="946" y="1130">brief.ts</text>
+<text class="r" x="954" y="1144.5">The variables of a node's prompts, filled from what the node and the graph hold.</text>
+<line class="row" x1="946" x2="1358" y1="1151" y2="1151"/>
+<text class="f" x="946" y="1167">generate.ts</text>
+<text class="r" x="954" y="1181.5">Writing a node's files with a model</text>
+<line class="row" x1="946" x2="1358" y1="1188" y2="1188"/>
+<text class="f" x="946" y="1204">generateGraph.ts</text>
+<text class="r" x="954" y="1218.5">Writing a whole graph with a model: one designed from a description, or the graph</text>
+<text class="r" x="954" y="1233">there is, changed as asked</text>
+<line class="row" x1="946" x2="1358" y1="1239.5" y2="1239.5"/>
+<text class="f" x="946" y="1255.5">generatePrompts.ts</text>
+<text class="r" x="954" y="1270">What the model is told when ✨ writes a node's files, and when it designs or</text>
+<text class="r" x="954" y="1284.5">changes a whole graph: the prose around what the node and the graph hold</text>
+<line class="row" x1="946" x2="1358" y1="1291" y2="1291"/>
+<text class="f" x="946" y="1307">graphPrompt.ts</text>
+<text class="r" x="954" y="1321.5">What the model is told before it designs a whole graph</text>
 </g>
 <g>
-<rect class="box" x="932" y="1088.5" width="440" height="165.5" rx="9"/>
-<text class="d" x="946" y="1110.5">backend/editor/host/</text>
-<text class="f" x="946" y="1135.5">api.ts</text>
-<text class="r" x="954" y="1150">The wire between the editor and the server: the routes only the editor serves, and</text>
-<text class="r" x="954" y="1164.5">what travels</text>
-<line class="row" x1="946" x2="1358" y1="1171" y2="1171"/>
-<text class="f" x="946" y="1187">commands.ts</text>
-<text class="r" x="954" y="1201.5">The commands only the editor has: check, test, one node, --bundle, --mcp.</text>
-<line class="row" x1="946" x2="1358" y1="1208" y2="1208"/>
-<text class="f" x="946" y="1224">routes.ts</text>
-<text class="r" x="954" y="1238.5">What the server answers only while a graph is being built</text>
+<rect class="box" x="20" y="1113" width="440" height="165.5" rx="9"/>
+<text class="d" x="34" y="1135">backend/editor/host/</text>
+<text class="f" x="34" y="1160">api.ts</text>
+<text class="r" x="42" y="1174.5">The wire between the editor and the server: the routes only the editor serves, and</text>
+<text class="r" x="42" y="1189">what travels</text>
+<line class="row" x1="34" x2="446" y1="1195.5" y2="1195.5"/>
+<text class="f" x="34" y="1211.5">commands.ts</text>
+<text class="r" x="42" y="1226">The commands only the editor has: check, test, one node, --bundle, --mcp.</text>
+<line class="row" x1="34" x2="446" y1="1232.5" y2="1232.5"/>
+<text class="f" x="34" y="1248.5">routes.ts</text>
+<text class="r" x="42" y="1263">What the server answers only while a graph is being built</text>
 </g>
 <g>
-<rect class="box" x="932" y="1270" width="440" height="180" rx="9"/>
-<text class="d" x="946" y="1292">backend/editor/project/</text>
-<text class="f" x="946" y="1317">files.ts</text>
-<text class="r" x="954" y="1331.5">The editor's view of the machine's files: finding projects and dropped files, and</text>
-<text class="r" x="954" y="1346">handing a node's file to the editor the person works in</text>
-<line class="row" x1="946" x2="1358" y1="1352.5" y2="1352.5"/>
-<text class="f" x="946" y="1368.5">folderCheck.ts</text>
-<text class="r" x="954" y="1383">What is wrong with a project folder, and the check command's answer</text>
-<line class="row" x1="946" x2="1358" y1="1389.5" y2="1389.5"/>
-<text class="f" x="946" y="1405.5">keptRounds.ts</text>
-<text class="r" x="954" y="1420">A round kept as a test: what it was started with and what it handed back, run</text>
-<text class="r" x="954" y="1434.5">again without asking a model</text>
+<rect class="box" x="476" y="1275.5" width="440" height="180" rx="9"/>
+<text class="d" x="490" y="1297.5">backend/editor/project/</text>
+<text class="f" x="490" y="1322.5">files.ts</text>
+<text class="r" x="498" y="1337">The editor's view of the machine's files: finding projects and dropped files, and</text>
+<text class="r" x="498" y="1351.5">handing a node's file to the editor the person works in</text>
+<line class="row" x1="490" x2="902" y1="1358" y2="1358"/>
+<text class="f" x="490" y="1374">folderCheck.ts</text>
+<text class="r" x="498" y="1388.5">What is wrong with a project folder, and the check command's answer</text>
+<line class="row" x1="490" x2="902" y1="1395" y2="1395"/>
+<text class="f" x="490" y="1411">keptRounds.ts</text>
+<text class="r" x="498" y="1425.5">A round kept as a test: what it was started with and what it handed back, run</text>
+<text class="r" x="498" y="1440">again without asking a model</text>
 </g>
 <g>
-<rect class="box" x="20" y="1275.5" width="440" height="151" rx="9"/>
-<text class="d" x="34" y="1297.5">backend/editor/project/deploy/</text>
-<text class="f" x="34" y="1322.5">bundle.ts</text>
-<text class="r" x="42" y="1337">Handing the graph to someone else</text>
-<line class="row" x1="34" x2="446" y1="1343.5" y2="1343.5"/>
-<text class="f" x="34" y="1359.5">launchers.ts</text>
-<text class="r" x="42" y="1374">The two files that start something from the folder they sit in: run.sh and run.cmd</text>
-<line class="row" x1="34" x2="446" y1="1380.5" y2="1380.5"/>
-<text class="f" x="34" y="1396.5">zip.ts</text>
-<text class="r" x="42" y="1411">A zip archive, written by hand</text>
+<rect class="box" x="20" y="1294.5" width="440" height="151" rx="9"/>
+<text class="d" x="34" y="1316.5">backend/editor/project/deploy/</text>
+<text class="f" x="34" y="1341.5">bundle.ts</text>
+<text class="r" x="42" y="1356">Handing the graph to someone else</text>
+<line class="row" x1="34" x2="446" y1="1362.5" y2="1362.5"/>
+<text class="f" x="34" y="1378.5">launchers.ts</text>
+<text class="r" x="42" y="1393">The two files that start something from the folder they sit in: run.sh and run.cmd</text>
+<line class="row" x1="34" x2="446" y1="1399.5" y2="1399.5"/>
+<text class="f" x="34" y="1415.5">zip.ts</text>
+<text class="r" x="42" y="1430">A zip archive, written by hand</text>
 </g>
 <g>
-<rect class="box" x="476" y="1326" width="440" height="114" rx="9"/>
-<text class="d" x="490" y="1348">backend/editor/settings/</text>
-<text class="f" x="490" y="1373">mcpServers.ts</text>
-<text class="r" x="498" y="1387.5">The tool servers that come with this installation, for the editor</text>
-<line class="row" x1="490" x2="902" y1="1394" y2="1394"/>
-<text class="f" x="490" y="1410">settings.ts</text>
-<text class="r" x="498" y="1424.5">The editor's settings dialog, and the one file behind it</text>
+<rect class="box" x="932" y="1353" width="440" height="114" rx="9"/>
+<text class="d" x="946" y="1375">backend/editor/settings/</text>
+<text class="f" x="946" y="1400">mcpServers.ts</text>
+<text class="r" x="954" y="1414.5">The tool servers that come with this installation, for the editor</text>
+<line class="row" x1="946" x2="1358" y1="1421" y2="1421"/>
+<text class="f" x="946" y="1437">settings.ts</text>
+<text class="r" x="954" y="1451.5">The editor's settings dialog, and the one file behind it</text>
 </g>
 <g>
-<rect class="box" x="20" y="1442.5" width="440" height="297.5" rx="9"/>
-<text class="d" x="34" y="1464.5">backend/notebook/</text>
-<text class="f" x="34" y="1489.5">api.ts</text>
-<text class="r" x="42" y="1504">The wire between the notebook and its server: the routes only the notebook's</text>
-<text class="r" x="42" y="1518.5">server answers, and what travels</text>
-<line class="row" x1="34" x2="446" y1="1525" y2="1525"/>
-<text class="f" x="34" y="1541">describe.ts</text>
-<text class="r" x="42" y="1555.5">Windows from a sentence: a tool said in words, or the windows there are changed as</text>
-<text class="r" x="42" y="1570">asked</text>
-<line class="row" x1="34" x2="446" y1="1576.5" y2="1576.5"/>
-<text class="f" x="34" y="1592.5">files.ts</text>
-<text class="r" x="42" y="1607">What the notebook reads and writes of a project besides the project's own files:</text>
-<text class="r" x="42" y="1621.5">nothing, any more</text>
-<line class="row" x1="34" x2="446" y1="1628" y2="1628"/>
-<text class="f" x="34" y="1644">main.ts</text>
-<text class="r" x="42" y="1658.5">The notebook's start file: node backend/notebook/main.ts [--port 8100] [--host</text>
-<text class="r" x="42" y="1673">127.0.0.1]</text>
-<line class="row" x1="34" x2="446" y1="1679.5" y2="1679.5"/>
-<text class="f" x="34" y="1695.5">routes.ts</text>
-<text class="r" x="42" y="1710">The routes of the notebook: open and save a project made of windows, and make</text>
-<text class="r" x="42" y="1724.5">windows from a sentence</text>
+<rect class="box" x="20" y="1461.5" width="440" height="297.5" rx="9"/>
+<text class="d" x="34" y="1483.5">backend/notebook/</text>
+<text class="f" x="34" y="1508.5">api.ts</text>
+<text class="r" x="42" y="1523">The wire between the notebook and its server: the routes only the notebook's</text>
+<text class="r" x="42" y="1537.5">server answers, and what travels</text>
+<line class="row" x1="34" x2="446" y1="1544" y2="1544"/>
+<text class="f" x="34" y="1560">describe.ts</text>
+<text class="r" x="42" y="1574.5">Windows from a sentence: a tool said in words, or the windows there are changed as</text>
+<text class="r" x="42" y="1589">asked</text>
+<line class="row" x1="34" x2="446" y1="1595.5" y2="1595.5"/>
+<text class="f" x="34" y="1611.5">files.ts</text>
+<text class="r" x="42" y="1626">What the notebook reads and writes of a project besides the project's own files:</text>
+<text class="r" x="42" y="1640.5">nothing, any more</text>
+<line class="row" x1="34" x2="446" y1="1647" y2="1647"/>
+<text class="f" x="34" y="1663">main.ts</text>
+<text class="r" x="42" y="1677.5">The notebook's start file: node backend/notebook/main.ts [--port 8100] [--host</text>
+<text class="r" x="42" y="1692">127.0.0.1]</text>
+<line class="row" x1="34" x2="446" y1="1698.5" y2="1698.5"/>
+<text class="f" x="34" y="1714.5">routes.ts</text>
+<text class="r" x="42" y="1729">The routes of the notebook: open and save a project made of windows, and make</text>
+<text class="r" x="42" y="1743.5">windows from a sentence</text>
 </g>
 </svg>

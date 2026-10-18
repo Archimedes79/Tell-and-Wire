@@ -6,7 +6,7 @@
 // generated: the code is copied verbatim, so what a recipient runs is what was tested here, byte
 // for byte.
 //
-// What a recipient needs installed: Node. That is the whole list -- every
+// What a recipient needs installed: Node, unless the bundle carries it (`node/`). That is the whole list -- every
 // written body is JavaScript, so the interpreter that runs the graph runs
 // them too.
 
@@ -266,6 +266,8 @@ export async function writeBundle(
     dataFrom?: string;
     /** The project's own GUI, written by hand (`frontendOf`): carried whole, and served in place of the built one. */
     frontend?: string | null;
+    /** The folder holding Node.js and its LICENSE, where it is not `node/` beside the code (a test). */
+    nodeFrom?: string;
   } = {},
 ): Promise<string[]> {
   // A bundle is something handed to someone else. One of a graph with no nodes
@@ -329,6 +331,15 @@ export async function writeBundle(
     servesGui = true;
   }
 
+  // Node itself, where the editor was downloaded with one (`node/`, with its licence): a tool is handed on with the
+  // program that runs it, and its recipient installs nothing. For the system this was made on -- elsewhere the
+  // launchers find the computer's Node, as they do for a bundle that carries none.
+  const node = await carriedNode(options.nodeFrom ?? join(installFolder(), 'node'));
+  if (node) {
+    await copy(node.binary, `node/${basename(node.binary)}`);
+    await copy(node.license, 'node/LICENSE');
+  }
+
   // The same pair the downloadable package ships (see launchers.ts): from its
   // own folder, with Node checked before it is needed and a window that stays
   // open long enough to read a failure.
@@ -338,7 +349,7 @@ export async function writeBundle(
   // A no-op on Windows; on a Mac or Linux box it is the difference between
   // `./run.sh` and "Permission denied".
   await chmod(resolve(target, 'run.sh'), zipMode('run.sh')!);
-  await put('README.md', readme(name, needs, servesGui, data));
+  await put('README.md', readme(name, needs, servesGui, data, !!node));
 
   // What this is and what is in it: which Tell & Wire it was made by, and every file, so a copy
   // that was saved, moved or unpacked can be checked against it.
@@ -349,7 +360,18 @@ export async function writeBundle(
   return written;
 }
 
-function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carried[]): string {
+/**
+ * The Node.js in *folder* -- its binary and the licence that goes with every copy of it -- or nothing, where there is
+ * no folder, or no licence beside the binary: a copy without its terms is not made.
+ */
+async function carriedNode(folder: string): Promise<{ binary: string; license: string } | undefined> {
+  const license = join(folder, 'LICENSE');
+  if (!existsSync(license)) return undefined;
+  const binary = ['node.exe', 'node'].map((file) => join(folder, file)).find((path) => existsSync(path));
+  return binary ? { binary, license } : undefined;
+}
+
+function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carried[], carriesNode = false): string {
   const lines = [
     `# ${name}`,
     '',
@@ -386,7 +408,12 @@ function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carr
     '## What you need',
     '',
     // What the launchers check before they start: one number, said once.
-    `- **Node ${NODE_MAJOR} or newer.** Nothing to install and nothing to build.`,
+    ...(carriesNode
+      ? [
+        '- **Nothing.** Node.js, which runs it, is in `node/` with its licence (`node/LICENSE`), and the launchers use it.',
+        `  It is the Node of the system this was made on: on another one, install Node ${NODE_MAJOR} or newer, and the launchers use that.`,
+      ]
+      : [`- **Node ${NODE_MAJOR} or newer.** Nothing to install and nothing to build.`]),
     '- Nothing else. Every code node in this graph is JavaScript, so the',
     '  interpreter that runs the graph runs them too.',
   ];

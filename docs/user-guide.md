@@ -30,7 +30,7 @@ The palette on the left of the Graph tab lists them. Click one, or drag it onto 
 |---|---|
 | **Start point** | Where a run begins. Started by the GUI (a block fires it), by a call (a script, the command line, MCP, the graph above) or by itself (when the tool starts, or every `5m`, `2h`, ...). Hands on one package: `{event, values}`. Started by itself, it can also read for the graph, as a file or folder block on a GUI does: one file (its path and content) or the paths of the files in a folder, filtered by file types, optionally with subfolders. |
 | **AI** | Asks a model. Its instructions are `prompt.md`; it answers in text, or in JSON when `output.js` names several outputs. |
-| **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`, and `node.windows` tells it how large the GUI blocks are that show its result (`[{ port, block, kind, label, w, h, width, height }]`, cells and pixels), for code that draws. It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
+| **Code** | Runs `code.js`: a JavaScript `run(inputs)` that returns an object keyed by output. It may ask a model with `await node.llm({ prompt })`, and `node.windows` tells it how large the GUI blocks are that show its result (`[{ port, block, kind, label, w, h, width, height }]`, cells and pixels), for code that draws. It may load files that stand beside it in the node's folder (helpers, a table of rates). It runs sandboxed: it reads the working directory except `ai-settings.json`, writes only the temp folder, starts no program and stops after 10 minutes (`TW_BODY_TIMEOUT_MS`). A file elsewhere reaches it as an input that reads a file path (section 4). |
 | **Data** | A struct kept between rounds: its fields are in `data.json`, and each field is an input and an output of the node. It fills, then forwards: what arrives on a field replaces it, and the struct as it is then goes on to what reads it. A loop goes through a data node: a wire from it to a card in an earlier column reads what it held when the round began. A GUI block can show a field, with no run. |
 | **End point** | Where a run ends: what arrives is the tool's result, under its name. It can also write the value to a file, or each item to a file in a folder. |
 | **Subgraph** | Holds a graph of its own. Its ports are that graph's start and end points. **Open this graph ▸** goes inside. |
@@ -130,6 +130,7 @@ names other ports than the node has.
 | **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
 | **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
+| a file beside `code.js` (code node) | **File**, ✕ | A helper or the data it reads: `.js`, `.mjs`, `.cjs`, `.json`, `.csv` or `.txt`, in the node's folder. **Add file** under the cards takes a name; `code.js` loads it with `require('./tax.js')` or `import './steps.mjs'`, and reads a table with `readFileSync(new URL('./rates.csv', import.meta.url))`. ✨ Code is shown the files, and Check names a file that code.js loads and the node does not have. |
 | **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat -- and above the file -- **Add field** takes a name and what it starts as, by hand, with no AI. |
 | **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. Auto generate writes it together with the fields; left empty, the start stands in. |
 
@@ -376,8 +377,12 @@ node backend/cli/main.ts check my_tool             # what is wrong, without runn
 
 **File → Deploy as zip** downloads a zip; `node backend/cli/main.ts my_tool --bundle ./out`
 writes the same folder. The person who gets it unzips it and starts `run.cmd` or `./run.sh`.
-They need Node 24 or newer and nothing else. With a GUI, the tool opens in the browser on
-port 8000 or the next free one. Without a GUI or a call, it runs once and prints JSON. The bar
+They need nothing installed when you made the tool in the download for their system: that
+download carries Node.js in `node/` with its licence, and Deploy puts the same `node/` into the
+zip. (Made on another system, or from a checkout, the zip has none, and they need Node 24 or
+newer.) With a GUI, the tool opens in a window of its own -- Edge or Chrome without tabs and
+address bar, where one is installed, else a tab of the default browser (`TW_WINDOW=tab` asks for
+the tab) -- on port 8000 or the next free one. Without a GUI or a call, it runs once and prints JSON. The bar
 above the delivered GUI shows the tool's name and its description -- write that for the people who
 use it (**✨ Write it**, on the GUI tab) -- and **⚙ AI Settings** only when the tool calls a model.
 

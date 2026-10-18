@@ -35,9 +35,9 @@ import { isLoopbackHost, portTaken, serve, type ServeOptions } from '../deployme
 import { untilStopped } from '../deployment/host/lifecycle.ts';
 import { dirname, join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
-import { spawn } from 'node:child_process';
 import { after, graphTriggers, parseInterval, type Trigger } from '../../graph/triggers.ts';
 import { messageOf } from '../../graph/errors.ts';
+import { show } from './appWindow.ts';
 
 interface CliOptions {
   graphPath: string;
@@ -316,7 +316,8 @@ export async function runServer(options: CliOptions, given?: Product): Promise<n
   for (const line of await product?.setup?.() ?? []) process.stderr.write(`${line}\n`);
   // Opening a browser is for something a person starts -- a tool they were
   // handed, or the editor -- not for a helper another process started.
-  if (hasGraph || product) await open(url);
+  // A tool is shown as a program of its own, the editor as a page.
+  if (hasGraph || product) await show(url, !product);
   // The server holds the process open until someone asks it to stop. Then the
   // runs in flight are ended rather than abandoned, and the code is returned so
   // the process ends by itself (see main.ts). Should something still hold it
@@ -333,19 +334,6 @@ async function editorProduct(dist: string): Promise<Product> {
     name: 'editor',
     setup: async () => (await import('../editor/settings/settings.ts')).setupLines(),
   };
-}
-
-/** Show the tool, if this machine has something to show it in. */
-async function open(url: string): Promise<void> {
-  // For CI, a container, and a helper another process started: nothing to
-  // open a browser in, and the attempt is only noise.
-  if (process.env.TW_NO_BROWSER) return;
-  const command = process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-  const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url];
-  // A headless machine is a fine place to serve from; the URL is printed. A
-  // missing opener is not thrown but said as an 'error' event, and unheard that
-  // event ended the process -- a container's, which has no xdg-open, at start.
-  spawn(command, args, { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
 }
 
 /**

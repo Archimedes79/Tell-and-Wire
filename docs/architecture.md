@@ -294,6 +294,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/authoring/product.ts` | Switching from one product to the other: find the one that is running, or start it, and say where it is |
 | `backend/authoring/productApi.ts` | The wire between a product and the page it serves, for the way to the other product: who this is, and a switch to the other |
 | `backend/authoring/write.ts` | A graph written as a folder: the project, saved |
+| `backend/cli/appWindow.ts` | Shows a served tool as a window of its own (Edge or Chrome, `--app`), else in the default browser |
 | `backend/cli/cli.ts` | Running a graph from a command line |
 | `backend/cli/main.ts` | The executable entry point: `node backend/cli/main.ts graph.json` |
 

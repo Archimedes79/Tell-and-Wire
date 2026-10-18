@@ -128,4 +128,58 @@ describe('a bundle', () => {
       await rm(built, { recursive: true, force: true });
     }
   });
+
+  it("carries the files beside a code node's code.js, which it loads where it is handed on", async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+    try {
+      const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
+      const graph = parseGraph({
+        metadata: { name: 'Net pay' },
+        nodes: [
+          {
+            id: 'pay', node_type: 'code', label: 'Pay', position: { x: 0, y: 0 }, inputs: [], outputs: [port('net', 'output')],
+            config: { code: "function run() { return { net: require('./tax.js').net(200) + require('./rates.json').bonus }; }", 'file:tax.js': 'module.exports = { net: (gross) => gross * 0.75 };', 'file:rates.json': '{ "bonus": 100 }' },
+          },
+          { id: 'told', node_type: 'end', label: 'Told', position: { x: 300, y: 0 }, inputs: [port('value', 'input')], outputs: [], config: {} },
+        ],
+        edges: [{ id: 'e1', source_node_id: 'pay', source_port_id: 'net', target_node_id: 'told', target_port_id: 'value' }],
+      });
+      await writeBundle(graph, dir);
+      expect(await readFile(join(dir, 'nodes', 'pay', 'tax.js'), 'utf8')).toContain('gross * 0.75');
+      const { code, out } = await run(dir);
+      expect(code).toBe(0);
+      expect(JSON.parse(out).node_results.find((one: { node_id: string }) => one.node_id === 'told').inputs.value).toBe(250);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it('carries Node.js with its licence where the editor has one, and none without the licence', async () => {
+    const graph = parseGraph({
+      metadata: { name: 'Gui' },
+      nodes: [{ id: 'result', node_type: 'end', label: 'result', position: { x: 0, y: 0 }, inputs: [], outputs: [], config: {} }],
+      edges: [],
+    });
+    const node = await mkdtemp(join(tmpdir(), 'tell-and-wire-node-'));
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+    const bare = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+    try {
+      await writeFile(join(node, 'node.exe'), 'a node');
+      const without = await writeBundle(graph, bare, { nodeFrom: node });
+      expect(without.filter((path) => path.startsWith('node/'))).toEqual([]);
+      expect(await readFile(join(bare, 'README.md'), 'utf8')).toContain('Node 24 or newer');
+
+      await writeFile(join(node, 'LICENSE'), 'Node is MIT');
+      const written = await writeBundle(graph, dir, { nodeFrom: node });
+      expect(written).toEqual(expect.arrayContaining(['node/node.exe', 'node/LICENSE']));
+      expect(await readFile(join(dir, 'node', 'LICENSE'), 'utf8')).toBe('Node is MIT');
+      expect(JSON.parse(await readFile(join(dir, 'MANIFEST.json'), 'utf8')).files).toContain('node/node.exe');
+      expect(await readFile(join(dir, 'README.md'), 'utf8')).toContain('node/LICENSE');
+      expect(await readFile(join(dir, 'run.cmd'), 'utf8')).toContain('node\\node.exe');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+      await rm(bare, { recursive: true, force: true });
+      await rm(node, { recursive: true, force: true });
+    }
+  });
 });
