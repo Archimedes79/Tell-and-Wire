@@ -25,4 +25,9 @@ describe('the words of the page', () => {
     expect(html('[bad](javascript:alert(1)) [mail](mailto:a@b.de)')).toBe('[bad](javascript:alert(1)) <a href="mailto:a@b.de" target="_blank" rel="noopener noreferrer">mail</a>');
     expect(html('**<i>**')).toBe('<strong>&lt;i&gt;</strong>');
   });
+
+  it('take no picture: what is written in the page loads nothing from the web', () => {
+    expect(html('![a chart](https://example.com/p.png)')).toBe('!<a href="https://example.com/p.png" target="_blank" rel="noopener noreferrer">a chart</a>');
+    expect(html('![a chart](https://example.com/p.png)')).not.toContain('<img');
+  });
 });

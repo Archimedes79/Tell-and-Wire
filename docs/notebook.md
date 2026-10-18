@@ -150,6 +150,8 @@ headings (`#`, `##`), bullets (`- `), numbered lists (`1. `) and quotations (`> 
 what is chosen. In **Write** the boxes show the marks as they are typed (a numbered list is drawn with its numbers only in **As app** and in the delivered tool); both draw them
 (`frontend/notebook/elements/inline.tsx` and `frontend/deployment/windows/inline.tsx`: two copies, the two products share no code). A window's outputs are text, a list, a table, a chart or a
 picture; a picture is a file, a data or http URL, or the markup of an SVG a code step drew.
+The words of the page take no pictures of their own -- `![…](…)` stays as typed, an exclamation mark and a link: what is written in the page loads nothing from the web. A picture at an
+http or https address is shown where a window's output is one, and the browser loads it whenever that output is shown, one kept from an earlier run included.
 
 `notebook-examples/` holds five pages written by hand, as the notebook saves them: `sales_report` (a CSV, a key-figure table, a trend, a model's two sentences), `text_toolbox`
 (a pasted text: numbers by code, a summary by a model), `badge_maker` (a picture drawn by code for the room it has), `picture_sheet` (a folder of pictures shown as a contact sheet, each described by a model that can see) and `tip_calculator` (a short page with a small calculator that runs

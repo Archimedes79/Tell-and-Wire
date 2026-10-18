@@ -31,7 +31,9 @@ products build it, on the same project format, and what one made the other opens
 - **The GUI** (GUI tab). The page a person uses the tool through, in the browser: text, a file
   picker, a dropdown, a slider, a button, a chart, a table, a chat. A block starts the graph at a
   start point and shows what an end point hands back -- by name, nothing is wired to the GUI, so
-  either half can be redesigned without touching the other.
+  either half can be redesigned without touching the other. A chat shows how full the model's
+  window is and, when a conversation grows long, has the model shorten it. The page is drawn in
+  one of four colour schemes (Night, Paper, White, Graphite), the notebook's windows the same.
 
 **The notebook** is a page you write, like any web page, with windows standing in it to be used. A window takes what
 goes in -- text, a number, a choice, a file, a folder --, has a button, and shows what comes out: a table, text, a chart,
@@ -63,7 +65,9 @@ the graph behind it, offline. A tool made in the notebook is handed on the same 
 <img src="docs/images/overview.svg" alt="Two products design a project: the editor (a GUI editor and a graph editor, one editor backend) and the notebook (a page and its cells, one notebook backend), both resting on common code that an AI that writes the code uses. The project is one folder of plain files that both write: the GUI, the graph with its schedule, and a folder of files per node. A deployment runs it: a browser shows the GUI, a session host keeps state and starts rounds, and a language-specific execution engine runs the nodes and may ask a model or a tool server." width="100%">
 
 The picture is the architecture the software is cut by: every box is a folder or a few, and
-[docs/architecture.md](docs/architecture.md) takes it apart box by box.
+[docs/architecture.md](docs/architecture.md) takes it apart box by box. [The same picture with each box's
+folders and key files](docs/images/overview-detail.svg) is drawn by code from the folders and the document, and a test
+fails when it is out of date.
 
 - **Design, files and execution are apart.** The editor and the notebook only design; what they make is a folder;
   a deployment runs the folder. That is why a tool can be saved, versioned, handed on and run

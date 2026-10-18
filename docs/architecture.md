@@ -53,7 +53,9 @@ Four cuts run through everything:
 folders it is and its sub-blocks. `backend/architecture/blocks.test.ts` holds this section to the software: every box of the
 picture is described here, every folder named here exists, and no folder of the source is left out.
 
-The same picture with each box's folders and key files, box for box and in the same places: [overview-detail.svg](images/overview-detail.svg).
+The same picture with each box's folders and key files, box for box and in the same places (click it for its full size, [overview-detail.svg](images/overview-detail.svg)):
+
+[![The overview picture with the folders and key files of each box: the editor and the notebook over common code, the project as plain files, and use](images/overview-detail.svg)](images/overview-detail.svg)
 
 `graph/`, `gui/` and `backend/` are TypeScript that Node 24 runs as it is: no build, no runtime dependencies. `frontend/` is
 React and Vite: `npm run build` writes the editor's page (`frontend/dist`), `npm run build:notebook` the notebook's
@@ -723,7 +725,7 @@ it in the document"). Keys and the two AI settings (the nodes', and the one that
 ## The project folder
 
 A tool is saved as a project folder: a folder with a `graph-flow.json`. Each fact is in one place,
-keys are sorted, and an unchanged save changes no byte (`backend/editor/project/write.test.ts`).
+keys are sorted, and an unchanged save changes no byte (`backend/authoring/write.test.ts`).
 
 ```
 my_tool/
@@ -772,8 +774,13 @@ my_tool/
   (`frontend/deployment/gui/kit/layout.ts`).
 - Which setting is which file is the definition's to say (`NodeDefinition.texts`). Every file is
   there from the start as a stub that reads back as nothing.
+- A file can end in a **footer** the node never holds (`footer` of a text file in `NodeDefinition`): `code.js` ends
+  in the lines that run it alone (`node code.js`). It is written after the body and taken off when the file is
+  read -- as it is now or as an older version worded it, found by its first and last line, and wherever it stands --
+  so a project written long ago opens as its body, and the next save writes the footer once
+  (`backend/authoring/write.test.ts`, which also holds the examples to the footer of the day).
 - `backend/deployment/project/folder.ts` reads folders -- for the editor, the CLI, a served tool and
-  the MCP server -- and `backend/editor/project/write.ts` writes them. The same graph as one
+  the MCP server -- and `backend/authoring/write.ts` writes them. The same graph as one
   `.json` file has everything inline.
 - A save refuses to overwrite a file changed on disk since it was read; the editor takes outside
   changes in as one undo step.

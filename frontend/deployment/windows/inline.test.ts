@@ -9,5 +9,6 @@ describe('the words of a delivered page', () => {
     expect(html('a **bold** and *italic* word')).toBe('a <strong>bold</strong> and <em>italic</em> word');
     expect(html('[x](https://example.com) <b>')).toMatch(/^<a href="https:\/\/example.com" [^>]*>x<\/a> &lt;b&gt;$/);
     expect(html('[bad](javascript:alert(1))')).toBe('[bad](javascript:alert(1))');
+    expect(html('![a chart](https://example.com/p.png)')).not.toContain('<img');
   });
 });
