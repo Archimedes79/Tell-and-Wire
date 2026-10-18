@@ -28,7 +28,7 @@ import { resolve } from 'node:path';
 import { aiSetting, configuredMcpServers, configuredSettings } from '../../deployment/runtime/ai/settings.ts';
 import { SECRET_NAME } from '../../deployment/runtime/ai/providers.ts';
 import { nodeRuntime } from '../../deployment/runtime/services.ts';
-import { chosenCore } from '../../deployment/runtime/stdio.ts';
+import { hostCore } from '../../deployment/host/room.ts';
 import { createGraphTools } from './tools.ts';
 import { serveStdio } from './transport.ts';
 import { messageOf } from '../../../graph/errors.ts';
@@ -81,7 +81,7 @@ export async function runMcpServer(folder?: string): Promise<void> {
     // server runs is the key the next generation uses.
     ai: { complete: (request) => nodeRuntime().ai.complete(request) },
     runtime: () => nodeRuntime(),
-    core: () => chosenCore(),
+    core: () => hostCore(),
     target: () => aiSetting(process.cwd(), process.env, 'write'),
     secrets: machineSecrets,
   });

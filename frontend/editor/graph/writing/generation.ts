@@ -13,6 +13,7 @@
 
 import type { Graph, GraphNode, GuiWidget, Port, Wire } from '../../document/graph';
 import { call, type AICall, type GenerateRequest, type GenerateResponse, type ProbeReport } from '../../api/client';
+import type { BlockWindow } from '../../../../graph/nodes/Runtime.ts';
 import type { Refine } from '../../../../backend/editor/host/api.ts';
 import { definitionExample, definitionKeys } from '../../../../graph/files/definition.ts';
 import { exchangeEntry, exchangeLabel, withExchange } from '../../../../graph/authoring/history.ts';
@@ -187,6 +188,8 @@ interface Around {
   metadata: Graph['metadata'];
   /** The GUI's blocks: what its start points are sent, what shows its end points. */
   gui: GuiWidget[];
+  /** The blocks that show what the node hands on, with their size: what its code is tried with (`node.windows`). */
+  windows?: BlockWindow[];
 }
 
 /**
@@ -210,6 +213,7 @@ export function generateRequest(
     ...(write === 'output' && filesOf(node, 'output').length ? { output_files: filesOf(node, 'output').map((path) => ({ path })) } : {}),
     input_sources: inputSources(node.id, around.nodes, around.edges, true, around.gui),
     output_targets: outputTargets(node.id, around.nodes, around.edges, true, around.gui),
+    ...(around.windows?.length ? { windows: around.windows } : {}),
     ...(ask?.trim() ? { ask: ask.trim() } : {}),
     ...(refine ? { refine } : {}),
   };

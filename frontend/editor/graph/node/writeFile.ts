@@ -10,6 +10,8 @@ import type { Graph, GraphNode } from '../../document/graph';
 import { call } from '../../api/client';
 import { useGraphStore } from '../../document/store/graphStore';
 import { columnsOf } from '../../../../graph/schedule.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { windowsOf } from '../../../../gui/room.ts';
 import { ONCE } from '../nodes/NodeGuiBuilder';
 import { runGenerate } from '../writing/useGenerate';
 import {
@@ -43,9 +45,11 @@ export function graphOf(target: Target): Graph {
 }
 
 function around(target: Target) {
-  const { nodes, metadata, gui } = graphOf(target);
+  const graph = graphOf(target);
+  const { nodes, metadata, gui } = graph;
   const { rfEdges, executionResult } = useGraphStore.getState();
-  return { nodes, edges: rfEdges, metadata, gui: gui?.blocks ?? [], executionResult };
+  const current = target.node();
+  return { nodes, edges: rfEdges, metadata, gui: gui?.blocks ?? [], executionResult, windows: current ? windowsOf(graph, current, registry) : [] };
 }
 
 /** What a chat would send for *write*, or what ✨ sends. */

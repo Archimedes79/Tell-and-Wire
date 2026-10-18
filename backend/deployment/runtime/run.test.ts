@@ -70,26 +70,3 @@ describe('Stop', () => {
     expect(result.node_results.map((r) => r.node_id)).toEqual(['slow']);
   }, 20_000);
 });
-
-describe('a body that draws', () => {
-  /** Code that draws one SVG, as large as the chart block that shows it; the block is *h* cells high. */
-  const plot = (h: number) => parseGraph({
-    nodes: [
-      {
-        id: 'draw', node_type: 'code', inputs: [], outputs: [port('svg')],
-        config: { code: 'function run(inputs, node) { const { width, height } = node.windows[0]; return { svg: "<svg viewBox=\\"0 0 " + width + " " + height + "\\"/>" }; }' },
-      },
-      { id: 'plot', node_type: 'end', inputs: [port('value')], config: {} },
-    ],
-    edges: [{ id: 'e', source_node_id: 'draw', source_port_id: 'svg', target_node_id: 'plot', target_port_id: 'value' }],
-    gui: { blocks: [{ id: 'chart', kind: 'plot_window', shows: 'plot', w: 4, h }] },
-  });
-
-  it('draws for the block that shows it as the block is now -- resized, the same code draws another size', async () => {
-    const svg = async (h: number) => (await executeGraph(plot(h), { registry, runtime: runtime({ code: nodeCode }) }))
-      .node_results.find((one) => one.node_id === 'draw')!.outputs.svg;
-    // Four cells of 56 px and 3 gaps of 14; and 2 cells and 1 gap, or 3 and 2.
-    expect(await svg(2)).toBe('<svg viewBox="0 0 266 126"/>');
-    expect(await svg(3)).toBe('<svg viewBox="0 0 266 196"/>');
-  });
-});

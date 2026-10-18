@@ -13,7 +13,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseGraph } from '../../../graph/graph.ts';
-import { chosenCore } from '../../deployment/runtime/stdio.ts';
+import { hostCore } from '../../deployment/host/room.ts';
 import type { GraphCore } from '../../deployment/runtime/protocol.ts';
 import { withoutWriting } from '../../../graph/authoring/handedOn.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
@@ -51,7 +51,7 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
   // editor's life, so asking what arrives at a node again and again while
   // writing it need not ask the model upstream again when nothing there changed.
   let tried: GraphCore | null = null;
-  const tries = (): GraphCore => (tried ??= chosenCore());
+  const tries = (): GraphCore => (tried ??= hostCore());
   /**
    * Transcripts of generations still in flight, by the id the page sent.
    *

@@ -63,7 +63,7 @@ export function localCore(options: LocalCoreOptions = {}): GraphCore {
       const replay = !!asked.given;
       const round = replay ? undefined : new RoundLatch(latch);
       const result = await executeGraph(graph, {
-        runtime, registry, trigger, signal, latch: round, given: asked.given, ...(replay || asked.offline ? {} : { reuse }),
+        runtime, registry, trigger, signal, latch: round, given: asked.given, windows: asked.windows, ...(replay || asked.offline ? {} : { reuse }),
       });
       // Only a round that ran to its end leaves what it made: one stopped began what is nobody's to keep.
       if (!signal?.aborted) round?.commit();
@@ -72,19 +72,19 @@ export function localCore(options: LocalCoreOptions = {}): GraphCore {
     },
 
     node(asked, signal) {
-      return runNodeAlone(structuredClone(asked.graph), asked.node, asked.inputs, { runtime: runtimeFor(silent), registry, signal });
+      return runNodeAlone(structuredClone(asked.graph), asked.node, asked.inputs, { runtime: runtimeFor(silent), registry, signal, windows: asked.windows });
     },
 
     example(asked, signal) {
-      return runExample(asked.graph, asked.node, { runtime: runtimeFor(silent), registry, offline: asked.offline, signal });
+      return runExample(asked.graph, asked.node, { runtime: runtimeFor(silent), registry, offline: asked.offline, signal, windows: asked.windows });
     },
 
     test(asked, signal) {
-      return testGraph(asked.graph, { runtime: () => runtimeFor(silent), registry, offline: asked.offline, only: asked.only, signal });
+      return testGraph(asked.graph, { runtime: () => runtimeFor(silent), registry, offline: asked.offline, only: asked.only, signal, windows: asked.windows });
     },
 
     arriving(asked, signal) {
-      return inputsFor(structuredClone(asked.graph), asked.node, { runtime: runtimeFor(silent), registry, reuse, signal });
+      return inputsFor(structuredClone(asked.graph), asked.node, { runtime: runtimeFor(silent), registry, reuse, signal, windows: asked.windows });
     },
 
     async forget() {

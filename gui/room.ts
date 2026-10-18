@@ -31,3 +31,13 @@ export function windowsOf(graph: Graph, node: GraphNode, kinds: Kinds): BlockWin
   }
   return [...found.values()];
 }
+
+/** What `windowsOf` says of every node of *graph* that has any, by node id: what a core is told, which is handed no GUI. */
+export function windowsByNode(graph: Graph, kinds: Kinds): Record<string, BlockWindow[]> {
+  const room: Record<string, BlockWindow[]> = {};
+  for (const node of graph.nodes) {
+    const found = windowsOf(graph, node, kinds);
+    if (found.length) room[node.id] = found;
+  }
+  return room;
+}

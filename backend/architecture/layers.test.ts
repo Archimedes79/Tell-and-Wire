@@ -124,6 +124,11 @@ describe('the folders', () => {
     expect(show(against)).toEqual([]);
   });
 
+  it('keep the engine blind to the GUI: what runs graphs imports nothing of gui/ -- the host tells it what it needs of the GUI', () => {
+    const against = IMPORTS.filter((one) => one.from.startsWith('backend/deployment/runtime/') && !/\.test\.tsx?$/.test(one.from) && one.to.startsWith('gui/'));
+    expect(show(against)).toEqual([]);
+  });
+
   it('keep the two products apart: the editor and the notebook import nothing of each other', () => {
     const against = IMPORTS.filter((one) => {
       const [from, to] = [productOf(one.from), productOf(one.to)];

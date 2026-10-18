@@ -6,6 +6,7 @@
 
 import { PRODUCT_API } from '../../authoring/productApi.ts';
 import type { Graph, GraphNode, NodeResult } from '../../../graph/graph.ts';
+import type { BlockWindow } from '../../../graph/nodes/Runtime.ts';
 import type { TextChange } from '../../../graph/files/changes.ts';
 import type { AICall } from '../../../graph/authoring/history.ts';
 import type { ExampleRun } from '../../deployment/runtime/examples.ts';
@@ -67,6 +68,11 @@ export interface GenerateRequest {
    * Definition} while the node has no output.js.
    */
   output_targets?: Record<string, string>;
+  /**
+   * The blocks of the GUI that show what the node hands on, each with its size (`Runtime.windows`): the example the code is tried
+   * on is tried with them, as it runs -- code that draws reads `node.windows`.
+   */
+  windows?: BlockWindow[];
   /**
    * What the person said to this file's chat, for a file not written yet: put
    * into the prompt after the standard one. Where there is a file to change,

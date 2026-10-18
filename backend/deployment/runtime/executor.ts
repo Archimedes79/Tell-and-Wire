@@ -42,7 +42,6 @@ import { ERROR_PORT, NESTING_LIMIT, fatalProblems, fieldOf, unrunnable } from '.
 import { runners as realRunners } from './nodes/registry.ts';
 import type { NodeRunner, Runners } from './nodes/NodeRunner.ts';
 import { messageOf } from '../../../graph/errors.ts';
-import { windowsOf } from '../../../gui/room.ts';
 
 /**
  * Gather what the wires deliver to *nodeId*.
@@ -129,6 +128,11 @@ interface RunOptions {
   latch?: Latch;
   /** How many graphs this run is already inside. Set by the executor, for itself. */
   depth?: number;
+  /**
+   * The blocks of the GUI that show what each node hands on, by node id (`Runtime.windows`): the host asks the GUI and
+   * tells the core, which is handed no GUI. A node with none is not in it.
+   */
+  windows?: Record<string, BlockWindow[]>;
 }
 
 /**
@@ -136,7 +140,7 @@ interface RunOptions {
  * it already is. No event, no slice of the graph, nothing held or reused: it
  * is one node, asked directly.
  */
-type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'runners' | 'signal' | 'depth'>;
+type NodeRunOptions = Pick<RunOptions, 'runtime' | 'registry' | 'runners' | 'signal' | 'depth' | 'windows'>;
 
 /**
  * Run the graph once.
@@ -354,7 +358,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         const arrived = await readInputs(element, node, inputs, runtime, registry);
         // An event is a moment: a package handed back from an earlier round
         // would say an event happened that is over.
-        const windows = windowsOf(graph, node, registry);
+        const windows = options.windows?.[nodeId] ?? [];
         const key = element.eventPorts(node).length ? undefined : options.reuse?.key(node, arrived, setting, windows);
         const kept = key && context(nodeId) ? options.reuse!.get(key) : undefined;
         if (kept) {
@@ -474,6 +478,8 @@ function withSubgraph(runtime: Runtime, options: NodeRunOptions, node: GraphNode
           // asked at the level they were asked at, and mean nothing here.
           trigger: null,
           only: undefined,
+          // The GUI shows what the outer graph hands on: the ids in there are another graph's.
+          windows: undefined,
           // Nothing is held in there: the same inner graph may sit in two
           // nodes, or run once per item, and one's last value is not another's.
           latch: undefined,
@@ -581,7 +587,7 @@ export async function executeNode(
   try {
     const arrived = await readInputs(element, node, inputs, runtime, options.registry);
     const { produced, failures, notes } = await runNode(
-      runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0, windowsOf(graph, node, options.registry)), options.signal,
+      runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0, options.windows?.[nodeId] ?? []), options.signal,
     );
     return ranTo(element, node, inputs, produced, failures, notes);
   } catch (error) {
@@ -609,7 +615,7 @@ export async function callNode(
     return { node_id: nodeId, status: 'error', inputs, outputs: {}, error: `No such node: ${nodeId}` };
   }
   try {
-    const runtime = withSubgraph(stoppable(options.runtime, options.signal), options, node, options.depth ?? 0, windowsOf(graph, node, options.registry));
+    const runtime = withSubgraph(stoppable(options.runtime, options.signal), options, node, options.depth ?? 0, options.windows?.[nodeId] ?? []);
     const outputs = reconcileOutputs(node, await runner.execute(node, inputs, runtime));
     return { node_id: nodeId, status: 'success', inputs, outputs, error: null };
   } catch (error) {

@@ -327,26 +327,23 @@ describe('what a round puts on every call', () => {
 });
 
 describe('the room a result is shown in', () => {
-  /** Code that makes something, wired into the end point a chart shows; another that is wired nowhere. */
-  const drawing = (blocks: Record<string, unknown>[]): Graph => ({
-    ...graphOf(
-      [nodeWith('make', 'code', { code: 'make' }, { out: ['out'] }), nodeWith('shown', 'end', {}, { in: ['input'] }), nodeWith('lone', 'code', { code: 'lone' }, { out: ['out'] })],
-      [edge('e', 'make', 'out', 'shown', 'input')],
-    ),
-    gui: { blocks },
-  });
-  const chart = (h: number) => ({ id: 'chart', kind: 'plot_window', label: 'Plot', shows: 'shown', w: 6, h });
+  /** Code that makes something, wired into an end point; another that is wired nowhere. */
+  const drawing = (): Graph => graphOf(
+    [nodeWith('make', 'code', { code: 'make' }, { out: ['out'] }), nodeWith('shown', 'end', {}, { in: ['input'] }), nodeWith('lone', 'code', { code: 'lone' }, { out: ['out'] })],
+    [edge('e', 'make', 'out', 'shown', 'input')],
+  );
+  const window = { port: 'out', block: 'chart', kind: 'plot_window', label: 'Plot', w: 6, h: 3, width: 406, height: 196 };
 
-  it('tells a body the blocks that show what it hands on, with their size in cells and pixels -- and a node wired to none, nothing', async () => {
+  // What the room is, the GUI says: the host asks it and tells the engine (`withRoom`, `host/room.test.ts`). The engine reads none.
+  it('tells a body the room it is told for its node, and a node it is told none for, nothing', async () => {
     const seen: Record<string, unknown> = {};
     const runtime: Runtime = { ...nowhere, code: { run: async (body, _inputs, _signal, context) => { seen[body] = context?.windows; return { out: 1 }; } } };
-    await executeGraph(drawing([chart(3)]), { runtime, registry });
-    // 6 cells of 56 px and the 5 gaps of 14 between them; 3 cells and 2 gaps.
-    expect(seen.make).toEqual([{ port: 'out', block: 'chart', kind: 'plot_window', label: 'Plot', w: 6, h: 3, width: 406, height: 196 }]);
+    await executeGraph(drawing(), { runtime, registry, windows: { make: [window] } });
+    expect(seen.make).toEqual([window]);
     expect(seen.lone).toBeUndefined();
-    // No GUI, no window.
+    // Not told, no window -- even for a graph that holds a GUI: the engine is handed none.
     seen.make = 'unset';
-    await executeGraph(drawing([]), { runtime, registry });
+    await executeGraph({ ...drawing(), gui: { blocks: [{ id: 'chart', kind: 'plot_window', label: 'Plot', shows: 'shown', w: 6, h: 3 }] } }, { runtime, registry });
     expect(seen.make).toBeUndefined();
   });
 

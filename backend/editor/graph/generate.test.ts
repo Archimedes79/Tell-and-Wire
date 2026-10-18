@@ -70,6 +70,19 @@ describe('✨ writes a node\'s files', () => {
     expect(reply.calls).toHaveLength(2);
   }, 30_000);
 
+  it('tries code that draws with the blocks that show it, and code that loads a file beside it with that file', async () => {
+    const window = { port: 'lines', block: 'chart', kind: 'plot_window', label: '', w: 4, h: 2, width: 266, height: 126 };
+    const ai = scripted([js('function run(i, node) { return { lines: node.windows[0].width + require("./n.json").more }; }')]);
+    const reply = await generate({
+      node: node('code', { input_definition: INPUT, output_definition: 'module.exports = { "lines": 1 };', 'file:n.json': '{ "more": 1 }' }),
+      windows: [window],
+    }, deps(ai, nodeCode));
+    // Not told the room, nor given the file, it would fail where it runs: it ran here as it runs in the graph.
+    expect(reply.probe.status).toBe('ok');
+    expect(ai.asked).toHaveLength(1);
+    expect(ai.asked[0].prompt).toContain('### n.json');
+  }, 30_000);
+
   it('changes a body as said, from the function there is, and restates the node\'s text', async () => {
     const ai = scripted([`${js('function run(i) { return { lines: i.text.split("\\n").length + 1 }; }')}\n<description>Count the lines, plus one.</description>`]);
     const reply = await generate({

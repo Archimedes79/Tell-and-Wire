@@ -30,7 +30,7 @@
 // Every call a generation makes is recorded and handed back: the editor shows
 // what was sent, and keeps it in the node's history.md.
 
-import type { AiService, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { AiService, BlockWindow, CodeService, FileService, Runtime } from '../../../graph/nodes/Runtime.ts';
 import { isStruct } from '../../../graph/graph.ts';
 import { RESERVED, hasField } from '../../../graph/nodes/data/DataNodeDefinition.ts';
 import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.ts';
@@ -106,7 +106,7 @@ const refuse = async (): Promise<never> => { throw new Error('No files here: thi
 const NO_FILES: FileService = { resolve: (path) => path, inProject: (path) => path, size: refuse, read: refuse, write: refuse, list: refuse };
 
 async function probe(
-  runtime: Runtime, target: Target, body: string, sample: Record<string, unknown>, files: Record<string, string> = {},
+  runtime: Runtime, target: Target, body: string, sample: Record<string, unknown>, files: Record<string, string> = {}, windows: BlockWindow[] = [],
 ): Promise<{ result: Record<string, unknown> | null; error: string }> {
   // Ended, not merely given up on: a generated body in an endless loop is a
   // process, and one per ✨ press left running is how a laptop gets warm.
@@ -119,7 +119,7 @@ async function probe(
     // What it asks is answered by the model that wrote it, which is the one
     // AI setting -- where the same call in a run goes, too.
     const ask = { ...PLAIN_ASK, provider: target.provider, model: target.model };
-    const result = await runBody(body, { ...sample }, runtime, { signal: stop.signal, ask, files });
+    const result = await runBody(body, { ...sample }, windows.length ? { ...runtime, windows } : runtime, { signal: stop.signal, ask, files });
     if (!result || typeof result !== 'object' || Array.isArray(result)) {
       return { result: null, error: `run() returned ${Array.isArray(result) ? 'an array' : typeof result}, but it must return an object.` };
     }
@@ -208,7 +208,7 @@ async function writeVerifiedCode(
    * can, and -- for a change -- nothing that would turn it back.
    */
   const verdict = async (body: string) => {
-    const ran = await probe(runtime, target, body, sample, shape.aside);
+    const ran = await probe(runtime, target, body, sample, shape.aside, shape.windows);
     if (!ran.result) return { ...ran, problems: [] as string[], mend: [] as string[], reached: 0 };
     const absent = ports.filter((port) => !(port in ran.result!));
     const missing = absent.map((port) => `it returns no "${port}"`);
@@ -394,6 +394,7 @@ function shapeOf(
     json: element.texts(node).some((text) => text.field === spec.fields.body && text.json === true),
     ...(spec.language ? { language: spec.language } : {}),
     ...(Object.keys(asideFiles(node.config)).length ? { aside: asideFiles(node.config) } : {}),
+    ...(request.windows?.length ? { windows: request.windows } : {}),
   };
 }
 

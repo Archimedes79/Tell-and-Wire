@@ -10,7 +10,7 @@
 // its words: the keys the definition names, each in the form its example has.
 
 import type { Graph } from '../../../graph/graph.ts';
-import type { Runtime } from '../../../graph/nodes/Runtime.ts';
+import type { BlockWindow, Runtime } from '../../../graph/nodes/Runtime.ts';
 import type { Kinds } from '../../../graph/nodes/NodeDefinition.ts';
 import { definitionExample, misfits, unreadableOutput } from '../../../graph/files/definition.ts';
 import { callNode } from './executor.ts';
@@ -53,7 +53,7 @@ const holds = (output: string): boolean => !!output.trim() && !unreadableOutput(
 export async function runExample(
   graph: Graph,
   nodeId: string,
-  options: { runtime: Runtime; registry: Kinds; offline?: boolean; signal?: AbortSignal },
+  options: { runtime: Runtime; registry: Kinds; offline?: boolean; signal?: AbortSignal; windows?: Record<string, BlockWindow[]> },
 ): Promise<ExampleRun> {
   const node = graph.nodes.find((candidate) => candidate.id === nodeId);
   const element = node && options.registry.node(node.node_type);
@@ -71,7 +71,7 @@ export async function runExample(
     return { status: 'error', details: ['It has no input.js, so there is nothing to try it on: press Auto generate in the node, or write input.js.'], held };
   }
   const runtime = options.offline ? withoutModel(options.runtime, NO_MODEL) : options.runtime;
-  const ran = await callNode(graph, nodeId, inputs, { runtime, registry: options.registry, signal: options.signal });
+  const ran = await callNode(graph, nodeId, inputs, { runtime, registry: options.registry, signal: options.signal, windows: options.windows });
   // It asked a model, and this run asks none: not a failure of the node.
   if (options.offline && ran.error?.includes(NO_MODEL)) {
     return { status: 'skipped', details: ['It asks a model, and this run asks none.'], held };
@@ -110,7 +110,7 @@ export interface Tested {
  */
 export async function testGraph(
   graph: Graph,
-  options: { runtime: () => Runtime; registry: Kinds; offline?: boolean; only?: string; signal?: AbortSignal },
+  options: { runtime: () => Runtime; registry: Kinds; offline?: boolean; only?: string; signal?: AbortSignal; windows?: Record<string, BlockWindow[]> },
 ): Promise<Tested> {
   const results: Tested['results'] = [];
   for (const { graph: level, inside } of everyGraphIn(graph, options.registry)) {
@@ -122,7 +122,7 @@ export async function testGraph(
       const unwritten = !options.only && definitions && node.inputs.length && !definitions.input.trim();
       const result: ExampleRun = unwritten
         ? { status: 'skipped', details: ['It has no input.js yet, so there is nothing to try it on: press Auto generate in the node, or write input.js.'], held: holds(definitions.output) }
-        : await runExample(level, node.id, { runtime: options.runtime(), registry: options.registry, offline: options.offline, signal: options.signal });
+        : await runExample(level, node.id, { runtime: options.runtime(), registry: options.registry, offline: options.offline, signal: options.signal, ...(inside ? {} : { windows: options.windows }) });
       results.push({ inside, nodeId: node.id, result });
     }
   }

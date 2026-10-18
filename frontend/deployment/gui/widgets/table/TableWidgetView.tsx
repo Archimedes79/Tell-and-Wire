@@ -69,11 +69,12 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
   const columns = table ? columnsFrom(table.header, table.header.map((_, c) => table.raw.map((row) => row[c]))) : [];
 
   if (!table) {
-    const text = data === undefined || data === null || data === ''
-      ? 'No data yet'
-      : typeof data === 'string' ? data : JSON.stringify(data);
+    const nothing = data === undefined || data === null || data === '';
+    const text = nothing ? 'No data yet' : typeof data === 'string' ? data : JSON.stringify(data);
     return (
       <div className="text-xs h-full overflow-auto" style={{ color: DIMMER }} title={widget.label}>
+        {/* What came is shown as it is, and what a table is made of is said: the least a person needs to mend what feeds it. */}
+        {!nothing && <p className="mb-1" style={{ color: MUTED }}>Not rows, so not a table: a list of objects, or a list of lists with the header first.</p>}
         {text}
       </div>
     );

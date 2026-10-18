@@ -9,6 +9,7 @@
 import type { PromptKind } from '../../../graph/editor/prompts.ts';
 import type { Language } from '../../../graph/authoring/generation.ts';
 import { textOutput, type Definitions } from '../../../graph/files/definition.ts';
+import type { BlockWindow } from '../../../graph/nodes/Runtime.ts';
 import { names } from '../../../graph/wiring.ts';
 import { RUN_PORT } from '../../../graph/triggers.ts';
 import type { Graph } from '../../../graph/graph.ts';
@@ -60,6 +61,8 @@ export interface Shape {
   language?: Language;
   /** The files beside the code, by name: it may load them. */
   aside?: Record<string, string>;
+  /** The blocks that show what the node hands on, as the code is told them when it is tried (`node.windows`). */
+  windows?: BlockWindow[];
 }
 
 /** How much of a file beside the code a model is shown: the head of a long table says what it is. */

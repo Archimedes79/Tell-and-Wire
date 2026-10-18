@@ -44,7 +44,7 @@
 // - End when stdin ends, stopping what still goes. An error is a sentence.
 
 import type { ExecutionResult, Graph, NodeResult } from '../../../graph/graph.ts';
-import type { ProgressEvent } from '../../../graph/nodes/Runtime.ts';
+import type { BlockWindow, ProgressEvent } from '../../../graph/nodes/Runtime.ts';
 import type { Trigger } from '../../../graph/triggers.ts';
 import type { Held } from './latch.ts';
 import type { ExampleRun, Tested } from './examples.ts';
@@ -64,8 +64,17 @@ export interface CoreHello {
   core: string;
 }
 
+/**
+ * What every request that holds a graph also carries: the blocks of the GUI that show what each node hands on, by node id,
+ * each with its size (`Runtime.windows`). The host asks the GUI and tells the core, which is handed no GUI. A node with none
+ * is not in it.
+ */
+interface Room {
+  windows?: Record<string, BlockWindow[]>;
+}
+
 /** A round of a graph. */
-interface RoundAsked {
+interface RoundAsked extends Room {
   /**
    * The graph as the round starts from it: what nodes keep put back into
    * them, what the round was sent put into the start points it reaches
@@ -90,28 +99,28 @@ export interface RoundEnded {
 }
 
 /** One node by itself: on *inputs*, or -- without -- on what the nodes feeding it produce. */
-interface NodeAsked {
+interface NodeAsked extends Room {
   graph: Graph;
   node: string;
   inputs?: Record<string, unknown>;
 }
 
 /** One node on the example its definitions hold, held to them. */
-interface ExampleAsked {
+interface ExampleAsked extends Room {
   graph: Graph;
   node: string;
   offline?: boolean;
 }
 
 /** Every node's example, at every depth -- or only the nodes with the id *only*. */
-interface TestAsked {
+interface TestAsked extends Room {
   graph: Graph;
   offline?: boolean;
   only?: string;
 }
 
 /** What would arrive at one node, were the graph run up to it now. */
-interface ArrivingAsked {
+interface ArrivingAsked extends Room {
   graph: Graph;
   node: string;
 }

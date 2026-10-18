@@ -23,7 +23,7 @@
 import type { Graph } from '../../graph/graph.ts';
 import { loadGraph, projectFolderOf } from '../deployment/project/folder.ts';
 import { nodeName } from '../../graph/order.ts';
-import { chosenCore } from '../deployment/runtime/stdio.ts';
+import { hostCore } from '../deployment/host/room.ts';
 import type { GraphCore } from '../deployment/runtime/protocol.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { nodeRuntime } from '../deployment/runtime/services.ts';
@@ -380,7 +380,7 @@ export async function main(argv: string[]): Promise<number> {
 
 /** *work* with the graph core this command runs graphs with, let go once it is done: a core of its own process ends. */
 async function withCore<T>(work: (core: GraphCore) => Promise<T>): Promise<T> {
-  const core = chosenCore();
+  const core = hostCore();
   try {
     return await work(core);
   } finally {

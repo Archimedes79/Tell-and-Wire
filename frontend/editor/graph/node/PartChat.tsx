@@ -93,6 +93,7 @@ export default function PartChat({ node, write, writing, trying, setConfig }: {
             </Button>
           </div>
           {problem && <p>{problem}</p>}
+          {sent && !sent[0] && <p>Nothing would go out yet: the request has nothing to be built from.</p>}
           {sent?.[0] && (
             <div className="space-y-1" aria-label="What is sent">
               <Part label="System" text={sent[0].system} />

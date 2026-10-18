@@ -47,7 +47,7 @@ import { stateFileOf } from '../project/folder.ts';
 import { NotFound } from '../../../graph/errors.ts';
 import { nodeRuntime } from '../runtime/services.ts';
 import { Rounds, type RoundWork } from './rounds.ts';
-import { chosenCore } from '../runtime/stdio.ts';
+import { hostCore } from './room.ts';
 import type { GraphCore } from '../runtime/protocol.ts';
 import type { RoundSnapshot, SessionView } from './api.ts';
 
@@ -204,7 +204,7 @@ export class Session {
     this.file = options.file ?? null;
     this.keeps = options.keeps ?? 'draft';
     this.runtime = options.runtime ?? ((report) => nodeRuntime({ report }));
-    this.core = options.core?.() ?? chosenCore({ runtime: options.runtime });
+    this.core = options.core?.() ?? hostCore({ runtime: options.runtime });
     this.gui = options.gui ?? NO_GUI;
     this.rounds = new Rounds((round, moment) => this.roundChanged(round, moment));
   }

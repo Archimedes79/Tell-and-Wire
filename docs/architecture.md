@@ -252,6 +252,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/deployment/host/lifecycle.ts` | What a served tool holds while it runs, and how it lets go of it |
 | `backend/deployment/host/port.js` | The reference client of the GUI port (`port.ts`, "The GUI port" in docs/architecture.md): what a page written by hand uses to meet its tool |
 | `backend/deployment/host/port.ts` | The GUI port: the connection points a page has to the tool it shows |
+| `backend/deployment/host/room.ts` | What a core is told of the GUI, which it is not handed: the graph without it, and the room each result is shown in |
 | `backend/deployment/host/rounds.ts` | The rounds of one session: one at a time, watched while they go, stopped when asked |
 | `backend/deployment/host/serve.ts` | The server: the built gui or editor, and the routes of `api.ts` |
 | `backend/deployment/host/session.ts` | The graph in use, and what using it leaves behind |
@@ -814,8 +815,12 @@ host. A **graph core** -- the runtime, in this process or a program of its own -
 ```
 
 The core is handed the graph definition as JSON (`Graph`, `graph/graph.ts`): the nodes with their
-settings, ports and files, and the wires, as the project folder holds them; not the GUI. Today
-there is one core, in JavaScript.
+settings, ports and files, and the wires, as the project folder holds them; not the GUI. What a body
+that draws needs of the GUI -- the blocks that show what its node hands on, with their size -- the
+host asks the GUI and says beside the graph (`windows`, by node id: `withRoom`,
+`backend/deployment/host/room.ts`), so a core in another language is told the same in the same
+words and `layers.test.ts` holds the engine to importing nothing of `gui/`. Today there is one
+core, in JavaScript.
 
 A server is **composed** by `backend/cli`: it answers the host's own routes, the GUI's route when it
 has a GUI part (`serve({ gui })`), and the editor's routes when it serves the editor
@@ -1077,6 +1082,10 @@ folder. A package carries:
 - the files the graph starts on, those from outside the project in `data/` (one that is missing or
   over 50 MB stops the package; a settings file is never carried, whatever folder holds it);
 - the project's own `frontend/`;
+- `node/` -- Node.js and its `LICENSE` -- when the editor came with one (the download for a system has
+  `node/` beside its code): the launchers use it before the computer's Node, so the recipient installs
+  nothing. It is the Node of the system the package was made on; for another, the launchers fall back
+  to the computer's. No licence beside the binary, no copy;
 - `LICENSE`, a `README.md`, `run.cmd` / `run.sh` (which run `node backend/cli/main.ts .`, with
   `--serve` when there is a GUI), and `MANIFEST.json`: the package and its version, the tool, and
   every file in it.
@@ -1085,6 +1094,23 @@ It leaves out `backend/editor/`, `backend/architecture/`, the editor's folders i
 `gui/`, tests and `state.json`. Its model comes from the `TW_AI_*` variables or `ai-settings.json`
 beside `run.sh`. The downloadable editor (`scripts/package.mjs`) is not a package: it carries
 everything, with Node.
+
+A served tool opens as a window of its own, not a tab: Edge or Chrome with `--app=<address>`
+(`backend/cli/appWindow.ts`), the default browser where neither is there, `TW_WINDOW=tab` for the tab.
+The editor stays a tab.
+
+**Handing on, and what was left out.** A folder with its Node and two launchers is what a recipient needs and
+what a maintainer can reason about. The other ways were looked at and are not taken, for these reasons:
+
+- *One executable* (Node's single-executable applications): the code is TypeScript that Node runs unbuilt, so it
+  would need a bundle step first, and a body runs as `process.execPath --permission …` -- in a single executable
+  that is the program itself, not Node's command line. The sandbox would have to be rebuilt around it.
+- *An installer* (MSIX, Inno Setup, a .pkg): easy on top of the folder, but an unsigned one is stopped by
+  SmartScreen and Gatekeeper, and signing is a certificate and a yearly cost, not code.
+- *A shell of its own* (Electron, Tauri): a second runtime to keep current for what an app window gives already.
+- *A host in the browser* (the core in a Web Worker, state in IndexedDB, one HTML file): possible because the GUI
+  speaks to its host only through `backend/deployment/host/api.ts`, but it loses tool servers, files and the
+  sandbox as it is. It suits tools that only compute; it is the one to build when a tool must run without Node.
 
 ## Security boundaries
 
