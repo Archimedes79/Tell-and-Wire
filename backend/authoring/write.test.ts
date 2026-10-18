@@ -13,7 +13,7 @@ import { folderName } from '../../graph/files/names.ts';
 import { RUN_ON_ITS_OWN } from '../../graph/nodes/code/CodeNodeDefinition.ts';
 import { registry } from '../../graph/nodes/registry.ts';
 import { FileChanged, forgetSeen, isProjectFolder, loadGraph, readProject } from '../deployment/project/folder.ts';
-import { changesOnDisk, graphAt, saveGraph, writeProject } from './write.ts';
+import { changesOnDisk, graphAt, nodeFileOf, saveGraph, writeProject } from './write.ts';
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 
@@ -408,6 +408,10 @@ describe('files beside a code node\'s code.js', () => {
     expect(count.config['file:tax.js']).toBe('module.exports = {};');
     expect(count.config['file:rates.json']).toBe('{ "a": 1 }');
     expect(Object.keys(count.config).some((key) => key.includes('notes'))).toBe(false);
+
+    // One of them is handed to the person's own editor like code.js is; a file that is none of the node's is not.
+    expect(await nodeFileOf(dir, 'count', 'tax.js')).toBe('nodes/count/tax.js');
+    await expect(nodeFileOf(dir, 'count', 'notes.md')).rejects.toThrow(/not one of the files/);
 
     // Saved, they are files again and not settings in graph-nodes.json.
     count.config['file:more.js'] = 'module.exports = 1;';
