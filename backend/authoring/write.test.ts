@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdir, mkdtemp, readFile, rename, rm, writeFile, utimes } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { parseGraph, withoutDefaults, type Graph } from '../../graph/graph.ts';
 import { problemsIn } from '../../gui/authoring/check.ts';
@@ -161,6 +162,43 @@ describe('a project folder', () => {
     const first = await Promise.all(files.map(text));
     await writeProject(dir, await readProject(dir));
     expect(await Promise.all(files.map(text))).toEqual(first);
+  });
+
+  it('takes a footer off that an older version worded otherwise, and writes the one there is, once', async () => {
+    await writeProject(dir, sample());
+    const body = 'function run(inputs) {\n  return { total: inputs.files.length };\n}';
+    // the footer as an earlier version wrote it: another dash count, one line less, and code a person added after it
+    const older = RUN_ON_ITS_OWN.replace(/─+/, '───────').replace('const node = { windows: [], llm', 'const node = { llm').replace(' and this part is left out.', '.');
+    expect(older).not.toBe(RUN_ON_ITS_OWN);
+    await touch(join(dir, 'nodes/count/code.js'), `${body}\n\n${older}\n\nfunction helper() {\n  return 1;\n}\n`);
+    forgetSeen();
+    const held = (await readProject(dir)).nodes.find((node) => node.id === 'count')?.config.code;
+    expect(held).toBe(`${body}\n\nfunction helper() {\n  return 1;\n}`);
+    // a save writes what there is of it once, and what was written twice by an earlier save is taken off as well
+    await touch(join(dir, 'nodes/count/code.js'), `${body}\n\n${RUN_ON_ITS_OWN}\n\n${older}\n`);
+    forgetSeen();
+    expect((await readProject(dir)).nodes.find((node) => node.id === 'count')?.config.code).toBe(body);
+    await writeProject(dir, await readProject(dir));
+    expect(await text('nodes/count/code.js')).toBe(`${body}\n\n${RUN_ON_ITS_OWN}\n`);
+  });
+
+  it('carries the footer of the day in every code.js of the examples, so opening one shows the node its code and nothing else', async () => {
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+    const codeFiles = async (folder: string): Promise<string[]> => {
+      const found: string[] = [];
+      for (const entry of await readdir(folder, { withFileTypes: true })) {
+        if (entry.isDirectory()) found.push(...await codeFiles(join(folder, entry.name)));
+        else if (entry.name === 'code.js') found.push(join(folder, entry.name));
+      }
+      return found;
+    };
+    const files = [...await codeFiles(join(root, 'examples')), ...await codeFiles(join(root, 'notebook-examples'))];
+    expect(files.length).toBeGreaterThan(5);
+    const wrong: string[] = [];
+    for (const file of files) {
+      if ((await readFile(file, 'utf8')).replace(/\r\n/g, '\n').split(RUN_ON_ITS_OWN).length !== 2) wrong.push(file);
+    }
+    expect(wrong).toEqual([]);
   });
 
   it('removes a deleted node\'s files, and nothing a person put in a node\'s folder, however deep', async () => {

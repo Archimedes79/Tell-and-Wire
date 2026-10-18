@@ -241,17 +241,39 @@ export function fileFor(value: unknown, text: ProjectText): string | null {
 }
 
 /**
+ * Where a footer stands in *said*: as it is written now or, in a file a version of Tell & Wire that worded it otherwise wrote, from the line
+ * that starts it to the first line after that which is its last -- the footers are a few lines that begin and end alike. Without that, an
+ * old footer would stay in the node's code and the next save would write the new one beneath it.
+ */
+function footerAt(said: string, footer: string): { at: number; end: number } | undefined {
+  const exact = said.indexOf(footer);
+  if (exact >= 0) return { at: exact, end: exact + footer.length };
+  const lines = footer.split('\n');
+  if (lines.length < 3) return undefined;
+  // the first line by its words, not its rule: `// ── Run on its own ────` is found under any count of dashes
+  const title = /\p{L}[\p{L} ]*\p{L}/u.exec(lines[0])?.[0];
+  if (!title) return undefined;
+  const closing = lines[lines.length - 1].trimEnd();
+  const rows = said.split('\n');
+  const first = rows.findIndex((row) => row.startsWith(lines[0].slice(0, 2)) && row.includes(title));
+  const last = first < 0 ? -1 : rows.findIndex((row, index) => index > first && row.trimEnd() === closing);
+  if (last < 0) return undefined;
+  const at = rows.slice(0, first).reduce((sum, row) => sum + row.length + 1, 0);
+  return { at, end: at + rows.slice(first, last + 1).join('\n').length };
+}
+
+/**
  * What the node holds, for a file of *text* that says *content*: the file
- * without its footer -- wherever it stands: code added after it is the node's,
- * and a footer kept in the body was written twice by the next save -- parsed
- * where it is JSON, or nothing, for the stub.
+ * without its footer -- wherever it stands, and however an older version
+ * worded it: code added after it is the node's, and a footer kept in the body
+ * was written twice by the next save -- parsed where it is JSON, or nothing,
+ * for the stub.
  */
 export function heldIn(content: string, text: ProjectText, path: string): { value: unknown } | undefined {
   let said = content.replace(/\r\n/g, '\n').replace(/\n$/, '');
-  const at = text.footer ? said.indexOf(text.footer) : -1;
-  if (at >= 0) {
-    const before = said.slice(0, at).replace(/\s+$/, '');
-    const after = said.slice(at + text.footer!.length).trim();
+  for (let found = text.footer ? footerAt(said, text.footer) : undefined; found; found = footerAt(said, text.footer!)) {
+    const before = said.slice(0, found.at).replace(/\s+$/, '');
+    const after = said.slice(found.end).trim();
     said = after ? `${before}\n\n${after}` : before;
   }
   if (text.standard !== undefined && said.trim() === text.standard.trim()) return undefined;
