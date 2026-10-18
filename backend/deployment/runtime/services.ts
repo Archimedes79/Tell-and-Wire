@@ -16,6 +16,7 @@ import { mcpToolService } from './ai/tools.ts';
 import { inProject, inside, reachable } from './confine.ts';
 import { aiSetting, configuredMcpServers, configuredSettings, candidatePaths } from './ai/settings.ts';
 import { messageOf } from '../../../graph/errors.ts';
+import { ASIDE_NAME } from '../../../graph/nodes/code/CodeNodeDefinition.ts';
 
 export const nodeFiles: FileService = {
   resolve: (path: string) => resolve(path),
@@ -181,6 +182,11 @@ export const nodeCode: CodeService = {
     const wrapper = `${lead}${body}${tail}`;
 
     try {
+      // The files beside code.js, where `./name` finds them: the body is a file in this folder, as code.js is in its own.
+      for (const [name, text] of Object.entries(context?.files ?? {})) {
+        if (!ASIDE_NAME.test(name)) throw new Error(`"${name}" is not a file a body may load: a name of letters, digits, _ . - ending in .js, .mjs, .cjs, .json, .csv or .txt.`);
+        await writeFile(join(dir, name), text, 'utf8');
+      }
       await writeFile(file, wrapper, 'utf8');
       const given = { inputs, calls: Object.keys(context?.calls ?? {}), facts: context?.facts ?? {}, windows: context?.windows ?? [] };
       const result = await converse(process.execPath, [...sandbox(dir), file], JSON.stringify(given), context?.calls ?? {}, signal);
@@ -206,6 +212,8 @@ export const nodeCode: CodeService = {
 function inBodyLines(error: unknown, lead: string): unknown {
   if (!(error instanceof Error)) return error;
   const offset = lead.split('\n').length - 1;
+  // A file beside the body is named as the person knows it, `helper.js:3`, not by a folder that is gone.
+  error.message = error.message.replace(/(?:file:\/\/\/)?[^\s()]*tell-and-wire-[^\s()\\/]+[\\/](?!body\.mjs)([\w.-]+):(\d+)/g, '$1:$2');
   error.message = error.message.replace(
     /[^\s()]*body\.mjs:(\d+)(?::(\d+))?/g,
     (whole, line: string, column?: string) => {

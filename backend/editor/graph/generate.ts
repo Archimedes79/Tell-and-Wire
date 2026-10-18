@@ -37,6 +37,7 @@ import type { NodeDefinition, Kinds } from '../../../graph/nodes/NodeDefinition.
 import { designs } from '../../../graph/authoring/nodes/registry.ts';
 import { PLAIN_ASK } from '../../deployment/runtime/nodes/ai/ask.ts';
 import { runBody } from '../../deployment/runtime/nodes/body.ts';
+import { asideFiles } from '../../../graph/nodes/code/CodeNodeDefinition.ts';
 import type { Generation } from '../../../graph/authoring/generation.ts';
 import { fillPrompt } from '../../../graph/files/prompts.ts';
 import { STANDARD_PROMPTS, type PromptKind } from '../../../graph/editor/prompts.ts';
@@ -105,7 +106,7 @@ const refuse = async (): Promise<never> => { throw new Error('No files here: thi
 const NO_FILES: FileService = { resolve: (path) => path, inProject: (path) => path, size: refuse, read: refuse, write: refuse, list: refuse };
 
 async function probe(
-  runtime: Runtime, target: Target, body: string, sample: Record<string, unknown>,
+  runtime: Runtime, target: Target, body: string, sample: Record<string, unknown>, files: Record<string, string> = {},
 ): Promise<{ result: Record<string, unknown> | null; error: string }> {
   // Ended, not merely given up on: a generated body in an endless loop is a
   // process, and one per ✨ press left running is how a laptop gets warm.
@@ -118,7 +119,7 @@ async function probe(
     // What it asks is answered by the model that wrote it, which is the one
     // AI setting -- where the same call in a run goes, too.
     const ask = { ...PLAIN_ASK, provider: target.provider, model: target.model };
-    const result = await runBody(body, { ...sample }, runtime, { signal: stop.signal, ask });
+    const result = await runBody(body, { ...sample }, runtime, { signal: stop.signal, ask, files });
     if (!result || typeof result !== 'object' || Array.isArray(result)) {
       return { result: null, error: `run() returned ${Array.isArray(result) ? 'an array' : typeof result}, but it must return an object.` };
     }
@@ -207,7 +208,7 @@ async function writeVerifiedCode(
    * can, and -- for a change -- nothing that would turn it back.
    */
   const verdict = async (body: string) => {
-    const ran = await probe(runtime, target, body, sample);
+    const ran = await probe(runtime, target, body, sample, shape.aside);
     if (!ran.result) return { ...ran, problems: [] as string[], mend: [] as string[], reached: 0 };
     const absent = ports.filter((port) => !(port in ran.result!));
     const missing = absent.map((port) => `it returns no "${port}"`);
@@ -392,6 +393,7 @@ function shapeOf(
     definitions,
     json: element.texts(node).some((text) => text.field === spec.fields.body && text.json === true),
     ...(spec.language ? { language: spec.language } : {}),
+    ...(Object.keys(asideFiles(node.config)).length ? { aside: asideFiles(node.config) } : {}),
   };
 }
 

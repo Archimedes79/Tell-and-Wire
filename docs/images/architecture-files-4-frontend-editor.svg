@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1848" viewBox="0 0 1848 1872.5" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1848" viewBox="0 0 1848 1898" role="img">
 <title>The editor's page: frontend/editor/</title>
-<desc>The canvas, a node opened in place, the GUI designer, the schedule table, the notebook link and the settings. 136 rows: each file with what it does.</desc>
+<desc>The canvas, a node opened in place, the GUI designer, the schedule table, the notebook link and the settings. 137 rows: each file with what it does.</desc>
 <style>svg{font-family:Segoe UI,Helvetica,Arial,sans-serif}.bg{fill:#ffffff}.h{font-size:19px;font-weight:600;fill:#1f1e1d}.n{font-size:12.5px;fill:#5f5e5a}.d{font-size:13px;font-weight:600;fill:#3C3489}.f{font-family:Consolas,Menlo,monospace;font-size:11.5px;font-weight:600;fill:#1f1e1d}.r{font-size:11px;fill:#5f5e5a}.box{fill:#EEEDFE;stroke:#534AB7;stroke-width:.6}.row{stroke:#534AB7;stroke-opacity:.25}@media (prefers-color-scheme:dark){.bg{fill:#1c1c1a}.h,.f{fill:#e8e6dc}.n,.r{fill:#b4b2a9}.d{fill:#CECBF6}.box{fill:#262624;stroke:#AFA9EC}.row{stroke:#AFA9EC}}</style>
-<rect class="bg" width="1848" height="1872.5"/>
+<rect class="bg" width="1848" height="1898"/>
 <text class="h" x="20" y="34">The editor's page: frontend/editor/</text>
-<text class="n" x="20" y="54">The canvas, a node opened in place, the GUI designer, the schedule table, the notebook link and the settings. (136 rows)</text>
+<text class="n" x="20" y="54">The canvas, a node opened in place, the GUI designer, the schedule table, the notebook link and the settings. (137 rows)</text>
 <g>
 <rect class="box" x="20" y="78" width="440" height="91.5" rx="9"/>
 <text class="d" x="34" y="100">frontend/editor/api/</text>
@@ -278,103 +278,106 @@
 <g>
 <rect class="box" x="476" y="803" width="440" height="513" rx="9"/>
 <text class="d" x="490" y="825">frontend/editor/graph/node/</text>
-<text class="f" x="490" y="850">DataFieldsForm.tsx</text>
-<text class="r" x="498" y="864.5">The fields of a data node: their names and starting values.</text>
+<text class="f" x="490" y="850">AddFile.tsx</text>
+<text class="r" x="498" y="864.5">The name field that adds a file beside a code node's code.js.</text>
 <line class="row" x1="490" x2="902" y1="871" y2="871"/>
-<text class="f" x="490" y="887">FilePane.tsx</text>
-<text class="r" x="498" y="901.5">The pane that edits one file of a node, whatever the file is kept as.</text>
+<text class="f" x="490" y="887">DataFieldsForm.tsx</text>
+<text class="r" x="498" y="901.5">The fields of a data node: their names and starting values.</text>
 <line class="row" x1="490" x2="902" y1="908" y2="908"/>
-<text class="f" x="490" y="924">FilesLine.tsx</text>
-<text class="r" x="498" y="938.5">The files a definition is written from, folded under their file, a chip each.</text>
+<text class="f" x="490" y="924">FilePane.tsx</text>
+<text class="r" x="498" y="938.5">The pane that edits one file of a node, whatever the file is kept as.</text>
 <line class="row" x1="490" x2="902" y1="945" y2="945"/>
-<text class="f" x="490" y="961">LastRun.tsx</text>
-<text class="r" x="498" y="975.5">What a node made in its last run, for reading.</text>
+<text class="f" x="490" y="961">FilesLine.tsx</text>
+<text class="r" x="498" y="975.5">The files a definition is written from, folded under their file, a chip each.</text>
 <line class="row" x1="490" x2="902" y1="982" y2="982"/>
-<text class="f" x="490" y="998">NodeView.tsx</text>
-<text class="r" x="498" y="1012.5">A node opened in place: its files, their chats and its settings.</text>
+<text class="f" x="490" y="998">LastRun.tsx</text>
+<text class="r" x="498" y="1012.5">What a node made in its last run, for reading.</text>
 <line class="row" x1="490" x2="902" y1="1019" y2="1019"/>
-<text class="f" x="490" y="1035">PartChat.tsx</text>
-<text class="r" x="498" y="1049.5">The chat of one file of a node: what was typed, what was asked, what came of it.</text>
+<text class="f" x="490" y="1035">NodeView.tsx</text>
+<text class="r" x="498" y="1049.5">A node opened in place: its files, their chats and its settings.</text>
 <line class="row" x1="490" x2="902" y1="1056" y2="1056"/>
-<text class="f" x="490" y="1072">PortsEditor.tsx</text>
-<text class="r" x="498" y="1086.5">The ports of a node, named by the person who wrote it.</text>
+<text class="f" x="490" y="1072">PartChat.tsx</text>
+<text class="r" x="498" y="1086.5">The chat of one file of a node: what was typed, what was asked, what came of it.</text>
 <line class="row" x1="490" x2="902" y1="1093" y2="1093"/>
-<text class="f" x="490" y="1109">SettingsPane.tsx</text>
-<text class="r" x="498" y="1123.5">Everything about a node that is set and not written: its kind's settings, its</text>
-<text class="r" x="498" y="1138">ports, its run options.</text>
-<line class="row" x1="490" x2="902" y1="1144.5" y2="1144.5"/>
-<text class="f" x="490" y="1160.5">WritingStatus.tsx</text>
-<text class="r" x="498" y="1175">What the model is doing for the node and what it last said.</text>
+<text class="f" x="490" y="1109">PortsEditor.tsx</text>
+<text class="r" x="498" y="1123.5">The ports of a node, named by the person who wrote it.</text>
+<line class="row" x1="490" x2="902" y1="1130" y2="1130"/>
+<text class="f" x="490" y="1146">SettingsPane.tsx</text>
+<text class="r" x="498" y="1160.5">Everything about a node that is set and not written: its kind's settings, its</text>
+<text class="r" x="498" y="1175">ports, its run options.</text>
 <line class="row" x1="490" x2="902" y1="1181.5" y2="1181.5"/>
-<text class="f" x="490" y="1197.5">nodeDraft.ts</text>
-<text class="r" x="498" y="1212">A node's edits as they reach the graph: a setting, ports, and what an output that</text>
-<text class="r" x="498" y="1226.5">catches failures says.</text>
-<line class="row" x1="490" x2="902" y1="1233" y2="1233"/>
-<text class="f" x="490" y="1249">nodePanel.ts</text>
-<text class="r" x="498" y="1263.5">A node's panel, as its changes reach the graph</text>
+<text class="f" x="490" y="1197.5">WritingStatus.tsx</text>
+<text class="r" x="498" y="1212">What the model is doing for the node and what it last said.</text>
+<line class="row" x1="490" x2="902" y1="1218.5" y2="1218.5"/>
+<text class="f" x="490" y="1234.5">nodeDraft.ts</text>
+<text class="r" x="498" y="1249">A node's edits as they reach the graph: a setting, ports, and what an output that</text>
+<text class="r" x="498" y="1263.5">catches failures says.</text>
 <line class="row" x1="490" x2="902" y1="1270" y2="1270"/>
-<text class="f" x="490" y="1286">portIds.ts</text>
-<text class="r" x="498" y="1300.5">What a node's port ids must be, for the node panel to store them</text>
+<text class="f" x="490" y="1286">nodePanel.ts</text>
+<text class="r" x="498" y="1300.5">A node's panel, as its changes reach the graph</text>
 </g>
 <g>
-<rect class="box" x="1388" y="828.5" width="440" height="180" rx="9"/>
+<rect class="box" x="1388" y="828.5" width="440" height="217" rx="9"/>
 <text class="d" x="1402" y="850.5">frontend/editor/graph/node (cont.)/</text>
-<text class="f" x="1402" y="875.5">useGraphSweep.ts</text>
-<text class="r" x="1410" y="890">The toolbar's Generate: every node of the graph written, front to back</text>
+<text class="f" x="1402" y="875.5">portIds.ts</text>
+<text class="r" x="1410" y="890">What a node's port ids must be, for the node panel to store them</text>
 <line class="row" x1="1402" x2="1814" y1="896.5" y2="896.5"/>
-<text class="f" x="1402" y="912.5">usePartGenerate.ts</text>
-<text class="r" x="1410" y="927">Everything the node view asks of the model, once: one state machine for the whole</text>
-<text class="r" x="1410" y="941.5">node.</text>
-<line class="row" x1="1402" x2="1814" y1="948" y2="948"/>
-<text class="f" x="1402" y="964">writeFile.ts</text>
-<text class="r" x="1410" y="978.5">Writing one file of a node (input, output or body) the way the node view and the</text>
-<text class="r" x="1410" y="993">toolbar's Generate do.</text>
-</g>
-<g>
-<rect class="box" x="1388" y="1024.5" width="440" height="91.5" rx="9"/>
-<text class="d" x="1402" y="1046.5">frontend/editor/graph/nodes/</text>
-<text class="f" x="1402" y="1071.5">NodeGuiBuilder.ts</text>
-<text class="r" x="1410" y="1086">How a person edits a node, in the browser: the mirror of</text>
-<text class="r" x="1410" y="1100.5">graph/nodes/NodeDefinition.ts</text>
+<text class="f" x="1402" y="912.5">useGraphSweep.ts</text>
+<text class="r" x="1410" y="927">The toolbar's Generate: every node of the graph written, front to back</text>
+<line class="row" x1="1402" x2="1814" y1="933.5" y2="933.5"/>
+<text class="f" x="1402" y="949.5">usePartGenerate.ts</text>
+<text class="r" x="1410" y="964">Everything the node view asks of the model, once: one state machine for the whole</text>
+<text class="r" x="1410" y="978.5">node.</text>
+<line class="row" x1="1402" x2="1814" y1="985" y2="985"/>
+<text class="f" x="1402" y="1001">writeFile.ts</text>
+<text class="r" x="1410" y="1015.5">Writing one file of a node (input, output or body) the way the node view and the</text>
+<text class="r" x="1410" y="1030">toolbar's Generate do.</text>
 </g>
 <g>
 <rect class="box" x="932" y="1050.5" width="440" height="91.5" rx="9"/>
-<text class="d" x="946" y="1072.5">frontend/editor/graph/nodes/&lt;kind&gt;/</text>
-<text class="f" x="946" y="1097.5">&lt;Kind&gt;NodeGuiBuilder.ts, &lt;Kind&gt;Node*Panel.tsx</text>
-<text class="r" x="954" y="1112">The builder of each node kind -- how a person edits it -- and the panels its</text>
-<text class="r" x="954" y="1126.5">settings are drawn in.</text>
+<text class="d" x="946" y="1072.5">frontend/editor/graph/nodes/</text>
+<text class="f" x="946" y="1097.5">NodeGuiBuilder.ts</text>
+<text class="r" x="954" y="1112">How a person edits a node, in the browser: the mirror of</text>
+<text class="r" x="954" y="1126.5">graph/nodes/NodeDefinition.ts</text>
 </g>
 <g>
-<rect class="box" x="1388" y="1132" width="440" height="217" rx="9"/>
-<text class="d" x="1402" y="1154">frontend/editor/graph/nodes/ai/</text>
-<text class="f" x="1402" y="1179">ServerPage.tsx</text>
-<text class="r" x="1410" y="1193.5">The settings page a tool server brings for itself, in a sandboxed frame.</text>
-<line class="row" x1="1402" x2="1814" y1="1200" y2="1200"/>
-<text class="f" x="1402" y="1216">ToolServerDialogs.tsx</text>
-<text class="r" x="1410" y="1230.5">Add and set up a tool server: install, write its entry, start it once.</text>
-<line class="row" x1="1402" x2="1814" y1="1237" y2="1237"/>
-<text class="f" x="1402" y="1253">ToolServers.tsx</text>
-<text class="r" x="1410" y="1267.5">The tool servers an AI node may use: which are set up on this machine and how each</text>
-<text class="r" x="1410" y="1282">stands.</text>
-<line class="row" x1="1402" x2="1814" y1="1288.5" y2="1288.5"/>
-<text class="f" x="1402" y="1304.5">pageDocument.ts</text>
-<text class="r" x="1410" y="1319">The document a tool server's page stands on: the editor's colours and form</text>
-<text class="r" x="1410" y="1333.5">controls.</text>
+<rect class="box" x="1388" y="1061.5" width="440" height="91.5" rx="9"/>
+<text class="d" x="1402" y="1083.5">frontend/editor/graph/nodes/&lt;kind&gt;/</text>
+<text class="f" x="1402" y="1108.5">&lt;Kind&gt;NodeGuiBuilder.ts, &lt;Kind&gt;Node*Panel.tsx</text>
+<text class="r" x="1410" y="1123">The builder of each node kind -- how a person edits it -- and the panels its</text>
+<text class="r" x="1410" y="1137.5">settings are drawn in.</text>
 </g>
 <g>
-<rect class="box" x="932" y="1158" width="440" height="188" rx="9"/>
-<text class="d" x="946" y="1180">frontend/editor/graph/views/</text>
-<text class="f" x="946" y="1205">ChatPane.tsx</text>
-<text class="r" x="954" y="1219.5">One chat: the exchanges, the words said and what came of them.</text>
+<rect class="box" x="932" y="1158" width="440" height="217" rx="9"/>
+<text class="d" x="946" y="1180">frontend/editor/graph/nodes/ai/</text>
+<text class="f" x="946" y="1205">ServerPage.tsx</text>
+<text class="r" x="954" y="1219.5">The settings page a tool server brings for itself, in a sandboxed frame.</text>
 <line class="row" x1="946" x2="1358" y1="1226" y2="1226"/>
-<text class="f" x="946" y="1242">NodeHeader.tsx</text>
-<text class="r" x="954" y="1256.5">The header of an opened node: its heading and a step to a neighbour.</text>
+<text class="f" x="946" y="1242">ToolServerDialogs.tsx</text>
+<text class="r" x="954" y="1256.5">Add and set up a tool server: install, write its entry, start it once.</text>
 <line class="row" x1="946" x2="1358" y1="1263" y2="1263"/>
-<text class="f" x="946" y="1279">NodeViewLayout.tsx</text>
-<text class="r" x="954" y="1293.5">The layout of an opened node: panes with their headers.</text>
-<line class="row" x1="946" x2="1358" y1="1300" y2="1300"/>
-<text class="f" x="946" y="1316">RowList.tsx</text>
-<text class="r" x="954" y="1330.5">The list of a node's files, each with whether anything is written in it yet.</text>
+<text class="f" x="946" y="1279">ToolServers.tsx</text>
+<text class="r" x="954" y="1293.5">The tool servers an AI node may use: which are set up on this machine and how each</text>
+<text class="r" x="954" y="1308">stands.</text>
+<line class="row" x1="946" x2="1358" y1="1314.5" y2="1314.5"/>
+<text class="f" x="946" y="1330.5">pageDocument.ts</text>
+<text class="r" x="954" y="1345">The document a tool server's page stands on: the editor's colours and form</text>
+<text class="r" x="954" y="1359.5">controls.</text>
+</g>
+<g>
+<rect class="box" x="1388" y="1169" width="440" height="188" rx="9"/>
+<text class="d" x="1402" y="1191">frontend/editor/graph/views/</text>
+<text class="f" x="1402" y="1216">ChatPane.tsx</text>
+<text class="r" x="1410" y="1230.5">One chat: the exchanges, the words said and what came of them.</text>
+<line class="row" x1="1402" x2="1814" y1="1237" y2="1237"/>
+<text class="f" x="1402" y="1253">NodeHeader.tsx</text>
+<text class="r" x="1410" y="1267.5">The header of an opened node: its heading and a step to a neighbour.</text>
+<line class="row" x1="1402" x2="1814" y1="1274" y2="1274"/>
+<text class="f" x="1402" y="1290">NodeViewLayout.tsx</text>
+<text class="r" x="1410" y="1304.5">The layout of an opened node: panes with their headers.</text>
+<line class="row" x1="1402" x2="1814" y1="1311" y2="1311"/>
+<text class="f" x="1402" y="1327">RowList.tsx</text>
+<text class="r" x="1410" y="1341.5">The list of a node's files, each with whether anything is written in it yet.</text>
 </g>
 <g>
 <rect class="box" x="20" y="1240" width="440" height="519.5" rx="9"/>
@@ -448,80 +451,80 @@
 <text class="r" x="498" y="1696">The text of a box whose stored form comes back tidied, kept as it is typed.</text>
 </g>
 <g>
-<rect class="box" x="932" y="1362" width="440" height="490.5" rx="9"/>
-<text class="d" x="946" y="1384">frontend/editor/gui/</text>
-<text class="f" x="946" y="1409">ApplicationView.tsx</text>
-<text class="r" x="954" y="1423.5">The application Run starts, shown: the tool as its recipient gets it, on the</text>
-<text class="r" x="954" y="1438">document being edited.</text>
-<line class="row" x1="946" x2="1358" y1="1444.5" y2="1444.5"/>
-<text class="f" x="946" y="1460.5">DesignerPalette.tsx</text>
-<text class="r" x="954" y="1475">The block palette of the GUI tab.</text>
-<line class="row" x1="946" x2="1358" y1="1481.5" y2="1481.5"/>
-<text class="f" x="946" y="1497.5">DesignerSurface.tsx</text>
-<text class="r" x="954" y="1512">The GUI plus the few affordances needed to build one: select, move, resize, drop.</text>
-<line class="row" x1="946" x2="1358" y1="1518.5" y2="1518.5"/>
-<text class="f" x="946" y="1534.5">DesignerTab.tsx</text>
-<text class="r" x="954" y="1549">The GUI tab: palette, surface, the heading and the panel of the selected block.</text>
-<line class="row" x1="946" x2="1358" y1="1555.5" y2="1555.5"/>
-<text class="f" x="946" y="1571.5">GuiHeading.tsx</text>
-<text class="r" x="954" y="1586">The tool's name and description, edited above the GUI.</text>
-<line class="row" x1="946" x2="1358" y1="1592.5" y2="1592.5"/>
-<text class="f" x="946" y="1608.5">GuiSettings.tsx</text>
-<text class="r" x="954" y="1623">What the right panel shows while no block is selected: the GUI's colour scheme.</text>
-<line class="row" x1="946" x2="1358" y1="1629.5" y2="1629.5"/>
-<text class="f" x="946" y="1645.5">KeptFold.tsx</text>
-<text class="r" x="954" y="1660">What a block holds in the session, folded under it, one line.</text>
-<line class="row" x1="946" x2="1358" y1="1666.5" y2="1666.5"/>
-<text class="f" x="946" y="1682.5">OnTheGraph.tsx</text>
-<text class="r" x="954" y="1697">How a block meets the graph: which start point it sends to, which end point it</text>
-<text class="r" x="954" y="1711.5">shows.</text>
-<line class="row" x1="946" x2="1358" y1="1718" y2="1718"/>
-<text class="f" x="946" y="1734">QuickInsert.tsx</text>
-<text class="r" x="954" y="1748.5">"/" on the GUI: type what you want, press Enter, keep going.</text>
-<line class="row" x1="946" x2="1358" y1="1755" y2="1755"/>
-<text class="f" x="946" y="1771">TopGraphOnly.tsx</text>
-<text class="r" x="954" y="1785.5">Shows the GUI only where a GUI can be: in the graph at the top.</text>
-<line class="row" x1="946" x2="1358" y1="1792" y2="1792"/>
-<text class="f" x="946" y="1808">WidgetEditor.tsx</text>
-<text class="r" x="954" y="1822.5">The panel of the selected block: its label, how it meets the graph, its own</text>
-<text class="r" x="954" y="1837">settings.</text>
+<rect class="box" x="1388" y="1373" width="440" height="490.5" rx="9"/>
+<text class="d" x="1402" y="1395">frontend/editor/gui/</text>
+<text class="f" x="1402" y="1420">ApplicationView.tsx</text>
+<text class="r" x="1410" y="1434.5">The application Run starts, shown: the tool as its recipient gets it, on the</text>
+<text class="r" x="1410" y="1449">document being edited.</text>
+<line class="row" x1="1402" x2="1814" y1="1455.5" y2="1455.5"/>
+<text class="f" x="1402" y="1471.5">DesignerPalette.tsx</text>
+<text class="r" x="1410" y="1486">The block palette of the GUI tab.</text>
+<line class="row" x1="1402" x2="1814" y1="1492.5" y2="1492.5"/>
+<text class="f" x="1402" y="1508.5">DesignerSurface.tsx</text>
+<text class="r" x="1410" y="1523">The GUI plus the few affordances needed to build one: select, move, resize, drop.</text>
+<line class="row" x1="1402" x2="1814" y1="1529.5" y2="1529.5"/>
+<text class="f" x="1402" y="1545.5">DesignerTab.tsx</text>
+<text class="r" x="1410" y="1560">The GUI tab: palette, surface, the heading and the panel of the selected block.</text>
+<line class="row" x1="1402" x2="1814" y1="1566.5" y2="1566.5"/>
+<text class="f" x="1402" y="1582.5">GuiHeading.tsx</text>
+<text class="r" x="1410" y="1597">The tool's name and description, edited above the GUI.</text>
+<line class="row" x1="1402" x2="1814" y1="1603.5" y2="1603.5"/>
+<text class="f" x="1402" y="1619.5">GuiSettings.tsx</text>
+<text class="r" x="1410" y="1634">What the right panel shows while no block is selected: the GUI's colour scheme.</text>
+<line class="row" x1="1402" x2="1814" y1="1640.5" y2="1640.5"/>
+<text class="f" x="1402" y="1656.5">KeptFold.tsx</text>
+<text class="r" x="1410" y="1671">What a block holds in the session, folded under it, one line.</text>
+<line class="row" x1="1402" x2="1814" y1="1677.5" y2="1677.5"/>
+<text class="f" x="1402" y="1693.5">OnTheGraph.tsx</text>
+<text class="r" x="1410" y="1708">How a block meets the graph: which start point it sends to, which end point it</text>
+<text class="r" x="1410" y="1722.5">shows.</text>
+<line class="row" x1="1402" x2="1814" y1="1729" y2="1729"/>
+<text class="f" x="1402" y="1745">QuickInsert.tsx</text>
+<text class="r" x="1410" y="1759.5">"/" on the GUI: type what you want, press Enter, keep going.</text>
+<line class="row" x1="1402" x2="1814" y1="1766" y2="1766"/>
+<text class="f" x="1402" y="1782">TopGraphOnly.tsx</text>
+<text class="r" x="1410" y="1796.5">Shows the GUI only where a GUI can be: in the graph at the top.</text>
+<line class="row" x1="1402" x2="1814" y1="1803" y2="1803"/>
+<text class="f" x="1402" y="1819">WidgetEditor.tsx</text>
+<text class="r" x="1410" y="1833.5">The panel of the selected block: its label, how it meets the graph, its own</text>
+<text class="r" x="1410" y="1848">settings.</text>
 </g>
 <g>
-<rect class="box" x="1388" y="1365" width="440" height="188" rx="9"/>
-<text class="d" x="1402" y="1387">frontend/editor/gui (cont.)/</text>
-<text class="f" x="1402" y="1412">guiFromGraph.ts</text>
-<text class="r" x="1410" y="1426.5">A GUI drawn from the graph: the blocks it still lacks</text>
-<line class="row" x1="1402" x2="1814" y1="1433" y2="1433"/>
-<text class="f" x="1402" y="1449">guiWrite.ts</text>
-<text class="r" x="1410" y="1463.5">Changing the GUI: the one way a block is added, changed, moved or removed</text>
-<line class="row" x1="1402" x2="1814" y1="1470" y2="1470"/>
-<text class="f" x="1402" y="1486">roundWords.ts</text>
-<text class="r" x="1410" y="1500.5">Who sent what began a round, in words.</text>
-<line class="row" x1="1402" x2="1814" y1="1507" y2="1507"/>
-<text class="f" x="1402" y="1523">typedValues.ts</text>
-<text class="r" x="1410" y="1537.5">What the designer shows in a block somebody has typed into</text>
+<rect class="box" x="932" y="1391" width="440" height="188" rx="9"/>
+<text class="d" x="946" y="1413">frontend/editor/gui (cont.)/</text>
+<text class="f" x="946" y="1438">guiFromGraph.ts</text>
+<text class="r" x="954" y="1452.5">A GUI drawn from the graph: the blocks it still lacks</text>
+<line class="row" x1="946" x2="1358" y1="1459" y2="1459"/>
+<text class="f" x="946" y="1475">guiWrite.ts</text>
+<text class="r" x="954" y="1489.5">Changing the GUI: the one way a block is added, changed, moved or removed</text>
+<line class="row" x1="946" x2="1358" y1="1496" y2="1496"/>
+<text class="f" x="946" y="1512">roundWords.ts</text>
+<text class="r" x="954" y="1526.5">Who sent what began a round, in words.</text>
+<line class="row" x1="946" x2="1358" y1="1533" y2="1533"/>
+<text class="f" x="946" y="1549">typedValues.ts</text>
+<text class="r" x="954" y="1563.5">What the designer shows in a block somebody has typed into</text>
 </g>
 <g>
-<rect class="box" x="1388" y="1569" width="440" height="283" rx="9"/>
-<text class="d" x="1402" y="1591">frontend/editor/gui/widgets/</text>
-<text class="f" x="1402" y="1616">DisplayWidgetGuiBuilder.ts</text>
-<text class="r" x="1410" y="1630.5">The mirror of gui/widgets/DisplayWidgetDefinition.ts: a block that only shows what</text>
-<text class="r" x="1410" y="1645">the end point it shows hands back -- a chart, a table, an image</text>
-<line class="row" x1="1402" x2="1814" y1="1651.5" y2="1651.5"/>
-<text class="f" x="1402" y="1667.5">DisplayWidgetPanel.tsx</text>
-<text class="r" x="1410" y="1682">The panel of a block that only shows an end point's value.</text>
-<line class="row" x1="1402" x2="1814" y1="1688.5" y2="1688.5"/>
-<text class="f" x="1402" y="1704.5">StaticWidgetGuiBuilder.ts</text>
-<text class="r" x="1410" y="1719">The mirror of gui/widgets/StaticWidgetDefinition.ts: a widget that is part of the</text>
-<text class="r" x="1410" y="1733.5">GUI rather than part of the graph -- a heading, a rule, a gap</text>
-<line class="row" x1="1402" x2="1814" y1="1740" y2="1740"/>
-<text class="f" x="1402" y="1756">WidgetGuiBuilder.ts</text>
-<text class="r" x="1410" y="1770.5">How a person edits a block, in the browser: the mirror of</text>
-<text class="r" x="1410" y="1785">gui/widgets/WidgetDefinition.ts</text>
-<line class="row" x1="1402" x2="1814" y1="1791.5" y2="1791.5"/>
-<text class="f" x="1402" y="1807.5">roster.ts</text>
-<text class="r" x="1410" y="1822">The widgets a GUI is built from: the mirror of gui/widgets/roster.ts, and the only</text>
-<text class="r" x="1410" y="1836.5">place that knows the whole set</text>
+<rect class="box" x="932" y="1595" width="440" height="283" rx="9"/>
+<text class="d" x="946" y="1617">frontend/editor/gui/widgets/</text>
+<text class="f" x="946" y="1642">DisplayWidgetGuiBuilder.ts</text>
+<text class="r" x="954" y="1656.5">The mirror of gui/widgets/DisplayWidgetDefinition.ts: a block that only shows what</text>
+<text class="r" x="954" y="1671">the end point it shows hands back -- a chart, a table, an image</text>
+<line class="row" x1="946" x2="1358" y1="1677.5" y2="1677.5"/>
+<text class="f" x="946" y="1693.5">DisplayWidgetPanel.tsx</text>
+<text class="r" x="954" y="1708">The panel of a block that only shows an end point's value.</text>
+<line class="row" x1="946" x2="1358" y1="1714.5" y2="1714.5"/>
+<text class="f" x="946" y="1730.5">StaticWidgetGuiBuilder.ts</text>
+<text class="r" x="954" y="1745">The mirror of gui/widgets/StaticWidgetDefinition.ts: a widget that is part of the</text>
+<text class="r" x="954" y="1759.5">GUI rather than part of the graph -- a heading, a rule, a gap</text>
+<line class="row" x1="946" x2="1358" y1="1766" y2="1766"/>
+<text class="f" x="946" y="1782">WidgetGuiBuilder.ts</text>
+<text class="r" x="954" y="1796.5">How a person edits a block, in the browser: the mirror of</text>
+<text class="r" x="954" y="1811">gui/widgets/WidgetDefinition.ts</text>
+<line class="row" x1="946" x2="1358" y1="1817.5" y2="1817.5"/>
+<text class="f" x="946" y="1833.5">roster.ts</text>
+<text class="r" x="954" y="1848">The widgets a GUI is built from: the mirror of gui/widgets/roster.ts, and the only</text>
+<text class="r" x="954" y="1862.5">place that knows the whole set</text>
 </g>
 <g>
 <rect class="box" x="476" y="1727.5" width="440" height="91.5" rx="9"/>

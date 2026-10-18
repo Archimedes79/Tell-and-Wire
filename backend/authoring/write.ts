@@ -17,7 +17,7 @@ import { FLOW_FILE, flowOf } from '../../graph/files/flow.ts';
 import { tableFor, tableLines } from '../../graph/schedule.ts';
 import { NotAGraph, NotFound } from '../../graph/errors.ts';
 import {
-  ABSENT, FileChanged, SCHEDULE_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, keyOf, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  ABSENT, FileChanged, addFilesBeside, SCHEDULE_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, keyOf, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readProject, readStructure, remember, seen, signature, textFields, toFile, withoutEmptyGui, type Guard,
 } from '../deployment/project/folder.ts';
 
@@ -269,6 +269,7 @@ export async function nodeFileOf(folder: string, nodeId: string, file?: string, 
   const { graph } = await readStructure(here);
   const node = graph.nodes.find((candidate) => candidate.id === nodeId);
   if (!node) throw new NotFound(`No node "${nodeId}" in ${here}. Save the graph first.`);
+  await addFilesBeside(here, graph);
   const texts = projectTexts(graph).filter((text) => text.node_id === nodeId);
   withoutEmptyGui(graph);
   const generation = designs.node(node.node_type)?.generation();
@@ -307,6 +308,7 @@ export async function nodeFileOf(folder: string, nodeId: string, file?: string, 
  */
 export async function changesOnDisk(folder: string): Promise<TextChange[]> {
   const { graph } = await readStructure(folder);
+  await addFilesBeside(folder, graph);
   const changes: TextChange[] = [];
   const looked = new Map<string, string>();
   for (const text of projectTexts(graph)) {
@@ -361,6 +363,7 @@ async function changedUnder(folder: string): Promise<boolean> {
   };
 
   const { graph, files } = await readStructure(folder);
+  await addFilesBeside(folder, graph);
   for (const path of files.keys()) await look(path);
   await look(join(folder, SCHEDULE_FILE));
   for (const text of projectTexts(graph)) await look(join(folder, text.path));

@@ -1,4 +1,4 @@
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, X } from 'lucide-react';
 import { ACCENT, ACCENT_FILL, ACCENT_TEXT, DIMMER, LINE, MUTED, ON_ACCENT, RAISE, SUCCESS, SUCCESS_TEXT, TEXT, WARNING_FILL, WARNING_TEXT } from '../../../deployment/gui/kit/ui/theme';
 
 /** One button of a row. */
@@ -21,6 +21,8 @@ export interface RowView {
   ports?: { kind: 'input' | 'output'; names: string[]; stray?: { file: string } };
   actions: RowAction[];
   add?: { title: string; onClick: () => void };
+  /** Takes the row away: a file a person added, which is theirs to remove. */
+  remove?: { title: string; onClick: () => void };
 }
 
 /** Which button is the one open, as `rowId:actionId`. */
@@ -104,6 +106,18 @@ export default function RowList({ rows, active, onAction }: {
                   style={{ width: 18, height: 18, border: `1px dashed ${LINE}`, color: MUTED }}
                 >
                   <Plus size={11} strokeWidth={2.4} aria-hidden="true" />
+                </button>
+              )}
+              {row.remove && (
+                <button
+                  type="button"
+                  onClick={row.remove.onClick}
+                  title={row.remove.title}
+                  aria-label={row.remove.title}
+                  className="ml-auto inline-flex items-center justify-center rounded-full hover-raise"
+                  style={{ width: 20, height: 20, color: MUTED }}
+                >
+                  <X size={12} strokeWidth={2.4} aria-hidden="true" />
                 </button>
               )}
               {small.map((action) => (

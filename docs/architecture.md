@@ -459,6 +459,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/editor/graph/canvas/nodeRemoval.ts` | Whether Delete or Backspace on the canvas removes what is selected. |
 | `frontend/editor/graph/canvas/useGlide.ts` | Cards that are put somewhere else glide there instead of jumping. |
 | `frontend/editor/graph/canvas/wireLook.ts` | How a wire is drawn: soft grey, in the accent where it touches what is selected. |
+| `frontend/editor/graph/node/AddFile.tsx` | The name field that adds a file beside a code node's code.js. |
 | `frontend/editor/graph/node/DataFieldsForm.tsx` | The fields of a data node: their names and starting values. |
 | `frontend/editor/graph/node/FilePane.tsx` | The pane that edits one file of a node, whatever the file is kept as. |
 | `frontend/editor/graph/node/FilesLine.tsx` | The files a definition is written from, folded under their file, a chip each. |

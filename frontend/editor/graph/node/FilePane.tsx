@@ -7,6 +7,7 @@ import CodeField, { type CodeLanguage } from '../writing/CodeField';
 import { OpenInEditor } from '../writing/FileChip';
 import TryExample, { type useTryExample } from '../writing/TryExample';
 import { useTyped } from '../writing/useTyped';
+import { ASIDE_PREFIX } from '../../../../graph/nodes/code/CodeNodeDefinition.ts';
 import { fieldsFrom, fileOf, hasDefinitions, isWritten, outputsAsDefined, partName, type Part } from '../writing/generation';
 import { PaneHeader } from '../views/NodeViewLayout';
 import FilesLine from './FilesLine';
@@ -69,9 +70,11 @@ function JsonEditor({ node, field, setConfig, ...editor }: Omit<EditorProps, 'va
  * names the outputs once the box is left, as the Output chat's does. Under a
  * body that runs, ▶ Try: one call on the example in input.js, held to output.js.
  */
-export default function FilePane({ node, write, setConfig, updateNode, flush, trying, busy, onFix }: {
+export default function FilePane({ node, write, aside, setConfig, updateNode, flush, trying, busy, onFix }: {
   node: GraphNode;
   write: Part;
+  /** A file beside the code, by name: it is shown in place of `write`'s, as plain text to edit. */
+  aside?: string;
   setConfig: NodePanelProps['setConfig'];
   updateNode: NodePanelProps['updateNode'];
   /** Write what the view still holds into the graph: before a project is saved to open one of its files. */
@@ -81,14 +84,14 @@ export default function FilePane({ node, write, setConfig, updateNode, flush, tr
   busy: boolean;
   onFix: () => void;
 }) {
-  const { field, file, stub, json } = fileOf(node, write);
+  const { field, file, stub, json } = aside ? { field: ASIDE_PREFIX + aside, file: aside, stub: '', json: false } : fileOf(node, write);
   const held = (node.config as Record<string, unknown>)[field];
   const [large, setLarge] = useState(false);
-  const tried = write === 'body' && hasDefinitions(node);
+  const tried = !aside && write === 'body' && hasDefinitions(node);
   const needs = tried && node.inputs.length && !isWritten(node, 'input')
     ? 'Write its input.js first: the example in it is what the code is tried on.' : undefined;
   const editor = {
-    language: file.endsWith('.md') ? 'markdown' as const : 'javascript' as const,
+    language: ['.md', '.csv', '.txt'].some((ending) => file.endsWith(ending)) ? 'markdown' as const : 'javascript' as const,
     placeholder: stub,
     title: `${node.label || node.id} -- ${file}`,
     large,
@@ -98,7 +101,7 @@ export default function FilePane({ node, write, setConfig, updateNode, flush, tr
 
   return (
     <div className="flex flex-col gap-3">
-      <PaneHeader title={`${partName(node, write)}, file`}>
+      <PaneHeader title={aside ? 'File beside the code' : `${partName(node, write)}, file`}>
         <code className="text-xs px-2 py-0.5 rounded" style={{ ...FIELD, color: MUTED }}>{file}</code>
         <span className="flex-1" />
         <Button size="sm" onClick={() => setLarge(true)} title={`Edit ${file} across the whole window (Esc to come back)`}>Full screen ⤢</Button>

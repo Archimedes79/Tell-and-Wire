@@ -58,7 +58,12 @@ export interface Shape {
   json: boolean;
   /** For a body of code, the language the node declares it is written in. */
   language?: Language;
+  /** The files beside the code, by name: it may load them. */
+  aside?: Record<string, string>;
 }
+
+/** How much of a file beside the code a model is shown: the head of a long table says what it is. */
+const ASIDE_SHOWN = 4000;
 
 /** Said of every definition's example: what Tell & Wire reads without running it. */
 const PLAIN_JSON = 'plain JSON: double-quoted keys and strings, no comments, no trailing commas';
@@ -151,6 +156,11 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
       if (perItem) lines.push('`run` is called once per item: `inputs` holds one item, as in the example; what the calls return is collected into lists by themselves.');
       if (inputs.length) lines.push(EMPTY_INPUT);
       lines.push(language.limits);
+      const aside = Object.entries(shape.aside ?? {});
+      if (aside.length) {
+        lines.push('', "These files stand beside it in the node's folder. Load what the function needs from them -- `require('./name')` or `import` -- and do not write their content again:");
+        for (const [name, text] of aside) lines.push('', `### ${name}`, '```', text.length > ASIDE_SHOWN ? `${text.slice(0, ASIDE_SHOWN)}\n…` : text, '```');
+      }
       break;
     }
     case 'prompt': {

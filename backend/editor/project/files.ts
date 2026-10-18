@@ -35,7 +35,11 @@ export class NotOpenable extends Error {}
  * node for another language brings its own. Nothing else is ever handed to
  * another program.
  */
-const OPENABLE = new Set(NODES.flatMap((element) => element.texts({ config: {} } as never).map((text) => extname(text.file).toLowerCase())));
+const OPENABLE = new Set([
+  ...NODES.flatMap((element) => element.texts({ config: {} } as never).map((text) => extname(text.file).toLowerCase())),
+  // and the files beside a code node's code.js
+  '.mjs', '.cjs', '.csv', '.txt',
+]);
 
 /**
  * What opens *path* when VS Code is not there: a text editor, never the

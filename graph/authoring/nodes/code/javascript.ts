@@ -58,8 +58,8 @@ export const JAVASCRIPT: Language = {
     + '[{ port, block, kind, label, w, h, width, height }], the size in cells and in pixels at most; draw for that size '
     + 'if it is there, and for the size the request names if not.',
   skeleton: renderSkeleton,
-  limits: 'Use only what Node has built in. There is no package manager and no `npm install`: `require` '
-    + "and `import` of anything outside Node's own standard library will fail at run time. "
+  limits: 'Use only what Node has built in, and the files beside code.js where the node has them. There is no package manager '
+    + "and no `npm install`: `require` and `import` of anything else outside Node's own standard library will fail at run time. "
     // Without a locale, toLocaleString() takes the machine's: "1.831 characters"
     // on a German one, in a tool whose every other word is English.
     + "Numbers and dates are read in English: format them with the 'en' locale -- `n.toLocaleString('en')` -- "

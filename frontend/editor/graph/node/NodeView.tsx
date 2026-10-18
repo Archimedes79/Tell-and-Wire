@@ -6,6 +6,8 @@ import { NODE_BUILDERS } from '../../elements/registry';
 import { derivedNodePorts } from '../../document/model/ports';
 import { neighbours } from '../../document/model/wires';
 import { columnsOf } from '../../../../graph/schedule.ts';
+import { registry } from '../../../../graph/nodes/registry.ts';
+import { ASIDE_PREFIX, asideFiles } from '../../../../graph/nodes/code/CodeNodeDefinition.ts';
 import { blocksAt } from '../../document/model/gui';
 import { headingFromText, isNumberedHeading } from '../../document/model/heading';
 import type { GraphNode } from '../../document/graph';
@@ -20,6 +22,7 @@ import { fileOf, isWritten, portIdsOf, strayDefinition, partName, partsOf, write
 import NodeHeader, { BackButton } from '../views/NodeHeader';
 import NodeViewLayout from '../views/NodeViewLayout';
 import RowList, { at, type RowAction, type RowView } from '../views/RowList';
+import AddFile, { seedFor } from './AddFile';
 import FilePane from './FilePane';
 import LastRun from './LastRun';
 import PartChat from './PartChat';
@@ -31,7 +34,7 @@ import { useNodePanel } from './nodePanel';
 import { usePartGenerate } from './usePartGenerate';
 
 /** What the right of the view shows: a file or its chat -- an example has none, its Fields chat writes it -- or the node's settings. */
-type Open = { part: Write; how: 'chat' | 'file' } | { part: 'example'; how: 'file' } | { part: 'settings' };
+type Open = { part: Write; how: 'chat' | 'file' } | { part: 'example'; how: 'file' } | { part: 'aside'; name: string; how: 'file' } | { part: 'settings' };
 const SETTINGS: Open = { part: 'settings' };
 
 /** What a node opens on: the first file nothing is written in yet, in the way it is written -- else its body, to read. An input is pulled, and so is an output where it goes into a memory: neither has a chat. */
@@ -151,6 +154,18 @@ function Opened({ node, panel, onClose, onOpenGui }: {
     if (heading) panel.change((current) => ({ ...current, label: heading }), ONCE);
   };
 
+  const addAside = (name: string) => {
+    panel.setConfig(ASIDE_PREFIX + name, seedFor(name), ONCE);
+    setOpen({ part: 'aside', name, how: 'file' });
+  };
+  const removeAside = (name: string) => {
+    panel.change((current) => {
+      const config = { ...current.config } as Record<string, unknown>;
+      delete config[ASIDE_PREFIX + name];
+      return { ...current, config: config as GraphNode['config'] };
+    }, ONCE);
+  };
+
   const ownPorts = derivedNodePorts(node) === null;
   const addPort = (side: 'inputs' | 'outputs') => {
     panel.change((current) => withPorts(current, {
@@ -197,8 +212,18 @@ function Opened({ node, panel, onClose, onOpenGui }: {
     };
   });
 
-  const shown: Open = open.part === 'settings' || parts.includes(open.part) ? open : firstOpen(node, parts, pullsOutput);
-  const active = shown.part === 'settings' ? null : at(shown.part, shown.how);
+  // The files beside the code, where the node keeps any: a row for each, and a way to add one.
+  const kind = registry.node(node.node_type);
+  const aside = kind?.fieldOfFile('x.js') !== undefined ? Object.keys(asideFiles(node.config)) : [];
+  const asideRows: RowView[] = aside.map((name) => ({
+    id: ASIDE_PREFIX + name,
+    label: name,
+    actions: [{ id: 'file', label: 'File', title: `${name}: read it and edit it here -- code.js loads it with require('./${name}')`, written: !!asideFiles(node.config)[name]?.trim() }],
+    remove: { title: `Remove ${name}`, onClick: () => removeAside(name) },
+  }));
+
+  const shown: Open = open.part === 'settings' || (open.part === 'aside' ? aside.includes(open.name) : parts.includes(open.part)) ? open : firstOpen(node, parts, pullsOutput);
+  const active = shown.part === 'settings' ? null : shown.part === 'aside' ? at(ASIDE_PREFIX + shown.name, shown.how) : at(shown.part, shown.how);
   const used = blocksAt(gui, node.id);
   // A block that fires a start point and sends to it too is one block.
   const usedBy = [...new Set([...used.fire, ...used.send, ...used.show])].map((block) => block.label || block.id);
@@ -270,14 +295,20 @@ function Opened({ node, panel, onClose, onOpenGui }: {
           </div>
           <div className="pt-4" style={{ borderTop: `1px solid ${LINE}` }}>
             <RowList
-              rows={rows}
+              rows={[...rows, ...asideRows]}
               active={active}
               onAction={(row, action) => {
                 // Pulled, a definition is shown where it was written.
                 if (action.id === 'pull') void writing.pull(row.id === 'output' ? 'output' : 'input');
+                if (row.id.startsWith(ASIDE_PREFIX)) return setOpen({ part: 'aside', name: row.id.slice(ASIDE_PREFIX.length), how: 'file' });
                 setOpen(row.id === 'example' ? { part: 'example', how: 'file' } : { part: row.id as Write, how: action.id === 'chat' ? 'chat' : 'file' });
               }}
             />
+            {kind?.fieldOfFile('x.js') !== undefined && (
+              <div className="mt-2.5">
+                <AddFile taken={aside} accepts={(name) => kind.fieldOfFile(name) !== undefined} onAdd={addAside} />
+              </div>
+            )}
           </div>
         </>
       )}
@@ -294,7 +325,7 @@ function Opened({ node, panel, onClose, onOpenGui }: {
           {/* Keyed by the pane: each file gets an editor and a chat of its own -- one kept
               showed the last file's placeholder, words and undo history -- and a pane that
               broke (a chunk gone stale) is tried again once another is chosen. */}
-          <ErrorBoundary inline key={shown.part === 'settings' ? 'settings' : `${shown.part}:${shown.how}`}>
+          <ErrorBoundary inline key={shown.part === 'settings' ? 'settings' : `${shown.part}:${shown.part === 'aside' ? shown.name : ''}:${shown.how}`}>
             {shown.part === 'settings' ? (
               <SettingsPane node={node} builder={builder} panel={panel} />
             ) : shown.how === 'chat' ? (
@@ -308,7 +339,8 @@ function Opened({ node, panel, onClose, onOpenGui }: {
             ) : (
               <FilePane
                 node={node}
-                write={shown.part}
+                write={shown.part === 'aside' ? 'body' : shown.part}
+                aside={shown.part === 'aside' ? shown.name : undefined}
                 setConfig={panel.setConfig}
                 updateNode={panel.change}
                 flush={() => panel.write()}

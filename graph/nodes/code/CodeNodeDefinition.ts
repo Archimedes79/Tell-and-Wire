@@ -6,6 +6,24 @@ import { DEFINITION_TEXTS, definitionsIn, type Definitions } from '../../files/d
 /** The file a code node's body is kept in, and run from by hand. */
 export const CODE_FILE = 'code.js';
 
+/**
+ * Files beside code.js, which it may `require` or `import` and read: a helper, a table of rates. Each is kept
+ * under a config key of its own, `file:<name>`, so it travels with the node like code.js does and is written to
+ * the folder the same way. Flat -- one folder deep -- and of a few kinds of text: code a body can load, and the
+ * data it reads.
+ */
+export const ASIDE_PREFIX = 'file:';
+export const ASIDE_NAME = /^[A-Za-z0-9_][A-Za-z0-9_.-]*\.(?:js|mjs|cjs|json|csv|txt)$/;
+
+/** The files beside code.js that *config* holds, by name. */
+export function asideFiles(config: Record<string, unknown>): Record<string, string> {
+  const found: Record<string, string> = {};
+  for (const [key, value] of Object.entries(config)) {
+    if (key.startsWith(ASIDE_PREFIX) && typeof value === 'string') found[key.slice(ASIDE_PREFIX.length)] = value;
+  }
+  return found;
+}
+
 /** What a code node stores. Its own fields, and no one else's. */
 export const CODE_FIELDS: LogicFields = { body: 'code' };
 
@@ -83,8 +101,14 @@ export class CodeNodeDefinition extends NodeDefinition {
     return /\.\s*llm\b|\[\s*['"]llm['"]\s*\]|[{,]\s*llm\s*[,}:=]/.test(String(node.config.code ?? ''));
   }
 
-  override texts(): readonly TextFile[] {
-    return CODE_TEXTS;
+  override texts(node: GraphNode): readonly TextFile[] {
+    const aside = Object.keys(asideFiles(node.config)).map((name) => ({ field: ASIDE_PREFIX + name, file: name }));
+    return aside.length ? [...CODE_TEXTS, ...aside] : CODE_TEXTS;
+  }
+
+  /** A file of a kind it may load or read, other than the ones it keeps its writing in. */
+  override fieldOfFile(name: string): string | undefined {
+    return ASIDE_NAME.test(name) && !CODE_TEXTS.some((text) => text.file === name) ? ASIDE_PREFIX + name : undefined;
   }
 
   override definitions(node: GraphNode): Definitions {

@@ -95,6 +95,15 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
+   * The config key a file of this name in the node's folder is kept under, for a node that keeps more files than
+   * `texts` names -- the files beside a code node's code.js -- or undefined where the name is none of its files.
+   * Asked of a folder being read, which is how files a person added there come in.
+   */
+  fieldOfFile(_name: string): string | undefined {
+    return undefined;
+  }
+
+  /**
    * The code this node runs, if its body is code: the body and where it is
    * kept. `undefined` for any other node -- an ai node's instructions are sent
    * to a model, not run, and an end point holds settings, not something

@@ -37,6 +37,8 @@ interface BodyGiven {
   signal?: AbortSignal;
   /** What `node` holds besides `node.llm`: plain JSON (see `Runtime.BodyContext`). */
   facts?: Record<string, unknown>;
+  /** The files beside the body, by name (`asideFiles`), loaded from it as they stand beside code.js. */
+  files?: Record<string, string>;
 }
 
 export function runBody(
@@ -47,5 +49,6 @@ export function runBody(
 ): Promise<Record<string, unknown>> {
   return runtime.code.run(body, inputs, given.signal, {
     calls: { llm: llmCall(given.ask ?? PLAIN_ASK, runtime) }, windows: runtime.windows, ...(given.facts ? { facts: given.facts } : {}),
+    ...(given.files && Object.keys(given.files).length ? { files: given.files } : {}),
   });
 }

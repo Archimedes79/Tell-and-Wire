@@ -35,7 +35,7 @@
 // node's code in `code.js` is the node's code wherever the graph is run from.
 
 import { existsSync, realpathSync, statSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { platform } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
@@ -179,6 +179,28 @@ export function projectTexts(graph: Graph): ProjectText[] {
     }
   }
   return found;
+}
+
+/**
+ * Give every node the files its folder holds beside the ones it names (`NodeDefinition.fieldOfFile`: the files beside a code
+ * node's code.js), as settings with nothing in them yet, so that `projectTexts` knows them and the reading fills them.
+ * A file a person put there is part of the node from then on -- and goes when the node does not hold it any more.
+ */
+export async function addFilesBeside(folder: string, graph: Graph): Promise<void> {
+  for (const node of graph.nodes) {
+    const element = registry.node(node.node_type);
+    if (!element) continue;
+    let entries;
+    try {
+      entries = await readdir(join(folder, nodeFolder(node.id)), { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      const field = entry.isFile() ? element.fieldOfFile(entry.name) : undefined;
+      if (field !== undefined && !(field in node.config)) node.config[field] = '';
+    }
+  }
 }
 
 /** *graph* without the GUI `projectTexts` gave it a place for, when nothing was put there: a GUI is its blocks. */
@@ -472,6 +494,7 @@ export async function readProject(folder: string, guard?: Guard): Promise<Graph>
   // Remembered like any other file: a save must not overwrite a node's
   // settings or ports that someone changed since.
   for (const [path, signed] of files) seen.set(path, signed);
+  await addFilesBeside(folder, graph);
   for (const text of projectTexts(graph)) {
     const path = join(folder, text.path);
     const signed = await signature(path);

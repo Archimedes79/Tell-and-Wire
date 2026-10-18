@@ -393,3 +393,47 @@ describe('a graph inside a node', () => {
     expect(existsSync(join(dir, 'nodes/count/code.js'))).toBe(true);
   });
 });
+
+describe('files beside a code node\'s code.js', () => {
+  it('come into the node when its folder is read, go to its folder when it is saved, leave with the node\'s setting, and are no file when emptied', async () => {
+    const graph = sample();
+    await writeProject(dir, graph);
+    await writeFile(join(dir, 'nodes/count/tax.js'), 'module.exports = {};\n');
+    await writeFile(join(dir, 'nodes/count/rates.json'), '{ "a": 1 }\n');
+    await writeFile(join(dir, 'nodes/count/notes.md'), 'mine, and not a file a body loads');
+    forgetSeen();
+
+    const read = await readProject(dir);
+    const count = read.nodes.find((node) => node.id === 'count')!;
+    expect(count.config['file:tax.js']).toBe('module.exports = {};');
+    expect(count.config['file:rates.json']).toBe('{ "a": 1 }');
+    expect(Object.keys(count.config).some((key) => key.includes('notes'))).toBe(false);
+
+    // Saved, they are files again and not settings in graph-nodes.json.
+    count.config['file:more.js'] = 'module.exports = 1;';
+    await writeProject(dir, read);
+    expect(await text('nodes/count/more.js')).toBe('module.exports = 1;\n');
+    expect(await text('graph-nodes.json')).not.toMatch(/file:|tax\.js/);
+
+    // Taken out of the node, a file goes; one that is left empty is no file; a file of the person's, however named, stays.
+    const again = await readProject(dir);
+    const node = again.nodes.find((candidate) => candidate.id === 'count')!;
+    delete node.config['file:rates.json'];
+    node.config['file:tax.js'] = '';
+    await writeProject(dir, again);
+    expect(existsSync(join(dir, 'nodes/count/rates.json'))).toBe(false);
+    expect(existsSync(join(dir, 'nodes/count/tax.js'))).toBe(false);
+    expect(existsSync(join(dir, 'nodes/count/more.js'))).toBe(true);
+    expect(await text('nodes/count/notes.md')).toBe('mine, and not a file a body loads');
+  });
+
+  it('are not kept by a node that is not a code node, and are named by no code node but the one whose folder holds them', async () => {
+    const graph = sample();
+    const say = graph.nodes.find((node) => node.id === 'say')!;
+    await writeProject(dir, graph);
+    await writeFile(join(dir, 'nodes/say/tax.js'), '// not an ai node\'s');
+    const read = await readProject(dir);
+    expect(Object.keys(read.nodes.find((node) => node.id === 'say')!.config).filter((key) => key.startsWith('file:'))).toEqual([]);
+    expect(say.node_type).toBe('ai');
+  });
+});

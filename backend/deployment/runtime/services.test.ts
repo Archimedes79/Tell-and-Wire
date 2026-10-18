@@ -65,3 +65,32 @@ describe('a body that draws', () => {
     expect(await nodeCode.run(body, {})).toEqual({ windows: [] });
   });
 });
+
+describe('a body with files beside it', () => {
+  it('loads them as code.js does -- require, import, a table it reads -- and names an error in one by the file, not by a folder that is gone', async () => {
+    const files = {
+      'tax.js': 'module.exports = { net: (gross) => gross * 0.75 };',
+      'rates.json': '{ "bonus": 100 }',
+      'steps.mjs': 'export const double = (n) => n * 2;',
+      'table.csv': 'a,b\n1,2\n',
+      'broken.js': 'module.exports = {\n  fail() { throw new Error("no rate"); },\n};',
+    };
+    const out = await nodeCode.run(
+      `import { double } from './steps.mjs';
+      import { readFileSync } from 'node:fs';
+      function run(inputs) {
+        const tax = require('./tax.js'), rates = require('./rates.json');
+        return { net: tax.net(inputs.gross) + rates.bonus, twice: double(2), csv: readFileSync(new URL('./table.csv', import.meta.url), 'utf8').trim().split('\\n').length };
+      }`,
+      { gross: 200 }, undefined, { files },
+    );
+    expect(out).toEqual({ net: 250, twice: 4, csv: 2 });
+
+    const failed = await nodeCode.run('function run() { return require("./broken.js").fail(); }', {}, undefined, { files }).catch((error: Error) => error);
+    expect((failed as Error).message).toMatch(/no rate/);
+    expect((failed as Error).message).toMatch(/broken\.js:2/);
+    expect((failed as Error).message).not.toMatch(/tell-and-wire-/);
+
+    await expect(nodeCode.run('function run() { return {}; }', {}, undefined, { files: { '../evil.js': '' } })).rejects.toThrow(/not a file a body may load/);
+  });
+});

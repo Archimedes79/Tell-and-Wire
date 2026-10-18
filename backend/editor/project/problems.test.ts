@@ -73,6 +73,13 @@ describe('what check finds', () => {
     const codeless = graph();
     codeless.nodes[0].config.code = '';
     expect(where(codeless)).toEqual([['node "count"', 'Its code.js holds no code yet: it fails the moment it runs.']]);
+
+    // A file it loads from beside it must stand there -- by its name, or without its .js or .json.
+    const loading = graph();
+    loading.nodes[0].config.code = "const tax = require('./tax'); const r = require('./rates.json'); import('./input.js'); const t = require('./table.csv');\nfunction run() { return {}; }";
+    loading.nodes[0].config['file:tax.js'] = 'module.exports = {};';
+    loading.nodes[0].config['file:rates.json'] = '{}';
+    expect(where(loading)).toEqual([['node "count"', 'Its code loads ./table.csv, and no such file stands beside code.js.']]);
   });
 
   it('in the flow: a wire whose type cannot fit, a gate that can never open, end points sharing a label, no end point, and a block that fires nowhere', () => {

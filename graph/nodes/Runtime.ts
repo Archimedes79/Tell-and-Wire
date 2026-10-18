@@ -54,6 +54,8 @@ interface BodyContext {
   facts?: Record<string, unknown>;
   /** `node.windows`: the blocks of the GUI that show what the body hands on. */
   windows?: BlockWindow[];
+  /** The files beside the body, by name: it may `require`, `import` and read them. */
+  files?: Record<string, string>;
 }
 
 /**
