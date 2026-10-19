@@ -5,7 +5,8 @@
 // one function, asked the same way by the node's Advanced settings, its ports
 // editor and `masterExamples.test.ts`, which builds the examples by these rules.
 
-import type { GraphNode, Port, Wire } from '../../document/graph';
+import type { GraphNode, GuiWidget, Port, Wire } from '../../document/graph';
+import { blockCan } from '../../document/model/gui';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { runsPerItem as executorRunsPerItem } from '../../../../graph/batching.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
@@ -33,15 +34,19 @@ export function wholeList(port: Port, whole: boolean): Port {
 /**
  * The input ports a list arrives on, one at a time when the node runs per
  * item: one whose example value (in input.js) is a list, one declared a list,
- * or one wired from an output that hands on a list -- but not one ticked
- * "whole list".
+ * or one wired from an output that hands on a list -- or one that takes of a start point the value of a block that sends a list
+ * (a folder to choose: the paths of its files), which the GUI says and no output does -- but not one ticked "whole list".
  */
-export function listPorts(node: GraphNode, example: Record<string, unknown> | undefined, nodes: GraphNode[] = [], edges: Wire[] = []): string[] {
+export function listPorts(
+  node: GraphNode, example: Record<string, unknown> | undefined, nodes: GraphNode[] = [], edges: Wire[] = [], gui: GuiWidget[] = [],
+): string[] {
   const byId = new Map(nodes.map((candidate) => [candidate.id, candidate]));
   const wiredList = (port: string) => edges.some((edge) => edge.target === node.id && edge.targetHandle === port
     && byId.get(edge.source)?.outputs.find((output) => output.id === edge.sourceHandle)?.multi === true);
+  const sentList = (port: Port) => !!port.field && gui.some((block) => block.id === port.field && blockCan(block).sends?.list === true)
+    && edges.some((edge) => edge.target === node.id && edge.targetHandle === port.id);
   return node.inputs
-    .filter((port) => !takesListWhole(port) && (port.multi || Array.isArray(example?.[port.id]) || wiredList(port.id)))
+    .filter((port) => !takesListWhole(port) && (port.multi || Array.isArray(example?.[port.id]) || wiredList(port.id) || sentList(port)))
     .map((port) => port.id);
 }
 

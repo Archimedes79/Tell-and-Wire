@@ -24,7 +24,8 @@ function exampleOf(node: GraphNode): Record<string, unknown> | undefined {
 export default function RunOncePerItem({ node, updateNode, subject }: Pick<NodePanelProps, 'node' | 'updateNode'> & { subject: string }) {
   const nodes = useGraphNodes();
   const edges = useGraphStore((s) => s.rfEdges);
-  const lists = listPorts(node, exampleOf(node), nodes, edges);
+  const gui = useGraphStore((s) => s.gui);
+  const lists = listPorts(node, exampleOf(node), nodes, edges, gui);
   // Once asked, the question stays while the panel is open: unticked, no input
   // is declared a list any more, and the box would vanish under the click.
   const asked = useRef(false);
