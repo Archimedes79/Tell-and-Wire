@@ -59,7 +59,7 @@ beforeAll(async () => {
 const example = (name: string): Graph => EXAMPLES[name];
 /** One of an example's nodes, as its folder holds it. */
 const exampleNode = (name: string, id: string): GraphNode => EXAMPLES[name].nodes.find((node) => node.id === id)!;
-/** What ✨ wrote for *id* in an example: its input.js, its output.js and its body, as the node's files hold them. */
+/** What ✨ wrote for *id* in an example: its input_example.js, its output.js and its body, as the node's files hold them. */
 const writtenFor = (name: string, id: string): Partial<Record<Write, string>> => {
   const node = exampleNode(name, id);
   return { input: heldBy(node, 'input'), output: heldBy(node, 'output'), body: heldBy(node, 'body') };

@@ -108,7 +108,7 @@ hold projects that tests and CI run; the format is under "The project folder").
 |---|---|
 | `gui.json` | The blocks of the GUI -- and, for a notebook, the words of the page and where its windows stand. |
 | `graph-flow.json`, `graph-nodes.json`, `graph-schedule.json` | Every wire, every node, and the table that says in which step each node runs. |
-| `nodes/<id>/` | A folder per node: what it does, `input.js`, `output.js`, and `code.js` or `prompt.md`. |
+| `nodes/<id>/` | A folder per node: what it does, `input_example.js`, `output.js`, and `code.js` or `prompt.md`. |
 
 ### Use: a deployment
 
@@ -173,7 +173,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `graph/errors.ts` | What more than one layer says, said once: two answers and what an error says |
 | `graph/fileInputs.ts` | Handing an element a file's content instead of its name |
 | `graph/files/changes.ts` | What changed in a project folder, as whoever has it open is told |
-| `graph/files/definition.ts` | A node's two definitions, as the files its folder keeps them in: what comes in (`input.js`) and what goes out (`output.js`) |
+| `graph/files/definition.ts` | A node's two definitions, as the files its folder keeps them in: what comes in (`input_example.js`) and what goes out (`output.js`) |
 | `graph/files/flow.ts` | `graph-flow.json`: the graph's name and every wire -- nothing about any node |
 | `graph/files/logic.ts` | What a node does, as an object rather than as a field name |
 | `graph/files/names.ts` | What an id is called on disk |
@@ -265,7 +265,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `backend/deployment/runtime/ai/tools.ts` | Tools for a model, from MCP servers |
 | `backend/deployment/runtime/ai/window.ts` | How much a model takes in at once, and where that is known from: the person, the provider, or a guess |
 | `backend/deployment/runtime/confine.ts` | Which files a graph may reach |
-| `backend/deployment/runtime/examples.ts` | A node's example: what its input.js gives one call, held to its output.js |
+| `backend/deployment/runtime/examples.ts` | A node's example: what its input_example.js gives one call, held to its output.js |
 | `backend/deployment/runtime/executor.ts` | Running a graph: initialise, wire, order, execute |
 | `backend/deployment/runtime/latch.ts` | What every node last produced, held until it runs again |
 | `backend/deployment/runtime/localCore.ts` | The JavaScript graph core, in the host's own process: the executor and the runners, behind the protocol (`protocol.ts`) |
@@ -737,9 +737,9 @@ my_tool/
   graph-schedule.json  { table, size? }: the order the nodes run in and where they stand (the schedule, below)
   gui.json             the GUI: a list of its blocks, each with sends_to / fires / shows
   nodes/<id>/          only the writing a node keeps; a node that keeps none has no folder
-    input.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
+    input_example.js           what one call is handed: a JSDoc typedef, then one example as JSON  (code, ai)
     output.js          what one call returns, the same way; its keys are the outputs        (code, ai)
-    code.js            the body, plus lines that run it alone on input.js's example          (code)
+    code.js            the body, plus lines that run it alone on input_example.js's example          (code)
     prompt.md          the instructions sent to the model                                   (ai)
     data.json          the fields it starts with, an object; its ports follow them           (data)
     example.json       the same struct filled, an example of what it holds; absent, data.json stands in (data)
@@ -918,7 +918,7 @@ For the editor only; a package leaves `backend/editor/` behind, so it answers no
 | `POST /api/runtime/application/start`, `POST /api/runtime/application/stop` | ▶ Run and ■ Stop: the clock and what starts by itself |
 | `POST /api/execute/node` | One node on given inputs |
 | `POST /api/execute/inputs` | What would arrive at a node now: what Pull takes its example from |
-| `POST /api/execute/example` | ▶ Try: a node on the example its input.js holds |
+| `POST /api/execute/example` | ▶ Try: a node on the example its input_example.js holds |
 | `POST /api/graphs/rounds/keep` | Keep a round that ran through as a test of the project |
 | `POST /api/ai/generate`, `GET /api/ai/generate/progress` | ✨: write one of a node's files from the standard prompt and what was said to its chat (`ask`), or change the file there is as said (`refine.change`), and watch it being written |
 | `POST /api/ai/generate-graph` | ✨ Describe a graph: design a whole graph from a description, or change one |

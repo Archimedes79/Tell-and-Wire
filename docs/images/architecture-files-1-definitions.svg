@@ -107,7 +107,7 @@
 <line class="row" x1="490" x2="902" y1="361" y2="361"/>
 <text class="f" x="490" y="377">definition.ts</text>
 <text class="r" x="498" y="391.5">A node's two definitions, as the files its folder keeps them in: what comes in</text>
-<text class="r" x="498" y="406">(input.js) and what goes out (output.js)</text>
+<text class="r" x="498" y="406">(input_example.js) and what goes out (output.js)</text>
 <line class="row" x1="490" x2="902" y1="412.5" y2="412.5"/>
 <text class="f" x="490" y="428.5">flow.ts</text>
 <text class="r" x="498" y="443">graph-flow.json: the graph's name and every wire -- nothing about any node</text>

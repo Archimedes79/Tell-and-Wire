@@ -76,7 +76,7 @@ const clip = (text: string, limit = 1500) => (text.length > limit ? `${text.slic
 const asText = (value: unknown) => (typeof value === 'string' ? value : JSON.stringify(value, null, 2) ?? '');
 
 /**
- * ▶ Try: one call of the node on the example in its input.js, the way `test`
+ * ▶ Try: one call of the node on the example in its input_example.js, the way `test`
  * runs it, and whether what came out fits its output.js -- ✓, or where it does
  * not. ✨ Fix repairs the body from that, where it failed or does not fit.
  */
@@ -100,11 +100,11 @@ export default function TryExample({ tried, running, onTry, whyNot, busy, onFix 
           size="sm"
           onClick={onTry}
           disabled={running || busy || !!whyNot}
-          title={whyNot ?? 'Run it once on the example in input.js, and hold what comes out to output.js -- nothing else runs'}
+          title={whyNot ?? 'Run it once on the example in input_example.js, and hold what comes out to output.js -- nothing else runs'}
         >
           {running ? 'Running…' : '▶ Try'}
         </Button>
-        <span className="text-xs" style={{ color: DIMMER }}>{whyNot ?? 'On the example in input.js, held to output.js.'}</span>
+        <span className="text-xs" style={{ color: DIMMER }}>{whyNot ?? 'On the example in input_example.js, held to output.js.'}</span>
         {fixable && (
           <Button size="sm" disabled={busy} onClick={onFix} title="Repair the body from how it failed, or where it does not fit output.js">
             ✨ Fix

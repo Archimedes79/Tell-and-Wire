@@ -31,11 +31,11 @@ export class CodeNodeDesign extends NodeDesign<CodeNodeDefinition> {
         fix: 'Press Auto generate in the node, or write function run(inputs) { … } in code.js (config.code in a graph file), returning an object keyed by its outputs.',
       }];
     }
-    // A file it loads from beside it, and is not there: it fails at the line that loads it. input.js and output.js are
+    // A file it loads from beside it, and is not there: it fails at the line that loads it. input_example.js and output.js are
     // named in code.js's own JSDoc, as types, and are none of this.
     const held = asideFiles(node.config);
     const missing = [...new Set([...code.matchAll(/(?:require\(\s*|\bfrom\s+|\bimport\s*\(?\s*)['"]\.\/([\w.-]+)['"]/g)].map((found) => found[1]))]
-      .filter((name) => !['input.js', 'output.js', 'code.js'].includes(name) && !(name in held) && !(`${name}.js` in held) && !(`${name}.json` in held));
+      .filter((name) => !['input_example.js', 'output.js', 'code.js'].includes(name) && !(name in held) && !(`${name}.js` in held) && !(`${name}.json` in held));
     return missing.map((name) => ({
       where,
       problem: `Its code loads ./${name}, and no such file stands beside code.js.`,

@@ -184,11 +184,11 @@ function Opened({ node, panel, onClose, onOpenGui }: {
     ? {
       id: 'pull',
       label: 'Pull input',
-      title: `Write input.js from the nodes before it: what they hand on, and an example from running them${asking.length ? `. That asks the model of ${listed(asking)}` : ''}`,
+      title: `Write input_example.js from the nodes before it: what they hand on, and an example from running them${asking.length ? `. That asks the model of ${listed(asking)}` : ''}`,
       disabled: writing.generate.busy,
       once: true,
     }
-    : { id: 'pull', label: 'Pull input', title: 'Nothing is wired to its inputs yet: wire a node to it, and input.js is pulled from there', disabled: true, once: true };
+    : { id: 'pull', label: 'Pull input', title: 'Nothing is wired to its inputs yet: wire a node to it, and input_example.js is pulled from there', disabled: true, once: true };
 
   const rows: RowView[] = parts.map((part) => {
     const { file } = fileOf(node, part);

@@ -21,14 +21,14 @@ function identifier(port: string): string {
 /**
  * The empty `run` ✨ Code completes: the signature, typed by the node's
  * definitions -- JSDoc, which is plain JavaScript at run time and leads an IDE
- * from code.js to input.js and output.js -- and nothing else. Rendered from the
+ * from code.js to input_example.js and output.js -- and nothing else. Rendered from the
  * ports, never parsed back: a text allowed to rename a port would detach wires.
  */
 function renderSkeleton(inputs: string[], outputs: string[]): string {
   const lines: string[] = [];
   if (inputs.length || outputs.length) {
     lines.push('/**');
-    if (inputs.length) lines.push(" * @param {import('./input.js').Input} inputs");
+    if (inputs.length) lines.push(" * @param {import('./input_example.js').Input} inputs");
     if (outputs.length) lines.push(" * @returns {import('./output.js').Output}");
     lines.push(' */');
   }

@@ -1,6 +1,6 @@
 // Pull: the definition a node's wires imply.
 //
-// A node's input.js says what one call of it is handed: a type for each input,
+// A node's input_example.js says what one call of it is handed: a type for each input,
 // and one example. A model can write that from the node's text -- or it can be
 // read off the graph, since what each wire carries is said by the node it comes
 // from: its output.js gives the type, a run of what comes before it gives the
@@ -14,7 +14,7 @@
 // and what each output feeds, is read from the graph by the editor
 // (`frontend/editor/graph/writing/pull.ts`).
 
-/** One input as a pull writes it into input.js. */
+/** One input as a pull writes it into input_example.js. */
 export interface PulledPort {
   id: string;
   /** Its JSDoc type: `string`, `Array<Object>`, `*` for one nothing is known of. */
@@ -61,7 +61,7 @@ function definitionFile(typedef: 'Input' | 'Output', ports: PulledPort[]): strin
   return ['/**', ` * @typedef {Object} ${typedef}`, ...properties, ' */', `module.exports = ${JSON.stringify(example, null, 2)};`].join('\n');
 }
 
-/** The input.js that says *ports*. */
+/** The input_example.js that says *ports*. */
 export function inputFile(ports: PulledPort[]): string {
   return definitionFile('Input', ports);
 }

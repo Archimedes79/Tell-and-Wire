@@ -4,7 +4,7 @@ import { NODE_KINDS } from '../../document/model/nodeKinds';
 import { ERROR_PORT } from '../../../../graph/wiring.ts';
 import { portIdsOf, strayDefinition } from './generation';
 
-/** The interface line above an open file: the node's ports as the files name them, and whether input.js and output.js say the same. */
+/** The interface line above an open file: the node's ports as the files name them, and whether input_example.js and output.js say the same. */
 const port = (id: string, kind: Port['kind']): Port => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 const reader = (input: string): GraphNode => ({
   ...NODE_KINDS.code.create('reader'),

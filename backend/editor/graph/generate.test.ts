@@ -57,7 +57,7 @@ const OUTPUT = 'module.exports = { "lines": 2 };';
 const js = (body: string) => `\`\`\`js\n${body}\n\`\`\``;
 
 describe('✨ writes a node\'s files', () => {
-  it('writes code from the fence, tries it on the example in input.js, and repairs it once, with the evidence, when it does not fit output.js', async () => {
+  it('writes code from the fence, tries it on the example in input_example.js, and repairs it once, with the evidence, when it does not fit output.js', async () => {
     const ai = scripted([
       js('function run(i) { return { lines: String(i.text.split("\\n").length) }; }'),
       js('function run(i) { return { lines: i.text.split("\\n").length }; }'),

@@ -58,7 +58,7 @@ describe('sweeping a graph', () => {
     expect(seen).toEqual(['a']);
   });
 
-  it('writes what a node is missing, in order -- input.js where it takes something in, output.js, its body -- and never what somebody wrote', () => {
+  it('writes what a node is missing, in order -- input_example.js where it takes something in, output.js, its body -- and never what somebody wrote', () => {
     const fresh = node('c');
     expect(missingOf(fresh)).toEqual(['input', 'output', 'body']);
     expect(missingOf({ ...fresh, inputs: [] })).toEqual(['output', 'body']);

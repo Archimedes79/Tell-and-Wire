@@ -35,7 +35,7 @@ export const CODE_FIELDS: LogicFields = { body: 'code' };
  */
 const CODE_STUB = `// code.js: what this code node does -- \`function run(inputs)\`, returning an
 // object keyed by its outputs. ✨ Code writes it from the node's text, its
-// input.js and its output.js.
+// input_example.js and its output.js.
 console.error('code.js holds no code yet: write it with ✨ Code.');
 process.exitCode = 1;`;
 
@@ -48,21 +48,21 @@ process.exitCode = 1;`;
  * It works under both module systems -- a body that uses `import` runs as an
  * ES module, and so does any file under a package.json that says
  * `"type": "module"`, where `require` and `module` do not exist: a direct run
- * is told by the file Node was asked to run, and input.js is run apart, in a
+ * is told by the file Node was asked to run, and input_example.js is run apart, in a
  * context of its own (`node:vm`) that gives it the `module` it assigns. A few
  * lines a person can read at the end of every code.js, rather than a parser:
- * Tell & Wire reads input.js without running it (`definitionExample`), and for
+ * Tell & Wire reads input_example.js without running it (`definitionExample`), and for
  * the plain JSON it holds both come to the same example.
  */
 export const RUN_ON_ITS_OWN = `// ── Run on its own ─────────────────────────────────────────────────────────
-// "node code.js" runs this node on the example in input.js and prints what
+// "node code.js" runs this node on the example in input_example.js and prints what
 // comes out. In a graph Tell & Wire runs this node, and this part is left out.
 if (/^code(\\.js)?$/.test(process.getBuiltinModule('node:path').basename(process.argv[1] ?? ''))) {
   const input = { exports: null };
-  const file = process.getBuiltinModule('node:path').join(process.argv[1], '..', 'input.js');
+  const file = process.getBuiltinModule('node:path').join(process.argv[1], '..', 'input_example.js');
   process.getBuiltinModule('node:vm').runInNewContext(process.getBuiltinModule('node:fs').readFileSync(file, 'utf8'), { module: input });
   const example = input.exports;
-  if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input.js has no example yet -- an object keyed by input, written by ✨ Input.');
+  if (!example || typeof example !== 'object' || Array.isArray(example)) throw new Error('input_example.js has no example yet -- an object keyed by input, written by ✨ Input.');
   const node = { windows: [], llm: async () => { throw new Error('node.llm needs Tell & Wire: node backend/cli/main.ts run-node <project> <node id>'); } };
   Promise.resolve(run(example, node)).then((out) => console.log(JSON.stringify(out, null, 2)));
 }`;

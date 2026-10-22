@@ -597,7 +597,7 @@ export async function executeNode(
 
 /**
  * One call of a node's body on *inputs* as the body is handed them -- the
- * example in its input.js: no file is read, because the example already holds
+ * example in its input_example.js: no file is read, because the example already holds
  * what a read file gives, and nothing fans out, because the example is one
  * item. What one call returns is what its output.js describes, so it comes
  * back as the call returned it, to be held to that (`examples.ts`).

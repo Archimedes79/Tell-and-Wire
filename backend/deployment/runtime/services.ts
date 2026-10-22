@@ -143,7 +143,7 @@ export const nodeCode: CodeService = {
 
     // A body runs as an ES module, where `require` and `module` do not exist.
     // Yet a model writes both styles: `import`, and `require` or code.js ended
-    // with `module.exports = { run };` -- as input.js and output.js end, and as
+    // with `module.exports = { run };` -- as input_example.js and output.js end, and as
     // code.js is run on its own (`node code.js`, a CommonJS file). So both
     // work: the bridge below defines `require`, `module` and `exports`, and
     // `import` needs nothing.

@@ -3,8 +3,8 @@
 //     node backend/cli/main.ts graph.json                     once
 //     node backend/cli/main.ts my_project/                    the same, for a project folder
 //     node backend/cli/main.ts check my_project/ other.json   what is wrong, without running
-//     node backend/cli/main.ts test my_project/ --offline     each node on its input.js, held to its output.js
-//     node backend/cli/main.ts run-node my_project/ count     one node, on its input.js (or '{"input": …}')
+//     node backend/cli/main.ts test my_project/ --offline     each node on its input_example.js, held to its output.js
+//     node backend/cli/main.ts run-node my_project/ count     one node, on its input_example.js (or '{"input": …}')
 //     node backend/cli/main.ts graph.json --event go          the round one start point starts
 //     node backend/cli/main.ts graph.json --event go --value name=text   ...sent a value, by name
 //     node backend/cli/main.ts my_project/ --event go --keep  ...and keep the round as a test, in tests/

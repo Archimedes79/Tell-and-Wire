@@ -74,7 +74,7 @@ export async function runCheck(paths: string[]): Promise<number> {
 }
 
 /**
- * Run every code and ai node once on the example in its input.js and hold
+ * Run every code and ai node once on the example in its input_example.js and hold
  * what comes out to its output.js -- or one node, with `--node`. `--offline`
  * asks no model: an ai node is skipped, which is how CI runs it. Exit code 1
  * when one fails.
@@ -107,7 +107,7 @@ export async function runTests(core: GraphCore, argv: string[]): Promise<number>
       for (const line of details) if (line) process.stdout.write(`    ${line}\n`);
       if (status !== 'pass') failed += 1;
     }
-    if (!tested && !kept.length) process.stdout.write(`· ${path}: ${only ? `no node "${only}"` : 'no node has an example in an input.js, and no round is kept'}\n`);
+    if (!tested && !kept.length) process.stdout.write(`· ${path}: ${only ? `no node "${only}"` : 'no node has an example in an input_example.js, and no round is kept'}\n`);
   }
   return failed ? 1 : 0;
 }
@@ -115,7 +115,7 @@ export async function runTests(core: GraphCore, argv: string[]): Promise<number>
 /**
  * Run one node by itself and print what it returned: on the inputs given as
  * JSON, as a run hands them to it -- files read, a list fanned out -- or,
- * without them, a code or an ai node once on the example in its input.js,
+ * without them, a code or an ai node once on the example in its input_example.js,
  * held to its output.js: what its ▶ Try runs, with no editor anywhere. A node
  * of another kind has no example, and runs on what the nodes feeding it
  * produce, as the MCP server's `run_node` runs it.
@@ -132,7 +132,7 @@ export async function runNode(core: GraphCore, [path, nodeId, given]: string[]):
     return result.status === 'error' ? 1 : 0;
   }
   if (!given) {
-    process.stderr.write(`${nodeName(node)}, on the example in its input.js\n`);
+    process.stderr.write(`${nodeName(node)}, on the example in its input_example.js\n`);
     const tried = await core.example({ graph, node: nodeId });
     process.stdout.write(`${JSON.stringify(tried, null, 2)}\n`);
     return tried.status === 'pass' ? 0 : 1;

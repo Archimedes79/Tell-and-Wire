@@ -79,11 +79,11 @@ describe('a project folder', () => {
   it('keeps each piece of writing in a file named for what it is, the wires once in graph-flow.json, each node once in graph-nodes.json, and a data node\'s fields as JSON in data.json', async () => {
     await writeProject(dir, sample());
     expect(await text('nodes/count/code.js')).toBe(`function run(inputs) {\n  return { total: inputs.files.length };\n}\n\n${RUN_ON_ITS_OWN}\n`);
-    expect(await text('nodes/count/input.js')).toBe('module.exports = { "files": ["a.csv"] };\n');
+    expect(await text('nodes/count/input_example.js')).toBe('module.exports = { "files": ["a.csv"] };\n');
     expect(await text('nodes/count/output.js')).toBe('module.exports = { "total": 1 };\n');
     expect(await text('nodes/count/history.md')).toBe('## 2026-09-28 09:05 · ✨ Code\n\nNothing was sent.\n');
     expect(await text('nodes/say/prompt.md')).toBe('Say how many files there are, in one sentence.\n');
-    // code.js runs on its own, on the example in input.js.
+    // code.js runs on its own, on the example in input_example.js.
     const { stdout } = await promisify(execFile)(process.execPath, [join(dir, 'nodes/count/code.js')], { cwd: dir });
     expect(JSON.parse(stdout)).toEqual({ total: 1 });
     // A start point has no writing of its own, and a chart is one block of the GUI's: no node, no folder.

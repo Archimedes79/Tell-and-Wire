@@ -15,7 +15,7 @@ describe('node elements', () => {
   it('define themselves exactly where their definition keeps its definitions', () => {
     for (const [nodeType, element] of Object.entries(NODE_BUILDERS)) {
       const node = NODE_KINDS[nodeType as GraphNode['node_type']].create(`${nodeType}-gen`);
-      // Its ports in Advanced, its input.js and output.js in its panel: the side panel's answer and the definition's are one.
+      // Its ports in Advanced, its input_example.js and output.js in its panel: the side panel's answer and the definition's are one.
       expect(element.definesItself, nodeType).toBe(hasDefinitions(node));
     }
   });

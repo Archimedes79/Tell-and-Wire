@@ -51,7 +51,7 @@ the code or the prompt -- and a chat for each file changes it as you say. A whol
 drawn from one description, too -- and in the notebook a page of windows. A local model (Ollama, LM Studio) will do,
 or an API of your choice.
 
-**Code first: it is all files.** Every node is a folder of plain text: `input.js` and
+**Code first: it is all files.** Every node is a folder of plain text: `input_example.js` and
 `output.js`, and `code.js` or `prompt.md`. Open any of them in your own editor, change it, diff it in
 git; the editor follows the folder. Nothing the AI wrote is out of reach, and nothing hides in a
 format: a node's example is its test (▶ Try), and a run that went well can be kept as an offline test.

@@ -1,6 +1,6 @@
 // The files a code or an ai node is given to write its definitions from.
 //
-// ✨ Input writes input.js from real files -- examples of what arrives, a spec
+// ✨ Input writes input_example.js from real files -- examples of what arrives, a spec
 // -- and ✨ Output may be given some too: the node keeps their paths in
 // `input_files` and `output_files`. A drop on the node adds one, and so do 📂
 // and ⟳ in its panel. Kept apart from what reads the graph around a node

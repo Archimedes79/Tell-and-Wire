@@ -25,7 +25,7 @@ const INPUT = 'module.exports = { "text": "a\\nb\\nc" };';
 const OUTPUT = 'module.exports = { "lines": 3 };';
 
 describe('a node\'s example', () => {
-  it('is one call on its input.js, held to its output.js: it passes, fails where the result does not fit, and errors where the node does', async () => {
+  it('is one call on its input_example.js, held to its output.js: it passes, fails where the result does not fit, and errors where the node does', async () => {
     const run = (config: Record<string, unknown>) => runExample(counter({ input_definition: INPUT, ...config }), 'count', { runtime: running, registry });
 
     expect(await run({ output_definition: OUTPUT })).toEqual({ status: 'pass', details: [], outputs: { lines: 3 }, held: true });
@@ -58,7 +58,7 @@ describe('a node\'s example', () => {
       metadata: { name: 'outer' },
       nodes: [
         ...counter({ input_definition: INPUT, output_definition: OUTPUT }).nodes,
-        // Not tried, and said: it has inputs, and no input.js to try it on.
+        // Not tried, and said: it has inputs, and no input_example.js to try it on.
         { ...counter({}).nodes[0], id: 'plain' },
         { id: 'part', node_type: 'subgraph', label: 'Part', inputs: [], outputs: [], config: { subgraph: inner } },
       ],

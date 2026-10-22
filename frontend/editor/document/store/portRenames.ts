@@ -87,7 +87,7 @@ export function portRenames(before: GraphNode | undefined, after: GraphNode): Po
  * *after* -- *before* with its ports edited once, in the ports editor -- with
  * every port new to it known from here on, and what became of the name of
  * each port of *before*: for what is keyed by a port's name rather than wired
- * to it, the keys of its input.js and output.js (`definitionPorts.ts`).
+ * to it, the keys of its input_example.js and output.js (`definitionPorts.ts`).
  *
  * `portRenames` answers the same question from the node as it is stored, for
  * the wires, when the panel writes; this answers it edit by edit, so the

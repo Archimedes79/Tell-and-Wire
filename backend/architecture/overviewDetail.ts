@@ -182,7 +182,7 @@ const projectGraph: Box = {
   text: [['format: graph/files/flow.ts, nodesFile.ts', ''], ['and graph/schedule.ts', '']],
 };
 const projectNode: Box = {
-  ...FILES, title: 'One folder per node', sub: 'what it does  input.js  output.js  code.js or prompt.md',
+  ...FILES, title: 'One folder per node', sub: 'what it does  input_example.js  output.js  code.js or prompt.md',
   text: [['format: graph/files/definition.ts, logic.ts,', ''], ['prompts.ts; history.md: graph/authoring/history.ts', '']],
 };
 const projectGit: Box = { ...EDITOR, title: 'Your editor, git', sub: 'read, change, diff any file' };

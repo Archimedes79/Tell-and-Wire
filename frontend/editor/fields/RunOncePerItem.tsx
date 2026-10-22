@@ -7,7 +7,7 @@ import { definitionExample, definitionsIn } from '../../../graph/files/definitio
 import { ONCE, type NodePanelProps } from '../graph/nodes/NodeGuiBuilder';
 import { DIMMER, MUTED } from '../../deployment/gui/kit/ui/theme';
 
-/** The example in *node*'s input.js, where it has one that can be read. */
+/** The example in *node*'s input_example.js, where it has one that can be read. */
 function exampleOf(node: GraphNode): Record<string, unknown> | undefined {
   const input = definitionsIn(node).input;
   if (!input.trim()) return undefined;
@@ -32,7 +32,7 @@ export default function RunOncePerItem({ node, updateNode, subject }: Pick<NodeP
   if (lists.length || runsPerItem(node)) asked.current = true;
   if (!asked.current) return null;
   const checked = runsPerItem(node);
-  const oneCall = hasDefinitions(node) ? ' -- input.js and output.js say one call;' : ';';
+  const oneCall = hasDefinitions(node) ? ' -- input_example.js and output.js say one call;' : ';';
   return (
     <div>
       <label className="flex items-center gap-2 text-sm" style={{ color: MUTED }}

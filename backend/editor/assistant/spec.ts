@@ -136,7 +136,7 @@ export const SPECS: ToolSpec[] = [
   {
     name: 'test_graph',
     description: 'Run each code and ai node once on the example in its input definition (config.input_definition, '
-      + 'input.js) and hold what comes out to its output definition (config.output_definition, output.js); report each '
+      + 'input_example.js) and hold what comes out to its output definition (config.output_definition, output.js); report each '
       + 'as pass, fail (with what does not fit), error or skipped. Every node that has an example, or one with node_id -- '
       + 'also inside the graphs nodes hold, where a result names the way down ("part ▸ work"). '
       + 'offline: ask no model; an ai node is skipped. A project also runs again each round it kept (tests/<name>.json), '

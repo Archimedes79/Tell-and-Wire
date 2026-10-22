@@ -1,6 +1,6 @@
 // ✨ for one node: what its chats ask the backend, and what comes back, written in.
 //
-// A node's ✨ writes one of its files -- its input definition (input.js), its
+// A node's ✨ writes one of its files -- its input definition (input_example.js), its
 // output definition (output.js), or its body: code.js, prompt.md, or what a
 // data node holds -- through one route (`generate`), from one request built
 // here: the node as the view holds it, the graph around it in words
@@ -320,11 +320,11 @@ export function resultMessage(name: string, response: Pick<GenerateResponse, 'pr
   const done = `${name}: ${refine ? 'changed' : 'written'}${withOutput ? ', with a new output.js' : ''}`;
   switch (probe?.status) {
     case 'ok':
-      return `✅ ${done}, and it fits output.js on the example in input.js.`;
+      return `✅ ${done}, and it fits output.js on the example in input_example.js.`;
     case 'repaired':
       return `✅ ${done}. The first attempt did not fit output.js on the example; this one does.`;
     case 'failed':
-      if (probe.error) return `⚠️ ${done}, but it fails on the example in input.js: ${probe.error}`;
+      if (probe.error) return `⚠️ ${done}, but it fails on the example in input_example.js: ${probe.error}`;
       return `⚠️ ${done}, but ${lowerFirst(probe.problems.join('; '))}`;
     default:
       return `✅ ${done}.`;
@@ -339,9 +339,9 @@ function fixMessage(probe: ProbeReport | undefined, mended: boolean): string {
   switch (probe?.status) {
     case 'ok':
     case 'repaired':
-      return `✅ ✨ Fix: repaired${mended ? ', output.js corrected' : ''}, and it fits output.js on the example in input.js.`;
+      return `✅ ✨ Fix: repaired${mended ? ', output.js corrected' : ''}, and it fits output.js on the example in input_example.js.`;
     case 'failed':
-      if (probe.error) return `⚠️ ✨ Fix: it still fails on the example in input.js: ${probe.error}`;
+      if (probe.error) return `⚠️ ✨ Fix: it still fails on the example in input_example.js: ${probe.error}`;
       return `⚠️ ✨ Fix: still does not fit -- ${lowerFirst(probe.problems.join('; '))}`;
     default:
       // Nothing to try it on here -- an AI node's prompt.md is tried by ▶ Try.

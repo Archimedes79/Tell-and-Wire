@@ -68,7 +68,7 @@ function JsonEditor({ node, field, setConfig, ...editor }: Omit<EditorProps, 'va
  * holds -- edited here as in the file: what is typed is written as typed.
  * Empty, it shows the file's stub: what the file is. output.js typed by hand
  * names the outputs once the box is left, as the Output chat's does. Under a
- * body that runs, ▶ Try: one call on the example in input.js, held to output.js.
+ * body that runs, ▶ Try: one call on the example in input_example.js, held to output.js.
  */
 export default function FilePane({ node, write, aside, setConfig, updateNode, flush, trying, busy, onFix }: {
   node: GraphNode;
@@ -89,7 +89,7 @@ export default function FilePane({ node, write, aside, setConfig, updateNode, fl
   const [large, setLarge] = useState(false);
   const tried = !aside && write === 'body' && hasDefinitions(node);
   const needs = tried && node.inputs.length && !isWritten(node, 'input')
-    ? 'Write its input.js first: the example in it is what the code is tried on.' : undefined;
+    ? 'Write its input_example.js first: the example in it is what the code is tried on.' : undefined;
   const editor = {
     language: ['.md', '.csv', '.txt'].some((ending) => file.endsWith(ending)) ? 'markdown' as const : 'javascript' as const,
     placeholder: stub,

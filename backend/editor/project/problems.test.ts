@@ -11,7 +11,7 @@ import { writeProject } from '../../authoring/write.ts';
 
 const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
 
-/** count hands "total" to say; *output* is count's output.js, *input* say's input.js. */
+/** count hands "total" to say; *output* is count's output.js, *input* say's input_example.js. */
 function graph(overrides: { output?: string; input?: string } = {}): Graph {
   return parseGraph({
     metadata: { name: 'Checked' },
@@ -64,7 +64,7 @@ describe('what check finds', () => {
       ['node "count", output.js', 'It does not name the output "total", so nothing says what goes out there.'],
     ]);
     expect(where(graph({ input: 'module.exports = { "totl": 1 };' }))).toEqual([
-      ['node "say", input.js', 'It names "totl", which is not one of the node\'s inputs.'],
+      ['node "say", input_example.js', 'It names "totl", which is not one of the node\'s inputs.'],
     ]);
     const [unread] = problemsIn(graph({ output: "module.exports = { total: 'one' };" }));
     expect(unread.problem).toMatch(/^It cannot be read: its example after module.exports is not plain JSON/);
@@ -76,7 +76,7 @@ describe('what check finds', () => {
 
     // A file it loads from beside it must stand there -- by its name, or without its .js or .json.
     const loading = graph();
-    loading.nodes[0].config.code = "const tax = require('./tax'); const r = require('./rates.json'); import('./input.js'); const t = require('./table.csv');\nfunction run() { return {}; }";
+    loading.nodes[0].config.code = "const tax = require('./tax'); const r = require('./rates.json'); import('./input_example.js'); const t = require('./table.csv');\nfunction run() { return {}; }";
     loading.nodes[0].config['file:tax.js'] = 'module.exports = {};';
     loading.nodes[0].config['file:rates.json'] = '{}';
     expect(where(loading)).toEqual([['node "count"', 'Its code loads ./table.csv, and no such file stands beside code.js.']]);

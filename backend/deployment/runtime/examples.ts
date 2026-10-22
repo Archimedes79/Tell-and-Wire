@@ -1,4 +1,4 @@
-// A node's example: what its input.js gives one call, held to its output.js.
+// A node's example: what its input_example.js gives one call, held to its output.js.
 //
 // A node that has definitions (`NodeDefinition.definitions`) carries its own test:
 // the example in its input definition is what one call is handed, and its
@@ -44,7 +44,7 @@ const NO_MODEL = 'No model is asked in this run.';
 const holds = (output: string): boolean => !!output.trim() && !unreadableOutput(output);
 
 /**
- * Run *nodeId* once on the example in its input.js -- on nothing, for a node
+ * Run *nodeId* once on the example in its input_example.js -- on nothing, for a node
  * that takes nothing in -- and hold what comes out to its output.js.
  *
  * *offline*: nothing asks a model, and a node that would is skipped: how CI
@@ -59,16 +59,16 @@ export async function runExample(
   const element = node && options.registry.node(node.node_type);
   const definitions = node && element?.definitions(node);
   if (!node || !element || !definitions) {
-    return { status: 'error', details: [node ? 'It has no example: only a code or an ai node has an input.js.' : `No node "${nodeId}".`], held: false };
+    return { status: 'error', details: [node ? 'It has no example: only a code or an ai node has an input_example.js.' : `No node "${nodeId}".`], held: false };
   }
   const held = holds(definitions.output);
   let inputs: Record<string, unknown> = {};
   if (definitions.input.trim()) {
     const read = definitionExample(definitions.input);
-    if ('problem' in read) return { status: 'error', details: [`Its input.js cannot be read: ${read.problem}.`], held };
+    if ('problem' in read) return { status: 'error', details: [`Its input_example.js cannot be read: ${read.problem}.`], held };
     inputs = read.example;
   } else if (node.inputs.length) {
-    return { status: 'error', details: ['It has no input.js, so there is nothing to try it on: press Auto generate in the node, or write input.js.'], held };
+    return { status: 'error', details: ['It has no input_example.js, so there is nothing to try it on: press Auto generate in the node, or write input_example.js.'], held };
   }
   const runtime = options.offline ? withoutModel(options.runtime, NO_MODEL) : options.runtime;
   const ran = await callNode(graph, nodeId, inputs, { runtime, registry: options.registry, signal: options.signal, windows: options.windows });
@@ -104,7 +104,7 @@ export interface Tested {
  * Run the example of every code and ai node -- or only of the nodes with the
  * id *only* -- at every depth, because the graph a node holds is part of the
  * same project, as `check` also says. One that takes something in and has no
- * input.js yet is said, skipped, rather than left out without a word. The one
+ * input_example.js yet is said, skipped, rather than left out without a word. The one
  * runner behind `test` on the command line and `test_graph` over MCP.
  * `tested` counts the nodes it went through; none means nothing matched.
  */
@@ -121,7 +121,7 @@ export async function testGraph(
       const definitions = options.registry.node(node.node_type)?.definitions(node);
       const unwritten = !options.only && definitions && node.inputs.length && !definitions.input.trim();
       const result: ExampleRun = unwritten
-        ? { status: 'skipped', details: ['It has no input.js yet, so there is nothing to try it on: press Auto generate in the node, or write input.js.'], held: holds(definitions.output) }
+        ? { status: 'skipped', details: ['It has no input_example.js yet, so there is nothing to try it on: press Auto generate in the node, or write input_example.js.'], held: holds(definitions.output) }
         : await runExample(level, node.id, { runtime: options.runtime(), registry: options.registry, offline: options.offline, signal: options.signal, ...(inside ? {} : { windows: options.windows }) });
       results.push({ inside, nodeId: node.id, result });
     }

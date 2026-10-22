@@ -76,7 +76,7 @@ export abstract class NodeGuiBuilder extends ElementGuiBuilder<NodePanelProps> {
   readonly AdvancedPanel?: ComponentType<NodePanelProps>;
 
   /**
-   * A node that says what its ports carry in its definitions (input.js,
+   * A node that says what its ports carry in its definitions (input_example.js,
    * output.js): a code or an ai node. Its ports are edited in its settings,
    * without a type per port -- an input's follows its wire -- and
    * its outputs follow its output definition.

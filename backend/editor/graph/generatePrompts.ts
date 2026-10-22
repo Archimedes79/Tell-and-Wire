@@ -19,7 +19,7 @@ import type { Refine } from '../host/api.ts';
 
 /** Who the model is told it is, for each thing it writes -- for code, the node's language says (`Language.system`). */
 export const SYSTEMS: Record<Exclude<PromptKind, 'code'>, string> = {
-  input: 'You write one file of a node in a graph tool: its input definition, input.js -- a JSDoc typedef of what one call '
+  input: 'You write one file of a node in a graph tool: its input definition, input_example.js -- a JSDoc typedef of what one call '
     + 'of the node is handed, then one example of it as plain JSON. Output only the file, in one ```js block.',
   output: 'You write one file of a node in a graph tool: its output definition, output.js -- a JSDoc typedef of what one '
     + 'call of the node returns, then one example of it as plain JSON. Output only the file, in one ```js block.',
@@ -117,10 +117,10 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
   switch (kind) {
     case 'input': {
       if (!inputs.length) {
-        lines.push('Answer with the whole file input.js, in one ```js block and nothing else. It has no inputs: `/** @typedef {Object} Input */` and `module.exports = {};`.');
+        lines.push('Answer with the whole file input_example.js, in one ```js block and nothing else. It has no inputs: `/** @typedef {Object} Input */` and `module.exports = {};`.');
         break;
       }
-      lines.push('Answer with the whole file input.js, in one ```js block and nothing else, shaped like this:', '', definitionSkeleton('Input', inputs), '',
+      lines.push('Answer with the whole file input_example.js, in one ```js block and nothing else, shaped like this:', '', definitionSkeleton('Input', inputs), '',
         `- the JSDoc: \`@typedef {Object} Input\`, then one \`@property {type} <id> <what it is>\` for each input -- ${names(inputs)} -- saying its general format, as any value it may be handed has it;`,
         `- after \`module.exports =\`: one small, realistic example of what one call is handed, keyed by exactly those input ids, as ${PLAIN_JSON}.`,
         // A model names an input by what it holds -- "text" -- where the node's is "input", and the example then names nothing that arrives.
@@ -230,7 +230,7 @@ function describeInputs(sample: Record<string, unknown>): string {
  */
 export function repairPrompt(body: string, sample: Record<string, unknown>, error: string, problems: string[], change = ''): string {
   const parts = [
-    'Your previous attempt was executed on the example in input.js and did not work. Fix it. Return the complete corrected function, not a patch.',
+    'Your previous attempt was executed on the example in input_example.js and did not work. Fix it. Return the complete corrected function, not a patch.',
     '', '--- your previous attempt ---', body,
   ];
   if (change) parts.push('', '--- the change it was written to make, which the fix keeps ---', change);
@@ -288,7 +288,7 @@ export function bodyChange(refine: Refine, body: string, what: string, output?: 
  * change, asked for again whole. The node's text is not restated -- that is the
  * person's; a definition is changed in its chat, and the body after it.
  */
-export function definitionChange(file: 'input.js' | 'output.js', held: string, change: string): string {
+export function definitionChange(file: 'input_example.js' | 'output.js', held: string, change: string): string {
   return [`## ${file} as it is now`, held.trim() || '(none yet)', '## What to change', change,
     'Write the whole file again with that change, keeping what the change does not touch.'].join('\n\n');
 }

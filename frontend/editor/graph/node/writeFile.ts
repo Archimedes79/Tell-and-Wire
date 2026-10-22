@@ -1,4 +1,4 @@
-// Writing one file of a node -- input.js, output.js or its body -- the way the
+// Writing one file of a node -- input_example.js, output.js or its body -- the way the
 // node's view and the toolbar's Generate all do: pull it off the graph where the
 // graph says it, else ask the model; write the result in; stop at a definition
 // that does not fit; keep a failed exchange in the node's history.
@@ -66,7 +66,7 @@ function change(target: Target, edit: (node: GraphNode) => GraphNode): void {
 }
 
 /**
- * Pull input.js off the graph (`writing/pull.ts`): what the nodes before it
+ * Pull input_example.js off the graph (`writing/pull.ts`): what the nodes before it
  * say they hand on, and an example from running them. No model is asked of it
  * -- unless a node before it asks one to run. Resolves to whether it was
  * written *and* every wired input has an example: what is written after it is
@@ -88,9 +88,9 @@ export async function pullInput(nodeId: string, target: Target): Promise<boolean
       const now = target.node() ?? start;
       const gap = pullGap(now, portsOf(now, arrived), around(target).edges, arrived);
       complete = !gap;
-      return gap ? `⚠️ input.js pulled, but ${gap}` : '✅ input.js pulled: its definition from the nodes before it, its example from running them.';
+      return gap ? `⚠️ input_example.js pulled, but ${gap}` : '✅ input_example.js pulled: its definition from the nodes before it, its example from running them.';
     },
-    failure: 'Pulling input.js failed',
+    failure: 'Pulling input_example.js failed',
   });
   return written && complete;
 }

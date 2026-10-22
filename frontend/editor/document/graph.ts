@@ -74,7 +74,7 @@ export type NodeConfig = {
    * filled in when it runs: `prompt.md` in a project. Empty: the standard ones.
    */
   prompt: string;
-  /** What one call of a code or ai node is handed: `input.js`, a JSDoc typedef and one example. See `graph/files/definition.ts`. */
+  /** What one call of a code or ai node is handed: `input_example.js`, a JSDoc typedef and one example. See `graph/files/definition.ts`. */
   input_definition?: string;
   /** What one call of a code or ai node returns: `output.js`. Its example's keys are the outputs. */
   output_definition?: string;

@@ -64,7 +64,7 @@ describe('--host', () => {
  * editor anywhere -- the node's example, and the files its example reads.
  */
 describe('run-node', () => {
-  it('runs a node once on the example in its input.js -- a file\'s text, already read -- and holds it to its output.js', async () => {
+  it('runs a node once on the example in its input_example.js -- a file\'s text, already read -- and holds it to its output.js', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-run-node-'));
     await writeProject(dir, parseGraph({
       metadata: { name: 'Rows' },

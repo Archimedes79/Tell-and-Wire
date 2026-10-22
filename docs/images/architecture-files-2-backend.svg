@@ -135,7 +135,7 @@
 <text class="r" x="42" y="560.5">Which files a graph may reach</text>
 <line class="row" x1="34" x2="446" y1="567" y2="567"/>
 <text class="f" x="34" y="583">examples.ts</text>
-<text class="r" x="42" y="597.5">A node's example: what its input.js gives one call, held to its output.js</text>
+<text class="r" x="42" y="597.5">A node's example: what its input_example.js gives one call, held to its output.js</text>
 <line class="row" x1="34" x2="446" y1="604" y2="604"/>
 <text class="f" x="34" y="620">executor.ts</text>
 <text class="r" x="42" y="634.5">Running a graph: initialise, wire, order, execute</text>

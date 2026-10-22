@@ -250,7 +250,7 @@ function nestedProblems(graph: Graph, node: GraphNode, where: string, depth: num
 /**
  * A node's definitions, held to its ports: each must be readable -- its
  * example plain JSON after module.exports -- and name ports the node has: an
- * input.js its inputs, an output.js exactly its outputs, which ✨ Output sets
+ * input_example.js its inputs, an output.js exactly its outputs, which ✨ Output sets
  * from it. A key that is no port is a value nothing hands on or nothing reads.
  */
 function definitionProblems(node: GraphNode, where: string): Problem[] {
@@ -258,7 +258,7 @@ function definitionProblems(node: GraphNode, where: string): Problem[] {
   if (!definitions) return [];
   const found: Problem[] = [];
   const sides = [
-    { file: 'input.js', text: definitions.input, ports: node.inputs, side: 'input', writer: '✨ Input' },
+    { file: 'input_example.js', text: definitions.input, ports: node.inputs, side: 'input', writer: '✨ Input' },
     { file: 'output.js', text: definitions.output, ports: node.outputs.filter((port) => port.id !== ERROR_PORT), side: 'output', writer: '✨ Output' },
   ];
   for (const { file, text, ports, side, writer } of sides) {

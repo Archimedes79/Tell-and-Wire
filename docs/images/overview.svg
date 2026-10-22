@@ -94,7 +94,7 @@
 <text class="note-s" x="362" y="396" text-anchor="middle">graph-schedule.json</text>
 <rect class="note" x="495" y="334" width="200" height="82" rx="6"/>
 <text class="note-t" x="595" y="358" text-anchor="middle">One folder per node</text>
-<text class="note-s" x="595" y="378" text-anchor="middle">what it does · input.js · output.js</text>
+<text class="note-s" x="595" y="378" text-anchor="middle">what it does · input_example.js · output.js</text>
 <text class="note-s" x="595" y="396" text-anchor="middle">code.js  or  prompt.md</text>
 <rect class="edit" x="720" y="334" width="140" height="82" rx="6"/>
 <text class="t" x="790" y="364" text-anchor="middle">Your editor, git</text>

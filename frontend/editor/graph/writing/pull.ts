@@ -162,7 +162,7 @@ export const pullableOutput = (node: GraphNode, nodes: GraphNode[], edges: Wire[
 
 /**
  * What a pull of *node*'s input could not find, in a sentence that follows
- * "input.js pulled, but": no example from a run, or none for a wired input --
+ * "input_example.js pulled, but": no example from a run, or none for a wired input --
  * or '' where every wired input has one. What is written after it is written
  * against it, and against none is written against nothing.
  */

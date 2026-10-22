@@ -21,7 +21,7 @@ const answer = (result: string, description?: string) => ({ result, calls: [], .
 const around = (node: GraphNode) => ({ nodes: [node], edges: [], metadata: { name: 'Words', description: '', gui_scheme: 'night' } as never, gui: [] });
 
 describe('what one press of ✨ writes', () => {
-  it('is, for the body, what is missing first -- input.js where it takes something in, output.js -- so one press does the whole node; for ✨ Generate, every file again once the body is there', () => {
+  it('is, for the body, what is missing first -- input_example.js where it takes something in, output.js -- so one press does the whole node; for ✨ Generate, every file again once the body is there', () => {
     expect(writesFor(made('code'), 'body')).toEqual(['input', 'output', 'body']);
     expect(writesFor(made('code', { input_definition: INPUT }), 'body')).toEqual(['output', 'body']);
     expect(writesFor(made('code', { input_definition: INPUT, output_definition: OUTPUT }), 'body')).toEqual(['body']);

@@ -29,7 +29,7 @@ export class CodeNodeGuiBuilder extends NodeGuiBuilder {
   override portHint(side: 'inputs' | 'outputs', node: GraphNode): string {
     if (side === 'inputs') {
       const first = node.inputs[0]?.id ?? 'name';
-      return `The code reads each one as inputs.${first}; input.js says what each holds.`;
+      return `The code reads each one as inputs.${first}; input_example.js says what each holds.`;
     }
     const keys = node.outputs.filter((port) => port.id !== ERROR_PORT).map((port) => `${port.id}: …`);
     return `run() returns one key per output: { ${keys.join(', ') || 'output: …'} } -- output.js names them.`;

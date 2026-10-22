@@ -87,7 +87,7 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
    * folder. Everything else it stores stays in its entry in `graph-nodes.json`.
    *
    * Fixed names rather than ones made from a label: a folder holding
-   * `input.js`, `output.js` and `code.js` says what each file is
+   * `input_example.js`, `output.js` and `code.js` says what each file is
    * before it is opened, and renaming a node renames nothing on disk.
    */
   texts(_node: GraphNode): readonly TextFile[] {
@@ -201,7 +201,7 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
-   * The node's input and output definitions -- `input.js` and `output.js`
+   * The node's input and output definitions -- `input_example.js` and `output.js`
    * (`files/definition.ts`) -- or undefined for a kind that has none. A
    * code node and an ai node have them: what one call is handed, and what it
    * returns.

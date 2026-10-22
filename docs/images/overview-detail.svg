@@ -175,7 +175,7 @@
 <text class="fil" x="421" y="1033">and graph/schedule.ts</text><text class="rol" x="569.7" y="1033"></text>
 <rect class="note" x="860" y="958" width="470" height="84" rx="8"/>
 <text class="note-t" x="871" y="985">One folder per node</text>
-<text class="note-s" x="871" y="1002">what it does  input.js  output.js  code.js or prompt.md</text>
+<text class="note-s" x="871" y="1002">what it does  input_example.js  output.js  code.js or prompt.md</text>
 <text class="fil" x="871" y="1018">format: graph/files/definition.ts, logic.ts,</text><text class="rol" x="1173.8" y="1018"></text>
 <text class="fil" x="871" y="1033">prompts.ts; history.md: graph/authoring/history.ts</text><text class="rol" x="1214" y="1033"></text>
 <rect class="edit" x="1350" y="958" width="240" height="84" rx="8"/>

@@ -9,7 +9,7 @@
 //                                 in order, each with what it connects to
 //       nodes/
 //         count/            one folder per node that keeps writing, by id
-//           input.js …      what the node keeps in files: `NodeDefinition.texts`
+//           input_example.js …      what the node keeps in files: `NodeDefinition.texts`
 //
 // **Each fact in one place.** The flow says which node feeds which, and nothing
 // about any node. The list says what each node is, and nothing about its

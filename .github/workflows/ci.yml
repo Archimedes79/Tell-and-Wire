@@ -61,7 +61,7 @@ jobs:
       - name: Check the examples
         run: node backend/cli/main.ts check $(ls -d examples/*/ | grep -v '^examples/data/$')
 
-      # Each node run once on the example in its input.js and held to its
+      # Each node run once on the example in its input_example.js and held to its
       # output.js, without a model: there is no key here, so an AI node is
       # skipped, not failed.
       - name: Test the examples' nodes

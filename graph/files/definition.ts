@@ -1,5 +1,5 @@
 // A node's two definitions, as the files its folder keeps them in: what comes
-// in (`input.js`) and what goes out (`output.js`).
+// in (`input_example.js`) and what goes out (`output.js`).
 //
 //     /**
 //      * @typedef {Object} Input
@@ -13,7 +13,7 @@
 // -- so Tell & Wire reads it without running anything, and what ▶ Try and `test`
 // run a node on is data, not code somebody wrote.
 //
-// **A definition is of one call.** `input.js` is what `run(inputs)` is handed,
+// **A definition is of one call.** `input_example.js` is what `run(inputs)` is handed,
 // a file's text where an input reads its file; `output.js` is what one call
 // returns. A node run once per item is handed one item, and its answers are
 // collected by the executor, not by the definition.
@@ -38,8 +38,8 @@ export interface Definitions {
  */
 export const DEFINITION_TEXTS: readonly TextFile[] = [
   {
-    field: 'input_definition', file: 'input.js', standard: `/**
- * input.js: what one call of this node is handed -- a JSDoc @typedef Input
+    field: 'input_definition', file: 'input_example.js', standard: `/**
+ * input_example.js: what one call of this node is handed -- a JSDoc @typedef Input
  * with one @property per input, then one example of it after module.exports,
  * as plain JSON. ✨ Input writes it; ▶ Try and \`test\` run the node on the
  * example.
@@ -128,7 +128,7 @@ function valueFrom(text: string, start: number): string {
  * The example *text* holds: the JSON after its last `module.exports =` that
  * is code -- not one a comment mentions -- as far as the value goes, parsed;
  * or a sentence saying why it is not one, for a person or a model to fix.
- * Read, never run: `node code.js` runs input.js instead (`RUN_ON_ITS_OWN`),
+ * Read, never run: `node code.js` runs input_example.js instead (`RUN_ON_ITS_OWN`),
  * and for plain JSON the two come to the same example.
  */
 export function definitionExample(text: string): DefinitionExample {

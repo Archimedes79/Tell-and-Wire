@@ -33,7 +33,7 @@ export function wholeList(port: Port, whole: boolean): Port {
 
 /**
  * The input ports a list arrives on, one at a time when the node runs per
- * item: one whose example value (in input.js) is a list, one declared a list,
+ * item: one whose example value (in input_example.js) is a list, one declared a list,
  * or one wired from an output that hands on a list -- or one that takes of a start point the value of a block that sends a list
  * (a folder to choose: the paths of its files), which the GUI says and no output does -- but not one ticked "whole list".
  */

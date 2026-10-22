@@ -122,19 +122,19 @@ stops after **Pull input** where a wired input has no example to pull -- the mes
 rather than write against nothing. Under that are the node's files, a card each -- its name in
 bold, the ports it holds as chips, and a button for each way of working on it. The one open is lit.
 Above the open file, one line says what the node takes in and what it hands on, from its ports:
-`file · path → text · info`. A click on a side opens its file, and `≠ input.js` says the file
+`file · path → text · info`. A click on a side opens its file, and `≠ input_example.js` says the file
 names other ports than the node has.
 
 | Card | Buttons | File |
 |---|---|---|
-| **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
+| **Input** | **File**, and ⟳ (**Pull input**) beside the name | `input_example.js`: what one call is handed -- a JSDoc typedef, then one example as plain JSON. |
 | **Output** | **Chat** or ⟳ (**Pull output**), **File** | `output.js`: what one call returns, the same way. Its keys are the node's outputs. |
 | **Code** (AI node: **Prompt**) | **Chat**, **File** | `code.js`, or `prompt.md`: the AI node's instructions. |
 | a file beside `code.js` (code node) | **File**, ✕ | A helper or the data it reads: `.js`, `.mjs`, `.cjs`, `.json`, `.csv` or `.txt`, in the node's folder. **Add file** under the cards takes a name; `code.js` loads it with `require('./tax.js')` or `import './steps.mjs'`, and reads a table with `readFileSync(new URL('./rates.csv', import.meta.url))`. ✨ Code is shown the files, and Check names a file that code.js loads and the node does not have. |
 | **Fields** (a data node) | **Chat**, **File** | `data.json`: the struct as it starts. Under the chat -- and above the file -- **Add field** takes a name and what it starts as, by hand, with no AI. |
 | **Example** (a data node) | **File** | `example.json`: the same struct filled, one example of what it holds. Auto generate writes it together with the fields; left empty, the start stands in. |
 
-- **Pull input** writes `input.js` from the graph, with no model: its types from the
+- **Pull input** writes `input_example.js` from the graph, with no model: its types from the
   `output.js` of the node wired before it, its example from running what comes before it on
   the example data -- a file an input reads is read for you. If a node before it asks a model,
   that is a model call, and the button says so.
@@ -157,7 +157,7 @@ names other ports than the node has.
 - **Last run** at the foot of the pane, once the tool has run, says how the node went and what
   arrived and what it made.
 
-New code is tried on the example in `input.js` and repaired once if it fails. Under the code,
+New code is tried on the example in `input_example.js` and repaired once if it fails. Under the code,
 **▶ Try** runs the node once on that example and holds the result to `output.js`; **✨ Fix**
 repairs the body where it failed. An AI node's **▶ Try** asks the model on the example.
 
@@ -165,7 +165,7 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
   shows what it adds, removes and changes before you **Apply** it. A change to one node is said
   in that node's Chat.
 - **Generate all** in the toolbar writes every empty node, in the order the graph runs. It pulls
-  what it can -- `input.js` off the nodes before, `output.js` off the data node an output goes
+  what it can -- `input_example.js` off the nodes before, `output.js` off the data node an output goes
   into -- and asks the model for the rest.
   **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
 
@@ -365,7 +365,7 @@ node backend/cli/main.ts my_tool --event measure --value "paragraph=One two." --
 The file holds what came from outside the graph (the start point's package, what the models
 answered, what data nodes held) and what the end points handed back. `test` runs it
 again with those handed in, asks no model, and fails when an end point hands back something
-else. It also runs each code and AI node on its `input.js` example and holds the result to
+else. It also runs each code and AI node on its `input_example.js` example and holds the result to
 `output.js`; `--offline` skips what needs a model:
 
 ```bash
@@ -432,7 +432,7 @@ open in the notebook. Details in [notebook.md](notebook.md).
   for the run report: where to look first, in plain words, and a button that copies it to send on.
 - **A run stopped and the GUI shows nothing.** The App tab says where: *The run stopped at "…"* with the reason, and **Show it** opens that node. The nodes after it only had nothing to do because of it.
 - **A node shows an error, or is skipped.** Open it and press **▶ Try**. A failing example
-  says whether `input.js` or `output.js` is wrong. **✨ Fix** repairs the body.
+  says whether `input_example.js` or `output.js` is wrong. **✨ Fix** repairs the body.
 - **Auto generate does nothing or fails.** The bar under the canvas and **⚙ Settings** say what is in the way
   before anything is asked: a local server that is not running, a model it has not pulled, a key
   not yet pasted. Settings has two AIs, *that runs the nodes* and *that writes* (Auto generate, the bar; the

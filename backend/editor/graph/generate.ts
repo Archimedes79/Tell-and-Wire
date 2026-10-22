@@ -1,6 +1,6 @@
 // Writing a node's files with a model.
 //
-// One entry point for every ✨: a node's input definition (input.js), its
+// One entry point for every ✨: a node's input definition (input_example.js), its
 // output definition (output.js), and its body -- code, an ai node's prompt, a
 // data node's data. What is sent is the standard prompt for that ✨
 // (`graph/editor/prompts.ts`) with its variables filled from what the node and the
@@ -19,7 +19,7 @@
 // a second generator.
 //
 // Code is not one call. It is written, run once on the example in the node's
-// input.js, held to its output.js, and repaired once with the evidence when
+// input_example.js, held to its output.js, and repaired once with the evidence when
 // that fails -- because a wrong output key is the single most common way
 // generated code "works" and still delivers nothing, and all of it becomes
 // knowable the moment the code executes. The second pass is not "try again";
@@ -135,7 +135,7 @@ async function probe(
 }
 
 /**
- * What one call is tried on: the example in the node's input.js -- nothing,
+ * What one call is tried on: the example in the node's input_example.js -- nothing,
  * for a node that takes nothing in -- or undefined when there is none to try
  * it on: then it is written and not tried.
  */
@@ -250,7 +250,7 @@ async function writeVerifiedCode(
 
 /**
  * What is wrong with a definition a model wrote: its example cannot be read,
- * an input.js names an input the node does not have, an output.js leaves out
+ * an input_example.js names an input the node does not have, an output.js leaves out
  * an output other nodes are wired to.
  */
 function definitionFaults(kind: 'input' | 'output', text: string, shape: Shape): string[] {
@@ -323,7 +323,7 @@ async function withTexts(given: { path: string; text?: string }[] | undefined, f
 }
 
 /**
- * *text*, an input.js, with each file handed as itself whole in its example.
+ * *text*, an input_example.js, with each file handed as itself whole in its example.
  * The model was shown no more than the start of each (`withTexts`), and may
  * write that start or an invented text in its place, but ▶ Try and `test`
  * run the node on the example, and a run hands such a port the file itself:
@@ -452,7 +452,7 @@ async function jobOf(given: GenerateRequest, deps: GenerateDeps): Promise<Job> {
  */
 async function writeDefinition({ request, shape, prompt, ai, calls, deps }: Job, write: 'input' | 'output'): Promise<GenerateResponse> {
   const change = request.refine?.change?.trim();
-  const opening = change ? definitionChange(`${write}.js`, shape.definitions?.[write] ?? '', change) : '';
+  const opening = change ? definitionChange(write === 'input' ? 'input_example.js' : 'output.js', shape.definitions?.[write] ?? '', change) : '';
   const complete = async (evidence: string) => fileIn(await ai.complete({ prompt: prompt(evidence, undefined), system: SYSTEMS[write], ...deps.target }));
   let text = await complete(opening);
   let faults = definitionFaults(write, text, shape);

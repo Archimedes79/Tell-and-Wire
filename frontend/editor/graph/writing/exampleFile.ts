@@ -2,7 +2,7 @@
 //
 // ✨ Input is shown the start of real files -- examples, a spec -- and writes
 // the general format of what arrives, and one small example of it, from them:
-// so a CSV node's input.js says the columns the file has, not ones a model
+// so a CSV node's input_example.js says the columns the file has, not ones a model
 // imagined. They are the node's own `input_files` when someone gave it some
 // (📂, a drop, ⟳), and otherwise the one the graph hands a file-reading input
 // of the node: what the last run brought there, what the node wired to it

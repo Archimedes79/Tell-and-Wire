@@ -8,7 +8,7 @@ const INPUT = `/**
 module.exports = { "csv": "Country,Population\\nIndia,1450" };
 `;
 
-describe('an input.js / output.js definition', () => {
+describe('an input_example.js / output.js definition', () => {
   it('has the JSON after module.exports as its example, read as require() reads the file, its keys as ports, and holds a call\'s result to it', () => {
     expect(definitionExample(INPUT)).toEqual({ example: { csv: 'Country,Population\nIndia,1450' } });
     // A semicolon inside the example is the example's; one after it ends it; a comment after it is nothing.

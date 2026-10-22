@@ -1,6 +1,6 @@
 // A node's definitions, following its ports as they are renamed and removed.
 //
-// input.js and output.js are keyed by port: the example's keys, and the name of
+// input_example.js and output.js are keyed by port: the example's keys, and the name of
 // each @property. A port renamed in the ports editor carries its wire along
 // (`portRenames`); its definitions carry the name along too, so ▶ Try runs the
 // body with the value where it now looks, and `check` does not find a key that

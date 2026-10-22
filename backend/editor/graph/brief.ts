@@ -2,7 +2,7 @@
 // graph hold (`graph/files/prompts.ts` names them):
 //
 //     {Node Description}   the heading, the id and kind, then the text
-//     {Input Definition}   input.js as it is, where it is written -- and after
+//     {Input Definition}   input_example.js as it is, where it is written -- and after
 //                          it, always, each input as wired: its port, its
 //                          type, where it comes from and what arrives there
 //     {Output Definition}  output.js as it is, where it is written -- and after
@@ -87,7 +87,7 @@ const saidOf = (port: Port): string => port.description?.replace(/\s+/g, ' ').tr
 const withoutBytes = (text: string): string => text.replace(/("data:[\w.+/-]+;base64,)[A-Za-z0-9+/=]{64,}"/g, '$1..."');
 
 /**
- * What {Input Definition} says: the node's input.js as it is, where it is
+ * What {Input Definition} says: the node's input_example.js as it is, where it is
  * written, and after it each input as wired -- its port, its type, where it
  * comes from and what arrives there: what an input definition is written
  * from, and what code is written to read.

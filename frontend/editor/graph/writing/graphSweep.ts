@@ -11,7 +11,7 @@
 // a loop through a data node from looking like a cycle.
 //
 // What travels forward is each node's output definition: a node is written
-// whole -- its input.js, its output.js, its body -- before the next one is
+// whole -- its input_example.js, its output.js, its body -- before the next one is
 // started, and the next one's input definition is written from what the node
 // wired into it defines (`generationContext.inputSources`).
 //

@@ -6,7 +6,7 @@ import { inputFile, outputFile } from '../../../../graph/editor/pull.ts';
 import { modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts } from './pull';
 
 /**
- * Pull: input.js read off the graph -- the type from the output.js of the node
+ * Pull: input_example.js read off the graph -- the type from the output.js of the node
  * before it, the example from a run of what is before it.
  */
 

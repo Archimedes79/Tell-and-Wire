@@ -35,7 +35,7 @@ interface Watched { progress_id?: string }
 
 /**
  * One node's writing to do, as its ✨ asks it: its input definition
- * (input.js), its output definition (output.js), or its body -- code, an ai
+ * (input_example.js), its output definition (output.js), or its body -- code, an ai
  * node's prompt, a data node's data. The node's design decides the rest.
  */
 export interface GenerateRequest {
@@ -45,7 +45,7 @@ export interface GenerateRequest {
    * Its history is not needed.
    */
   node: GraphNode;
-  /** What to write: `input` (input.js), `output` (output.js), or the body (the default). */
+  /** What to write: `input` (input_example.js), `output` (output.js), or the body (the default). */
   write?: 'input' | 'output' | 'body';
   /** The graph around the node, in words: what {Context} says. Built by the editor. */
   context?: string;
@@ -59,7 +59,7 @@ export interface GenerateRequest {
   output_files?: { path: string; text?: string }[];
   /**
    * Where each input is wired from and what that node hands on, by port id:
-   * {Input Definition} while the node has no input.js.
+   * {Input Definition} while the node has no input_example.js.
    */
   input_sources?: Record<string, string>;
   /**
@@ -107,7 +107,7 @@ export interface Refine {
 
 /**
  * What trying generated code on the node's example revealed -- the example in
- * its input.js, held to its output.js. `skipped`: there was nothing to try it
+ * its input_example.js, held to its output.js. `skipped`: there was nothing to try it
  * on; `ok` passed the first try, `repaired` the second.
  */
 export interface ProbeReport {
@@ -120,7 +120,7 @@ export interface ProbeReport {
 
 export interface GenerateResponse {
   /**
-   * What was written: the whole file -- input.js, output.js, code.js,
+   * What was written: the whole file -- input_example.js, output.js, code.js,
    * prompt.md -- or, for a data node, the text of what it holds. Which field
    * it belongs in is the caller's business.
    */
@@ -254,7 +254,7 @@ export const EDITOR_API = {
   /** What would arrive at a node: what feeds it is run, the node is not. */
   nodeInputs: route<OnNode, { inputs: Record<string, unknown>; error: string | null }>('POST', '/api/execute/inputs'),
 
-  /** ▶ Try: one call of a node on the example in its input.js, held to its output.js. */
+  /** ▶ Try: one call of a node on the example in its input_example.js, held to its output.js. */
   testNode: route<OnNode, ExampleRun>('POST', '/api/execute/example'),
 
   /**
@@ -343,7 +343,7 @@ export const EDITOR_API = {
 
   /**
    * One of a node's files in a project, in the person's own editor: `file`,
-   * named from the node's folder -- `input.js`, `history.md` -- or, without
+   * named from the node's folder -- `input_example.js`, `history.md` -- or, without
    * it, its body (`nodes/<id>/code.js`). The node is one of the graph
    * `inside` leads down to: the ids of the nodes that hold it, outermost
    * first (`nodeFileOf`). It starts a program.

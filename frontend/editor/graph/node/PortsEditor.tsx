@@ -29,7 +29,7 @@ import { DANGER_TEXT, DIMMER, FIELD, LINE, MUTED } from '../../../deployment/gui
  * What a port carries is not written here for a node that defines itself
  * (`compact`: a code or ai node). An input's is what is wired into it, said on
  * the line under it, and whether its file is read; what each holds is said in
- * its input.js and output.js. A type box per port said it a second time, and a
+ * its input_example.js and output.js. A type box per port said it a second time, and a
  * "list" box was half of a setting whose other half was folded away: a list
  * follows "Run once per item", on both sides -- and while the node runs per item, an input can
  * be taken whole instead ("whole list"), a stop-word list beside the words it
@@ -219,7 +219,7 @@ function PortRow({ port, kind, editable, perPort, readsFiles, wholeOffered, wire
                 ticks it where nobody has said anything yet (`connect`). */}
             {kind === 'input' && readsFiles && (
               <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: DIMMER }}
-                title="The node is handed what the file says, not its path: a run reads the file -- a Word document as its text, a picture or a PDF as the file itself, which an AI node sends to its model -- and its input.js example holds such a text">
+                title="The node is handed what the file says, not its path: a run reads the file -- a Word document as its text, a picture or a PDF as the file itself, which an AI node sends to its model -- and its input_example.js example holds such a text">
                 <input type="checkbox" checked={port.data_type === 'file_path'} aria-label="Read the file at this path"
                   onChange={(e) => set({ data_type: e.target.checked ? 'file_path' : 'any' }, ONCE)} />
                 Read the file at this path
