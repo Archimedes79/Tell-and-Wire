@@ -66,6 +66,12 @@ The picture (`docs/images/overview.svg`, in the README) is the target architectu
   node. A block never reaches a node, and a block can read what a data node holds with no round.
 - **Two models, two jobs**: the one that writes belongs to the editor; the one that runs the AI
   nodes is asked by the engine. Neither side imports the other's.
+- **Memory has one home: the session.** What a graph remembers between rounds is kept there and
+  goes with it. The only file the session writes by itself is `state.json`, and what goes into
+  it is decided in one place (`Keeps`, `session.ts`). What a tool should keep beyond that is
+  explicit: a file (an end or start point with a `path`) or a state a person saves under a name.
+  Before adding another way to remember -- a file, a cache, a kind of node -- say which one it
+  replaces.
 - A change that has to cross one of these lines the wrong way -- the editor into a deployment, the
   engine into the session or the GUI, a node into a block -- is a sign to move it, not to add the
   import. Say so in the plan.
