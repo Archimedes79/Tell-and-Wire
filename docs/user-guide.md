@@ -167,7 +167,8 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
 - **Generate all** in the toolbar writes every empty node, in the order the graph runs. It pulls
   what it can -- `input.js` off the nodes before, `output.js` off the data node an output goes
   into -- and asks the model for the rest.
-  **File → ✨ Describe a graph…** designs a whole graph from a description: good for a first sketch.
+  On an empty tool the bar under the canvas reads *Say what the tool should do…* and **Build** designs a whole graph from a
+  description at once (Undo takes it back): good for a first sketch.
 
 A start point, a folder, an end point and a subgraph have no files: they open on their
 settings. **Edit the GUI** on a node a block uses goes to the GUI tab.

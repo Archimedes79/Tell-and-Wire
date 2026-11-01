@@ -921,7 +921,7 @@ For the editor only; a package leaves `backend/editor/` behind, so it answers no
 | `POST /api/execute/example` | ▶ Try: a node on the example its input.js holds |
 | `POST /api/graphs/rounds/keep` | Keep a round that ran through as a test of the project |
 | `POST /api/ai/generate`, `GET /api/ai/generate/progress` | ✨: write one of a node's files from the standard prompt and what was said to its chat (`ask`), or change the file there is as said (`refine.change`), and watch it being written |
-| `POST /api/ai/generate-graph` | ✨ Describe a graph: design a whole graph from a description, or change one |
+| `POST /api/ai/generate-graph` | The bar under the canvas: design a whole graph from a description, or change one |
 | `POST /api/windows/load`, `POST /api/windows/save` | The notebook: open a project with the windows it was made from (and whether the graph beside them is still what they made), and save windows as a project (`docs/notebook.md`) |
 | `POST /api/windows/describe` | Windows from a description, or the windows there are changed as it says; nothing is written |
 | `GET /api/ai/settings`, `POST /api/ai/settings`, `GET /api/ai/providers` | The two AI settings and the providers to choose from |

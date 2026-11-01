@@ -6,6 +6,7 @@ import Button from '../../deployment/gui/kit/ui/Button';
 import LiveGeneration from '../graph/writing/LiveGeneration';
 import GraphProblems from './GraphProblems';
 import ProblemsChip from './ProblemsChip';
+import type { Graph } from '../document/graph';
 import { useGraphAsk, type GraphAsk } from './graphAsk';
 import { refreshProviderStatus, useProviderStatus } from '../fields/ProviderModelSelect';
 import { describeChange, graphChange } from './graphChange';
@@ -13,8 +14,7 @@ import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } fro
 
 /**
  * The bar under the canvas, always there: say what to change in the graph.
- * ✨ Describe a graph is sent the graph and the words, and what comes back is
- * shown, with what it adds, removes and changes and what `check` finds in it,
+ * The words are sent with the graph, and what comes back is shown, with what it adds, removes and changes and what `check` finds in it,
  * before it is applied as one undo step. A change to one node's files is said
  * in that node's chats, with the node open.
  */
@@ -43,6 +43,8 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
   }, [opened, reset]);
 
   const asking = change.phase === 'asking';
+  // A tool with nothing in it yet: what is said builds it at once -- there is nothing to lose, and Undo is a click away.
+  const empty = useGraphStore((s) => s.rfNodes.length === 0);
 
   const submit = async () => {
     const words = text.trim();
@@ -51,7 +53,9 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
     setApplied(null);
     flushPanels();
     // The words go back where they were, to be sent again or said otherwise.
-    if (await send(words, words, useGraphStore.getState().exportGraph()) === 'failed') setText(words);
+    const result = await send(words, words, useGraphStore.getState().exportGraph());
+    if (result === 'failed') setText(words);
+    else if (result && empty) applyGraph(result);
   };
 
   const stop = () => {
@@ -60,12 +64,15 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
     reset();
   };
 
-  const apply = () => {
-    if (change.phase !== 'ready') return;
-    useGraphStore.getState().changeGraph(change.graph);
+  const applyGraph = (graph: Graph) => {
+    useGraphStore.getState().changeGraph(graph);
     const { past } = useGraphStore.getState();
     setApplied(past[past.length - 1]);
     reset();
+  };
+
+  const apply = () => {
+    if (change.phase === 'ready') applyGraph(change.graph);
   };
 
   const discard = () => {
@@ -139,7 +146,8 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
             // A server started since the last look is noticed as the bar is used.
             onFocus={() => { if (ai?.writing_problem) refreshProviderStatus(); }}
             disabled={asking}
-            placeholder="Say what to change in the graph…"
+            placeholder={empty ? 'Say what the tool should do…' : 'Say what to change in the graph…'}
+            autoFocus={empty}
             aria-label="Say what to change"
             className="flex-1 min-w-0 bg-transparent text-sm outline-none"
             style={{ color: TEXT }}
@@ -152,7 +160,7 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
           className="h-10 shrink-0"
           title="Change the graph as said, with ✨: you see what it changes before it is applied"
         >
-          Change
+          {empty ? 'Build' : 'Change'}
         </Button>
         <ProblemsChip />
       </div>

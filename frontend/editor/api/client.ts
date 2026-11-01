@@ -44,7 +44,7 @@ export function call<K extends keyof typeof ROUTES & string>(
  * and judge -- the prompt, the context, each step. *run* is handed the id to
  * send as `progress_id`, which is what the server files the calls under. A
  * poll that fails changes nothing: the generation is what matters. A node's
- * panel and ✨ Describe a graph each wrote this out.
+ * panel and the bar each wrote this out.
  *
  * *stop* ends the watch at once, rejecting with its reason: the request goes
  * on at the server, and what it brings back is dropped -- a call that hung
