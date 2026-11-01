@@ -28,6 +28,22 @@ export function placeOf(where: string, graph: Pick<Graph, 'nodes'>): string {
 }
 
 /**
+ * One problem as a person reads it: the plain sentence first, where it has one, and the exact words under "Details" --
+ * where it has none, the exact words alone.
+ */
+export function ProblemText({ problem }: { problem: Problem }) {
+  const exact = `${problem.problem} ${problem.fix}`;
+  return problem.plain ? (
+    <>
+      <span style={{ color: TEXT }}>{problem.where}</span>: {problem.plain}
+      <details className="mt-0.5"><summary className="cursor-pointer select-none opacity-70">Details</summary>{exact}</details>
+    </>
+  ) : (
+    <><span style={{ color: TEXT }}>{problem.where}</span>: {exact}</>
+  );
+}
+
+/**
  * What `check` finds in a graph about to be taken in from outside -- one ✨ Describe
  * a graph designed or changed, one pasted as JSON -- said before the button
  * that takes it (*action*: Load, Apply). Loaded without a word, a graph whose
@@ -43,9 +59,7 @@ export default function GraphProblems({ graph, action = 'Load' }: { graph: Graph
       </p>
       <ul className="space-y-1">
         {problems.map((problem, index) => (
-          <li key={index}>
-            <span style={{ color: TEXT }}>{placeOf(problem.where, graph)}</span>: {problem.problem} {problem.fix}
-          </li>
+          <li key={index}><ProblemText problem={{ ...problem, where: placeOf(problem.where, graph) }} /></li>
         ))}
       </ul>
     </div>

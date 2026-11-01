@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { placeOf } from './GraphProblems';
+import { placeOf, problemsOf } from './GraphProblems';
 
 describe('where a problem is said to be', () => {
   const graph = { nodes: [{ id: 'code', label: 'Add one' }, { id: 'data', label: '' }] } as Parameters<typeof placeOf>[1];
@@ -18,5 +18,18 @@ describe('where a problem is said to be', () => {
     expect(placeOf('node "data"', graph)).toBe('node "data"');
     expect(placeOf('node "ghost"', graph)).toBe('node "ghost"');
     expect(placeOf('edge "e1"', graph)).toBe('edge "e1"');
+  });
+});
+
+describe('what is said of a graph with a common problem', () => {
+  it('says it in plain words first -- an input nothing is wired to, a graph with no end point', () => {
+    const input = { id: 'text', name: 'Text', kind: 'input', data_type: 'text', multi: false, required: false, field: 'file.content' };
+    const problems = problemsOf({
+      metadata: { name: 't', description: '', gui_scheme: 'night' },
+      nodes: [{ id: 'sum', node_type: 'ai', label: 'Sum', description: '', position: { x: 0, y: 0 }, inputs: [input], outputs: [], config: {} }],
+      edges: [],
+    } as never);
+    expect(problems.find((one) => one.problem.includes('nothing is wired to it'))?.plain).toContain('nothing is connected to it');
+    expect(problems.find((one) => one.problem.startsWith('Nothing a person can see'))?.plain).toContain('no End point');
   });
 });

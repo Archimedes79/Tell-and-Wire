@@ -170,6 +170,7 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
       where: 'graph',
       problem: 'Nothing a person can see: there is no end point, so a run computes its answer and shows nobody.',
       fix: 'End every branch in an "end" node -- an end point, what the graph hands back under its name, which a block on the GUI can show; config.write_mode "file" or "directory" writes it too.',
+      plain: 'Nothing is shown: the graph has no End point. Add one from the left and wire the last node into it.',
     });
   }
   if (!inside) problems.push(...sharedResultLabels(graph), ...guiProblems(graph, registry));
@@ -230,6 +231,7 @@ function nestedProblems(graph: Graph, node: GraphNode, where: string, depth: num
     where,
     problem: `Its input "${port.id}" takes "${port.field}" of what arrives, and nothing is wired to it.`,
     fix: `Wire a node to it -- a memory's field, a start point's "data" -- and name in "field" a key of what arrives there, never a node.`,
+    plain: `The input "${port.name || port.id}" waits for something, and nothing is connected to it. Drag a wire to its dot -- from the Data dot of the Start point, if it is to read what the GUI sends.`,
   }));
   const own = [...(designs.node(node.node_type)?.problems(node, registry, where, wired) ?? []), ...unwired];
   const held = element.nestedGraph(node);

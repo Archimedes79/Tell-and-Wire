@@ -8,8 +8,8 @@ is the user guide: the same things, in depth.
    a model on this computer or another one on your network (Ollama, LM Studio, any server that
    speaks the OpenAI API: enter its address), or a cloud model with a key (Google Gemini has a free
    tier). Under the choice, the line beginning *Now:* says whether it answers.
-2. **Start a tool.** **File → New** gives an empty one. **File → ✨ Describe a graph…** builds one
-   from a sentence, for example *Read a text file, summarize it and show the result.* Or open one
+2. **Start a tool.** **File → New** gives an empty one. Say what it should do in the bar under the
+   canvas -- *Read a text file, summarize it and show the result.* -- and **Build** makes it. Or open one
    that exists: **File → Open…** and choose a folder from the `examples` folder of this download.
 3. **Look at the graph.** A **start point** is where a run begins, an **end point** is where it
    ends, the nodes between them do the work, and a wire carries a result from one to the next.

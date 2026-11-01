@@ -17,11 +17,15 @@ import { port } from './nodes/port.ts';
 import { routeProblems, scheduleProblems } from './schedule.ts';
 import { RUN_PORT } from './triggers.ts';
 
-/** One thing to fix: where it is, what it is, and what to do about it. */
+/**
+ * One thing to fix: where it is, what it is, and what to do about it. *plain* is the same for a person who has not read the
+ * guide, in words of the screen -- the editor says it first and keeps the exact words under "Details"; a model reads the exact ones.
+ */
 export interface Problem {
   where: string;
   problem: string;
   fix: string;
+  plain?: string;
 }
 
 export const names = (ids: Iterable<string>): string => [...ids].map((id) => `"${id}"`).join(', ') || '(none)';

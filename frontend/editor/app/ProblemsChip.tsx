@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGraphStore } from '../document/store/graphStore';
-import { placeOf, problemsOf } from './GraphProblems';
+import { ProblemText, placeOf, problemsOf } from './GraphProblems';
 import Button from '../../deployment/gui/kit/ui/Button';
 import { PANEL, TEXT, WARNING_TEXT } from '../../deployment/gui/kit/ui/theme';
 
@@ -40,9 +40,7 @@ export default function ProblemsChip() {
           aria-label="Problems of this graph"
         >
           {problems.map((problem, index) => (
-            <li key={index}>
-              <b>{problem.where}</b>: {problem.problem} {problem.fix}
-            </li>
+            <li key={index}><ProblemText problem={problem} /></li>
           ))}
         </ul>
       )}

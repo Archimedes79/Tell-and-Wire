@@ -129,10 +129,9 @@ export default function App() {
   /**
    * Make *graph* the document and say how it went -- what it could not hold,
    * a wire to a node that is not there, included. *file*: where it came from.
-   * *unsaved*: it came from nowhere (✨ designed it).
    */
-  const replaceWith = (graph: Graph, ok: string, file?: { path: string; project: boolean }, unsaved = false) => {
-    const { dropped } = loadGraph(graph, { unsaved });
+  const replaceWith = (graph: Graph, ok: string, file?: { path: string; project: boolean }) => {
+    const { dropped } = loadGraph(graph);
     if (file) setCurrentFilePath(file.path, file.project);
     if (dropped.length) say(`⚠ Left out ${dropped.length === 1 ? 'a wire' : `${dropped.length} wires`} to nodes that are not there: ${dropped.join(', ')}`, true);
     else say(ok);
@@ -235,7 +234,7 @@ export default function App() {
   /**
    * Whether the document may be replaced: it is, when it holds nothing unsaved
    * -- or the person saves it, or lets it go. Everything that loads a graph
-   * asks first: New, Open, Reload, a drop, pasted JSON and ✨ Describe a graph
+   * asks first: New, Open, Reload, a drop, and pasted JSON
    * destroy unsaved work otherwise.
    */
   const mayReplace = async (): Promise<boolean> => {
@@ -459,11 +458,6 @@ export default function App() {
           onOpenHelp={() => setShowHelp(true)}
           onOpenNotebook={isProject && currentFilePath && canSwitch ? () => { switchTab(async () => (await call('switchProduct', { path: currentFilePath })).url).catch((error: unknown) => say(`⚠ ${error instanceof Error ? error.message : String(error)}`, true)); } : undefined}
           onOpenReport={openReport}
-          onLoadDesigned={async (graph) => {
-            if (!(await mayReplace())) return false;
-            replaceWith(graph, '', undefined, true);
-            return true;
-          }}
           view={view}
           // The tab of the view one is already in is also the way out of a node that is open in it.
           onViewChange={(next) => { if (next === view && next === 'graph') closeNode(); setView(next); }}

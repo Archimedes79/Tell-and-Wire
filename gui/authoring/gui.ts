@@ -110,7 +110,7 @@ export function guiProblems(graph: Graph, registry: Kinds): Problem[] {
       element.showsEnd(block) && 'show an end point ("shows")',
     ].filter(Boolean);
     if (can.length && !block.sends_to.length && !block.fires && !block.shows) {
-      found.push({ where: at, problem: 'It is connected to nothing: using it reaches no start point, and nothing is ever shown on it.', fix: `Let it ${can.join(', or ')}.` });
+      found.push({ where: at, problem: 'It is connected to nothing: using it reaches no start point, and nothing is ever shown on it.', fix: `Let it ${can.join(', or ')}.`, plain: 'This block is not connected to the graph, so using it does nothing. Select it and, under "On the graph", pick the Start point it sends to or the End point it shows.' });
     }
   }
   for (const edge of graph.edges) {
@@ -132,6 +132,7 @@ export function guiProblems(graph: Graph, registry: Kinds): Problem[] {
       where: `start point "${name}"`,
       problem: 'It is started by the GUI, and nothing on the GUI fires it.',
       fix: `Let a button, a box or a choice fire "${name}", or have it started by a call or by itself.`,
+      plain: `The Start point "${name}" is started by the GUI, but nothing on the GUI starts it. Add a button on the GUI tab, or let a block start it under "On the graph".`,
     });
   }
   return found;
