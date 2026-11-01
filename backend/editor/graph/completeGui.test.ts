@@ -47,4 +47,16 @@ describe('a GUI written whole', () => {
     const ask = graph.gui!.blocks.find((block) => block.id === 'ask')!;
     expect([ask.fires, ask.sends_to]).toEqual(['a', undefined]);
   });
+
+  it('wires an input that takes a part of the start package from the start point, where a model wired the gate and forgot the input', () => {
+    const graph = parseGraph({
+      nodes: [
+        { id: 'go', node_type: 'start', config: { started_by: 'gui' } },
+        { id: 'sum', node_type: 'ai', inputs: [{ id: 'text', name: 'Text', kind: 'input', data_type: 'text', multi: false, required: false, field: 'file.content' }], outputs: [] },
+      ],
+      edges: [{ id: 'g', source_node_id: 'go', source_port_id: 'data', target_node_id: 'sum', target_port_id: '__run' }],
+    });
+    completeGui(graph, registry);
+    expect(graph.edges.map((edge) => `${edge.source_node_id}.${edge.source_port_id} -> ${edge.target_node_id}.${edge.target_port_id}`)).toEqual(['go.data -> sum.__run', 'go.data -> sum.text']);
+  });
 });
