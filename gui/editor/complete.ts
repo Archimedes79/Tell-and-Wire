@@ -11,6 +11,7 @@
 import type { Graph, GraphNode } from '../../graph/graph.ts';
 import type { Kinds } from '../../graph/nodes/NodeDefinition.ts';
 import { guiBlocks, parseWidget, widgetElement } from '../gui.ts';
+import { RUN_PORT } from '../../graph/triggers.ts';
 import { points } from '../authoring/gui.ts';
 
 /** The first of *base*, *base*_2, *base*_3 ... that is not in *taken*. */
@@ -41,6 +42,7 @@ const words = (id: string): string => {
  * Points are made unwired and beside the graph; wiring them is the graph's author's.
  */
 export function completeGui(graph: Graph, registry: Kinds): void {
+  wireFieldInputs(graph, registry);
   for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
     const element = widgetElement(widget.kind);
@@ -104,5 +106,24 @@ export function completeGui(graph: Graph, registry: Kinds): void {
     if (by !== 'gui' || guiBlocks(graph).some((stored) => stored.fires === name)) continue;
     const senders = blocks.filter(({ stored, element, widget }) => (stored.sends_to as unknown[] | undefined)?.includes(name) && !stored.fires && element.event(widget));
     if (senders.length === 1) senders[0].stored.fires = name;
+  }
+}
+
+/**
+ * An input that takes a part of a start point's package (`field`) and has no wire is wired from that start point -- the one
+ * its node's gate is wired from, else the only one the GUI starts. A model that wires "data" to a node's gate ("start here")
+ * and forgets the input leaves the node nothing to read: "nothing is wired to it", and a first tool with a problem.
+ */
+function wireFieldInputs(graph: Graph, registry: Kinds): void {
+  const { starts } = points(graph, registry);
+  const guiStarts = [...starts].filter(([, by]) => by === 'gui').map(([name]) => name);
+  for (const node of graph.nodes) {
+    for (const port of node.inputs) {
+      if (!port.field || graph.edges.some((edge) => edge.target_node_id === node.id && edge.target_port_id === port.id)) continue;
+      const gate = graph.edges.find((edge) => edge.target_node_id === node.id && edge.target_port_id === RUN_PORT && starts.has(edge.source_node_id));
+      const from = gate?.source_node_id ?? (guiStarts.length === 1 ? guiStarts[0] : undefined);
+      if (!from) continue;
+      graph.edges.push({ id: `${from}.data -> ${node.id}.${port.id}`, source_node_id: from, source_port_id: 'data', target_node_id: node.id, target_port_id: port.id });
+    }
   }
 }
