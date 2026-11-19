@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1848" viewBox="0 0 1848 1330" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1848" viewBox="0 0 1848 1348" role="img">
 <title>The definitions: graph/ and gui/</title>
-<desc>What a graph and a GUI are, whatever the language. Stand on nothing but themselves; every other layer imports them. 74 rows: each file with what it does.</desc>
+<desc>What a graph and a GUI are, whatever the language. Stand on nothing but themselves; every other layer imports them. 75 rows: each file with what it does.</desc>
 <style>svg{font-family:Segoe UI,Helvetica,Arial,sans-serif}.bg{fill:#ffffff}.h{font-size:19px;font-weight:600;fill:#1f1e1d}.n{font-size:12.5px;fill:#5f5e5a}.d{font-size:13px;font-weight:600;fill:#444441}.f{font-family:Consolas,Menlo,monospace;font-size:11.5px;font-weight:600;fill:#1f1e1d}.r{font-size:11px;fill:#5f5e5a}.box{fill:#F1EFE8;stroke:#5F5E5A;stroke-width:.6}.row{stroke:#5F5E5A;stroke-opacity:.25}@media (prefers-color-scheme:dark){.bg{fill:#1c1c1a}.h,.f{fill:#e8e6dc}.n,.r{fill:#b4b2a9}.d{fill:#D3D1C7}.box{fill:#262624;stroke:#B4B2A9}.row{stroke:#B4B2A9}}</style>
-<rect class="bg" width="1848" height="1330"/>
+<rect class="bg" width="1848" height="1348"/>
 <text class="h" x="20" y="34">The definitions: graph/ and gui/</text>
-<text class="n" x="20" y="54">What a graph and a GUI are, whatever the language. Stand on nothing but themselves; every other layer imports them. (74 rows)</text>
+<text class="n" x="20" y="54">What a graph and a GUI are, whatever the language. Stand on nothing but themselves; every other layer imports them. (75 rows)</text>
 <g>
 <rect class="box" x="20" y="78" width="440" height="476" rx="9"/>
 <text class="d" x="34" y="100">graph/</text>
@@ -165,54 +165,61 @@
 <text class="r" x="954" y="517">is, whatever the language -- see "Elements".</text>
 </g>
 <g>
-<rect class="box" x="932" y="548.5" width="440" height="77" rx="9"/>
-<text class="d" x="946" y="570.5">graph/nodes/subgraph/</text>
-<text class="f" x="946" y="595.5">boundary.ts</text>
-<text class="r" x="954" y="610">Where a graph inside a node meets the node that holds it</text>
+<rect class="box" x="932" y="548.5" width="440" height="91.5" rx="9"/>
+<text class="d" x="946" y="570.5">graph/nodes/start/</text>
+<text class="f" x="946" y="595.5">params.ts</text>
+<text class="r" x="954" y="610">What a start point that a call starts takes, named: the parameters of its command</text>
+<text class="r" x="954" y="624.5">line -- read, checked, typed, and said by --help</text>
 </g>
 <g>
-<rect class="box" x="20" y="570" width="440" height="254" rx="9"/>
-<text class="d" x="34" y="592">gui/</text>
-<text class="f" x="34" y="617">gui.ts</text>
-<text class="r" x="42" y="631.5">The GUI a graph is used through: its blocks, and how each connects itself</text>
-<line class="row" x1="34" x2="446" y1="638" y2="638"/>
-<text class="f" x="34" y="654">interface.ts</text>
-<text class="r" x="42" y="668.5">What a GUI adds to a graph's interface: which blocks fire a start point and what</text>
-<text class="r" x="42" y="683">the GUI sends with it.</text>
-<line class="row" x1="34" x2="446" y1="689.5" y2="689.5"/>
-<text class="f" x="34" y="705.5">room.ts</text>
-<text class="r" x="42" y="720">The room what a node hands on is shown in</text>
-<line class="row" x1="34" x2="446" y1="726.5" y2="726.5"/>
-<text class="f" x="34" y="742.5">scheme.ts</text>
-<text class="r" x="42" y="757">The colour scheme: one choice for the whole tool, from a closed set, and the CSS</text>
-<text class="r" x="42" y="771.5">variables a frontend paints it with</text>
-<line class="row" x1="34" x2="446" y1="778" y2="778"/>
-<text class="f" x="34" y="794">size.ts</text>
-<text class="r" x="42" y="808.5">How large a block of the GUI is, in cells and in pixels</text>
+<rect class="box" x="20" y="570" width="440" height="77" rx="9"/>
+<text class="d" x="34" y="592">graph/nodes/subgraph/</text>
+<text class="f" x="34" y="617">boundary.ts</text>
+<text class="r" x="42" y="631.5">Where a graph inside a node meets the node that holds it</text>
 </g>
 <g>
-<rect class="box" x="476" y="622.5" width="440" height="143" rx="9"/>
-<text class="d" x="490" y="644.5">gui/authoring/</text>
-<text class="f" x="490" y="669.5">check.ts</text>
-<text class="r" x="498" y="684">What is wrong with a graph: the one list of problems that check, CI, the MCP</text>
-<text class="r" x="498" y="698.5">server and the editor all read.</text>
-<line class="row" x1="490" x2="902" y1="705" y2="705"/>
-<text class="f" x="490" y="721">gui.ts</text>
-<text class="r" x="498" y="735.5">What only the editor asks of the GUI: whether it is sound, what to tell the model</text>
-<text class="r" x="498" y="750">that writes one, what a package carries</text>
+<rect class="box" x="476" y="622.5" width="440" height="254" rx="9"/>
+<text class="d" x="490" y="644.5">gui/</text>
+<text class="f" x="490" y="669.5">gui.ts</text>
+<text class="r" x="498" y="684">The GUI a graph is used through: its blocks, and how each connects itself</text>
+<line class="row" x1="490" x2="902" y1="690.5" y2="690.5"/>
+<text class="f" x="490" y="706.5">interface.ts</text>
+<text class="r" x="498" y="721">What a GUI adds to a graph's interface: which blocks fire a start point and what</text>
+<text class="r" x="498" y="735.5">the GUI sends with it.</text>
+<line class="row" x1="490" x2="902" y1="742" y2="742"/>
+<text class="f" x="490" y="758">room.ts</text>
+<text class="r" x="498" y="772.5">The room what a node hands on is shown in</text>
+<line class="row" x1="490" x2="902" y1="779" y2="779"/>
+<text class="f" x="490" y="795">scheme.ts</text>
+<text class="r" x="498" y="809.5">The colour scheme: one choice for the whole tool, from a closed set, and the CSS</text>
+<text class="r" x="498" y="824">variables a frontend paints it with</text>
+<line class="row" x1="490" x2="902" y1="830.5" y2="830.5"/>
+<text class="f" x="490" y="846.5">size.ts</text>
+<text class="r" x="498" y="861">How large a block of the GUI is, in cells and in pixels</text>
 </g>
 <g>
-<rect class="box" x="932" y="641.5" width="440" height="165.5" rx="9"/>
-<text class="d" x="946" y="663.5">gui/authoring/widgets/</text>
-<text class="f" x="946" y="688.5">DisplayWidgetDesign.ts</text>
-<text class="r" x="954" y="703">The design of a block that only shows an end point's value.</text>
-<line class="row" x1="946" x2="1358" y1="709.5" y2="709.5"/>
-<text class="f" x="946" y="725.5">WidgetDesign.ts</text>
-<text class="r" x="954" y="740">What only building the GUI asks of a widget: what to tell a neighbour, the model</text>
-<text class="r" x="954" y="754.5">that writes a graph, a package</text>
-<line class="row" x1="946" x2="1358" y1="761" y2="761"/>
-<text class="f" x="946" y="777">roster.ts</text>
-<text class="r" x="954" y="791.5">The design of each kind of block: what only building the GUI asks of it</text>
+<rect class="box" x="932" y="656" width="440" height="143" rx="9"/>
+<text class="d" x="946" y="678">gui/authoring/</text>
+<text class="f" x="946" y="703">check.ts</text>
+<text class="r" x="954" y="717.5">What is wrong with a graph: the one list of problems that check, CI, the MCP</text>
+<text class="r" x="954" y="732">server and the editor all read.</text>
+<line class="row" x1="946" x2="1358" y1="738.5" y2="738.5"/>
+<text class="f" x="946" y="754.5">gui.ts</text>
+<text class="r" x="954" y="769">What only the editor asks of the GUI: whether it is sound, what to tell the model</text>
+<text class="r" x="954" y="783.5">that writes one, what a package carries</text>
+</g>
+<g>
+<rect class="box" x="20" y="663" width="440" height="165.5" rx="9"/>
+<text class="d" x="34" y="685">gui/authoring/widgets/</text>
+<text class="f" x="34" y="710">DisplayWidgetDesign.ts</text>
+<text class="r" x="42" y="724.5">The design of a block that only shows an end point's value.</text>
+<line class="row" x1="34" x2="446" y1="731" y2="731"/>
+<text class="f" x="34" y="747">WidgetDesign.ts</text>
+<text class="r" x="42" y="761.5">What only building the GUI asks of a widget: what to tell a neighbour, the model</text>
+<text class="r" x="42" y="776">that writes a graph, a package</text>
+<line class="row" x1="34" x2="446" y1="782.5" y2="782.5"/>
+<text class="f" x="34" y="798.5">roster.ts</text>
+<text class="r" x="42" y="813">The design of each kind of block: what only building the GUI asks of it</text>
 </g>
 <g>
 <rect class="box" x="1388" y="748" width="440" height="77" rx="9"/>
@@ -221,114 +228,114 @@
 <text class="r" x="1410" y="809.5">The design of each block kind: what only building the GUI asks of it.</text>
 </g>
 <g>
-<rect class="box" x="476" y="781.5" width="440" height="77" rx="9"/>
-<text class="d" x="490" y="803.5">gui/editor/</text>
-<text class="f" x="490" y="828.5">complete.ts</text>
-<text class="r" x="498" y="843">A GUI written whole, with the start and end points its blocks need</text>
+<rect class="box" x="932" y="815" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="837">gui/editor/</text>
+<text class="f" x="946" y="862">complete.ts</text>
+<text class="r" x="954" y="876.5">A GUI written whole, with the start and end points its blocks need</text>
 </g>
 <g>
-<rect class="box" x="932" y="823" width="440" height="305.5" rx="9"/>
-<text class="d" x="946" y="845">gui/notebook/</text>
-<text class="f" x="946" y="870">edit.ts</text>
-<text class="r" x="954" y="884.5">Changing windows: the small edits a person makes to a page, each one a function</text>
-<text class="r" x="954" y="899">from windows to windows</text>
-<line class="row" x1="946" x2="1358" y1="905.5" y2="905.5"/>
-<text class="f" x="946" y="921.5">fromGraph.ts</text>
-<text class="r" x="954" y="936">The windows a graph says: windowsToGraph (windows.ts) read backwards</text>
-<line class="row" x1="946" x2="1358" y1="942.5" y2="942.5"/>
-<text class="f" x="946" y="958.5">page.ts</text>
-<text class="r" x="954" y="973">The page: headings, text, lists and gaps as in the plainest editor of pages, with</text>
-<text class="r" x="954" y="987.5">the windows standing in them</text>
-<line class="row" x1="946" x2="1358" y1="994" y2="994"/>
-<text class="f" x="946" y="1010">pageModel.ts</text>
-<text class="r" x="954" y="1024.5">What a page is made of, before anything is done to it: which blocks it has, and</text>
-<text class="r" x="954" y="1039">the one a tool without a page of its own gets</text>
-<line class="row" x1="946" x2="1358" y1="1045.5" y2="1045.5"/>
-<text class="f" x="946" y="1061.5">read.ts</text>
-<text class="r" x="954" y="1076">Windows read from JSON: a file, or a model's answer</text>
-<line class="row" x1="946" x2="1358" y1="1082.5" y2="1082.5"/>
-<text class="f" x="946" y="1098.5">windows.ts</text>
-<text class="r" x="954" y="1113">Windows: a tool said as a page of fixed windows, each one a short list of cells</text>
+<rect class="box" x="1388" y="841" width="440" height="305.5" rx="9"/>
+<text class="d" x="1402" y="863">gui/notebook/</text>
+<text class="f" x="1402" y="888">edit.ts</text>
+<text class="r" x="1410" y="902.5">Changing windows: the small edits a person makes to a page, each one a function</text>
+<text class="r" x="1410" y="917">from windows to windows</text>
+<line class="row" x1="1402" x2="1814" y1="923.5" y2="923.5"/>
+<text class="f" x="1402" y="939.5">fromGraph.ts</text>
+<text class="r" x="1410" y="954">The windows a graph says: windowsToGraph (windows.ts) read backwards</text>
+<line class="row" x1="1402" x2="1814" y1="960.5" y2="960.5"/>
+<text class="f" x="1402" y="976.5">page.ts</text>
+<text class="r" x="1410" y="991">The page: headings, text, lists and gaps as in the plainest editor of pages, with</text>
+<text class="r" x="1410" y="1005.5">the windows standing in them</text>
+<line class="row" x1="1402" x2="1814" y1="1012" y2="1012"/>
+<text class="f" x="1402" y="1028">pageModel.ts</text>
+<text class="r" x="1410" y="1042.5">What a page is made of, before anything is done to it: which blocks it has, and</text>
+<text class="r" x="1410" y="1057">the one a tool without a page of its own gets</text>
+<line class="row" x1="1402" x2="1814" y1="1063.5" y2="1063.5"/>
+<text class="f" x="1402" y="1079.5">read.ts</text>
+<text class="r" x="1410" y="1094">Windows read from JSON: a file, or a model's answer</text>
+<line class="row" x1="1402" x2="1814" y1="1100.5" y2="1100.5"/>
+<text class="f" x="1402" y="1116.5">windows.ts</text>
+<text class="r" x="1410" y="1131">Windows: a tool said as a page of fixed windows, each one a short list of cells</text>
 </g>
 <g>
-<rect class="box" x="20" y="840" width="440" height="202.5" rx="9"/>
-<text class="d" x="34" y="862">gui/widgets/</text>
-<text class="f" x="34" y="887">DisplayWidgetDefinition.ts</text>
-<text class="r" x="42" y="901.5">The definition of a block that only shows the end point it shows hands back.</text>
-<line class="row" x1="34" x2="446" y1="908" y2="908"/>
-<text class="f" x="34" y="924">StaticWidgetDefinition.ts</text>
-<text class="r" x="42" y="938.5">The definition of a block that is part of the GUI, not of the graph: a heading, a</text>
-<text class="r" x="42" y="953">divider, a gap.</text>
-<line class="row" x1="34" x2="446" y1="959.5" y2="959.5"/>
-<text class="f" x="34" y="975.5">WidgetDefinition.ts</text>
-<text class="r" x="42" y="990">A widget: the element branch that sits on the GUI a graph is used through</text>
-<line class="row" x1="34" x2="446" y1="996.5" y2="996.5"/>
-<text class="f" x="34" y="1012.5">roster.ts</text>
-<text class="r" x="42" y="1027">The blocks a GUI is built from</text>
+<rect class="box" x="20" y="844.5" width="440" height="202.5" rx="9"/>
+<text class="d" x="34" y="866.5">gui/widgets/</text>
+<text class="f" x="34" y="891.5">DisplayWidgetDefinition.ts</text>
+<text class="r" x="42" y="906">The definition of a block that only shows the end point it shows hands back.</text>
+<line class="row" x1="34" x2="446" y1="912.5" y2="912.5"/>
+<text class="f" x="34" y="928.5">StaticWidgetDefinition.ts</text>
+<text class="r" x="42" y="943">The definition of a block that is part of the GUI, not of the graph: a heading, a</text>
+<text class="r" x="42" y="957.5">divider, a gap.</text>
+<line class="row" x1="34" x2="446" y1="964" y2="964"/>
+<text class="f" x="34" y="980">WidgetDefinition.ts</text>
+<text class="r" x="42" y="994.5">A widget: the element branch that sits on the GUI a graph is used through</text>
+<line class="row" x1="34" x2="446" y1="1001" y2="1001"/>
+<text class="f" x="34" y="1017">roster.ts</text>
+<text class="r" x="42" y="1031.5">The blocks a GUI is built from</text>
 </g>
 <g>
-<rect class="box" x="1388" y="841" width="440" height="91.5" rx="9"/>
-<text class="d" x="1402" y="863">gui/widgets/&lt;kind&gt;/</text>
-<text class="f" x="1402" y="888">&lt;Kind&gt;WidgetDefinition.ts</text>
-<text class="r" x="1410" y="902.5">The definition of each block kind (text, divider, spacer, input_picker, text_io,</text>
-<text class="r" x="1410" y="917">select, slider, button, chat, plot_window, table, image_view).</text>
+<rect class="box" x="476" y="892.5" width="440" height="91.5" rx="9"/>
+<text class="d" x="490" y="914.5">gui/widgets/&lt;kind&gt;/</text>
+<text class="f" x="490" y="939.5">&lt;Kind&gt;WidgetDefinition.ts</text>
+<text class="r" x="498" y="954">The definition of each block kind (text, divider, spacer, input_picker, text_io,</text>
+<text class="r" x="498" y="968.5">select, slider, button, chat, plot_window, table, image_view).</text>
 </g>
 <g>
-<rect class="box" x="476" y="874.5" width="440" height="128.5" rx="9"/>
-<text class="d" x="490" y="896.5">gui/widgets/chat/</text>
-<text class="f" x="490" y="921.5">value.ts</text>
-<text class="r" x="498" y="936">What a chat block holds: the conversation so far and the message in hand</text>
-<line class="row" x1="490" x2="902" y1="942.5" y2="942.5"/>
-<text class="f" x="490" y="958.5">compact.ts</text>
-<text class="r" x="498" y="973">A long conversation, shortened by the model: what a chat block sends of it, how</text>
-<text class="r" x="498" y="987.5">much that is, and what is asked to shorten it</text>
+<rect class="box" x="932" y="908" width="440" height="128.5" rx="9"/>
+<text class="d" x="946" y="930">gui/widgets/chat/</text>
+<text class="f" x="946" y="955">value.ts</text>
+<text class="r" x="954" y="969.5">What a chat block holds: the conversation so far and the message in hand</text>
+<line class="row" x1="946" x2="1358" y1="976" y2="976"/>
+<text class="f" x="946" y="992">compact.ts</text>
+<text class="r" x="954" y="1006.5">A long conversation, shortened by the model: what a chat block sends of it, how</text>
+<text class="r" x="954" y="1021">much that is, and what is asked to shorten it</text>
 </g>
 <g>
-<rect class="box" x="1388" y="948.5" width="440" height="77" rx="9"/>
-<text class="d" x="1402" y="970.5">gui/widgets/input_picker/</text>
-<text class="f" x="1402" y="995.5">dropped.ts</text>
-<text class="r" x="1410" y="1010">A file dropped onto a file picker: where it is on the machine the tool runs on</text>
+<rect class="box" x="476" y="1000" width="440" height="77" rx="9"/>
+<text class="d" x="490" y="1022">gui/widgets/input_picker/</text>
+<text class="f" x="490" y="1047">dropped.ts</text>
+<text class="r" x="498" y="1061.5">A file dropped onto a file picker: where it is on the machine the tool runs on</text>
 </g>
 <g>
-<rect class="box" x="476" y="1019" width="440" height="77" rx="9"/>
-<text class="d" x="490" y="1041">gui/widgets/select/</text>
-<text class="f" x="490" y="1066">choice.ts</text>
-<text class="r" x="498" y="1080.5">What a dropdown offers and what it stands at</text>
+<rect class="box" x="932" y="1052.5" width="440" height="77" rx="9"/>
+<text class="d" x="946" y="1074.5">gui/widgets/select/</text>
+<text class="f" x="946" y="1099.5">choice.ts</text>
+<text class="r" x="954" y="1114">What a dropdown offers and what it stands at</text>
 </g>
 <g>
-<rect class="box" x="1388" y="1041.5" width="440" height="91.5" rx="9"/>
-<text class="d" x="1402" y="1063.5">gui/widgets/slider/</text>
-<text class="f" x="1402" y="1088.5">range.ts</text>
-<text class="r" x="1410" y="1103">What a slider's stored settings mean: its range, its step and the number it stands</text>
-<text class="r" x="1410" y="1117.5">at</text>
+<rect class="box" x="20" y="1063" width="440" height="91.5" rx="9"/>
+<text class="d" x="34" y="1085">gui/widgets/slider/</text>
+<text class="f" x="34" y="1110">range.ts</text>
+<text class="r" x="42" y="1124.5">What a slider's stored settings mean: its range, its step and the number it stands</text>
+<text class="r" x="42" y="1139">at</text>
 </g>
 <g>
-<rect class="box" x="20" y="1058.5" width="440" height="91.5" rx="9"/>
-<text class="d" x="34" y="1080.5">gui/widgets/text/</text>
-<text class="f" x="34" y="1105.5">role.ts</text>
-<text class="r" x="42" y="1120">How a piece of prose is set: a first-level heading, a second-level heading, a</text>
-<text class="r" x="42" y="1134.5">paragraph or a caption</text>
+<rect class="box" x="476" y="1093" width="440" height="91.5" rx="9"/>
+<text class="d" x="490" y="1115">gui/widgets/text/</text>
+<text class="f" x="490" y="1140">role.ts</text>
+<text class="r" x="498" y="1154.5">How a piece of prose is set: a first-level heading, a second-level heading, a</text>
+<text class="r" x="498" y="1169">paragraph or a caption</text>
 </g>
 <g>
-<rect class="box" x="476" y="1112" width="440" height="114" rx="9"/>
-<text class="d" x="490" y="1134">gui/widgets/text_io/</text>
-<text class="f" x="490" y="1159">role.ts</text>
-<text class="r" x="498" y="1173.5">What a box of text is for: typed into, shown in, or both</text>
-<line class="row" x1="490" x2="902" y1="1180" y2="1180"/>
-<text class="f" x="490" y="1196">text.ts</text>
-<text class="r" x="498" y="1210.5">A value, as a box of text reads it</text>
+<rect class="box" x="932" y="1145.5" width="440" height="114" rx="9"/>
+<text class="d" x="946" y="1167.5">gui/widgets/text_io/</text>
+<text class="f" x="946" y="1192.5">role.ts</text>
+<text class="r" x="954" y="1207">What a box of text is for: typed into, shown in, or both</text>
+<line class="row" x1="946" x2="1358" y1="1213.5" y2="1213.5"/>
+<text class="f" x="946" y="1229.5">text.ts</text>
+<text class="r" x="954" y="1244">A value, as a box of text reads it</text>
 </g>
 <g>
-<rect class="box" x="932" y="1144.5" width="440" height="165.5" rx="9"/>
-<text class="d" x="946" y="1166.5">gui/windows/</text>
-<text class="f" x="946" y="1191.5">grid.ts</text>
-<text class="r" x="954" y="1206">What a window and the block in it keep of their room, in pixels: the numbers a</text>
-<text class="r" x="954" y="1220.5">drawing function is told and the delivered page draws with.</text>
-<line class="row" x1="946" x2="1358" y1="1227" y2="1227"/>
-<text class="f" x="946" y="1243">order.ts</text>
-<text class="r" x="954" y="1257.5">Which windows to run, and in what order</text>
-<line class="row" x1="946" x2="1358" y1="1264" y2="1264"/>
-<text class="f" x="946" y="1280">owns.ts</text>
-<text class="r" x="954" y="1294.5">Whose a node of a round is: a window's nodes are named after it.</text>
+<rect class="box" x="1388" y="1162.5" width="440" height="165.5" rx="9"/>
+<text class="d" x="1402" y="1184.5">gui/windows/</text>
+<text class="f" x="1402" y="1209.5">grid.ts</text>
+<text class="r" x="1410" y="1224">What a window and the block in it keep of their room, in pixels: the numbers a</text>
+<text class="r" x="1410" y="1238.5">drawing function is told and the delivered page draws with.</text>
+<line class="row" x1="1402" x2="1814" y1="1245" y2="1245"/>
+<text class="f" x="1402" y="1261">order.ts</text>
+<text class="r" x="1410" y="1275.5">Which windows to run, and in what order</text>
+<line class="row" x1="1402" x2="1814" y1="1282" y2="1282"/>
+<text class="f" x="1402" y="1298">owns.ts</text>
+<text class="r" x="1410" y="1312.5">Whose a node of a round is: a window's nodes are named after it.</text>
 </g>
 </svg>

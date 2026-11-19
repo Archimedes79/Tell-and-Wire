@@ -26,6 +26,7 @@ import { writeProject } from '../../../authoring/write.ts';
 import { SETTINGS_FILENAME, candidatePaths } from '../../../deployment/runtime/ai/settings.ts';
 import { WEB_DIR, installFolder } from '../../../deployment/project/layout.ts';
 import { NODE_MAJOR, runCmd, runSh, zipMode } from './launchers.ts';
+import { paramsOf, usageOf } from '../../../../graph/nodes/start/params.ts';
 
 /** The checkout's root: a bundle copies the folders of `CARRIED` from it, at the same paths. This file sits in `backend/editor/project/deploy/`. */
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -349,7 +350,7 @@ export async function writeBundle(
   // A no-op on Windows; on a Mac or Linux box it is the difference between
   // `./run.sh` and "Permission denied".
   await chmod(resolve(target, 'run.sh'), zipMode('run.sh')!);
-  await put('README.md', readme(name, needs, servesGui, data, !!node));
+  await put('README.md', readme(name, needs, servesGui, data, !!node, commandLines(graph)));
 
   // What this is and what is in it: which Tell & Wire it was made by, and every file, so a copy
   // that was saved, moved or unpacked can be checked against it.
@@ -371,7 +372,23 @@ async function carriedNode(folder: string): Promise<{ binary: string; license: s
   return binary ? { binary, license } : undefined;
 }
 
-function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carried[], carriesNode = false): string {
+/**
+ * What `--help` says of each command line the graph declares (`graph/nodes/start/params.ts`): one block for a start point that a call starts
+ * and that names what it takes -- `./run.sh --text "…"`, run by the launchers as they are.
+ */
+function commandLines(graph: Graph): string[] {
+  return graph.nodes.flatMap((node) => {
+    const params = paramsOf(node);
+    if (!params.length || registry.node(node.node_type)?.startedBy(node) !== 'call') return [];
+    const several = graph.nodes.filter((one) => paramsOf(one).length).length > 1;
+    return [usageOf({
+      name: graph.metadata.name || 'This tool', description: node.description || graph.metadata.description,
+      command: `./run.sh${several ? ` --event ${node.id}` : ''}`, params,
+    })];
+  });
+}
+
+function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carried[], carriesNode = false, usage: string[] = []): string {
   const lines = [
     `# ${name}`,
     '',
@@ -404,6 +421,9 @@ function readme(name: string, needs: BundleNeeds, servesGui: boolean, data: Carr
         'stderr, so `./run.sh | jq` works. `--every 5m` runs it again after each',
         'run finishes.',
       ]),
+    ...(usage.length
+      ? ['', '## The command line', '', 'This tool takes its values as options (`run.cmd` on Windows):', '', ...usage.flatMap((one) => ['```', one, '```', ''])]
+      : []),
     '',
     '## What you need',
     '',

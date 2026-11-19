@@ -244,6 +244,22 @@ start point as started.
 A node upstream that only provides context is reused when nothing about it changed, so a
 second run does not ask the model again. A start point that reads a folder lists it every time it starts.
 
+**The command line as a start point.** A start point started by *a call, or the command line* can say
+what it takes: **Add parameter** gives a name, a kind (`text`, `number` or `flag`), a default or
+*required*, and a sentence. The tool is then run with them -- and the same words are in `--help`:
+
+```bash
+node backend/cli/main.ts shout --text "one two three" --words 2 --loud
+echo "a longer text" | node backend/cli/main.ts shout --text -     # a text of - is read from standard input
+node backend/cli/main.ts shout --help                              # what it takes, and the defaults
+```
+
+They arrive as the start point's values under their names, so an input wired from it takes one by name
+(**takes**, in the node's settings, lists them as `--words`). A run that names no `--event` runs that start
+point, a missing required value or a name that is none is said before anything runs, and `--value name=text`
+still sends what it names. A bundle's `run.cmd` and `run.sh` pass the options on, and its README says them.
+With several such start points, `--event NAME` says which.
+
 An end point's value is the tool's result under its name: a block shows it, a script and
 the command line read it. **Also write it to** writes it to a file, or each item to its own
 file in a folder.

@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import type { GraphNode } from '../../../document/graph';
 import { StartNodeDefinition } from '../../../../../graph/nodes/start/StartNodeDefinition.ts';
+import { paramsOf } from '../../../../../graph/nodes/start/params.ts';
 import { INK } from '../../../../deployment/gui/kit/ui/theme';
 import { NodeGuiBuilder } from '../NodeGuiBuilder';
 import { Play } from 'lucide-react';
@@ -42,7 +43,10 @@ export class StartNodeGuiBuilder extends NodeGuiBuilder {
   override canvasSummary(node: GraphNode): string | undefined {
     const { startedBy, onStart, every, reads, path } = ELEMENT.config(node as never);
     if (startedBy === 'gui') return 'started by the GUI';
-    if (startedBy === 'call') return 'started by a call';
+    if (startedBy === 'call') {
+      const params = paramsOf(node);
+      return params.length ? `started by a call · ${params.map((param) => `--${param.name}`).join(' ')}` : 'started by a call';
+    }
     const parts = [onStart ? 'at start' : '', every ? `every ${every}` : ''].filter(Boolean);
     const when = parts.length ? `by itself: ${parts.join(' · ')}` : 'never';
     return reads && path ? `${when} · reads ${path}` : when;

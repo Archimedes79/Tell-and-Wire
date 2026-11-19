@@ -8,6 +8,7 @@ import FolderListing from '../../../fields/FolderListing';
 import { listAsRun } from '../../writing/readAsRun';
 import type { NodePanelProps } from '../NodeGuiBuilder';
 import { messageOf } from '../../../../../graph/errors.ts';
+import StartParams from './StartParams';
 
 /** What a start point that starts itself can send, in the words the panel offers it. */
 const SENDS = [
@@ -19,7 +20,7 @@ const SENDS = [
 /** Who starts a start point, in the words the panel offers it. */
 const STARTERS = [
   ['gui', 'The GUI', 'a block on it: a button, Enter in a text box, a choice made'],
-  ['call', 'A call', 'a script, a model over MCP, or the graph above, by this start point\'s name'],
+  ['call', 'A call, or the command line', 'a script, the command line, a model over MCP, or the graph above, by this start point\'s name'],
   ['itself', 'Itself', 'when the tool starts, and again on a clock'],
 ] as const;
 
@@ -173,6 +174,7 @@ export default function StartNodePanel({ node, setConfig }: NodePanelProps) {
           </label>
         ))}
       </fieldset>
+      {startedBy === 'call' && <StartParams node={node} setConfig={setConfig} />}
       {startedBy === 'call' && <ExampleSent node={node} setConfig={setConfig} />}
       {startedBy === 'itself' && (
         <div className="mb-3">

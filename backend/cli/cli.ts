@@ -7,6 +7,7 @@
 //     node backend/cli/main.ts run-node my_project/ count     one node, on its input.js (or '{"input": …}')
 //     node backend/cli/main.ts graph.json --event go          the round one start point starts
 //     node backend/cli/main.ts graph.json --event go --value name=text   ...sent a value, by name
+//     node backend/cli/main.ts graph.json --text "…" --words 20           the options its start point declares (--help says them)
 //     node backend/cli/main.ts my_project/ --event go --keep  ...and keep the round as a test, in tests/
 //     node backend/cli/main.ts graph.json --every 5m           again, after each run
 //     node backend/cli/main.ts graph.json --bundle ./out       hand it to someone else
@@ -37,6 +38,7 @@ import { dirname, join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { after, graphTriggers, parseInterval, type Trigger } from '../../graph/triggers.ts';
 import { messageOf } from '../../graph/errors.ts';
+import { paramsOf, usageOf, valuesFromFlags, type Flags } from '../../graph/nodes/start/params.ts';
 import { show } from './appWindow.ts';
 
 interface CliOptions {
@@ -49,8 +51,15 @@ interface CliOptions {
    * an input that takes `file.content` reads it.
    */
   values: Record<string, unknown>;
-  /** The event a round is started by, by name; none, the whole graph. */
+  /** The event a round is started by, by name; none, the whole graph -- or the one start point that declares a command line. */
   event?: string;
+  /**
+   * What was typed that this command does not know -- `--text "…"`, `--words=20` -- by name: the parameters of a start
+   * point that declares them (`resolveCommandLine`), or a mistake to say.
+   */
+  flags: Flags;
+  /** `--help`: say what the tool takes, and run nothing. */
+  help?: boolean;
   /** Seconds between the end of one run and the start of the next. */
   every?: number;
   /** Stop after this many runs. Undefined means keep going. */
@@ -109,7 +118,7 @@ function put(values: Record<string, unknown>, name: string, value: string): void
 }
 
 export function parseArgs(argv: string[]): CliOptions {
-  const options: CliOptions = { graphPath: '', graphNamed: false, values: {} };
+  const options: CliOptions = { graphPath: '', graphNamed: false, values: {}, flags: {} };
   let i = 0;
   /** What follows the option, taken -- unless it is the next option, which `--editor --port 9000` has there. */
   const followed = (): string | undefined => {
@@ -161,13 +170,13 @@ export function parseArgs(argv: string[]): CliOptions {
       options.mcp = true;
     } else if (arg === '--mcp-root') {
       options.mcpRoot = required(arg, 'a folder');
+    } else if (arg === '--help' || arg === '-h') {
+      options.help = true;
     } else if (arg.startsWith('--')) {
-      // A flag this command does not know is a mistake to say, not a graph to
-      // look for.
-      throw new Error(
-        `Unknown option "${arg}". This command knows --value, --event, --keep, --every, --limit, --bundle, `
-          + '--serve, --port, --editor, --host, --mcp and --mcp-root.',
-      );
+      // Not this command's: a parameter of the tool, if its start point declares one (`resolveCommandLine`), else a
+      // mistake to say there -- not a graph to look for. `--name=value`, `--name value`, or `--name` alone.
+      const [name, ...rest] = arg.slice(2).split('=');
+      options.flags[name] = rest.length ? rest.join('=') : (followed() ?? true);
     } else if (!options.graphPath) {
       options.graphPath = arg;
     }
@@ -361,7 +370,13 @@ export async function main(argv: string[]): Promise<number> {
   if (options.mcp) return (await editorCommands()).runMcp(options.mcpRoot || undefined);
   if (options.bundle) return (await editorCommands()).makeBundle(options.graphPath, options.bundle);
   if (options.serve || options.editor) return runServer(options);
+  if (options.help) {
+    process.stdout.write(`${await helpFor(options)}
+`);
+    return 0;
+  }
   const graph = await loadGraph(options.graphPath);
+  await resolveCommandLine(graph, options);
   // The graph's own clock, when the command line names none: a graph saved as
   // "every 5 minutes" is that on any machine, not only where someone remembers
   // the flag. `--every` still wins, which is how one run is made of it.
@@ -376,6 +391,70 @@ export async function main(argv: string[]): Promise<number> {
   const trigger = sendFromOutside(graph, options.event, options.values, registry);
   if (options.keep && options.every) throw new Error('--keep keeps one round: run it without --every.');
   return withCore((core) => (options.every ? runEvery(graph, trigger, options, core) : runOnce(graph, trigger, options, core)));
+}
+
+/** The start points a call starts that declare parameters: the tool's command line, by start point. */
+function commandLines(graph: Graph): { node: Graph['nodes'][number]; params: ReturnType<typeof paramsOf> }[] {
+  return graph.nodes
+    .filter((node) => registry.node(node.node_type)?.startedBy(node) === 'call')
+    .map((node) => ({ node, params: paramsOf(node) }))
+    .filter((line) => line.params.length);
+}
+
+/**
+ * The tool's command line, as its start point declares it (`graph/nodes/start/params.ts`): what was typed after the
+ * tool's name -- `--text "…" --words 20` -- becomes the package the start point is sent, typed, with the defaults filled
+ * in, and a run that names no event runs that start point. A text of `-` is read from standard input.
+ *
+ * One start point declares it, or the event says which. A tool that declares none takes no such options: what is typed
+ * is a mistake, said as one.
+ */
+async function resolveCommandLine(graph: Graph, options: CliOptions): Promise<void> {
+  const typed = Object.keys(options.flags);
+  const lines = commandLines(graph);
+  const line = options.event ? lines.find((one) => one.node.id === options.event) : lines.length === 1 ? lines[0] : undefined;
+  if (!line) {
+    if (!typed.length) return;
+    if (!options.event && lines.length > 1) {
+      throw new Error(`This tool has more than one command line, so say which with --event: ${lines.map((one) => one.node.id).join(', ')}.`);
+    }
+    throw new Error(
+      `Unknown option "--${typed[0]}". This command knows --value, --event, --keep, --every, --limit, --bundle, `
+        + '--serve, --port, --editor, --host, --mcp, --mcp-root and --help; and this tool\'s start point declares no parameters of its own.',
+    );
+  }
+  const flags: Flags = { ...options.flags };
+  let stdin: Promise<string> | undefined;
+  for (const [name, given] of Object.entries(flags)) {
+    if (given === '-' && line.params.some((param) => param.name === name && param.type === 'text')) {
+      stdin ??= new Promise((done, fail) => {
+        let text = '';
+        process.stdin.setEncoding('utf8').on('data', (chunk) => { text += chunk; }).on('end', () => done(text)).on('error', fail);
+      });
+      // One line end that the shell added is not part of the text.
+      flags[name] = (await stdin).replace(/\r?\n$/, '');
+    }
+  }
+  options.event = line.node.id;
+  // What was said with --value still wins: it names exactly what it means.
+  options.values = { ...valuesFromFlags(line.params, flags), ...options.values };
+}
+
+/** What `--help` prints: the tool's own command line where it declares one, else what this command takes. */
+async function helpFor(options: CliOptions): Promise<string> {
+  const command = `node backend/cli/main.ts ${options.graphPath}`;
+  try {
+    const graph = await loadGraph(options.graphPath);
+    const lines = commandLines(graph);
+    const line = options.event ? lines.find((one) => one.node.id === options.event) : lines.length === 1 ? lines[0] : undefined;
+    const said = lines.length > 1 && !line ? `\n\nThis tool has more than one command line: --help --event NAME for one of ${lines.map((one) => one.node.id).join(', ')}.` : '';
+    return usageOf({
+      name: graph.metadata.name || 'This tool', description: line?.node.description || graph.metadata.description, command, params: line?.params ?? [],
+    }) + said;
+  } catch {
+    return 'Usage: node backend/cli/main.ts <tool> [--event NAME] [--value name=text] [--every 5m] [--keep] [--serve] [--bundle DIR]\n'
+      + 'A tool whose start point declares parameters takes them as --name value; --help with the tool says which.';
+  }
 }
 
 /** *work* with the graph core this command runs graphs with, let go once it is done: a core of its own process ends. */

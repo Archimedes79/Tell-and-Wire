@@ -6,11 +6,13 @@ import { RUN_PORT, START_PORT, parseInterval } from '../../../triggers.ts';
 import { ownPathProblem } from '../../../nodes/ownPath.ts';
 import type { StartNodeDefinition } from '../../../nodes/start/StartNodeDefinition.ts';
 import { messageOf } from '../../../errors.ts';
+import { paramProblems, paramsOf } from '../../../nodes/start/params.ts';
 
 export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
   override graphAuthorNote(): string {
     return `a named start point: where a round begins. Its id is its name; whoever uses the graph starts it by that name. `
-      + `config.started_by is "gui" (a block on the GUI fires it: then the graph needs a gui), "call" (a script, a model over MCP, or the graph above starts it) `
+      + `config.started_by is "gui" (a block on the GUI fires it: then the graph needs a gui), "call" (a script, the command line, a model over MCP, or the graph above starts it; `
+      + `config.params, a list of {"name", "type": "text"|"number"|"flag", "default", "required", "description"}, declares what the command line takes -- tool --name value -- and it arrives as "values" under those names) `
       + `or "itself" (config.on_start, true or false: when the tool starts; config.every, "" or "30s", "5m", "2h", "1d": again on that clock; `
       + `config.reads, "file" or "folder", with config.path: it then sends that file -- {path, content} -- or the paths of the files in that folder -- config.extensions, e.g. ".csv, .txt", `
       + `keeps only those types, config.recursive = true looks into subfolders too -- as "values" under its own id, read afresh each time it starts). `
@@ -37,6 +39,10 @@ export class StartNodeDesign extends NodeDesign<StartNodeDefinition> {
 
   override problems(node: GraphNode, _kinds: Kinds, where: string): Problem[] {
     const { startedBy, onStart, every, reads, path } = this.kind.config(node);
+    // What a call's command line takes: named so that a person can type it.
+    if (startedBy === 'call') {
+      return paramProblems(paramsOf(node)).map((problem) => ({ where, problem, fix: 'Name the parameters in lower case letters, digits, _ and -, once each, and not as an option the command line has itself.' }));
+    }
     if (startedBy !== 'itself') return [];
     const found: Problem[] = [];
     if (reads && !path) {

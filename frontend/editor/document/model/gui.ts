@@ -12,6 +12,7 @@ import type { Sent } from '../../../../gui/widgets/WidgetDefinition.ts';
 import { parseWidget, widgetElement } from '../../../../gui/gui.ts';
 import { widgetDesign } from '../../../../gui/authoring/widgets/roster.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
+import { paramsOf } from '../../../../graph/nodes/start/params.ts';
 
 /** What *widget* can do with the graph: what it sends -- none, for a heading or a button --, whether using it is an event, whether it shows an end point. */
 export function blockCan(widget: GuiWidget): { sends: Sent | null; fires: boolean; shows: boolean } {
@@ -145,8 +146,8 @@ function exampleChoices(start: GraphNode): FieldChoice[] {
 /**
  * What an input wired from start point *start* can take of its package: what
  * each block that sends to it sends, whole -- under the block's id -- or one
- * part of it, `file.content`; and each part of what a call sends it, for
- * example.
+ * part of it, `file.content`; each parameter its command line declares; and
+ * each part of what a call sends it, for example.
  */
 export function fieldChoices(blocks: GuiWidget[], start: GraphNode): FieldChoice[] {
   const fromBlocks = blocksAt(blocks, start.id).send.flatMap((block) => {
@@ -157,8 +158,12 @@ export function fieldChoices(blocks: GuiWidget[], start: GraphNode): FieldChoice
       ...Object.entries(sent.keys ?? {}).map(([key, part]) => ({ value: `${block.id}.${key}`, label: `${name} · ${key}`, type: part.type })),
     ];
   });
-  const named = new Set(fromBlocks.map((choice) => choice.value));
-  return [...fromBlocks, ...exampleChoices(start).filter((choice) => !named.has(choice.value))];
+  // What the command line declares: `--words 20` arrives as "words", typed as it is declared.
+  const declared: FieldChoice[] = paramsOf(start).map((param) => ({
+    value: param.name, label: `--${param.name}`, type: param.type === 'flag' ? 'boolean' : param.type,
+  }));
+  const named = new Set([...fromBlocks, ...declared].map((choice) => choice.value));
+  return [...fromBlocks, ...declared, ...exampleChoices(start).filter((choice) => !named.has(choice.value))];
 }
 
 /**

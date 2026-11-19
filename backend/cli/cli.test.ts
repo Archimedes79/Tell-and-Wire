@@ -13,7 +13,8 @@ describe('parseArgs', () => {
     expect(options.graphPath).toBe('g.json');
     expect(options.values).toEqual({ a: '1', file: { content: 'a,b', path: 'a.csv' }, q: 'x=y' });
     expect(options.event).toBe('go');
-    expect(() => parseArgs(['g.json', '--ai-force'])).toThrow(/Unknown option "--ai-force"/);
+    // Not this command's: a parameter of the tool, if its start point declares one -- else said once the tool is read.
+    expect(parseArgs(['g.json', '--ai-force', '--words=3', '--text', 'hi', '--loud']).flags).toEqual({ 'ai-force': true, words: '3', text: 'hi', loud: true });
     // A name is a key of the values, not a way into the prototype every object shares.
     parseArgs(['g.json', '--value', '__proto__.polluted=1', '--value', 'constructor.prototype.polluted=1']);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -103,4 +104,84 @@ describe('showing a tool as a program', () => {
     ]);
     expect(appWindowCommands('http://x', 'linux', {}, none).map((one) => one.command)).toContain('chromium');
   });
+});
+
+/** A tool whose start point declares what the command line takes, a code node that reads it, and an end point. */
+async function shoutProject(declare: boolean): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-cli-'));
+  await writeProject(dir, parseGraph({
+    metadata: { name: 'Shout', description: 'Says it louder.' },
+    nodes: [
+      {
+        id: 'say', node_type: 'start', label: 'Say', description: 'Say something.', inputs: [], outputs: [],
+        config: {
+          started_by: 'call',
+          ...(declare ? { params: [
+            { name: 'text', type: 'text', required: true, description: 'What to say.' },
+            { name: 'words', type: 'number', default: '3' },
+            { name: 'loud', type: 'flag' },
+          ] } : {}),
+        },
+      },
+      {
+        id: 'shout', node_type: 'code', label: 'Shout', inputs: [port('request', 'input')], outputs: [port('output', 'output')],
+        config: { code: 'function run(i) { const v = i.request.values; const t = String(v.text).split(" ").slice(0, v.words ?? 99).join(" "); return { output: v.loud ? t.toUpperCase() : t }; }' },
+      },
+      { id: 'told', node_type: 'end', label: 'Told', inputs: [port('value', 'input')], outputs: [], config: {} },
+    ],
+    edges: [
+      { id: 'e1', source_node_id: 'say', source_port_id: 'data', target_node_id: 'shout', target_port_id: 'request' },
+      { id: 'e2', source_node_id: 'shout', source_port_id: 'output', target_node_id: 'told', target_port_id: 'value' },
+    ],
+  }));
+  return dir;
+}
+
+describe("a start point's command line", () => {
+  const told = (out: string) => (JSON.parse(out).node_results as { node_id: string; inputs: Record<string, unknown> }[]).find((one) => one.node_id === 'told')!.inputs.value;
+
+  it('is typed after the tool: --name value, --name=value, a flag alone -- typed, with defaults, and it runs that start point with no --event', async () => {
+    const dir = await shoutProject(true);
+    try {
+      const first = await printed([dir, '--text', 'one two three four', '--words=2', '--loud']);
+      expect(first.code).toBe(0);
+      expect(told(first.out)).toBe('ONE TWO');
+      // The defaults: three words, not loud.
+      expect(told((await printed([dir, '--text', 'a b c d e'])).out)).toBe('a b c');
+      // What --value says still wins: it names exactly what it means.
+      expect(told((await printed([dir, '--text', 'a b', '--value', 'text=x y'])).out)).toBe('x y');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it('is refused in a sentence before anything runs: a parameter missing, one that is none, one of the wrong kind', async () => {
+    const dir = await shoutProject(true);
+    try {
+      await expect(printed([dir])).rejects.toThrow(/Missing --text: it is required/);
+      await expect(printed([dir, '--text', 'hi', '--nope', '1'])).rejects.toThrow(/Unknown option "--nope". This tool takes --text, --words, --loud/);
+      await expect(printed([dir, '--text', 'hi', '--words', 'many'])).rejects.toThrow(/--words wants a number/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it('is said by --help, which runs nothing; and a tool that declares none takes none', async () => {
+    const declared = await shoutProject(true);
+    const bare = await shoutProject(false);
+    try {
+      const help = await printed([declared, '--help']);
+      expect(help.code).toBe(0);
+      expect(help.out).toContain('Shout');
+      expect(help.out).toContain('--text <text>');
+      expect(help.out).toContain('What to say. (required)');
+      expect(help.out).not.toContain('node_results');
+      await expect(printed([bare, '--text', 'hi'])).rejects.toThrow(/Unknown option "--text".*declares no parameters/);
+      // Without parameters, a run is what it was: the whole graph, once.
+      expect((await printed([bare])).code).toBe(0);
+    } finally {
+      await rm(declared, { recursive: true, force: true });
+      await rm(bare, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

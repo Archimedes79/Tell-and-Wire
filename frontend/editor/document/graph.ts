@@ -97,6 +97,8 @@ export type NodeConfig = {
   started_by: 'gui' | 'call' | 'itself';
   /** A start point: what it is sent when nobody sends it anything -- a run of it on its own, ▶ Try -- as a caller would name it. */
   values?: Record<string, unknown>;
+  /** A start point a call starts: what the command line takes -- `tool --name value` -- by name, typed, with a default or required (`graph/nodes/start/params.ts`). */
+  params?: { name: string; type: 'text' | 'number' | 'flag'; default?: string; required?: boolean; description?: string }[];
   on_start: boolean;
   every: string;
   /** A start point that starts itself: what it sends -- one file, the files of a folder (`path`, `extensions`, `recursive`) -- or nothing. */

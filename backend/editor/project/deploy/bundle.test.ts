@@ -182,4 +182,33 @@ describe('a bundle', () => {
       await rm(node, { recursive: true, force: true });
     }
   });
+
+  it('says the command line a start point declares in its README, and the bundle runs with those options as typed', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'tell-and-wire-bundle-'));
+    try {
+      const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
+      const graph = parseGraph({
+        metadata: { name: 'Shout', description: 'Says it louder.' },
+        nodes: [
+          { id: 'say', node_type: 'start', label: 'Say', inputs: [], outputs: [], config: { started_by: 'call', params: [{ name: 'text', type: 'text', required: true, description: 'What to say.' }, { name: 'loud', type: 'flag' }] } },
+          { id: 'shout', node_type: 'code', label: 'Shout', inputs: [{ ...port('request', 'input'), field: 'text' }], outputs: [port('output', 'output')], config: { code: 'function run(i) { return { output: String(i.request).toUpperCase() }; }' } },
+          { id: 'told', node_type: 'end', label: 'Told', inputs: [port('value', 'input')], outputs: [], config: {} },
+        ],
+        edges: [
+          { id: 'e1', source_node_id: 'say', source_port_id: 'data', target_node_id: 'shout', target_port_id: 'request' },
+          { id: 'e2', source_node_id: 'shout', source_port_id: 'output', target_node_id: 'told', target_port_id: 'value' },
+        ],
+      });
+      await writeBundle(graph, dir);
+      const readme = await readFile(join(dir, 'README.md'), 'utf8');
+      expect(readme).toContain('## The command line');
+      expect(readme).toContain('Usage: ./run.sh --text … [options]');
+      expect(readme).toContain('--text <text>  What to say. (required)');
+      const { code, out } = await run(dir, ['--text', 'a quiet word']);
+      expect(code).toBe(0);
+      expect(JSON.parse(out).node_results.find((one: { node_id: string }) => one.node_id === 'told').inputs.value).toBe('A QUIET WORD');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
 });

@@ -190,6 +190,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `graph/nodes/images.ts` | Turning a picture on disk into something that can be looked at or sent, and the one place where the size of a picture or a PDF read is limited |
 | `graph/nodes/ownPath.ts` | A path written in a graph file -- a start point's, an end point's -- is the graph's, and a graph may come from a stranger |
 | `graph/nodes/port.ts` | How a port is written: its id, name, type and what it reads of a package. |
+| `graph/nodes/start/params.ts` | What a start point that a call starts takes, named: the parameters of its command line -- read, checked, typed, and said by `--help` |
 | `graph/nodes/registry.ts` | The registry of node kinds: every node a graph can hold, as its definition |
 | `graph/nodes/subgraph/boundary.ts` | Where a graph inside a node meets the node that holds it |
 | `graph/order.ts` | The order a graph runs in: levels over the wires, and how a loop may pass through a data node. |
@@ -479,6 +480,7 @@ places (the faces under "Elements"); those are one row each, written as a patter
 | `frontend/editor/graph/node/writeFile.ts` | Writing one file of a node (input, output or body) the way the node view and the toolbar's Generate do. |
 | `frontend/editor/graph/nodes/NodeGuiBuilder.ts` | How a person edits a node, in the browser: the mirror of `graph/nodes/NodeDefinition.ts` |
 | `frontend/editor/graph/nodes/<kind>/<Kind>NodeGuiBuilder.ts`, `frontend/editor/graph/nodes/<kind>/<Kind>Node*Panel.tsx` | The **builder** of each node kind -- how a person edits it -- and the panels its settings are drawn in. |
+| `frontend/editor/graph/nodes/start/StartParams.tsx` | The parameters a start point's command line takes: a name, a kind, a default, whether it is required, a sentence. |
 | `frontend/editor/graph/nodes/ai/ServerPage.tsx` | The settings page a tool server brings for itself, in a sandboxed frame. |
 | `frontend/editor/graph/nodes/ai/ToolServerDialogs.tsx` | Add and set up a tool server: install, write its entry, start it once. |
 | `frontend/editor/graph/nodes/ai/ToolServers.tsx` | The tool servers an AI node may use: which are set up on this machine and how each stands. |
