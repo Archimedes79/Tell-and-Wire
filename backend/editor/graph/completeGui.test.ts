@@ -85,5 +85,23 @@ describe('a GUI written whole', () => {
     // A part the folder does not send ("folder.files") is what it does send: its paths, whole, under its id.
     expect(types).toEqual({ file: 'file_path', note: 'text', many: 'file_path' });
     expect(graph.nodes.find((one) => one.id === 'each')!.inputs.find((port) => port.id === 'many')!.field).toBe('folder');
+    // The files of a folder are items: the node is asked to run once for each, and hands on the list of what it made.
+    const each = graph.nodes.find((one) => one.id === 'each')!;
+    expect([each.config.batch_mode, each.inputs.find((port) => port.id === 'file')!.multi]).toEqual(['per_item', true]);
+  });
+});
+
+describe('a graph a model wired by naming outputs', () => {
+  it('wires an input whose field names another node\'s output from that output -- not from the start point, which then hands it the whole tool\'s package', () => {
+    const graph = parseGraph({
+      nodes: [
+        { id: 'go', node_type: 'start', config: { started_by: 'gui' } },
+        { id: 'read', node_type: 'ai', outputs: [{ id: 'amount', name: 'Amount', kind: 'output', data_type: 'number', multi: true, required: false, description: '' }], inputs: [] },
+        { id: 'sum', node_type: 'code', inputs: [{ id: 'amounts', name: 'Amounts', kind: 'input', data_type: 'number', multi: false, required: false, field: 'read.amount' }], outputs: [] },
+      ],
+    });
+    completeGui(graph, registry);
+    expect(graph.edges.map((edge) => `${edge.source_node_id}.${edge.source_port_id} -> ${edge.target_node_id}.${edge.target_port_id}`)).toEqual(['read.amount -> sum.amounts']);
+    expect(graph.nodes.find((one) => one.id === 'sum')!.inputs[0].field).toBeUndefined();
   });
 });

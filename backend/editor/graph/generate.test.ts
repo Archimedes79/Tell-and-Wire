@@ -3,7 +3,7 @@ import type { AiRequest, AiService, CodeService } from '../../../graph/nodes/Run
 import { registry } from '../../../graph/nodes/registry.ts';
 import { parseGraph, type GraphNode } from '../../../graph/graph.ts';
 import { GenerationFailed, GenerationRefused, firstBlock, generate } from './generate.ts';
-import { generateGraph, withoutUnreadableDefinitions } from './generateGraph.ts';
+import { generateGraph, withoutUnreadableDefinitions, withoutWrittenFiles } from './generateGraph.ts';
 import { nodeCode } from '../../deployment/runtime/services.ts';
 import type { GenerateRequest } from '../host/api.ts';
 
@@ -249,5 +249,23 @@ describe('a graph a model wrote whole', () => {
     expect(said).toEqual(['output.js of "Extract" could not be read and was left empty: Auto generate writes it.']);
     expect(graph.nodes[0].config.output_definition).toBeUndefined();
     expect(graph.nodes[0].config.input_definition).toContain('"text"');
+  });
+});
+
+describe('a tool built from a sentence', () => {
+  it('is its spec: what each node does and how they are wired -- the code, the instructions and the definitions are taken out for ✨ to write in order; a memory keeps its fields', () => {
+    const graph = parseGraph({
+      nodes: [
+        { id: 'ex', node_type: 'ai', label: 'Extract', description: 'Take out the supplier.', config: { prompt: 'Say it.', input_definition: 'module.exports = { "t": 1 };', output_definition: 'module.exports = { "supplier": "A" };' } },
+        { id: 'sum', node_type: 'code', label: 'Sum', description: 'Add up.', config: { code: 'function run() { return {}; }', output_definition: 'module.exports = { "total": 1 };' } },
+        { id: 'keep', node_type: 'data', label: 'Memory', config: { data: { total: 0 } } },
+      ],
+    });
+    withoutWrittenFiles(graph);
+    const [ex, sum, keep] = graph.nodes;
+    expect(ex.description).toBe('Take out the supplier.');
+    expect([ex.config.prompt, ex.config.input_definition, ex.config.output_definition]).toEqual([undefined, undefined, undefined]);
+    expect([sum.config.code, sum.config.output_definition]).toEqual([undefined, undefined]);
+    expect(keep.config.data).toEqual({ total: 0 });
   });
 });

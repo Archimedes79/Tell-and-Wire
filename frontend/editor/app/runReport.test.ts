@@ -67,6 +67,15 @@ describe('the report of a run', () => {
     expect(runReport({ status: 'cancelled', outputs: {}, node_results: [] }, nodes).summary).toContain('stopped');
   });
 
+  it('does not say a run went well when a node handed on something other than its output.js says', () => {
+    const off = runReport({
+      status: 'success', outputs: {},
+      node_results: [{ node_id: 'ask', status: 'success', inputs: {}, outputs: {}, messages: ['Does not fit its output.js: output "supplier" is missing'] }],
+    }, nodes);
+    expect(off.summary).toBe('It ran, but "Summarize" did not hand on what its output.js says: what comes after may be empty or wrong.');
+    expect(off.nodes[0].plain).toContain('does not fit its output.js');
+  });
+
   it('is plain text that carries no data of the person unless asked to', () => {
     const report = runReport(failedRun, nodes);
     const without = reportText(report, { tool: 'Summarizer', ai: 'ollama / llama3', withData: false });

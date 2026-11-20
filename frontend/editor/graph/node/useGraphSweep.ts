@@ -8,7 +8,8 @@
 // into a memory is pulled, and an input is, by a run of what feeds it -- where
 // no model is among that, which a sweep would ask once more for every node after it.
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { create } from 'zustand';
 import type { GraphEdge, GraphNode } from '../../document/graph';
 import { useGraphStore } from '../../document/store/graphStore';
 import { graphEdge } from '../../document/model/wires';
@@ -58,8 +59,8 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
 
   const missing = missingExamples(nodesOf(), dslEdges(), live().gui);
   if (missing.length) {
-    say(`❌ ${missing.map((n) => n.label || n.id).join(', ')}: give it a file or folder to read by default. `
-      + 'Without one, the first node is written against nothing and every node after it inherits the guess.');
+    say(`❌ ${missing.map((n) => n.label || n.id).join(', ')}: choose an example to read, on the GUI tab, in the block's Folder or File field. `
+      + 'Without one, the first node is written against nothing and every node after it inherits the guess. Then press Generate all.');
     return;
   }
 
@@ -111,6 +112,13 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
   }
 }
 
+/**
+ * Generate all, asked for by something other than the button: a tool just built from a sentence is its spec, and its files are
+ * written next, in order, without a second press. The toolbar's hook hears it and shows how it goes, as it does for the button.
+ */
+const asked = create<{ count: number }>(() => ({ count: 0 }));
+export const requestSweep = (): void => asked.setState((state) => ({ count: state.count + 1 }));
+
 export function useGraphSweep(): SweepState {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -125,6 +133,15 @@ export function useGraphSweep(): SweepState {
       setBusy(false);
     }
   }, []);
+
+  // Only what is asked after this one is on screen: a request made before it, for a graph long gone, is not run.
+  const seen = useRef(asked.getState().count);
+  const count = asked((state) => state.count);
+  useEffect(() => {
+    if (count === seen.current) return;
+    seen.current = count;
+    void run();
+  }, [count, run]);
 
   const stop = useCallback(() => { stopping.current = true; }, []);
   const dismiss = useCallback(() => setMessage(''), []);

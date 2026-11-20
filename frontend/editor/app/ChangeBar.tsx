@@ -4,6 +4,7 @@ import { useGraphStore } from '../document/store/graphStore';
 import { flushPanels } from '../document/store/flushPanels';
 import Button from '../../deployment/gui/kit/ui/Button';
 import LiveGeneration from '../graph/writing/LiveGeneration';
+import { requestSweep } from '../graph/node/useGraphSweep';
 import GraphProblems from './GraphProblems';
 import ProblemsChip from './ProblemsChip';
 import type { Graph } from '../document/graph';
@@ -58,7 +59,11 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
     if (result === 'failed') setText(words);
     // Built only while the tool is still blank as it was asked about. What was made meanwhile stays, and the
     // graph that came back is proposed as a change instead, with the warning that the graph moved on.
-    else if (result && stillBlank(asked, useGraphStore.getState().exportGraph())) applyGraph(result);
+    else if (result && stillBlank(asked, useGraphStore.getState().exportGraph())) {
+      applyGraph(result);
+      // What was built is the spec: its files are written next, in order, without a second press.
+      requestSweep();
+    }
   };
 
   const stop = () => {

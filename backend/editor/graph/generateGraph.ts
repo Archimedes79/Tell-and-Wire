@@ -16,6 +16,7 @@ import { GenerationFailed, firstBlock, recording } from './generate.ts';
 import type { AICall, Target } from '../host/api.ts';
 import { messageOf } from '../../../graph/errors.ts';
 import { definitionExample } from '../../../graph/files/definition.ts';
+import { designs } from '../../../graph/authoring/nodes/registry.ts';
 
 /** A value as JSON with every object's keys in one order: two that say the same compare equal. */
 const canonical = (value: unknown): string => JSON.stringify(value, (_key, item: unknown) => (
@@ -145,4 +146,20 @@ export function withoutUnreadableDefinitions(graph: Graph): string[] {
     }
   }
   return said;
+}
+
+/**
+ * A tool built from a sentence is the nodes, what each does, and how they are wired -- its spec. The files a model wrote with it
+ * -- the code, the instructions, what each takes in and hands on -- were written together in one answer, and where two nodes
+ * name what passes between them differently ("total_amount_eur" up, "total_amount" down) the run still goes through and says so
+ * nowhere: a table of zeroes. They are taken out, so that ✨ writes them one node after the other, each from what the one before it
+ * really hands on. A memory's fields are data, and stay.
+ */
+export function withoutWrittenFiles(graph: Graph): void {
+  for (const node of graph.nodes) {
+    const spec = designs.node(node.node_type)?.generation();
+    if (!spec || spec.kind === 'data') continue;
+    const config = node.config as Record<string, unknown>;
+    for (const key of [spec.fields.body, 'input_definition', 'output_definition']) delete config[key];
+  }
 }

@@ -98,8 +98,14 @@ export function runReport(result: ExecutionResult, nodes: Pick<GraphNode, 'id' |
   const failed = reported.find((node) => node.status === 'error');
   const done = reported.filter((node) => node.status === 'success' || node.status === 'partial').length;
   const partly = reported.filter((node) => node.status === 'partial');
+  // A node that ran and handed on something other than what its output.js says: what comes after it reads keys that are not there,
+  // and the table is empty -- a run that "went well" is then a lie of the kind nobody finds.
+  const off = reported.filter((node) => node.status === 'success' && node.messages.some((message) => message.startsWith('Does not fit its output.js')));
+  for (const node of off) node.plain ??= 'It ran, but what it handed on does not fit its output.js: the nodes after it may get nothing they can use.';
   let summary: string;
-  if (result.status === 'success') summary = `It went well: ${done} of ${reported.length} nodes ran.`;
+  if (result.status === 'success' && off.length) {
+    summary = `It ran, but ${off.map((node) => `"${node.label}"`).join(', ')} did not hand on what ${off.length > 1 ? 'their output.js say' : 'its output.js says'}: what comes after may be empty or wrong.`;
+  } else if (result.status === 'success') summary = `It went well: ${done} of ${reported.length} nodes ran.`;
   else if (result.status === 'cancelled') summary = 'It was stopped before it was done.';
   else if (failed) summary = `${result.status === 'partial' ? 'Part of it worked, but' : 'It stopped:'} "${failed.label}" failed. ${failed.plain ?? ''}`.trim();
   else if (result.status === 'partial' && partly.length) summary = `It ran, but part of it failed: ${partly.map((node) => `"${node.label}"`).join(', ')}. ${partly[0].plain ?? ''}`.trim();

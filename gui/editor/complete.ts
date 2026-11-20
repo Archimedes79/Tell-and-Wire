@@ -12,6 +12,7 @@ import type { Graph, GraphNode } from '../../graph/graph.ts';
 import type { Kinds } from '../../graph/nodes/NodeDefinition.ts';
 import { guiBlocks, parseWidget, widgetElement } from '../gui.ts';
 import { RUN_PORT } from '../../graph/triggers.ts';
+import { ERROR_PORT } from '../../graph/wiring.ts';
 import { points } from '../authoring/gui.ts';
 
 /** The first of *base*, *base*_2, *base*_3 ... that is not in *taken*. */
@@ -42,6 +43,7 @@ const words = (id: string): string => {
  * Points are made unwired and beside the graph; wiring them is the graph's author's.
  */
 export function completeGui(graph: Graph, registry: Kinds): void {
+  wireNamedOutputs(graph);
   wireFieldInputs(graph, registry);
   readFilesOfPathInputs(graph, registry);
   for (const stored of guiBlocks(graph)) {
@@ -111,6 +113,24 @@ export function completeGui(graph: Graph, registry: Kinds): void {
 }
 
 /**
+ * An input whose `field` names another node's output -- "extract_invoice.supplier" -- and has no wire is wired from that output, and
+ * takes the whole of it: a model that writes a node's name where a key of a package belongs means a wire. Left as it was written,
+ * the start point was wired to it (`wireFieldInputs`), and the node was handed what the whole tool was started with.
+ */
+function wireNamedOutputs(graph: Graph): void {
+  for (const node of graph.nodes) {
+    for (const port of node.inputs) {
+      if (!port.field || graph.edges.some((edge) => edge.target_node_id === node.id && edge.target_port_id === port.id)) continue;
+      const [from, out, ...more] = port.field.split('.');
+      const source = graph.nodes.find((one) => one.id === from && one.id !== node.id);
+      if (!source || !out || more.length || !source.outputs.some((one) => one.id === out)) continue;
+      graph.edges.push({ id: `${from}.${out} -> ${node.id}.${port.id}`, source_node_id: from, source_port_id: out, target_node_id: node.id, target_port_id: port.id });
+      port.field = undefined;
+    }
+  }
+}
+
+/**
  * An input that takes, of a start point's package, what a file or folder block sends -- the paths of the files -- is typed as
  * paths to read (`file_path`): a run reads each file and hands over its text. Left typed otherwise it is handed the paths
  * themselves, and a model asked to take supplier and amount out of "invoices/a_mueller.txt" answers with what it makes up --
@@ -131,7 +151,17 @@ function readFilesOfPathInputs(graph: Graph, registry: Kinds): void {
       if (!sent) continue;
       // A part it has none of: what it sends is a path, a text, a number -- not an object to take a key of.
       if (inside.length && !sent.keys && ['file_path', 'text', 'number', 'boolean'].includes(sent.type)) port.field = id;
-      if (!port.field.includes('.') && sent.type === 'file_path') port.data_type = 'file_path';
+      if (port.field.includes('.') || sent.type !== 'file_path') continue;
+      port.data_type = 'file_path';
+      // The files of a folder are items: each is read and handled on its own, and what the node hands on is the list of the
+      // answers -- unless something else is already the list it runs over. A model that is told "every invoice" leaves the
+      // setting at whole: the first file is handled, and the rest are not.
+      const runsOver = node.inputs.some((other) => other !== port && other.multi);
+      if (sent.list && registry.node(node.node_type)?.fansOut && !runsOver) {
+        port.multi = true;
+        (node.config as Record<string, unknown>).batch_mode = 'per_item';
+        for (const out of node.outputs) if (out.id !== ERROR_PORT) out.multi = true;
+      }
     }
   }
 }
