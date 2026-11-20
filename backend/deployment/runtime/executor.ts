@@ -38,7 +38,7 @@ import { parseTable, placesOf, scheduleProblems, stepsOf } from '../../../graph/
 import type { LastOutputs } from './reuse.ts';
 import type { Latch } from './latch.ts';
 import { mismatches } from '../../../graph/schema.ts';
-import { ERROR_PORT, NESTING_LIMIT, fatalProblems, fieldOf, unrunnable } from '../../../graph/wiring.ts';
+import { ERROR_PORT, NESTING_LIMIT, NOTHING_ARRIVED, fatalProblems, fieldOf, unrunnable } from '../../../graph/wiring.ts';
 import { runners as realRunners } from './nodes/registry.ts';
 import type { NodeRunner, Runners } from './nodes/NodeRunner.ts';
 import { messageOf } from '../../../graph/errors.ts';
@@ -77,7 +77,7 @@ function collectInputs(
       const source = outputs.get(edge.source_node_id);
       if (source === undefined) continue;
       const field = fields.get(port);
-      values.push(field ? fieldOf(source[edge.source_port_id], field) : source[edge.source_port_id]);
+      values.push(field ? fieldOf(source[edge.source_port_id], field, [edge.source_node_id, edge.source_port_id]) : source[edge.source_port_id]);
     }
     if (incoming.length > 1) collected[port] = values;
     else if (values.length) collected[port] = values[0];
@@ -522,11 +522,11 @@ function nothingToDo(
   for (const port of node.inputs) {
     if (port.required && wired.has(port.id) && isNothing(inputs[port.id])) {
       const named = port.field ? ` It takes "${port.field}" of what is wired to it, and what arrived has nothing under that name.` : '';
-      return `Nothing arrived on "${port.name || port.id}", which this node needs -- so it had nothing to do.${named}`;
+      return `${NOTHING_ARRIVED} on "${port.name || port.id}", which this node needs -- so it had nothing to do.${named}`;
     }
   }
   if (element.needsInput(node) && wired.size && [...wired].every((id) => isNothing(inputs[id]))) {
-    return 'Nothing arrived on any of its inputs, so there was nothing to ask.';
+    return `${NOTHING_ARRIVED} on any of its inputs, so there was nothing to ask.`;
   }
   return '';
 }

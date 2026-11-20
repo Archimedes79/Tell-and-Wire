@@ -9,7 +9,7 @@ import ProblemsChip from './ProblemsChip';
 import type { Graph } from '../document/graph';
 import { useGraphAsk, type GraphAsk } from './graphAsk';
 import { refreshProviderStatus, useProviderStatus } from '../fields/ProviderModelSelect';
-import { describeChange, graphChange } from './graphChange';
+import { describeChange, graphChange, stillBlank } from './graphChange';
 import { ACCENT_TEXT, DANGER_TEXT, DIM, LINE, MUTED, SUNKEN, SURFACE, TEXT } from '../../deployment/gui/kit/ui/theme';
 
 /**
@@ -43,8 +43,8 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
   }, [opened, reset]);
 
   const asking = change.phase === 'asking';
-  // A tool with nothing in it yet: what is said builds it at once -- there is nothing to lose, and Undo is a click away.
-  const empty = useGraphStore((s) => s.rfNodes.length === 0);
+  // A tool with nothing in it yet -- no node and no GUI block: what is said builds it at once. There is nothing to lose, and Undo is a click away.
+  const blank = useGraphStore((s) => s.rfNodes.length === 0 && s.gui.length === 0);
 
   const submit = async () => {
     const words = text.trim();
@@ -52,10 +52,13 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
     setText('');
     setApplied(null);
     flushPanels();
+    const asked = useGraphStore.getState().exportGraph();
     // The words go back where they were, to be sent again or said otherwise.
-    const result = await send(words, words, useGraphStore.getState().exportGraph());
+    const result = await send(words, words, asked);
     if (result === 'failed') setText(words);
-    else if (result && empty) applyGraph(result);
+    // Built only while the tool is still blank as it was asked about. What was made meanwhile stays, and the
+    // graph that came back is proposed as a change instead, with the warning that the graph moved on.
+    else if (result && stillBlank(asked, useGraphStore.getState().exportGraph())) applyGraph(result);
   };
 
   const stop = () => {
@@ -146,8 +149,8 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
             // A server started since the last look is noticed as the bar is used.
             onFocus={() => { if (ai?.writing_problem) refreshProviderStatus(); }}
             disabled={asking}
-            placeholder={empty ? 'Say what the tool should do…' : 'Say what to change in the graph…'}
-            autoFocus={empty}
+            placeholder={blank ? 'Say what the tool should do…' : 'Say what to change in the graph…'}
+            autoFocus={blank}
             aria-label="Say what to change"
             className="flex-1 min-w-0 bg-transparent text-sm outline-none"
             style={{ color: TEXT }}
@@ -160,7 +163,7 @@ export default function ChangeBar({ onOpenSettings }: { onOpenSettings: () => vo
           className="h-10 shrink-0"
           title="Change the graph as said, with ✨: you see what it changes before it is applied"
         >
-          {empty ? 'Build' : 'Change'}
+          {blank ? 'Build' : 'Change'}
         </Button>
         <ProblemsChip />
       </div>

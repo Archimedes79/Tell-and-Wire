@@ -73,3 +73,13 @@ export function describeChange(change: GraphChange): string[] {
   ].filter(Boolean);
   return lines.length ? lines : ['Nothing in the graph or the GUI changes.'];
 }
+
+/**
+ * Whether a graph asked for on a tool may replace that tool without being
+ * proposed first: only where the tool is still blank -- no node, no GUI block --
+ * and as it was when it was asked about, so that nothing made while the model
+ * worked is replaced by what came back.
+ */
+export function stillBlank(asked: Graph, now: Graph): boolean {
+  return JSON.stringify(asked) === JSON.stringify(now) && now.nodes.length === 0 && !now.gui?.blocks.length;
+}

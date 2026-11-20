@@ -109,12 +109,17 @@ describe('a loop', () => {
 });
 
 describe('an input that takes a field', () => {
-  it('is handed a list whole where it names a part of it: a list has no parts, and what a small model meant is the list', async () => {
+  it('is handed a list whole where the field names the node and output it came by, and nothing where it names neither', async () => {
     const source = nodeWith('src', 'code', { code: 'SRC' }, { out: ['items'] });
-    const sink = nodeWith('sink', 'code', {}, { in: ['x:src.items'], out: ['x'] });
+    const named = nodeWith('named', 'code', {}, { in: ['x:src.items'], out: ['x'] });
+    const misnamed = nodeWith('misnamed', 'code', {}, { in: ['x:src.itemz'], out: ['x'] });
     const runtime = quietRuntime({ code: { run: async (body, inputs) => (body === 'SRC' ? { items: [1, 2, 3] } : inputs) } });
-    const result = await executeGraph(graphOf([source, sink], [edge('e', 'src', 'items', 'sink', 'x')]), { runtime, registry });
-    expect(result.node_results.find((one) => one.node_id === 'sink')?.outputs).toEqual({ x: [1, 2, 3] });
+    const result = await executeGraph(graphOf([source, named, misnamed], [
+      edge('e1', 'src', 'items', 'named', 'x'),
+      edge('e2', 'src', 'items', 'misnamed', 'x'),
+    ]), { runtime, registry });
+    expect(result.node_results.find((one) => one.node_id === 'named')?.outputs).toEqual({ x: [1, 2, 3] });
+    expect(result.node_results.find((one) => one.node_id === 'misnamed')?.outputs?.x).toBeUndefined();
   });
 });
 

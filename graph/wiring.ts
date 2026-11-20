@@ -30,16 +30,23 @@ export interface Problem {
 
 export const names = (ids: Iterable<string>): string => [...ids].map((id) => `"${id}"`).join(', ') || '(none)';
 
+/** How a node that had nothing to do, because a wire it needs brought nothing, says so. Where a run stopped is read by it (`roundWords`). */
+export const NOTHING_ARRIVED = 'Nothing arrived';
+
 /**
  * The value under *field* -- a path, `folder` or `file.content` -- of what
  * arrived: of a start point's package, one of the values its sender sent; of
  * anything else, a key of it. Nothing there is undefined: nothing arrived.
- * A text, a number or a list has no keys, and is itself the part asked for: a model
- * that wires a list on and names "pantry.ingredients" of it means the list.
+ * A text, a number or a list has no keys: it is the part asked for only where
+ * the path names the node and the output it came by (*sources*), as
+ * "pantry.ingredients" names the data node "pantry" and its output "ingredients".
  */
-export function fieldOf(value: unknown, field: string): unknown {
-  const isPackage = !!value && typeof value === 'object' && 'event' in value && 'values' in value;
-  if (!isPackage && (!value || typeof value !== 'object' || Array.isArray(value))) return value;
+export function fieldOf(value: unknown, field: string, sources: readonly string[] = []): unknown {
+  if (value === null || value === undefined) return undefined;
+  const isPackage = typeof value === 'object' && 'event' in value && 'values' in value;
+  if (!isPackage && (typeof value !== 'object' || Array.isArray(value))) {
+    return field.split('.').every((part) => sources.includes(part)) ? value : undefined;
+  }
   let at: unknown = isPackage ? (value as { values: unknown }).values : value;
   for (const key of field.split('.')) {
     if (!at || typeof at !== 'object') return undefined;
