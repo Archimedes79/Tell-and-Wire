@@ -4,8 +4,9 @@
 
 **A visual node editor: tell each step what it should do, wire the steps into a graph,
 give it a GUI -- or write the tool as a notebook, a page with windows to use.**
-**AI writes the code -- or you do. What you build is a folder of plain files that runs
-wherever Node runs: offline, with a local model, if you like.**
+**Software is modules with specifications, and AI can fill them in: as code it writes -- or
+you do -- or as a model that turns loose input into a defined output. What you build is a folder
+of plain files that runs wherever Node runs: offline, with a local model, if you like.**
 
 ### ⬇ [Windows](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-windows.zip) · [Linux](https://github.com/Archimedes79/Tell-and-Wire/releases/latest/download/tell-and-wire-linux.zip)
 
@@ -14,6 +15,50 @@ Notebook only, a smaller download: [Windows](https://github.com/Archimedes79/Tel
 <img src="docs/images/hero.png" alt="The Tell & Wire editor with a node opened in place of the canvas: its text on the left, the files AI wrote from it on the right -- and the same graph delivered as a tool that draws a bar chart" width="100%">
 
 </div>
+
+## The idea
+
+Complex software is modules with specifications: each module says what goes in, what comes
+out and what it is for, and the whole is how they are wired. That has not changed. What
+changes is how a module gets filled:
+
+- **AI writes the code.** You say what the module should do; a model writes it as plain
+  files that you can read, change and diff.
+- **A model is the module.** Where the input is loose -- a manuscript, a mail, a table nobody
+  cleaned -- a model turns it into the output the next module expects, in the shape its
+  contract names, on every run.
+
+Both fill the same slot: a node with a contract. Tell & Wire is the editor for software built
+that way. You **tell** a node in a sentence what it does; you **wire** the nodes into a graph,
+and the graph is the architecture, drawn where everyone can see it.
+
+<img src="docs/images/graph.png" alt="The Tell & Wire editor with the Paper review panel example: a start point, a code node that reads a manuscript, five AI reviewers side by side, their findings shown as end points, and a judge that merges them into one piece of advice" width="100%">
+
+<sub>The Paper review panel example: one code node reads a manuscript, five AI reviewers read it
+side by side, a judge merges their findings into one ranked list.</sub>
+
+## The way there
+
+1. **Tell.** Add a node, give it a heading and a sentence: "Merges the five reviews into one
+   ranked list and a recommendation."
+2. **Specify.** **Auto generate** turns the sentence into the contract: `input.js` and
+   `output.js`, what goes in and what comes out, each with an example. That is the
+   specification, and the example is its test. You can read it without reading any code.
+3. **Fill.** It then writes the body: `code.js` where the step is exact, `prompt.md` where a
+   model has to judge. You choose by the job; the contract is the same.
+4. **Wire.** Connect outputs to inputs. Fan out to run five reviewers side by side, fan in to a
+   judge, fold a part into a subgraph. Give the tool a GUI -- a picker, a button, a chart, a
+   chat -- whose blocks start the graph and show what it hands back.
+5. **Run, keep, hand on.** ▶ Run shows the tool as its user will see it. Keep a run that went
+   well as an offline test. **File → Deploy as zip** writes a folder that anyone with Node can
+   unzip and start.
+
+A tool grows along the same path. Start with a model doing a loose job, because that is the
+quickest way to something that works. When you know what good output looks like, keep the
+runs that show it, and replace the model's guess with code wherever code can do the job
+exactly. The contract between nodes stays, so the rest of the graph does not notice. And since
+every node is a contract and a body in plain text, an assistant can take part: see
+[Tell & Wire and MCP](#tell--wire-and-mcp).
 
 ## What it is
 
@@ -232,8 +277,8 @@ remembers in a data node: a button counts up, no model, and the wire back to the
 reads the count as it was when the round began. net_pay is a code node of three files:
 code.js loads the tax rule in tax.js and the bonus in rates.json that stand beside it.
 file_summarizer starts one run from a picker, a dropdown and a button. nested_statistics
-shows a subgraph, a hand-written gui and a kept test. paper_review_panel and
-portfolio_review are teams of AI reviewers.
+shows a subgraph, a hand-written gui and a kept test. paper_review_panel (the picture under
+*The idea*) and portfolio_review are teams of AI reviewers.
 
 [`notebook-examples/`](notebook-examples/) holds five notebook pages, each a project the notebook opens with **Open…**:
 sales_report (a CSV into a table of key figures and a chart), text_toolbox (numbers from code, a summary from a model),
