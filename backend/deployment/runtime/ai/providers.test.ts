@@ -170,6 +170,12 @@ describe('a newcomer', () => {
     await expect(google.complete({ prompt: 'x' })).rejects.toThrow(/wait a minute/);
     stubFetch([{ status: 404, body: { error: 'model "llama3" not found' } }]);
     await expect(service({ provider: 'ollama', model: 'llama3', attempts: 1 }).complete({ prompt: 'x' })).rejects.toThrow(/ollama pull/);
+    // A hint names a provider only where that provider's answer needs it: an OpenAI 404 is not Ollama's, and a 403 is not a wrong key.
+    stubFetch([{ status: 404, body: { error: { message: 'The model `gpt-x` does not exist' } } }]);
+    await expect(service({ provider: 'openai', model: 'gpt-x', apiKeys: { openai: 'k' }, attempts: 1 }).complete({ prompt: 'x' }))
+      .rejects.toThrow(/does not exist\. Check the model name and the server address in ⚙ Settings\.$/);
+    stubFetch([{ status: 403, body: { error: { message: 'Your account has no access to this model' } } }]);
+    await expect(google.complete({ prompt: 'x' })).rejects.toThrow(/no access to this model\. Check the key, and that its account may use this model/);
 
     // Ollama cuts a prompt longer than its window from the start, where the instructions are: the window follows the request.
     const calls = stubFetch([ollamaReply('ok')]);
@@ -201,6 +207,20 @@ describe('retrying', () => {
     calls = stubFetch([{ status: 400, body: { error: { message: 'model not found' } } }]);
     await expect(ai.complete({ prompt: 'x' })).rejects.toThrow(/model not found/);
     expect(calls).toHaveLength(1);
+  });
+
+  it('tries again on a dropped connection, and says a TypeError of its own as it is', async () => {
+    // A connection closed mid-request: fetch says "fetch failed", and the system's reason is the cause.
+    const dropped = () => { throw Object.assign(new TypeError('fetch failed'), { cause: { code: 'UND_ERR_SOCKET' } }); };
+    const calls = stubFetch([dropped, openAiReply('back')]);
+    expect(await service({ provider: 'lmstudio', model: 'local', retryDelay: 0 }).complete({ prompt: 'x' })).toBe('back');
+    expect(calls).toHaveLength(2);
+
+    // A TypeError with no cause is not the network's: it is thrown as it is, and not retried.
+    const bug = vi.fn(async () => { throw new TypeError('our own bug'); });
+    vi.stubGlobal('fetch', bug);
+    await expect(service({ provider: 'lmstudio', model: 'local', retryDelay: 0 }).complete({ prompt: 'x' })).rejects.toThrow('our own bug');
+    expect(bug).toHaveBeenCalledTimes(1);
   });
 
   it('takes the number of tries and the first wait from the environment, within bounds', () => {

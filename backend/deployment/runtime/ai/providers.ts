@@ -196,23 +196,42 @@ export function needsKey(provider: string): boolean {
 /**
  * Nobody answered: the server is not running, the address is wrong, or there
  * is no network. Said so, with what to do -- Node's own word for it is "fetch
- * failed". A dropped connection is retried, a refusal is not: nothing is
- * listening, and asking again in a second changes nothing.
+ * failed". A dropped connection is retried; a refusal and a wrong address are
+ * not: asking again in a second changes nothing.
  */
 class UnreachableError extends Error {
   readonly transient: boolean;
 
-  constructor(url: string, code: string) {
-    super(`Could not reach ${new URL(url).host}. Is the server running, and its address right? Start it, or choose another AI in ⚙ Settings.`);
+  constructor(url: string, cause: unknown) {
+    super(`Could not reach ${hostOf(url)}. Is the server running, and its address right? Start it, or choose another AI in ⚙ Settings.`);
     this.name = 'UnreachableError';
-    this.transient = !['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH'].includes(code);
+    const code = String((cause as { code?: unknown } | undefined)?.code ?? '');
+    this.transient = !['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ERR_INVALID_URL'].includes(code);
   }
 }
 
-/** What to do about a provider's answer, after its own sentence says what happened -- not where to put it right. */
-function remedy(status: number, said: string): string {
-  if (status === 401 || status === 403 || /api key|credential/i.test(said)) return ' Check the key in ⚙ Settings.';
-  if (status === 404) return ' Check the model name and the server address in ⚙ Settings (Gemini: gemini-flash-latest or gemini-flash-lite-latest); with Ollama, a model must be pulled first (ollama pull <name>).';
+/** The host the person knows the server by: the address as it was written, when it has none. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host || url;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * What to do about a provider's answer, after its own sentence says what
+ * happened -- not where to put it right. Only the 404 hint depends on the
+ * provider: the model names and the setup of each one differ.
+ */
+function remedy(provider: string, status: number, said: string): string {
+  if (status === 401 || /api key|credential/i.test(said)) return ' Check the key in ⚙ Settings.';
+  if (status === 403) return ' Check the key, and that its account may use this model, or choose another model in ⚙ Settings.';
+  if (status === 404) {
+    if (provider === 'ollama') return ' With Ollama, a model must be pulled first (ollama pull <name>), and its name checked in ⚙ Settings.';
+    if (provider === 'google') return ' Check the model name in ⚙ Settings (Gemini: gemini-flash-latest or gemini-flash-lite-latest).';
+    return ' Check the model name and the server address in ⚙ Settings.';
+  }
   if (status === 429) return ' The limit of this plan is reached for now (free tiers allow only a few calls a minute): wait a minute, or choose another model in ⚙ Settings.';
   return '';
 }
@@ -242,6 +261,7 @@ function isRetryable(error: unknown): boolean {
 }
 
 async function post(
+  provider: string,
   url: string,
   body: unknown,
   headers: Record<string, string>,
@@ -270,7 +290,7 @@ async function post(
       // The provider's own message, not just the code: "model not found" and
       // "quota exceeded" are both 400 and need different things done about them.
       const said = detail(text);
-      const next = remedy(response.status, said);
+      const next = remedy(provider, response.status, said);
       throw new HttpError(response.status, `${response.status}: ${said}${next && !/[.!?]\s*$/.test(said) ? '.' : ''}${next}`);
     }
     return JSON.parse(text) as Record<string, unknown>;
@@ -279,7 +299,9 @@ async function post(
     // connection, and a dropped connection is retried.
     if (stop?.aborted) throw new StoppedError();
     if (late) throw new TimedOutError(timeoutMs);
-    if (error instanceof TypeError) throw new UnreachableError(url, String((error as { cause?: { code?: unknown } }).cause?.code ?? ''));
+    // fetch rejects a request that got no answer with a TypeError whose cause is the system's reason. Any other TypeError is ours, and is thrown as it is.
+    const cause = error instanceof TypeError ? (error as { cause?: unknown }).cause : undefined;
+    if (cause !== undefined) throw new UnreachableError(url, cause);
     throw error;
   } finally {
     stop?.removeEventListener('abort', onStop);
@@ -547,7 +569,7 @@ function openAiStyle(
 
   return {
     async ask(mode) {
-      const body = await post(`${base.replace(/\/$/, '')}/chat/completions`, {
+      const body = await post(provider, `${base.replace(/\/$/, '')}/chat/completions`, {
         model: request.model,
         messages: history,
         ...sampling(request),
@@ -626,7 +648,7 @@ function anthropic(request: AiRequest, settings: ProviderSettings): Conversation
 
   return {
     async ask(mode) {
-      const body = await post(`${settings.endpoints.anthropic}/messages`, {
+      const body = await post('anthropic', `${settings.endpoints.anthropic}/messages`, {
         model: request.model,
         max_tokens: settings.maxTokens,
         ...sampling(request),
@@ -711,7 +733,7 @@ function ollama(request: AiRequest, settings: ProviderSettings): Conversation {
 
   return {
     async ask(mode) {
-      const body = await post(`${settings.endpoints.ollama}/api/chat`, {
+      const body = await post('ollama', `${settings.endpoints.ollama}/api/chat`, {
         model: request.model,
         stream: false,
         options: { ...sampling(request), num_ctx: contextFor(history, settings.maxTokens) },

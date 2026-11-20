@@ -190,12 +190,12 @@ export function frame(kind: PromptKind, shape: Shape, restating: boolean, asked:
     case 'data': {
       const after = restating ? ' -- then the node\'s text restated as asked above, and nothing else' : ', and nothing else';
       lines.push(`Answer with two \`\`\`json blocks, each one JSON object with a key for each field -- its name -- as ${PLAIN_JSON}${after}:`,
-        '- the first, the fields as the node starts: each with its starting value. Where the text says what the node holds -- a list of things, a table, a setting -- that content IS the starting value: '
-        + 'write it out, inventing realistic values where the text only describes them ("a list of baking ingredients" gives {"ingredients": ["flour", "sugar", "eggs", "butter", ...]}, a dozen or more real ones). '
+        '- the first, the fields as the node starts: each with its starting value. Where the text names what the node is to hold -- a list of things, the parts of something, a table, a setting -- that content IS the starting value: '
+        + 'write it out, inventing realistic values where the text only describes them (a list of three colors gives {"colors": ["red", "green", "blue"]}; a list with no number given has a dozen). '
         + 'Where it only collects what arrives over rounds -- a count, a history, the latest result -- it starts empty, as before any round: null, 0, "", [] or {}, whichever fits what it holds;',
         '- the second, the same fields as rounds would have filled them: one realistic value for each, shaped as what arrives on it and what the nodes it feeds want it.',
         'Each field is an input and an output of the node under its key: name it for what it holds, in letters, digits and underscores. '
-        + 'A collection of things is ONE field holding a list -- ingredients are the field "ingredients" with a list of them -- not a field for each thing in it. '
+        + 'A collection of things is ONE field holding a list, not a field for each thing in it. '
         + 'What arrives on a field replaces its value, and what reads the node gets the struct as it is then, so give a field the shape of what arrives on it.');
       // A field is a port: one renamed or left out loses its wires.
       const kept = [...new Set([...wired, ...fed])].filter((id) => id !== RUN_PORT);
