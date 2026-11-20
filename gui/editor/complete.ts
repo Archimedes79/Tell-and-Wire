@@ -43,6 +43,7 @@ const words = (id: string): string => {
  */
 export function completeGui(graph: Graph, registry: Kinds): void {
   wireFieldInputs(graph, registry);
+  readFilesOfPathInputs(graph, registry);
   for (const stored of guiBlocks(graph)) {
     const widget = parseWidget(stored);
     const element = widgetElement(widget.kind);
@@ -106,6 +107,32 @@ export function completeGui(graph: Graph, registry: Kinds): void {
     if (by !== 'gui' || guiBlocks(graph).some((stored) => stored.fires === name)) continue;
     const senders = blocks.filter(({ stored, element, widget }) => (stored.sends_to as unknown[] | undefined)?.includes(name) && !stored.fires && element.event(widget));
     if (senders.length === 1) senders[0].stored.fires = name;
+  }
+}
+
+/**
+ * An input that takes, of a start point's package, what a file or folder block sends -- the paths of the files -- is typed as
+ * paths to read (`file_path`): a run reads each file and hands over its text. Left typed otherwise it is handed the paths
+ * themselves, and a model asked to take supplier and amount out of "invoices/a_mueller.txt" answers with what it makes up --
+ * a table that looks right and is not. A model that builds a graph names the field and forgets the type, or names a part
+ * the block does not send ("folder.content", "folder.files"): a folder sends its list of paths, whole, under its id.
+ */
+function readFilesOfPathInputs(graph: Graph, registry: Kinds): void {
+  for (const node of graph.nodes) {
+    for (const port of node.inputs) {
+      if (!port.field) continue;
+      const from = graph.edges.find((edge) => edge.target_node_id === node.id && edge.target_port_id === port.id)?.source_node_id;
+      const source = from ? graph.nodes.find((one) => one.id === from) : undefined;
+      if (!source || !registry.node(source.node_type)?.takesPackage) continue;
+      const [id, ...inside] = port.field.split('.');
+      const block = guiBlocks(graph).find((stored) => stored.id === id);
+      const widget = block ? parseWidget(block) : undefined;
+      const sent = widget ? widgetElement(widget.kind)?.sends(widget) : undefined;
+      if (!sent) continue;
+      // A part it has none of: what it sends is a path, a text, a number -- not an object to take a key of.
+      if (inside.length && !sent.keys && ['file_path', 'text', 'number', 'boolean'].includes(sent.type)) port.field = id;
+      if (!port.field.includes('.') && sent.type === 'file_path') port.data_type = 'file_path';
+    }
   }
 }
 

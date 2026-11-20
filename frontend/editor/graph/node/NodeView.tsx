@@ -107,7 +107,10 @@ function Opened({ node, panel, onClose, onOpenGui }: {
   const labels = Object.fromEntries(graphNodes.map((item) => [item.id, item.label || item.id]));
   // Where every output goes into a memory, the output is pulled too: the field says what it wants.
   const pullsOutput = pullableOutput(node, graphNodes, wires);
-  const [open, setOpen] = useState<Open>(() => firstOpen(node, parts, pullsOutput));
+  // A node a run skipped had nothing to do because of what is wired to it, and what it takes of that is in its settings:
+  // "Show it" under a run's stop opens there, not on a file that says nothing of it.
+  const skipped = useGraphStore((s) => s.executionResult?.node_results.find((one) => one.node_id === node.id)?.status === 'skipped');
+  const [open, setOpen] = useState<Open>(() => (skipped && parts.length ? SETTINGS : firstOpen(node, parts, pullsOutput)));
   const view = useRef<HTMLDivElement>(null);
   const describing = useId();
   const text = useRef<HTMLTextAreaElement>(null);

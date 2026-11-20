@@ -36,7 +36,7 @@ import * as project from '../../deployment/project/folder.ts';
 import * as write from '../../authoring/write.ts';
 import { keptRound, writeKeptRound, TESTS_DIR } from '../project/keptRounds.ts';
 import * as gen from '../graph/generate.ts';
-import { generateGraph } from '../graph/generateGraph.ts';
+import { generateGraph, withoutUnreadableDefinitions } from '../graph/generateGraph.ts';
 import { zip } from '../project/deploy/zip.ts';
 import { productRoutes } from '../../authoring/product.ts';
 import { searchedIn } from '../../deployment/host/find.ts';
@@ -174,7 +174,8 @@ export function editorRoutes(held: SessionHolder = holderOf()): HandlersOf<typeo
       const { graph, explanation } = await generateGraph(asked.description ?? '', { ai: nodeRuntime().ai, target, calls }, current);
       const designed = parseGraph(graph);
       completeGui(designed, registry);
-      return { graph: designed, explanation };
+      const left = withoutUnreadableDefinitions(designed);
+      return { graph: designed, explanation: [explanation, ...left].filter(Boolean).join('\n') };
     }),
 
     async bundle(asked) {

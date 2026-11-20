@@ -3,6 +3,7 @@ import { parseGraph } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { completeGui } from '../../../gui/editor/complete.ts';
 import { guiProblems } from '../../../gui/authoring/gui.ts';
+import { problemsIn } from '../../../gui/authoring/check.ts';
 
 /** A GUI a model wrote with the blocks but not what they connect to: the points a person would have been given are made. */
 describe('a GUI written whole', () => {
@@ -58,5 +59,31 @@ describe('a GUI written whole', () => {
     });
     completeGui(graph, registry);
     expect(graph.edges.map((edge) => `${edge.source_node_id}.${edge.source_port_id} -> ${edge.target_node_id}.${edge.target_port_id}`)).toEqual(['go.data -> sum.__run', 'go.data -> sum.text']);
+  });
+
+  it('types an input that takes the paths a file or folder block sends as paths to read -- a model that names the field forgets the type, and is then sent the names, not the text', () => {
+    const graph = parseGraph({
+      nodes: [
+        { id: 'go', node_type: 'start', config: { started_by: 'gui' } },
+        { id: 'each', node_type: 'ai', inputs: [{ id: 'file', name: 'File', kind: 'input', data_type: 'text', multi: true, required: false, field: 'folder' }, { id: 'note', name: 'Note', kind: 'input', data_type: 'text', multi: false, required: false, field: 'word' }, { id: 'many', name: 'Many', kind: 'input', data_type: 'text', multi: false, required: false, field: 'folder.files' }], outputs: [] },
+      ],
+      edges: [
+        { id: 'a', source_node_id: 'go', source_port_id: 'data', target_node_id: 'each', target_port_id: 'file' },
+        { id: 'b', source_node_id: 'go', source_port_id: 'data', target_node_id: 'each', target_port_id: 'note' },
+        { id: 'c', source_node_id: 'go', source_port_id: 'data', target_node_id: 'each', target_port_id: 'many' },
+      ],
+      gui: { blocks: [
+        { id: 'folder', kind: 'input_picker', mode: 'directory', label: 'Folder', sends_to: ['go'] },
+        { id: 'word', kind: 'text_io', mode: 'input', label: 'Word', sends_to: ['go'] },
+      ] },
+    });
+    // Left as it was written, the check says it in plain words; completed, there is nothing to say.
+    expect(problemsIn(graph).map((one) => one.plain ?? '').filter((said) => /names of the files/.test(said))).toEqual([expect.stringMatching(/only given the names of the files.*Read the file at this path/)]);
+    completeGui(graph, registry);
+    expect(problemsIn(graph).filter((one) => /names of the files/.test(one.plain ?? ''))).toEqual([]);
+    const types = Object.fromEntries(graph.nodes.find((one) => one.id === 'each')!.inputs.map((port) => [port.id, port.data_type]));
+    // A part the folder does not send ("folder.files") is what it does send: its paths, whole, under its id.
+    expect(types).toEqual({ file: 'file_path', note: 'text', many: 'file_path' });
+    expect(graph.nodes.find((one) => one.id === 'each')!.inputs.find((port) => port.id === 'many')!.field).toBe('folder');
   });
 });

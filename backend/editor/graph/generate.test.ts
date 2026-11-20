@@ -3,7 +3,7 @@ import type { AiRequest, AiService, CodeService } from '../../../graph/nodes/Run
 import { registry } from '../../../graph/nodes/registry.ts';
 import { parseGraph, type GraphNode } from '../../../graph/graph.ts';
 import { GenerationFailed, GenerationRefused, firstBlock, generate } from './generate.ts';
-import { generateGraph } from './generateGraph.ts';
+import { generateGraph, withoutUnreadableDefinitions } from './generateGraph.ts';
 import { nodeCode } from '../../deployment/runtime/services.ts';
 import type { GenerateRequest } from '../host/api.ts';
 
@@ -234,5 +234,20 @@ describe('a whole graph, changed as said', () => {
     // Touched: the exchange at the end of its history, as after every ✨; new: its history begins with it.
     expect(String(say.config.history)).toMatch(/^## 2026-09-27 11:00 · ✨ Prompt\n\nNothing was sent\.\n\n## \d{4}-\d\d-\d\d \d\d:\d\d · Change of the graph: Say it kindly/);
     expect(String(note.config.history)).toMatch(/^## \d{4}-\d\d-\d\d \d\d:\d\d · Change of the graph: Say it kindly/);
+  });
+});
+
+describe('a graph a model wrote whole', () => {
+  it('has the definitions taken out that cannot be read, and says which -- a node starts with no file rather than a broken one', () => {
+    const graph = parseGraph({
+      nodes: [{ id: 'ex', node_type: 'ai', label: 'Extract', config: {
+        input_definition: 'module.exports = { "text": "a" };',
+        output_definition: 'module.exports = { "supplier": "Acme", // the name\n};',
+      } }],
+    });
+    const said = withoutUnreadableDefinitions(graph);
+    expect(said).toEqual(['output.js of "Extract" could not be read and was left empty: Auto generate writes it.']);
+    expect(graph.nodes[0].config.output_definition).toBeUndefined();
+    expect(graph.nodes[0].config.input_definition).toContain('"text"');
   });
 });

@@ -15,6 +15,7 @@ import { changePrompt } from './generatePrompts.ts';
 import { GenerationFailed, firstBlock, recording } from './generate.ts';
 import type { AICall, Target } from '../host/api.ts';
 import { messageOf } from '../../../graph/errors.ts';
+import { definitionExample } from '../../../graph/files/definition.ts';
 
 /** A value as JSON with every object's keys in one order: two that say the same compare equal. */
 const canonical = (value: unknown): string => JSON.stringify(value, (_key, item: unknown) => (
@@ -126,4 +127,22 @@ export async function generateGraph(
     explanation: fenced?.after ?? '',
     calls,
   };
+}
+
+/**
+ * Take out the definitions a model wrote that cannot be read -- JSON with a comment in it, a trailing comma -- and say which.
+ * A tool that is handed over with a file nobody can read starts with a problem no one who only says what the nodes do can
+ * mend; left empty, the file is the stub ✨ writes in place of (Auto generate, or the file's own chat).
+ */
+export function withoutUnreadableDefinitions(graph: Graph): string[] {
+  const said: string[] = [];
+  for (const node of graph.nodes) {
+    for (const [key, file] of [['input_definition', 'input.js'], ['output_definition', 'output.js']] as const) {
+      const text = String((node.config as Record<string, unknown>)[key] ?? '');
+      if (!text.trim() || !('problem' in definitionExample(text))) continue;
+      delete (node.config as Record<string, unknown>)[key];
+      said.push(`${file} of "${node.label || node.id}" could not be read and was left empty: Auto generate writes it.`);
+    }
+  }
+  return said;
 }

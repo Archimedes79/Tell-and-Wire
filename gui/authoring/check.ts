@@ -89,6 +89,23 @@ export function problemsIn(graph: Graph, inside = '', depth = 0): Problem[] {
       });
     }
 
+    // A model is asked to take something out of a file and is handed the file's name: it answers, and what it says is made up.
+    if (designs.node(node.node_type)?.generation()?.kind === 'prompt') {
+      for (const port of node.inputs) {
+        if (!port.field || port.field.includes('.') || port.data_type === 'file_path') continue;
+        const edge = graph.edges.find((one) => one.target_node_id === node.id && one.target_port_id === port.id);
+        const sender = edge ? fieldSender(graph, edge.source_node_id, port.field) : undefined;
+        if (sender && widgetElement(sender.kind)?.sends(sender)?.type === 'file_path') {
+          problems.push({
+            where,
+            problem: `Its input "${port.id}" takes what the block "${sender.id}" sends -- the paths of files -- and is not set to read them, so the model is handed the names and not the text.`,
+            fix: `Set the input's type to "file_path": a run then reads each file and hands over what is in it.`,
+            plain: `“${node.label || node.id}” is only given the names of the files, so the model can only guess what is in them. Open its settings and tick “Read the file at this path” on the input “${port.name || port.id}”.`,
+          });
+        }
+      }
+    }
+
     problems.push(...definitionProblems(node, where));
     problems.push(...nestedProblems(graph, node, where, depth));
   }
