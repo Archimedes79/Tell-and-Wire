@@ -93,7 +93,7 @@ shown light or dark. It saves the same project files, so **Open in editor** show
 **No code: tell it.** A node is a heading and a few plain words about what it should do.
 **Auto generate** has a model write the node's files from them -- what goes in and out, then
 the code or the prompt -- and a chat for each file changes it as you say. A whole graph can be
-drawn from one description, too -- and in the notebook a page of windows. A local model (Ollama, LM Studio) will do,
+drawn from one description, too -- and in the notebook a page of windows. A local model will do,
 or an API of your choice.
 
 **Code first: it is all files.** Every node is a folder of plain text: `input.js` and
@@ -147,7 +147,7 @@ specific ways:
   validate, save, run, run one node, test, list -- so an AI assistant can design and test Tell & Wire
   graphs in that folder.
 - **It uses them**, in AI nodes. An AI node can call the tools of MCP servers. A web reader and a
-  Word and PDF reader come with the download (`mcp/`), and any other can be added
+  reader for `.docx` and PDF files come with the download (`mcp/`), and any other can be added
   (*Tools for an AI node*, below).
 
 ## Download and start
@@ -180,7 +180,7 @@ The launcher installs on first use, builds the page when its sources changed, re
 editor already on the port and opens the browser; `stop.*` stops it. By hand it is
 `npm ci`, `npm run build`, then `npm start` (`node backend/cli/main.ts --editor frontend/dist`).
 `npm run dev` serves the page with live reload on <http://127.0.0.1:3000>. Keep a checkout
-out of folders that Dropbox or OneDrive sync: they lock files during `npm ci` and the build.
+out of folders that a file-sync service watches: it locks files during `npm ci` and the build.
 
 The notebook starts the same way with `start-notebook.sh`, `start-notebook.ps1` or `start-notebook.cmd` (on
 <http://127.0.0.1:8100>; `stop-notebook.*` stops it), and `npm run package:notebook` writes its small zip.
@@ -209,8 +209,8 @@ the same `ai-settings.json` and variables, so set it up once, here, or by editin
   every run, also in a delivered tool. The second serves Auto generate (a node's code and prompt, a whole
   graph, the bar under the canvas) and is the first one until you set it apart -- a larger
   model may be worth it for writing, a small one enough for the nodes, or the other way round.
-- Under the provider you choose, what it needs: **the address of its server** (Ollama, LM Studio
-  or any server that speaks the OpenAI API -- on this computer or another one the editor can
+- Under the provider you choose, what it needs: **the address of its server** (a local model
+  server, or any server of the `openai_compatible` kind -- on this computer or another one the editor can
   reach, for example `http://192.168.1.20:11434`) or **an API key**. Keys are write-only: saved
   on this machine, never shown again. *All keys and server addresses* lists every one.
 
@@ -225,18 +225,18 @@ file: `TW_AI_PROVIDER`, `TW_AI_MODEL` (the nodes), `TW_WRITING_PROVIDER`, `TW_WR
 
 | Provider (id) | Cost | Key or address |
 |---|---|---|
-| Ollama (`ollama`) | free, local | `OLLAMA_BASE_URL` (default `http://localhost:11434`) |
-| LM Studio (`lmstudio`) | free, local | `LMSTUDIO_BASE_URL` (default `http://localhost:1234/v1`) |
-| Google Gemini (`google`) | free tier | `GOOGLE_API_KEY`, from [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
-| GitHub Models (`github_copilot`) | free tier | `GITHUB_TOKEN` with the `models:read` scope |
-| OpenAI (`openai`) | paid | `OPENAI_API_KEY` |
-| Anthropic (`anthropic`) | paid | `ANTHROPIC_API_KEY` |
-| OpenAI-compatible (`openai_compatible`) | depends | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` |
+| `ollama` | free, local | `OLLAMA_BASE_URL` (default `http://localhost:11434`) |
+| `lmstudio` | free, local | `LMSTUDIO_BASE_URL` (default `http://localhost:1234/v1`) |
+| `google` | free tier | `GOOGLE_API_KEY` |
+| `github_copilot` | free tier | `GITHUB_TOKEN` with the `models:read` scope |
+| `openai` | paid | `OPENAI_API_KEY` |
+| `anthropic` | paid | `ANTHROPIC_API_KEY` |
+| `openai_compatible` | depends | `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` |
 
-With nothing set, Tell & Wire uses a local model server that is running (Ollama or
-LM Studio), else Ollama, and the editor says at once if that is not running. For Gemini, use
-the `-latest` model names; dated names are retired. Ollama is asked for a context window as large
-as the request (4096 to 32768 tokens), since it cuts a longer prompt silently at its own default.
+With nothing set, Tell & Wire uses a local model server that is running (`ollama` or
+`lmstudio`), else `ollama`, and the editor says at once if that is not running. For `google`, use
+the `-latest` model names; dated names are retired. `ollama` is asked for a context window as large
+as the request (4096 to 32768 tokens), since the server cuts a longer prompt silently at its own default.
 
 A small local model slips now and then: an empty answer, broken JSON, a key left out. Tell & Wire
 asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
@@ -244,7 +244,7 @@ asks again before a node fails (`TW_AI_ATTEMPTS`, `TW_AI_REPAIRS`; see
 
 **Tools for an AI node.** An AI node can call tools from [MCP](https://modelcontextprotocol.io)
 servers. In *the node's settings → Tools the model may use*, **+ Add MCP server** offers the ones
-that come with Tell & Wire -- a web reader and a Word and PDF reader, each with the settings it
+that come with Tell & Wire -- a web reader and a reader for `.docx` and PDF files, each with the settings it
 needs -- and takes any other, by a name that the machine's own settings file
 (`TW_SETTINGS`, else `~/.tell-and-wire/settings.json`) defines:
 
@@ -256,15 +256,15 @@ needs -- and takes any other, by a name that the machine's own settings file
 
 A graph can name a server but never the command or the address of one, so a graph someone
 hands you cannot start a program of its choosing or post its data to a stranger's server. A
-Word file is read by the `documents` server, not by the nodes. A server started by `command` does not
+`.docx` file is read by the `documents` server, not by the nodes. A server started by `command` does not
 inherit variables named like keys, tokens, secrets or passwords from the environment: give
 it what it needs in its own `env`. A tool call gets two minutes
 (`TW_MCP_TIMEOUT_MS`, `0` for none), and the model at most eight turns of calls per answer.
 
-## Docker
+## Container
 
 ```bash
-docker compose up --build    # the editor beside an Ollama container, on 127.0.0.1:8000
+docker compose up --build    # the editor beside a model server container, on 127.0.0.1:8000
 docker run -p 127.0.0.1:8000:8000 -v ./data:/app/data ghcr.io/archimedes79/tell-and-wire:latest
 ```
 
@@ -293,7 +293,7 @@ described by a model) and tip_calculator (a bill split, no model).
   its folders, the rules between them, the tool's folder format, the host's APIs and the core
   protocol, what a package carries, and how to extend Tell & Wire.
 - [mcp/](mcp/README.md): the tool servers that come with Tell & Wire -- they let an AI node read web
-  pages and Word and PDF files -- and how a server brings its own settings.
+  pages and `.docx` and PDF files -- and how a server brings its own settings.
 
 ## Licence
 
@@ -303,6 +303,6 @@ what you build is yours.
 
 ## Trademarks
 
-Ollama, LM Studio, OpenAI, Anthropic, Google Gemini, GitHub Models, Node.js and the other
-product names in this document belong to their owners. Tell & Wire is not affiliated with
-or endorsed by them; the names only say what it can connect to or run on.
+Node.js, and every other product or company name that is part of a provider id, a variable
+or a command in this document, belongs to its owner. Tell & Wire is not affiliated with or
+endorsed by them; the names only say what it can connect to or run on.
