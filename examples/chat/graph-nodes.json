@@ -34,19 +34,6 @@
   "reply": {
     "kind": "end",
     "label": "Reply",
-    "description": "The assistant's answer: the chat shows it and adds it to the conversation.",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "description": "The assistant's answer: the chat shows it and adds it to the conversation."
   }
 }

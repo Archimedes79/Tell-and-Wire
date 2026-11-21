@@ -39,7 +39,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { platform } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
-import { parseGraph, type Graph, type GraphNode } from '../../../graph/graph.ts';
+import { parseGraph, type Graph, type GraphNode, type Port } from '../../../graph/graph.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { keepingFields } from '../../../graph/nodes/port.ts';
 import { NODES_FILE } from '../../../graph/files/nodesFile.ts';
@@ -465,7 +465,7 @@ export async function readStructure(folder: string, guard?: Guard): Promise<{ gr
   };
   const flow = await read(FLOW_FILE, 'flow');
   const list = await read(NODES_FILE, 'list of nodes');
-  return { graph: graphFrom(flow.json, list.json, flow.path, list.path), files };
+  return { graph: graphFrom(flow.json, list.json, flow.path, list.path, defaultPortsOf), files };
 }
 
 /**
@@ -483,6 +483,11 @@ export function derivePorts(graph: Graph): Set<string> {
     derived.add(node.id);
   }
   return derived;
+}
+
+/** The standard ports of a node's kind, when it has a set of its own: what a list that leaves a node's inputs out is read with. */
+export function defaultPortsOf(kind: string): readonly Port[] | null {
+  return registry.node(kind)?.defaultPorts() ?? null;
 }
 
 /** A project folder, with every piece of writing read in from its file. */

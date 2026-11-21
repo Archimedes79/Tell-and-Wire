@@ -23,7 +23,9 @@
 // subgraph's from the graph it holds: they are worked out again when it is
 // read, so the file never holds a copy that can disagree. What a person chose
 // for those inputs stays, as a stub: which part of a package one takes
-// (`field`), and that it takes a list (`list`).
+// (`field`), and that it takes a list (`list`). An end point's ports are not
+// written while they are the standard ones of its kind (`defaultPorts`): a
+// node that lists none is read with them.
 
 import { isStruct, withoutDefaults, type DataType, type GraphNode, type Port, type PortKind } from '../graph.ts';
 import { NotAGraph } from '../errors.ts';
@@ -79,23 +81,36 @@ function stubOnDisk(port: Port): { port: string; list?: true; field?: string } {
   return { port: port.id, ...(port.multi ? { list: true as const } : {}), ...(port.field ? { field: port.field } : {}) };
 }
 
+/** The standard ports of each kind, when it has a set of its own (`NodeDefinition.defaultPorts`). */
+export type DefaultPorts = (kind: string) => readonly Port[] | null;
+
+/** Whether two lists of ports are what a file would say of each, port for port. */
+function sameAs(one: readonly Port[], two: readonly Port[]): boolean {
+  return JSON.stringify(one.map(onDisk)) === JSON.stringify(two.map(onDisk));
+}
+
 /**
  * What `graph-nodes.json` says for *nodes*: the writing already taken out of their
  * settings. *derived* is the ids of the nodes whose ports follow from their
- * settings: of those, only the choices a person made are kept.
+ * settings: of those, only the choices a person made are kept. A node whose
+ * inputs are the standard ones of its kind is written without them.
  */
-export function describeNodes(nodes: GraphNode[], derived: ReadonlySet<string>): Record<string, unknown> {
+export function describeNodes(nodes: GraphNode[], derived: ReadonlySet<string>, defaults: DefaultPorts): Record<string, unknown> {
   return Object.fromEntries(nodes.map((node) => {
     const config = withoutDefaults(node.config);
     const follows = derived.has(node.id);
+    const standard = defaults(node.node_type);
+    const standardInputs = !follows && standard !== null && sameAs(node.inputs, standard);
     const inputs = follows ? node.inputs.filter((port) => port.multi || port.field).map(stubOnDisk) : node.inputs.map(onDisk);
+    // Where the standard ones would come back when read, an empty list is written: it says there are none.
+    const writeInputs = follows ? inputs.length > 0 : !standardInputs && (standard !== null || inputs.length > 0);
     const outputs = follows ? [] : node.outputs.map(onDisk);
     return [node.id, {
       kind: node.node_type,
       label: node.label,
       ...(node.description ? { description: node.description } : {}),
       ...(Object.keys(config).length ? { config: sorted(config) } : {}),
-      ...(inputs.length ? { inputs } : {}),
+      ...(writeInputs ? { inputs } : {}),
       ...(outputs.length ? { outputs } : {}),
     }];
   }));
@@ -105,7 +120,7 @@ export function describeNodes(nodes: GraphNode[], derived: ReadonlySet<string>):
  * The nodes the list *raw* describes, as a graph document lists them. *path*
  * names the file in a message about what is wrong with it.
  */
-export function nodesFrom(raw: unknown, path: string): Record<string, unknown>[] {
+export function nodesFrom(raw: unknown, path: string, defaults: DefaultPorts = () => null): Record<string, unknown>[] {
   if (!isStruct(raw)) {
     throw new NotAGraph(`${path} is not a list of nodes: it must say each node by its id, { "count": { "kind": "code", … } }.`);
   }
@@ -119,9 +134,12 @@ export function nodesFrom(raw: unknown, path: string): Record<string, unknown>[]
       if (!Array.isArray(value)) throw new NotAGraph(`${where}: "${kind}s" must be a list of ports.`);
       return value.map((port) => fromDisk(port, kind, where));
     };
+    // A node that lists no inputs has the standard ones of its kind: the file leaves them out of one that has them.
+    const standard = defaults(node.kind);
     return {
       id, node_type: node.kind, label: node.label, description: node.description, config: node.config,
-      inputs: ports(node.inputs, 'input'), outputs: ports(node.outputs, 'output'),
+      inputs: node.inputs === undefined && standard !== null ? standard : ports(node.inputs, 'input'),
+      outputs: ports(node.outputs, 'output'),
     };
   });
 }

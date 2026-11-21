@@ -178,104 +178,26 @@
   },
   "verdict": {
     "kind": "end",
-    "label": "Judge — consolidated advice",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Judge — consolidated advice"
   },
   "scientific_review": {
     "kind": "end",
-    "label": "Scientific reviewer",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Scientific reviewer"
   },
   "adversarial_review": {
     "kind": "end",
-    "label": "Adversarial reviewer",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Adversarial reviewer"
   },
   "claims_review": {
     "kind": "end",
-    "label": "Evidence & claims reviewer",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Evidence & claims reviewer"
   },
   "references_review": {
     "kind": "end",
-    "label": "References reviewer",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "References reviewer"
   },
   "figures_review": {
     "kind": "end",
-    "label": "Figures & tables reviewer",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Figures & tables reviewer"
   }
 }

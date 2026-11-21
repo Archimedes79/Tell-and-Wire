@@ -18,6 +18,7 @@ import { derivedNodePorts } from './ports';
 import { withoutDefaults } from '../../../../graph/graph.ts';
 import { SubgraphNodeDefinition } from '../../../../graph/nodes/subgraph/SubgraphNodeDefinition.ts';
 import { StartNodeDefinition } from '../../../../graph/nodes/start/StartNodeDefinition.ts';
+import { EndNodeDefinition } from '../../../../graph/nodes/end/EndNodeDefinition.ts';
 import { registry } from '../../../../graph/nodes/registry.ts';
 import { baseNodeConfig } from './baseNodeConfig';
 import { numberedHeading } from './heading';
@@ -25,6 +26,7 @@ import { freeId } from './ids';
 
 const SUBGRAPH = new SubgraphNodeDefinition();
 const START = new StartNodeDefinition();
+const END = new EndNodeDefinition();
 
 // A new node's description starts empty: on an ai or code node it is the text
 // ✨ writes the body from, and a blurb there -- "Send a prompt to an AI model"
@@ -149,11 +151,8 @@ export const NODE_KINDS: Record<NodeType, NodeKind> = {
       label: 'Result',
       description: '',
       position: { x: 0, y: 0 },
-      inputs: [
-        // One value, until a list is wired into it (`connect`): what it hands back, as the interface says it.
-        { id: 'value', name: 'Value', kind: 'input', data_type: 'any', multi: false, required: false, description: '' },
-        { id: 'path', name: 'Path', kind: 'input', data_type: 'file_path', multi: false, required: false, description: 'Optional: a wired file or folder path, used instead of the one set above.' },
-      ],
+      // One value, until a list is wired into it (`connect`): what it hands back, as the interface says it.
+      inputs: END.defaultPorts(),
       outputs: [],
       config: baseNodeConfig(),
     }),

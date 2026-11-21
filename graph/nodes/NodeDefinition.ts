@@ -134,6 +134,17 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
+   * The standard ports of a kind whose ports a person names, but who starts
+   * from a set of its own -- an end point's value, and the path it may write
+   * to. A file writes them only where they were changed: a node with these as
+   * they are is written without its ports, and read back with them. Null: the
+   * kind has no standard set.
+   */
+  defaultPorts(): Port[] | null {
+    return null;
+  }
+
+  /**
    * Whether a failure here becomes an `error` output instead of ending the run.
    *
    * Off unless someone asks for it: a graph that has not been given somewhere

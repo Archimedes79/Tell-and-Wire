@@ -70,55 +70,16 @@
   "summary": {
     "kind": "end",
     "label": "Summary",
-    "description": "The summary, in the length asked for.",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "description": "The summary, in the length asked for."
   },
   "about": {
     "kind": "end",
     "label": "About the file",
-    "description": "One line saying what the file is.",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "description": "One line saying what the file is."
   },
   "content": {
     "kind": "end",
     "label": "What was read",
-    "description": "The file's text, as it was read.",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "description": "The file's text, as it was read."
   }
 }

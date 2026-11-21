@@ -134,6 +134,24 @@ describe('a project folder', () => {
     expect(again.nodes[0].inputs.map((one) => [one.id, one.data_type, one.field])).toEqual([['count', 'any', 'chat.message'], ['names', 'any', undefined]]);
   });
 
+  it('writes an end point without its standard ports, and with the ports of one changed; both are read back as they were', async () => {
+    const standard = registry.node('end')!.defaultPorts()!;
+    const end = (id: string, inputs: unknown[]) => ({ id, node_type: 'end', label: id, inputs, outputs: [], config: {} });
+    const ends = join(dir, 'ends');
+    await writeProject(ends, parseGraph({
+      metadata: { name: 'Ends' },
+      nodes: [end('plain', standard), end('value_only', standard.slice(0, 1)), end('none', [])],
+      edges: [],
+    }));
+    const listed = JSON.parse(await readFile(join(ends, 'graph-nodes.json'), 'utf8'));
+    expect(listed.plain).toEqual({ kind: 'end', label: 'plain' });
+    expect(listed.value_only.inputs).toEqual([{ port: 'value', name: 'Value', type: 'any' }]);
+    expect(listed.none.inputs).toEqual([]);
+    forgetSeen();
+    const again = await readProject(ends);
+    expect(again.nodes.map((node) => node.inputs.map((one) => one.id))).toEqual([['value', 'path'], ['value'], []]);
+  });
+
   it('reads back exactly what was written', async () => {
     const original = sample();
     await writeProject(dir, original);

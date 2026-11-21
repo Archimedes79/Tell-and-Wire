@@ -755,7 +755,7 @@ my_tool/
 - **The graph is three files**: `graph-flow.json` (the wires), `graph-nodes.json` (the nodes) and
   `graph-schedule.json` (when they run, and where they stand). A run needs the first two and the node
   folders, and reads the third for the order; without it, a graph runs in the order of its wires. Every node has an
-  entry in `graph-nodes.json`, at least `{ "kind": … }`; a wire to an id without one is a `check`
+  entry in `graph-nodes.json`, at least `{ "kind": … }`; an end point with its standard ports (`value`, `path`) is written without them and read back with them; a wire to an id without one is a `check`
   problem. The GUI is no part of the graph: `gui.json` names start and end points by id, and a tool
   without a GUI has no such file.
 - **The schedule** (`graph/schedule.ts`) is a table: rows of text, one id or `.` for an empty cell each,

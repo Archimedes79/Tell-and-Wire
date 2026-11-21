@@ -20,7 +20,7 @@
 import { defaultMetadata, isStruct, parseGraph, type Graph, type GraphEdge, type GraphMetadata } from '../graph.ts';
 import { NotAGraph } from '../errors.ts';
 import type { Problem } from '../wiring.ts';
-import { nodesFrom, sorted } from './nodesFile.ts';
+import { nodesFrom, sorted, type DefaultPorts } from './nodesFile.ts';
 import { parseCell } from '../schedule.ts';
 import { folderName } from './names.ts';
 
@@ -129,11 +129,11 @@ export function flowOf(graph: Graph): Record<string, unknown> {
  * *flowPath* and *nodesPath* name the files in a message about what is wrong
  * with them.
  */
-export function graphFrom(flow: unknown, list: unknown, flowPath: string, nodesPath: string): Graph {
+export function graphFrom(flow: unknown, list: unknown, flowPath: string, nodesPath: string, defaults: DefaultPorts = () => null): Graph {
   if (!isStruct(flow)) throw new NotAGraph(`${flowPath} is not a flow: expected an object with "name" and "wires".`);
   const { wires = [], ...metadata } = flow;
   if (!Array.isArray(wires)) throw new NotAGraph(`${flowPath}: "wires" must be a list, one "node.port -> node.port" each.`);
-  const nodes = nodesFrom(list, nodesPath);
+  const nodes = nodesFrom(list, nodesPath, defaults);
 
   try {
     return parseGraph({ metadata, nodes, edges: wires.map((wire) => edgeOf(wire, flowPath)) });

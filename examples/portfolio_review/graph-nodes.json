@@ -475,70 +475,18 @@
     "config": {
       "path": "output/portfolio_review.md",
       "write_mode": "file"
-    },
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    }
   },
   "allocation": {
     "kind": "end",
-    "label": "Allocation by theme",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Allocation by theme"
   },
   "actions": {
     "kind": "end",
-    "label": "Master action list",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Master action list"
   },
   "report": {
     "kind": "end",
-    "label": "Report",
-    "inputs": [
-      {
-        "port": "value",
-        "name": "Value",
-        "type": "any"
-      },
-      {
-        "port": "path",
-        "name": "Path",
-        "type": "file_path",
-        "description": "Optional: a wired file or folder path, used instead of the one set above."
-      }
-    ]
+    "label": "Report"
   }
 }

@@ -1,5 +1,6 @@
 import { NodeDefinition, type Offer } from '../NodeDefinition.ts';
 import type { GraphNode, NodeResult, Port } from '../../graph.ts';
+import { port } from '../port.ts';
 
 /**
  * The input that says *where* to write rather than *what*: a control input,
@@ -47,6 +48,14 @@ export class EndNodeDefinition extends NodeDefinition<EndConfig> {
 
   override boundaryRole(): 'out' {
     return 'out';
+  }
+
+  /** A new end point's ports: its value, and the path it may write to. */
+  override defaultPorts(): Port[] {
+    return [
+      port('value', 'Value', 'input', 'any'),
+      port(WRITE_PATH_PORT, 'Path', 'input', 'file_path', false, 'Optional: a wired file or folder path, used instead of the one set above.'),
+    ];
   }
 
   override valuePorts(node: GraphNode): Port[] {

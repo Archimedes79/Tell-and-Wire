@@ -17,7 +17,7 @@ import { FLOW_FILE, flowOf } from '../../graph/files/flow.ts';
 import { tableFor, tableLines } from '../../graph/schedule.ts';
 import { NotAGraph, NotFound } from '../../graph/errors.ts';
 import {
-  ABSENT, FileChanged, addFilesBeside, SCHEDULE_FILE, NODES_DIR, derivePorts, fileFor, heldIn, isProjectFolder, keyOf, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
+  ABSENT, FileChanged, addFilesBeside, SCHEDULE_FILE, NODES_DIR, defaultPortsOf, derivePorts, fileFor, heldIn, isProjectFolder, keyOf, looksLikeGraph, nestedGraphs, nodeFolder, projectFolderOf,
   projectTexts, readProject, readStructure, remember, seen, signature, textFields, toFile, withoutEmptyGui, type Guard,
 } from '../deployment/project/folder.ts';
 
@@ -112,7 +112,7 @@ function planProject(folder: string, copy: Graph): Plan[] {
   // and its folder -- refuses the save instead of being written over, and the
   // new node's files tidied away. The list last: the writing is out of the settings by now.
   files.set(join(folder, FLOW_FILE), toFile(flow, true));
-  files.set(join(folder, NODES_FILE), toFile(describeNodes(copy.nodes, derived), true));
+  files.set(join(folder, NODES_FILE), toFile(describeNodes(copy.nodes, derived, defaultPortsOf), true));
   files.set(join(folder, SCHEDULE_FILE), toFile(schedule, true));
 
   // Deepest first, so a level is only written once everything it holds is.
