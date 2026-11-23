@@ -19,7 +19,7 @@ import {
   type Refine, type Write,
 } from '../writing/generation';
 import { inputFilesOf } from '../writing/exampleFile';
-import { arrivedAt, modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts, type Arrived } from '../writing/pull';
+import { arrivedAt, modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts, statedPorts, type Arrived } from '../writing/pull';
 import { inputFile, outputFile } from '../../../../graph/editor/pull.ts';
 import type { NodePanel } from './nodePanel';
 
@@ -129,8 +129,19 @@ export async function writeFile(nodeId: string, target: Target, write: Write, sa
   const current = target.node();
   if (!current) return false;
   const { nodes, edges } = around(target);
-  if (write === 'input' && pullable(current, edges) && !(noModels && modelsBefore(current, nodes, edges, columnsOf(useGraphStore.getState().table)).length)) {
-    return pullInput(nodeId, target);
+  if (write === 'input' && pullable(current, edges)) {
+    if (!(noModels && modelsBefore(current, nodes, edges, columnsOf(useGraphStore.getState().table)).length)) return pullInput(nodeId, target);
+    // A model is before it and is not asked again: what the nodes before it say they hand on is what it is written against.
+    const stated = statedPorts(current, nodes, edges);
+    if (stated) {
+      return runGenerate(nodeId, {
+        pending: 'Reading what the nodes before it hand on…',
+        run: async () => stated,
+        apply: (ports) => change(target, (now) => ({ ...now, config: { ...now.config, input_definition: inputFile(ports) } })),
+        success: '✅ input.js pulled: its definition and its example from the output.js of the nodes before it.',
+        failure: 'Pulling input.js failed',
+      });
+    }
   }
   if (write === 'output' && !(say.ask || say.refine) && pullableOutput(current, nodes, edges)) return pullOutput(nodeId, target);
   const request = requestFor(target, write, say);

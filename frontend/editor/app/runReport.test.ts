@@ -74,6 +74,21 @@ describe('the report of a run', () => {
     }, nodes);
     expect(off.summary).toBe('It ran, but "Summarize" did not hand on what its output.js says: what comes after may be empty or wrong.');
     expect(off.nodes[0].plain).toContain('does not fit its output.js');
+    expect(off.well).toBe(false);
+  });
+
+  it('does not say a run went well when every node ran and an end point was handed nothing', () => {
+    const typed = [...nodes.slice(0, 2), { ...nodes[2], node_type: 'end' }];
+    const ran = (value: unknown) => runReport({
+      status: 'success', outputs: {},
+      node_results: [{ node_id: 'read', status: 'success', inputs: { text: '' }, outputs: { rows: value } }, { node_id: 'end', status: 'success', inputs: { value }, outputs: {} }],
+    }, typed);
+    expect(ran([]).summary).toContain('nothing arrived at "Result"');
+    expect(ran([]).nodes[1].plain).toBe('Nothing arrived here: what it shows is empty.');
+    expect(ran([]).well).toBe(false);
+    // A value that is one, however small, is shown: a count of nought is an answer.
+    expect(ran(0).well).toBe(true);
+    expect(ran([{ a: 1 }]).summary).toBe('It went well: 2 of 2 nodes ran.');
   });
 
   it('is plain text that carries no data of the person unless asked to', () => {

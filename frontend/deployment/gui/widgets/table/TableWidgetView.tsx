@@ -69,8 +69,10 @@ export default function TableWidgetView({ widget, value, incoming }: WidgetViewP
   const columns = table ? columnsFrom(table.header, table.header.map((_, c) => table.raw.map((row) => row[c]))) : [];
 
   if (!table) {
-    const nothing = data === undefined || data === null || data === '';
-    const text = nothing ? 'No data yet' : typeof data === 'string' ? data : JSON.stringify(data);
+    // A list with nothing in it is a table with no rows, and is said so: it is not the wrong form.
+    const empty = Array.isArray(data) && data.length === 0;
+    const nothing = data === undefined || data === null || data === '' || empty;
+    const text = empty ? 'No rows: the list that arrived is empty.' : nothing ? 'No data yet' : typeof data === 'string' ? data : JSON.stringify(data);
     return (
       <div className="text-xs h-full overflow-auto" style={{ color: DIMMER }} title={widget.label}>
         {/* What came is shown as it is, and what a table is made of is said: the least a person needs to mend what feeds it. */}

@@ -47,7 +47,7 @@ Valid node_type values: ${NODE_TYPES}. What each one keeps in its config is said
  * a code, ai or data node is written from that sentence, so a node without one
  * is a node nobody can finish.
  */
-const NODE_WORDS = `Every node is its label and its description: the label a short heading, the description one or two sentences saying in plain words what the node does. A person reads them on the canvas, and a code, ai or data node has what it holds or runs written from its description.`;
+const NODE_WORDS = `Every node is its label and its description: the label a short heading, the description one or two sentences saying in plain words what the node does. A person reads them on the canvas, and a code, ai or data node has what it holds or runs written from its description -- and from nothing else: every particular the request gives for that step (the values to choose from, a unit, a name, the form wanted) is kept in it, word for word.`;
 
 /**
  * What the tool says of itself. Its description is the one line under its name in the header of the

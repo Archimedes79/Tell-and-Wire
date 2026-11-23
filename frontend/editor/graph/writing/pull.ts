@@ -103,15 +103,20 @@ export function pulledPorts(node: GraphNode, nodes: GraphNode[], edges: Wire[], 
     const held = source ? NODE_BUILDERS[source.node_type]?.restingValue(source, out) : undefined;
     // An input that takes one field of it is shown that field: how a loop reads a memory's field.
     const own = held !== undefined && port.field ? fieldOf(held, port.field) : held;
-    const stands = ('example' in stated ? stated.example[out] : undefined) ?? own;
+    // A node that runs per item states one answer in its output.js, and hands on the list of them.
+    const listed = !!source && runsPerItem(source) && source.outputs.some((one) => one.id === out && one.multi);
+    const answer = 'example' in stated ? stated.example[out] : undefined;
+    const stands = (listed && answer !== undefined ? [answer] : answer) ?? own;
     const reading = reads.has(port.id);
+    const one = perItem && port.multi;
     // A path the node before it states is no example of the text of the file it names.
     let example = reading ? arrived.texts[port.id] : own ?? arrived.inputs[port.id] ?? stands;
     // A call of a node that runs per item is handed one item of what arrives.
-    if (perItem && port.multi && Array.isArray(example)) example = example[0];
+    if (one && Array.isArray(example)) example = example[0];
+    const typed = property?.type && listed && !one ? `Array<${property.type}>` : property?.type;
     return {
       id: port.id,
-      type: reading ? 'string' : property?.type ?? typeOfValue(example),
+      type: reading ? 'string' : typed ?? typeOfValue(example),
       description: reading ? 'the content of the file the path names (the input reads it)' : property?.description || port.description?.trim() || '',
       example,
     };
@@ -133,6 +138,20 @@ function writtenTo(node: GraphNode, port: string, nodes: GraphNode[], edges: Wir
     }
   }
   return undefined;
+}
+
+/** Nothing was run: what a pull has where only what the nodes before say they hand on is read. */
+const NOT_RUN: Arrived = { inputs: {}, texts: {}, unread: [], error: null };
+
+/**
+ * The inputs of *node* read off what the nodes before it say they hand on (the example in their output.js), with nothing run --
+ * or undefined where that leaves a wired input without an example: one that reads a file, or takes what a start point sends.
+ * A node written after a model is written against what that model is held to, not against a guess of it: a guess names the
+ * keys otherwise, and the tool runs through with nothing in its table.
+ */
+export function statedPorts(node: GraphNode, nodes: GraphNode[], edges: Wire[]): PulledPort[] | undefined {
+  const ports = pulledPorts(node, nodes, edges, NOT_RUN);
+  return pullGap(node, ports, edges, NOT_RUN) ? undefined : ports;
 }
 
 /**

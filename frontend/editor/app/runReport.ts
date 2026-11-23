@@ -10,6 +10,7 @@
 // for: a report is meant to be shared.
 
 import type { ExecutionResult, GraphNode, NodeResult } from '../document/graph';
+import { registry } from '../../../graph/nodes/registry.ts';
 
 export type ReportStatus = 'success' | 'partial' | 'error' | 'skipped' | 'held';
 
@@ -34,6 +35,8 @@ export interface RunReport {
   nodes: ReportNode[];
   /** The first node that failed, where there is one: where to look first. */
   failed?: ReportNode;
+  /** Every node ran and nothing is to be remarked: a run that ended in success with an empty table is not this. */
+  well: boolean;
 }
 
 /** How much of an error, or of a value, a report carries. */
@@ -92,9 +95,13 @@ function reportNode(result: NodeResult, label: string): ReportNode {
 }
 
 /** The report of *result*, for the nodes of the graph it was a run of. */
-export function runReport(result: ExecutionResult, nodes: Pick<GraphNode, 'id' | 'label'>[]): RunReport {
+export function runReport(result: ExecutionResult, nodes: (Pick<GraphNode, 'id' | 'label'> & { node_type?: string })[]): RunReport {
   const labelOf = (id: string) => nodes.find((node) => node.id === id)?.label || id;
   const reported = result.node_results.map((one) => reportNode(one, labelOf(one.node_id)));
+  // An end point that was handed nothing: every node ran, and the table the person looks at is empty.
+  const shows = (id: string) => registry.node(nodes.find((node) => node.id === id)?.node_type ?? '')?.isResult === true;
+  const bare = reported.filter((node, at) => node.status === 'success' && shows(node.id) && Object.values(result.node_results[at].inputs ?? {}).every(isEmpty));
+  for (const node of bare) node.plain = 'Nothing arrived here: what it shows is empty.';
   const failed = reported.find((node) => node.status === 'error');
   const done = reported.filter((node) => node.status === 'success' || node.status === 'partial').length;
   const partly = reported.filter((node) => node.status === 'partial');
@@ -105,12 +112,21 @@ export function runReport(result: ExecutionResult, nodes: Pick<GraphNode, 'id' |
   let summary: string;
   if (result.status === 'success' && off.length) {
     summary = `It ran, but ${off.map((node) => `"${node.label}"`).join(', ')} did not hand on what ${off.length > 1 ? 'their output.js say' : 'its output.js says'}: what comes after may be empty or wrong.`;
+  } else if (result.status === 'success' && bare.length) {
+    summary = `It ran, but nothing arrived at ${bare.map((node) => `"${node.label}"`).join(', ')}: what ${bare.length > 1 ? 'they show' : 'it shows'} is empty. `
+      + 'Tick "Include what went in and out" in the report to see what each node handed on.';
   } else if (result.status === 'success') summary = `It went well: ${done} of ${reported.length} nodes ran.`;
   else if (result.status === 'cancelled') summary = 'It was stopped before it was done.';
   else if (failed) summary = `${result.status === 'partial' ? 'Part of it worked, but' : 'It stopped:'} "${failed.label}" failed. ${failed.plain ?? ''}`.trim();
   else if (result.status === 'partial' && partly.length) summary = `It ran, but part of it failed: ${partly.map((node) => `"${node.label}"`).join(', ')}. ${partly[0].plain ?? ''}`.trim();
   else summary = result.error ? `It failed: ${explain(result.error)}` : 'It did not finish.';
-  return { status: result.status, summary, nodes: reported, failed };
+  return { status: result.status, summary, nodes: reported, failed, well: result.status === 'success' && !off.length && !bare.length };
+}
+
+/** Nothing to show: no value, an empty text, an empty list, an object without a key. */
+function isEmpty(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return true;
+  return typeof value === 'object' && Object.keys(value).length === 0;
 }
 
 const MARK: Record<ReportStatus, string> = { success: 'ok', partial: 'partly', error: 'FAILED', skipped: 'did not run', held: 'stood still' };
@@ -126,7 +142,7 @@ export function reportText(report: RunReport, context: { tool: string; ai: strin
     'Nodes, in the order they ran:',
   ];
   report.nodes.forEach((node, index) => {
-    lines.push(`${index + 1}. [${MARK[node.status]}] ${node.label}${node.plain && node.status !== 'success' ? ` — ${node.plain}` : ''}`);
+    lines.push(`${index + 1}. [${MARK[node.status]}] ${node.label}${node.plain ? ` — ${node.plain}` : ''}`);
     if (node.error) lines.push(...node.error.split('\n').map((line) => `     ${line}`));
     for (const message of node.messages.slice(0, 3)) lines.push(`     note: ${message}`);
     if (context.withData && node.inputs) lines.push('     in:', ...node.inputs.split('\n').map((line) => `       ${line}`));

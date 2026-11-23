@@ -28,7 +28,7 @@ export class CodeNodeDesign extends NodeDesign<CodeNodeDefinition> {
       return [{
         where,
         problem: 'Its code.js holds no code yet: it fails the moment it runs.',
-        fix: 'Press Auto generate in the node, or write function run(inputs) { … } in code.js (config.code in a graph file), returning an object keyed by its outputs.',
+        fix: 'Press ✨ Generate all in the toolbar, or Auto generate in the node -- or write function run(inputs) { … } in code.js (config.code in a graph file), returning an object keyed by its outputs.',
       }];
     }
     // A file it loads from beside it, and is not there: it fails at the line that loads it. input.js and output.js are

@@ -52,8 +52,9 @@ export default function RunReportDialog({ onClose, onShowNode }: { onClose: () =
 
   const text = report ? reportText(report, { tool: toolName, ai: nowText(probe, 'run'), withData }) : '';
   const tone = !report ? undefined
-    : report.status === 'success' ? { bg: SUCCESS_FILL, ink: SUCCESS }
+    : report.well ? { bg: SUCCESS_FILL, ink: SUCCESS }
       : report.status === 'cancelled' ? { bg: SUNKEN, ink: MUTED }
+        : report.status === 'success' ? { bg: SUNKEN, ink: WARNING }
         : { bg: DANGER_FILL, ink: DANGER_TEXT };
 
   return (
@@ -119,7 +120,7 @@ export default function RunReportDialog({ onClose, onShowNode }: { onClose: () =
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm"><span className="font-medium">{node.label}</span> <span className="text-xs" style={{ color: DIMMER }}>{look.word}</span></div>
-                        {node.plain && node.status !== 'success' && <div className="text-xs" style={{ color: MUTED }}>{node.plain}</div>}
+                        {node.plain && <div className="text-xs" style={{ color: MUTED }}>{node.plain}</div>}
                         {withData && (node.inputs || node.outputs) && (
                           <pre className="mt-1 text-xs whitespace-pre-wrap break-words" style={{ color: DIM }}>
                             {[node.inputs && `in\n${node.inputs}`, node.outputs && `out\n${node.outputs}`].filter(Boolean).join('\n')}

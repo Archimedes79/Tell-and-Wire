@@ -3,7 +3,7 @@ import type { GraphNode, Port, Wire } from '../../document/graph';
 import { NODE_KINDS } from '../../document/model/nodeKinds';
 import { definitionExample, typedefProperties } from '../../../../graph/files/definition.ts';
 import { inputFile, outputFile } from '../../../../graph/editor/pull.ts';
-import { modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts } from './pull';
+import { modelsBefore, pullGap, pullable, pullableOutput, pulledOutputs, pulledPorts, statedPorts } from './pull';
 
 /**
  * Pull: input.js read off the graph -- the type from the output.js of the node
@@ -52,6 +52,16 @@ describe('pulling an input', () => {
     // One call of a node that runs per item is handed one item of the list that arrives.
     const each: GraphNode = { ...counter, inputs: [port('text', { multi: true })], config: { ...counter.config, batch_mode: 'per_item' } };
     expect(pulledPorts(each, nodes, edges, { inputs: { text: ['first', 'second'] }, texts: {} })[0]).toMatchObject({ type: 'string', example: 'first' });
+  });
+
+  it('reads an input off what the node before it says it hands on, with nothing run -- a list of it where that node runs per item', () => {
+    const only: GraphNode = { ...counter, inputs: [port('text')] };
+    expect(statedPorts(only, nodes, edges)).toMatchObject([{ id: 'text', type: 'string', example: 'one two' }]);
+    // Each call of a node that runs per item makes one answer: what arrives after it is the list of them.
+    const perItem: GraphNode = { ...reader, config: { ...reader.config, batch_mode: 'per_item' }, inputs: [port('input', { multi: true })], outputs: [port('text', { kind: 'output', multi: true })] };
+    expect(statedPorts(only, [writer, perItem, only], edges)).toMatchObject([{ id: 'text', type: 'Array<string>', example: ['one two'] }]);
+    // A wired input nothing states an example for is left to be asked: half an input.js is none.
+    expect(statedPorts(counter, [writer, NODE_KINDS.code.create('reader'), counter], edges)).toBeUndefined();
   });
 
   it('reads a memory as it looks filled, and the outputs written into one off its fields -- where every output is -- with no model', () => {

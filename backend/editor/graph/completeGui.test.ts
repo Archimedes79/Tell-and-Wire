@@ -104,4 +104,21 @@ describe('a graph a model wired by naming outputs', () => {
     expect(graph.edges.map((edge) => `${edge.source_node_id}.${edge.source_port_id} -> ${edge.target_node_id}.${edge.target_port_id}`)).toEqual(['read.amount -> sum.amounts']);
     expect(graph.nodes.find((one) => one.id === 'sum')!.inputs[0].field).toBeUndefined();
   });
+
+  it('points a wire at the port it means where a model named it in the singular and declared it in the plural -- and leaves one that could mean two', () => {
+    const port = (id: string, kind: 'input' | 'output') => ({ id, name: id, kind, data_type: 'any', multi: false, required: false, description: '' });
+    const graph = parseGraph({
+      nodes: [
+        { id: 'read', node_type: 'ai', inputs: [], outputs: [port('category', 'output'), port('urgency', 'output')] },
+        { id: 'count', node_type: 'code', inputs: [port('categories', 'input'), port('urgencies', 'input'), port('note', 'input'), port('notes', 'input')], outputs: [] },
+      ],
+      edges: [
+        { id: 'e1', source_node_id: 'read', source_port_id: 'categories', target_node_id: 'count', target_port_id: 'category' },
+        { id: 'e2', source_node_id: 'read', source_port_id: 'urgency', target_node_id: 'count', target_port_id: 'urgency' },
+        { id: 'e3', source_node_id: 'read', source_port_id: 'urgency', target_node_id: 'count', target_port_id: 'Notes' },
+      ],
+    });
+    completeGui(graph, registry);
+    expect(graph.edges.map((edge) => `${edge.source_port_id} -> ${edge.target_port_id}`)).toEqual(['category -> categories', 'urgency -> urgencies', 'urgency -> Notes']);
+  });
 });

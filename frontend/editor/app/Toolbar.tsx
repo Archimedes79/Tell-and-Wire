@@ -102,12 +102,14 @@ export default function Toolbar({
   useEffect(() => {
     if (!executionResult || executionResult === told.current) return;
     told.current = executionResult;
-    if (executionResult.status !== 'error' && executionResult.status !== 'partial') {
+    const report = runReport(executionResult, useGraphStore.getState().rootGraph().nodes);
+    // A run that ended in success and left the table empty is said too: "success" alone sends nobody to look.
+    const { status } = executionResult;
+    if (!(status === 'error' || status === 'partial' || (status === 'success' && !report.well))) {
       say('run', '');
       return;
     }
-    const labels = useGraphStore.getState().rootGraph().nodes;
-    say('run', runReport(executionResult, labels).summary, {
+    say('run', report.summary, {
       level: executionResult.status === 'error' ? 'error' : 'warning',
       action: { label: 'Report', run: onOpenReport },
     });

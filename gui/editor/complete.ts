@@ -43,6 +43,7 @@ const words = (id: string): string => {
  * Points are made unwired and beside the graph; wiring them is the graph's author's.
  */
 export function completeGui(graph: Graph, registry: Kinds): void {
+  mendPortNames(graph);
   wireNamedOutputs(graph);
   wireFieldInputs(graph, registry);
   readFilesOfPathInputs(graph, registry);
@@ -109,6 +110,30 @@ export function completeGui(graph: Graph, registry: Kinds): void {
     if (by !== 'gui' || guiBlocks(graph).some((stored) => stored.fires === name)) continue;
     const senders = blocks.filter(({ stored, element, widget }) => (stored.sends_to as unknown[] | undefined)?.includes(name) && !stored.fires && element.event(widget));
     if (senders.length === 1) senders[0].stored.fires = name;
+  }
+}
+
+/** A port's name without its number: "categories" and "category" are one word. */
+const oneOrMany = (id: string): string => id.toLowerCase().replace(/ies$/, 'y').replace(/s$/, '');
+
+/**
+ * A wire to or from a port its node does not have is pointed at the port it means, where exactly one port of that node is the same
+ * word in the other number and is free: a model that declares the inputs "categories" and "urgencies" and wires to "category" and
+ * "urgency" hands over a tool with two problems nobody who only says what the nodes do can read. A name that could mean two is left.
+ */
+function mendPortNames(graph: Graph): void {
+  for (const edge of graph.edges) {
+    const target = graph.nodes.find((node) => node.id === edge.target_node_id);
+    if (target && !target.inputs.some((port) => port.id === edge.target_port_id)) {
+      const wired = (id: string) => graph.edges.some((other) => other.target_node_id === target.id && other.target_port_id === id);
+      const meant = target.inputs.filter((port) => oneOrMany(port.id) === oneOrMany(edge.target_port_id) && !wired(port.id));
+      if (meant.length === 1) edge.target_port_id = meant[0].id;
+    }
+    const source = graph.nodes.find((node) => node.id === edge.source_node_id);
+    if (source && !source.outputs.some((port) => port.id === edge.source_port_id)) {
+      const meant = source.outputs.filter((port) => oneOrMany(port.id) === oneOrMany(edge.source_port_id));
+      if (meant.length === 1) edge.source_port_id = meant[0].id;
+    }
   }
 }
 

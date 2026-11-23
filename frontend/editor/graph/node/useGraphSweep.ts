@@ -59,8 +59,9 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
 
   const missing = missingExamples(nodesOf(), dslEdges(), live().gui);
   if (missing.length) {
-    say(`❌ ${missing.map((n) => n.label || n.id).join(', ')}: choose an example to read, on the GUI tab, in the block's Folder or File field. `
-      + 'Without one, the first node is written against nothing and every node after it inherits the guess. Then press Generate all.');
+    // A step to take, not a failure: this is the first thing said to someone whose tool was just built from a sentence.
+    say(`⚠ Next: choose an example for ${missing.map((n) => `"${n.label || n.id}"`).join(', ')} -- on the GUI tab, in the block's Folder or File field -- `
+      + 'then press ✨ Generate all. The nodes are written against it; without one, against a guess.');
     return;
   }
 
