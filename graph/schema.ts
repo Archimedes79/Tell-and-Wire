@@ -121,12 +121,15 @@ function typeWords(types: string[]): string {
  * once, and the place inside it -- `output "rows" at [3].Population`. *path*
  * is the keys and list positions down to it; none, for the whole of it.
  */
-function placeOf(path: string[]): string {
-  if (!path.length) return 'what it returned';
+function placeOf(path: string[], side: Side): string {
+  if (!path.length) return side === 'output' ? 'what it returned' : 'what it was handed';
   const [port, ...inside] = path;
   const rest = inside.map((part, at) => (part.startsWith('[') || at === 0 ? part : `.${part}`)).join('');
-  return `output "${port}"${rest ? ` at ${rest}` : ''}`;
+  return `${side} "${port}"${rest ? ` at ${rest}` : ''}`;
 }
+
+/** Which of a node's two definitions a value is held to: what it returned to its output.js, what it was handed to its input.js. */
+type Side = 'output' | 'input';
 
 /**
  * Where *value* breaks *schema*, as sentences naming the place: `output "rows"
@@ -134,8 +137,9 @@ function placeOf(path: string[]): string {
  * Stops after a few: one broken list of a thousand rows is one problem, not a
  * thousand.
  */
-export function mismatches(value: unknown, schema: Schema, path: string[] = [], found: string[] = []): string[] {
-  if (found.length >= 5 || !schema.type) return found;
+export function mismatches(value: unknown, schema: Schema, path: string[] = [], found: string[] = [], side: Side = 'output'): string[] {
+  // A failure standing in for a value -- a file that could not be read -- is said where it failed.
+  if (found.length >= 5 || !schema.type || value instanceof Error) return found;
   const actual = typeOf(value);
   const allowed = [schema.type].flat();
   // A number is a number: an example that happened to hold 120 does not
@@ -143,24 +147,24 @@ export function mismatches(value: unknown, schema: Schema, path: string[] = [], 
   const numeric = (type: string): string => (type === 'integer' ? 'number' : type);
   const fits = allowed.map(numeric).includes(numeric(actual));
   if (!fits) {
-    const place = placeOf(path);
+    const place = placeOf(path, side);
     // Null where something was expected is a missing value, and said as such.
-    found.push(actual === 'null' ? `${place} is empty; output.js says ${typeWords(allowed)}`
-      : `${place} is ${typeWords([actual])}; output.js says ${typeWords(allowed)}`);
+    found.push(actual === 'null' ? `${place} is empty; ${side}.js says ${typeWords(allowed)}`
+      : `${place} is ${typeWords([actual])}; ${side}.js says ${typeWords(allowed)}`);
     return found;
   }
   if (actual === 'object') {
     const record = value as Record<string, unknown>;
     for (const key of schema.required ?? []) {
-      if (record[key] === undefined || record[key] === null) found.push(`${placeOf([...path, key])} is missing`);
+      if (record[key] === undefined || record[key] === null) found.push(`${placeOf([...path, key], side)} is missing`);
     }
     for (const [key, property] of Object.entries(schema.properties ?? {})) {
-      if (record[key] !== undefined && record[key] !== null) mismatches(record[key], property, [...path, key], found);
+      if (record[key] !== undefined && record[key] !== null) mismatches(record[key], property, [...path, key], found, side);
     }
   }
   if (actual === 'array' && schema.items) {
     (value as unknown[]).slice(0, 200).forEach((item, index) => {
-      if (item !== null && item !== undefined) mismatches(item, schema.items!, [...path, `[${index}]`], found);
+      if (item !== null && item !== undefined) mismatches(item, schema.items!, [...path, `[${index}]`], found, side);
     });
   }
   return found.slice(0, 5);

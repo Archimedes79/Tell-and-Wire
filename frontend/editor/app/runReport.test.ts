@@ -75,6 +75,11 @@ describe('the report of a run', () => {
     expect(off.summary).toBe('It ran, but "Summarize" did not hand on what its output.js says: what comes after may be empty or wrong.');
     expect(off.nodes[0].plain).toContain('does not fit its output.js');
     expect(off.well).toBe(false);
+    const fed = runReport({
+      status: 'success', outputs: {},
+      node_results: [{ node_id: 'ask', status: 'success', inputs: {}, outputs: {}, messages: ['Does not fit its input.js: input "items" at [0].sender is missing'] }],
+    }, nodes);
+    expect(fed.summary).toBe('It ran, but "Summarize" was not handed what its input.js says: what comes after may be empty or wrong.');
   });
 
   it('does not say a run went well when every node ran and an end point was handed nothing', () => {

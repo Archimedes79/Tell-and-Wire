@@ -238,6 +238,24 @@ export abstract class NodeDefinition<C = unknown> extends ElementDefinition<Grap
   }
 
   /**
+   * What this node's inputs are held to in a run: for each input its input definition's example has a value for, the shape of
+   * that value -- as a list of it, where the node runs once per item and a list arrived on that input (*arrived*). An input
+   * the example leaves empty, or that nothing arrived on, is held to nothing: whether a node has what it needs is asked
+   * elsewhere (`required`). None while it has no input definition.
+   */
+  inputInterface(node: GraphNode, arrived: Record<string, unknown>): Schema | undefined {
+    const input = this.definitions(node)?.input;
+    const shape = input?.trim() ? definitionShape(input) : undefined;
+    if (!shape?.properties) return undefined;
+    const over = new Set(runsPerItem(node, this.batchMode(node)) ? node.inputs.filter((port) => port.multi).map((port) => port.id) : []);
+    return {
+      type: 'object',
+      properties: Object.fromEntries(Object.entries(shape.properties).map(([port, one]) => (
+        [port, over.has(port) && Array.isArray(arrived[port]) && one.type ? { type: 'array', items: one } : one]))),
+    };
+  }
+
+  /**
    * This node keeps what is delivered to it between rounds: it fills from what
    * arrives and forwards what it then holds, in the same round. A wire from it
    * to a node that runs before it carries what it held when the round began

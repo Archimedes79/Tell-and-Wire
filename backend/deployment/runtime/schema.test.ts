@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { inferSchema, mismatches } from '../../../graph/schema.ts';
-import { executeGraph } from './executor.ts';
+import { executeGraph, executeNode } from './executor.ts';
 import { registry } from '../../../graph/nodes/registry.ts';
 import { parseGraph } from '../../../graph/graph.ts';
 import { quietRuntime } from './test/fakes.ts';
@@ -70,5 +70,19 @@ describe('a run held to its output.js', () => {
     expect(fits.node_results[0].messages).toBeUndefined();
     const none = await executeGraph(graphWith(undefined), { runtime: runtime({ total: 'anything' }), registry });
     expect(none.node_results[0].messages).toBeUndefined();
+  });
+
+  it('says so too when what it is handed does not fit its input.js: the keys another node names otherwise, and a list of them where it runs per item', async () => {
+    const taking = (mode: string) => {
+      const graph = graphWith(undefined);
+      Object.assign(graph.nodes[0].config, { batch_mode: mode, input_definition: `module.exports = { "text": ${mode === 'per_item' ? '{ "sender": "Ada" }' : '[{ "sender": "Ada" }]'} };` });
+      return graph;
+    };
+    const handed = (mode: string, text: unknown) => executeNode(taking(mode), 'count', { text }, { runtime: runtime({ total: 1 }), registry });
+    expect((await handed('whole_list', [{ output: { sender: 'Ada' } }])).messages).toEqual(['Does not fit its input.js: input "text" at [0].sender is missing']);
+    expect((await handed('per_item', [{ sender: 'Ada' }, { name: 'Bo' }])).messages).toEqual(['Does not fit its input.js: input "text" at [1].sender is missing']);
+    expect((await handed('whole_list', [{ sender: 'Bo', more: 1 }])).messages).toBeUndefined();
+    // Nothing arrived on it: whether it needs it is another question.
+    expect((await handed('whole_list', null)).messages).toBeUndefined();
   });
 });

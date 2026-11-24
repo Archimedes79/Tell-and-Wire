@@ -107,11 +107,18 @@ export function runReport(result: ExecutionResult, nodes: (Pick<GraphNode, 'id' 
   const partly = reported.filter((node) => node.status === 'partial');
   // A node that ran and handed on something other than what its output.js says: what comes after it reads keys that are not there,
   // and the table is empty -- a run that "went well" is then a lie of the kind nobody finds.
-  const off = reported.filter((node) => node.status === 'success' && node.messages.some((message) => message.startsWith('Does not fit its output.js')));
+  // The same of what a node was handed and its input.js: it was written for other keys than arrived.
+  const unfit = (file: string) => reported.filter((node) => node.status === 'success' && node.messages.some((message) => message.startsWith(`Does not fit its ${file}`)));
+  const off = unfit('output.js');
+  const fed = unfit('input.js');
   for (const node of off) node.plain ??= 'It ran, but what it handed on does not fit its output.js: the nodes after it may get nothing they can use.';
+  for (const node of fed) node.plain ??= 'It ran, but what it was handed does not fit its input.js: what it made of it may be empty or wrong.';
+  const named = (some: ReportNode[]) => some.map((node) => `"${node.label}"`).join(', ');
   let summary: string;
   if (result.status === 'success' && off.length) {
-    summary = `It ran, but ${off.map((node) => `"${node.label}"`).join(', ')} did not hand on what ${off.length > 1 ? 'their output.js say' : 'its output.js says'}: what comes after may be empty or wrong.`;
+    summary = `It ran, but ${named(off)} did not hand on what ${off.length > 1 ? 'their output.js say' : 'its output.js says'}: what comes after may be empty or wrong.`;
+  } else if (result.status === 'success' && fed.length) {
+    summary = `It ran, but ${named(fed)} ${fed.length > 1 ? 'were not handed what their input.js say' : 'was not handed what its input.js says'}: what comes after may be empty or wrong.`;
   } else if (result.status === 'success' && bare.length) {
     summary = `It ran, but nothing arrived at ${bare.map((node) => `"${node.label}"`).join(', ')}: what ${bare.length > 1 ? 'they show' : 'it shows'} is empty. `
       + 'Tick "Include what went in and out" in the report to see what each node handed on.';
@@ -120,7 +127,7 @@ export function runReport(result: ExecutionResult, nodes: (Pick<GraphNode, 'id' 
   else if (failed) summary = `${result.status === 'partial' ? 'Part of it worked, but' : 'It stopped:'} "${failed.label}" failed. ${failed.plain ?? ''}`.trim();
   else if (result.status === 'partial' && partly.length) summary = `It ran, but part of it failed: ${partly.map((node) => `"${node.label}"`).join(', ')}. ${partly[0].plain ?? ''}`.trim();
   else summary = result.error ? `It failed: ${explain(result.error)}` : 'It did not finish.';
-  return { status: result.status, summary, nodes: reported, failed, well: result.status === 'success' && !off.length && !bare.length };
+  return { status: result.status, summary, nodes: reported, failed, well: result.status === 'success' && !off.length && !fed.length && !bare.length };
 }
 
 /** Nothing to show: no value, an empty text, an empty list, an object without a key. */

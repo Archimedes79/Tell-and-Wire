@@ -379,7 +379,7 @@ export async function executeGraph(graph: Graph, options: RunOptions): Promise<E
         if (!failures.length) options.latch?.set(latchKey(node), produced);
         // Kept only when it went through whole: a partial result is not one to hand back.
         if (key && !failures.length) options.reuse!.set(key, produced);
-        const result = ranTo(element, node, inputs, produced, failures, notes);
+        const result = ranTo(element, node, inputs, arrived, produced, failures, notes);
         if (result.status === 'partial') partial.add(nodeId);
         finish(result);
       } catch (error) {
@@ -589,7 +589,7 @@ export async function executeNode(
     const { produced, failures, notes } = await runNode(
       runner, node, arrived, withSubgraph(runtime, options, node, options.depth ?? 0, options.windows?.[nodeId] ?? []), options.signal,
     );
-    return ranTo(element, node, inputs, produced, failures, notes);
+    return ranTo(element, node, inputs, arrived, produced, failures, notes);
   } catch (error) {
     return failedWith(element, node, inputs, error);
   }
@@ -628,19 +628,25 @@ export async function callNode(
  * partial, and said, rather than a success whose gaps are nulls nobody
  * explains. What does not fit its output definition is said, not enforced:
  * the values are what they are, but a node that broke it is named here rather
- * than blamed three nodes later by whatever read the wrong shape.
+ * than blamed three nodes later by whatever read the wrong shape. And what it
+ * was handed (*arrived*: its inputs, the files among them read) is held to its
+ * input definition the same way: a node written for `items[].output` and handed
+ * items without one runs through, and makes an empty table.
  */
 function ranTo(
   element: NodeDefinition,
   node: GraphNode,
   inputs: Record<string, unknown>,
+  arrived: Record<string, unknown>,
   produced: Record<string, unknown>,
   failures: string[] & { total: number },
   notes: string[] = [],
 ): NodeResult {
+  const taken = element.inputInterface(node, arrived);
+  const handed = taken ? mismatches(arrived, taken, [], [], 'input') : [];
   const iface = element.outputInterface(node);
   const broken = iface ? mismatches(produced, iface) : [];
-  const said = [...notes, ...broken.map((line) => `Does not fit its output.js: ${line}`)];
+  const said = [...notes, ...handed.map((line) => `Does not fit its input.js: ${line}`), ...broken.map((line) => `Does not fit its output.js: ${line}`)];
   return {
     node_id: node.id, status: failures.length ? 'partial' : 'success', inputs, outputs: produced,
     error: failures.length ? itemFailures(failures) : null,

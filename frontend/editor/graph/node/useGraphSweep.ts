@@ -47,7 +47,7 @@ export function missingOf(node: GraphNode): Write[] {
  * it started, and only while it still is: node ids repeat from graph to graph,
  * and a body that came back for one graph's node is not the next graph's.
  */
-export async function sweepGraph({ say, stopped }: { say: (message: string) => void; stopped: () => boolean }): Promise<void> {
+export async function sweepGraph({ say, stopped }: { say: (message: string) => void; stopped: () => boolean }): Promise<'waiting' | void> {
   // Read through `getState` rather than a subscription: the sweep writes into
   // the store as it goes, and every node after the first wants what the one
   // before it just wrote.
@@ -60,9 +60,9 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
   const missing = missingExamples(nodesOf(), dslEdges(), live().gui);
   if (missing.length) {
     // A step to take, not a failure: this is the first thing said to someone whose tool was just built from a sentence.
-    say(`⚠ Next: choose an example for ${missing.map((n) => `"${n.label || n.id}"`).join(', ')} -- on the GUI tab, in the block's Folder or File field -- `
-      + 'then press ✨ Generate all. The nodes are written against it; without one, against a guess.');
-    return;
+    say(`⚠ Next: choose an example for ${missing.map((n) => `"${n.label || n.id}"`).join(', ')} -- on the GUI tab, in the block's Folder or File field. `
+      + 'The nodes are then written against it, by themselves; without one they would be written against a guess.');
+    return 'waiting';
   }
 
   const unitFor = (node: GraphNode): SweepUnit | undefined => {
@@ -118,6 +118,9 @@ export async function sweepGraph({ say, stopped }: { say: (message: string) => v
  * written next, in order, without a second press. The toolbar's hook hears it and shows how it goes, as it does for the button.
  */
 const asked = create<{ count: number }>(() => ({ count: 0 }));
+
+/** How long an example chosen must stand unchanged before a sweep that waited for it goes on (ms). */
+const SETTLED = 1500;
 export const requestSweep = (): void => asked.setState((state) => ({ count: state.count + 1 }));
 
 export function useGraphSweep(): SweepState {
@@ -125,15 +128,37 @@ export function useGraphSweep(): SweepState {
   const [message, setMessage] = useState('');
   const stopping = useRef(false);
 
+  // The graph a sweep stopped in for want of an example: once it has one, the sweep goes on without a second press.
+  const [waiting, setWaiting] = useState<number | null>(null);
+
   const run = useCallback(async () => {
     stopping.current = false;
     setBusy(true);
+    setWaiting(null);
     try {
-      await sweepGraph({ say: setMessage, stopped: () => stopping.current });
+      const outcome = await sweepGraph({ say: setMessage, stopped: () => stopping.current });
+      if (outcome === 'waiting') setWaiting(useGraphStore.getState().document);
     } finally {
       setBusy(false);
     }
   }, []);
+
+  const opened = useGraphStore((s) => s.document);
+  const gui = useGraphStore((s) => s.gui);
+  const rfNodes = useGraphStore((s) => s.rfNodes);
+  useEffect(() => {
+    if (waiting === null || busy) return undefined;
+    if (opened !== waiting) {
+      setWaiting(null);
+      return undefined;
+    }
+    const nodes = rfNodes.map((item) => item.data.graphNode);
+    const ready = !missingExamples(nodes, useGraphStore.getState().rfEdges.map(graphEdge), gui).length && nodes.some((node) => missingOf(node).length);
+    if (!ready) return undefined;
+    // A path is typed a letter at a time: it is taken once it has stood still.
+    const timer = setTimeout(() => { void run(); }, SETTLED);
+    return () => clearTimeout(timer);
+  }, [waiting, busy, opened, gui, rfNodes, run]);
 
   // Only what is asked after this one is on screen: a request made before it, for a graph long gone, is not run.
   const seen = useRef(asked.getState().count);

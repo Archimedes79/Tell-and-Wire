@@ -168,7 +168,11 @@ repairs the body where it failed. An AI node's **▶ Try** asks the model on the
   what it can -- `input.js` off the nodes before, `output.js` off the data node an output goes
   into -- and asks the model for the rest.
   On an empty tool the bar under the canvas reads *Say what the tool should do…* and **Build** designs a whole graph from a
-  description at once (Undo takes it back): good for a first sketch.
+  description at once (Undo takes it back): good for a first sketch. What it builds is the spec -- the nodes, what each does,
+  the wires -- and **Generate all** then starts by itself; where a file or folder block has no example yet it waits, and goes
+  on once you have chosen one.
+- **A run holds every node to its files**: what a node is handed to its `input.js`, what it hands on to its `output.js`. What
+  does not fit is said on the node and in the run's **Report** -- as is an end point that was handed nothing.
 
 A start point, a folder, an end point and a subgraph have no files: they open on their
 settings. **Edit the GUI** on a node a block uses goes to the GUI tab.
